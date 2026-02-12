@@ -59,4 +59,18 @@ public class Equipo {
     public void setProximoCambioFiltro(LocalDate proximoCambioFiltro) { this.proximoCambioFiltro = proximoCambioFiltro; }
     public void setEstado(String estado) { this.estado = estado; }
     public void setNotas(String notas) { this.notas = notas; }
-}
+
+
+    public Equipo(Sede sede,
+                  String marca,
+                  String modelo,
+                  String numeroSerie,
+                  String ubicacionInterna,
+                  String notas) {
+        this.sede = sede;
+        this.marca = marca;
+        this.modelo = modelo;
+        this.numeroSerie = numeroSerie;
+        this.ubicacionInterna = ubicacionInterna;
+        this.notas = notas;
+    }}

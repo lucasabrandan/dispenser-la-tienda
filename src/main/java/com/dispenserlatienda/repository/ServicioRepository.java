@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface ServicioRepository extends JpaRepository<Servicio, Long> {
 
-    List<Servicio> findByEquipoId(Long equipoId);
-
+    // Opcional, útil para listar servicios de una sede:
+    List<Servicio> findBySedeId(Long sedeId);
 }

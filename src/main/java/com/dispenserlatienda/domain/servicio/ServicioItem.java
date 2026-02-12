@@ -25,7 +25,7 @@ public class ServicioItem {
     @Column(name = "trabajo_tipo", nullable = false, length = 30)
     private TrabajoTipo trabajoTipo;
 
-    @Column(name = "trabajo_realizado", length = 1000)
+    @Column(name = "trabajo_realizado", nullable = false, length = 1000)
     private String trabajoRealizado;
 
     @Column(name = "garantia_hasta")
@@ -43,7 +43,11 @@ public class ServicioItem {
     public Long getId() { return id; }
     public Servicio getServicio() { return servicio; }
     public Equipo getEquipo() { return equipo; }
+    public TrabajoTipo getTrabajoTipo() { return trabajoTipo; }
+    public String getTrabajoRealizado() { return trabajoRealizado; }
     public LocalDate getGarantiaHasta() { return garantiaHasta; }
 
-    public void setGarantiaHasta(LocalDate garantiaHasta) { this.garantiaHasta = garantiaHasta; }
+    public void setGarantiaHasta(LocalDate garantiaHasta) {
+        this.garantiaHasta = garantiaHasta;
+    }
 }

@@ -23,15 +23,22 @@ public class Sede {
     @Column(length = 500)
     private String notas;
 
+    // JPA
+    protected Sede() {}
+
+    // Constructor "de negocio"
+    public Sede(Cliente cliente, String nombreSede, String direccion, String localidad, String notas) {
+        this.cliente = cliente;
+        this.nombreSede = nombreSede;
+        this.direccion = direccion;
+        this.localidad = localidad;
+        this.notas = notas;
+    }
+
     public Long getId() { return id; }
     public Cliente getCliente() { return cliente; }
-    public void setCliente(Cliente cliente) { this.cliente = cliente; }
     public String getNombreSede() { return nombreSede; }
-    public void setNombreSede(String nombreSede) { this.nombreSede = nombreSede; }
     public String getDireccion() { return direccion; }
-    public void setDireccion(String direccion) { this.direccion = direccion; }
     public String getLocalidad() { return localidad; }
-    public void setLocalidad(String localidad) { this.localidad = localidad; }
     public String getNotas() { return notas; }
-    public void setNotas(String notas) { this.notas = notas; }
 }
