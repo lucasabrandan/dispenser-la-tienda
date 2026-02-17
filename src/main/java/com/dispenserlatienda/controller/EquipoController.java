@@ -2,6 +2,9 @@ package com.dispenserlatienda.controller;
 
 import com.dispenserlatienda.domain.Equipo;
 import com.dispenserlatienda.domain.servicio.ServicioItem;
+import com.dispenserlatienda.dto.equipo.EquipoSugerenciaDTO;
+import com.dispenserlatienda.dto.equipo.GarantiaStatusDTO;
+import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.EquipoRepository;
 import com.dispenserlatienda.repository.ServicioItemRepository;
 import org.springframework.data.domain.PageRequest;
@@ -26,46 +29,42 @@ public class EquipoController {
 
     /**
      * B) Autocompletado por número de serie.
-     * Ejemplos:
-     *  - /api/equipos/sugerencias?query=495
-     *  - /api/equipos/sugerencias?query=495&sedeId=3
+     * Devuelve DTO con información de sede para evitar búsquedas extra en el front.
      */
     @GetMapping("/sugerencias")
-    public List<EquipoSugerenciaResponse> sugerencias(
+    public List<EquipoSugerenciaDTO> sugerencias(
             @RequestParam("query") String query,
             @RequestParam(value = "sedeId", required = false) Long sedeId,
             @RequestParam(value = "limit", defaultValue = "10") int limit
     ) {
         if (query == null || query.trim().length() < 2) {
-            return List.of(); // evita sugerencias con 1 carácter
+            return List.of();
         }
 
-        var pageable = PageRequest.of(0, Math.min(Math.max(limit, 1), 20)); // 1..20
+        var pageable = PageRequest.of(0, Math.min(Math.max(limit, 1), 20));
 
         List<Equipo> equipos = (sedeId == null)
                 ? equipoRepository.findByNumeroSerieContainingIgnoreCase(query.trim(), pageable)
                 : equipoRepository.findBySedeIdAndNumeroSerieContainingIgnoreCase(sedeId, query.trim(), pageable);
 
         return equipos.stream()
-                .map(e -> new EquipoSugerenciaResponse(
+                .map(e -> new EquipoSugerenciaDTO(
                         e.getId(),
                         e.getNumeroSerie(),
-                        e.getSede().getId()
+                        e.getModelo(),
+                        e.getSede().getId(),
+                        e.getSede().getNombreSede()
                 ))
                 .toList();
     }
 
     /**
      * C) Verificar si un equipo está en garantía.
-     * Usa el último ServicioItem (por garantiaHasta más grande).
-     * Ejemplo:
-     *  - /api/equipos/12/garantia
      */
     @GetMapping("/{equipoId}/garantia")
-    public GarantiaResponse garantia(@PathVariable Long equipoId) {
-        // si el equipo no existe, 404 "prolijo"
+    public GarantiaStatusDTO garantia(@PathVariable Long equipoId) {
         Equipo equipo = equipoRepository.findById(equipoId)
-                .orElseThrow(() -> new RuntimeException("Equipo no encontrado: " + equipoId));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipo no encontrado con ID: " + equipoId));
 
         Optional<ServicioItem> ultimo = servicioItemRepository
                 .findTopByEquipoIdOrderByGarantiaHastaDesc(equipoId);
@@ -73,18 +72,12 @@ public class EquipoController {
         LocalDate hoy = LocalDate.now();
 
         if (ultimo.isEmpty() || ultimo.get().getGarantiaHasta() == null) {
-            return new GarantiaResponse(equipo.getId(), equipo.getNumeroSerie(), false, null);
+            return new GarantiaStatusDTO(equipo.getId(), equipo.getNumeroSerie(), false, null);
         }
 
         LocalDate garantiaHasta = ultimo.get().getGarantiaHasta();
-        boolean enGarantia = !hoy.isAfter(garantiaHasta); // hoy <= garantiaHasta
+        boolean enGarantia = !hoy.isAfter(garantiaHasta);
 
-        return new GarantiaResponse(equipo.getId(), equipo.getNumeroSerie(), enGarantia, garantiaHasta);
+        return new GarantiaStatusDTO(equipo.getId(), equipo.getNumeroSerie(), enGarantia, garantiaHasta);
     }
-
-    // ====== DTOs de respuesta (adentro del controller para ir rápido) ======
-
-    public record EquipoSugerenciaResponse(Long equipoId, String numeroSerie, Long sedeId) {}
-
-    public record GarantiaResponse(Long equipoId, String numeroSerie, boolean enGarantia, LocalDate garantiaHasta) {}
 }

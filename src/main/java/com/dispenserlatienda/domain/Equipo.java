@@ -1,8 +1,6 @@
 package com.dispenserlatienda.domain;
 
-import com.dispenserlatienda.domain.Sede;
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
 
 @Entity
@@ -41,26 +39,16 @@ public class Equipo {
     @Column(name = "notas", length = 500)
     private String notas;
 
-    protected Equipo() { } // JPA
+    // JPA obligatorio
+    protected Equipo() { }
 
+    // Constructor mínimo
     public Equipo(Sede sede, String numeroSerie) {
         this.sede = sede;
         this.numeroSerie = numeroSerie;
     }
 
-    public Long getId() { return id; }
-    public Sede getSede() { return sede; }
-    public String getNumeroSerie() { return numeroSerie; }
-
-    // setters mínimos (después refinamos con DTOs)
-    public void setMarca(String marca) { this.marca = marca; }
-    public void setModelo(String modelo) { this.modelo = modelo; }
-    public void setUbicacionInterna(String ubicacionInterna) { this.ubicacionInterna = ubicacionInterna; }
-    public void setProximoCambioFiltro(LocalDate proximoCambioFiltro) { this.proximoCambioFiltro = proximoCambioFiltro; }
-    public void setEstado(String estado) { this.estado = estado; }
-    public void setNotas(String notas) { this.notas = notas; }
-
-
+    // Constructor completo para Seed/Carga masiva
     public Equipo(Sede sede,
                   String marca,
                   String modelo,
@@ -73,4 +61,26 @@ public class Equipo {
         this.numeroSerie = numeroSerie;
         this.ubicacionInterna = ubicacionInterna;
         this.notas = notas;
-    }}
+    }
+
+    // --- GETTERS (Necesarios para DTOs y Lógica de Negocio) ---
+
+    public Long getId() { return id; }
+    public Sede getSede() { return sede; }
+    public String getMarca() { return marca; }
+    public String getModelo() { return modelo; }
+    public String getNumeroSerie() { return numeroSerie; }
+    public String getUbicacionInterna() { return ubicacionInterna; }
+    public LocalDate getProximoCambioFiltro() { return proximoCambioFiltro; }
+    public String getEstado() { return estado; }
+    public String getNotas() { return notas; }
+
+    // --- SETTERS ---
+
+    public void setMarca(String marca) { this.marca = marca; }
+    public void setModelo(String modelo) { this.modelo = modelo; }
+    public void setUbicacionInterna(String ubicacionInterna) { this.ubicacionInterna = ubicacionInterna; }
+    public void setProximoCambioFiltro(LocalDate proximoCambioFiltro) { this.proximoCambioFiltro = proximoCambioFiltro; }
+    public void setEstado(String estado) { this.estado = estado; }
+    public void setNotas(String notas) { this.notas = notas; }
+}
