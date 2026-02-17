@@ -1,0 +1,28 @@
+### Listar Clientes
+GET http://localhost:8080/api/clientes
+
+### Crear un Cliente nuevo (ÉXITO)
+POST http://localhost:8080/api/clientes
+Content-Type: application/json
+
+{
+  "tipo": "EMPRESA",
+  "razonSocialNombre": "Distribuidora Sur",
+  "cuilDni": "30999999991",
+  "telefono": "1144556677",
+  "email": "ventas@distrisur.com",
+  "notas": "Cliente mayorista"
+}
+
+### Intentar crear el mismo cliente (PRUEBA DE BLINDAJE)
+POST http://localhost:8080/api/clientes
+Content-Type: application/json
+
+{
+  "tipo": "EMPRESA",
+  "razonSocialNombre": "Distribuidora Sur",
+  "cuilDni": "30999999991",
+  "telefono": "1144556677",
+  "email": "ventas@distrisur.com",
+  "notas": "Repetido"
+}
