@@ -13,6 +13,7 @@ public class ServicioItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ❗ ahora el setter se usa para sincronizar el agregado
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "servicio_id", nullable = false)
     private Servicio servicio;
@@ -33,8 +34,15 @@ public class ServicioItem {
 
     protected ServicioItem() {}
 
-    public ServicioItem(Servicio servicio, Equipo equipo, TrabajoTipo trabajoTipo, String trabajoRealizado) {
-        this.servicio = servicio;
+    // ✅ Cambiamos el constructor: NO recibe Servicio.
+    // Motivo: el padre (Servicio) es el que “adopta” al item con addItem()
+    public ServicioItem(Equipo equipo, TrabajoTipo trabajoTipo, String trabajoRealizado) {
+        if (equipo == null) throw new IllegalArgumentException("equipo es obligatorio");
+        if (trabajoTipo == null) throw new IllegalArgumentException("trabajoTipo es obligatorio");
+        if (trabajoRealizado == null || trabajoRealizado.isBlank()) {
+            throw new IllegalArgumentException("trabajoRealizado es obligatorio");
+        }
+
         this.equipo = equipo;
         this.trabajoTipo = trabajoTipo;
         this.trabajoRealizado = trabajoRealizado;
@@ -49,5 +57,24 @@ public class ServicioItem {
 
     public void setGarantiaHasta(LocalDate garantiaHasta) {
         this.garantiaHasta = garantiaHasta;
+        validarGarantia();
+    }
+
+    // 🔒 Setter “de paquete” o public para JPA + helpers
+    // (si querés lo hacemos package-private, pero IntelliJ a veces complica)
+    public void setServicio(Servicio servicio) {
+        this.servicio = servicio;
+    }
+
+    private void validarGarantia() {
+        if (trabajoTipo == TrabajoTipo.REVISION) {
+            if (garantiaHasta != null) {
+                throw new IllegalStateException("REVISION no debe tener garantía");
+            }
+        } else {
+            if (garantiaHasta == null) {
+                throw new IllegalStateException(trabajoTipo + " debe tener garantía");
+            }
+        }
     }
 }
