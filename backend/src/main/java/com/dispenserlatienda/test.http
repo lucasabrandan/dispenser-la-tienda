@@ -1,0 +1,34 @@
+### A) Listar sedes del Cliente 1 (El que creó el Seed)
+GET http://localhost:8080/api/sedes/cliente/1
+
+### B) Crear una Sede nueva para el Cliente 1 (ÉXITO)
+POST http://localhost:8080/api/sedes
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "nombreSede": "Sucursal Banfield",
+  "direccion": "Maipú 300",
+  "localidad": "Banfield",
+  "notas": "Horario de atención 08:00 a 17:00"
+}
+
+### C) Intentar crear la MISMA sede para el MISMO cliente (PRUEBA DE VALIDACIÓN)
+POST http://localhost:8080/api/sedes
+Content-Type: application/json
+
+{
+  "clienteId": 1,
+  "nombreSede": "Sucursal Banfield",
+  "direccion": "Calle inventada 123"
+}
+
+### D) Intentar crear sede para un cliente que NO EXISTE (PRUEBA DE BLINDAJE)
+POST http://localhost:8080/api/sedes
+Content-Type: application/json
+
+{
+  "clienteId": 9999,
+  "nombreSede": "Sede Fantasma",
+  "direccion": "Dirección X"
+}
