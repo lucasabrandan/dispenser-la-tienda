@@ -1,4 +1,5 @@
 package com.dispenserlatienda.service.servicio;
+
 import com.dispenserlatienda.domain.Equipo;
 import com.dispenserlatienda.domain.Sede;
 import com.dispenserlatienda.domain.servicio.Servicio;
@@ -44,17 +45,42 @@ public class ServicioService {
 
         for (var itemDto : dto.items()) {
             Equipo equipo = equipoRepository.findById(itemDto.equipoId()).orElseThrow(() -> new ResourceNotFoundException("Equipo no encontrado"));
+
+            // Blindaje de integridad
             if (!equipo.getSede().getId().equals(sede.getId())) {
-                throw new IllegalArgumentException("El equipo no pertenece a la sede del servicio");
+                throw new IllegalArgumentException("Integridad fallida: el equipo " + equipo.getNumeroSerie() + " no pertenece a la sede seleccionada.");
             }
-            ServicioItem item = new ServicioItem(equipo, itemDto.trabajoTipo(), itemDto.trabajoRealizado());
+
+            ServicioItem item = new ServicioItem(
+                    equipo,
+                    itemDto.tecnico(),
+                    itemDto.costo(),
+                    itemDto.trabajoRealizado(),
+                    itemDto.garantiaHasta()
+            );
             servicio.addItem(item);
         }
         return mapToDTO(servicioRepository.save(servicio));
     }
 
     private ServicioDTO mapToDTO(Servicio s) {
-        List<ServicioItemDTO> items = s.getItems().stream().map(i -> new ServicioItemDTO(i.getEquipo().getId(), i.getEquipo().getNumeroSerie(), i.getTrabajoTipo(), i.getGarantiaHasta())).toList();
-        return new ServicioDTO(s.getId(), s.getFechaServicio(), s.getServicioTipo(), s.getSede().getNombreSede(), items);
+        // Mapeo corregido para enviar técnico y costo al React
+        List<ServicioItemDTO> items = s.getItems().stream()
+                .map(i -> new ServicioItemDTO(
+                        i.getEquipo().getId(),
+                        i.getEquipo().getNumeroSerie(),
+                        i.getTecnico(),          // 👈 Datos reales
+                        i.getCosto(),            // 👈 Datos reales
+                        i.getTrabajoRealizado(),
+                        i.getGarantiaHasta()
+                )).toList();
+
+        return new ServicioDTO(
+                s.getId(),
+                s.getFechaServicio(),
+                s.getServicioTipo(),
+                s.getSede().getNombreSede(),
+                items
+        );
     }
 }

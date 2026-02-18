@@ -1,9 +1,12 @@
 package com.dispenserlatienda.domain.servicio;
 
 import com.dispenserlatienda.domain.Equipo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "servicio_item")
@@ -13,68 +16,54 @@ public class ServicioItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ❗ ahora el setter se usa para sincronizar el agregado
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "servicio_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "servicio_id")
+    @JsonIgnore
     private Servicio servicio;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(optional = false)
     @JoinColumn(name = "equipo_id", nullable = false)
+    @JsonIgnoreProperties({"equipos", "sede"})
     private Equipo equipo;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "trabajo_tipo", nullable = false, length = 30)
-    private TrabajoTipo trabajoTipo;
+    private String tecnico;
+    private BigDecimal costo;
+    private LocalDateTime fechaHora;
 
-    @Column(name = "trabajo_realizado", nullable = false, length = 1000)
+    // 🛠️ Cambiamos el nombre para que coincida con el Service
+    @Column(name = "trabajo_realizado", length = 1000)
     private String trabajoRealizado;
 
     @Column(name = "garantia_hasta")
     private LocalDate garantiaHasta;
 
+    @Enumerated(EnumType.STRING)
+    private TrabajoTipo trabajoTipo;
+
     protected ServicioItem() {}
 
-    // ✅ Cambiamos el constructor: NO recibe Servicio.
-    // Motivo: el padre (Servicio) es el que “adopta” al item con addItem()
-    public ServicioItem(Equipo equipo, TrabajoTipo trabajoTipo, String trabajoRealizado) {
-        if (equipo == null) throw new IllegalArgumentException("equipo es obligatorio");
-        if (trabajoTipo == null) throw new IllegalArgumentException("trabajoTipo es obligatorio");
-        if (trabajoRealizado == null || trabajoRealizado.isBlank()) {
-            throw new IllegalArgumentException("trabajoRealizado es obligatorio");
-        }
-
+    // Constructor para el nuevo formulario
+    public ServicioItem(Equipo equipo, String tecnico, BigDecimal costo, String trabajoRealizado, LocalDate garantiaHasta) {
         this.equipo = equipo;
-        this.trabajoTipo = trabajoTipo;
+        this.tecnico = tecnico;
+        this.costo = costo;
         this.trabajoRealizado = trabajoRealizado;
-    }
-
-    public Long getId() { return id; }
-    public Servicio getServicio() { return servicio; }
-    public Equipo getEquipo() { return equipo; }
-    public TrabajoTipo getTrabajoTipo() { return trabajoTipo; }
-    public String getTrabajoRealizado() { return trabajoRealizado; }
-    public LocalDate getGarantiaHasta() { return garantiaHasta; }
-
-    public void setGarantiaHasta(LocalDate garantiaHasta) {
         this.garantiaHasta = garantiaHasta;
-        validarGarantia();
+        this.fechaHora = LocalDateTime.now();
+        this.trabajoTipo = TrabajoTipo.REPARACION; // Valor por defecto para no romper el modelo
     }
 
-    // 🔒 Setter “de paquete” o public para JPA + helpers
-    // (si querés lo hacemos package-private, pero IntelliJ a veces complica)
     public void setServicio(Servicio servicio) {
         this.servicio = servicio;
     }
 
-    private void validarGarantia() {
-        if (trabajoTipo == TrabajoTipo.REVISION) {
-            if (garantiaHasta != null) {
-                throw new IllegalStateException("REVISION no debe tener garantía");
-            }
-        } else {
-            if (garantiaHasta == null) {
-                throw new IllegalStateException(trabajoTipo + " debe tener garantía");
-            }
-        }
-    }
+    // --- Getters que el Service necesita ---
+    public Long getId() { return id; }
+    public Equipo getEquipo() { return equipo; }
+    public String getTecnico() { return tecnico; }
+    public BigDecimal getCosto() { return costo; }
+    public String getTrabajoRealizado() { return trabajoRealizado; } // 👈 EL QUE FALTABA
+    public LocalDate getGarantiaHasta() { return garantiaHasta; }
+    public LocalDateTime getFechaHora() { return fechaHora; }
+    public TrabajoTipo getTrabajoTipo() { return trabajoTipo; }
 }

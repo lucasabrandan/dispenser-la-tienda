@@ -1,86 +1,63 @@
 package com.dispenserlatienda.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import java.time.LocalDate;
 
 @Entity
-@Table(name = "equipo", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_equipo_numero_serie", columnNames = "numero_serie")
-})
+@Table(name = "equipo")
 public class Equipo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "sede_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_equipo_sede"))
-    private Sede sede;
-
-    @Column(name = "marca", length = 100)
-    private String marca;
-
-    @Column(name = "modelo", length = 100)
-    private String modelo;
-
-    @Column(name = "numero_serie", nullable = false, length = 100)
+    @Column(name = "numero_serie", nullable = false, unique = true)
     private String numeroSerie;
 
-    @Column(name = "ubicacion_interna", length = 150)
-    private String ubicacionInterna;
-
-    @Column(name = "proximo_cambio_filtro")
-    private LocalDate proximoCambioFiltro;
-
-    @Column(name = "estado", length = 50)
-    private String estado;
-
-    @Column(name = "notas", length = 500)
+    private String modelo;
+    private String marca;       // Agregamos Marca
+    private String ubicacion;   // Ej: "Cocina 2do piso"
     private String notas;
 
-    // JPA obligatorio
-    protected Equipo() { }
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "sede_id", nullable = false)
+    @JsonIgnoreProperties({"equipos", "cliente"}) // Evitamos bucles infinitos al leer la sede
+    private Sede sede;
 
-    // Constructor mínimo
-    public Equipo(Sede sede, String numeroSerie) {
-        this.sede = sede;
+    // 1. Constructor vacío (Obligatorio para JPA/Hibernate)
+    protected Equipo() {}
+
+    // 2. CONSTRUCTOR QUE NECESITA TU CONTROLLER (EL QUE FALTABA) 🛠️
+    public Equipo(String numeroSerie, String modelo, String marca, Sede sede) {
         this.numeroSerie = numeroSerie;
+        this.modelo = modelo;
+        this.marca = marca;
+        this.sede = sede;
     }
 
-    // Constructor completo para Seed/Carga masiva
-    public Equipo(Sede sede,
-                  String marca,
-                  String modelo,
-                  String numeroSerie,
-                  String ubicacionInterna,
-                  String notas) {
+    // 3. Constructor completo (para otros usos)
+    public Equipo(Sede sede, String numeroSerie, String modelo, String marca, String ubicacion, String notas) {
         this.sede = sede;
-        this.marca = marca;
-        this.modelo = modelo;
         this.numeroSerie = numeroSerie;
-        this.ubicacionInterna = ubicacionInterna;
+        this.modelo = modelo;
+        this.marca = marca;
+        this.ubicacion = ubicacion;
         this.notas = notas;
     }
 
-    // --- GETTERS (Necesarios para DTOs y Lógica de Negocio) ---
-
+    // Getters y Setters
     public Long getId() { return id; }
-    public Sede getSede() { return sede; }
-    public String getMarca() { return marca; }
-    public String getModelo() { return modelo; }
     public String getNumeroSerie() { return numeroSerie; }
-    public String getUbicacionInterna() { return ubicacionInterna; }
-    public LocalDate getProximoCambioFiltro() { return proximoCambioFiltro; }
-    public String getEstado() { return estado; }
+    public String getModelo() { return modelo; }
+    public String getMarca() { return marca; }
+    public String getUbicacion() { return ubicacion; }
     public String getNotas() { return notas; }
+    public Sede getSede() { return sede; }
 
-    // --- SETTERS ---
-
-    public void setMarca(String marca) { this.marca = marca; }
+    public void setNumeroSerie(String numeroSerie) { this.numeroSerie = numeroSerie; }
     public void setModelo(String modelo) { this.modelo = modelo; }
-    public void setUbicacionInterna(String ubicacionInterna) { this.ubicacionInterna = ubicacionInterna; }
-    public void setProximoCambioFiltro(LocalDate proximoCambioFiltro) { this.proximoCambioFiltro = proximoCambioFiltro; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public void setMarca(String marca) { this.marca = marca; }
+    public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
     public void setNotas(String notas) { this.notas = notas; }
+    public void setSede(Sede sede) { this.sede = sede; }
 }
