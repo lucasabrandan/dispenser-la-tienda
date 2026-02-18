@@ -30,62 +30,57 @@ public class Servicio {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private ServicioTipo tipo;
+    private ServicioTipo servicioTipo; // Unificamos el nombre a servicioTipo
 
     @Column(length = 1000)
     private String observaciones;
 
-    // ✅ Relación agregada: Servicio (padre) -> ServicioItem (hijos)
-    // - cascade ALL: si guardo Servicio, se guardan sus items
-    // - orphanRemoval true: si saco un item de la lista, se borra (en DB) porque no tiene sentido “huérfano”
     @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ServicioItem> items = new ArrayList<>();
 
     protected Servicio() {}
 
-    public Servicio(Sede sede, Usuario usuario, LocalDate fechaServicio, ServicioTipo tipo) {
+    public Servicio(Sede sede, Usuario usuario, LocalDate fechaServicio, ServicioTipo servicioTipo) {
         if (sede == null) throw new IllegalArgumentException("sede es obligatoria");
         if (usuario == null) throw new IllegalArgumentException("usuario es obligatorio");
         if (fechaServicio == null) throw new IllegalArgumentException("fechaServicio es obligatoria");
-        if (tipo == null) throw new IllegalArgumentException("tipo de servicio es obligatorio");
+        if (servicioTipo == null) throw new IllegalArgumentException("tipo de servicio es obligatorio");
 
         this.sede = sede;
         this.usuario = usuario;
         this.fechaServicio = fechaServicio;
-        this.tipo = tipo;
+        this.servicioTipo = servicioTipo;
     }
 
     // ✅ Helper para sincronización bidireccional
     public void addItem(ServicioItem item) {
         if (item == null) throw new IllegalArgumentException("item no puede ser null");
-
-        // si ya pertenece a este servicio, no repetimos
         if (this.items.contains(item)) return;
 
         this.items.add(item);
-        item.setServicio(this); // sincroniza el lado ManyToOne
+        item.setServicio(this);
     }
 
     public void removeItem(ServicioItem item) {
         if (item == null) return;
-
         if (this.items.remove(item)) {
-            item.setServicio(null); // deja huérfano en memoria; orphanRemoval lo borrará en DB al persistir
+            item.setServicio(null);
         }
     }
 
-    // Exponemos lista como read-only (evita que desde afuera rompan el agregado)
-    public List<ServicioItem> getItems() {
-        return Collections.unmodifiableList(items);
-    }
-
+    // --- GETTERS ---
     public Long getId() { return id; }
     public Sede getSede() { return sede; }
     public Usuario getUsuario() { return usuario; }
     public LocalDate getFechaServicio() { return fechaServicio; }
-    public ServicioTipo getTipo() { return tipo; }
+    public ServicioTipo getServicioTipo() { return servicioTipo; } // Coincide con el Service
     public String getObservaciones() { return observaciones; }
 
+    public List<ServicioItem> getItems() {
+        return Collections.unmodifiableList(items);
+    }
+
+    // --- SETTERS ---
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
     }
