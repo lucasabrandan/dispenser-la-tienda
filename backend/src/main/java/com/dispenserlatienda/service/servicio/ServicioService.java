@@ -1,5 +1,4 @@
 package com.dispenserlatienda.service.servicio;
-
 import com.dispenserlatienda.domain.Equipo;
 import com.dispenserlatienda.domain.Sede;
 import com.dispenserlatienda.domain.servicio.Servicio;
@@ -20,77 +19,42 @@ import java.util.List;
 
 @Service
 public class ServicioService {
-
     private final ServicioRepository servicioRepository;
     private final SedeRepository sedeRepository;
     private final UsuarioRepository usuarioRepository;
     private final EquipoRepository equipoRepository;
 
-    public ServicioService(ServicioRepository servicioRepository,
-                           SedeRepository sedeRepository,
-                           UsuarioRepository usuarioRepository,
-                           EquipoRepository equipoRepository) {
+    public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository, UsuarioRepository usuarioRepository, EquipoRepository equipoRepository) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
         this.equipoRepository = equipoRepository;
     }
 
+    @Transactional(readOnly = true)
+    public List<ServicioDTO> listarTodos() {
+        return servicioRepository.findAll().stream().map(this::mapToDTO).toList();
+    }
+
     @Transactional
     public ServicioDTO crearServicioCompleto(ServicioCreateDTO dto) {
-        // 1. Obtención y validación de cabecera
-        Sede sede = sedeRepository.findById(dto.sedeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada con ID: " + dto.sedeId()));
-
-        Usuario usuario = usuarioRepository.findById(dto.usuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.usuarioId()));
-
-        // 2. Creación del objeto raíz (Servicio)
+        Sede sede = sedeRepository.findById(dto.sedeId()).orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada"));
+        Usuario usuario = usuarioRepository.findById(dto.usuarioId()).orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         Servicio servicio = new Servicio(sede, usuario, dto.fecha(), dto.servicioTipo());
-        servicio.setObservaciones(dto.observaciones());
 
-        // 3. Procesamiento de ítems (Bucle de equipos atendidos)
         for (var itemDto : dto.items()) {
-            Equipo equipo = equipoRepository.findById(itemDto.equipoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Equipo no encontrado con ID: " + itemDto.equipoId()));
-
-            // ✅ BLINDAJE DE INTEGRIDAD: Validar que el equipo pertenezca a la sede del servicio
-            if (!equipo.getSede().getId().equals(dto.sedeId())) {
-                throw new IllegalArgumentException(String.format(
-                        "Error de integridad: El equipo [%s] no pertenece a la sede [%s].",
-                        equipo.getNumeroSerie(), sede.getNombreSede()
-                ));
+            Equipo equipo = equipoRepository.findById(itemDto.equipoId()).orElseThrow(() -> new ResourceNotFoundException("Equipo no encontrado"));
+            if (!equipo.getSede().getId().equals(sede.getId())) {
+                throw new IllegalArgumentException("El equipo no pertenece a la sede del servicio");
             }
-
-            // Crear ítem y calcular garantía
             ServicioItem item = new ServicioItem(equipo, itemDto.trabajoTipo(), itemDto.trabajoRealizado());
-            item.setGarantiaHasta(GarantiaCalculator.calcular(servicio.getFechaServicio(), itemDto.trabajoTipo()));
-
-            // Sincronización bidireccional
             servicio.addItem(item);
         }
-
-        // 4. Persistencia única (Cascade guarda todos los ítems)
-        Servicio guardado = servicioRepository.save(servicio);
-
-        return mapToDTO(guardado);
+        return mapToDTO(servicioRepository.save(servicio));
     }
 
     private ServicioDTO mapToDTO(Servicio s) {
-        List<ServicioItemDTO> itemDtos = s.getItems().stream()
-                .map(i -> new ServicioItemDTO(
-                        i.getEquipo().getId(),
-                        i.getEquipo().getNumeroSerie(),
-                        i.getTrabajoTipo(),
-                        i.getGarantiaHasta()
-                )).toList();
-
-        return new ServicioDTO(
-                s.getId(),
-                s.getFechaServicio(),
-                s.getServicioTipo(),
-                s.getSede().getNombreSede(),
-                itemDtos
-        );
+        List<ServicioItemDTO> items = s.getItems().stream().map(i -> new ServicioItemDTO(i.getEquipo().getId(), i.getEquipo().getNumeroSerie(), i.getTrabajoTipo(), i.getGarantiaHasta())).toList();
+        return new ServicioDTO(s.getId(), s.getFechaServicio(), s.getServicioTipo(), s.getSede().getNombreSede(), items);
     }
 }
