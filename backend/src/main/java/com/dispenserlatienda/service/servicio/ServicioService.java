@@ -1,21 +1,15 @@
 package com.dispenserlatienda.service.servicio;
 
-import com.dispenserlatienda.domain.Equipo;
-import com.dispenserlatienda.domain.Sede;
-import com.dispenserlatienda.domain.servicio.Servicio;
-import com.dispenserlatienda.domain.servicio.ServicioItem;
+import com.dispenserlatienda.domain.*;
+import com.dispenserlatienda.domain.servicio.*;
 import com.dispenserlatienda.domain.usuario.Usuario;
-import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
-import com.dispenserlatienda.dto.servicio.ServicioDTO;
-import com.dispenserlatienda.dto.servicio.ServicioItemDTO;
+import com.dispenserlatienda.dto.servicio.*;
+import com.dispenserlatienda.repository.*;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
-import com.dispenserlatienda.repository.EquipoRepository;
-import com.dispenserlatienda.repository.SedeRepository;
-import com.dispenserlatienda.repository.ServicioRepository;
-import com.dispenserlatienda.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -44,43 +38,42 @@ public class ServicioService {
         Servicio servicio = new Servicio(sede, usuario, dto.fecha(), dto.servicioTipo());
 
         for (var itemDto : dto.items()) {
-            Equipo equipo = equipoRepository.findById(itemDto.equipoId()).orElseThrow(() -> new ResourceNotFoundException("Equipo no encontrado"));
+            Equipo equipo = equipoRepository.findByNumeroSerie(itemDto.equipoSerial())
+                    .orElseThrow(() -> new ResourceNotFoundException("Serie no existe: " + itemDto.equipoSerial()));
 
-            // Blindaje de integridad
             if (!equipo.getSede().getId().equals(sede.getId())) {
-                throw new IllegalArgumentException("Integridad fallida: el equipo " + equipo.getNumeroSerie() + " no pertenece a la sede seleccionada.");
+                throw new IllegalArgumentException("INTEGRIDAD FALLIDA: El dispenser " + equipo.getNumeroSerie() + " no pertenece a la sede " + sede.getNombreSede());
             }
 
-            ServicioItem item = new ServicioItem(
-                    equipo,
-                    itemDto.tecnico(),
-                    itemDto.costo(),
-                    itemDto.trabajoRealizado(),
-                    itemDto.garantiaHasta()
-            );
+            BigDecimal costoBase = itemDto.costo();
+            BigDecimal montoDescuentoCalculado = BigDecimal.ZERO;
+            String descRaw = (itemDto.descuento() != null) ? itemDto.descuento().trim() : "0";
+
+            try {
+                if (descRaw.endsWith("%")) {
+                    BigDecimal porcentajeVal = new BigDecimal(descRaw.replace("%", "")).abs(); // .abs() evita negativos
+                    montoDescuentoCalculado = costoBase.multiply(porcentajeVal).divide(new BigDecimal("100"), RoundingMode.HALF_UP);
+                } else {
+                    montoDescuentoCalculado = new BigDecimal(descRaw).abs(); // .abs() evita negativos
+                }
+            } catch (Exception e) {
+                montoDescuentoCalculado = BigDecimal.ZERO;
+            }
+
+            if (montoDescuentoCalculado.compareTo(costoBase) > 0) montoDescuentoCalculado = costoBase;
+
+            ServicioItem item = new ServicioItem(equipo, itemDto.tecnico(), costoBase, montoDescuentoCalculado, itemDto.metodoPago(), itemDto.trabajoRealizado(), itemDto.garantiaHasta());
             servicio.addItem(item);
         }
         return mapToDTO(servicioRepository.save(servicio));
     }
 
     private ServicioDTO mapToDTO(Servicio s) {
-        // Mapeo corregido para enviar técnico y costo al React
         List<ServicioItemDTO> items = s.getItems().stream()
                 .map(i -> new ServicioItemDTO(
-                        i.getEquipo().getId(),
-                        i.getEquipo().getNumeroSerie(),
-                        i.getTecnico(),          // 👈 Datos reales
-                        i.getCosto(),            // 👈 Datos reales
-                        i.getTrabajoRealizado(),
-                        i.getGarantiaHasta()
+                        i.getEquipo().getId(), i.getEquipo().getNumeroSerie(), i.getTecnico(),
+                        i.getCosto(), i.getDescuento(), i.getMetodoPago(), i.getTrabajoRealizado(), i.getGarantiaHasta()
                 )).toList();
-
-        return new ServicioDTO(
-                s.getId(),
-                s.getFechaServicio(),
-                s.getServicioTipo(),
-                s.getSede().getNombreSede(),
-                items
-        );
+        return new ServicioDTO(s.getId(), s.getFechaServicio(), s.getServicioTipo(), s.getSede().getNombreSede(), items);
     }
 }

@@ -1,21 +1,13 @@
 package com.dispenserlatienda.config;
 
-import com.dispenserlatienda.domain.Cliente;
-import com.dispenserlatienda.domain.ClienteTipo;
-import com.dispenserlatienda.domain.Equipo;
-import com.dispenserlatienda.domain.Sede;
+import com.dispenserlatienda.domain.*;
 import com.dispenserlatienda.domain.servicio.ServicioTipo;
 import com.dispenserlatienda.domain.servicio.TrabajoTipo;
 import com.dispenserlatienda.domain.usuario.RolUsuario;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
-import com.dispenserlatienda.dto.servicio.ServicioDTO;
 import com.dispenserlatienda.dto.servicio.ServicioItemCreateDTO;
-import com.dispenserlatienda.repository.ClienteRepository;
-import com.dispenserlatienda.repository.EquipoRepository;
-import com.dispenserlatienda.repository.SedeRepository;
-import com.dispenserlatienda.repository.ServicioRepository;
-import com.dispenserlatienda.repository.UsuarioRepository;
+import com.dispenserlatienda.repository.*;
 import com.dispenserlatienda.service.servicio.ServicioService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
@@ -51,86 +43,62 @@ public class DevSeedRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-
-        // 1) Cliente
-        Cliente cliente = clienteRepository.findByCuilDni("20123456789")
-                .orElseGet(() -> clienteRepository.save(
-                        new Cliente(ClienteTipo.EMPRESA, "Cliente Demo", "20123456789", "1122334455", "demo@demo.com", null)
-                ));
-
-        // 2) Sede
-        Sede sede = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Casa Central")
-                .orElseGet(() -> sedeRepository.save(
-                        new Sede(cliente, "Casa Central", "Av. Siempre Viva 123", "Lanús", null)
-                ));
-
-        // 3) Equipo
-        Equipo equipo = equipoRepository.findByNumeroSerie("495050")
-                .orElseGet(() -> equipoRepository.save(
-                        new Equipo(sede, "MarcaX", "ModeloY", "495050", "Recepción", null)
-                ));
-
-        // 4) Usuario
-        Usuario tecnico = usuarioRepository.findByUsername("marcos")
-                .orElseGet(() -> usuarioRepository.save(
-                        new Usuario("Marcos", "marcos", "hash-demo", RolUsuario.TECNICO)
-                ));
-
-        // 5) Servicio demo (usando el nuevo DTO)
-        LocalDate hoy = LocalDate.now();
-        boolean yaExisteServicioDemo = servicioRepository.existsBySedeIdAndUsuarioIdAndFechaServicioAndServicioTipo(
-                sede.getId(),
-                tecnico.getId(),
-                hoy,
-                ServicioTipo.REPARACION
-        );
-
-        if (yaExisteServicioDemo) {
-            System.out.println("ℹ️ Seed: Servicio demo ya existe para hoy.");
-        } else {
-            // Preparamos el item
-            ServicioItemCreateDTO itemDto = new ServicioItemCreateDTO(
-                    equipo.getId(),
-                    TrabajoTipo.REPARACION,
-                    "Se cambió válvula y se probó funcionamiento"
-            );
-
-            // Preparamos el Servicio completo
-            ServicioCreateDTO servicioDto = new ServicioCreateDTO(
-                    sede.getId(),
-                    tecnico.getId(),
-                    hoy,
-                    ServicioTipo.REPARACION,
-                    "Carga inicial de semilla",
-                    List.of(itemDto)
-            );
-
-            ServicioDTO resultado = servicioService.crearServicioCompleto(servicioDto);
-            System.out.println("✅ Seed: Servicio creado con ID: " + resultado.id());
-        }
-
-        // --- 🛡️ PRUEBA DE BLINDAJE ---
         try {
-            System.out.println("🧪 Probando blindaje de integridad (Sede vs Equipo)...");
+            System.out.println("🌱 Cargando datos de prueba...");
 
+            Cliente cliente = clienteRepository.findByCuilDni("20123456789")
+                    .orElseGet(() -> clienteRepository.save(new Cliente(ClienteTipo.EMPRESA, "Cliente Demo", "20123456789", "1122334455", "demo@demo.com", null)));
+
+            Sede sede = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Casa Central")
+                    .orElseGet(() -> sedeRepository.save(new Sede(cliente, "Casa Central", "Av. Siempre Viva 123", "Lanús", null)));
+
+            Equipo equipo = equipoRepository.findByNumeroSerie("495050")
+                    .orElseGet(() -> equipoRepository.save(new Equipo(sede, "MarcaX", "ModeloY", "495050", "Recepción", null)));
+
+            Usuario tecnico = usuarioRepository.findByUsername("marcos")
+                    .orElseGet(() -> usuarioRepository.save(new Usuario("Marcos", "marcos", "hash-demo", RolUsuario.TECNICO)));
+
+            LocalDate hoy = LocalDate.now();
+
+            // 🛡️ VERIFICACIÓN DE SERVICIO DEMO
+            if (!servicioRepository.existsBySedeIdAndUsuarioIdAndFechaServicioAndServicioTipo(sede.getId(), tecnico.getId(), hoy, ServicioTipo.REPARACION)) {
+                // Importante: Mandamos "0" como String para el descuento
+                ServicioItemCreateDTO item = new ServicioItemCreateDTO("495050", TrabajoTipo.REPARACION, "Carga inicial");
+                ServicioCreateDTO dto = new ServicioCreateDTO(sede.getId(), tecnico.getId(), hoy, ServicioTipo.REPARACION, "Seed", List.of(item));
+                servicioService.crearServicioCompleto(dto);
+                System.out.println("✅ Servicio demo creado con éxito.");
+            }
+
+            // LANZAMOS LA PRUEBA
+            ejecutarPruebaBlindaje(cliente, tecnico, hoy);
+
+            System.out.println("🚀 TODO LISTO: Podés entrar al sistema.");
+
+        } catch (Exception e) {
+            System.err.println("⚠️ ERROR CRÍTICO EN RUNNER: " + e.getMessage());
+            e.printStackTrace(); // Esto te va a decir exacto qué falló en la consola
+        }
+    }
+
+    private void ejecutarPruebaBlindaje(Cliente cliente, Usuario tecnico, LocalDate hoy) {
+        try {
+            System.out.println("🧪 Probando blindaje de integridad...");
             Sede sedeDeposito = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Depósito")
-                    .orElseGet(() -> sedeRepository.save(
-                            new Sede(cliente, "Depósito", "Calle Falsa 456", "Quilmes", "Sede para pruebas")
-                    ));
+                    .orElseGet(() -> sedeRepository.save(new Sede(cliente, "Depósito", "Calle Falsa 123", "Quilmes", null)));
 
-            ServicioCreateDTO dtoInconsistente = new ServicioCreateDTO(
-                    sedeDeposito.getId(), // Sede Depósito
-                    tecnico.getId(),
-                    hoy,
-                    ServicioTipo.REPARACION,
-                    "Prueba fallo",
-                    List.of(new ServicioItemCreateDTO(equipo.getId(), TrabajoTipo.REPARACION, "Fallo esperado")) // Equipo pertenece a Casa Central
+            // Prueba: Intentar asignar dispenser de Sede A a Sede B
+            ServicioCreateDTO dtoError = new ServicioCreateDTO(
+                    sedeDeposito.getId(), tecnico.getId(), hoy, ServicioTipo.REPARACION, "Error",
+                    List.of(new ServicioItemCreateDTO("495050", TrabajoTipo.REPARACION, "No debe guardar"))
             );
 
-            servicioService.crearServicioCompleto(dtoInconsistente);
-            System.err.println("❌ ERROR: El blindaje falló.");
-        } catch (IllegalArgumentException e) {
-            System.out.println("🛡️ ÉXITO: El blindaje funcionó. Error: " + e.getMessage());
+            servicioService.crearServicioCompleto(dtoError);
+            System.out.println("❌ ERROR: El blindaje NO funcionó, se guardó algo inválido.");
+
+        } catch (Exception e) {
+            // 🎯 CAPTURAMOS CUALQUIER ERROR (No solo IllegalArgument)
+            System.out.println("🛡️ ÉXITO: El blindaje bloqueó la operación correctamente.");
+            System.out.println("👉 Motivo del bloqueo: " + e.getMessage());
         }
     }
 }

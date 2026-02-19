@@ -6,8 +6,10 @@ import java.time.LocalDate;
 public record ServicioItemDTO(
         Long equipoId,
         String numeroSerie,
-        String tecnico,      // 👈 Agregado para la tabla
-        BigDecimal costo,    // 👈 Agregado para la tabla
+        String tecnico,
+        BigDecimal costo,
+        BigDecimal descuento,
+        String metodoPago,
         String trabajoRealizado,
         LocalDate garantiaHasta
 ) {}

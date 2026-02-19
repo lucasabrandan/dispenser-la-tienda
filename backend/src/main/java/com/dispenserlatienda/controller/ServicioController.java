@@ -1,33 +1,27 @@
-package com.dispenserlatienda.controller;
+package com.dispenserlatienda.controller.servicio;
 
 import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
 import com.dispenserlatienda.dto.servicio.ServicioDTO;
 import com.dispenserlatienda.service.servicio.ServicioService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/servicios")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
+@CrossOrigin(origins = "*")
 public class ServicioController {
-
     private final ServicioService servicioService;
-
-    public ServicioController(ServicioService servicioService) {
-        this.servicioService = servicioService;
-    }
+    public ServicioController(ServicioService servicioService) { this.servicioService = servicioService; }
 
     @GetMapping
-    public List<ServicioDTO> listar() {
-        return servicioService.listarTodos();
+    public ResponseEntity<List<ServicioDTO>> listar() {
+        return ResponseEntity.ok(servicioService.listarTodos());
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ServicioDTO crear(@Valid @RequestBody ServicioCreateDTO dto) {
-        return servicioService.crearServicioCompleto(dto);
+    public ResponseEntity<ServicioDTO> crear(@RequestBody @Valid ServicioCreateDTO dto) {
+        return ResponseEntity.ok(servicioService.crearServicioCompleto(dto));
     }
 }

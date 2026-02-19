@@ -1,55 +1,38 @@
 import React from 'react';
 
 export default function ServicioList({ servicios }) {
-    if (!servicios || servicios.length === 0) {
-        return <p style={{ textAlign: 'center', color: '#666', marginTop: '20px' }}>No hay visitas registradas aún.</p>;
-    }
-
+    if (!servicios || servicios.length === 0) return <p style={{textAlign:'center', padding:'20px'}}>No hay registros contables.</p>;
     return (
-        <section style={{ marginTop: '20px' }}>
-            <h2 style={{ borderBottom: '2px solid #e65100', paddingBottom: '10px', color: '#333' }}>Historial de Visitas</h2>
-            <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-                    <thead>
-                        <tr style={{ background: '#333', color: 'white', textAlign: 'left' }}>
-                            <th style={{ padding: '12px', border: '1px solid #ddd' }}>Fecha</th>
-                            <th style={{ padding: '12px', border: '1px solid #ddd' }}>Sede</th>
-                            <th style={{ padding: '12px', border: '1px solid #ddd' }}>Técnico</th>
-                            <th style={{ padding: '12px', border: '1px solid #ddd' }}>Trabajo realizado</th>
-                            <th style={{ padding: '12px', border: '1px solid #ddd' }}>Costo</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {servicios.map((s) => (
-                            <React.Fragment key={s.id}>
-                                {s.items && s.items.map((item, idx) => (
-                                    <tr key={`${s.id}-${idx}`} style={{ background: idx % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd' }}>{idx === 0 ? s.fecha : ''}</td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd', fontWeight: 'bold' }}>{idx === 0 ? s.nombreSede : ''}</td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                                            <span style={{ 
-                                                fontWeight: 'bold', 
-                                                color: item.tecnico === 'Marcos' ? '#2e7d32' : '#1565c0',
-                                                background: item.tecnico === 'Marcos' ? '#e8f5e9' : '#e3f2fd',
-                                                padding: '4px 8px',
-                                                borderRadius: '4px'
-                                            }}>
-                                                {item.tecnico || '---'}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                                            <strong>{item.numeroSerie}:</strong> {item.trabajoRealizado}
-                                        </td>
-                                        <td style={{ padding: '12px', border: '1px solid #ddd', color: '#d32f2f', fontWeight: 'bold' }}>
-                                            ${item.costo?.toLocaleString('es-AR') || '0'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </React.Fragment>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <div style={{ marginTop: '30px', background: '#fff', padding: '20px', borderRadius: '12px' }}>
+            <h2 style={{ color: '#2e7d32' }}>📊 Historial de Visitas y Caja</h2>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                    <tr style={{ background: '#2e7d32', color: '#fff' }}>
+                        <th style={{ padding: '12px' }}>Sede / Fecha</th>
+                        <th style={{ padding: '12px' }}>Equipo</th>
+                        <th style={{ padding: '12px', textAlign: 'right' }}>Bruto</th>
+                        <th style={{ padding: '12px', textAlign: 'right' }}>Desc.</th>
+                        <th style={{ padding: '12px', textAlign: 'right' }}>NETO</th>
+                        <th style={{ padding: '12px' }}>Medio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {servicios.map(s => (
+                        <React.Fragment key={s.id}>
+                            {s.items.map((item, idx) => (
+                                <tr key={`${s.id}-${idx}`} style={{ borderBottom: '1px solid #eee' }}>
+                                    <td style={{ padding: '10px' }}>{idx === 0 ? <strong>{s.nombreSede}<br/><small style={{color:'#999'}}>{s.fechaServicio}</small></strong> : ''}</td>
+                                    <td style={{ padding: '10px' }}>{item.numeroSerie}</td>
+                                    <td style={{ padding: '10px', textAlign: 'right', color: '#888' }}>${item.costo?.toLocaleString()}</td>
+                                    <td style={{ padding: '10px', textAlign: 'right', color: '#d32f2f' }}>{item.descuento > 0 ? `-$${item.descuento.toLocaleString()}` : '--'}</td>
+                                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: 'bold', color: '#1b5e20' }}>${(item.costo - item.descuento).toLocaleString('es-AR')}</td>
+                                    <td style={{ padding: '10px', textAlign: 'center', fontSize: '0.8em' }}>{item.metodoPago}</td>
+                                </tr>
+                            ))}
+                        </React.Fragment>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     );
 }

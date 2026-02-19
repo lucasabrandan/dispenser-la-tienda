@@ -1,15 +1,12 @@
 package com.dispenserlatienda.domain.servicio;
 
 import com.dispenserlatienda.domain.Equipo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "servicio_item")
+@Table(name = "servicio_items")
 public class ServicioItem {
 
     @Id
@@ -18,52 +15,38 @@ public class ServicioItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "servicio_id")
-    @JsonIgnore
     private Servicio servicio;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "equipo_id", nullable = false)
-    @JsonIgnoreProperties({"equipos", "sede"})
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipo_id")
     private Equipo equipo;
 
     private String tecnico;
     private BigDecimal costo;
-    private LocalDateTime fechaHora;
-
-    // 🛠️ Cambiamos el nombre para que coincida con el Service
-    @Column(name = "trabajo_realizado", length = 1000)
+    private BigDecimal descuento;
+    private String metodoPago;
     private String trabajoRealizado;
-
-    @Column(name = "garantia_hasta")
     private LocalDate garantiaHasta;
 
-    @Enumerated(EnumType.STRING)
-    private TrabajoTipo trabajoTipo;
+    public ServicioItem() {}
 
-    protected ServicioItem() {}
-
-    // Constructor para el nuevo formulario
-    public ServicioItem(Equipo equipo, String tecnico, BigDecimal costo, String trabajoRealizado, LocalDate garantiaHasta) {
+    public ServicioItem(Equipo equipo, String tecnico, BigDecimal costo, BigDecimal descuento, String metodoPago, String trabajoRealizado, LocalDate garantiaHasta) {
         this.equipo = equipo;
         this.tecnico = tecnico;
         this.costo = costo;
+        this.descuento = (descuento != null) ? descuento : BigDecimal.ZERO;
+        this.metodoPago = (metodoPago != null) ? metodoPago : "EFECTIVO";
         this.trabajoRealizado = trabajoRealizado;
         this.garantiaHasta = garantiaHasta;
-        this.fechaHora = LocalDateTime.now();
-        this.trabajoTipo = TrabajoTipo.REPARACION; // Valor por defecto para no romper el modelo
     }
 
-    public void setServicio(Servicio servicio) {
-        this.servicio = servicio;
-    }
-
-    // --- Getters que el Service necesita ---
     public Long getId() { return id; }
+    public void setServicio(Servicio servicio) { this.servicio = servicio; }
     public Equipo getEquipo() { return equipo; }
     public String getTecnico() { return tecnico; }
     public BigDecimal getCosto() { return costo; }
-    public String getTrabajoRealizado() { return trabajoRealizado; } // 👈 EL QUE FALTABA
+    public BigDecimal getDescuento() { return descuento; }
+    public String getMetodoPago() { return metodoPago; }
+    public String getTrabajoRealizado() { return trabajoRealizado; }
     public LocalDate getGarantiaHasta() { return garantiaHasta; }
-    public LocalDateTime getFechaHora() { return fechaHora; }
-    public TrabajoTipo getTrabajoTipo() { return trabajoTipo; }
 }
