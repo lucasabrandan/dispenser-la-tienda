@@ -1,36 +1,32 @@
 package com.dispenserlatienda.controller;
 
-import com.dispenserlatienda.dto.cliente.ClienteCreateDTO;
-import com.dispenserlatienda.dto.cliente.ClienteDTO;
-import com.dispenserlatienda.service.ClienteService;
-import org.springframework.http.HttpStatus;
+import com.dispenserlatienda.domain.Cliente;
+import com.dispenserlatienda.repository.ClienteRepository;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/clientes")
 public class ClienteController {
-
-    private final ClienteService clienteService;
-
-    public ClienteController(ClienteService clienteService) {
-        this.clienteService = clienteService;
-    }
+    private final ClienteRepository repository;
+    public ClienteController(ClienteRepository repository) { this.repository = repository; }
 
     @GetMapping
-    public List<ClienteDTO> listar() {
-        return clienteService.listarTodos();
-    }
-
-    @GetMapping("/{id}")
-    public ClienteDTO obtenerPorId(@PathVariable Long id) {
-        return clienteService.buscarPorId(id);
-    }
+    public List<Cliente> listar() { return repository.findAll(); }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public ClienteDTO crear(@RequestBody ClienteCreateDTO dto) {
-        return clienteService.crear(dto);
+    public Cliente crear(@RequestBody Cliente cliente) { return repository.save(cliente); }
+
+    @PutMapping("/{id}")
+    public Cliente editar(@PathVariable Long id, @RequestBody Cliente datos) {
+        Cliente c = repository.findById(id).orElseThrow();
+        c.setNombre(datos.getNombre());
+        c.setCuilDni(datos.getCuilDni());
+        c.setTelefono(datos.getTelefono());
+        c.setEmail(datos.getEmail());
+        return repository.save(c);
     }
+
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) { repository.deleteById(id); }
 }

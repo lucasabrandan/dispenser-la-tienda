@@ -35,12 +35,15 @@ public class ClienteService {
 
     @Transactional
     public ClienteDTO crear(ClienteCreateDTO dto) {
-        // ✅ Validación de Negocio: CUIL único
-        clienteRepository.findByCuilDni(dto.cuilDni())
-                .ifPresent(c -> {
-                    throw new IllegalArgumentException("Ya existe un cliente registrado con el CUIL/DNI: " + dto.cuilDni());
-                });
+        // Validación: CUIL único solo si no está vacío o nulo
+        if (dto.cuilDni() != null && !dto.cuilDni().trim().isEmpty()) {
+            clienteRepository.findByCuilDni(dto.cuilDni())
+                    .ifPresent(c -> {
+                        throw new IllegalArgumentException("Ya existe un cliente con el CUIL/DNI: " + dto.cuilDni());
+                    });
+        }
 
+        // 💡 Ahora el constructor encaja perfecto con la entidad Cliente
         Cliente nuevoCliente = new Cliente(
                 dto.tipo(),
                 dto.razonSocialNombre(),
@@ -54,16 +57,15 @@ public class ClienteService {
         return mapToDTO(guardado);
     }
 
-    // Método helper para no repetir lógica de conversión
     private ClienteDTO mapToDTO(Cliente cliente) {
         return new ClienteDTO(
                 cliente.getId(),
-                cliente.getTipo(),
-                cliente.getRazonSocialNombre(),
+                cliente.getClienteTipo(),  // 💡 Usamos el getter correcto
+                cliente.getNombre(),       // 💡 Usamos getNombre para estar prolijos
                 cliente.getCuilDni(),
                 cliente.getTelefono(),
                 cliente.getEmail(),
-                cliente.getNotas()
+                cliente.getNotas()         // 💡 Ahora sí existe en la entidad
         );
     }
 }

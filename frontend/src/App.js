@@ -1,63 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
-import api from './services/api';
 
-// Importamos los 3 componentes
-import SedeForm from './components/SedeForm';
-import EquipoForm from './components/EquipoForm'; // <--- El nuevo
+// 📦 Importamos tus 3 componentes principales
 import ServicioForm from './components/ServicioForm';
 import ServicioList from './components/ServicioList';
+import ClienteManager from './components/ClienteManager';
 
-function App() {
-    const [servicios, setServicios] = useState([]);
-    
-    // Esta llave hace que los componentes se actualicen cuando creas algo nuevo
-    const [refreshKey, setRefreshKey] = useState(0);
-
-    const cargarLista = () => {
-        api.get('/servicios')
-            .then((res) => setServicios(res.data))
-            .catch((err) => console.error("Error cargando lista:", err));
-    };
-
-    useEffect(() => {
-        cargarLista();
-    }, []);
-
-    // Función para recargar todo
-    const handleRefresh = () => {
-        setRefreshKey(prev => prev + 1);
-        cargarLista();
-    };
+export default function App() {
+    // 💡 El estado que controla en qué pantalla estamos (Arranca en 'caja')
+    const [seccionActual, setSeccionActual] = useState('caja'); 
 
     return (
-        <div style={{ padding: 20, maxWidth: 900, margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
-            <Toaster position="top-right" />
-            
-            <h1 style={{textAlign: 'center'}}>Panel de Gestión - Dispenser 💧</h1>
+        <div style={{ fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', background: '#eef2f5', minHeight: '100vh', padding: '20px' }}>
+            {/* 🔔 Este componente es obligatorio para que funcionen los carteles verdes/rojos de aviso */}
+            <Toaster position="top-right" toastOptions={{ duration: 3000, style: { fontSize: '1.1em', fontWeight: 'bold' } }} />
 
-            {/* PASO 1: CREAR SEDE */}
-            <SedeForm onCreated={handleRefresh} />
+            {/* 🔴 BARRA DE NAVEGACIÓN SUPERIOR */}
+            <header style={{ 
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                background: 'white', padding: '15px 30px', borderRadius: '15px', 
+                boxShadow: '0 4px 15px rgba(0,0,0,0.05)', marginBottom: '30px' 
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <h1 style={{ margin: 0, color: '#2e7d32', fontSize: '1.8em' }}>💧 Dispenser La Tienda</h1>
+                </div>
 
-            {/* PASO 2: CREAR EQUIPO (Ahora podés cargar máquinas) */}
-            <EquipoForm onCreated={handleRefresh} />
+                <nav style={{ display: 'flex', gap: '15px' }}>
+                    {/* BOTÓN: CAJA Y VENTAS */}
+                    <button 
+                        onClick={() => setSeccionActual('caja')}
+                        style={{ 
+                            background: seccionActual === 'caja' ? '#2e7d32' : '#f0f4f8', 
+                            color: seccionActual === 'caja' ? 'white' : '#555', 
+                            border: 'none', padding: '12px 25px', borderRadius: '10px', 
+                            cursor: 'pointer', fontWeight: 'bold', fontSize: '1em',
+                            transition: 'all 0.3s ease'
+                        }}>
+                        💰 Ventas y Presupuestos
+                    </button>
 
-            <hr style={{ margin: '30px 0', border: '0', borderTop: '2px dashed #ccc' }} />
+                    {/* BOTÓN: CLIENTES */}
+                    <button 
+                        onClick={() => setSeccionActual('clientes')}
+                        style={{ 
+                            background: seccionActual === 'clientes' ? '#007bff' : '#f0f4f8', 
+                            color: seccionActual === 'clientes' ? 'white' : '#555', 
+                            border: 'none', padding: '12px 25px', borderRadius: '10px', 
+                            cursor: 'pointer', fontWeight: 'bold', fontSize: '1em',
+                            transition: 'all 0.3s ease'
+                        }}>
+                        👥 Directorio de Clientes
+                    </button>
+                </nav>
+            </header>
 
-            <h2 style={{color: '#444'}}>Registrar Servicio Técnico</h2>
-            {/* PASO 3: REGISTRAR SERVICIO */}
-            {/* La 'key' obliga a este form a recargar la lista de equipos cuando creas uno nuevo */}
-            <ServicioForm 
-                key={refreshKey} 
-                onSaved={handleRefresh} 
-            />
+            {/* 🔴 ZONA DE VISUALIZACIÓN (Acá cambia la pantalla según el botón que tocaste) */}
+            <main style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                
+                {/* 🛒 PANTALLA DE CAJA: Muestra el Formulario de Cobro y la Tabla de Historial */}
+                {seccionActual === 'caja' && (
+                    <div style={{ display: 'grid', gap: '30px' }}>
+                        <ServicioForm />
+                        <ServicioList />
+                    </div>
+                )}
 
-            <hr style={{ margin: '30px 0' }} />
+                {/* 👥 PANTALLA DE CLIENTES: Muestra ÚNICAMENTE el gestor de la libreta de contactos */}
+                {seccionActual === 'clientes' && (
+                    <ClienteManager />
+                )}
 
-            <h3>Historial de Servicios</h3>
-            <ServicioList servicios={servicios} />
+            </main>
         </div>
     );
 }
-
-export default App;

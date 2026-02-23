@@ -24,7 +24,7 @@ public class EquipoController {
 
     private final EquipoRepository equipoRepository;
     private final ServicioItemRepository servicioItemRepository;
-    private final SedeRepository sedeRepository; // Necesario para buscar la sede al crear
+    private final SedeRepository sedeRepository;
 
     public EquipoController(EquipoRepository equipoRepository,
                             ServicioItemRepository servicioItemRepository,
@@ -34,33 +34,54 @@ public class EquipoController {
         this.sedeRepository = sedeRepository;
     }
 
-    // 1. Listar todos (para llenar selectores en el frontend)
+    // 1. Listar todos
     @GetMapping
     public List<Equipo> listarTodos() {
         return equipoRepository.findAll();
     }
 
-    // 2. CREAR EQUIPO (Esto es lo que te faltaba para poder guardar)
+    // 2. CREAR EQUIPO
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Equipo crear(@RequestBody EquipoCreateDTO dto) {
-        // Buscamos la sede primero
         Sede sede = sedeRepository.findById(dto.sedeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada con ID: " + dto.sedeId()));
 
-        // Creamos la entidad Equipo
-        // (Asegurate que tu clase Equipo tenga este constructor: serie, modelo, marca, sede)
         Equipo nuevo = new Equipo(
+                sede,
+                dto.marca() != null ? dto.marca() : "Genérica",
+                dto.modelo() != null ? dto.modelo() : "Estándar",
                 dto.numeroSerie(),
-                dto.modelo(),
-                dto.marca(), // Si no tenés marca en la entidad, borra esto
-                sede
+                dto.ubicacion() != null ? dto.ubicacion() : "",
+                dto.observaciones() != null ? dto.observaciones() : ""
         );
 
         return equipoRepository.save(nuevo);
     }
 
-    // 3. Autocompletado / Búsqueda
+    // 💡 NUEVO: 3. EDITAR EQUIPO
+    @PutMapping("/{id}")
+    public Equipo editar(@PathVariable Long id, @RequestBody EquipoCreateDTO dto) {
+        Equipo equipo = equipoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Equipo no encontrado"));
+
+        equipo.setNumeroSerie(dto.numeroSerie());
+        equipo.setMarca(dto.marca());
+        equipo.setModelo(dto.modelo());
+        equipo.setUbicacion(dto.ubicacion());
+        equipo.setObservaciones(dto.observaciones());
+
+        return equipoRepository.save(equipo);
+    }
+
+    // 💡 NUEVO: 4. ELIMINAR EQUIPO
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable Long id) {
+        equipoRepository.deleteById(id);
+    }
+
+    // 5. Autocompletado / Búsqueda
     @GetMapping("/sugerencias")
     public List<EquipoSugerenciaDTO> sugerencias(
             @RequestParam("query") String query,
@@ -82,7 +103,7 @@ public class EquipoController {
                 )).toList();
     }
 
-    // 4. Verificar Garantía
+    // 6. Verificar Garantía
     @GetMapping("/{equipoId}/garantia")
     public GarantiaStatusDTO garantia(@PathVariable Long equipoId) {
         Equipo equipo = equipoRepository.findById(equipoId)
@@ -101,11 +122,14 @@ public class EquipoController {
         return new GarantiaStatusDTO(equipo.getId(), equipo.getNumeroSerie(), enGarantia, garantiaHasta);
     }
 
-    // DTO interno para recibir los datos de creación
+    // DTO Actualizado
     public record EquipoCreateDTO(
             String numeroSerie,
             String modelo,
             String marca,
-            Long sedeId
-    ) {}
+            Long sedeId,
+            String ubicacion,
+            String observaciones
+    ) {
+    }
 }

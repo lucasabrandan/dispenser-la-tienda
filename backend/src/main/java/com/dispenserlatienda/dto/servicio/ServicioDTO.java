@@ -6,8 +6,9 @@ import java.util.List;
 
 public record ServicioDTO(
         Long id,
-        LocalDate fechaServicio, // 👈 Importante el nombre
+        LocalDate fecha,
         ServicioTipo servicioTipo,
-        String nombreSede,       // 👈 Este es el que falta en tu tabla
-        List<ServicioItemDTO> items
+        String sedeNombre,
+        List<ServicioItemDTO> items,
+        String estado
 ) {}

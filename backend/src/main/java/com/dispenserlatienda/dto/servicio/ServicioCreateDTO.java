@@ -12,5 +12,6 @@ public record ServicioCreateDTO(
         @NotNull LocalDate fecha,
         @NotNull ServicioTipo servicioTipo,
         String observaciones,
-        @NotEmpty List<ServicioItemCreateDTO> items // Al menos debe haber un equipo atendido
+        @NotEmpty List<ServicioItemCreateDTO> items,
+        String estado // 💡 El 7mo parámetro: "VENTA" o "PRESUPUESTO"
 ) {}

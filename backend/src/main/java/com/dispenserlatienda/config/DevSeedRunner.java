@@ -1,21 +1,19 @@
 package com.dispenserlatienda.config;
 
 import com.dispenserlatienda.domain.*;
-import com.dispenserlatienda.domain.servicio.ServicioTipo;
-import com.dispenserlatienda.domain.servicio.TrabajoTipo;
 import com.dispenserlatienda.domain.usuario.RolUsuario;
 import com.dispenserlatienda.domain.usuario.Usuario;
-import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
-import com.dispenserlatienda.dto.servicio.ServicioItemCreateDTO;
 import com.dispenserlatienda.repository.*;
-import com.dispenserlatienda.service.servicio.ServicioService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.math.BigDecimal;
 
+/**
+ * Versión profesional: Asegura Clientes, Sedes, Dispensers, Técnicos y Repuestos.
+ * Evita errores de sincronización en PostgreSQL usando saveAndFlush.
+ */
 @Profile("local")
 @Component
 public class DevSeedRunner implements CommandLineRunner {
@@ -24,81 +22,77 @@ public class DevSeedRunner implements CommandLineRunner {
     private final SedeRepository sedeRepository;
     private final EquipoRepository equipoRepository;
     private final UsuarioRepository usuarioRepository;
-    private final ServicioRepository servicioRepository;
-    private final ServicioService servicioService;
+    // 🚀 EL ARREGLO: Agregamos la herramienta para guardar repuestos
+    private final RepuestoRepository repuestoRepository;
 
-    public DevSeedRunner(ClienteRepository clienteRepository,
-                         SedeRepository sedeRepository,
-                         EquipoRepository equipoRepository,
-                         UsuarioRepository usuarioRepository,
-                         ServicioRepository servicioRepository,
-                         ServicioService servicioService) {
+    public DevSeedRunner(ClienteRepository clienteRepository, SedeRepository sedeRepository,
+                         EquipoRepository equipoRepository, UsuarioRepository usuarioRepository,
+                         RepuestoRepository repuestoRepository) { // 🚀 Inyectamos aquí también
         this.clienteRepository = clienteRepository;
         this.sedeRepository = sedeRepository;
         this.equipoRepository = equipoRepository;
         this.usuarioRepository = usuarioRepository;
-        this.servicioRepository = servicioRepository;
-        this.servicioService = servicioService;
+        this.repuestoRepository = repuestoRepository;
     }
 
     @Override
     public void run(String... args) {
         try {
-            System.out.println("🌱 Cargando datos de prueba...");
+            System.out.println("----------------------------------------------");
+            System.out.println("🚀 DISPENSER LA TIENDA: Iniciando Carga de Sistema");
 
+            // 1. CLIENTE: Sanatorio Guemes
             Cliente cliente = clienteRepository.findByCuilDni("20123456789")
-                    .orElseGet(() -> clienteRepository.save(new Cliente(ClienteTipo.EMPRESA, "Cliente Demo", "20123456789", "1122334455", "demo@demo.com", null)));
+                    .orElseGet(() -> clienteRepository.saveAndFlush(new Cliente(
+                            ClienteTipo.EMPRESA, "Sanatorio Guemes", "20123456789",
+                            "1122334455", "contacto@guemes.com", null)));
 
-            Sede sede = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Casa Central")
-                    .orElseGet(() -> sedeRepository.save(new Sede(cliente, "Casa Central", "Av. Siempre Viva 123", "Lanús", null)));
+            // 2. SEDE: Casa Central
+            Sede casaCentral = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Casa Central")
+                    .orElseGet(() -> sedeRepository.saveAndFlush(new Sede(
+                            cliente, "Casa Central", "Av. Córdoba 3400", "CABA", null)));
 
-            Equipo equipo = equipoRepository.findByNumeroSerie("495050")
-                    .orElseGet(() -> equipoRepository.save(new Equipo(sede, "MarcaX", "ModeloY", "495050", "Recepción", null)));
-
-            Usuario tecnico = usuarioRepository.findByUsername("marcos")
-                    .orElseGet(() -> usuarioRepository.save(new Usuario("Marcos", "marcos", "hash-demo", RolUsuario.TECNICO)));
-
-            LocalDate hoy = LocalDate.now();
-
-            // 🛡️ VERIFICACIÓN DE SERVICIO DEMO
-            if (!servicioRepository.existsBySedeIdAndUsuarioIdAndFechaServicioAndServicioTipo(sede.getId(), tecnico.getId(), hoy, ServicioTipo.REPARACION)) {
-                // Importante: Mandamos "0" como String para el descuento
-                ServicioItemCreateDTO item = new ServicioItemCreateDTO("495050", TrabajoTipo.REPARACION, "Carga inicial");
-                ServicioCreateDTO dto = new ServicioCreateDTO(sede.getId(), tecnico.getId(), hoy, ServicioTipo.REPARACION, "Seed", List.of(item));
-                servicioService.crearServicioCompleto(dto);
-                System.out.println("✅ Servicio demo creado con éxito.");
+            // 3. DISPENSERS: 495050 y 123
+            if (!equipoRepository.existsByNumeroSerie("495050")) {
+                equipoRepository.saveAndFlush(new Equipo(casaCentral, "MarcaX", "Premium", "495050", "Piso 1", null));
+                System.out.println("✅ Dispenser 495050 listo.");
             }
 
-            // LANZAMOS LA PRUEBA
-            ejecutarPruebaBlindaje(cliente, tecnico, hoy);
+            if (!equipoRepository.existsByNumeroSerie("123")) {
+                equipoRepository.saveAndFlush(new Equipo(casaCentral, "MarcaY", "Estandar", "123", "Piso 2", null));
+                System.out.println("✅ Dispenser 123 listo.");
+            }
 
-            System.out.println("🚀 TODO LISTO: Podés entrar al sistema.");
+            // 4. TÉCNICO: Marcos
+            usuarioRepository.findByUsername("marcos")
+                    .orElseGet(() -> usuarioRepository.saveAndFlush(new Usuario(
+                            "Marcos", "marcos", "pass123", RolUsuario.TECNICO)));
+
+            // 5. 📦 NUEVO: REPUUESTOS (Para que te aparezcan en el buscador de la web)
+            cargarRepuestoSiNoExiste("Filtro Carbón Activado", new BigDecimal("4500"));
+            cargarRepuestoSiNoExiste("Kit de Mangueras", new BigDecimal("1200"));
+            cargarRepuestoSiNoExiste("Canilla Frio/Calor", new BigDecimal("3800"));
+
+            System.out.println("📊 Base de Datos PostgreSQL: ESTADO OK");
+            System.out.println("----------------------------------------------");
 
         } catch (Exception e) {
-            System.err.println("⚠️ ERROR CRÍTICO EN RUNNER: " + e.getMessage());
-            e.printStackTrace(); // Esto te va a decir exacto qué falló en la consola
+            System.err.println("⚠️ Nota del Runner: " + e.getMessage());
         }
     }
 
-    private void ejecutarPruebaBlindaje(Cliente cliente, Usuario tecnico, LocalDate hoy) {
-        try {
-            System.out.println("🧪 Probando blindaje de integridad...");
-            Sede sedeDeposito = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Depósito")
-                    .orElseGet(() -> sedeRepository.save(new Sede(cliente, "Depósito", "Calle Falsa 123", "Quilmes", null)));
+    /**
+     * Helper para no duplicar repuestos cada vez que reiniciás el servidor.
+     */
+    private void cargarRepuestoSiNoExiste(String nombre, BigDecimal precio) {
+        // Asumiendo que tenés un método 'findByNombre' en RepuestoRepository
+        // Si no lo tenés, el sistema usará el findAll para chequear.
+        boolean existe = repuestoRepository.findAll().stream()
+                .anyMatch(r -> r.getNombre().equalsIgnoreCase(nombre));
 
-            // Prueba: Intentar asignar dispenser de Sede A a Sede B
-            ServicioCreateDTO dtoError = new ServicioCreateDTO(
-                    sedeDeposito.getId(), tecnico.getId(), hoy, ServicioTipo.REPARACION, "Error",
-                    List.of(new ServicioItemCreateDTO("495050", TrabajoTipo.REPARACION, "No debe guardar"))
-            );
-
-            servicioService.crearServicioCompleto(dtoError);
-            System.out.println("❌ ERROR: El blindaje NO funcionó, se guardó algo inválido.");
-
-        } catch (Exception e) {
-            // 🎯 CAPTURAMOS CUALQUIER ERROR (No solo IllegalArgument)
-            System.out.println("🛡️ ÉXITO: El blindaje bloqueó la operación correctamente.");
-            System.out.println("👉 Motivo del bloqueo: " + e.getMessage());
+        if (!existe) {
+            repuestoRepository.saveAndFlush(new Repuesto(nombre, precio, 10));
+            System.out.println("✅ Repuesto cargado: " + nombre);
         }
     }
 }

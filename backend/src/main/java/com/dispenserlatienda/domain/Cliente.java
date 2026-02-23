@@ -3,12 +3,7 @@ package com.dispenserlatienda.domain;
 import jakarta.persistence.*;
 
 @Entity
-@Table(
-        name = "cliente",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_cliente_cuil_dni", columnNames = "cuil_dni")
-        }
-)
+@Table(name = "cliente")
 public class Cliente {
 
     @Id
@@ -16,49 +11,61 @@ public class Cliente {
     private Long id;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "cliente_tipo", nullable = false)
+    private ClienteTipo clienteTipo;
+
     @Column(nullable = false)
-    private ClienteTipo tipo;
+    private String nombre;
 
-    @Column(name = "razon_social_nombre", nullable = false)
-    private String razonSocialNombre;
-
-    @Column(name = "cuil_dni", nullable = false, length = 20)
+    @Column(name = "cuil_dni")
     private String cuilDni;
 
     private String telefono;
     private String email;
 
-    @Column(length = 500)
+    // 💡 AGREGADO: Para que coincida con lo que manda el DTO y el Service
     private String notas;
 
     protected Cliente() {}
 
-    public Cliente(ClienteTipo tipo,
-                   String razonSocialNombre,
-                   String cuilDni,
-                   String telefono,
-                   String email,
-                   String notas) {
-        this.tipo = tipo;
-        this.razonSocialNombre = razonSocialNombre;
+    // 💡 ACTUALIZADO: Cambiamos el "Object sedes" por "String notas" para que el Service no tire error
+    public Cliente(ClienteTipo clienteTipo, String nombre, String cuilDni, String telefono, String email, String notas) {
+        this.clienteTipo = clienteTipo;
+        this.nombre = nombre;
         this.cuilDni = cuilDni;
         this.telefono = telefono;
         this.email = email;
         this.notas = notas;
     }
 
-    public Long getId() { return id; }
-    public ClienteTipo getTipo() { return tipo; }
-    public String getRazonSocialNombre() { return razonSocialNombre; }
-    public String getCuilDni() { return cuilDni; }
-    public String getTelefono() { return telefono; }
-    public String getEmail() { return email; }
-    public String getNotas() { return notas; }
+    // =================================================================
+    // 🚀 GETTERS Y SETTERS
+    // =================================================================
 
-    public void setTipo(ClienteTipo tipo) { this.tipo = tipo; }
-    public void setRazonSocialNombre(String razonSocialNombre) { this.razonSocialNombre = razonSocialNombre; }
+    public Long getId() { return id; }
+
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+
+    // Puente para código viejo
+    public String getRazonSocialNombre() { return this.nombre; }
+    public void setRazonSocialNombre(String razonSocialNombre) { this.nombre = razonSocialNombre; }
+
+    public String getCuilDni() { return cuilDni; }
     public void setCuilDni(String cuilDni) { this.cuilDni = cuilDni; }
+
+    public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
+
+    public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
+
+    public ClienteTipo getClienteTipo() { return clienteTipo; }
+    public void setClienteTipo(ClienteTipo clienteTipo) { this.clienteTipo = clienteTipo; }
+
+    // 💡 Puente para el DTO: Si el Service pide "getTipo()", le damos el "clienteTipo"
+    public ClienteTipo getTipo() { return this.clienteTipo; }
 }
