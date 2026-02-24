@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable'; // 💡 CORRECCIÓN 1: Importamos la tabla correctamente
 
 export default function RepuestoManager() {
     const [repuestos, setRepuestos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [modalAbierto, setModalAbierto] = useState(false);
     
-    const [form, setForm] = useState({ id: null, sku: '', nombre: '', descripcion: '', costo: '', porcentajeGanancia: '', precio: '', stock: '' });
+    const [form, setForm] = useState({ id: null, sku: '', nombre: '', descripcion: '', costo: '', porcentajeGanancia: '', precio: '', stock: '', imagen: '' });
 
     useEffect(() => { cargarRepuestos(); }, []);
 
@@ -17,7 +19,6 @@ export default function RepuestoManager() {
 
     const manejarCambiosFinancieros = (campo, valor) => {
         const nuevoForm = { ...form, [campo]: valor };
-        
         const costo = parseFloat(nuevoForm.costo) || 0;
         const margen = parseFloat(nuevoForm.porcentajeGanancia) || 0;
         
@@ -25,24 +26,24 @@ export default function RepuestoManager() {
             const precioCalculado = costo + (costo * (margen / 100));
             nuevoForm.precio = precioCalculado.toFixed(2);
         }
-        
         setForm(nuevoForm);
+    };
+
+    const manejarFoto = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) return toast.error("❌ La imagen es muy pesada. Max 2MB.");
+            const reader = new FileReader();
+            reader.onloadend = () => setForm({ ...form, imagen: reader.result });
+            reader.readAsDataURL(file);
+        }
     };
 
     const guardarRepuesto = async (e) => {
         e.preventDefault();
         try {
-            if (Number(form.stock) < 0 || Number(form.costo) < 0) {
-                return toast.error("❌ Los valores no pueden ser negativos.");
-            }
-
-            const payload = { 
-                ...form, 
-                costo: Number(form.costo),
-                porcentajeGanancia: Number(form.porcentajeGanancia),
-                precio: Number(form.precio), 
-                stock: Number(form.stock) 
-            };
+            if (Number(form.stock) < 0 || Number(form.costo) < 0) return toast.error("❌ Los valores no pueden ser negativos.");
+            const payload = { ...form, costo: Number(form.costo), porcentajeGanancia: Number(form.porcentajeGanancia), precio: Number(form.precio), stock: Number(form.stock) };
 
             if (form.id) {
                 await api.put(`/repuestos/${form.id}`, payload);
@@ -66,15 +67,78 @@ export default function RepuestoManager() {
         }
     };
 
-    // 💡 SÚPER BUSCADOR OMNICANAL
     const filtrados = repuestos.filter(r => {
         const txt = busqueda.toLowerCase();
-        return (
-            (r.nombre && r.nombre.toLowerCase().includes(txt)) || 
-            (r.sku && r.sku.toLowerCase().includes(txt)) || 
-            (r.descripcion && r.descripcion.toLowerCase().includes(txt))
-        );
+        return (r.nombre?.toLowerCase().includes(txt) || r.sku?.toLowerCase().includes(txt) || r.descripcion?.toLowerCase().includes(txt));
     });
+
+    // 💡 LA MAGIA DEL PDF: EXPORTADOR DE CATÁLOGO COMERCIAL
+    const generarCatalogoPDF = () => {
+        if (filtrados.length === 0) return toast.error("No hay productos para exportar.");
+
+        const doc = new jsPDF();
+        
+        // Encabezado
+        doc.setFontSize(22);
+        doc.setTextColor(0, 86, 179);
+        doc.text("Dispenser La Tienda", 14, 22);
+        
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text("Catálogo Oficial de Repuestos y Accesorios", 14, 30);
+        
+        const fecha = new Date().toLocaleDateString('es-AR');
+        doc.setFontSize(10);
+        doc.text(`Lista de Precios al Público - Actualizada: ${fecha}`, 14, 36);
+
+        // Columnas (SIN COSTOS NI STOCK)
+        const tableColumn = ["Foto", "SKU", "Producto", "Descripción", "Precio Final"];
+        const tableRows = [];
+
+        filtrados.forEach(r => {
+            const repuestoData = [
+                "", // Espacio vacío para dibujar la foto después
+                r.sku || "-",
+                r.nombre,
+                r.descripcion || "-",
+                `$ ${Number(r.precio).toLocaleString('es-AR')}`
+            ];
+            tableRows.push(repuestoData);
+        });
+
+        // 💡 CORRECCIÓN 2: Llamamos a la herramienta de tabla de la forma moderna
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 45,
+            theme: 'grid',
+            headStyles: { fillColor: [0, 86, 179], textColor: [255, 255, 255], fontSize: 11, halign: 'center' },
+            bodyStyles: { minCellHeight: 22, valign: 'middle', fontSize: 10 },
+            columnStyles: { 
+                0: { halign: 'center', cellWidth: 30 }, 
+                4: { halign: 'right', fontStyle: 'bold', textColor: [46, 125, 50] } 
+            },
+            didDrawCell: function(data) {
+                // Dibujamos la foto adentro de la celda de la columna "Foto"
+                if (data.column.index === 0 && data.cell.section === 'body') {
+                    const r = filtrados[data.row.index];
+                    if (r && r.imagen) {
+                        try {
+                            doc.addImage(r.imagen, 'JPEG', data.cell.x + 5, data.cell.y + 2, 18, 18);
+                        } catch (e) {
+                            doc.text("Sin foto", data.cell.x + 8, data.cell.y + 13);
+                        }
+                    } else {
+                        doc.setTextColor(200, 200, 200);
+                        doc.text("Sin foto", data.cell.x + 8, data.cell.y + 13);
+                    }
+                }
+            }
+        });
+
+        doc.save(`Catalogo_LaTienda_${fecha}.pdf`);
+        toast.success("📄 ¡Catálogo generado con éxito!");
+    };
 
     const valorTotalInventario = repuestos.reduce((acc, r) => acc + (Number(r.costo || 0) * Number(r.stock)), 0);
     const itemsBajoStock = repuestos.filter(r => Number(r.stock) <= 5).length;
@@ -99,19 +163,42 @@ export default function RepuestoManager() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <h2 style={{ margin: 0, color: '#333' }}>🔧 Gestión de Repuestos</h2>
-                <button onClick={() => { setForm({ id: null, sku: '', nombre: '', descripcion: '', costo: '', porcentajeGanancia: '', precio: '', stock: '' }); setModalAbierto(true); }} style={{ background: '#007bff', color: 'white', padding: '12px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                    + INGRESAR REPUESTO
-                </button>
+                <div style={{display: 'flex', gap: '10px'}}>
+                    <button onClick={generarCatalogoPDF} style={{ background: '#546e7a', color: 'white', padding: '12px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                        📄 EXPORTAR CATÁLOGO PDF
+                    </button>
+                    <button onClick={() => { setForm({ id: null, sku: '', nombre: '', descripcion: '', costo: '', porcentajeGanancia: '', precio: '', stock: '', imagen: '' }); setModalAbierto(true); }} style={{ background: '#007bff', color: 'white', padding: '12px 20px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                        + INGRESAR REPUESTO
+                    </button>
+                </div>
             </div>
 
             <input type="text" placeholder="🔍 Buscar repuesto por nombre, descripción o SKU (Ej: r12)..." value={busqueda} onChange={e => setBusqueda(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #ddd' }} />
 
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95em' }}>
-                <thead><tr style={{ borderBottom: '2px solid #333', background: '#f8f9fa' }}><th style={{ padding: '12px' }}>SKU</th><th>Nombre y Detalle</th><th style={{ textAlign: 'center' }}>Stock</th><th style={{ textAlign: 'right' }}>Costo</th><th style={{ textAlign: 'center' }}>Margen</th><th style={{ textAlign: 'right' }}>Venta</th><th style={{ textAlign: 'center' }}>Acciones</th></tr></thead>
+                <thead>
+                    <tr style={{ borderBottom: '2px solid #333', background: '#f8f9fa' }}>
+                        <th style={{ padding: '12px', width: '60px', textAlign: 'center' }}>Foto</th>
+                        <th>SKU</th>
+                        <th>Nombre y Detalle</th>
+                        <th style={{ textAlign: 'center' }}>Stock</th>
+                        <th style={{ textAlign: 'right' }}>Costo</th>
+                        <th style={{ textAlign: 'center' }}>Margen</th>
+                        <th style={{ textAlign: 'right' }}>Venta</th>
+                        <th style={{ textAlign: 'center' }}>Acciones</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {filtrados.map(r => (
                         <tr key={r.id} style={{ borderBottom: '1px solid #eee', background: Number(r.stock) <= 5 ? '#fffaf5' : 'transparent' }}>
-                            <td style={{ padding: '12px', fontWeight: 'bold', color: '#546e7a' }}>{r.sku || '-'}</td>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                                {r.imagen ? (
+                                    <img src={r.imagen} alt={r.nombre} style={{ width: '45px', height: '45px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd' }} />
+                                ) : (
+                                    <div style={{ width: '45px', height: '45px', background: '#f0f0f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5em', border: '1px solid #ddd' }}>📦</div>
+                                )}
+                            </td>
+                            <td style={{ fontWeight: 'bold', color: '#546e7a' }}>{r.sku || '-'}</td>
                             <td><b style={{ color: '#0056b3' }}>{r.nombre}</b> <br/><small style={{ color: '#666' }}>{r.descripcion}</small></td>
                             <td style={{ textAlign: 'center' }}>
                                 <span style={{ background: Number(r.stock) <= 5 ? '#ffc107' : '#e2e8f0', padding: '4px 10px', borderRadius: '12px', fontWeight: 'bold', color: Number(r.stock) <= 5 ? '#856404' : '#333' }}>
@@ -121,22 +208,35 @@ export default function RepuestoManager() {
                             <td style={{ textAlign: 'right', color: '#d32f2f' }}>$ {Number(r.costo || 0).toLocaleString('es-AR')}</td>
                             <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#2e7d32' }}>{r.porcentajeGanancia || 0}%</td>
                             <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1.1em' }}>$ {Number(r.precio).toLocaleString('es-AR')}</td>
-                            <td style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <td style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', padding: '15px' }}>
                                 <button onClick={() => { setForm(r); setModalAbierto(true); }} style={{ background: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>✏️ Editar</button>
                                 <button onClick={() => eliminarRepuesto(r.id, r.nombre)} style={{ background: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️</button>
                             </td>
                         </tr>
                     ))}
-                    {filtrados.length === 0 && <tr><td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: '#888' }}>No se encontraron repuestos con esa búsqueda.</td></tr>}
+                    {filtrados.length === 0 && <tr><td colSpan="8" style={{ textAlign: 'center', padding: '30px', color: '#888' }}>No se encontraron repuestos.</td></tr>}
                 </tbody>
             </table>
 
-            {/* 🛑 MODAL UX PROFESIONAL: REPUESTOS */}
+            {/* MODAL REPUESTOS */}
             {modalAbierto && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <form onSubmit={guardarRepuesto} style={{ background: 'white', padding: '30px', borderRadius: '15px', width: '550px', display: 'grid', gap: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+                    <form onSubmit={guardarRepuesto} style={{ background: 'white', padding: '30px', borderRadius: '15px', width: '550px', maxHeight: '90vh', overflowY: 'auto', display: 'grid', gap: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
                         <h3 style={{ margin: 0, color: '#333', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>{form.id ? '✏️ Modificar Repuesto' : '🆕 Ingreso de Repuesto'}</h3>
                         
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', background: '#f8f9fa', padding: '15px', borderRadius: '10px', border: '1px dashed #ccc' }}>
+                            {form.imagen ? (
+                                <img src={form.imagen} alt="Vista previa" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px', border: '2px solid #007bff' }} />
+                            ) : (
+                                <div style={{ width: '80px', height: '80px', background: '#e9ecef', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2em' }}>📸</div>
+                            )}
+                            <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', fontSize: '0.85em', fontWeight: 'bold', color: '#555', marginBottom: '5px' }}>Foto del Repuesto (Max 2MB)</label>
+                                <input type="file" accept="image/*" onChange={manejarFoto} style={{ width: '100%', fontSize: '0.9em' }} />
+                                {form.imagen && <button type="button" onClick={() => setForm({...form, imagen: ''})} style={{ marginTop: '5px', background: 'none', border: 'none', color: '#d32f2f', cursor: 'pointer', fontSize: '0.8em', fontWeight: 'bold' }}>❌ Quitar foto</button>}
+                            </div>
+                        </div>
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '15px' }}>
                             <div>
                                 <label style={{ display: 'block', fontSize: '0.85em', fontWeight: 'bold', color: '#555', marginBottom: '5px' }}>SKU (Ej: r12)</label>

@@ -45,6 +45,9 @@ public class RepuestoController {
             // Validación anti-negativos
             repuesto.setStock(detalles.getStock() < 0 ? 0 : detalles.getStock());
 
+            // 💡 NUEVO: Guardar la imagen al editar
+            repuesto.setImagen(detalles.getImagen());
+
             return ResponseEntity.ok(repuestoRepository.save(repuesto));
         }).orElse(ResponseEntity.notFound().build());
     }

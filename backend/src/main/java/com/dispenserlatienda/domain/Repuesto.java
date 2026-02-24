@@ -29,6 +29,11 @@ public class Repuesto {
     @Column(nullable = false)
     private Integer stock;
 
+    // 💡 NUEVO: Acá se va a guardar la foto convertida a texto Base64
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String imagen;
+
     // 1. Constructor vacío exigido por JPA
     public Repuesto() {}
 
@@ -82,4 +87,7 @@ public class Repuesto {
 
     public Integer getStock() { return stock; }
     public void setStock(Integer stock) { this.stock = stock; }
+
+    public String getImagen() { return imagen; }
+    public void setImagen(String imagen) { this.imagen = imagen; }
 }
