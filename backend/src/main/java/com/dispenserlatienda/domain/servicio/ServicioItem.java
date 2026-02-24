@@ -22,7 +22,14 @@ public class ServicioItem {
     private Equipo equipo;
 
     private String tecnico;
+
+    // 💡 Lo que le cobraste al cliente (Precio Venta Final)
     private BigDecimal costo;
+
+    // 💡 NUEVO: Lo que te costaron a vos los repuestos de este trabajo
+    @Column(name = "costo_interno")
+    private BigDecimal costoInterno;
+
     private BigDecimal descuento;
     private String metodoPago;
     private String trabajoRealizado;
@@ -30,21 +37,30 @@ public class ServicioItem {
 
     public ServicioItem() {}
 
-    public ServicioItem(Equipo equipo, String tecnico, BigDecimal costo, BigDecimal descuento, String metodoPago, String trabajoRealizado, LocalDate garantiaHasta) {
+    // Constructor actualizado
+    public ServicioItem(Equipo equipo, String tecnico, BigDecimal costo, BigDecimal costoInterno, BigDecimal descuento, String metodoPago, String trabajoRealizado, LocalDate garantiaHasta) {
         this.equipo = equipo;
         this.tecnico = tecnico;
         this.costo = costo;
+        this.costoInterno = (costoInterno != null) ? costoInterno : BigDecimal.ZERO;
         this.descuento = (descuento != null) ? descuento : BigDecimal.ZERO;
         this.metodoPago = (metodoPago != null) ? metodoPago : "EFECTIVO";
         this.trabajoRealizado = trabajoRealizado;
         this.garantiaHasta = garantiaHasta;
     }
 
+    // --- GETTERS Y SETTERS ---
     public Long getId() { return id; }
     public void setServicio(Servicio servicio) { this.servicio = servicio; }
     public Equipo getEquipo() { return equipo; }
     public String getTecnico() { return tecnico; }
+
     public BigDecimal getCosto() { return costo; }
+    public void setCosto(BigDecimal costo) { this.costo = costo; }
+
+    public BigDecimal getCostoInterno() { return costoInterno; }
+    public void setCostoInterno(BigDecimal costoInterno) { this.costoInterno = costoInterno; }
+
     public BigDecimal getDescuento() { return descuento; }
     public String getMetodoPago() { return metodoPago; }
     public String getTrabajoRealizado() { return trabajoRealizado; }

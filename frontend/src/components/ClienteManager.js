@@ -38,7 +38,6 @@ export default function ClienteManager() {
         } catch (err) { toast.error("❌ Error al guardar cliente"); }
     };
 
-    // 💡 SOLUCIÓN: Cartel de confirmación profesional y personalizado
     const eliminarCliente = async (clienteSeleccionado) => {
         const mensajeConfirmacion = `⚠️ ATENCIÓN: ¿Estás seguro de eliminar a "${clienteSeleccionado.nombre}"?\n\nEsto borrará permanentemente sus domicilios, sus dispensers y todo su historial de facturación en la caja.\n\nEsta acción NO se puede deshacer.`;
         
@@ -88,7 +87,17 @@ export default function ClienteManager() {
         }
     };
 
-    const clientesFiltrados = clientes.filter(c => c.nombre?.toLowerCase().includes(busqueda.toLowerCase()));
+    // 💡 SÚPER BUSCADOR OMNICANAL
+    const clientesFiltrados = clientes.filter(c => {
+        const txt = busqueda.toLowerCase();
+        return (
+            (c.nombre && c.nombre.toLowerCase().includes(txt)) || 
+            (c.cuilDni && c.cuilDni.toLowerCase().includes(txt)) || 
+            (c.telefono && c.telefono.toLowerCase().includes(txt)) || 
+            (c.email && c.email.toLowerCase().includes(txt))
+        );
+    });
+    
     const equiposDelCliente = modalEquipos ? equipos.filter(eq => sedes.find(s => s.cliente?.id === modalEquipos.id)?.id === eq.sede?.id) : [];
 
     return (
@@ -100,7 +109,7 @@ export default function ClienteManager() {
                 </button>
             </div>
 
-            <input type="text" placeholder="🔍 Buscar cliente por nombre..." value={busqueda} onChange={e => setBusqueda(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            <input type="text" placeholder="🔍 Buscar por nombre, DNI, teléfono o email..." value={busqueda} onChange={e => setBusqueda(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '8px', border: '1px solid #ddd' }} />
 
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead><tr style={{ borderBottom: '2px solid #333', background: '#f8f9fa' }}><th style={{ padding: '12px' }}>Nombre</th><th>CUIT/DNI</th><th>Contacto</th><th style={{ textAlign: 'center' }}>Acciones</th></tr></thead>
@@ -113,11 +122,11 @@ export default function ClienteManager() {
                             <td style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center' }}>
                                 <button onClick={() => setModalEquipos(c)} style={{ background: '#e0f7fa', color: '#006064', border: '1px solid #00acc1', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>💧 Dispensers</button>
                                 <button onClick={() => { setForm(c); setModalAbierto(true); }} style={{ background: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>✏️ Editar Info</button>
-                                {/* 💡 NOTA: Botón actualizado para pasar todo el objeto 'c' */}
                                 <button onClick={() => eliminarCliente(c)} style={{ background: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Borrar</button>
                             </td>
                         </tr>
                     ))}
+                    {clientesFiltrados.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#888' }}>No se encontraron clientes con esa búsqueda.</td></tr>}
                 </tbody>
             </table>
 

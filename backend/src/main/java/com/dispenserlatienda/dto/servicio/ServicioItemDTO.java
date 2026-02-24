@@ -8,6 +8,7 @@ public record ServicioItemDTO(
         String numeroSerie,
         String tecnico,
         BigDecimal costo,
+        BigDecimal costoInterno, // 💡 NUEVO: Devuelve el costo secreto
         BigDecimal descuento,
         String metodoPago,
         String trabajoRealizado,

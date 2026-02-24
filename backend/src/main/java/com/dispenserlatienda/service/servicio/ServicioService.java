@@ -45,20 +45,19 @@ public class ServicioService {
             Equipo equipo = equipoRepository.findByNumeroSerie(itemDto.equipoSerial())
                     .orElseThrow(() -> new ResourceNotFoundException("Serie no encontrada"));
 
-            // 🛡️ BLINDAJE ANTI-NEGATIVOS
             if (itemDto.costo().compareTo(BigDecimal.ZERO) < 0) {
                 throw new IllegalArgumentException("ERROR CRÍTICO: El costo no puede ser negativo.");
             }
 
-            servicio.addItem(new ServicioItem(equipo, itemDto.tecnico(), itemDto.costo(), BigDecimal.ZERO,
+            // 💡 NUEVO: Pasamos el costoInterno al crear el ítem
+            BigDecimal costoInterno = itemDto.costoInterno() != null ? itemDto.costoInterno() : BigDecimal.ZERO;
+
+            servicio.addItem(new ServicioItem(equipo, itemDto.tecnico(), itemDto.costo(), costoInterno, BigDecimal.ZERO,
                     itemDto.metodoPago(), itemDto.trabajoRealizado(), itemDto.garantiaHasta()));
         }
         return mapToDTO(servicioRepository.save(servicio));
     }
 
-    // =====================================================================
-    // 💡 ACÁ ESTÁ EL MÉTODO QUE FALTABA: EL QUE SOLUCIONA TU ERROR
-    // =====================================================================
     @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado) {
         Servicio servicio = servicioRepository.findById(id)
@@ -69,9 +68,10 @@ public class ServicioService {
     }
 
     private ServicioDTO mapToDTO(Servicio s) {
+        // 💡 NUEVO: Agregamos i.getCostoInterno() al mapeo
         List<ServicioItemDTO> items = s.getItems().stream()
                 .map(i -> new ServicioItemDTO(i.getEquipo().getId(), i.getEquipo().getNumeroSerie(), i.getTecnico(),
-                        i.getCosto(), i.getDescuento(), i.getMetodoPago(), i.getTrabajoRealizado(), i.getGarantiaHasta())).toList();
+                        i.getCosto(), i.getCostoInterno(), i.getDescuento(), i.getMetodoPago(), i.getTrabajoRealizado(), i.getGarantiaHasta())).toList();
         return new ServicioDTO(s.getId(), s.getFechaServicio(), s.getServicioTipo(), s.getSede().getNombreSede(), items, s.getEstado());
     }
 }

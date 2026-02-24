@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 
-// 📦 Importamos tus 3 componentes principales
+// 📦 Importamos tus componentes principales
 import ServicioForm from './components/ServicioForm';
 import ServicioList from './components/ServicioList';
 import ClienteManager from './components/ClienteManager';
+import RepuestoManager from './components/RepuestoManager'; // 💡 NUEVO: Importamos el inventario
 
 export default function App() {
     // 💡 El estado que controla en qué pantalla estamos (Arranca en 'caja')
@@ -51,6 +52,19 @@ export default function App() {
                         }}>
                         👥 Directorio de Clientes
                     </button>
+
+                    {/* 💡 NUEVO BOTÓN: INVENTARIO */}
+                    <button 
+                        onClick={() => setSeccionActual('repuestos')}
+                        style={{ 
+                            background: seccionActual === 'repuestos' ? '#e65100' : '#f0f4f8', 
+                            color: seccionActual === 'repuestos' ? 'white' : '#555', 
+                            border: 'none', padding: '12px 25px', borderRadius: '10px', 
+                            cursor: 'pointer', fontWeight: 'bold', fontSize: '1em',
+                            transition: 'all 0.3s ease'
+                        }}>
+                        🔧 Inventario
+                    </button>
                 </nav>
             </header>
 
@@ -68,6 +82,11 @@ export default function App() {
                 {/* 👥 PANTALLA DE CLIENTES: Muestra ÚNICAMENTE el gestor de la libreta de contactos */}
                 {seccionActual === 'clientes' && (
                     <ClienteManager />
+                )}
+
+                {/* 💡 NUEVA PANTALLA: INVENTARIO DE REPUESTOS */}
+                {seccionActual === 'repuestos' && (
+                    <RepuestoManager />
                 )}
 
             </main>

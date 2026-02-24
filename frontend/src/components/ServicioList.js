@@ -6,6 +6,9 @@ export default function ServicioList() {
     const [servicios, setServicios] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [filtroTab, setFiltroTab] = useState('TODOS');
+    
+    // 💡 NUEVO: Estado para abrir la ventana de detalles (El Ojo)
+    const [modalDetalle, setModalDetalle] = useState(null);
 
     useEffect(() => { cargarServicios(); }, []);
 
@@ -31,35 +34,19 @@ export default function ServicioList() {
         }
     };
 
-    // ==========================================
-    // 💡 LÓGICA FINANCIERA (BLINDADA)
-    // ==========================================
+    // LÓGICA FINANCIERA
+    const calcularCosto = (s) => s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
     
-    // 1. Forzamos a que el costo sea un Número real, no un texto de Java.
-    const calcularCosto = (s) => {
-        if (!s.items) return 0;
-        return s.items.reduce((acc, i) => acc + Number(i.costo || 0), 0);
-    };
-    
-    // 2. Filtramos limpiando posibles espacios vacíos que mande la base de datos
     const ventas = servicios.filter(s => (s.estado || '').trim().toUpperCase() === 'VENTA');
     const presupuestos = servicios.filter(s => (s.estado || '').trim().toUpperCase() === 'PRESUPUESTO');
 
-    // 3. Sumas totales seguras
     const totalFacturado = ventas.reduce((acc, s) => acc + calcularCosto(s), 0);
     const totalPresupuestado = presupuestos.reduce((acc, s) => acc + calcularCosto(s), 0);
     
-    // 4. Fecha local estricta (Para que no te corte la caja del día a las 21hs por el horario UTC)
     const hoy = new Date();
     const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
-    
-    const ventasHoy = ventas.filter(s => {
-        const fechaServicio = s.fechaServicio || s.fecha || '';
-        return fechaServicio.startsWith(hoyStr); 
-    });
+    const ventasHoy = ventas.filter(s => (s.fechaServicio || s.fecha || '').startsWith(hoyStr));
     const cajaDelDia = ventasHoy.reduce((acc, s) => acc + calcularCosto(s), 0);
-
-    // ==========================================
 
     const filtrados = servicios.filter(s => {
         const estadoLimpio = (s.estado || '').trim().toUpperCase();
@@ -92,7 +79,6 @@ export default function ServicioList() {
                 </div>
             </div>
 
-            {/* 🗂️ PESTAÑAS Y BUSCADOR */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '15px' }}>
                 <div style={{ display: 'flex', gap: '5px', background: '#f1f3f5', padding: '5px', borderRadius: '8px' }}>
                     <button onClick={() => setFiltroTab('TODOS')} style={{ padding: '8px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', background: filtroTab === 'TODOS' ? 'white' : 'transparent', boxShadow: filtroTab === 'TODOS' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none' }}>Ver Todo</button>
@@ -123,6 +109,10 @@ export default function ServicioList() {
                                 </td>
                                 <td style={{ textAlign: 'right', fontWeight: 'bold' }}>$ {Number(item.costo || 0).toLocaleString('es-AR')}</td>
                                 <td style={{ textAlign: 'center' }}>
+                                    
+                                    {/* 💡 ACÁ ESTÁ EL NUEVO BOTÓN PARA VER LA GANANCIA */}
+                                    <button onClick={() => setModalDetalle({ s, item })} title="Ver Detalles del Trabajo" style={{ background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer', marginRight: '5px' }}>👁️</button>
+                                    
                                     {esPresu && (
                                         <button onClick={() => aprobarPresupuesto(s.id)} title="Convertir en Venta" style={{ background: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '5px 10px', fontWeight: 'bold', marginRight: '5px' }}>💰 Cobrar</button>
                                     )}
@@ -134,6 +124,42 @@ export default function ServicioList() {
                     {filtrados.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#888' }}>No hay registros para mostrar.</td></tr>}
                 </tbody>
             </table>
+
+            {/* 🛑 MODAL UX PROFESIONAL: RADIOGRAFÍA DEL TRABAJO */}
+            {modalDetalle && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+                    <div style={{ background: 'white', padding: '30px', borderRadius: '15px', width: '500px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>
+                            <h3 style={{ margin: 0, color: '#333' }}>🧾 Radiografía del Trabajo</h3>
+                            <button onClick={() => setModalDetalle(null)} style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 15px', cursor: 'pointer', fontWeight: 'bold' }}>X CERRAR</button>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <p style={{ margin: '5px 0' }}><strong>Sede/Cliente:</strong> {modalDetalle.s.sedeNombre}</p>
+                            <p style={{ margin: '5px 0' }}><strong>Dispenser:</strong> SN: {modalDetalle.item.equipoSerial}</p>
+                            <p style={{ margin: '5px 0' }}><strong>Técnico:</strong> {modalDetalle.item.tecnico}</p>
+                            <p style={{ margin: '5px 0' }}><strong>Detalle:</strong> <span style={{ color: '#555' }}>{modalDetalle.item.trabajoRealizado || 'Sin detalles'}</span></p>
+                        </div>
+
+                        {/* 📊 LA MATEMÁTICA DE LA GANANCIA */}
+                        <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '10px', border: '1px solid #ddd' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                <span>Facturado al cliente:</span>
+                                <b>$ {Number(modalDetalle.item.costo || 0).toLocaleString('es-AR')}</b>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#d32f2f' }}>
+                                <span>Costo de Repuestos (Interno):</span>
+                                <b>- $ {Number(modalDetalle.item.costoInterno || 0).toLocaleString('es-AR')}</b>
+                            </div>
+                            <hr style={{ borderTop: '1px solid #ccc' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '1.2em', color: '#2e7d32' }}>
+                                <b>✨ GANANCIA NETA:</b>
+                                <b>$ {(Number(modalDetalle.item.costo || 0) - Number(modalDetalle.item.costoInterno || 0)).toLocaleString('es-AR')}</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
