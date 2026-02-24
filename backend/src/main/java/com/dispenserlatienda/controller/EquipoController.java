@@ -9,8 +9,10 @@ import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.EquipoRepository;
 import com.dispenserlatienda.repository.SedeRepository;
 import com.dispenserlatienda.repository.ServicioItemRepository;
+import org.springframework.dao.DataIntegrityViolationException; // 💡 NUEVO
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity; // 💡 NUEVO
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -74,11 +76,15 @@ public class EquipoController {
         return equipoRepository.save(equipo);
     }
 
-    // 💡 NUEVO: 4. ELIMINAR EQUIPO
+    // 💡 NUEVO: 4. ELIMINAR EQUIPO (Blindado)
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long id) {
-        equipoRepository.deleteById(id);
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+        try {
+            equipoRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest().body("No se puede eliminar el dispenser porque ya tiene presupuestos o ventas asociadas en la caja.");
+        }
     }
 
     // 5. Autocompletado / Búsqueda

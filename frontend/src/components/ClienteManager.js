@@ -38,6 +38,23 @@ export default function ClienteManager() {
         } catch (err) { toast.error("❌ Error al guardar cliente"); }
     };
 
+    // 💡 SOLUCIÓN: Cartel de confirmación profesional y personalizado
+    const eliminarCliente = async (clienteSeleccionado) => {
+        const mensajeConfirmacion = `⚠️ ATENCIÓN: ¿Estás seguro de eliminar a "${clienteSeleccionado.nombre}"?\n\nEsto borrará permanentemente sus domicilios, sus dispensers y todo su historial de facturación en la caja.\n\nEsta acción NO se puede deshacer.`;
+        
+        if(window.confirm(mensajeConfirmacion)) {
+            try {
+                await api.delete(`/clientes/${clienteSeleccionado.id}`);
+                toast.success(`🗑️ ${clienteSeleccionado.nombre} y todos sus registros fueron eliminados.`);
+                cargarDatos();
+            } catch (err) { 
+                const errorData = err.response?.data;
+                const mensaje = typeof errorData === 'string' ? errorData : "❌ Error crítico al eliminar.";
+                toast.error(mensaje);
+            }
+        }
+    };
+
     const guardarEquipo = async (e) => {
         e.preventDefault();
         try {
@@ -63,7 +80,11 @@ export default function ClienteManager() {
                 await api.delete(`/equipos/${id}`);
                 toast.success("🗑️ Dispenser eliminado");
                 cargarDatos();
-            } catch (err) { toast.error("❌ Error al eliminar el equipo"); }
+            } catch (err) { 
+                const errorData = err.response?.data;
+                const mensaje = typeof errorData === 'string' ? errorData : "❌ No se puede eliminar (tiene historial en caja).";
+                toast.error(mensaje);
+            }
         }
     };
 
@@ -92,6 +113,8 @@ export default function ClienteManager() {
                             <td style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center' }}>
                                 <button onClick={() => setModalEquipos(c)} style={{ background: '#e0f7fa', color: '#006064', border: '1px solid #00acc1', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>💧 Dispensers</button>
                                 <button onClick={() => { setForm(c); setModalAbierto(true); }} style={{ background: '#fff3cd', color: '#856404', border: '1px solid #ffeeba', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>✏️ Editar Info</button>
+                                {/* 💡 NOTA: Botón actualizado para pasar todo el objeto 'c' */}
+                                <button onClick={() => eliminarCliente(c)} style={{ background: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>🗑️ Borrar</button>
                             </td>
                         </tr>
                     ))}
@@ -149,7 +172,6 @@ export default function ClienteManager() {
                             <button onClick={() => setModalEquipos(null)} style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 15px', cursor: 'pointer', fontWeight: 'bold' }}>X CERRAR</button>
                         </div>
 
-                        {/* Formulario Equipos */}
                         <form onSubmit={guardarEquipo} style={{ background: '#e0f7fa', padding: '20px', borderRadius: '10px', marginBottom: '25px', border: '1px solid #b2ebf2' }}>
                             <h4 style={{ margin: '0 0 15px 0', color: '#006064' }}>{formEquipo.id ? '✏️ Editando Máquina' : '+ Alta de Nueva Máquina'}</h4>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
@@ -180,7 +202,6 @@ export default function ClienteManager() {
                             </div>
                         </form>
 
-                        {/* Tabla de Equipos */}
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
                             <thead>
                                 <tr style={{ background: '#f1f3f5', borderBottom: '2px solid #ddd', textAlign: 'left' }}>
