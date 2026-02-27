@@ -5,12 +5,15 @@ import java.time.LocalDate;
 
 public record ServicioItemDTO(
         Long equipoId,
-        String numeroSerie,
+        String equipoSerial,
+        String equipoUbicacion, // 💡 NUEVO: Acá viaja "Piso 5 - Sala de Médicos"
         String tecnico,
         BigDecimal costo,
-        BigDecimal costoInterno, // 💡 NUEVO: Devuelve el costo secreto
+        BigDecimal costoInterno,
         BigDecimal descuento,
         String metodoPago,
         String trabajoRealizado,
-        LocalDate garantiaHasta
+        LocalDate garantiaHasta,
+        String fotoAntes,
+        String fotoDespues
 ) {}

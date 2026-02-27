@@ -2,162 +2,125 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
+// ⚛️ Átomos
+import Card from './ui/Card';
+import Button from './ui/Button';
+import Input from './ui/Input';
+
+// 🛠️ Utilidades
+import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
+
 export default function ServicioList() {
     const [servicios, setServicios] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [filtroTab, setFiltroTab] = useState('TODOS');
-    
-    // 💡 NUEVO: Estado para abrir la ventana de detalles (El Ojo)
     const [modalDetalle, setModalDetalle] = useState(null);
 
     useEffect(() => { cargarServicios(); }, []);
 
     const cargarServicios = () => {
-        api.get('/servicios').then(res => setServicios(res.data)).catch(() => {});
+        api.get('/servicios').then(res => setServicios(res.data)).catch(() => toast.error("Error al cargar historial"));
     };
 
     const aprobarPresupuesto = async (id) => {
         try {
             await api.patch(`/servicios/${id}/estado`, { estado: "VENTA" });
-            toast.success("✅ ¡Cobro registrado en caja!");
+            toast.success("✅ ¡Caja actualizada!");
             cargarServicios(); 
-        } catch (err) { toast.error("Error al actualizar estado"); }
+        } catch (err) { toast.error("Error al cobrar"); }
     };
 
     const eliminarServicio = async (id) => {
-        if(window.confirm("⚠️ ¿Estás seguro de eliminar este registro de la caja permanentemente?")) {
+        if(window.confirm("⚠️ ¿Eliminar permanentemente?")) {
             try {
                 await api.delete(`/servicios/${id}`);
-                toast.success("🗑️ Registro eliminado");
+                toast.success("🗑️ Registro borrado");
                 cargarServicios();
             } catch (err) { toast.error("Error al eliminar"); }
         }
     };
 
-    // LÓGICA FINANCIERA
     const calcularCosto = (s) => s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
-    
-    const ventas = servicios.filter(s => (s.estado || '').trim().toUpperCase() === 'VENTA');
-    const presupuestos = servicios.filter(s => (s.estado || '').trim().toUpperCase() === 'PRESUPUESTO');
-
+    const ventas = servicios.filter(s => (s.estado || '').toUpperCase() === 'VENTA');
     const totalFacturado = ventas.reduce((acc, s) => acc + calcularCosto(s), 0);
-    const totalPresupuestado = presupuestos.reduce((acc, s) => acc + calcularCosto(s), 0);
-    
-    const hoy = new Date();
-    const hoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
-    const ventasHoy = ventas.filter(s => (s.fechaServicio || s.fecha || '').startsWith(hoyStr));
-    const cajaDelDia = ventasHoy.reduce((acc, s) => acc + calcularCosto(s), 0);
 
     const filtrados = servicios.filter(s => {
         const estadoLimpio = (s.estado || '').trim().toUpperCase();
         const coincideTab = filtroTab === 'TODOS' || estadoLimpio === filtroTab;
         const txt = busqueda.toLowerCase();
-        const sede = (s.sedeNombre?.toLowerCase() || "");
-        const coincideBusqueda = sede.includes(txt) || s.items?.some(i => (i.equipoSerial?.toLowerCase() || "").includes(txt));
-        return coincideTab && coincideBusqueda;
+        return coincideTab && (s.clienteNombre?.toLowerCase().includes(txt) || s.sedeNombre?.toLowerCase().includes(txt));
     });
 
     return (
-        <div style={{ padding: '20px', background: '#fff', borderRadius: '15px', marginTop: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-            
-            {/* 💰 DASHBOARD FINANCIERO */}
+        <div style={{ color: 'var(--text-primary)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '25px' }}>
-                <div style={{ background: '#e8f5e9', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #2e7d32' }}>
-                    <div style={{ fontSize: '0.8em', color: '#2e7d32', fontWeight: 'bold' }}>CAJA DEL DÍA (HOY)</div>
-                    <div style={{ fontSize: '2em', fontWeight: 'bold', color: '#1b5e20' }}>$ {cajaDelDia.toLocaleString('es-AR')}</div>
-                    <div style={{ fontSize: '0.8em', color: '#666' }}>{ventasHoy.length} operaciones hoy</div>
-                </div>
-                <div style={{ background: '#e3f2fd', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #007bff' }}>
-                    <div style={{ fontSize: '0.8em', color: '#007bff', fontWeight: 'bold' }}>FACTURACIÓN TOTAL</div>
-                    <div style={{ fontSize: '2em', fontWeight: 'bold', color: '#0056b3' }}>$ {totalFacturado.toLocaleString('es-AR')}</div>
-                    <div style={{ fontSize: '0.8em', color: '#666' }}>{ventas.length} ventas confirmadas</div>
-                </div>
-                <div style={{ background: '#eceff1', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #546e7a' }}>
-                    <div style={{ fontSize: '0.8em', color: '#546e7a', fontWeight: 'bold' }}>EN PRESUPUESTO</div>
-                    <div style={{ fontSize: '2em', fontWeight: 'bold', color: '#37474f' }}>$ {totalPresupuestado.toLocaleString('es-AR')}</div>
-                    <div style={{ fontSize: '0.8em', color: '#666' }}>{presupuestos.length} pendientes de cobro</div>
-                </div>
+                <Card style={{ borderLeft: '5px solid var(--status-success)' }}>
+                    <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>FACTURACIÓN TOTAL</div>
+                    <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: 'var(--status-success)' }}>$ {totalFacturado.toLocaleString()}</div>
+                </Card>
+                <Card style={{ borderLeft: '5px solid var(--brand-yellow)' }}>
+                    <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>OPERACIONES</div>
+                    <div style={{ fontSize: '1.8em', fontWeight: 'bold' }}>{servicios.length}</div>
+                </Card>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '15px' }}>
-                <div style={{ display: 'flex', gap: '5px', background: '#f1f3f5', padding: '5px', borderRadius: '8px' }}>
-                    <button onClick={() => setFiltroTab('TODOS')} style={{ padding: '8px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', background: filtroTab === 'TODOS' ? 'white' : 'transparent', boxShadow: filtroTab === 'TODOS' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none' }}>Ver Todo</button>
-                    <button onClick={() => setFiltroTab('VENTA')} style={{ padding: '8px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', color: '#2e7d32', background: filtroTab === 'VENTA' ? 'white' : 'transparent', boxShadow: filtroTab === 'VENTA' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none' }}>Solo Ventas</button>
-                    <button onClick={() => setFiltroTab('PRESUPUESTO')} style={{ padding: '8px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', color: '#546e7a', background: filtroTab === 'PRESUPUESTO' ? 'white' : 'transparent', boxShadow: filtroTab === 'PRESUPUESTO' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none' }}>Presupuestos Pendientes</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button variant={filtroTab === 'TODOS' ? 'primary' : 'secondary'} onClick={() => setFiltroTab('TODOS')}>TODOS</Button>
+                    <Button variant={filtroTab === 'VENTA' ? 'success' : 'secondary'} onClick={() => setFiltroTab('VENTA')}>VENTAS</Button>
                 </div>
-                <input type="text" placeholder="🔍 Buscar por sede o serie..." value={busqueda} onChange={e => setBusqueda(e.target.value)} style={{ padding: '10px', width: '300px', borderRadius: '8px', border: '1px solid #ddd' }} />
+                <Input placeholder="🔍 Buscar por cliente o sede..." value={busqueda} onChange={e => setBusqueda(e.target.value)} style={{maxWidth: '300px', marginBottom: 0}} />
             </div>
 
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95em' }}>
-                <thead>
-                    <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-                        <th style={{ padding: '12px' }}>Fecha</th><th>Sede / Cliente</th><th>Serie</th><th>Estado</th><th style={{ textAlign: 'right' }}>Total ($)</th><th style={{ textAlign: 'center' }}>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filtrados.map(s => {
-                        const esPresu = (s.estado || '').trim().toUpperCase() === 'PRESUPUESTO';
-                        return s.items?.map((item, idx) => (
-                            <tr key={`${s.id}-${idx}`} style={{ borderBottom: '1px solid #eee', backgroundColor: esPresu ? '#fcfcfc' : 'white' }}>
-                                <td style={{ padding: '12px', color: '#555' }}>{s.fechaServicio || s.fecha}</td>
-                                <td><b style={{ color: '#0056b3' }}>{s.sedeNombre}</b></td>
-                                <td>{item.equipoSerial}</td>
+            <Card style={{ padding: 0, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ background: 'var(--bg-sidebar)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
+                            <th style={{ padding: '15px' }}>Fecha</th>
+                            <th>Cliente / Sede</th>
+                            <th style={{ textAlign: 'right' }}>Total</th>
+                            <th style={{ textAlign: 'center' }}>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filtrados.map(s => (
+                            <tr key={s.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                <td style={{ padding: '15px', fontSize: '13px' }}>{s.fecha}</td>
                                 <td>
-                                    <span style={{ fontSize: '0.8em', padding: '4px 10px', borderRadius: '15px', background: esPresu ? '#e2e8f0' : '#d4edda', color: esPresu ? '#475569' : '#155724', fontWeight: 'bold' }}>
-                                        {s.estado}
-                                    </span>
+                                    <b style={{color: 'var(--brand-yellow)'}}>{s.clienteNombre}</b><br/>
+                                    <small>{s.sedeNombre}</small>
                                 </td>
-                                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>$ {Number(item.costo || 0).toLocaleString('es-AR')}</td>
+                                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>$ {calcularCosto(s).toLocaleString()}</td>
                                 <td style={{ textAlign: 'center' }}>
-                                    
-                                    {/* 💡 ACÁ ESTÁ EL NUEVO BOTÓN PARA VER LA GANANCIA */}
-                                    <button onClick={() => setModalDetalle({ s, item })} title="Ver Detalles del Trabajo" style={{ background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer', marginRight: '5px' }}>👁️</button>
-                                    
-                                    {esPresu && (
-                                        <button onClick={() => aprobarPresupuesto(s.id)} title="Convertir en Venta" style={{ background: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '5px 10px', fontWeight: 'bold', marginRight: '5px' }}>💰 Cobrar</button>
-                                    )}
-                                    <button onClick={() => eliminarServicio(s.id)} title="Eliminar Registro" style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', padding: '5px 10px', cursor: 'pointer' }}>🗑️</button>
+                                    <Button variant="secondary" onClick={() => generarRemitoPDFPremium({ esPresupuesto: s.estado === 'PRESUPUESTO', cliente: {nombre: s.clienteNombre}, sede: {nombreSede: s.sedeNombre}, tecnico: "Marcos", ticketItems: s.items.map(i => ({...i, moFinal: i.costo, subtotalCobrado: i.costo})), totalFinal: calcularCosto(s) })} style={{padding: '5px 10px', marginRight: '5px'}}>📄</Button>
+                                    <Button variant="secondary" onClick={() => setModalDetalle(s)} style={{padding: '5px 10px', marginRight: '5px'}}>👁️</Button>
+                                    {s.estado === 'PRESUPUESTO' && <Button variant="success" onClick={() => aprobarPresupuesto(s.id)} style={{padding: '5px 10px', marginRight: '5px'}}>💰</Button>}
+                                    <Button variant="danger" onClick={() => eliminarServicio(s.id)} style={{padding: '5px 10px'}}>🗑️</Button>
                                 </td>
                             </tr>
-                        ));
-                    })}
-                    {filtrados.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#888' }}>No hay registros para mostrar.</td></tr>}
-                </tbody>
-            </table>
+                        ))}
+                    </tbody>
+                </table>
+            </Card>
 
-            {/* 🛑 MODAL UX PROFESIONAL: RADIOGRAFÍA DEL TRABAJO */}
+            {/* MODAL RADIOGRAFÍA CON TU LÓGICA DE GANANCIA NETA */}
             {modalDetalle && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <div style={{ background: 'white', padding: '30px', borderRadius: '15px', width: '500px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>
-                            <h3 style={{ margin: 0, color: '#333' }}>🧾 Radiografía del Trabajo</h3>
-                            <button onClick={() => setModalDetalle(null)} style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 15px', cursor: 'pointer', fontWeight: 'bold' }}>X CERRAR</button>
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+                    <Card style={{ width: '500px', borderTop: '5px solid var(--brand-red)' }}>
+                        <h3>🧾 Detalle de Operación</h3>
+                        <div style={{ marginBottom: '20px', fontSize: '14px' }}>
+                            <p><strong>Cliente:</strong> {modalDetalle.clienteNombre}</p>
+                            <p><strong>Sede:</strong> {modalDetalle.sedeNombre}</p>
+                            <hr style={{borderColor: 'var(--border-color)'}} />
+                            {modalDetalle.items.map((item, idx) => (
+                                <div key={idx} style={{background: 'var(--bg-main)', padding: '10px', borderRadius: '8px', marginTop: '10px'}}>
+                                    <p><strong>Equipo:</strong> {item.equipoSerial}</p>
+                                    <p><strong>Ganancia Neta:</strong> <span style={{color: 'var(--status-success)'}}>$ {(Number(item.costo) - Number(item.costoInterno)).toLocaleString()}</span></p>
+                                </div>
+                            ))}
                         </div>
-                        
-                        <div style={{ marginBottom: '20px' }}>
-                            <p style={{ margin: '5px 0' }}><strong>Sede/Cliente:</strong> {modalDetalle.s.sedeNombre}</p>
-                            <p style={{ margin: '5px 0' }}><strong>Dispenser:</strong> SN: {modalDetalle.item.equipoSerial}</p>
-                            <p style={{ margin: '5px 0' }}><strong>Técnico:</strong> {modalDetalle.item.tecnico}</p>
-                            <p style={{ margin: '5px 0' }}><strong>Detalle:</strong> <span style={{ color: '#555' }}>{modalDetalle.item.trabajoRealizado || 'Sin detalles'}</span></p>
-                        </div>
-
-                        {/* 📊 LA MATEMÁTICA DE LA GANANCIA */}
-                        <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '10px', border: '1px solid #ddd' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                <span>Facturado al cliente:</span>
-                                <b>$ {Number(modalDetalle.item.costo || 0).toLocaleString('es-AR')}</b>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#d32f2f' }}>
-                                <span>Costo de Repuestos (Interno):</span>
-                                <b>- $ {Number(modalDetalle.item.costoInterno || 0).toLocaleString('es-AR')}</b>
-                            </div>
-                            <hr style={{ borderTop: '1px solid #ccc' }} />
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '1.2em', color: '#2e7d32' }}>
-                                <b>✨ GANANCIA NETA:</b>
-                                <b>$ {(Number(modalDetalle.item.costo || 0) - Number(modalDetalle.item.costoInterno || 0)).toLocaleString('es-AR')}</b>
-                            </div>
-                        </div>
-                    </div>
+                        <Button variant="secondary" onClick={() => setModalDetalle(null)} style={{width: '100%'}}>CERRAR</Button>
+                    </Card>
                 </div>
             )}
         </div>

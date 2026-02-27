@@ -10,3 +10,4 @@ public record SedeCreateDTO(
         String localidad,
         String notas
 ) {}
+

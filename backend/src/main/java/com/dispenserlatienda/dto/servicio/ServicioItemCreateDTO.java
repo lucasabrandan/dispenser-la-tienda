@@ -9,14 +9,16 @@ public record ServicioItemCreateDTO(
         @NotBlank String equipoSerial,
         @NotBlank String tecnico,
         @NotNull @PositiveOrZero(message = "El costo no puede ser negativo") BigDecimal costo,
-        BigDecimal costoInterno, // 💡 NUEVO: Recibe el costo secreto
+        BigDecimal costoInterno,
         String descuento,
         @NotBlank String metodoPago,
         @NotBlank String trabajoRealizado,
         LocalDate garantiaHasta,
-        @NotNull TrabajoTipo trabajoTipo
+        @NotNull TrabajoTipo trabajoTipo,
+        String fotoAntes,   // 💡 Agregado
+        String fotoDespues  // 💡 Agregado
 ) {
     public ServicioItemCreateDTO(String equipoSerial, TrabajoTipo trabajoTipo, String trabajoRealizado) {
-        this(equipoSerial, "Marcos", BigDecimal.ZERO, BigDecimal.ZERO, "0", "EFECTIVO", trabajoRealizado, null, trabajoTipo);
+        this(equipoSerial, "Marcos", BigDecimal.ZERO, BigDecimal.ZERO, "0", "EFECTIVO", trabajoRealizado, null, trabajoTipo, null, null);
     }
 }

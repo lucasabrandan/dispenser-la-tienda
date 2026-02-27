@@ -1,14 +1,14 @@
 package com.dispenserlatienda.dto.servicio;
 
-import com.dispenserlatienda.domain.servicio.ServicioTipo;
 import java.time.LocalDate;
 import java.util.List;
 
 public record ServicioDTO(
         Long id,
-        LocalDate fecha,
-        ServicioTipo servicioTipo,
-        String sedeNombre,
+        LocalDate fechaServicio,
+        String servicioTipo,
+        String clienteNombre, // 💡 NUEVO: El nombre del Sanatorio
+        String sedeNombre,    // Acá iría "Edificio Córdoba"
         List<ServicioItemDTO> items,
         String estado
 ) {}

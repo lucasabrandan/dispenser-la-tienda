@@ -49,11 +49,15 @@ public class ServicioService {
                 throw new IllegalArgumentException("ERROR CRÍTICO: El costo no puede ser negativo.");
             }
 
-            // 💡 NUEVO: Pasamos el costoInterno al crear el ítem
             BigDecimal costoInterno = itemDto.costoInterno() != null ? itemDto.costoInterno() : BigDecimal.ZERO;
 
-            servicio.addItem(new ServicioItem(equipo, itemDto.tecnico(), itemDto.costo(), costoInterno, BigDecimal.ZERO,
-                    itemDto.metodoPago(), itemDto.trabajoRealizado(), itemDto.garantiaHasta()));
+            ServicioItem nuevoItem = new ServicioItem(equipo, itemDto.tecnico(), itemDto.costo(), costoInterno, BigDecimal.ZERO,
+                    itemDto.metodoPago(), itemDto.trabajoRealizado(), itemDto.garantiaHasta());
+
+            nuevoItem.setFotoAntes(itemDto.fotoAntes());
+            nuevoItem.setFotoDespues(itemDto.fotoDespues());
+
+            servicio.addItem(nuevoItem);
         }
         return mapToDTO(servicioRepository.save(servicio));
     }
@@ -68,10 +72,31 @@ public class ServicioService {
     }
 
     private ServicioDTO mapToDTO(Servicio s) {
-        // 💡 NUEVO: Agregamos i.getCostoInterno() al mapeo
         List<ServicioItemDTO> items = s.getItems().stream()
-                .map(i -> new ServicioItemDTO(i.getEquipo().getId(), i.getEquipo().getNumeroSerie(), i.getTecnico(),
-                        i.getCosto(), i.getCostoInterno(), i.getDescuento(), i.getMetodoPago(), i.getTrabajoRealizado(), i.getGarantiaHasta())).toList();
-        return new ServicioDTO(s.getId(), s.getFechaServicio(), s.getServicioTipo(), s.getSede().getNombreSede(), items, s.getEstado());
+                .map(i -> new ServicioItemDTO(
+                        i.getEquipo().getId(),
+                        i.getEquipo().getNumeroSerie(),
+                        i.getEquipo().getUbicacion(),
+                        i.getTecnico(),
+                        i.getCosto(),
+                        i.getCostoInterno(),
+                        i.getDescuento(),
+                        i.getMetodoPago(),
+                        i.getTrabajoRealizado(),
+                        i.getGarantiaHasta(),
+                        i.getFotoAntes(),
+                        i.getFotoDespues()
+                )).toList();
+
+        // 💡 CORRECCIÓN ACÁ: s.getServicioTipo().name()
+        return new ServicioDTO(
+                s.getId(),
+                s.getFechaServicio(),
+                s.getServicioTipo() != null ? s.getServicioTipo().name() : null,
+                s.getSede().getCliente().getNombre(),
+                s.getSede().getNombreSede(),
+                items,
+                s.getEstado()
+        );
     }
 }

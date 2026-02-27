@@ -22,11 +22,8 @@ public class ServicioItem {
     private Equipo equipo;
 
     private String tecnico;
-
-    // 💡 Lo que le cobraste al cliente (Precio Venta Final)
     private BigDecimal costo;
 
-    // 💡 NUEVO: Lo que te costaron a vos los repuestos de este trabajo
     @Column(name = "costo_interno")
     private BigDecimal costoInterno;
 
@@ -35,9 +32,14 @@ public class ServicioItem {
     private String trabajoRealizado;
     private LocalDate garantiaHasta;
 
+    @Column(name = "foto_antes", columnDefinition = "TEXT")
+    private String fotoAntes;
+
+    @Column(name = "foto_despues", columnDefinition = "TEXT")
+    private String fotoDespues;
+
     public ServicioItem() {}
 
-    // Constructor actualizado
     public ServicioItem(Equipo equipo, String tecnico, BigDecimal costo, BigDecimal costoInterno, BigDecimal descuento, String metodoPago, String trabajoRealizado, LocalDate garantiaHasta) {
         this.equipo = equipo;
         this.tecnico = tecnico;
@@ -49,20 +51,26 @@ public class ServicioItem {
         this.garantiaHasta = garantiaHasta;
     }
 
-    // --- GETTERS Y SETTERS ---
     public Long getId() { return id; }
     public void setServicio(Servicio servicio) { this.servicio = servicio; }
     public Equipo getEquipo() { return equipo; }
+    public void setEquipo(Equipo equipo) { this.equipo = equipo; }
     public String getTecnico() { return tecnico; }
-
+    public void setTecnico(String tecnico) { this.tecnico = tecnico; }
     public BigDecimal getCosto() { return costo; }
     public void setCosto(BigDecimal costo) { this.costo = costo; }
-
     public BigDecimal getCostoInterno() { return costoInterno; }
     public void setCostoInterno(BigDecimal costoInterno) { this.costoInterno = costoInterno; }
-
     public BigDecimal getDescuento() { return descuento; }
+    public void setDescuento(BigDecimal descuento) { this.descuento = descuento; }
     public String getMetodoPago() { return metodoPago; }
+    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
     public String getTrabajoRealizado() { return trabajoRealizado; }
+    public void setTrabajoRealizado(String trabajoRealizado) { this.trabajoRealizado = trabajoRealizado; }
     public LocalDate getGarantiaHasta() { return garantiaHasta; }
+    public void setGarantiaHasta(LocalDate garantiaHasta) { this.garantiaHasta = garantiaHasta; }
+    public String getFotoAntes() { return fotoAntes; }
+    public void setFotoAntes(String fotoAntes) { this.fotoAntes = fotoAntes; }
+    public String getFotoDespues() { return fotoDespues; }
+    public void setFotoDespues(String fotoDespues) { this.fotoDespues = fotoDespues; }
 }

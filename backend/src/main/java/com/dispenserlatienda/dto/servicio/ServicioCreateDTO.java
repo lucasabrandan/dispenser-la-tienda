@@ -13,5 +13,5 @@ public record ServicioCreateDTO(
         @NotNull ServicioTipo servicioTipo,
         String observaciones,
         @NotEmpty List<ServicioItemCreateDTO> items,
-        String estado // 💡 El 7mo parámetro: "VENTA" o "PRESUPUESTO"
+        String estado
 ) {}
