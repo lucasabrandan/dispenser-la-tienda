@@ -6,9 +6,14 @@ import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.servicio.*;
 import com.dispenserlatienda.repository.*;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,13 +22,16 @@ public class ServicioService {
     private final SedeRepository sedeRepository;
     private final UsuarioRepository usuarioRepository;
     private final EquipoRepository equipoRepository;
+    private final ObjectMapper objectMapper;
 
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
-                           UsuarioRepository usuarioRepository, EquipoRepository equipoRepository) {
+                           UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
+                           ObjectMapper objectMapper) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
-        this.equipoRepository = equipoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.equipoRepository = equipoRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
@@ -33,29 +41,40 @@ public class ServicioService {
 
     @Transactional
     public ServicioDTO crearServicioCompleto(ServicioCreateDTO dto) {
-        Sede sede = sedeRepository.findById(dto.sedeId())
+        Sede sede = sedeRepository.findById(dto.getSedeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada"));
-        Usuario usuario = usuarioRepository.findById(dto.usuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        Servicio servicio = new Servicio(sede, usuario, dto.fecha(), dto.servicioTipo());
-        servicio.setEstado(dto.estado() != null ? dto.estado() : "VENTA");
+        Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
+                .orElseGet(() -> usuarioRepository.findAll().get(0));
 
-        for (var itemDto : dto.items()) {
-            Equipo equipo = equipoRepository.findByNumeroSerie(itemDto.equipoSerial())
-                    .orElseThrow(() -> new ResourceNotFoundException("Serie no encontrada"));
+        // 🚀 Conversión manual de fecha para matar el Error 500
+        LocalDate fechaReal = LocalDate.parse(dto.getFecha());
+        Servicio servicio = new Servicio(sede, usuario, fechaReal, dto.getServicioTipo());
 
-            if (itemDto.costo().compareTo(BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("ERROR CRÍTICO: El costo no puede ser negativo.");
-            }
+        servicio.setClienteNombre(dto.getClienteNombre());
+        servicio.setSedeNombre(dto.getSedeNombre());
+        servicio.setEstado(dto.getEstado() != null ? dto.getEstado() : "PRESUPUESTO");
+        servicio.setFotoRemito(dto.getFotoRemito());
 
-            BigDecimal costoInterno = itemDto.costoInterno() != null ? itemDto.costoInterno() : BigDecimal.ZERO;
+        for (var itemDto : dto.getItems()) {
+            Equipo equipo = equipoRepository.findByNumeroSerie(itemDto.equipoSerial()).orElse(null);
 
-            ServicioItem nuevoItem = new ServicioItem(equipo, itemDto.tecnico(), itemDto.costo(), costoInterno, BigDecimal.ZERO,
-                    itemDto.metodoPago(), itemDto.trabajoRealizado(), itemDto.garantiaHasta());
+            LocalDate garantia = (itemDto.garantiaHasta() != null && !itemDto.garantiaHasta().isEmpty())
+                    ? LocalDate.parse(itemDto.garantiaHasta()) : null;
 
-            nuevoItem.setFotoAntes(itemDto.fotoAntes());
-            nuevoItem.setFotoDespues(itemDto.fotoDespues());
+            ServicioItem nuevoItem = new ServicioItem(
+                    equipo, itemDto.tecnico(), itemDto.costo(),
+                    itemDto.costoInterno() != null ? itemDto.costoInterno() : BigDecimal.ZERO,
+                    BigDecimal.ZERO, itemDto.metodoPago(), itemDto.trabajoRealizado(), garantia
+            );
+            nuevoItem.setCostoExtra(itemDto.costoExtra() != null ? itemDto.costoExtra() : BigDecimal.ZERO);
+
+            // Guardar repuestos como JSON String en la base de datos
+            try {
+                if (itemDto.repuestosUsados() != null) {
+                    nuevoItem.setRepuestosUsados(objectMapper.writeValueAsString(itemDto.repuestosUsados()));
+                }
+            } catch (JsonProcessingException e) { e.printStackTrace(); }
 
             servicio.addItem(nuevoItem);
         }
@@ -64,39 +83,34 @@ public class ServicioService {
 
     @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado) {
-        Servicio servicio = servicioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado con ID: " + id));
-
-        servicio.setEstado(nuevoEstado);
-        return mapToDTO(servicioRepository.save(servicio));
+        Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
+        s.setEstado(nuevoEstado);
+        return mapToDTO(servicioRepository.save(s));
     }
 
     private ServicioDTO mapToDTO(Servicio s) {
-        List<ServicioItemDTO> items = s.getItems().stream()
-                .map(i -> new ServicioItemDTO(
-                        i.getEquipo().getId(),
-                        i.getEquipo().getNumeroSerie(),
-                        i.getEquipo().getUbicacion(),
-                        i.getTecnico(),
-                        i.getCosto(),
-                        i.getCostoInterno(),
-                        i.getDescuento(),
-                        i.getMetodoPago(),
-                        i.getTrabajoRealizado(),
-                        i.getGarantiaHasta(),
-                        i.getFotoAntes(),
-                        i.getFotoDespues()
-                )).toList();
+        List<ServicioItemDTO> items = s.getItems().stream().map(i -> {
+            List<RepuestoUsadoDTO> listaRepuestos = new ArrayList<>();
+            try {
+                if (i.getRepuestosUsados() != null && !i.getRepuestosUsados().isEmpty()) {
+                    listaRepuestos = objectMapper.readValue(i.getRepuestosUsados(),
+                            new TypeReference<List<RepuestoUsadoDTO>>(){});
+                }
+            } catch (JsonProcessingException e) { e.printStackTrace(); }
 
-        // 💡 CORRECCIÓN ACÁ: s.getServicioTipo().name()
+            return new ServicioItemDTO(
+                    i.getEquipo() != null ? i.getEquipo().getId() : null,
+                    i.getEquipo() != null ? i.getEquipo().getNumeroSerie() : "MOSTRADOR",
+                    i.getEquipo() != null ? i.getEquipo().getUbicacion() : "MOSTRADOR",
+                    i.getTecnico(), i.getCosto(), i.getCostoExtra(), i.getCostoInterno(),
+                    i.getDescuento(), i.getMetodoPago(), i.getTrabajoRealizado(),
+                    i.getGarantiaHasta(), listaRepuestos, i.getFotoAntes(), i.getFotoDespues()
+            );
+        }).toList();
+
         return new ServicioDTO(
-                s.getId(),
-                s.getFechaServicio(),
-                s.getServicioTipo() != null ? s.getServicioTipo().name() : null,
-                s.getSede().getCliente().getNombre(),
-                s.getSede().getNombreSede(),
-                items,
-                s.getEstado()
+                s.getId(), s.getFechaServicio(), s.getServicioTipo().name(),
+                s.getClienteNombre(), s.getSedeNombre(), items, s.getEstado(), s.getFotoRemito()
         );
     }
 }

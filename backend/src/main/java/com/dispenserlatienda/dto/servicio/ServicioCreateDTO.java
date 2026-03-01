@@ -1,17 +1,45 @@
 package com.dispenserlatienda.dto.servicio;
 
 import com.dispenserlatienda.domain.servicio.ServicioTipo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDate;
 import java.util.List;
 
-public record ServicioCreateDTO(
-        @NotNull Long sedeId,
-        @NotNull Long usuarioId,
-        @NotNull LocalDate fecha,
-        @NotNull ServicioTipo servicioTipo,
-        String observaciones,
-        @NotEmpty List<ServicioItemCreateDTO> items,
-        String estado
-) {}
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ServicioCreateDTO {
+    @NotNull private Long sedeId;
+    @NotNull private Long usuarioId;
+    @NotNull private String fecha; // Recibimos "yyyy-MM-dd"
+    @NotNull private ServicioTipo servicioTipo;
+    private String clienteNombre;
+    private String sedeNombre;
+    private String observaciones;
+    @NotEmpty private List<ServicioItemCreateDTO> items;
+    private String estado;
+    private String fotoRemito;
+
+    public ServicioCreateDTO() {}
+
+    // GETTERS Y SETTERS COMPLETOS
+    public Long getSedeId() { return sedeId; }
+    public void setSedeId(Long sedeId) { this.sedeId = sedeId; }
+    public Long getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
+    public String getFecha() { return fecha; }
+    public void setFecha(String fecha) { this.fecha = fecha; }
+    public ServicioTipo getServicioTipo() { return servicioTipo; }
+    public void setServicioTipo(ServicioTipo servicioTipo) { this.servicioTipo = servicioTipo; }
+    public String getClienteNombre() { return clienteNombre; }
+    public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
+    public String getSedeNombre() { return sedeNombre; }
+    public void setSedeNombre(String sedeNombre) { this.sedeNombre = sedeNombre; }
+    public String getObservaciones() { return observaciones; }
+    public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+    public List<ServicioItemCreateDTO> getItems() { return items; }
+    public void setItems(List<ServicioItemCreateDTO> items) { this.items = items; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
+    public String getFotoRemito() { return fotoRemito; }
+    public void setFotoRemito(String fotoRemito) { this.fotoRemito = fotoRemito; }
+}

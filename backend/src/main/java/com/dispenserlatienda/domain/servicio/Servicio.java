@@ -31,10 +31,20 @@ public class Servicio {
     private ServicioTipo servicioTipo;
 
     @Column(nullable = false, length = 20)
-    private String estado = "VENTA"; // 💡 VENTA o PRESUPUESTO
+    private String estado = "VENTA";
+
+    // 🚀 NUEVOS: Para persistir los nombres en el historial
+    @Column(name = "cliente_nombre")
+    private String clienteNombre;
+
+    @Column(name = "sede_nombre")
+    private String sedeNombre;
 
     @Column(length = 1000)
     private String observaciones;
+
+    @Column(name = "foto_remito")
+    private String fotoRemito;
 
     @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ServicioItem> items = new ArrayList<>();
@@ -53,6 +63,7 @@ public class Servicio {
         item.setServicio(this);
     }
 
+    // --- Getters y Setters ---
     public Long getId() { return id; }
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
@@ -60,4 +71,13 @@ public class Servicio {
     public List<ServicioItem> getItems() { return Collections.unmodifiableList(items); }
     public LocalDate getFechaServicio() { return fechaServicio; }
     public ServicioTipo getServicioTipo() { return servicioTipo; }
+
+    public String getClienteNombre() { return clienteNombre; }
+    public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
+
+    public String getSedeNombre() { return sedeNombre; }
+    public void setSedeNombre(String sedeNombre) { this.sedeNombre = sedeNombre; }
+
+    public String getFotoRemito() { return fotoRemito; }
+    public void setFotoRemito(String fotoRemito) { this.fotoRemito = fotoRemito; }
 }

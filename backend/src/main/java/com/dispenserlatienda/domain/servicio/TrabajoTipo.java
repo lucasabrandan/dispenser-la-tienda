@@ -1,8 +1,9 @@
 package com.dispenserlatienda.domain.servicio;
 
 public enum TrabajoTipo {
-    CAMBIO_FILTRO,
-    LIMPIEZA,
     REPARACION,
-    REVISION
+    VENTA,
+    INSTALACION,
+    REVISION,
+    CAMBIO_FILTRO  // 👈 AGREGÁ ESTE AQUÍ
 }

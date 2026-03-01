@@ -7,8 +7,9 @@ public record ServicioDTO(
         Long id,
         LocalDate fechaServicio,
         String servicioTipo,
-        String clienteNombre, // 💡 NUEVO: El nombre del Sanatorio
-        String sedeNombre,    // Acá iría "Edificio Córdoba"
+        String clienteNombre,
+        String sedeNombre,
         List<ServicioItemDTO> items,
-        String estado
+        String estado,
+        String fotoRemito // 🚀 AGREGADO: El nombre del archivo para mostrar la foto
 ) {}

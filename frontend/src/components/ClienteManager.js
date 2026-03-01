@@ -8,19 +8,21 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 
 export default function ClienteManager() {
+    // --- ESTADOS ---
     const [clientes, setClientes] = useState([]);
     const [sedes, setSedes] = useState([]);
     const [equipos, setEquipos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     
-    const [modalAbierto, setModalAbierto] = useState(false);
-    const [modalEquipos, setModalEquipos] = useState(null);
-    const [modalSedes, setModalSedes] = useState(null);
+    const [modalCliente, setModalCliente] = useState(false);
+    const [modalSedes, setModalSedes] = useState(null); // Guarda el objeto cliente seleccionado
+    const [modalEquipos, setModalEquipos] = useState(null); // Guarda el objeto cliente seleccionado
 
-    const [form, setForm] = useState({ id: null, nombre: '', cuilDni: '', telefono: '', email: '', nombreSede: 'Casa Central', direccion: '' });
-    const [formEquipo, setFormEquipo] = useState({ id: null, numeroSerie: '', marca: '', modelo: '', ubicacion: '', observaciones: '', sedeId: '' });
+    const [form, setForm] = useState({ id: null, nombre: '', cuilDni: '', telefono: '', email: '', direccion: '' });
     const [formSede, setFormSede] = useState({ id: null, nombreSede: '', direccion: '' });
+    const [formEquipo, setFormEquipo] = useState({ id: null, numeroSerie: '', marca: '', modelo: '', sedeId: '' });
 
+    // --- CARGA DE DATOS ---
     useEffect(() => { cargarDatos(); }, []);
 
     const cargarDatos = () => {
@@ -29,96 +31,72 @@ export default function ClienteManager() {
         api.get('/equipos').then(res => setEquipos(res.data)).catch(() => {});
     };
 
+    // --- GESTIÓN DE CLIENTES ---
     const guardarCliente = async (e) => {
         if (e) e.preventDefault();
-        if (!form.nombre?.trim()) return toast.error("❌ El Nombre es OBLIGATORIO.");
+        if (!form.nombre.trim()) return toast.error("❌ El nombre es obligatorio");
+        
+        const loading = toast.loading("Guardando cliente...");
         try {
             if (form.id) {
-                await api.put(`/clientes/${form.id}`, form);
-                toast.success("✅ Cliente actualizado");
+                await api.put(`/clientes/${form.id}`, { ...form, clienteTipo: "PARTICULAR" });
+                toast.success("✅ Datos actualizados", { id: loading });
             } else {
-                const resCli = await api.post('/clientes', { ...form, clienteTipo: "PARTICULAR" });
-                await api.post('/sedes', { clienteId: resCli.data.id, nombreSede: form.nombreSede, direccion: form.direccion });
-                toast.success("✅ Cliente y Sede creados");
+                await api.post('/clientes', { ...form, clienteTipo: "PARTICULAR" });
+                toast.success("✅ Cliente registrado", { id: loading });
             }
-            setModalAbierto(false);
+            setModalCliente(false);
             cargarDatos();
-        } catch (err) { toast.error("❌ Error al guardar cliente"); }
+        } catch (err) { toast.error("❌ Error al guardar", { id: loading }); }
     };
 
     const eliminarCliente = async (c) => {
-        if(!window.confirm(`⚠️ ¿ELIMINAR A "${c.nombre.toUpperCase()}"?`)) return;
+        if(!window.confirm(`⚠️ ¿ELIMINAR A "${c.nombre.toUpperCase()}"?\nSe borrarán sus sedes y equipos asociados.`)) return;
         try {
             await api.delete(`/clientes/${c.id}`);
-            toast.success("🗑️ Registro eliminado");
+            toast.success("🗑️ Cliente borrado");
             cargarDatos();
         } catch (err) { toast.error("❌ Error al eliminar"); }
     };
 
-    // --- 🛡️ LÓGICA DE SEDES (CORREGIDA PARA EVITAR 404) ---
-    const guardarSedeAdicional = async (e) => {
-        if (e) e.preventDefault();
-        if (!modalSedes?.id) return toast.error("❌ No hay un cliente activo.");
-        if (!formSede.nombreSede.trim()) return toast.error("❌ Nombre de sede requerido.");
-
+    // --- GESTIÓN DE SEDES ---
+    const guardarSede = async (e) => {
+        e.preventDefault();
+        if (!formSede.nombreSede.trim()) return toast.error("❌ Nombre de sede obligatorio");
+        
+        const loading = toast.loading("Guardando sede...");
         try {
             const payload = { ...formSede, clienteId: modalSedes.id };
-            if (formSede.id) {
-                // Si esto da 404, el problema está en el Controller de Java (@PutMapping)
-                await api.put(`/sedes/${formSede.id}`, payload);
-                toast.success("✅ Sede actualizada");
-            } else {
-                await api.post('/sedes', payload);
-                toast.success("✅ Sede agregada");
-            }
+            if (formSede.id) await api.put(`/sedes/${formSede.id}`, payload);
+            else await api.post('/sedes', payload);
+            
+            toast.success("✅ Sede guardada", { id: loading });
             setFormSede({ id: null, nombreSede: '', direccion: '' });
             cargarDatos();
-        } catch (err) { 
-            console.error(err);
-            toast.error("❌ Error 404: Ruta de Sede no encontrada"); 
-        }
+        } catch (err) { toast.error("❌ Error", { id: loading }); }
     };
 
-    const eliminarSedeAdicional = async (id) => {
-        if(!window.confirm("⚠️ ¿Eliminar sucursal?")) return;
-        try {
-            await api.delete(`/sedes/${id}`);
-            toast.success("🗑️ Sede eliminada");
-            cargarDatos();
-        } catch (err) { 
-            console.error(err);
-            toast.error("❌ Error al borrar: No se encontró la ruta /sedes/" + id); 
-        }
-    };
-
+    // --- GESTIÓN DE EQUIPOS ---
     const guardarEquipo = async (e) => {
-        if (e) e.preventDefault();
+        e.preventDefault();
+        if (!formEquipo.numeroSerie.trim()) return toast.error("❌ S/N es obligatorio");
         if (!formEquipo.sedeId) return toast.error("❌ Seleccioná una sede");
+
+        const loading = toast.loading("Registrando equipo...");
         try {
-            if (formEquipo.id) {
-                await api.put(`/equipos/${formEquipo.id}`, formEquipo);
-                toast.success("✅ Dispenser actualizado");
-            } else {
-                await api.post('/equipos', formEquipo);
-                toast.success("✅ Dispenser registrado");
-            }
-            setFormEquipo({ id: null, numeroSerie: '', marca: '', modelo: '', ubicacion: '', observaciones: '', sedeId: '' });
+            if (formEquipo.id) await api.put(`/equipos/${formEquipo.id}`, formEquipo);
+            else await api.post('/equipos', formEquipo);
+            
+            toast.success("✅ Dispenser registrado", { id: loading });
+            setFormEquipo({ id: null, numeroSerie: '', marca: '', modelo: '', sedeId: '' });
             cargarDatos();
-        } catch (err) { toast.error("❌ Error al guardar equipo"); }
+        } catch (err) { toast.error("❌ Error", { id: loading }); }
     };
 
-    const eliminarEquipo = async (id) => {
-        if(!window.confirm("⚠️ ¿Borrar dispenser?")) return;
-        try {
-            await api.delete(`/equipos/${id}`);
-            toast.success("🗑️ Equipo eliminado");
-            cargarDatos();
-        } catch (err) { toast.error("❌ Error al eliminar equipo"); }
-    };
-
+    // --- FILTROS ---
     const filtrados = clientes.filter(c => 
-        c.nombre?.toLowerCase().includes(busqueda.toLowerCase()) || 
-        c.cuilDni?.includes(busqueda)
+        (c.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) || 
+        (c.cuilDni || '').includes(busqueda)
     );
 
     const sedesDelCliente = modalSedes ? sedes.filter(s => s.cliente?.id === modalSedes.id) : [];
@@ -126,152 +104,142 @@ export default function ClienteManager() {
     const equiposDelCliente = modalEquipos ? equipos.filter(eq => sedesParaEquipos.find(s => s.id === eq.sede?.id)) : [];
 
     return (
-        <div style={{ color: 'var(--text-primary)' }} className="card-animate">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0 }}>👥 Directorio de Clientes</h2>
-                <Button variant="success" type="button" onClick={() => { setForm({ id: null, nombre: '', cuilDni: '', telefono: '', email: '', nombreSede: 'Casa Central', direccion: '' }); setModalAbierto(true); }}>
-                    + NUEVO CLIENTE
-                </Button>
+        <div style={{ background: '#EDEDED', minHeight: '100vh', paddingBottom: '120px' }}>
+            
+            {/* BUSCADOR ESTILO ML */}
+            <div style={{ background: '#FFF159', padding: '15px', borderBottom: '1px solid #DDD' }}>
+                <Input 
+                    placeholder="🔍 Buscar cliente por nombre o CUIT..." 
+                    value={busqueda} 
+                    onChange={e => setBusqueda(e.target.value)}
+                    style={{ background: '#FFF', border: 'none', marginBottom: 0 }}
+                />
             </div>
 
-            <Input 
-                placeholder="🔍 Buscar por nombre, CUIT o teléfono..." 
-                value={busqueda} 
-                onChange={e => setBusqueda(e.target.value)} 
-            />
+            <div style={{ padding: '15px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#111' }}>MIS CLIENTES ({filtrados.length})</h2>
+                    <Button onClick={() => { setForm({ id: null, nombre: '', cuilDni: '', telefono: '', email: '', direccion: '' }); setModalCliente(true); }}
+                            style={{ background: '#3483FA', height: '40px', padding: '0 15px', fontWeight: 'bold' }}>
+                        + NUEVO
+                    </Button>
+                </div>
 
-            <Card style={{ padding: 0, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ background: 'var(--bg-sidebar)', borderBottom: '2px solid var(--border-color)' }}>
-                            <th style={{ padding: '15px' }}>Nombre / Empresa</th>
-                            <th>CUIT/DNI</th>
-                            <th>Contacto</th>
-                            <th style={{ textAlign: 'center' }}>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtrados.map(c => (
-                            <tr key={c.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                <td style={{ padding: '15px' }}><b style={{ color: 'var(--brand-yellow)' }}>{c.nombre}</b></td>
-                                <td>{c.cuilDni || '-'}</td>
-                                <td><small>{c.telefono}<br/>{c.email}</small></td>
-                                <td style={{ textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center', padding: '10px' }}>
-                                    <Button type="button" variant="secondary" onClick={() => setModalSedes(c)} style={{padding: '5px 10px'}}>📍 Sedes</Button>
-                                    <Button type="button" variant="secondary" onClick={() => setModalEquipos(c)} style={{padding: '5px 10px', color: 'var(--status-info)'}}>💧 Eq.</Button>
-                                    <Button type="button" variant="secondary" onClick={() => { setForm(c); setModalAbierto(true); }} style={{padding: '5px 10px'}}>✏️</Button>
-                                    <Button type="button" variant="danger" onClick={() => eliminarCliente(c)} style={{padding: '5px 10px'}}>🗑️</Button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </Card>
+                {/* LISTADO DE CLIENTES */}
+                <div style={{ display: 'grid', gap: '12px' }}>
+                    {filtrados.map(c => (
+                        <div key={c.id} style={{ background: '#FFF', padding: '15px', borderRadius: '12px', border: '1px solid #DDD', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <div>
+                                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#111' }}>{c.nombre.toUpperCase()}</h4>
+                                    <p style={{ margin: '4px 0', fontSize: '12px', color: '#666', fontWeight: 'bold' }}>
+                                        {c.cuilDni || 'SIN CUIT'} • {c.telefono || 'SIN TEL'}
+                                    </p>
+                                </div>
+                                <div style={{ fontSize: '10px', color: '#AAA', fontWeight: '900' }}>ID {c.id}</div>
+                            </div>
+                            
+                            {/* ACCIONES ERGONÓMICAS */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #EEE' }}>
+                                <button onClick={() => setModalSedes(c)} title="Sedes" style={{ background: '#F5F5F5', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '20px' }}>📍</button>
+                                <button onClick={() => setModalEquipos(c)} title="Equipos" style={{ background: '#F5F5F5', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '20px' }}>💧</button>
+                                <button onClick={() => { setForm(c); setModalCliente(true); }} title="Editar" style={{ background: '#F5F5F5', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '20px' }}>✏️</button>
+                                <button onClick={() => eliminarCliente(c)} title="Borrar" style={{ background: '#FFF1F1', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '20px' }}>🗑️</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             {/* --- MODAL CLIENTE --- */}
-            {modalAbierto && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <Card style={{ width: '550px', borderTop: '5px solid var(--brand-red)' }}>
-                        <h3 style={{marginTop: 0, color: 'var(--brand-red)'}}>{form.id ? '✏️ EDITAR CLIENTE' : '🆕 NUEVO CLIENTE'}</h3>
-                        <form onSubmit={guardarCliente} style={{ display: 'grid', gap: '10px' }}>
-                            <Input label="Nombre o Empresa *" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} required />
+            {modalCliente && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 2000 }}>
+                    <div style={{ background: '#FFF', width: '100%', maxWidth: '500px', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '20px' }}>
+                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
+                        <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#111', marginBottom: '15px' }}>{form.id ? 'EDITAR CLIENTE' : 'NUEVO CLIENTE'}</h3>
+                        <form onSubmit={guardarCliente}>
+                            <Input label="NOMBRE O EMPRESA" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} />
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                                 <Input label="CUIT / DNI" value={form.cuilDni} onChange={e => setForm({...form, cuilDni: e.target.value})} />
-                                <Input label="Teléfono" value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})} />
+                                <Input label="TELÉFONO" value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})} />
                             </div>
-                            <Input label="Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-                            {!form.id && (
-                                <div style={{ background: 'var(--bg-main)', padding: '15px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                                    <label style={{ fontSize: '11px', color: 'var(--brand-yellow)', fontWeight: 'bold' }}>📍 REGISTRO DE PRIMERA SEDE</label>
-                                    <Input label="Nombre de Sede" value={form.nombreSede} onChange={e => setForm({...form, nombreSede: e.target.value})} />
-                                    <Input label="Dirección" value={form.direccion} onChange={e => setForm({...form, direccion: e.target.value})} />
-                                </div>
-                            )}
+                            <Input label="EMAIL" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
                             <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                <Button variant="secondary" type="button" onClick={() => setModalAbierto(false)} style={{flex: 1}}>CANCELAR</Button>
-                                <Button variant="primary" type="submit" style={{flex: 2}}>💾 GUARDAR CLIENTE</Button>
+                                <Button onClick={() => setModalCliente(false)} style={{ flex: 1, background: '#666' }}>CANCELAR</Button>
+                                <Button type="submit" style={{ flex: 2, background: '#3483FA' }}>GUARDAR CLIENTE</Button>
                             </div>
                         </form>
-                    </Card>
+                    </div>
                 </div>
             )}
 
-            {/* --- MODAL SEDES --- */}
+            {/* --- MODAL SEDES (📍) --- */}
             {modalSedes && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <Card style={{ width: '700px', maxHeight: '90vh', overflowY: 'auto', borderTop: '5px solid var(--status-success)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0 }}>📍 Sedes: <span style={{color: 'var(--brand-yellow)'}}>{modalSedes.nombre}</span></h3>
-                            <Button variant="danger" type="button" onClick={() => setModalSedes(null)} style={{padding: '5px 12px'}}>CERRAR X</Button>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 2000 }}>
+                    <div style={{ background: '#FFF', width: '100%', maxWidth: '500px', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '20px' }}>
+                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
+                        <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#111' }}>SEDES DE {modalSedes.nombre.toUpperCase()}</h3>
+                        
+                        <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '20px', background: '#F9F9F9', borderRadius: '12px', border: '1px solid #EEE' }}>
+                            {sedesDelCliente.length > 0 ? sedesDelCliente.map(s => (
+                                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #EEE' }}>
+                                    <div>
+                                        <p style={{ margin: 0, fontWeight: 'bold', color: '#111' }}>{s.nombreSede}</p>
+                                        <p style={{ margin: 0, fontSize: '11px', color: '#666' }}>{s.direccion}</p>
+                                    </div>
+                                    <button onClick={() => api.delete(`/sedes/${s.id}`).then(cargarDatos)} style={{ border: 'none', background: 'none', fontSize: '18px' }}>🗑️</button>
+                                </div>
+                            )) : <p style={{ padding: '20px', textAlign: 'center', color: '#999' }}>No hay sedes cargadas</p>}
                         </div>
-                        <form onSubmit={guardarSedeAdicional} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px', gap: '10px', background: 'var(--bg-main)', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid var(--border-color)' }}>
-                            <Input label="Nombre Sede" value={formSede.nombreSede} onChange={e => setFormSede({...formSede, nombreSede: e.target.value})} placeholder="Ej: Sucursal Lanús" />
-                            <Input label="Dirección" value={formSede.direccion} onChange={e => setFormSede({...formSede, direccion: e.target.value})} placeholder="Calle 123" />
-                            <Button variant="success" type="submit" style={{height: '42px', marginTop: '22px'}}>➕</Button>
+
+                        <form onSubmit={guardarSede} style={{ borderTop: '2px dashed #DDD', paddingTop: '15px' }}>
+                            <Input label="NOMBRE DE SEDE (EJ: DEPÓSITO)" value={formSede.nombreSede} onChange={e => setFormSede({...formSede, nombreSede: e.target.value})} />
+                            <Input label="DIRECCIÓN" value={formSede.direccion} onChange={e => setFormSede({...formSede, direccion: e.target.value})} />
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <Button onClick={() => setModalSedes(null)} style={{ flex: 1, background: '#666' }}>CERRAR</Button>
+                                <Button type="submit" style={{ flex: 2, background: '#3483FA' }}>+ AÑADIR SEDE</Button>
+                            </div>
                         </form>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{textAlign: 'left', color: 'var(--text-secondary)', fontSize: '12px'}}>
-                                    <th style={{padding: '10px'}}>Nombre</th>
-                                    <th>Dirección</th>
-                                    <th style={{textAlign: 'right'}}>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sedesDelCliente.map(s => (
-                                    <tr key={s.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                        <td style={{ padding: '10px' }}><b>{s.nombreSede}</b></td>
-                                        <td><small style={{color: 'var(--text-secondary)'}}>{s.direccion}</small></td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <Button type="button" variant="secondary" onClick={() => setFormSede(s)} style={{marginRight: '5px', padding: '4px 8px'}}>✏️</Button>
-                                            <Button type="button" variant="danger" onClick={() => eliminarSedeAdicional(s.id)} style={{padding: '4px 8px'}}>🗑️</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </Card>
+                    </div>
                 </div>
             )}
 
-            {/* --- MODAL EQUIPOS --- */}
+            {/* --- MODAL EQUIPOS (💧) --- */}
             {modalEquipos && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <Card style={{ width: '800px', maxHeight: '90vh', overflowY: 'auto', borderTop: '5px solid var(--status-info)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0 }}>💧 Parque: <span style={{color: 'var(--brand-yellow)'}}>{modalEquipos.nombre}</span></h3>
-                            <Button variant="danger" type="button" onClick={() => setModalEquipos(null)} style={{padding: '5px 12px'}}>CERRAR X</Button>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 2000 }}>
+                    <div style={{ background: '#FFF', width: '100%', maxWidth: '500px', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '20px' }}>
+                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
+                        <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#3483FA' }}>DISPENSERS REGISTRADOS</h3>
+
+                        <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '20px' }}>
+                            {equiposDelCliente.map(eq => (
+                                <div key={eq.id} style={{ padding: '12px', background: '#F5F5F5', borderRadius: '10px', marginBottom: '8px', border: '1px solid #DDD' }}>
+                                    <p style={{ margin: 0, fontWeight: '900', color: '#111' }}>S/N: {eq.numeroSerie}</p>
+                                    <p style={{ margin: 0, fontSize: '11px', color: '#666' }}>{eq.marca} {eq.modelo} • {eq.sede?.nombreSede}</p>
+                                </div>
+                            ))}
                         </div>
-                        <form onSubmit={guardarEquipo} style={{ background: 'var(--bg-main)', padding: '20px', borderRadius: '10px', marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', border: '1px solid var(--border-color)' }}>
-                            <div style={{gridColumn: 'span 3'}}>
-                                <label style={{fontSize: '11px', color: 'var(--brand-yellow)', fontWeight: 'bold'}}>UBICAR EN SEDE:</label>
-                                <select value={formEquipo.sedeId} onChange={e => setFormEquipo({...formEquipo, sedeId: e.target.value})} style={{width: '100%', padding: '12px', background: 'var(--bg-card)', color: 'white', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '5px'}}>
-                                    <option value="">-- Seleccionar Destino --</option>
-                                    {sedesParaEquipos.map(s => <option key={s.id} value={s.id}>{s.nombreSede} ({s.direccion})</option>)}
-                                </select>
+
+                        <form onSubmit={guardarEquipo} style={{ borderTop: '2px dashed #DDD', paddingTop: '15px' }}>
+                            <label className="label-dark" style={{ fontSize: '10px' }}>¿A QUÉ SEDE PERTENECE?</label>
+                            <select 
+                                style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '15px', border: '1px solid #DDD', fontSize: '16px', background: '#FFF' }}
+                                onChange={e => setFormEquipo({...formEquipo, sedeId: e.target.value})}
+                                value={formEquipo.sedeId}
+                            >
+                                <option value="">Seleccionar Sede...</option>
+                                {sedesParaEquipos.map(s => <option key={s.id} value={s.id}>{s.nombreSede}</option>)}
+                            </select>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <Input label="NRO SERIE (S/N)" value={formEquipo.numeroSerie} onChange={e => setFormEquipo({...formEquipo, numeroSerie: e.target.value})} />
+                                <Input label="MARCA" value={formEquipo.marca} onChange={e => setFormEquipo({...formEquipo, marca: e.target.value})} />
                             </div>
-                            <Input label="Serie" value={formEquipo.numeroSerie} onChange={e => setFormEquipo({...formEquipo, numeroSerie: e.target.value})} />
-                            <Input label="Marca" value={formEquipo.marca} onChange={e => setFormEquipo({...formEquipo, marca: e.target.value})} />
-                            <Button variant="success" type="submit" style={{marginTop: '22px'}}>💾 GUARDAR</Button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <Button onClick={() => setModalEquipos(null)} style={{ flex: 1, background: '#666' }}>CERRAR</Button>
+                                <Button type="submit" style={{ flex: 2, background: '#3483FA' }}>+ REGISTRAR DISPENSER</Button>
+                            </div>
                         </form>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <tbody>
-                                {equiposDelCliente.map(eq => (
-                                    <tr key={eq.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                        <td style={{ padding: '12px' }}>
-                                            <b style={{color: 'var(--status-info)'}}>{eq.numeroSerie}</b><br/>
-                                            <small>{eq.marca}</small>
-                                        </td>
-                                        <td><small>{sedesParaEquipos.find(s => s.id === eq.sede?.id)?.nombreSede}</small></td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <Button type="button" variant="secondary" onClick={() => setFormEquipo({...eq, sedeId: eq.sede?.id})} style={{marginRight: '5px', padding: '5px 10px'}}>✏️</Button>
-                                            <Button type="button" variant="danger" onClick={() => eliminarEquipo(eq.id)} style={{padding: '5px 10px'}}>🗑️</Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </Card>
+                    </div>
                 </div>
             )}
         </div>

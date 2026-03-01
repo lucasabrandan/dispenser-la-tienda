@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
-// ⚛️ Átomos
+// Átomos UI
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Input from './ui/Input';
 
-// 🛠️ Utilidades
+// Utilidades
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 
 export default function ServicioList() {
@@ -19,19 +19,26 @@ export default function ServicioList() {
     useEffect(() => { cargarServicios(); }, []);
 
     const cargarServicios = () => {
-        api.get('/servicios').then(res => setServicios(res.data)).catch(() => toast.error("Error al cargar historial"));
+        api.get('/servicios')
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : [];
+                // Ordenar por fecha: lo más nuevo arriba de todo
+                setServicios(data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)));
+            })
+            .catch(() => toast.error("Error al conectar con el historial"));
     };
 
     const aprobarPresupuesto = async (id) => {
+        const loading = toast.loading("Confirmando cobro...");
         try {
             await api.patch(`/servicios/${id}/estado`, { estado: "VENTA" });
-            toast.success("✅ ¡Caja actualizada!");
+            toast.success("✅ ¡Venta confirmada!", { id: loading });
             cargarServicios(); 
-        } catch (err) { toast.error("Error al cobrar"); }
+        } catch (err) { toast.error("Error al procesar el pago", { id: loading }); }
     };
 
     const eliminarServicio = async (id) => {
-        if(window.confirm("⚠️ ¿Eliminar permanentemente?")) {
+        if(window.confirm("⚠️ ¿Eliminar permanentemente este registro? Esta acción no se puede deshacer.")) {
             try {
                 await api.delete(`/servicios/${id}`);
                 toast.success("🗑️ Registro borrado");
@@ -41,86 +48,130 @@ export default function ServicioList() {
     };
 
     const calcularCosto = (s) => s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
-    const ventas = servicios.filter(s => (s.estado || '').toUpperCase() === 'VENTA');
-    const totalFacturado = ventas.reduce((acc, s) => acc + calcularCosto(s), 0);
-
+    
+    // --- LÓGICA DE FILTRADO ---
     const filtrados = servicios.filter(s => {
-        const estadoLimpio = (s.estado || '').trim().toUpperCase();
-        const coincideTab = filtroTab === 'TODOS' || estadoLimpio === filtroTab;
+        const coincideTab = filtroTab === 'TODOS' || (s.estado || '').toUpperCase() === filtroTab;
         const txt = busqueda.toLowerCase();
-        return coincideTab && (s.clienteNombre?.toLowerCase().includes(txt) || s.sedeNombre?.toLowerCase().includes(txt));
+        
+        return coincideTab && (
+            (s.clienteNombre?.toLowerCase() || '').includes(txt) || 
+            (s.sedeNombre?.toLowerCase() || '').includes(txt) ||
+            s.items?.some(it => it.equipoSerial?.toLowerCase().includes(txt))
+        );
     });
 
+    const totalFacturado = servicios
+        .filter(s => (s.estado || '').toUpperCase() === 'VENTA')
+        .reduce((acc, s) => acc + calcularCosto(s), 0);
+
+    // --- RE-IMPRESIÓN DE PDF CON DESGLOSE ---
+    const dispararPDF = (s) => {
+        generarRemitoPDFPremium({
+            esPresupuesto: s.estado === 'PRESUPUESTO',
+            cliente: { nombre: s.clienteNombre },
+            sede: { nombreSede: s.sedeNombre },
+            tecnico: "Marcos",
+            // Mapeamos los items recuperando los repuestos y la MO que guardamos
+            ticketItems: s.items.map(it => ({
+                equipoSerial: it.equipoSerial,
+                trabajo: it.trabajoRealizado,
+                totalCalculado: it.costo,
+                costoExtra: it.costoExtra || 0,
+                repuestosUsados: it.repuestosUsados || []
+            })),
+            totalFinal: calcularCosto(s)
+        });
+    };
+
     return (
-        <div style={{ color: 'var(--text-primary)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '25px' }}>
-                <Card style={{ borderLeft: '5px solid var(--status-success)' }}>
-                    <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>FACTURACIÓN TOTAL</div>
-                    <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: 'var(--status-success)' }}>$ {totalFacturado.toLocaleString()}</div>
-                </Card>
-                <Card style={{ borderLeft: '5px solid var(--brand-yellow)' }}>
-                    <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>OPERACIONES</div>
-                    <div style={{ fontSize: '1.8em', fontWeight: 'bold' }}>{servicios.length}</div>
-                </Card>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', gap: '15px' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button variant={filtroTab === 'TODOS' ? 'primary' : 'secondary'} onClick={() => setFiltroTab('TODOS')}>TODOS</Button>
-                    <Button variant={filtroTab === 'VENTA' ? 'success' : 'secondary'} onClick={() => setFiltroTab('VENTA')}>VENTAS</Button>
+        <div style={{ background: '#F0F0F0', minHeight: '100vh', padding: '15px', color: '#000' }}>
+            
+            {/* --- DASHBOARD SUPERIOR --- */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+                <div style={{ background: '#00A650', padding: '15px', borderRadius: '16px', border: '2px solid #000', boxShadow: '4px 4px 0px #000' }}>
+                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#FFF', margin: 0 }}>FACTURACIÓN (VENTAS)</p>
+                    <p style={{ fontSize: '22px', fontWeight: '900', color: '#FFF', margin: 0 }}>$ {totalFacturado.toLocaleString()}</p>
                 </div>
-                <Input placeholder="🔍 Buscar por cliente o sede..." value={busqueda} onChange={e => setBusqueda(e.target.value)} style={{maxWidth: '300px', marginBottom: 0}} />
+                <div style={{ background: '#FFF', padding: '15px', borderRadius: '16px', border: '2px solid #000', boxShadow: '4px 4px 0px #000' }}>
+                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#666', margin: 0 }}>TOTAL ÓRDENES</p>
+                    <p style={{ fontSize: '22px', fontWeight: '900', color: '#000', margin: 0 }}>{servicios.length}</p>
+                </div>
             </div>
 
-            <Card style={{ padding: 0, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: 'var(--bg-sidebar)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                            <th style={{ padding: '15px' }}>Fecha</th>
-                            <th>Cliente / Sede</th>
-                            <th style={{ textAlign: 'right' }}>Total</th>
-                            <th style={{ textAlign: 'center' }}>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtrados.map(s => (
-                            <tr key={s.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                <td style={{ padding: '15px', fontSize: '13px' }}>{s.fecha}</td>
-                                <td>
-                                    <b style={{color: 'var(--brand-yellow)'}}>{s.clienteNombre}</b><br/>
-                                    <small>{s.sedeNombre}</small>
-                                </td>
-                                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>$ {calcularCosto(s).toLocaleString()}</td>
-                                <td style={{ textAlign: 'center' }}>
-                                    <Button variant="secondary" onClick={() => generarRemitoPDFPremium({ esPresupuesto: s.estado === 'PRESUPUESTO', cliente: {nombre: s.clienteNombre}, sede: {nombreSede: s.sedeNombre}, tecnico: "Marcos", ticketItems: s.items.map(i => ({...i, moFinal: i.costo, subtotalCobrado: i.costo})), totalFinal: calcularCosto(s) })} style={{padding: '5px 10px', marginRight: '5px'}}>📄</Button>
-                                    <Button variant="secondary" onClick={() => setModalDetalle(s)} style={{padding: '5px 10px', marginRight: '5px'}}>👁️</Button>
-                                    {s.estado === 'PRESUPUESTO' && <Button variant="success" onClick={() => aprobarPresupuesto(s.id)} style={{padding: '5px 10px', marginRight: '5px'}}>💰</Button>}
-                                    <Button variant="danger" onClick={() => eliminarServicio(s.id)} style={{padding: '5px 10px'}}>🗑️</Button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </Card>
+            {/* --- BUSCADOR Y TABS --- */}
+            <div style={{ marginBottom: '20px' }}>
+                <input 
+                    placeholder="🔍 Cliente, Sede o S/N..." 
+                    value={busqueda} 
+                    onChange={e => setBusqueda(e.target.value)} 
+                    style={{ width: '100%', padding: '15px', background: '#FFF', borderRadius: '12px', border: '2px solid #000', fontSize: '16px', fontWeight: 'bold' }}
+                />
+                <div style={{ display: 'flex', gap: '5px', background: '#000', padding: '5px', borderRadius: '12px', marginTop: '10px' }}>
+                    {['TODOS', 'VENTA', 'PRESUPUESTO'].map(t => (
+                        <button key={t} onClick={() => setFiltroTab(t)}
+                            style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '900',
+                                background: filtroTab === t ? '#FFF' : 'transparent',
+                                color: filtroTab === t ? '#000' : '#FFF' }}>
+                            {t}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-            {/* MODAL RADIOGRAFÍA CON TU LÓGICA DE GANANCIA NETA */}
+            {/* --- LISTADO DE TARJETAS --- */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
+                {filtrados.map(s => (
+                    <div key={s.id} style={{ background: '#FFF', padding: '15px', borderRadius: '20px', border: '2px solid #000', boxShadow: '2px 2px 0px #000' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                            <div>
+                                <span style={{ fontSize: '11px', color: '#666', fontWeight: 'bold' }}>📅 {new Date(s.fecha).toLocaleDateString()}</span>
+                                <h4 style={{ fontSize: '17px', fontWeight: '900', margin: '2px 0', color: '#000' }}>{s.clienteNombre}</h4>
+                                <p style={{ fontSize: '13px', color: '#444', margin: 0 }}>📍 {s.sedeNombre}</p>
+                            </div>
+                            <span style={{ 
+                                fontSize: '10px', fontWeight: '900', padding: '5px 10px', borderRadius: '8px', border: '1px solid #000',
+                                background: s.estado === 'VENTA' ? '#D1FAE5' : '#FFF159',
+                                color: '#000'
+                            }}>
+                                {s.estado}
+                            </span>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #EEE', paddingTop: '12px' }}>
+                            <div style={{ fontSize: '24px', fontWeight: '900', color: '#000' }}>$ {calcularCosto(s).toLocaleString()}</div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button onClick={() => setModalDetalle(s)} style={{ background: '#EEE', border: '1px solid #000', borderRadius: '10px', padding: '10px', fontSize: '18px' }}>👁️</button>
+                                <button onClick={() => dispararPDF(s)} style={{ background: '#EEE', border: '1px solid #000', borderRadius: '10px', padding: '10px', fontSize: '18px' }}>📄</button>
+                                {s.estado === 'PRESUPUESTO' && (
+                                    <button onClick={() => aprobarPresupuesto(s.id)} style={{ background: '#FFF159', border: '1px solid #000', borderRadius: '10px', padding: '10px', fontWeight: '900', fontSize: '12px' }}>💰 COBRAR</button>
+                                )}
+                                <button onClick={() => eliminarServicio(s.id)} style={{ background: '#FF0000', color: '#FFF', border: '1px solid #000', borderRadius: '10px', padding: '10px', fontSize: '18px' }}>🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* --- MODAL DE DETALLE --- */}
             {modalDetalle && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                    <Card style={{ width: '500px', borderTop: '5px solid var(--brand-red)' }}>
-                        <h3>🧾 Detalle de Operación</h3>
-                        <div style={{ marginBottom: '20px', fontSize: '14px' }}>
-                            <p><strong>Cliente:</strong> {modalDetalle.clienteNombre}</p>
-                            <p><strong>Sede:</strong> {modalDetalle.sedeNombre}</p>
-                            <hr style={{borderColor: 'var(--border-color)'}} />
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 2000 }}>
+                    <div style={{ background: '#FFF', width: '100%', borderTopLeftRadius: '30px', borderTopRightRadius: '30px', padding: '25px', border: '2px solid #000' }}>
+                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
+                        <h3 style={{ fontSize: '20px', fontWeight: '900', marginBottom: '15px', color: '#000' }}>DETALLE DE LA OPERACIÓN</h3>
+                        <div style={{ maxHeight: '50vh', overflowY: 'auto', marginBottom: '20px' }}>
                             {modalDetalle.items.map((item, idx) => (
-                                <div key={idx} style={{background: 'var(--bg-main)', padding: '10px', borderRadius: '8px', marginTop: '10px'}}>
-                                    <p><strong>Equipo:</strong> {item.equipoSerial}</p>
-                                    <p><strong>Ganancia Neta:</strong> <span style={{color: 'var(--status-success)'}}>$ {(Number(item.costo) - Number(item.costoInterno)).toLocaleString()}</span></p>
+                                <div key={idx} style={{ background: '#F9FAFB', padding: '15px', borderRadius: '15px', marginBottom: '10px', border: '1px solid #DDD' }}>
+                                    <p style={{ fontSize: '14px', fontWeight: '900', margin: '0 0 5px', color: '#000' }}>📦 {item.equipoSerial}</p>
+                                    <p style={{ fontSize: '13px', color: '#444', margin: '0 0 10px' }}>{item.trabajoRealizado}</p>
+                                    <div style={{ borderTop: '1px solid #EEE', paddingTop: '10px', textAlign: 'right', fontWeight: '900', fontSize: '18px', color: '#00A650' }}>
+                                        $ {Number(item.costo).toLocaleString()}
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                        <Button variant="secondary" onClick={() => setModalDetalle(null)} style={{width: '100%'}}>CERRAR</Button>
-                    </Card>
+                        <Button onClick={() => setModalDetalle(null)} style={{ width: '100%', height: '55px', background: '#000' }}>CERRAR</Button>
+                    </div>
                 </div>
             )}
         </div>

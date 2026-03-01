@@ -1,38 +1,25 @@
-.App {
-  text-align: center;
+:root {
+  /* Paleta Mercado Libre Profesional */
+  --ml-yellow: #FFF159;
+  --ml-blue: #3483FA;
+  --ml-bg: #EDEDED;
+  --ml-card: #FFFFFF;
+  --ml-text-main: #333333;
+  --ml-text-sec: #666666;
+  --ml-border: #DDDDDD;
+  --ml-success: #00A650;
+  --ml-error: #F23D4F;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+body {
+  background-color: var(--ml-bg);
+  color: var(--ml-text-main);
+  font-family: 'Proxima Nova', -apple-system, sans-serif;
+  margin: 0;
+  padding-bottom: 70px; /* Espacio para el menú inferior */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* Clases de utilidad para que nada se pierda */
+.label-dark { color: var(--ml-text-main); font-weight: bold; display: block; margin-bottom: 5px; }
+.text-error { color: var(--ml-error); }
+.text-success { color: var(--ml-success); }

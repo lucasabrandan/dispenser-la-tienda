@@ -1,174 +1,306 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
-import imageCompression from 'browser-image-compression';
 import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 
-// ⚛️ Átomos
+// Átomos UI
 import Card from './ui/Card';
 import Button from './ui/Button';
-import Input from './ui/Input';
-
-// 🛠️ Utilidades
-import { darkSelectStyles } from '../utils/selectStyles';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 
 export default function ServicioForm({ onSaved }) {
-    const [clientes, setClientes] = useState([]);
-    const [sedes, setSedes] = useState([]);
-    const [equipos, setEquipos] = useState([]);
-    const [repuestosDB, setRepuestosDB] = useState([]);
-    
-    const [esPresupuesto, setEsPresupuesto] = useState(false);
-    const [clienteIdSeleccionado, setClienteIdSeleccionado] = useState('');
-    const [sedeId, setSedeId] = useState('');
-    const [tecnico, setTecnico] = useState('Marcos');
-    const [descuentoGlobal, setDescuentoGlobal] = useState('0');
-    const [pagoGlobal, setPagoGlobal] = useState('EFECTIVO');
+    const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
+    const [clienteId, setClienteId] = useState(null);
+    const [esPresupuesto, setEsPresupuesto] = useState(true); 
     const [ticketItems, setTicketItems] = useState([]);
-
-    const [itemActual, setItemActual] = useState({
-        equipoSerial: '', trabajo: '', costoMO: '', repuestosUsados: [], fotoAntes: null, fotoDespues: null
+    
+    const [itemActual, setItemActual] = useState({ 
+        sedeId: '', sedeNombre: '', equipoSerial: '', 
+        trabajo: '', costoExtra: 0, repuestosUsados: [] 
     });
 
+    const [repuestoElegido, setRepuestoElegido] = useState(null);
+
+    // 🎨 COLORES DE MARCA
+    const RED_TECNICA = "#E54D42";
+    const GREEN_VENTA = "#008000";
+    const activeColor = esPresupuesto ? RED_TECNICA : GREEN_VENTA;
+
+    const highContrastStyles = {
+        control: (base) => ({ 
+            ...base, background: '#FFF', border: '2px solid #000', borderRadius: '10px', minHeight: '55px',
+            boxShadow: 'none', '&:hover': { border: '2px solid #000' }
+        }),
+        option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isSelected ? '#000' : state.isFocused ? '#F0F0F0' : '#FFF',
+            color: state.isSelected ? '#FFF' : '#000',
+            padding: '15px', borderBottom: '1px solid #EEE'
+        }),
+        singleValue: (base) => ({ ...base, color: '#000', fontWeight: '800' }),
+    };
+
     useEffect(() => {
-        const cargarDatos = async () => {
+        const cargar = async () => {
             try {
                 const [c, s, e, r] = await Promise.all([
                     api.get('/clientes'), api.get('/sedes'), api.get('/equipos'), api.get('/repuestos')
                 ]);
-                setClientes(c.data); setSedes(s.data); setEquipos(e.data); setRepuestosDB(r.data);
-            } catch (err) { toast.error("Error al conectar con el servidor"); }
+                setDb({ 
+                    clientes: c.data || [], sedes: s.data || [], 
+                    equipos: e.data || [], repuestos: r.data || [] 
+                });
+            } catch (err) { toast.error("Error de conexión"); }
         };
-        cargarDatos();
+        cargar();
     }, []);
 
-    const sedesFiltradas = sedes.filter(s => s.cliente?.id.toString() === clienteIdSeleccionado?.toString());
-    const equiposFiltrados = equipos.filter(eq => eq.sede?.id.toString() === sedeId?.toString() && !ticketItems.find(item => item.equipoSerial === eq.numeroSerie));
-
-    // Lógica de fotos con tu compresión original
-    const manejarFoto = async (e, tipo) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const opciones = { maxSizeMB: 0.7, maxWidthOrHeight: 1024, useWebWorker: true };
-        try {
-            const loadingToast = toast.loading("Comprimiendo imagen...");
-            const compressedFile = await imageCompression(file, opciones);
-            const reader = new FileReader();
-            reader.readAsDataURL(compressedFile);
-            reader.onloadend = () => {
-                setItemActual(prev => ({...prev, [tipo === 'antes' ? 'fotoAntes' : 'fotoDespues']: reader.result}));
-                toast.dismiss(loadingToast);
-                toast.success("Foto cargada");
-            };
-        } catch (error) { toast.error("Error al procesar la foto"); }
+    // --- LÓGICA DE REPUESTOS ---
+    const sumarRepuesto = () => {
+        if (!repuestoElegido) return toast.error("Elegí un producto");
+        const nuevos = [...itemActual.repuestosUsados];
+        const idx = nuevos.findIndex(r => r.id === repuestoElegido.id);
+        if (idx > -1) {
+            nuevos[idx].cantidad += 1;
+            nuevos[idx].subtotal = nuevos[idx].cantidad * nuevos[idx].precio;
+        } else {
+            nuevos.push({ ...repuestoElegido, cantidad: 1, subtotal: repuestoElegido.precio });
+        }
+        setItemActual({ ...itemActual, repuestosUsados: nuevos });
+        setRepuestoElegido(null);
     };
 
+    const actualizarCantidad = (idx, valor) => {
+        const nuevos = [...itemActual.repuestosUsados];
+        const qty = Math.max(1, parseInt(valor) || 1);
+        nuevos[idx].cantidad = qty;
+        nuevos[idx].subtotal = qty * nuevos[idx].precio;
+        setItemActual({ ...itemActual, repuestosUsados: nuevos });
+    };
+
+    const quitarRepuesto = (idx) => {
+        const nuevos = [...itemActual.repuestosUsados];
+        nuevos.splice(idx, 1);
+        setItemActual({ ...itemActual, repuestosUsados: nuevos });
+    };
+
+    // --- LÓGICA DE REMITO ---
     const agregarAlTicket = () => {
-        if (!itemActual.equipoSerial) return toast.error("⚠️ Elegí un dispenser");
-        const mo = parseFloat(itemActual.costoMO) || 0;
-        const repTotal = itemActual.repuestosUsados.reduce((acc, r) => acc + Number(r.precio || 0), 0);
-        const costoInt = itemActual.repuestosUsados.reduce((acc, r) => acc + Number(r.costo || 0), 0);
+        if (esPresupuesto && !itemActual.equipoSerial) return toast.error("❌ Falta el S/N del dispenser");
+        const extra = Math.max(0, parseFloat(itemActual.costoExtra) || 0);
+        const totalR = itemActual.repuestosUsados.reduce((a, b) => a + b.subtotal, 0);
 
-        setTicketItems([...ticketItems, {
-            ...itemActual, moFinal: mo, subtotalCobrado: mo + repTotal, costoInterno: costoInt,
-            equipoData: equipos.find(e => e.numeroSerie === itemActual.equipoSerial)
-        }]);
-        setItemActual({ equipoSerial: '', trabajo: '', costoMO: '', repuestosUsados: [], fotoAntes: null, fotoDespues: null });
-        toast.success("✅ Dispenser sumado");
+        const nuevoRenglon = {
+            ...itemActual,
+            costoExtra: extra,
+            totalCalculado: extra + totalR,
+            resumenTexto: esPresupuesto 
+                ? `${itemActual.trabajo} | MO: $${extra}`
+                : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(", ")}`
+        };
+
+        setTicketItems([...ticketItems, nuevoRenglon]);
+        setItemActual({ ...itemActual, equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
+        toast.success("✅ Añadido al remito");
     };
 
-    const calcularTotales = () => {
-        const subtotal = ticketItems.reduce((acc, item) => acc + item.subtotalCobrado, 0);
-        const dTxt = descuentoGlobal.toString();
-        const dto = dTxt.endsWith('%') ? (subtotal * parseFloat(dTxt) / 100) : parseFloat(dTxt) || 0;
-        return { subtotal, totalFinal: subtotal - dto };
+    const editarItem = (idx) => {
+        const itemParaEditar = ticketItems[idx];
+        setItemActual(itemParaEditar); 
+        const nuevaLista = [...ticketItems];
+        nuevaLista.splice(idx, 1); 
+        setTicketItems(nuevaLista);
     };
 
-    const { subtotal, totalFinal } = calcularTotales();
+    const eliminarItem = (idx) => {
+        const nuevaLista = [...ticketItems];
+        nuevaLista.splice(idx, 1);
+        setTicketItems(nuevaLista);
+    };
 
-    const guardarEnSistema = async () => {
-        if (ticketItems.length === 0) return toast.error("Ticket vacío");
+    const dispararPDF = () => {
+        const clienteObj = db.clientes?.find(c => c.id.toString() === clienteId);
+        const sedeObj = db.sedes?.find(s => s.id.toString() === (itemActual.sedeId || ticketItems[0]?.sedeId)?.toString());
+        generarRemitoPDFPremium({
+            esPresupuesto, cliente: clienteObj, sede: sedeObj, tecnico: 'Marcos', ticketItems,
+            totalFinal: ticketItems.reduce((a, b) => a + b.totalCalculado, 0)
+        });
+    };
+
+    const finalizar = async () => {
+        if (ticketItems.length === 0) return toast.error("Agregá al menos un ítem");
+        const loading = toast.loading("Guardando en el sistema...");
         try {
-            const payload = {
-                sedeId: parseInt(sedeId),
+            const clienteObj = db.clientes?.find(c => c.id.toString() === clienteId);
+            const sedeIdReal = itemActual.sedeId || ticketItems[0]?.sedeId;
+            const sedeObj = db.sedes?.find(s => s.id.toString() === sedeIdReal?.toString());
+
+            const servicioData = {
+                sedeId: parseInt(sedeIdReal),
                 usuarioId: 1, 
                 fecha: new Date().toISOString().split('T')[0],
-                servicioTipo: "REPARACION",
+                servicioTipo: esPresupuesto ? "TECNICA" : "VENTA", 
                 estado: esPresupuesto ? "PRESUPUESTO" : "VENTA",
-                items: ticketItems.map(item => ({
-                    equipoSerial: item.equipoSerial,
-                    tecnico,
-                    costo: item.subtotalCobrado,
-                    costoInterno: item.costoInterno,
-                    trabajoRealizado: `${item.trabajo} ${item.repuestosUsados.length > 0 ? `[Repuestos: ${item.repuestosUsados.map(r => r.nombre).join(", ")}]` : ''}`,
-                    fotoAntes: item.fotoAntes,
-                    fotoDespues: item.fotoDespues
+                clienteNombre: clienteObj?.nombre || "Particular",
+                sedeNombre: sedeObj?.nombreSede || "Mostrador",
+                observaciones: ticketItems[0]?.trabajo || "",
+                items: ticketItems.map(it => ({
+                    equipoSerial: it.equipoSerial || "MOSTRADOR",
+                    tecnico: "Marcos",
+                    costo: parseFloat(it.totalCalculado),
+                    costoExtra: parseFloat(it.costoExtra) || 0,
+                    metodoPago: "EFECTIVO",
+                    trabajoRealizado: it.resumenTexto,
+                    trabajoTipo: esPresupuesto ? "REPARACION" : "VENTA",
+                    repuestosUsados: it.repuestosUsados || [],
+                    garantiaHasta: null
                 }))
             };
-            await api.post('/servicios', payload);
-            toast.success("🚀 Guardado con éxito");
-            setTicketItems([]);
-            if (onSaved) onSaved(); 
-        } catch (err) { toast.error("Error al guardar"); }
+
+            const formData = new FormData();
+            formData.append("servicio", new Blob([JSON.stringify(servicioData)], { type: 'application/json' }));
+            await api.post('/servicios', formData);
+            
+            toast.success("🚀 ¡Guardado con éxito!", { id: loading });
+            setTicketItems([]); setClienteId(null);
+            if (onSaved) onSaved();
+        } catch (err) { toast.error("Error de servidor", { id: loading }); }
     };
 
     return (
-        <div style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '50px' }}>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                <Button variant={!esPresupuesto ? 'primary' : 'secondary'} onClick={()=>setEsPresupuesto(false)} style={{flex: 1}}>🛒 VENTA</Button>
-                <Button variant={esPresupuesto ? 'primary' : 'secondary'} onClick={()=>setEsPresupuesto(true)} style={{flex: 1}}>📋 PRESUPUESTO</Button>
+        <div style={{ background: '#F2F2F2', minHeight: '100vh', padding: '15px', color: '#000', paddingBottom: '160px' }}>
+            
+            {/* SWITCH DE MODO */}
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                <button onClick={() => {setEsPresupuesto(true); setTicketItems([])}} 
+                    style={{ flex: 1, padding: '20px', borderRadius: '15px', border: '2px solid #000', fontWeight: '900', fontSize: '14px', background: esPresupuesto ? RED_TECNICA : '#FFF', color: esPresupuesto ? '#FFF' : '#000', boxShadow: esPresupuesto ? `0px 4px 0px #000` : 'none' }}>
+                    🛠️ SERVICIO TÉCNICO
+                </button>
+                <button onClick={() => {setEsPresupuesto(false); setTicketItems([])}} 
+                    style={{ flex: 1, padding: '20px', borderRadius: '15px', border: '2px solid #000', fontWeight: '900', fontSize: '14px', background: !esPresupuesto ? GREEN_VENTA : '#FFF', color: !esPresupuesto ? '#FFF' : '#000', boxShadow: !esPresupuesto ? `0px 4px 0px #000` : 'none' }}>
+                    🛒 VENTA / INSUMOS
+                </button>
             </div>
 
-            <Card style={{ marginBottom: '20px' }}>
-                <label style={{color: 'var(--brand-yellow)', fontWeight: 'bold', fontSize: '11px', display: 'block', marginBottom: '10px'}}>PASO 1: UBICACIÓN</label>
-                <Select options={clientes.map(c => ({value: c.id, label: c.nombre}))} placeholder="Cliente..." styles={darkSelectStyles} onChange={(sel) => setClienteIdSeleccionado(sel?.value)} />
-                <div style={{ height: '10px' }} />
-                <Select options={sedesFiltradas.map(s => ({value: s.id, label: s.nombreSede}))} placeholder="Sede..." styles={darkSelectStyles} onChange={(sel) => setSedeId(sel?.value)} />
+            {/* CARD CLIENTE */}
+            <Card style={{ border: '2px solid #000', borderRadius: '15px', background: '#FFF' }}>
+                <label style={{ fontWeight: '900', fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>SELECCIONAR CLIENTE</label>
+                <CreatableSelect styles={highContrastStyles}
+                    options={db.clientes?.map(c => ({ value: c.id.toString(), label: c.nombre }))}
+                    value={db.clientes?.find(c => c.id.toString() === clienteId) ? { label: db.clientes.find(c => c.id.toString() === clienteId).nombre } : null}
+                    onChange={(s) => setClienteId(s?.value)}
+                    placeholder="Escribí nombre del cliente..."
+                />
             </Card>
 
-            {sedeId && (
-                <Card style={{ borderLeft: '5px solid var(--brand-red)', marginBottom: '20px' }}>
-                    <label style={{color: 'var(--brand-red)', fontWeight: 'bold', fontSize: '11px', display: 'block', marginBottom: '10px'}}>PASO 2: TRABAJO</label>
-                    <Select options={equiposFiltrados.map(e => ({value: e.numeroSerie, label: e.numeroSerie}))} styles={darkSelectStyles} placeholder="Elegir Dispenser..." onChange={(sel) => setItemActual({...itemActual, equipoSerial: sel?.value})} />
-                    
-                    <div style={{ background: 'var(--bg-main)', padding: '10px', borderRadius: '10px', marginTop: '15px' }}>
-                        <Select options={repuestosDB.map(r => ({value: r.id, label: r.nombre, objetoReal: r}))} styles={darkSelectStyles} placeholder="⚙️ Repuestos..." value={null} onChange={(sel) => sel && setItemActual({...itemActual, repuestosUsados: [...itemActual.repuestosUsados, sel.objetoReal]})} />
-                        {itemActual.repuestosUsados.map((r, i) => (
-                            <div key={i} style={{fontSize: '12px', display: 'flex', justifyContent: 'space-between', padding: '5px'}}>
-                                <span>🛠️ {r.nombre}</span>
-                                <span style={{color: 'var(--brand-red)', cursor: 'pointer'}} onClick={() => {
-                                    const n = [...itemActual.repuestosUsados]; n.splice(i, 1); setItemActual({...itemActual, repuestosUsados: n});
-                                }}>❌</span>
-                            </div>
-                        ))}
+            {clienteId && (
+                <Card style={{ marginTop: '15px', border: '2px solid #000', borderRadius: '15px', background: '#FFF' }}>
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ fontSize: '11px', fontWeight: '900' }}>SEDE / DOMICILIO</label>
+                        <Select styles={highContrastStyles}
+                            options={db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId).map(s => ({ value: s.id, label: s.nombreSede }))}
+                            onChange={(s) => setItemActual({ ...itemActual, sedeId: s.value, sedeNombre: s.label })}
+                            placeholder="Elegí la sede..."
+                        />
                     </div>
 
-                    <textarea placeholder="¿Qué trabajo se realizó?" value={itemActual.trabajo} onChange={e=>setItemActual({...itemActual, trabajo: e.target.value})} style={{ width: '100%', padding: '12px', marginTop: '15px', borderRadius: '8px', background: 'var(--bg-main)', color: 'white', border: '1px solid var(--border-color)', height: '80px' }} />
-                    <Input label="Mano de Obra ($)" type="number" value={itemActual.costoMO} onChange={e=>setItemActual({...itemActual, costoMO: e.target.value})} />
+                    {esPresupuesto && (
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: '900' }}>S/N DISPENSER</label>
+                            <CreatableSelect styles={highContrastStyles}
+                                options={db.equipos?.filter(e => e.sede?.id?.toString() === itemActual.sedeId?.toString()).map(e => ({ value: e.numeroSerie, label: `S/N: ${e.numeroSerie}` }))}
+                                onChange={(s) => setItemActual({...itemActual, equipoSerial: s?.value})}
+                                value={itemActual.equipoSerial ? { label: itemActual.equipoSerial } : null}
+                                placeholder="Elegí o creá N/S..."
+                            />
+                        </div>
+                    )}
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-                        <div style={{ border: '2px dashed var(--border-color)', borderRadius: '10px', padding: '10px', textAlign: 'center', position: 'relative' }}>
-                            <span style={{fontSize: '10px'}}>{itemActual.fotoAntes ? "✅ ANTES" : "📸 ANTES"}</span>
-                            <input type="file" capture="environment" onChange={e=>manejarFoto(e, 'antes')} style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%' }} />
+                    {/* SELECTOR DE REPUESTOS */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 65px', gap: '10px', alignItems: 'flex-end', marginBottom: '15px' }}>
+                        <div>
+                            <label style={{fontSize: '11px', fontWeight: '900'}}>AGREGAR PRODUCTOS</label>
+                            <Select styles={highContrastStyles}
+                                options={db.repuestos?.map(r => ({ ...r, label: `${r.nombre} ($${r.precio})`, value: r.id }))}
+                                onChange={setRepuestoElegido} value={repuestoElegido}
+                                placeholder="Buscar repuesto..."
+                            />
                         </div>
-                        <div style={{ border: '2px dashed var(--border-color)', borderRadius: '10px', padding: '10px', textAlign: 'center', position: 'relative' }}>
-                            <span style={{fontSize: '10px'}}>{itemActual.fotoDespues ? "✅ DESPUÉS" : "📸 DESPUÉS"}</span>
-                            <input type="file" capture="environment" onChange={e=>manejarFoto(e, 'despues')} style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%' }} />
-                        </div>
+                        <button onClick={sumarRepuesto} style={{ height: '55px', background: '#000', color: '#FFF', borderRadius: '10px', border: 'none', fontSize: '28px', fontWeight: 'bold' }}>+</button>
                     </div>
-                    <Button variant="success" onClick={agregarAlTicket} style={{ width: '100%', marginTop: '20px' }}>AGREGAR AL REMITO</Button>
+
+                    {/* LISTA DE REPUESTOS EN EL ITEM ACTUAL */}
+                    {itemActual.repuestosUsados.length > 0 && (
+                        <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '12px', border: '1px dashed #000', marginBottom: '15px' }}>
+                            {itemActual.repuestosUsados.map((r, i) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #EEE' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{fontWeight: '700', fontSize: '14px'}}>{r.nombre}</div>
+                                        <div style={{fontSize: '12px', color: '#666'}}>${r.precio} c/u</div>
+                                    </div>
+                                    <input type="number" value={r.cantidad} onChange={(e) => actualizarCantidad(i, e.target.value)} 
+                                           style={{ width: '50px', height: '35px', border: '2px solid #000', borderRadius: '8px', textAlign: 'center', fontWeight: '900', marginRight: '10px' }} />
+                                    <div style={{ fontWeight: '900', width: '70px', textAlign: 'right' }}>${r.subtotal}</div>
+                                    <button onClick={() => quitarRepuesto(i)} style={{ marginLeft: '10px', color: 'red', border: 'none', background: 'none', fontWeight: '900' }}>✕</button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <textarea placeholder="Descripción detallada del trabajo realizado..." value={itemActual.trabajo} onChange={e => setItemActual({...itemActual, trabajo: e.target.value})}
+                              style={{ width: '100%', padding: '15px', border: '2px solid #000', borderRadius: '12px', marginBottom: '15px', fontSize: '15px', minHeight: '100px', outline: 'none' }} />
+
+                    <div style={{ background: '#000', padding: '18px', borderRadius: '15px', marginBottom: '15px' }}>
+                        <label style={{ color: '#FFF', fontWeight: '900', fontSize: '11px', letterSpacing: '1px' }}>{esPresupuesto ? 'MANO DE OBRA / SERVICE ($)' : 'COSTO DE ENVÍO ($)'}</label>
+                        <input type="number" value={itemActual.costoExtra} onChange={e => setItemActual({ ...itemActual, costoExtra: e.target.value })}
+                               style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '2px solid #FFF', color: '#FFF', fontSize: '32px', fontWeight: '900', outline: 'none', marginTop: '5px' }} />
+                    </div>
+
+                    <button onClick={agregarAlTicket} style={{ width: '100%', height: '65px', background: '#000', color: '#FFF', borderRadius: '15px', border: 'none', fontWeight: '900', fontSize: '16px', letterSpacing: '1px' }}>
+                        SUMAR AL REMITO +
+                    </button>
                 </Card>
             )}
 
+            {/* CARRITO DE ITEMS CARGADOS */}
             {ticketItems.length > 0 && (
-                <Card>
-                    <div style={{ background: 'var(--brand-yellow)', color: 'black', padding: '15px', borderRadius: '10px', textAlign: 'center', marginBottom: '15px' }}>
-                        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>$ {totalFinal.toLocaleString()}</div>
+                <div style={{ marginTop: '30px' }}>
+                    <p style={{ fontWeight: '900', fontSize: '13px', color: '#666', textAlign: 'center', marginBottom: '15px' }}>RESUMEN DE CARGA ACTUAL</p>
+                    {ticketItems.map((it, idx) => (
+                        <div key={idx} style={{ background: '#FFF', padding: '20px', borderRadius: '15px', marginBottom: '12px', border: '2px solid #000', boxShadow: '4px 4px 0px #000' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: '900', fontSize: '18px', color: activeColor }}>{it.equipoSerial || 'VENTA MOSTRADOR'}</div>
+                                    <div style={{ fontSize: '13px', marginTop: '4px', color: '#444', lineHeight: '1.4' }}>{it.resumenTexto}</div>
+                                    <div style={{ fontWeight: '900', fontSize: '22px', marginTop: '10px' }}>${it.totalCalculado.toLocaleString()}</div>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <button onClick={() => editarItem(idx)} style={{ background: '#F0F0F0', border: '1px solid #000', padding: '12px', borderRadius: '10px' }}>✏️</button>
+                                    <button onClick={() => eliminarItem(idx)} style={{ background: '#FFEBEB', color: '#F23D4F', border: '1px solid #000', padding: '12px', borderRadius: '10px' }}>🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* FOOTER BAR FIJA */}
+            {ticketItems.length > 0 && (
+                <div style={{ position: 'fixed', bottom: '25px', left: '15px', right: '15px', zIndex: 1000 }}>
+                    <div style={{ background: '#000', padding: '20px', borderRadius: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '2px solid #FFF', boxShadow: '0px 10px 40px rgba(0,0,0,0.4)' }}>
+                        <div style={{ color: '#FFF' }}>
+                            <div style={{ fontSize: '11px', opacity: 0.7, fontWeight: '700' }}>TOTAL A COBRAR</div>
+                            <div style={{ fontSize: '28px', fontWeight: '900' }}>${ticketItems.reduce((a, b) => a + b.totalCalculado, 0).toLocaleString()}</div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={dispararPDF} style={{ background: '#333', color: '#FFF', border: '1px solid #666', borderRadius: '15px', width: '60px', height: '60px', fontSize: '24px' }}>📄</button>
+                            <button onClick={finalizar} style={{ background: activeColor, color: '#FFF', border: 'none', borderRadius: '15px', padding: '0 30px', fontWeight: '900', fontSize: '16px' }}>
+                                GUARDAR
+                            </button>
+                        </div>
                     </div>
-                    <Button onClick={guardarEnSistema} style={{ width: '100%', marginBottom: '10px' }}>💾 GUARDAR TODO</Button>
-                    <Button variant="secondary" onClick={() => generarRemitoPDFPremium({ esPresupuesto, cliente: clientes.find(c => c.id === clienteIdSeleccionado), sede: sedes.find(s => s.id === sedeId), tecnico, ticketItems, subtotalTicket: subtotal, valorDescuento: 0, totalFinal })} style={{ width: '100%' }}>📄 PDF PREMIUM</Button>
-                </Card>
+                </div>
             )}
         </div>
     );
