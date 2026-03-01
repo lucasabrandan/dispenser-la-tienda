@@ -39,37 +39,76 @@ public class ServicioService {
         return servicioRepository.findAll().stream().map(this::mapToDTO).toList();
     }
 
+    @Transactional(readOnly = true)
+    public ServicioDTO buscarPorId(Long id) {
+        return servicioRepository.findById(id)
+                .map(this::mapToDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado con ID: " + id));
+    }
+
     @Transactional
     public ServicioDTO crearServicioCompleto(ServicioCreateDTO dto) {
+        return procesarGuardado(new Servicio(), dto);
+    }
+
+    @Transactional
+    public ServicioDTO actualizarServicio(Long id, ServicioCreateDTO dto) {
+        Servicio servicio = servicioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe el servicio con ID: " + id));
+
+        servicio.getItems().clear();
+        return procesarGuardado(servicio, dto);
+    }
+
+    private ServicioDTO procesarGuardado(Servicio servicio, ServicioCreateDTO dto) {
         Sede sede = sedeRepository.findById(dto.getSedeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada"));
 
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseGet(() -> usuarioRepository.findAll().get(0));
 
-        // 🚀 Conversión manual de fecha para matar el Error 500
-        LocalDate fechaReal = LocalDate.parse(dto.getFecha());
-        Servicio servicio = new Servicio(sede, usuario, fechaReal, dto.getServicioTipo());
-
+        servicio.setSede(sede);
+        servicio.setUsuario(usuario);
+        servicio.setFechaServicio(LocalDate.parse(dto.getFecha()));
         servicio.setClienteNombre(dto.getClienteNombre());
         servicio.setSedeNombre(dto.getSedeNombre());
         servicio.setEstado(dto.getEstado() != null ? dto.getEstado() : "PRESUPUESTO");
         servicio.setFotoRemito(dto.getFotoRemito());
 
+        // 🧠 MEJORA: Detección Automática de Tipo de Servicio
+        // Empezamos asumiendo VENTA, si encontramos un S/N real pasa a TECNICA.
+        ServicioTipo tipoDetectado = ServicioTipo.VENTA;
+
         for (var itemDto : dto.getItems()) {
+            // 🛡️ Lógica de detección: Si el serial no es nulo ni es "MOSTRADOR", es técnica.
+            if (itemDto.equipoSerial() != null && !itemDto.equipoSerial().equalsIgnoreCase("MOSTRADOR")) {
+                tipoDetectado = ServicioTipo.TECNICA;
+            }
+
             Equipo equipo = equipoRepository.findByNumeroSerie(itemDto.equipoSerial()).orElse(null);
 
-            LocalDate garantia = (itemDto.garantiaHasta() != null && !itemDto.garantiaHasta().isEmpty())
-                    ? LocalDate.parse(itemDto.garantiaHasta()) : null;
+            LocalDate fechaGarantia = null;
+            if (itemDto.garantiaHasta() != null && !itemDto.garantiaHasta().isBlank()) {
+                fechaGarantia = LocalDate.parse(itemDto.garantiaHasta());
+            }
+
+            // 🛡️ MEJORA: Blindaje de Negativos (Si el costo es negativo, se guarda como 0)
+            BigDecimal costoBlindado = itemDto.costo().max(BigDecimal.ZERO);
+            BigDecimal extraBlindado = (itemDto.costoExtra() != null) ? itemDto.costoExtra().max(BigDecimal.ZERO) : BigDecimal.ZERO;
+            BigDecimal internoBlindado = (itemDto.costoInterno() != null) ? itemDto.costoInterno().max(BigDecimal.ZERO) : BigDecimal.ZERO;
 
             ServicioItem nuevoItem = new ServicioItem(
-                    equipo, itemDto.tecnico(), itemDto.costo(),
-                    itemDto.costoInterno() != null ? itemDto.costoInterno() : BigDecimal.ZERO,
-                    BigDecimal.ZERO, itemDto.metodoPago(), itemDto.trabajoRealizado(), garantia
+                    equipo,
+                    itemDto.tecnico(),
+                    costoBlindado,
+                    internoBlindado,
+                    BigDecimal.ZERO,
+                    itemDto.metodoPago(),
+                    itemDto.trabajoRealizado(),
+                    fechaGarantia
             );
-            nuevoItem.setCostoExtra(itemDto.costoExtra() != null ? itemDto.costoExtra() : BigDecimal.ZERO);
+            nuevoItem.setCostoExtra(extraBlindado);
 
-            // Guardar repuestos como JSON String en la base de datos
             try {
                 if (itemDto.repuestosUsados() != null) {
                     nuevoItem.setRepuestosUsados(objectMapper.writeValueAsString(itemDto.repuestosUsados()));
@@ -78,6 +117,10 @@ public class ServicioService {
 
             servicio.addItem(nuevoItem);
         }
+
+        // 🚀 Aplicamos el tipo detectado (IGNORAMOS lo que mande el frontend si es incorrecto)
+        servicio.setServicioTipo(tipoDetectado);
+
         return mapToDTO(servicioRepository.save(servicio));
     }
 
@@ -98,19 +141,28 @@ public class ServicioService {
                 }
             } catch (JsonProcessingException e) { e.printStackTrace(); }
 
+            String garantiaStr = (i.getGarantiaHasta() != null) ? i.getGarantiaHasta().toString() : null;
+
             return new ServicioItemDTO(
                     i.getEquipo() != null ? i.getEquipo().getId() : null,
                     i.getEquipo() != null ? i.getEquipo().getNumeroSerie() : "MOSTRADOR",
                     i.getEquipo() != null ? i.getEquipo().getUbicacion() : "MOSTRADOR",
                     i.getTecnico(), i.getCosto(), i.getCostoExtra(), i.getCostoInterno(),
                     i.getDescuento(), i.getMetodoPago(), i.getTrabajoRealizado(),
-                    i.getGarantiaHasta(), listaRepuestos, i.getFotoAntes(), i.getFotoDespues()
+                    garantiaStr,
+                    listaRepuestos, i.getFotoAntes(), i.getFotoDespues()
             );
         }).toList();
 
         return new ServicioDTO(
-                s.getId(), s.getFechaServicio(), s.getServicioTipo().name(),
-                s.getClienteNombre(), s.getSedeNombre(), items, s.getEstado(), s.getFotoRemito()
+                s.getId(),
+                s.getFechaServicio() != null ? s.getFechaServicio().toString() : null,
+                s.getServicioTipo() != null ? s.getServicioTipo().name() : "VENTA",
+                s.getClienteNombre(),
+                s.getSedeNombre(),
+                items,
+                s.getEstado(),
+                s.getFotoRemito()
         );
     }
 }

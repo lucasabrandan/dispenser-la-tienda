@@ -5,7 +5,6 @@ import com.dispenserlatienda.domain.usuario.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -31,9 +30,8 @@ public class Servicio {
     private ServicioTipo servicioTipo;
 
     @Column(nullable = false, length = 20)
-    private String estado = "VENTA";
+    private String estado = "PRESUPUESTO"; // 🛡️ Por defecto presupuesto
 
-    // 🚀 NUEVOS: Para persistir los nombres en el historial
     @Column(name = "cliente_nombre")
     private String clienteNombre;
 
@@ -47,9 +45,11 @@ public class Servicio {
     private String fotoRemito;
 
     @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<ServicioItem> items = new ArrayList<>();
+    private List<ServicioItem> items = new ArrayList<>();
 
-    protected Servicio() {}
+    // 🛡️ FIX 1: Cambiado a PUBLIC.
+    // Si es 'protected', el ServicioService no puede hacer "new Servicio()"
+    public Servicio() {}
 
     public Servicio(Sede sede, Usuario usuario, LocalDate fechaServicio, ServicioTipo servicioTipo) {
         this.sede = sede;
@@ -65,12 +65,26 @@ public class Servicio {
 
     // --- Getters y Setters ---
     public Long getId() { return id; }
+
+    // 🛡️ FIX 2: Agregados setters que el Service necesita para actualizar
+    public void setSede(Sede sede) { this.sede = sede; }
+    public Sede getSede() { return sede; }
+
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public Usuario getUsuario() { return usuario; }
+
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
-    public Sede getSede() { return sede; }
-    public List<ServicioItem> getItems() { return Collections.unmodifiableList(items); }
+
+    // 🛡️ FIX 3: Quitamos el 'Collections.unmodifiableList'.
+    // El Service necesita hacer "servicio.getItems().clear()" para editar.
+    public List<ServicioItem> getItems() { return items; }
+
     public LocalDate getFechaServicio() { return fechaServicio; }
+    public void setFechaServicio(LocalDate fechaServicio) { this.fechaServicio = fechaServicio; }
+
     public ServicioTipo getServicioTipo() { return servicioTipo; }
+    public void setServicioTipo(ServicioTipo servicioTipo) { this.servicioTipo = servicioTipo; }
 
     public String getClienteNombre() { return clienteNombre; }
     public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }
@@ -80,4 +94,7 @@ public class Servicio {
 
     public String getFotoRemito() { return fotoRemito; }
     public void setFotoRemito(String fotoRemito) { this.fotoRemito = fotoRemito; }
+
+    public String getObservaciones() { return observaciones; }
+    public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
 }

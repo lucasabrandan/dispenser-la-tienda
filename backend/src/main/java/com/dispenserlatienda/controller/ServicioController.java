@@ -21,9 +21,8 @@ public class ServicioController {
     private final ServicioService servicioService;
     private final ServicioRepository servicioRepository;
     private final FileStorageService fileStorageService;
-    private final ObjectMapper objectMapper; // 👈 El "traductor" inyectado
+    private final ObjectMapper objectMapper;
 
-    // Inyectamos todo por constructor. Spring se encarga de darnos el ObjectMapper profesional.
     public ServicioController(ServicioService servicioService,
                               ServicioRepository servicioRepository,
                               FileStorageService fileStorageService,
@@ -34,21 +33,26 @@ public class ServicioController {
         this.objectMapper = objectMapper;
     }
 
+    // 🔍 Listar todos (para el historial y tablero de control)
     @GetMapping
     public ResponseEntity<List<ServicioDTO>> listar() {
         return ResponseEntity.ok(servicioService.listarTodos());
     }
 
-    // 🚀 Este es el método que Marcos usa al darle a "GUARDAR"
+    // 🔍 NUEVO: Buscar uno solo por ID (Para que React "levante" un presupuesto viejo)
+    @GetMapping("/{id}")
+    public ResponseEntity<ServicioDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(servicioService.buscarPorId(id));
+    }
+
+    // 🚀 Crear (Lo que ya usaba Marcos)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServicioDTO> crear(
             @RequestPart("servicio") String servicioJson,
             @RequestPart(value = "foto", required = false) MultipartFile foto) throws Exception {
 
-        // ✅ Al usar el objectMapper inyectado, la fecha "2026-03-01" entra perfecta
         ServicioCreateDTO dto = objectMapper.readValue(servicioJson, ServicioCreateDTO.class);
 
-        // Si Marcos sacó una foto del remito en papel, la guardamos
         if (foto != null && !foto.isEmpty()) {
             String nombreImagen = fileStorageService.guardarArchivo(foto);
             dto.setFotoRemito(nombreImagen);
@@ -57,6 +61,25 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.crearServicioCompleto(dto));
     }
 
+    // ✏️ NUEVO: Actualizar un presupuesto existente
+    // Este método servirá tanto para editar datos como para pasarlo de "PRESUPUESTO" a "REALIZADO"
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ServicioDTO> actualizar(
+            @PathVariable Long id,
+            @RequestPart("servicio") String servicioJson,
+            @RequestPart(value = "foto", required = false) MultipartFile foto) throws Exception {
+
+        ServicioCreateDTO dto = objectMapper.readValue(servicioJson, ServicioCreateDTO.class);
+
+        if (foto != null && !foto.isEmpty()) {
+            String nombreImagen = fileStorageService.guardarArchivo(foto);
+            dto.setFotoRemito(nombreImagen);
+        }
+
+        return ResponseEntity.ok(servicioService.actualizarServicio(id, dto));
+    }
+
+    // ✅ Cambiar estado rápido (Ej: de PRESUPUESTO a RECHAZADO)
     @PatchMapping("/{id}/estado")
     public ResponseEntity<ServicioDTO> cambiarEstado(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         String nuevoEstado = payload.get("estado");

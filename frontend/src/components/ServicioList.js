@@ -2,15 +2,10 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
-// Átomos UI
-import Card from './ui/Card';
-import Button from './ui/Button';
-import Input from './ui/Input';
-
 // Utilidades
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 
-export default function ServicioList() {
+export default function ServicioList({ onEditar }) {
     const [servicios, setServicios] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [filtroTab, setFiltroTab] = useState('TODOS');
@@ -22,23 +17,23 @@ export default function ServicioList() {
         api.get('/servicios')
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
-                // Ordenar por fecha: lo más nuevo arriba de todo
+                // Ordenar: lo más nuevo arriba
                 setServicios(data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)));
             })
             .catch(() => toast.error("Error al conectar con el historial"));
     };
 
     const aprobarPresupuesto = async (id) => {
-        const loading = toast.loading("Confirmando cobro...");
+        const loading = toast.loading("Confirmando operación...");
         try {
-            await api.patch(`/servicios/${id}/estado`, { estado: "VENTA" });
-            toast.success("✅ ¡Venta confirmada!", { id: loading });
+            await api.patch(`/servicios/${id}/estado`, { estado: "REALIZADO" });
+            toast.success("✅ ¡Confirmado!", { id: loading });
             cargarServicios(); 
-        } catch (err) { toast.error("Error al procesar el pago", { id: loading }); }
+        } catch (err) { toast.error("Error al procesar", { id: loading }); }
     };
 
     const eliminarServicio = async (id) => {
-        if(window.confirm("⚠️ ¿Eliminar permanentemente este registro? Esta acción no se puede deshacer.")) {
+        if(window.confirm("⚠️ ¿Eliminar permanentemente este registro?")) {
             try {
                 await api.delete(`/servicios/${id}`);
                 toast.success("🗑️ Registro borrado");
@@ -49,70 +44,60 @@ export default function ServicioList() {
 
     const calcularCosto = (s) => s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
     
-    // --- LÓGICA DE FILTRADO ---
+    // --- 🧠 LÓGICA DE FILTRADO COMPLETA ---
     const filtrados = servicios.filter(s => {
-        const coincideTab = filtroTab === 'TODOS' || (s.estado || '').toUpperCase() === filtroTab;
         const txt = busqueda.toLowerCase();
-        
-        return coincideTab && (
+        let pasaTab = false;
+        if (filtroTab === 'TODOS') pasaTab = true;
+        if (filtroTab === 'PRESUPUESTO') pasaTab = s.estado === 'PRESUPUESTO';
+        if (filtroTab === 'VENTA') pasaTab = s.servicioTipo === 'VENTA' && s.estado !== 'PRESUPUESTO';
+        if (filtroTab === 'TECNICA') pasaTab = s.servicioTipo === 'TECNICA' && s.estado !== 'PRESUPUESTO';
+
+        return pasaTab && (
             (s.clienteNombre?.toLowerCase() || '').includes(txt) || 
             (s.sedeNombre?.toLowerCase() || '').includes(txt) ||
             s.items?.some(it => it.equipoSerial?.toLowerCase().includes(txt))
         );
     });
 
-    const totalFacturado = servicios
-        .filter(s => (s.estado || '').toUpperCase() === 'VENTA')
+    // Totales dinámicos para el Dashboard
+    const totalVentas = servicios
+        .filter(s => s.servicioTipo === 'VENTA' && s.estado !== 'PRESUPUESTO')
         .reduce((acc, s) => acc + calcularCosto(s), 0);
 
-    // --- RE-IMPRESIÓN DE PDF CON DESGLOSE ---
-    const dispararPDF = (s) => {
-        generarRemitoPDFPremium({
-            esPresupuesto: s.estado === 'PRESUPUESTO',
-            cliente: { nombre: s.clienteNombre },
-            sede: { nombreSede: s.sedeNombre },
-            tecnico: "Marcos",
-            // Mapeamos los items recuperando los repuestos y la MO que guardamos
-            ticketItems: s.items.map(it => ({
-                equipoSerial: it.equipoSerial,
-                trabajo: it.trabajoRealizado,
-                totalCalculado: it.costo,
-                costoExtra: it.costoExtra || 0,
-                repuestosUsados: it.repuestosUsados || []
-            })),
-            totalFinal: calcularCosto(s)
-        });
-    };
+    const totalTecnica = servicios
+        .filter(s => s.servicioTipo === 'TECNICA' && s.estado !== 'PRESUPUESTO')
+        .reduce((acc, s) => acc + calcularCosto(s), 0);
 
     return (
-        <div style={{ background: '#F0F0F0', minHeight: '100vh', padding: '15px', color: '#000' }}>
+        <div style={{ background: '#F4F7F6', minHeight: '100vh', padding: '15px', paddingBottom: '100px' }}>
             
-            {/* --- DASHBOARD SUPERIOR --- */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-                <div style={{ background: '#00A650', padding: '15px', borderRadius: '16px', border: '2px solid #000', boxShadow: '4px 4px 0px #000' }}>
-                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#FFF', margin: 0 }}>FACTURACIÓN (VENTAS)</p>
-                    <p style={{ fontSize: '22px', fontWeight: '900', color: '#FFF', margin: 0 }}>$ {totalFacturado.toLocaleString()}</p>
+            {/* --- DASHBOARD SUPERIOR (BORDES DE COLOR) --- */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                <div style={{ background: '#FFF', padding: '15px', borderRadius: '16px', borderLeft: '8px solid #008000', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#008000', margin: 0 }}>VENTAS INSUMOS</p>
+                    <p style={{ fontSize: '22px', fontWeight: '900', color: '#000', margin: 0 }}>$ {totalVentas.toLocaleString()}</p>
                 </div>
-                <div style={{ background: '#FFF', padding: '15px', borderRadius: '16px', border: '2px solid #000', boxShadow: '4px 4px 0px #000' }}>
-                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#666', margin: 0 }}>TOTAL ÓRDENES</p>
-                    <p style={{ fontSize: '22px', fontWeight: '900', color: '#000', margin: 0 }}>{servicios.length}</p>
+                <div style={{ background: '#FFF', padding: '15px', borderRadius: '16px', borderLeft: '8px solid #E54D42', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#E54D42', margin: 0 }}>TÉCNICA / MO</p>
+                    <p style={{ fontSize: '22px', fontWeight: '900', color: '#000', margin: 0 }}>$ {totalTecnica.toLocaleString()}</p>
                 </div>
             </div>
 
-            {/* --- BUSCADOR Y TABS --- */}
-            <div style={{ marginBottom: '20px' }}>
+            {/* --- BUSCADOR Y TABS (STICKY) --- */}
+            <div style={{ position: 'sticky', top: '10px', zIndex: 100, background: '#F4F7F6', paddingBottom: '10px' }}>
                 <input 
                     placeholder="🔍 Cliente, Sede o S/N..." 
                     value={busqueda} 
                     onChange={e => setBusqueda(e.target.value)} 
-                    style={{ width: '100%', padding: '15px', background: '#FFF', borderRadius: '12px', border: '2px solid #000', fontSize: '16px', fontWeight: 'bold' }}
+                    style={{ width: '100%', padding: '15px', background: '#FFF', borderRadius: '12px', border: '2px solid #000', fontSize: '16px', fontWeight: 'bold', outline: 'none' }}
                 />
                 <div style={{ display: 'flex', gap: '5px', background: '#000', padding: '5px', borderRadius: '12px', marginTop: '10px' }}>
-                    {['TODOS', 'VENTA', 'PRESUPUESTO'].map(t => (
+                    {['TODOS', 'VENTA', 'TECNICA', 'PRESUPUESTO'].map(t => (
                         <button key={t} onClick={() => setFiltroTab(t)}
-                            style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '900',
+                            style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', fontSize: '10px', fontWeight: '900',
                                 background: filtroTab === t ? '#FFF' : 'transparent',
-                                color: filtroTab === t ? '#000' : '#FFF' }}>
+                                color: filtroTab === t ? '#000' : '#FFF', transition: '0.2s' }}>
                             {t}
                         </button>
                     ))}
@@ -120,57 +105,83 @@ export default function ServicioList() {
             </div>
 
             {/* --- LISTADO DE TARJETAS --- */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '100px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
                 {filtrados.map(s => (
-                    <div key={s.id} style={{ background: '#FFF', padding: '15px', borderRadius: '20px', border: '2px solid #000', boxShadow: '2px 2px 0px #000' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                    <div key={s.id} style={{ background: '#FFF', padding: '18px', borderRadius: '20px', border: '1px solid #E0E0E0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <span style={{ fontSize: '11px', color: '#666', fontWeight: 'bold' }}>📅 {new Date(s.fecha).toLocaleDateString()}</span>
-                                <h4 style={{ fontSize: '17px', fontWeight: '900', margin: '2px 0', color: '#000' }}>{s.clienteNombre}</h4>
-                                <p style={{ fontSize: '13px', color: '#444', margin: 0 }}>📍 {s.sedeNombre}</p>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '5px' }}>
+                                    <span style={{ fontSize: '11px', color: '#999', fontWeight: 'bold' }}>#{s.id}</span>
+                                    <span style={{ 
+                                        fontSize: '10px', fontWeight: '900', padding: '3px 8px', borderRadius: '6px',
+                                        background: s.estado === 'PRESUPUESTO' ? '#FFF159' : (s.servicioTipo === 'TECNICA' ? '#FFEBEB' : '#E6F4EA'),
+                                        color: s.estado === 'PRESUPUESTO' ? '#000' : (s.servicioTipo === 'TECNICA' ? '#E54D42' : '#008000')
+                                    }}>
+                                        {s.estado === 'PRESUPUESTO' ? 'PENDIENTE' : s.servicioTipo}
+                                    </span>
+                                </div>
+                                <h4 style={{ fontSize: '18px', fontWeight: '900', margin: '0', color: '#000' }}>{s.clienteNombre}</h4>
+                                <p style={{ fontSize: '13px', color: '#666', margin: '2px 0 0' }}>📍 {s.sedeNombre}</p>
                             </div>
-                            <span style={{ 
-                                fontSize: '10px', fontWeight: '900', padding: '5px 10px', borderRadius: '8px', border: '1px solid #000',
-                                background: s.estado === 'VENTA' ? '#D1FAE5' : '#FFF159',
-                                color: '#000'
-                            }}>
-                                {s.estado}
-                            </span>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '22px', fontWeight: '900', color: '#000' }}>$ {calcularCosto(s).toLocaleString()}</div>
+                                <div style={{ fontSize: '11px', color: '#AAA' }}>{s.fecha}</div>
+                            </div>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #EEE', paddingTop: '12px' }}>
-                            <div style={{ fontSize: '24px', fontWeight: '900', color: '#000' }}>$ {calcularCosto(s).toLocaleString()}</div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => setModalDetalle(s)} style={{ background: '#EEE', border: '1px solid #000', borderRadius: '10px', padding: '10px', fontSize: '18px' }}>👁️</button>
-                                <button onClick={() => dispararPDF(s)} style={{ background: '#EEE', border: '1px solid #000', borderRadius: '10px', padding: '10px', fontSize: '18px' }}>📄</button>
-                                {s.estado === 'PRESUPUESTO' && (
-                                    <button onClick={() => aprobarPresupuesto(s.id)} style={{ background: '#FFF159', border: '1px solid #000', borderRadius: '10px', padding: '10px', fontWeight: '900', fontSize: '12px' }}>💰 COBRAR</button>
-                                )}
-                                <button onClick={() => eliminarServicio(s.id)} style={{ background: '#FF0000', color: '#FFF', border: '1px solid #000', borderRadius: '10px', padding: '10px', fontSize: '18px' }}>🗑️</button>
-                            </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #F8F8F8' }}>
+                            
+                            {/* 🛡️ BOTÓN EDITAR CANDADO: Solo si es presupuesto */}
+                            {s.estado === 'PRESUPUESTO' && (
+                                <button onClick={() => onEditar(s)} style={{ background: '#FFF', border: '2px solid #000', borderRadius: '10px', padding: '10px 14px', fontSize: '16px', boxShadow: '2px 2px 0px #000' }}>✏️</button>
+                            )}
+                            
+                            <button onClick={() => setModalDetalle(s)} style={{ background: '#F8F9FA', border: '1px solid #DDD', borderRadius: '10px', padding: '10px 14px', fontSize: '16px' }}>👁️</button>
+                            
+                            <button onClick={() => generarRemitoPDFPremium({
+                                esPresupuesto: s.estado === 'PRESUPUESTO',
+                                cliente: { nombre: s.clienteNombre },
+                                sede: { nombreSede: s.sedeNombre },
+                                tecnico: "Marcos",
+                                ticketItems: s.items.map(it => ({ ...it, totalCalculado: it.costo })),
+                                totalFinal: calcularCosto(s),
+                                fechaServicio: s.fecha
+                            })} style={{ background: '#F8F9FA', border: '1px solid #DDD', borderRadius: '10px', padding: '10px 14px', fontSize: '16px' }}>📄</button>
+                            
+                            {s.estado === 'PRESUPUESTO' && (
+                                <button onClick={() => aprobarPresupuesto(s.id)} style={{ background: '#000', color: '#FFF', borderRadius: '10px', padding: '0 15px', fontWeight: '900', fontSize: '11px' }}>COBRAR</button>
+                            )}
+                            
+                            <button onClick={() => eliminarServicio(s.id)} style={{ background: '#FFF', color: '#E54D42', border: '1px solid #FFEBEB', borderRadius: '10px', padding: '10px', fontSize: '18px' }}>🗑️</button>
                         </div>
                     </div>
                 ))}
             </div>
 
-            {/* --- MODAL DE DETALLE --- */}
+            {/* --- MODAL DE DETALLE COMPLETO (RECUPERADO) --- */}
             {modalDetalle && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 2000 }}>
-                    <div style={{ background: '#FFF', width: '100%', borderTopLeftRadius: '30px', borderTopRightRadius: '30px', padding: '25px', border: '2px solid #000' }}>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', zIndex: 2000 }}>
+                    <div style={{ background: '#FFF', width: '100%', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '25px', borderTop: '4px solid #000' }}>
                         <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
-                        <h3 style={{ fontSize: '20px', fontWeight: '900', marginBottom: '15px', color: '#000' }}>DETALLE DE LA OPERACIÓN</h3>
+                        <h3 style={{ fontSize: '18px', fontWeight: '900', marginBottom: '20px' }}>DESGLOSE DEL SERVICIO</h3>
+                        
                         <div style={{ maxHeight: '50vh', overflowY: 'auto', marginBottom: '20px' }}>
-                            {modalDetalle.items.map((item, idx) => (
-                                <div key={idx} style={{ background: '#F9FAFB', padding: '15px', borderRadius: '15px', marginBottom: '10px', border: '1px solid #DDD' }}>
-                                    <p style={{ fontSize: '14px', fontWeight: '900', margin: '0 0 5px', color: '#000' }}>📦 {item.equipoSerial}</p>
-                                    <p style={{ fontSize: '13px', color: '#444', margin: '0 0 10px' }}>{item.trabajoRealizado}</p>
-                                    <div style={{ borderTop: '1px solid #EEE', paddingTop: '10px', textAlign: 'right', fontWeight: '900', fontSize: '18px', color: '#00A650' }}>
-                                        $ {Number(item.costo).toLocaleString()}
+                            {modalDetalle.items.map((it, idx) => (
+                                <div key={idx} style={{ background: '#F8F9FA', padding: '15px', borderRadius: '15px', marginBottom: '10px', border: '1px solid #EEE' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                        <span style={{ fontWeight: '900', color: '#E54D42' }}>{it.equipoSerial}</span>
+                                        <span style={{ fontWeight: '900' }}>$ {Number(it.costo).toLocaleString()}</span>
                                     </div>
+                                    <p style={{ fontSize: '13px', margin: '0 0 8px' }}>{it.trabajoRealizado}</p>
+                                    {it.repuestosUsados?.length > 0 && (
+                                        <div style={{ fontSize: '11px', color: '#666', borderTop: '1px solid #EEE', paddingTop: '8px' }}>
+                                            <strong>Repuestos:</strong> {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
-                        <Button onClick={() => setModalDetalle(null)} style={{ width: '100%', height: '55px', background: '#000' }}>CERRAR</Button>
+                        <button onClick={() => setModalDetalle(null)} style={{ width: '100%', padding: '18px', background: '#000', color: '#FFF', borderRadius: '15px', fontWeight: '900' }}>CERRAR</button>
                     </div>
                 </div>
             )}

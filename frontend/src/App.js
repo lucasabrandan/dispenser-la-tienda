@@ -13,34 +13,55 @@ import RepuestoManager from './components/RepuestoManager';
 export default function App() {
     // Controlamos la sección. 'caja' es la pantalla de inicio.
     const [seccionActual, setSeccionActual] = useState('caja'); 
+    
+    // 🚀 NUEVO: Estado para guardar el presupuesto que queremos editar
+    const [servicioAEditar, setServicioAEditar] = useState(null);
+
+    // 🚀 NUEVO: Función que se dispara cuando tocás el lápiz en el Historial
+    const manejarEdicion = (servicio) => {
+        setServicioAEditar(servicio);  // Guardamos los datos
+        setSeccionActual('caja');      // Te mandamos a la vista del formulario
+    };
+
+    // 🚀 NUEVO: Función inteligente para cambiar de sección desde el menú
+    // Si tocás "Caja" manualmente en el menú, limpiamos la edición para que arranques uno en blanco.
+    const cambiarSeccionDesdeMenu = (nuevaSeccion) => {
+        if (nuevaSeccion === 'caja' && seccionActual !== 'caja') {
+            setServicioAEditar(null); 
+        }
+        setSeccionActual(nuevaSeccion);
+    };
 
     // Función que decide qué componente mostrar
-    // 💡 IMPORTANTE: Los nombres de los 'case' deben coincidir con los IDs del Sidebar
     const renderSeccion = () => {
         switch (seccionActual) {
             case 'caja':
-                // Solo el formulario para cargar ventas rápido
                 return (
                     <div className="card-animate">
-                        <ServicioForm onSaved={() => setSeccionActual('historial')} />
+                        <ServicioForm 
+                            // 🚀 Le pasamos el servicio si estamos editando, o null si es nuevo
+                            servicioParaEditar={servicioAEditar} 
+                            onSaved={() => {
+                                setServicioAEditar(null); // Limpiamos al guardar
+                                setSeccionActual('historial');
+                            }} 
+                        />
                     </div>
                 );
             case 'historial':
-                // Pantalla dedicada a revisar el historial y generar PDFs
                 return (
                     <div className="card-animate">
-                        <ServicioList />
+                        {/* 🚀 Le pasamos la función manejarEdicion al botón del lápiz */}
+                        <ServicioList onEditar={manejarEdicion} />
                     </div>
                 );
             case 'clientes':
-                // Gestión de Clientes, Sedes y Dispensers
                 return (
                     <div className="card-animate">
                         <ClienteManager />
                     </div>
                 );
             case 'repuestos':
-                // Control de Stock y precios de repuestos
                 return (
                     <div className="card-animate">
                         <RepuestoManager />
@@ -57,7 +78,6 @@ export default function App() {
 
     return (
         <>
-            {/* Configuración de notificaciones: Estilo limpio */}
             <Toaster 
                 position="top-right" 
                 toastOptions={{ 
@@ -71,10 +91,9 @@ export default function App() {
                 }} 
             />
 
-            {/* El Layout envuelve toda la navegación */}
-            <Layout vistaActual={seccionActual} setVistaActual={setSeccionActual}>
+            {/* 🚀 En vez de setSeccionActual directo, usamos nuestra función inteligente */}
+            <Layout vistaActual={seccionActual} setVistaActual={cambiarSeccionDesdeMenu}>
                 
-                {/* Contenedor con ancho máximo para que en PC no se estire infinito */}
                 <div style={{ 
                     maxWidth: '1000px', 
                     margin: '0 auto', 
