@@ -17,7 +17,6 @@ export default function ServicioList({ onEditar }) {
         api.get('/servicios')
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : [];
-                // Ordenar: lo más nuevo arriba
                 setServicios(data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)));
             })
             .catch(() => toast.error("Error al conectar con el historial"));
@@ -60,7 +59,6 @@ export default function ServicioList({ onEditar }) {
         );
     });
 
-    // Totales dinámicos para el Dashboard
     const totalVentas = servicios
         .filter(s => s.servicioTipo === 'VENTA' && s.estado !== 'PRESUPUESTO')
         .reduce((acc, s) => acc + calcularCosto(s), 0);
@@ -70,118 +68,125 @@ export default function ServicioList({ onEditar }) {
         .reduce((acc, s) => acc + calcularCosto(s), 0);
 
     return (
-        <div style={{ background: '#F4F7F6', minHeight: '100vh', padding: '15px', paddingBottom: '100px' }}>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 pb-28 font-sans transition-colors duration-300">
             
-            {/* --- DASHBOARD SUPERIOR (BORDES DE COLOR) --- */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-                <div style={{ background: '#FFF', padding: '15px', borderRadius: '16px', borderLeft: '8px solid #008000', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#008000', margin: 0 }}>VENTAS INSUMOS</p>
-                    <p style={{ fontSize: '22px', fontWeight: '900', color: '#000', margin: 0 }}>$ {totalVentas.toLocaleString()}</p>
+            {/* --- DASHBOARD SUPERIOR --- */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 border-l-4 border-l-emerald-500 shadow-sm transition-colors duration-300">
+                    <p className="text-[11px] font-extrabold text-emerald-500 uppercase tracking-wide m-0">Ventas Insumos</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">$ {totalVentas.toLocaleString()}</p>
                 </div>
-                <div style={{ background: '#FFF', padding: '15px', borderRadius: '16px', borderLeft: '8px solid #E54D42', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                    <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#E54D42', margin: 0 }}>TÉCNICA / MO</p>
-                    <p style={{ fontSize: '22px', fontWeight: '900', color: '#000', margin: 0 }}>$ {totalTecnica.toLocaleString()}</p>
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 border-l-4 border-l-rose-500 shadow-sm transition-colors duration-300">
+                    <p className="text-[11px] font-extrabold text-rose-500 uppercase tracking-wide m-0">Técnica / MO</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">$ {totalTecnica.toLocaleString()}</p>
                 </div>
             </div>
 
             {/* --- BUSCADOR Y TABS (STICKY) --- */}
-            <div style={{ position: 'sticky', top: '10px', zIndex: 100, background: '#F4F7F6', paddingBottom: '10px' }}>
-                <input 
-                    placeholder="🔍 Cliente, Sede o S/N..." 
-                    value={busqueda} 
-                    onChange={e => setBusqueda(e.target.value)} 
-                    style={{ width: '100%', padding: '15px', background: '#FFF', borderRadius: '12px', border: '2px solid #000', fontSize: '16px', fontWeight: 'bold', outline: 'none' }}
-                />
-                <div style={{ display: 'flex', gap: '5px', background: '#000', padding: '5px', borderRadius: '12px', marginTop: '10px' }}>
+            <div className="sticky top-2 z-40 bg-slate-50 dark:bg-slate-900 pb-4 transition-colors duration-300">
+                <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔍</span>
+                    <input 
+                        placeholder="Buscar cliente, sede o S/N..." 
+                        value={busqueda} 
+                        onChange={e => setBusqueda(e.target.value)} 
+                        className="w-full py-3.5 pl-11 pr-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-[15px] font-semibold text-slate-900 dark:text-white outline-none shadow-sm focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                    />
+                </div>
+                
+                {/* Segmented Control */}
+                <div className="flex gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl mt-3 transition-colors duration-300">
                     {['TODOS', 'VENTA', 'TECNICA', 'PRESUPUESTO'].map(t => (
                         <button key={t} onClick={() => setFiltroTab(t)}
-                            style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', fontSize: '10px', fontWeight: '900',
-                                background: filtroTab === t ? '#FFF' : 'transparent',
-                                color: filtroTab === t ? '#000' : '#FFF', transition: '0.2s' }}>
-                            {t}
+                            className={`flex-1 py-2.5 px-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wide transition-all duration-200 ${
+                                filtroTab === t 
+                                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
+                                    : 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-300/50 dark:hover:bg-slate-700/50'
+                            }`}>
+                            {t === 'PRESUPUESTO' ? 'PENDIENTES' : t}
                         </button>
                     ))}
                 </div>
             </div>
 
             {/* --- LISTADO DE TARJETAS --- */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+            <div className="flex flex-col gap-4 mt-1">
                 {filtrados.map(s => (
-                    <div key={s.id} style={{ background: '#FFF', padding: '18px', borderRadius: '20px', border: '1px solid #E0E0E0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div key={s.id} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
+                        <div className="flex justify-between items-start">
                             <div>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '5px' }}>
-                                    <span style={{ fontSize: '11px', color: '#999', fontWeight: 'bold' }}>#{s.id}</span>
-                                    <span style={{ 
-                                        fontSize: '10px', fontWeight: '900', padding: '3px 8px', borderRadius: '6px',
-                                        background: s.estado === 'PRESUPUESTO' ? '#FFF159' : (s.servicioTipo === 'TECNICA' ? '#FFEBEB' : '#E6F4EA'),
-                                        color: s.estado === 'PRESUPUESTO' ? '#000' : (s.servicioTipo === 'TECNICA' ? '#E54D42' : '#008000')
-                                    }}>
-                                        {s.estado === 'PRESUPUESTO' ? 'PENDIENTE' : s.servicioTipo}
+                                <div className="flex gap-2 items-center mb-2">
+                                    <span className="text-xs text-slate-400 font-bold">#{s.id}</span>
+                                    <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wide ${
+                                        s.estado === 'PRESUPUESTO' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 
+                                        s.servicioTipo === 'TECNICA' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' : 
+                                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    }`}>
+                                        {s.estado === 'PRESUPUESTO' ? 'Pendiente' : s.servicioTipo}
                                     </span>
                                 </div>
-                                <h4 style={{ fontSize: '18px', fontWeight: '900', margin: '0', color: '#000' }}>{s.clienteNombre}</h4>
-                                <p style={{ fontSize: '13px', color: '#666', margin: '2px 0 0' }}>📍 {s.sedeNombre}</p>
+                                <h4 className="text-lg font-extrabold m-0 text-slate-900 dark:text-white tracking-tight">{s.clienteNombre}</h4>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-1 font-medium">📍 {s.sedeNombre}</p>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '22px', fontWeight: '900', color: '#000' }}>$ {calcularCosto(s).toLocaleString()}</div>
-                                <div style={{ fontSize: '11px', color: '#AAA' }}>{s.fecha}</div>
+                            <div className="text-right">
+                                <div className="text-xl font-black text-slate-900 dark:text-white tracking-tight">$ {calcularCosto(s).toLocaleString()}</div>
+                                <div className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-1">{s.fecha}</div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #F8F8F8' }}>
+                        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                             
-                            {/* 🛡️ BOTÓN EDITAR CANDADO: Solo si es presupuesto */}
                             {s.estado === 'PRESUPUESTO' && (
-                                <button onClick={() => onEditar(s)} style={{ background: '#FFF', border: '2px solid #000', borderRadius: '10px', padding: '10px 14px', fontSize: '16px', boxShadow: '2px 2px 0px #000' }}>✏️</button>
+                                <button onClick={() => onEditar(s)} className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">✏️</button>
                             )}
                             
-                            <button onClick={() => setModalDetalle(s)} style={{ background: '#F8F9FA', border: '1px solid #DDD', borderRadius: '10px', padding: '10px 14px', fontSize: '16px' }}>👁️</button>
+                            <button onClick={() => setModalDetalle(s)} className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">👁️</button>
                             
                             <button onClick={() => generarRemitoPDFPremium({
-                                esPresupuesto: s.estado === 'PRESUPUESTO',
-                                cliente: { nombre: s.clienteNombre },
-                                sede: { nombreSede: s.sedeNombre },
-                                tecnico: "Marcos",
-                                ticketItems: s.items.map(it => ({ ...it, totalCalculado: it.costo })),
-                                totalFinal: calcularCosto(s),
-                                fechaServicio: s.fecha
-                            })} style={{ background: '#F8F9FA', border: '1px solid #DDD', borderRadius: '10px', padding: '10px 14px', fontSize: '16px' }}>📄</button>
+                                esPresupuesto: s.estado === 'PRESUPUESTO', cliente: { nombre: s.clienteNombre }, sede: { nombreSede: s.sedeNombre },
+                                tecnico: "Marcos", ticketItems: s.items.map(it => ({ ...it, totalCalculado: it.costo })), totalFinal: calcularCosto(s), fechaServicio: s.fecha
+                            })} className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">📄</button>
                             
                             {s.estado === 'PRESUPUESTO' && (
-                                <button onClick={() => aprobarPresupuesto(s.id)} style={{ background: '#000', color: '#FFF', borderRadius: '10px', padding: '0 15px', fontWeight: '900', fontSize: '11px' }}>COBRAR</button>
+                                <button onClick={() => aprobarPresupuesto(s.id)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 font-extrabold text-xs shadow-md shadow-blue-500/30 transition-all">COBRAR</button>
                             )}
                             
-                            <button onClick={() => eliminarServicio(s.id)} style={{ background: '#FFF', color: '#E54D42', border: '1px solid #FFEBEB', borderRadius: '10px', padding: '10px', fontSize: '18px' }}>🗑️</button>
+                            <button onClick={() => eliminarServicio(s.id)} className="bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl p-2.5 text-base flex items-center justify-center ml-auto transition-colors">🗑️</button>
                         </div>
                     </div>
                 ))}
+
+                {filtrados.length === 0 && (
+                    <div className="text-center p-10 text-slate-400 font-semibold">
+                        No se encontraron registros.
+                    </div>
+                )}
             </div>
 
-            {/* --- MODAL DE DETALLE COMPLETO (RECUPERADO) --- */}
+            {/* --- MODAL DE DETALLE --- */}
             {modalDetalle && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', zIndex: 2000 }}>
-                    <div style={{ background: '#FFF', width: '100%', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '25px', borderTop: '4px solid #000' }}>
-                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
-                        <h3 style={{ fontSize: '18px', fontWeight: '900', marginBottom: '20px' }}>DESGLOSE DEL SERVICIO</h3>
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end z-[2000] transition-opacity">
+                    <div className="bg-white dark:bg-slate-800 w-full rounded-t-3xl p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-transform">
+                        <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
+                        <h3 className="text-lg font-black mb-5 text-slate-900 dark:text-white">Desglose del Servicio</h3>
                         
-                        <div style={{ maxHeight: '50vh', overflowY: 'auto', marginBottom: '20px' }}>
+                        <div className="max-h-[55vh] overflow-y-auto mb-5 pr-1">
                             {modalDetalle.items.map((it, idx) => (
-                                <div key={idx} style={{ background: '#F8F9FA', padding: '15px', borderRadius: '15px', marginBottom: '10px', border: '1px solid #EEE' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                                        <span style={{ fontWeight: '900', color: '#E54D42' }}>{it.equipoSerial}</span>
-                                        <span style={{ fontWeight: '900' }}>$ {Number(it.costo).toLocaleString()}</span>
+                                <div key={idx} className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-2xl mb-3 border border-slate-100 dark:border-slate-600">
+                                    <div className="flex justify-between mb-2">
+                                        <span className="font-extrabold text-blue-600 dark:text-blue-400 text-[15px]">{it.equipoSerial}</span>
+                                        <span className="font-black text-slate-900 dark:text-white text-base">$ {Number(it.costo).toLocaleString()}</span>
                                     </div>
-                                    <p style={{ fontSize: '13px', margin: '0 0 8px' }}>{it.trabajoRealizado}</p>
+                                    <p className="text-sm m-0 mb-3 text-slate-600 dark:text-slate-300 leading-snug">{it.trabajoRealizado}</p>
                                     {it.repuestosUsados?.length > 0 && (
-                                        <div style={{ fontSize: '11px', color: '#666', borderTop: '1px solid #EEE', paddingTop: '8px' }}>
-                                            <strong>Repuestos:</strong> {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
+                                        <div className="text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-600 pt-3 font-medium">
+                                            <strong className="text-slate-700 dark:text-slate-300">Repuestos:</strong> {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
                                         </div>
                                     )}
                                 </div>
                             ))}
                         </div>
-                        <button onClick={() => setModalDetalle(null)} style={{ width: '100%', padding: '18px', background: '#000', color: '#FFF', borderRadius: '15px', fontWeight: '900' }}>CERRAR</button>
+                        <button onClick={() => setModalDetalle(null)} className="w-full py-4 bg-slate-900 dark:bg-blue-600 hover:dark:bg-blue-500 text-white rounded-2xl font-extrabold text-[15px] transition-colors">CERRAR</button>
                     </div>
                 </div>
             )}

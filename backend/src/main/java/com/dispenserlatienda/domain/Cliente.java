@@ -22,34 +22,52 @@ public class Cliente {
 
     private String telefono;
     private String email;
-
-    // 💡 AGREGADO: Para que coincida con lo que manda el DTO y el Service
     private String notas;
+
+    // 🏛️ NUEVO: Condición Fiscal ARCA 2026
+    private String condicionIva;
+
+    // 📍 Campos de Logística
+    private String calle;
+    private String numero;
+    private String piso;
+    private String depto;
+    private String localidad;
+    private String provincia;
+    private String direccion;
 
     protected Cliente() {}
 
-    // 💡 ACTUALIZADO: Cambiamos el "Object sedes" por "String notas" para que el Service no tire error
-    public Cliente(ClienteTipo clienteTipo, String nombre, String cuilDni, String telefono, String email, String notas) {
+    public Cliente(ClienteTipo clienteTipo, String nombre, String cuilDni, String telefono, String email, String notas, String condicionIva) {
         this.clienteTipo = clienteTipo;
         this.nombre = nombre;
         this.cuilDni = cuilDni;
         this.telefono = telefono;
         this.email = email;
         this.notas = notas;
+        this.condicionIva = condicionIva;
     }
 
     // =================================================================
-    // 🚀 GETTERS Y SETTERS
+    // 🛠️ MÉTODOS DE COMPATIBILIDAD (PUENTE)
+    // =================================================================
+
+    public String getRazonSocialNombre() {
+        return this.nombre;
+    }
+
+    public void setRazonSocialNombre(String razonSocialNombre) {
+        this.nombre = razonSocialNombre;
+    }
+
+    // =================================================================
+    // ⚙️ GETTERS Y SETTERS ESTÁNDAR
     // =================================================================
 
     public Long getId() { return id; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-
-    // Puente para código viejo
-    public String getRazonSocialNombre() { return this.nombre; }
-    public void setRazonSocialNombre(String razonSocialNombre) { this.nombre = razonSocialNombre; }
 
     public String getCuilDni() { return cuilDni; }
     public void setCuilDni(String cuilDni) { this.cuilDni = cuilDni; }
@@ -66,6 +84,29 @@ public class Cliente {
     public ClienteTipo getClienteTipo() { return clienteTipo; }
     public void setClienteTipo(ClienteTipo clienteTipo) { this.clienteTipo = clienteTipo; }
 
-    // 💡 Puente para el DTO: Si el Service pide "getTipo()", le damos el "clienteTipo"
-    public ClienteTipo getTipo() { return this.clienteTipo; }
+    // ✅ GETTER Y SETTER PARA ARCA
+    public String getCondicionIva() { return condicionIva; }
+    public void setCondicionIva(String condicionIva) { this.condicionIva = condicionIva; }
+
+    // 📍 Getters/Setters Logística
+    public String getCalle() { return calle; }
+    public void setCalle(String calle) { this.calle = calle; }
+
+    public String getNumero() { return numero; }
+    public void setNumero(String numero) { this.numero = numero; }
+
+    public String getPiso() { return piso; }
+    public void setPiso(String piso) { this.piso = piso; }
+
+    public String getDepto() { return depto; }
+    public void setDepto(String depto) { this.depto = depto; }
+
+    public String getLocalidad() { return localidad; }
+    public void setLocalidad(String localidad) { this.localidad = localidad; }
+
+    public String getProvincia() { return provincia; }
+    public void setProvincia(String provincia) { this.provincia = provincia; }
+
+    public String getDireccion() { return direccion; }
+    public void setDireccion(String direccion) { this.direccion = direccion; }
 }

@@ -6,7 +6,6 @@ import CreatableSelect from 'react-select/creatable';
 
 // Átomos UI
 import Card from './ui/Card';
-import Button from './ui/Button';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 
 export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
@@ -15,9 +14,7 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
     const [esPresupuesto, setEsPresupuesto] = useState(true); 
     const [ticketItems, setTicketItems] = useState([]);
     const [idEdicion, setIdEdicion] = useState(null);
-    const [estaBloqueado, setEstaBloqueado] = useState(false); // 🛡️ NUEVO: ESTADO DE BLOQUEO
-    
-    // 🚀 ESTADO PARA SEGUIMIENTO DE EQUIPO SELECCIONADO
+    const [estaBloqueado, setEstaBloqueado] = useState(false);
     const [historialEquipo, setHistorialEquipo] = useState(null);
     
     const [itemActual, setItemActual] = useState({ 
@@ -27,54 +24,54 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
 
     const [repuestoElegido, setRepuestoElegido] = useState(null);
 
-    // 🎨 COLORES DE MARCA
-    const RED_TECNICA = "#E54D42";
-    const GREEN_VENTA = "#008000";
-    const activeColor = esPresupuesto ? RED_TECNICA : GREEN_VENTA;
+    // Colores de marca
+    const RED_TECNICA = "#EF4444";
+    const GREEN_VENTA = "#10B981";
 
-    const highContrastStyles = {
-        control: (base) => ({ 
+    // Detectar Modo Oscuro para los Selects
+    const isDark = document.documentElement.classList.contains('dark');
+
+    const premiumStyles = {
+        control: (base, state) => ({ 
             ...base, 
-            background: estaBloqueado ? '#EAEAEA' : '#FFF', // Gris si está bloqueado
-            border: '2px solid #000', borderRadius: '10px', minHeight: '55px',
-            boxShadow: 'none', '&:hover': { border: '2px solid #000' }
+            background: estaBloqueado ? (isDark ? '#1E293B' : '#F1F5F9') : (isDark ? '#0F172A' : '#F8FAFC'), 
+            border: state.isFocused ? '1px solid #3B82F6' : (isDark ? '1px solid #334155' : '1px solid #E2E8F0'), 
+            borderRadius: '12px', 
+            minHeight: '55px',
+            boxShadow: state.isFocused ? '0 0 0 3px rgba(59, 130, 246, 0.15)' : 'none', 
+            '&:hover': { border: estaBloqueado ? 'none' : '1px solid #3B82F6' },
+            transition: 'all 0.2s ease'
         }),
         option: (base, state) => ({
             ...base,
-            backgroundColor: state.isSelected ? '#000' : state.isFocused ? '#F0F0F0' : '#FFF',
-            color: state.isSelected ? '#FFF' : '#000',
-            padding: '15px', borderBottom: '1px solid #EEE'
+            backgroundColor: state.isSelected ? '#3B82F6' : state.isFocused ? (isDark ? '#1E293B' : '#EFF6FF') : (isDark ? '#0F172A' : '#FFF'),
+            color: state.isSelected ? '#FFF' : (isDark ? '#CBD5E1' : '#334155'),
+            padding: '12px 15px', 
+            cursor: 'pointer'
         }),
-        singleValue: (base) => ({ ...base, color: '#000', fontWeight: '800' }),
+        menu: (base) => ({ ...base, background: isDark ? '#0F172A' : '#FFF', border: isDark ? '1px solid #334155' : 'none' }),
+        singleValue: (base) => ({ ...base, color: isDark ? '#F8FAFC' : '#0F172A', fontWeight: '700' }),
+        placeholder: (base) => ({ ...base, color: '#94A3B8' })
     };
 
-    // 🚀 CARGA INICIAL Y MAPEADO DE EDICIÓN INTEGRADO
     useEffect(() => {
         const cargar = async () => {
             try {
                 const [c, s, e, r] = await Promise.all([
                     api.get('/clientes'), api.get('/sedes'), api.get('/equipos'), api.get('/repuestos')
                 ]);
-                const database = { 
-                    clientes: c.data || [], sedes: s.data || [], 
-                    equipos: e.data || [], repuestos: r.data || [] 
-                };
-                setDb(database);
+                setDb({ clientes: c.data || [], sedes: s.data || [], equipos: e.data || [], repuestos: r.data || [] });
 
                 if (servicioParaEditar) {
-                    // 🛡️ LÓGICA DE BLOQUEO: Si no es PRESUPUESTO, se activa el candado
                     if (servicioParaEditar.estado !== "PRESUPUESTO") {
                         setEstaBloqueado(true);
-                        toast.error("⚠️ REGISTRO YA CONFIRMADO: Solo lectura");
                     } else {
                         setEstaBloqueado(false);
                     }
-
                     setIdEdicion(servicioParaEditar.id);
                     setClienteId(servicioParaEditar.clienteId?.toString());
                     setEsPresupuesto(servicioParaEditar.servicioTipo === "TECNICA");
-                    
-                    const itemsMapeados = servicioParaEditar.items.map(it => ({
+                    setTicketItems(servicioParaEditar.items.map(it => ({
                         sedeId: servicioParaEditar.sedeId,
                         equipoSerial: it.equipoSerial,
                         trabajo: it.trabajoRealizado,
@@ -82,8 +79,7 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
                         totalCalculado: Math.max(0, it.costo),
                         repuestosUsados: it.repuestosUsados || [],
                         resumenTexto: it.trabajoRealizado
-                    }));
-                    setTicketItems(itemsMapeados);
+                    })));
                     setItemActual(prev => ({ ...prev, sedeId: servicioParaEditar.sedeId }));
                 }
             } catch (err) { toast.error("Error de conexión"); }
@@ -91,43 +87,33 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
         cargar();
     }, [servicioParaEditar]);
 
-    // 🚀 LÓGICA DE CONSULTA DE ANTECEDENTES Y GARANTÍA
+    // --- FUNCIONES DE LÓGICA (RESTABLECIDAS) ---
+
     const consultarAntecedentes = async (serial) => {
         if (!serial || serial === "MOSTRADOR") { setHistorialEquipo(null); return; }
         try {
             const res = await api.get(`/servicios?equipoSerial=${serial}`);
-            const historial = res.data;
-            if (historial && historial.length > 0) {
-                const ultimo = historial[0];
+            if (res.data?.length > 0) {
+                const ultimo = res.data[0];
                 setHistorialEquipo(ultimo);
-                
-                const hoy = new Date();
                 const itemGarantia = ultimo.items?.find(i => i.equipoSerial === serial && i.garantiaHasta);
-                
-                if (itemGarantia && new Date(itemGarantia.garantiaHasta) > hoy) {
-                    toast.success(`🛡️ EQUIPO EN GARANTÍA HASTA: ${itemGarantia.garantiaHasta}`, { 
-                        duration: 6000,
-                        style: { border: '2px solid #000', fontWeight: 'bold' }
-                    });
+                if (itemGarantia && new Date(itemGarantia.garantiaHasta) > new Date()) {
+                    toast.success(`🛡️ GARANTÍA HASTA: ${itemGarantia.garantiaHasta}`, { duration: 6000 });
                 }
             } else { setHistorialEquipo(null); }
-        } catch (e) { console.error("Error buscando antecedentes"); }
+        } catch (e) { console.error("Error antecedentes"); }
     };
 
-    // 🚀 LÓGICA DE WHATSAPP DINÁMICO
     const enviarWhatsAppMantenimiento = () => {
         const cliente = db.clientes.find(c => c.id.toString() === clienteId);
-        if (!cliente?.telefono) return toast.error("El cliente no tiene teléfono cargado");
-        
+        if (!cliente?.telefono) return toast.error("Sin teléfono");
         const tel = cliente.telefono.replace(/\D/g, '');
-        const msg = `Hola ${cliente.nombre}, te escribo de Dispenser La Tienda. Revisando el historial del dispenser S/N ${itemActual.equipoSerial}, notamos que ya le toca su mantenimiento programado. ¿Te gustaría que coordinemos una visita?`;
+        const msg = `Hola ${cliente.nombre}, revisando el historial del dispenser S/N ${itemActual.equipoSerial}, notamos que ya le toca su mantenimiento...`;
         window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
-    // --- LÓGICA DE REPUESTOS ---
     const sumarRepuesto = () => {
-        if (estaBloqueado) return; // 🛡️ BLOQUEO
-        if (!repuestoElegido) return toast.error("Elegí un producto");
+        if (estaBloqueado || !repuestoElegido) return;
         const nuevos = [...itemActual.repuestosUsados];
         const idx = nuevos.findIndex(r => r.id === repuestoElegido.id);
         if (idx > -1) {
@@ -141,9 +127,7 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
     };
 
     const actualizarCantidad = (idx, valor) => {
-        if (estaBloqueado) return; // 🛡️ BLOQUEO
         const nuevos = [...itemActual.repuestosUsados];
-        // 🛡️ BLOQUEO NEGATIVOS: Mínimo 1
         const qty = Math.max(1, parseInt(valor) || 1);
         nuevos[idx].cantidad = qty;
         nuevos[idx].subtotal = qty * nuevos[idx].precio;
@@ -151,47 +135,23 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
     };
 
     const quitarRepuesto = (idx) => {
-        if (estaBloqueado) return; // 🛡️ BLOQUEO
+        if (estaBloqueado) return;
         const nuevos = [...itemActual.repuestosUsados];
         nuevos.splice(idx, 1);
         setItemActual({ ...itemActual, repuestosUsados: nuevos });
     };
 
-    // --- LÓGICA DE REMITO ---
-    const agregarAlTicket = () => {
-        if (estaBloqueado) return; // 🛡️ BLOQUEO
-        if (esPresupuesto && !itemActual.equipoSerial) return toast.error("❌ Falta el S/N del dispenser");
-        
-        // 🛡️ BLOQUEO NEGATIVOS AL SUMAR
-        const extra = Math.max(0, parseFloat(itemActual.costoExtra) || 0);
-        const totalR = itemActual.repuestosUsados.reduce((a, b) => a + b.subtotal, 0);
-
-        const nuevoRenglon = {
-            ...itemActual,
-            costoExtra: extra,
-            totalCalculado: extra + totalR,
-            resumenTexto: (itemActual.equipoSerial && itemActual.equipoSerial !== "MOSTRADOR")
-                ? `${itemActual.trabajo} | MO: $${extra}`
-                : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(", ")}`
-        };
-
-        setTicketItems([...ticketItems, nuevoRenglon]);
-        setItemActual({ ...itemActual, equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
-        setHistorialEquipo(null);
-        toast.success("✅ Añadido al remito");
-    };
-
     const editarItem = (idx) => {
-        if (estaBloqueado) return; // 🛡️ BLOQUEO
+        if (estaBloqueado) return;
         const itemParaEditar = ticketItems[idx];
-        setItemActual(itemParaEditar); 
+        setItemActual(itemParaEditar);
         const nuevaLista = [...ticketItems];
-        nuevaLista.splice(idx, 1); 
+        nuevaLista.splice(idx, 1);
         setTicketItems(nuevaLista);
     };
 
     const eliminarItem = (idx) => {
-        if (estaBloqueado) return; // 🛡️ BLOQUEO
+        if (estaBloqueado) return;
         const nuevaLista = [...ticketItems];
         nuevaLista.splice(idx, 1);
         setTicketItems(nuevaLista);
@@ -212,97 +172,103 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
         });
     };
 
+    const agregarAlTicket = () => {
+        if (estaBloqueado) return;
+        if (esPresupuesto && !itemActual.equipoSerial) return toast.error("❌ Falta S/N");
+        const extra = Math.max(0, parseFloat(itemActual.costoExtra) || 0);
+        const totalR = itemActual.repuestosUsados.reduce((a, b) => a + b.subtotal, 0);
+        const nuevoRenglon = {
+            ...itemActual,
+            costoExtra: extra,
+            totalCalculado: extra + totalR,
+            resumenTexto: (itemActual.equipoSerial && itemActual.equipoSerial !== "MOSTRADOR")
+                ? `${itemActual.trabajo} | MO: $${extra}`
+                : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(", ")}`
+        };
+        setTicketItems([...ticketItems, nuevoRenglon]);
+        setItemActual({ ...itemActual, equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
+        setHistorialEquipo(null);
+    };
+
     const finalizar = async (confirmarTrabajo = false) => {
-        if (estaBloqueado) return; // 🛡️ BLOQUEO
-        if (ticketItems.length === 0) return toast.error("Agregá al menos un ítem");
-        const loading = toast.loading(confirmarTrabajo ? "Confirmando Trabajo..." : "Guardando Presupuesto...");
-        
+        if (estaBloqueado || ticketItems.length === 0) return;
+        const loading = toast.loading(confirmarTrabajo ? "Confirmando..." : "Guardando...");
         try {
             const clienteObj = db.clientes?.find(c => c.id.toString() === clienteId);
             const sedeIdReal = itemActual.sedeId || ticketItems[0]?.sedeId;
             const tieneEquipo = ticketItems.some(it => it.equipoSerial && it.equipoSerial !== "MOSTRADOR");
 
             const servicioData = {
-                sedeId: parseInt(sedeIdReal),
-                usuarioId: 1, 
-                fecha: new Date().toISOString().split('T')[0],
-                servicioTipo: tieneEquipo ? "TECNICA" : "VENTA", 
-                estado: confirmarTrabajo ? "REALIZADO" : "PRESUPUESTO",
-                clienteNombre: clienteObj?.nombre || "Particular",
-                sedeNombre: db.sedes?.find(s => s.id === sedeIdReal)?.nombreSede || "Mostrador",
+                sedeId: parseInt(sedeIdReal), usuarioId: 1, fecha: new Date().toISOString().split('T')[0],
+                servicioTipo: tieneEquipo ? "TECNICA" : "VENTA", estado: confirmarTrabajo ? "REALIZADO" : "PRESUPUESTO",
+                clienteNombre: clienteObj?.nombre || "Particular", sedeNombre: db.sedes?.find(s => s.id === sedeIdReal)?.nombreSede || "Mostrador",
                 items: ticketItems.map(it => {
-                    const esFiltro = it.trabajo?.toUpperCase().includes("FILTRO") || 
-                                    it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes("FILTRO"));
-                    const mesesGarantia = esFiltro ? 6 : 3;
-
+                    const esFiltro = it.trabajo?.toUpperCase().includes("FILTRO") || it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes("FILTRO"));
                     return {
-                        equipoSerial: it.equipoSerial || "MOSTRADOR",
-                        tecnico: "Marcos",
-                        costo: parseFloat(it.totalCalculado),
-                        costoExtra: parseFloat(it.costoExtra) || 0,
-                        metodoPago: "EFECTIVO",
-                        trabajoRealizado: it.resumenTexto,
-                        trabajoTipo: tieneEquipo ? (esFiltro ? "CAMBIO_FILTRO" : "REPARACION") : "VENTA",
-                        repuestosUsados: it.repuestosUsados || [],
-                        garantiaHasta: (confirmarTrabajo && tieneEquipo) 
-                            ? new Date(new Date().setMonth(new Date().getMonth() + mesesGarantia)).toISOString().split('T')[0] 
-                            : null
+                        equipoSerial: it.equipoSerial || "MOSTRADOR", tecnico: "Marcos", costo: parseFloat(it.totalCalculado),
+                        costoExtra: parseFloat(it.costoExtra) || 0, metodoPago: "EFECTIVO", trabajoRealizado: it.resumenTexto,
+                        trabajoTipo: tieneEquipo ? (esFiltro ? "CAMBIO_FILTRO" : "REPARACION") : "VENTA", repuestosUsados: it.repuestosUsados || [],
+                        garantiaHasta: (confirmarTrabajo && tieneEquipo) ? new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3))).toISOString().split('T')[0] : null
                     };
                 })
             };
 
             const formData = new FormData();
             formData.append("servicio", new Blob([JSON.stringify(servicioData)], { type: 'application/json' }));
+            if (idEdicion) await api.put(`/servicios/${idEdicion}`, formData);
+            else await api.post('/servicios', formData);
             
-            if (idEdicion) {
-                await api.put(`/servicios/${idEdicion}`, formData);
-            } else {
-                await api.post('/servicios', formData);
-            }
-            
-            toast.success("🚀 Registro procesado!", { id: loading });
+            toast.success("🚀 ¡Listo!", { id: loading });
             setTicketItems([]); setClienteId(null); setIdEdicion(null);
             if (onSaved) onSaved();
         } catch (err) { toast.error("Error de servidor", { id: loading }); }
     };
 
     return (
-        <div style={{ background: '#F2F2F2', minHeight: '100vh', padding: '15px', color: '#000', paddingBottom: '160px' }}>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 pb-48 font-sans transition-colors duration-300">
             
-            {/* 🛡️ AVISO DE BLOQUEO */}
-            {estaBloqueado && <div style={{background: '#E54D42', color: '#FFF', padding: '15px', borderRadius: '15px', textAlign:'center', fontWeight:'900', marginBottom:'20px'}}>🔒 ESTE REGISTRO YA FUE CONFIRMADO / COBRADO (SOLO LECTURA)</div>}
+            {/* 🔒 AVISO DE BLOQUEO */}
+            {estaBloqueado && (
+                <div className="bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 p-4 rounded-2xl border border-rose-200 dark:border-rose-800 text-center font-bold mb-5 shadow-sm">
+                    🔒 REGISTRO YA COBRADO (SOLO LECTURA)
+                </div>
+            )}
             
-            {/* SWITCH DE MODO (Se oculta si está bloqueado para evitar cambios) */}
+            {/* SWITCH DE MODO */}
             {!estaBloqueado && (
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                <div className="flex gap-3 mb-6">
                     <button onClick={() => {setEsPresupuesto(true); setTicketItems([])}} 
-                        style={{ flex: 1, padding: '20px', borderRadius: '15px', border: '2px solid #000', fontWeight: '900', fontSize: '14px', background: esPresupuesto ? RED_TECNICA : '#FFF', color: esPresupuesto ? '#FFF' : '#000', boxShadow: esPresupuesto ? `0px 4px 0px #000` : 'none' }}>
+                        className={`flex-1 py-4 rounded-xl font-black text-xs transition-all duration-300 ${esPresupuesto ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'}`}>
                         🛠️ SERVICIO TÉCNICO
                     </button>
                     <button onClick={() => {setEsPresupuesto(false); setTicketItems([])}} 
-                        style={{ flex: 1, padding: '20px', borderRadius: '15px', border: '2px solid #000', fontWeight: '900', fontSize: '14px', background: !esPresupuesto ? GREEN_VENTA : '#FFF', color: !esPresupuesto ? '#FFF' : '#000', boxShadow: !esPresupuesto ? `0px 4px 0px #000` : 'none' }}>
+                        className={`flex-1 py-4 rounded-xl font-black text-xs transition-all duration-300 ${!esPresupuesto ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'}`}>
                         🛒 VENTA / INSUMOS
                     </button>
                 </div>
             )}
 
-            {idEdicion && !estaBloqueado && <div style={{textAlign:'center', fontWeight:'900', marginBottom:'10px', color: RED_TECNICA}}>✏️ EDITANDO PRESUPUESTO #{idEdicion}</div>}
+            {idEdicion && !estaBloqueado && (
+                <div className="text-center font-black text-rose-500 bg-rose-50 dark:bg-rose-900/20 py-2 rounded-lg mb-4 text-xs tracking-widest uppercase">
+                    ✏️ Editando Presupuesto #{idEdicion}
+                </div>
+            )}
 
-            <Card style={{ border: '2px solid #000', borderRadius: '15px', background: '#FFF' }}>
-                <label style={{ fontWeight: '900', fontSize: '12px', color: '#666', marginBottom: '8px', display: 'block' }}>CLIENTE</label>
-                <CreatableSelect isDisabled={estaBloqueado} styles={highContrastStyles}
+            <Card className="shadow-sm">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Cliente</label>
+                <CreatableSelect isDisabled={estaBloqueado} styles={premiumStyles}
                     options={db.clientes?.map(c => ({ value: c.id.toString(), label: c.nombre }))}
                     value={db.clientes?.find(c => c.id.toString() === clienteId) ? { label: db.clientes.find(c => c.id.toString() === clienteId).nombre } : null}
                     onChange={(s) => setClienteId(s?.value)}
-                    placeholder="Buscar cliente..."
+                    placeholder="Buscar o crear cliente..."
                 />
             </Card>
 
             {clienteId && (
-                <Card style={{ marginTop: '15px', border: '2px solid #000', borderRadius: '15px', background: '#FFF' }}>
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ fontSize: '11px', fontWeight: '900' }}>SEDE / DOMICILIO</label>
-                        <Select isDisabled={estaBloqueado} styles={highContrastStyles}
+                <Card className="mt-4 shadow-sm">
+                    <div className="mb-5">
+                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Sede / Domicilio</label>
+                        <Select isDisabled={estaBloqueado} styles={premiumStyles}
                             options={db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId).map(s => ({ value: s.id, label: s.nombreSede }))}
                             value={db.sedes?.find(s => s.id === itemActual.sedeId) ? { label: db.sedes.find(s => s.id === itemActual.sedeId).nombreSede } : null}
                             onChange={(s) => setItemActual({ ...itemActual, sedeId: s.value, sedeNombre: s.label })}
@@ -311,126 +277,120 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
                     </div>
 
                     {esPresupuesto && (
-                        <div style={{ marginBottom: '15px' }}>
-                            <label style={{ fontSize: '11px', fontWeight: '900' }}>S/N DISPENSER</label>
-                            <CreatableSelect isDisabled={estaBloqueado} styles={highContrastStyles}
+                        <div className="mb-5">
+                            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">S/N Dispenser</label>
+                            <CreatableSelect isDisabled={estaBloqueado} styles={premiumStyles}
                                 options={db.equipos?.filter(e => e.sede?.id?.toString() === itemActual.sedeId?.toString()).map(e => ({ value: e.numeroSerie, label: `S/N: ${e.numeroSerie}` }))}
-                                onChange={(s) => {
-                                    setItemActual({...itemActual, equipoSerial: s?.value});
-                                    consultarAntecedentes(s?.value);
-                                }}
+                                onChange={(s) => { setItemActual({...itemActual, equipoSerial: s?.value}); consultarAntecedentes(s?.value); }}
                                 value={itemActual.equipoSerial ? { label: itemActual.equipoSerial } : null}
                                 placeholder="Elegí o creá N/S..."
                             />
                             {historialEquipo && (
-                                <div style={{ marginTop: '10px', background: '#000', color: '#FFF', padding: '15px', borderRadius: '12px', border: '2px solid #333' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '10px', fontWeight: '900', color: RED_TECNICA }}>ANTECEDENTES</span>
-                                        <button onClick={enviarWhatsAppMantenimiento} style={{ background: '#25D366', color: '#FFF', border: 'none', borderRadius: '8px', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold' }}>💬 WA</button>
+                                <div className="mt-3 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest tracking-tight">Antecedentes</span>
+                                        <button onClick={enviarWhatsAppMantenimiento} className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-black active:scale-95 transition-transform">💬 WHATSAPP</button>
                                     </div>
-                                    <div style={{ marginTop: '5px' }}>
-                                        <div style={{ fontSize: '12px', fontWeight: 'bold' }}>{historialEquipo.fecha} - {historialEquipo.items[0]?.trabajoRealizado}</div>
-                                    </div>
+                                    <p className="m-0 text-xs font-bold text-slate-600 dark:text-slate-400">
+                                        <span className="opacity-50">{historialEquipo.fecha}</span> — {historialEquipo.items[0]?.trabajoRealizado}
+                                    </p>
                                 </div>
                             )}
                         </div>
                     )}
 
                     {!estaBloqueado && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 65px', gap: '10px', alignItems: 'flex-end', marginBottom: '15px' }}>
-                            <div>
-                                <label style={{fontSize: '11px', fontWeight: '900'}}>AGREGAR PRODUCTOS</label>
-                                <Select styles={highContrastStyles}
+                        <div className="flex gap-2 items-end mb-5">
+                            <div className="flex-1">
+                                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Agregar Productos</label>
+                                <Select styles={premiumStyles}
                                     options={db.repuestos?.map(r => ({ ...r, label: `${r.nombre} ($${r.precio})`, value: r.id }))}
                                     onChange={setRepuestoElegido} value={repuestoElegido}
                                     placeholder="Buscar repuesto..."
                                 />
                             </div>
-                            <button onClick={sumarRepuesto} style={{ height: '55px', background: '#000', color: '#FFF', borderRadius: '10px', border: 'none', fontSize: '28px', fontWeight: 'bold' }}>+</button>
+                            <button onClick={sumarRepuesto} className="h-[55px] w-14 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-2xl font-black shadow-lg shadow-slate-900/20 active:scale-90 transition-transform">+</button>
                         </div>
                     )}
 
                     {itemActual.repuestosUsados.length > 0 && (
-                        <div style={{ background: '#F9F9F9', padding: '12px', borderRadius: '12px', border: '1px dashed #000', marginBottom: '15px' }}>
+                        <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-100 dark:border-slate-700 mb-5">
                             {itemActual.repuestosUsados.map((r, i) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #EEE' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{fontWeight: '700', fontSize: '14px'}}>{r.nombre}</div>
-                                        <div style={{fontSize: '12px', color: '#666'}}>${r.precio} c/u</div>
+                                <div key={i} className="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700 last:border-0">
+                                    <div className="flex-1">
+                                        <div className="font-bold text-sm text-slate-900 dark:text-white">{r.nombre}</div>
+                                        <div className="text-[10px] text-slate-400 font-bold">${r.precio} c/u</div>
                                     </div>
                                     <input disabled={estaBloqueado} type="number" value={r.cantidad} min="1" onChange={(e) => actualizarCantidad(i, e.target.value)} 
-                                           style={{ width: '50px', height: '35px', border: '2px solid #000', borderRadius: '8px', textAlign: 'center', fontWeight: '900', marginRight: '10px' }} />
-                                    <div style={{ fontWeight: '900', width: '70px', textAlign: 'right' }}>${r.subtotal}</div>
-                                    {!estaBloqueado && <button onClick={() => quitarRepuesto(i)} style={{ marginLeft: '10px', color: 'red', border: 'none', background: 'none', fontWeight: '900' }}>✕</button>}
+                                           className="w-12 h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-center font-black text-slate-900 dark:text-white mr-3" />
+                                    <div className="font-black text-sm w-16 text-right text-slate-900 dark:text-white">${r.subtotal}</div>
+                                    {!estaBloqueado && <button onClick={() => quitarRepuesto(i)} className="ml-3 text-rose-500 text-lg">✕</button>}
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    <textarea disabled={estaBloqueado} placeholder="Descripción del trabajo..." value={itemActual.trabajo} onChange={e => setItemActual({...itemActual, trabajo: e.target.value})}
-                              style={{ width: '100%', padding: '15px', border: '2px solid #000', borderRadius: '12px', marginBottom: '15px', fontSize: '15px', minHeight: '100px', outline: 'none' }} />
+                    <textarea disabled={estaBloqueado} placeholder="Descripción detallada del trabajo..." value={itemActual.trabajo} onChange={e => setItemActual({...itemActual, trabajo: e.target.value})}
+                              className="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl mb-5 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]" />
 
-                    <div style={{ background: estaBloqueado ? '#EAEAEA' : '#000', padding: '18px', borderRadius: '15px', marginBottom: '15px' }}>
-                        <label style={{ color: estaBloqueado ? '#666' : '#FFF', fontWeight: '900', fontSize: '11px' }}>{esPresupuesto ? 'MANO DE OBRA ($)' : 'ENVÍO ($)'}</label>
+                    <div className="bg-slate-900 dark:bg-slate-800 p-5 rounded-2xl mb-5 shadow-inner">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{esPresupuesto ? 'Mano de Obra ($)' : 'Costo de Envío ($)'}</label>
                         <input 
-                            disabled={estaBloqueado}
-                            type="number" 
-                            min="0"
-                            value={itemActual.costoExtra} 
+                            disabled={estaBloqueado} type="number" min="0" value={itemActual.costoExtra} 
                             onChange={e => setItemActual({ ...itemActual, costoExtra: Math.max(0, parseFloat(e.target.value) || 0) })}
-                            style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: `2px solid ${estaBloqueado ? '#666' : '#FFF'}`, color: estaBloqueado ? '#000' : '#FFF', fontSize: '32px', fontWeight: '900', outline: 'none', marginTop: '5px' }} 
+                            className="w-full bg-transparent border-none text-white text-4xl font-black outline-none mt-1" 
                         />
                     </div>
 
                     {!estaBloqueado && (
-                        <button onClick={agregarAlTicket} style={{ width: '100%', height: '65px', background: '#000', color: '#FFF', borderRadius: '15px', border: 'none', fontWeight: '900', fontSize: '16px' }}>
+                        <button onClick={agregarAlTicket} className="w-full h-14 bg-blue-600 text-white rounded-xl font-black text-sm shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all">
                             SUMAR AL TICKET +
                         </button>
                     )}
                 </Card>
             )}
 
-            {/* CARRITO */}
+            {/* RESUMEN DEL TICKET */}
             {ticketItems.length > 0 && (
-                <div style={{ marginTop: '30px' }}>
+                <div className="mt-8 mb-4">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Resumen del Remito</h4>
                     {ticketItems.map((it, idx) => (
-                        <div key={idx} style={{ background: '#FFF', padding: '20px', borderRadius: '15px', marginBottom: '12px', border: '2px solid #000', boxShadow: '4px 4px 0px #000' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: '900', fontSize: '18px', color: (it.equipoSerial && it.equipoSerial !== "MOSTRADOR") ? RED_TECNICA : GREEN_VENTA }}>
-                                        {it.equipoSerial || 'VENTA'}
-                                    </div>
-                                    <div style={{ fontSize: '13px', marginTop: '4px' }}>{it.resumenTexto}</div>
-                                    <div style={{ fontWeight: '900', fontSize: '22px', marginTop: '10px' }}>${it.totalCalculado.toLocaleString()}</div>
+                        <div key={idx} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 mb-3 shadow-sm flex justify-between items-start">
+                            <div className="flex-1 pr-4">
+                                <div className={`font-black text-sm tracking-tight ${it.equipoSerial !== "MOSTRADOR" ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                    {it.equipoSerial || 'VENTA INSUMOS'}
                                 </div>
-                                {!estaBloqueado && (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                        <button onClick={() => editarItem(idx)} style={{ background: '#F0F0F0', border: '1px solid #000', padding: '12px', borderRadius: '10px' }}>✏️</button>
-                                        <button onClick={() => eliminarItem(idx)} style={{ background: '#FFEBEB', color: '#F23D4F', border: '1px solid #000', padding: '12px', borderRadius: '10px' }}>🗑️</button>
-                                    </div>
-                                )}
+                                <div className="text-xs mt-1.5 text-slate-600 dark:text-slate-400 font-bold leading-relaxed">{it.resumenTexto}</div>
+                                <div className="text-2xl font-black mt-3 text-slate-900 dark:text-white tracking-tighter">${it.totalCalculado.toLocaleString()}</div>
                             </div>
+                            {!estaBloqueado && (
+                                <div className="flex flex-col gap-2 shrink-0">
+                                    <button onClick={() => editarItem(idx)} className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 p-2.5 rounded-xl font-black text-[10px] uppercase">Editar</button>
+                                    <button onClick={() => eliminarItem(idx)} className="bg-rose-50 dark:bg-rose-900/20 text-rose-500 p-2.5 rounded-xl font-black text-[10px] uppercase">Quitar</button>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* BARRA DE ACCIÓN FINAL */}
+            {/* 🚀 BARRA DE ACCIÓN FINAL */}
             {ticketItems.length > 0 && (
-                <div style={{ position: 'fixed', bottom: '25px', left: '15px', right: '15px', zIndex: 1000 }}>
-                    <div style={{ background: '#000', padding: '20px', borderRadius: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '2px solid #FFF', boxShadow: '0px 10px 40px rgba(0,0,0,0.4)' }}>
-                        <div style={{ color: '#FFF' }}>
-                            <div style={{ fontSize: '11px', opacity: 0.7 }}>TOTAL</div>
-                            <div style={{ fontSize: '28px', fontWeight: '900' }}>${ticketItems.reduce((a, b) => a + b.totalCalculado, 0).toLocaleString()}</div>
+                <div className="fixed bottom-[100px] left-4 right-4 z-[1000]">
+                    <div className="bg-slate-900 dark:bg-slate-800 p-4 pl-6 pr-4 rounded-3xl flex justify-between items-center shadow-2xl border border-slate-700">
+                        <div className="text-white">
+                            <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Total Final</div>
+                            <div className="text-3xl font-black tracking-tighter">${ticketItems.reduce((a, b) => a + b.totalCalculado, 0).toLocaleString()}</div>
                         </div>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button onClick={dispararPDF} style={{ background: '#333', color: '#FFF', border: '1px solid #666', borderRadius: '15px', width: '60px', height: '60px', fontSize: '24px' }}>📄</button>
+                        <div className="flex gap-2">
+                            <button onClick={dispararPDF} className="bg-slate-700 text-white w-14 h-14 rounded-2xl text-2xl flex items-center justify-center active:scale-90 transition-transform">📄</button>
                             {!estaBloqueado && (
                                 <>
-                                    <button onClick={() => finalizar(false)} style={{ background: '#444', color: '#FFF', borderRadius: '12px', padding: '0 15px', fontWeight: '900', border: 'none' }}>
-                                        {idEdicion ? "ACTUALIZAR" : "PENDIENTE"}
+                                    <button onClick={() => finalizar(false)} className="bg-slate-700 text-white px-4 rounded-2xl font-black text-[11px] active:scale-95 transition-transform">
+                                        {idEdicion ? "ACTUALIZAR" : "GUARDAR"}
                                     </button>
-                                    <button onClick={() => finalizar(true)} style={{ background: activeColor, color: '#FFF', border: 'none', borderRadius: '15px', padding: '0 20px', fontWeight: '900' }}>
+                                    <button onClick={() => finalizar(true)} 
+                                            className={`px-6 rounded-2xl font-black text-xs text-white shadow-lg active:scale-95 transition-all ${esPresupuesto ? 'bg-rose-500' : 'bg-emerald-500'}`}>
                                         CONFIRMAR
                                     </button>
                                 </>

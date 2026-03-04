@@ -1,102 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* =========================================
-   VARIABLES Y BASE
+    VARIABLES DE MARCA (Light & Dark)
    ========================================= */
 :root {
-  --brand-red: #e54d42;
-  --brand-yellow: #f1c40f;
-  --bg-main: #0f0f0f;
-  --bg-card: #1a1a1a;
-  --bg-sidebar: #141414;
-  --border-color: #2d2d2d;
-  --status-success: #2ecc71;
-  --status-info: #3498db;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --border-radius-btn: 10px;
+  --brand-red: #EF4444;
+  --brand-yellow: #F1C40F;
+  --bg-main: #F8FAFC;      /* Gris muy clarito (Slate-50) */
+  --bg-card: #FFFFFF;
+  --border-color: #E2E8F0;
+  --text-primary: #0F172A; /* Azul casi negro */
+  --text-secondary: #64748B;
+  --status-success: #10B981;
 }
 
-* { box-sizing: border-box; }
+/* Cuando se activa el modo oscuro (.dark en el HTML) */
+.dark {
+  --bg-main: #0F172A;      /* Azul oscuro (Slate-900) */
+  --bg-card: #1E293B;      /* Azul intermedio (Slate-800) */
+  --border-color: #334155;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+}
+
+/* =========================================
+    RESET Y BASE
+   ========================================= */
+* { 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; /* Evita el recuadro azul feo en celu */
+}
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--bg-main);
+  @apply bg-slate-50 dark:bg-slate-900 transition-colors duration-300;
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
+  /* Crucial: Espacio para que el menú de abajo no tape el contenido */
+  padding-bottom: 100px; 
 }
 
 /* =========================================
-   LAYOUT DESKTOP (Computadora)
+    CONTENEDOR PRINCIPAL
    ========================================= */
 .app-container {
   display: flex;
   min-height: 100vh;
 }
 
-.sidebar-container {
-  width: 260px;
-  background-color: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  padding: 25px 20px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-}
-
+/* El contenido principal se adapta solo */
 .main-content {
   flex: 1;
-  padding: 40px;
   width: 100%;
+  max-width: 100%;
+  padding: 20px;
+  transition: padding 0.3s ease;
+}
+
+/* En computadoras le damos más aire */
+@media (min-width: 768px) {
+  .main-content {
+    padding: 40px;
+    padding-bottom: 40px; /* En PC no hace falta el padding-bottom de 100px */
+  }
+  body {
+    padding-bottom: 0;
+  }
 }
 
 /* =========================================
-   ADAPTACIÓN MOBILE (Celular)
+    UTILIDADES PARA TABLAS Viejas
    ========================================= */
-@media (max-width: 768px) {
-  .app-container {
-    flex-direction: column; /* Sidebar arriba, contenido abajo */
-  }
+/* Por si todavía tenés alguna tabla sin pasar a Cards */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  @apply rounded-2xl border border-slate-200 dark:border-slate-800;
+}
 
-  .sidebar-container {
-    width: 100% !important;
-    height: auto !important;
-    padding: 10px !important;
-    flex-direction: row !important; /* Menú horizontal */
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    z-index: 1000;
-  }
+/* Estilo para los scrollbars (más finitos y pro) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 
-  .sidebar-logo {
-    display: none !important; /* Sacamos el logo en celu para ganar lugar */
-  }
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
 
-  .sidebar-nav {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 8px;
-    overflow-x: auto; /* Si hay muchos botones, podés scrollear de costado */
-    width: 100%;
-    padding-bottom: 5px;
-  }
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+}
 
-  /* Ajuste de tablas para que no rompan el ancho */
-  .card-animate {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-    margin: 0 -15px; /* Compensa el padding para usar todo el ancho */
-    padding: 0 15px;
-  }
-
-  table {
-    min-width: 600px;
-  }
-
-  .main-content {
-    padding: 15px !important;
-  }
+/* Evitar que el zoom de iOS rompa el diseño en los inputs */
+input, select, textarea {
+  font-size: 16px !important;
 }

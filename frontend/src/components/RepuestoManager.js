@@ -4,11 +4,6 @@ import { toast } from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// ⚛️ Átomos unificados (Asegurate que existan en su carpeta ui)
-import Card from './ui/Card';
-import Button from './ui/Button';
-import Input from './ui/Input';
-
 export default function RepuestoManager() {
     // --- ESTADOS ---
     const [repuestos, setRepuestos] = useState([]);
@@ -131,7 +126,6 @@ export default function RepuestoManager() {
                 4: { fontStyle: 'bold', halign: 'right' }
             },
             didDrawCell: (data) => {
-                // Si es la celda de imagen y el repuesto tiene imagen
                 if (data.column.index === 0 && data.cell.section === 'body') {
                     const r = filtrados[data.row.index];
                     if (r.imagen) {
@@ -156,120 +150,151 @@ export default function RepuestoManager() {
     const itemsBajoStock = repuestos.filter(r => Number(r.stock) <= 3).length;
 
     return (
-        <div style={{ background: '#EDEDED', minHeight: '100vh', padding: '15px', paddingBottom: '120px' }}>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 pb-32 font-sans transition-colors duration-300">
             
             {/* 📊 INDICADORES SUPERIORES */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' }}>
-                <Card style={{ borderLeft: '5px solid #3483FA', padding: '15px' }}>
-                    <p style={{ fontSize: '10px', fontWeight: '900', color: '#666', margin: 0 }}>CAPITAL INVERTIDO</p>
-                    <p style={{ fontSize: '18px', fontWeight: '900', color: '#111', margin: 0 }}>$ {valorTotalInventario.toLocaleString()}</p>
-                </Card>
-                <Card style={{ borderLeft: `5px solid ${itemsBajoStock > 0 ? '#F23D4F' : '#00A650'}`, padding: '15px' }}>
-                    <p style={{ fontSize: '10px', fontWeight: '900', color: '#666', margin: 0 }}>STOCK CRÍTICO</p>
-                    <p style={{ fontSize: '18px', fontWeight: '900', color: itemsBajoStock > 0 ? '#F23D4F' : '#111', margin: 0 }}>{itemsBajoStock} PRODUCTOS</p>
-                </Card>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 border-l-4 border-l-blue-500 shadow-sm transition-colors duration-300">
+                    <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide m-0">Capital Invertido</p>
+                    <p className="text-lg font-black text-slate-900 dark:text-white mt-1 tracking-tight">$ {valorTotalInventario.toLocaleString()}</p>
+                </div>
+                <div className={`bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 border-l-4 shadow-sm transition-colors duration-300 ${itemsBajoStock > 0 ? 'border-l-rose-500' : 'border-l-emerald-500'}`}>
+                    <p className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide m-0">Stock Crítico</p>
+                    <p className={`text-lg font-black mt-1 tracking-tight ${itemsBajoStock > 0 ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>
+                        {itemsBajoStock} PROD.
+                    </p>
+                </div>
             </div>
 
-            {/* BUSCADOR */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-                <div style={{ flex: 1 }}>
-                   <Input 
-                        placeholder="🔍 Buscar por nombre o SKU..." 
+            {/* 🔍 BUSCADOR Y AGREGAR */}
+            <div className="flex gap-2 mb-5">
+                <div className="relative flex-1">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔍</span>
+                    <input 
+                        placeholder="Buscar por nombre o SKU..." 
                         value={busqueda} 
                         onChange={e => setBusqueda(e.target.value)}
-                        style={{ marginBottom: 0 }}
+                        className="w-full py-3.5 pl-11 pr-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-[15px] font-semibold text-slate-900 dark:text-white outline-none shadow-sm focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                     />
                 </div>
-                <Button onClick={() => { 
-                    setForm({ id: null, sku: '', nombre: '', costo: '', porcentajeGanancia: '', precio: '', stock: '', imagen: '' });
-                    setModalAbierto(true); 
-                }} style={{ background: '#3483FA', width: '50px', fontSize: '24px' }}>+</Button>
+                <button 
+                    onClick={() => { 
+                        setForm({ id: null, sku: '', nombre: '', costo: '', porcentajeGanancia: '', precio: '', stock: '', imagen: '' });
+                        setModalAbierto(true); 
+                    }} 
+                    className="bg-blue-600 hover:bg-blue-700 text-white w-14 rounded-xl flex justify-center items-center text-2xl font-bold shadow-md shadow-blue-500/30 transition-all active:scale-95"
+                >
+                    +
+                </button>
             </div>
 
-            {/* LISTADO DE PRODUCTOS */}
-            <div style={{ display: 'grid', gap: '12px' }}>
+            {/* 📋 LISTADO DE PRODUCTOS */}
+            <div className="grid gap-3">
                 {filtrados.map(r => (
-                    <div key={r.id} style={{ 
-                        background: '#FFF', padding: '12px', borderRadius: '12px', 
-                        display: 'flex', alignItems: 'center', gap: '12px',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #DDD'
-                    }}>
+                    <div key={r.id} className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4 transition-colors duration-300">
+                        
                         {/* Miniatura Imagen */}
-                        <div style={{ width: '70px', height: '70px', borderRadius: '8px', background: '#F5F5F5', overflow: 'hidden', border: '1px solid #EEE', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <div className="min-w-[70px] h-[70px] rounded-xl bg-slate-100 dark:bg-slate-700 flex justify-center items-center overflow-hidden border border-slate-200 dark:border-slate-600">
                             {r.imagen ? (
-                                <img src={r.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="r" />
+                                <img src={r.imagen} className="w-full h-full object-cover" alt="repuesto" />
                             ) : (
-                                <span style={{ fontSize: '30px' }}>📦</span>
+                                <span className="text-2xl opacity-50">📦</span>
                             )}
                         </div>
 
                         {/* Info Producto */}
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: '10px', fontWeight: '900', color: '#3483FA' }}>{r.sku}</span>
-                                <span style={{ fontSize: '11px', fontWeight: '900', color: Number(r.stock) <= 3 ? '#F23D4F' : '#00A650' }}>{r.stock} UNID.</span>
+                        <div className="flex-1">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[11px] font-black text-blue-600 dark:text-blue-400 tracking-wide">{r.sku}</span>
+                                <span className={`text-[11px] font-black px-2 py-0.5 rounded-md ${Number(r.stock) <= 3 ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400'}`}>
+                                    {r.stock} UNID.
+                                </span>
                             </div>
-                            <h4 style={{ margin: '2px 0', fontSize: '15px', color: '#111', fontWeight: 'bold' }}>{r.nombre}</h4>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
-                                <span style={{ fontWeight: '900', fontSize: '18px', color: '#111' }}>$ {Number(r.precio).toLocaleString()}</span>
-                                <div style={{ display: 'flex', gap: '5px' }}>
-                                    <button onClick={() => { setForm(r); setModalAbierto(true); }} style={{ padding: '8px', borderRadius: '8px', border: 'none', background: '#F5F5F5' }}>✏️</button>
-                                    <button onClick={() => eliminarRepuesto(r.id, r.nombre)} style={{ padding: '8px', borderRadius: '8px', border: 'none', background: '#FFEBEB', color: '#F23D4F' }}>🗑️</button>
+                            <h4 className="m-0 mt-1 text-[15px] text-slate-900 dark:text-white font-extrabold leading-tight">{r.nombre}</h4>
+                            
+                            <div className="flex justify-between items-center mt-2">
+                                <span className="font-black text-lg text-slate-900 dark:text-white">$ {Number(r.precio).toLocaleString()}</span>
+                                <div className="flex gap-2">
+                                    <button onClick={() => { setForm(r); setModalAbierto(true); }} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors">✏️</button>
+                                    <button onClick={() => eliminarRepuesto(r.id, r.nombre)} className="p-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-100 transition-colors">🗑️</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 ))}
+                {filtrados.length === 0 && (
+                    <div className="text-center p-10 text-slate-400 font-semibold">
+                        No se encontraron repuestos.
+                    </div>
+                )}
             </div>
 
-            {/* MODAL BOTTOM SHEET (Mobile First) */}
+            {/* ⬆️ MODAL BOTTOM SHEET (ESTILO APP NATIVA) */}
             {modalAbierto && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 3000 }}>
-                    <div style={{ background: '#FFF', width: '100%', maxWidth: '500px', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '20px', animation: 'slideUp 0.3s ease-out' }}>
-                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
-                        <h3 style={{ margin: '0 0 20px 0', color: '#111', fontWeight: '900' }}>{form.id ? 'EDITAR PRODUCTO' : 'NUEVO INGRESO'}</h3>
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-end z-[3000] transition-opacity">
+                    <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-t-3xl p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-transform">
+                        <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
+                        <h3 className="m-0 mb-5 text-lg font-black text-slate-900 dark:text-white">
+                            {form.id ? '✏️ EDITAR PRODUCTO' : '📦 NUEVO INGRESO'}
+                        </h3>
                         
-                        <form onSubmit={guardarRepuesto}>
-                            <div style={{ display: 'flex', gap: '15px', background: '#F9F9F9', padding: '10px', borderRadius: '12px', marginBottom: '15px', border: '1px dashed #CCC' }}>
-                                <div style={{ width: '60px', height: '60px', background: '#FFF', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', border: '1px solid #DDD' }}>
-                                    {form.imagen ? <img src={form.imagen} style={{width: '100%'}} alt="p" /> : '📸'}
+                        <form onSubmit={guardarRepuesto} className="grid gap-4 max-h-[70vh] overflow-y-auto pr-2 pb-2">
+                            
+                            {/* Subida de foto */}
+                            <div className="flex gap-4 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-2xl border border-dashed border-slate-300 dark:border-slate-600 items-center">
+                                <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-xl flex justify-center items-center overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
+                                    {form.imagen ? <img src={form.imagen} className="w-full h-full object-cover" alt="preview" /> : <span className="text-2xl opacity-50">📸</span>}
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ fontSize: '10px', fontWeight: '900', color: '#666' }}>FOTO DEL REPUESTO</label>
-                                    <input type="file" accept="image/*" onChange={manejarFoto} style={{ fontSize: '12px', marginTop: '5px' }} />
+                                <div className="flex-1 overflow-hidden">
+                                    <label className="text-[10px] font-black text-slate-500 tracking-wide">FOTO DEL REPUESTO</label>
+                                    <input type="file" accept="image/*" onChange={manejarFoto} className="text-xs mt-1 w-full text-slate-500 dark:text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 dark:file:bg-slate-800 dark:file:text-blue-400" />
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
-                                <Input label="SKU" value={form.sku} onChange={e => setForm({...form, sku: e.target.value.toUpperCase()})} />
-                                <Input label="NOMBRE" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} />
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="col-span-1">
+                                    <label className="text-[10px] font-black text-slate-500 tracking-wide uppercase">SKU</label>
+                                    <input value={form.sku} onChange={e => setForm({...form, sku: e.target.value.toUpperCase()})} className="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="text-[10px] font-black text-slate-500 tracking-wide uppercase">Nombre</label>
+                                    <input value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} className="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', background: '#F5F5F5', padding: '10px', borderRadius: '12px', marginBottom: '15px' }}>
-                                <Input label="COSTO $" type="number" value={form.costo} onChange={e => manejarCambiosFinancieros('costo', e.target.value)} />
-                                <Input label="GANANCIA %" type="number" value={form.porcentajeGanancia} onChange={e => manejarCambiosFinancieros('porcentajeGanancia', e.target.value)} />
-                                <Input label="VENTA $" value={form.precio} readOnly style={{ fontWeight: 'bold', color: '#3483FA' }} />
+                            <div className="grid grid-cols-3 gap-3 bg-blue-50/50 dark:bg-slate-700/30 p-3 rounded-2xl">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-500 tracking-wide uppercase">Costo $</label>
+                                    <input type="number" value={form.costo} onChange={e => manejarCambiosFinancieros('costo', e.target.value)} className="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-500 tracking-wide uppercase">Ganancia %</label>
+                                    <input type="number" value={form.porcentajeGanancia} onChange={e => manejarCambiosFinancieros('porcentajeGanancia', e.target.value)} className="w-full mt-1 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-blue-600 dark:text-blue-400 tracking-wide uppercase">Venta $</label>
+                                    <input value={form.precio} readOnly className="w-full mt-1 p-3 bg-blue-100/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm font-black text-blue-700 dark:text-blue-400 outline-none" />
+                                </div>
                             </div>
 
-                            <Input label="STOCK ACTUAL" type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})} />
+                            <div>
+                                <label className="text-[10px] font-black text-slate-500 tracking-wide uppercase">Stock Actual</label>
+                                <input type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})} className="w-full mt-1 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
+                            </div>
 
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                <Button onClick={() => setModalAbierto(false)} style={{ flex: 1, background: '#666' }}>CANCELAR</Button>
-                                <Button type="submit" style={{ flex: 2, background: '#3483FA' }}>GUARDAR CAMBIOS</Button>
+                            <div className="flex gap-3 mt-2">
+                                <button type="button" onClick={() => setModalAbierto(false)} className="flex-1 py-3.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-extrabold text-sm transition-colors">CANCELAR</button>
+                                <button type="submit" className="flex-[2] py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-extrabold text-sm shadow-md shadow-blue-500/30 transition-all">GUARDAR CAMBIOS</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* BOTÓN FLOTANTE PARA CATÁLOGO */}
+            {/* 📄 BOTÓN FLOTANTE PARA CATÁLOGO (CORREGIDO EL CHOQUE DE BARRAS) */}
             <button 
                 onClick={generarCatalogoPDF}
-                style={{ 
-                    position: 'fixed', bottom: '90px', right: '20px', width: '60px', height: '60px', 
-                    borderRadius: '50%', background: '#111', color: '#FFF', border: 'none', 
-                    fontSize: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.4)', zIndex: 100 
-                }}
+                className="fixed bottom-28 right-5 w-14 h-14 rounded-full bg-slate-900 dark:bg-blue-600 text-white border-none text-2xl shadow-lg shadow-slate-900/30 dark:shadow-blue-600/30 flex justify-center items-center z-[100] active:scale-95 transition-transform"
             >
                 📄
             </button>

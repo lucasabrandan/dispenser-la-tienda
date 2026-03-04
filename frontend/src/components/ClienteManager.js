@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
-
-// ⚛️ Átomos
-import Card from './ui/Card';
-import Button from './ui/Button';
-import Input from './ui/Input';
+import ClienteForm from './ClienteForm';
+import SedeModal from './SedeModal';
+import EquipoModal from './EquipoModal';
 
 export default function ClienteManager() {
     // --- ESTADOS ---
@@ -13,234 +11,204 @@ export default function ClienteManager() {
     const [sedes, setSedes] = useState([]);
     const [equipos, setEquipos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
+    const [modalOpen, setModalOpen] = useState(null); 
+    const [selectedCliente, setSelectedCliente] = useState(null);
     
-    const [modalCliente, setModalCliente] = useState(false);
-    const [modalSedes, setModalSedes] = useState(null); // Guarda el objeto cliente seleccionado
-    const [modalEquipos, setModalEquipos] = useState(null); // Guarda el objeto cliente seleccionado
+    // 1. Estado inicial con TODOS los campos de la DB incluyendo NOTAS
+    const initialForm = { 
+        id: null, 
+        nombre: '', 
+        calle: '', 
+        numero: '', 
+        piso: '', 
+        depto: '', 
+        localidad: '', 
+        provincia: 'Buenos Aires', 
+        telefono: '', 
+        cuilDni: '',
+        notas: '' // ✅ Implementado
+    };
+    
+    const [form, setForm] = useState(initialForm);
+    const [errors, setErrors] = useState({});
 
-    const [form, setForm] = useState({ id: null, nombre: '', cuilDni: '', telefono: '', email: '', direccion: '' });
-    const [formSede, setFormSede] = useState({ id: null, nombreSede: '', direccion: '' });
-    const [formEquipo, setFormEquipo] = useState({ id: null, numeroSerie: '', marca: '', modelo: '', sedeId: '' });
-
-    // --- CARGA DE DATOS ---
     useEffect(() => { cargarDatos(); }, []);
 
-    const cargarDatos = () => {
-        api.get('/clientes').then(res => setClientes(res.data)).catch(() => {});
-        api.get('/sedes').then(res => setSedes(res.data)).catch(() => {});
-        api.get('/equipos').then(res => setEquipos(res.data)).catch(() => {});
+    const cargarDatos = async () => {
+        try {
+            const [resCli, resSed, resEqu] = await Promise.all([
+                api.get('/clientes'),
+                api.get('/sedes'),
+                api.get('/equipos')
+            ]);
+            setClientes(resCli.data);
+            setSedes(resSed.data);
+            setEquipos(resEqu.data);
+        } catch (err) {
+            console.error("Error al cargar datos:", err);
+            toast.error("Error al conectar con el servidor");
+        }
     };
 
-    // --- GESTIÓN DE CLIENTES ---
-    const guardarCliente = async (e) => {
-        if (e) e.preventDefault();
-        if (!form.nombre.trim()) return toast.error("❌ El nombre es obligatorio");
+    // --- LOGÍSTICA ---
+    const abrirWhatsApp = (telefono, nombre) => {
+        if (!telefono) return toast.error("Sin teléfono cargado");
+        let num = telefono.replace(/\D/g, '');
+        if (!num.startsWith('54')) num = '549' + num;
+        window.open(`https://wa.me/${num}?text=Hola%20${nombre}`, '_blank');
+    };
+
+    const abrirMaps = (c) => {
+        const calle = (c.calle || '').trim();
+        const numero = (c.numero || '').trim();
+        const localidad = (c.localidad || '').trim();
+        const provincia = (c.provincia || '').trim();
         
-        const loading = toast.loading("Guardando cliente...");
+        let destino = "";
+        if (calle !== "" && numero !== "") {
+            destino = `${calle} ${numero}, ${localidad}, ${provincia}, Argentina`;
+        } else if (c.direccion) {
+            destino = `${c.direccion}, Argentina`;
+        }
+
+        destino = destino.replace(/undefined/g, '').replace(/\s+/g, ' ').trim();
+
+        if (destino === "" || destino === ", Argentina") {
+            return toast.error("Dirección incompleta para el GPS");
+        }
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destino)}`, '_blank');
+    };
+
+    // --- GUARDADO ---
+    const handleGuardar = async (e) => {
+        e.preventDefault();
+        if (!form.nombre || !form.calle) return toast.error("Nombre y Calle son obligatorios");
+
+        const loading = toast.loading("Guardando...");
         try {
+            // Mandamos los campos individuales + la direccion combinada + notas
+            const payload = { 
+                ...form, 
+                direccion: `${form.calle} ${form.numero}, ${form.localidad}`.trim(),
+                clienteTipo: "PARTICULAR"
+            };
+
             if (form.id) {
-                await api.put(`/clientes/${form.id}`, { ...form, clienteTipo: "PARTICULAR" });
-                toast.success("✅ Datos actualizados", { id: loading });
+                await api.put(`/clientes/${form.id}`, payload);
+                toast.success("✅ Cambios guardados", { id: loading });
             } else {
-                await api.post('/clientes', { ...form, clienteTipo: "PARTICULAR" });
-                toast.success("✅ Cliente registrado", { id: loading });
+                await api.post('/clientes', payload);
+                toast.success("✅ Nuevo cliente registrado", { id: loading });
             }
-            setModalCliente(false);
+
+            setModalOpen(null);
             cargarDatos();
-        } catch (err) { toast.error("❌ Error al guardar", { id: loading }); }
+        } catch (err) {
+            toast.error("Error al guardar en la DB", { id: loading });
+        }
     };
 
-    const eliminarCliente = async (c) => {
-        if(!window.confirm(`⚠️ ¿ELIMINAR A "${c.nombre.toUpperCase()}"?\nSe borrarán sus sedes y equipos asociados.`)) return;
+    const eliminarCliente = async (id) => {
+        if (!window.confirm("¿Eliminar cliente?")) return;
         try {
-            await api.delete(`/clientes/${c.id}`);
-            toast.success("🗑️ Cliente borrado");
+            await api.delete(`/clientes/${id}`);
+            toast.success("Eliminado");
             cargarDatos();
-        } catch (err) { toast.error("❌ Error al eliminar"); }
+        } catch (err) { toast.error("Error"); }
     };
 
-    // --- GESTIÓN DE SEDES ---
-    const guardarSede = async (e) => {
-        e.preventDefault();
-        if (!formSede.nombreSede.trim()) return toast.error("❌ Nombre de sede obligatorio");
-        
-        const loading = toast.loading("Guardando sede...");
-        try {
-            const payload = { ...formSede, clienteId: modalSedes.id };
-            if (formSede.id) await api.put(`/sedes/${formSede.id}`, payload);
-            else await api.post('/sedes', payload);
-            
-            toast.success("✅ Sede guardada", { id: loading });
-            setFormSede({ id: null, nombreSede: '', direccion: '' });
-            cargarDatos();
-        } catch (err) { toast.error("❌ Error", { id: loading }); }
-    };
-
-    // --- GESTIÓN DE EQUIPOS ---
-    const guardarEquipo = async (e) => {
-        e.preventDefault();
-        if (!formEquipo.numeroSerie.trim()) return toast.error("❌ S/N es obligatorio");
-        if (!formEquipo.sedeId) return toast.error("❌ Seleccioná una sede");
-
-        const loading = toast.loading("Registrando equipo...");
-        try {
-            if (formEquipo.id) await api.put(`/equipos/${formEquipo.id}`, formEquipo);
-            else await api.post('/equipos', formEquipo);
-            
-            toast.success("✅ Dispenser registrado", { id: loading });
-            setFormEquipo({ id: null, numeroSerie: '', marca: '', modelo: '', sedeId: '' });
-            cargarDatos();
-        } catch (err) { toast.error("❌ Error", { id: loading }); }
-    };
-
-    // --- FILTROS ---
-    const filtrados = clientes.filter(c => 
-        (c.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) || 
-        (c.cuilDni || '').includes(busqueda)
+    const filtrados = clientes.filter(c =>
+        (c.nombre || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+        (c.localidad || '').toLowerCase().includes(busqueda.toLowerCase())
     );
 
-    const sedesDelCliente = modalSedes ? sedes.filter(s => s.cliente?.id === modalSedes.id) : [];
-    const sedesParaEquipos = modalEquipos ? sedes.filter(s => s.cliente?.id === modalEquipos.id) : [];
-    const equiposDelCliente = modalEquipos ? equipos.filter(eq => sedesParaEquipos.find(s => s.id === eq.sede?.id)) : [];
-
     return (
-        <div style={{ background: '#EDEDED', minHeight: '100vh', paddingBottom: '120px' }}>
-            
-            {/* BUSCADOR ESTILO ML */}
-            <div style={{ background: '#FFF159', padding: '15px', borderBottom: '1px solid #DDD' }}>
-                <Input 
-                    placeholder="🔍 Buscar cliente por nombre o CUIT..." 
-                    value={busqueda} 
+        <div className="w-full">
+            {/* BUSCADOR */}
+            <div className="sticky top-0 z-30 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-md -mx-4 md:-mx-12 px-4 md:px-12 py-6 mb-8 border-b border-slate-200 dark:border-slate-800 transition-all">
+                <input
+                    placeholder="Buscar cliente o localidad..."
+                    value={busqueda}
                     onChange={e => setBusqueda(e.target.value)}
-                    style={{ background: '#FFF', border: 'none', marginBottom: 0 }}
+                    className="w-full py-5 px-8 bg-white dark:bg-slate-900 rounded-[2rem] border-none font-bold text-slate-900 dark:text-white shadow-xl outline-none"
                 />
             </div>
 
-            <div style={{ padding: '15px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#111' }}>MIS CLIENTES ({filtrados.length})</h2>
-                    <Button onClick={() => { setForm({ id: null, nombre: '', cuilDni: '', telefono: '', email: '', direccion: '' }); setModalCliente(true); }}
-                            style={{ background: '#3483FA', height: '40px', padding: '0 15px', fontWeight: 'bold' }}>
-                        + NUEVO
-                    </Button>
-                </div>
-
-                {/* LISTADO DE CLIENTES */}
-                <div style={{ display: 'grid', gap: '12px' }}>
-                    {filtrados.map(c => (
-                        <div key={c.id} style={{ background: '#FFF', padding: '15px', borderRadius: '12px', border: '1px solid #DDD', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <div>
-                                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#111' }}>{c.nombre.toUpperCase()}</h4>
-                                    <p style={{ margin: '4px 0', fontSize: '12px', color: '#666', fontWeight: 'bold' }}>
-                                        {c.cuilDni || 'SIN CUIT'} • {c.telefono || 'SIN TEL'}
-                                    </p>
-                                </div>
-                                <div style={{ fontSize: '10px', color: '#AAA', fontWeight: '900' }}>ID {c.id}</div>
-                            </div>
-                            
-                            {/* ACCIONES ERGONÓMICAS */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #EEE' }}>
-                                <button onClick={() => setModalSedes(c)} title="Sedes" style={{ background: '#F5F5F5', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '20px' }}>📍</button>
-                                <button onClick={() => setModalEquipos(c)} title="Equipos" style={{ background: '#F5F5F5', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '20px' }}>💧</button>
-                                <button onClick={() => { setForm(c); setModalCliente(true); }} title="Editar" style={{ background: '#F5F5F5', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '20px' }}>✏️</button>
-                                <button onClick={() => eliminarCliente(c)} title="Borrar" style={{ background: '#FFF1F1', border: 'none', borderRadius: '10px', padding: '12px', fontSize: '20px' }}>🗑️</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            {/* HEADER */}
+            <div className="flex justify-between items-center mb-10 px-2">
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Directorio</h2>
+                <button
+                    onClick={() => { setForm(initialForm); setModalOpen('cliente'); }}
+                    className="bg-blue-600 text-white h-16 px-10 rounded-3xl font-black text-xs uppercase shadow-2xl active:scale-95 transition-all"
+                >
+                    + NUEVO
+                </button>
             </div>
 
-            {/* --- MODAL CLIENTE --- */}
-            {modalCliente && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 2000 }}>
-                    <div style={{ background: '#FFF', width: '100%', maxWidth: '500px', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '20px' }}>
-                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
-                        <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#111', marginBottom: '15px' }}>{form.id ? 'EDITAR CLIENTE' : 'NUEVO CLIENTE'}</h3>
-                        <form onSubmit={guardarCliente}>
-                            <Input label="NOMBRE O EMPRESA" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} />
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                <Input label="CUIT / DNI" value={form.cuilDni} onChange={e => setForm({...form, cuilDni: e.target.value})} />
-                                <Input label="TELÉFONO" value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})} />
+            {/* GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filtrados.map(c => (
+                    <div key={c.id} className="bg-white dark:bg-slate-800 p-8 rounded-[3rem] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-2xl transition-all duration-300 group">
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex-1">
+                                <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase leading-tight group-hover:text-blue-600">{c.nombre}</h4>
+                                <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase">
+                                    {c.calle} {c.numero} {c.piso && `• P:${c.piso}`} {c.depto && ` D:${c.depto}`}
+                                    <br />
+                                    {c.localidad} • {c.provincia}
+                                </p>
                             </div>
-                            <Input label="EMAIL" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                <Button onClick={() => setModalCliente(false)} style={{ flex: 1, background: '#666' }}>CANCELAR</Button>
-                                <Button type="submit" style={{ flex: 2, background: '#3483FA' }}>GUARDAR CLIENTE</Button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* --- MODAL SEDES (📍) --- */}
-            {modalSedes && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 2000 }}>
-                    <div style={{ background: '#FFF', width: '100%', maxWidth: '500px', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '20px' }}>
-                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
-                        <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#111' }}>SEDES DE {modalSedes.nombre.toUpperCase()}</h3>
-                        
-                        <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '20px', background: '#F9F9F9', borderRadius: '12px', border: '1px solid #EEE' }}>
-                            {sedesDelCliente.length > 0 ? sedesDelCliente.map(s => (
-                                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', borderBottom: '1px solid #EEE' }}>
-                                    <div>
-                                        <p style={{ margin: 0, fontWeight: 'bold', color: '#111' }}>{s.nombreSede}</p>
-                                        <p style={{ margin: 0, fontSize: '11px', color: '#666' }}>{s.direccion}</p>
-                                    </div>
-                                    <button onClick={() => api.delete(`/sedes/${s.id}`).then(cargarDatos)} style={{ border: 'none', background: 'none', fontSize: '18px' }}>🗑️</button>
-                                </div>
-                            )) : <p style={{ padding: '20px', textAlign: 'center', color: '#999' }}>No hay sedes cargadas</p>}
+                            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-2xl text-xl">👤</div>
                         </div>
 
-                        <form onSubmit={guardarSede} style={{ borderTop: '2px dashed #DDD', paddingTop: '15px' }}>
-                            <Input label="NOMBRE DE SEDE (EJ: DEPÓSITO)" value={formSede.nombreSede} onChange={e => setFormSede({...formSede, nombreSede: e.target.value})} />
-                            <Input label="DIRECCIÓN" value={formSede.direccion} onChange={e => setFormSede({...formSede, direccion: e.target.value})} />
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <Button onClick={() => setModalSedes(null)} style={{ flex: 1, background: '#666' }}>CERRAR</Button>
-                                <Button type="submit" style={{ flex: 2, background: '#3483FA' }}>+ AÑADIR SEDE</Button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* --- MODAL EQUIPOS (💧) --- */}
-            {modalEquipos && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'flex-end', zIndex: 2000 }}>
-                    <div style={{ background: '#FFF', width: '100%', maxWidth: '500px', borderTopLeftRadius: '25px', borderTopRightRadius: '25px', padding: '20px' }}>
-                        <div style={{ width: '40px', height: '4px', background: '#DDD', borderRadius: '2px', margin: '0 auto 15px' }} />
-                        <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#3483FA' }}>DISPENSERS REGISTRADOS</h3>
-
-                        <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '20px' }}>
-                            {equiposDelCliente.map(eq => (
-                                <div key={eq.id} style={{ padding: '12px', background: '#F5F5F5', borderRadius: '10px', marginBottom: '8px', border: '1px solid #DDD' }}>
-                                    <p style={{ margin: 0, fontWeight: '900', color: '#111' }}>S/N: {eq.numeroSerie}</p>
-                                    <p style={{ margin: 0, fontSize: '11px', color: '#666' }}>{eq.marca} {eq.modelo} • {eq.sede?.nombreSede}</p>
-                                </div>
-                            ))}
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            <button onClick={() => abrirMaps(c)} className="bg-slate-900 dark:bg-slate-700 text-white py-4 rounded-2xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all">📍 Cómo llegar</button>
+                            <button onClick={() => abrirWhatsApp(c.telefono, c.nombre)} className="bg-[#25D366] text-white py-4 rounded-2xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all">💬 WhatsApp</button>
                         </div>
 
-                        <form onSubmit={guardarEquipo} style={{ borderTop: '2px dashed #DDD', paddingTop: '15px' }}>
-                            <label className="label-dark" style={{ fontSize: '10px' }}>¿A QUÉ SEDE PERTENECE?</label>
-                            <select 
-                                style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '15px', border: '1px solid #DDD', fontSize: '16px', background: '#FFF' }}
-                                onChange={e => setFormEquipo({...formEquipo, sedeId: e.target.value})}
-                                value={formEquipo.sedeId}
-                            >
-                                <option value="">Seleccionar Sede...</option>
-                                {sedesParaEquipos.map(s => <option key={s.id} value={s.id}>{s.nombreSede}</option>)}
-                            </select>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                <Input label="NRO SERIE (S/N)" value={formEquipo.numeroSerie} onChange={e => setFormEquipo({...formEquipo, numeroSerie: e.target.value})} />
-                                <Input label="MARCA" value={formEquipo.marca} onChange={e => setFormEquipo({...formEquipo, marca: e.target.value})} />
-                            </div>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <Button onClick={() => setModalEquipos(null)} style={{ flex: 1, background: '#666' }}>CERRAR</Button>
-                                <Button type="submit" style={{ flex: 2, background: '#3483FA' }}>+ REGISTRAR DISPENSER</Button>
-                            </div>
-                        </form>
+                        {/* ACCIONES TÉCNICAS */}
+                        <div className="grid grid-cols-4 gap-2 pt-6 border-t border-slate-100 dark:border-slate-700/50">
+                            <button onClick={() => { setSelectedCliente(c); setModalOpen('sede'); }} className="flex flex-col items-center p-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl">🏠</button>
+                            <button onClick={() => { setSelectedCliente(c); setModalOpen('equipo'); }} className="flex flex-col items-center p-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl">💧</button>
+                            
+                            {/* BOTÓN EDITAR MAPEADO CON NOTAS ✅ */}
+                            <button 
+                                onClick={() => { 
+                                    setForm({
+                                        id: c.id,
+                                        nombre: c.nombre || '',
+                                        calle: c.calle || '',
+                                        numero: c.numero || '',
+                                        piso: c.piso || '',
+                                        depto: c.depto || '',
+                                        localidad: c.localidad || '',
+                                        provincia: c.provincia || 'Buenos Aires',
+                                        telefono: c.telefono || '',
+                                        cuilDni: c.cuilDni || '',
+                                        notas: c.notas || '' // ✅ Mapeo de notas
+                                    }); 
+                                    setModalOpen('cliente'); 
+                                }} 
+                                className="flex flex-col items-center p-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl"
+                            >✏️</button>
+                            
+                            <button onClick={() => eliminarCliente(c.id)} className="flex flex-col items-center p-3 bg-rose-50 dark:bg-rose-900/10 rounded-2xl text-rose-500">🗑️</button>
+                        </div>
                     </div>
-                </div>
+                ))}
+            </div>
+
+            {/* MODALES */}
+            {modalOpen === 'cliente' && (
+                <ClienteForm form={form} setForm={setForm} errors={errors} onSubmit={handleGuardar} onClose={() => setModalOpen(null)} />
+            )}
+
+            {modalOpen === 'sede' && selectedCliente && (
+                <SedeModal cliente={selectedCliente} sedes={sedes.filter(s => s.cliente?.id === selectedCliente.id)} onRefresh={cargarDatos} onClose={() => setModalOpen(null)} />
+            )}
+
+            {modalOpen === 'equipo' && selectedCliente && (
+                <EquipoModal cliente={selectedCliente} sedes={sedes.filter(s => s.cliente?.id === selectedCliente.id)} equipos={equipos.filter(eq => eq.sede?.cliente?.id === selectedCliente.id)} onRefresh={cargarDatos} onClose={() => setModalOpen(null)} />
             )}
         </div>
     );

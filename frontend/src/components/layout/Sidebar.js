@@ -1,85 +1,51 @@
 import React from 'react';
-// Importamos el logo desde la carpeta assets
 import logo from '../../assets/logo-dispenser.svg';
 
 export default function Sidebar({ setVistaActual, vistaActual }) {
-    const s = {
-        // Estructura principal: usa el blanco definido en las variables
-        sidebar: {
-            backgroundColor: 'var(--bg-card)', 
-            borderRight: '1px solid var(--border-color)',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '25px 20px',
-            boxSizing: 'border-box',
-            width: '260px', // Ancho fijo para que no "baile" el contenido en PC
-        },
-        logoArea: {
-            textAlign: 'center',
-            marginBottom: '40px',
-            paddingBottom: '20px',
-            borderBottom: '1px solid var(--border-color)'
-        },
-        // Botones de navegación: cambian de color automáticamente según el estado
-        navItem: (activa) => ({
-            padding: '14px 20px',
-            marginBottom: '10px',
-            borderRadius: 'var(--border-radius-btn)', // Usa el radio de 12px del App.css
-            cursor: 'pointer',
-            fontWeight: '700',
-            fontSize: '15px',
-            // Si está activo: texto negro. Si no: gris secundario.
-            color: activa ? '#000000' : 'var(--text-secondary)',
-            // Si está activo: fondo amarillo. Si no: transparente.
-            backgroundColor: activa ? 'var(--brand-yellow)' : 'transparent',
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            whiteSpace: 'nowrap'
-        })
-    };
-
-    // Lista de navegación (Mantenemos tu lógica de IDs)
+    
     const menu = [
         { id: 'caja', nombre: '💰 Cargar Venta' },
         { id: 'historial', nombre: '📋 Historial' }, 
         { id: 'clientes', nombre: '👥 Clientes' },
         { id: 'repuestos', nombre: '🔧 Stock' },
+        { id: 'radar', nombre: '🚨 Radar' },
     ];
 
     return (
-        // La clase "sidebar-container" es la que usamos en App.css para ocultarlo en móviles
-        <aside style={s.sidebar} className="sidebar-container">
+        // Ensanchamos de 260px a 280px para que no parezca tan "flaquito" en PC
+        <aside className="hidden md:flex flex-col w-[280px] h-screen sticky top-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-8 transition-colors duration-300 z-50">
             
-            {/* Área del Logo */}
-            <div style={s.logoArea}>
-                <img src={logo} alt="Logo" style={{ width: '100%', maxWidth: '130px' }} />
+            {/* Área del Logo: Agrandamos el max-w de 130px a 170px */}
+            <div className="text-center mb-10 pb-8 border-b border-slate-100 dark:border-slate-800/50">
+                <img src={logo} alt="Logo" className="w-full max-w-[170px] mx-auto drop-shadow-sm dark:brightness-110" />
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mt-3 tracking-[0.2em] uppercase">
+                    Sistema de Logística
+                </p>
             </div>
             
-            {/* Navegación del Menú */}
-            <nav style={{ flex: 1 }}>
-                {menu.map(item => (
-                    <div 
-                        key={item.id} 
-                        style={s.navItem(vistaActual === item.id)}
-                        onClick={() => setVistaActual(item.id)}
-                    >
-                        {item.nombre}
-                    </div>
-                ))}
+            {/* Navegación del Menú (Tu lógica original intacta) */}
+            <nav className="flex-1 flex flex-col gap-3">
+                {menu.map(item => {
+                    const activa = vistaActual === item.id;
+                    return (
+                        <div 
+                            key={item.id} 
+                            onClick={() => setVistaActual(item.id)}
+                            className={`px-6 py-4 rounded-2xl cursor-pointer text-[15px] transition-all duration-200 flex items-center gap-4 whitespace-nowrap active:scale-95 ${
+                                activa 
+                                    ? 'bg-blue-600 text-white font-black shadow-lg shadow-blue-500/30' 
+                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 font-bold'
+                            }`}
+                        >
+                            {item.nombre}
+                        </div>
+                    );
+                })}
             </nav>
 
-            {/* Footer del Menú: Limpio y profesional */}
-            <div style={{ 
-                marginTop: 'auto', 
-                fontSize: '11px', 
-                color: 'var(--text-secondary)', 
-                textAlign: 'center',
-                fontWeight: 'bold',
-                opacity: 0.7 
-            }}>
-                SISTEMA DE GESTIÓN TÉCNICA
+            {/* Footer del Menú */}
+            <div className="mt-auto pt-6 text-[9px] text-slate-300 dark:text-slate-600 text-center font-black uppercase tracking-widest">
+                Logística Dispenser v3.0
             </div>
         </aside>
     );

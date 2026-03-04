@@ -35,7 +35,7 @@ public class ClienteService {
 
     @Transactional
     public ClienteDTO crear(ClienteCreateDTO dto) {
-        // Validación: CUIL único solo si no está vacío o nulo
+        // Validación de CUIL/DNI
         if (dto.cuilDni() != null && !dto.cuilDni().trim().isEmpty()) {
             clienteRepository.findByCuilDni(dto.cuilDni())
                     .ifPresent(c -> {
@@ -43,29 +43,49 @@ public class ClienteService {
                     });
         }
 
-        // 💡 Ahora el constructor encaja perfecto con la entidad Cliente
+        // 💡 1. Usamos el constructor de 7 parámetros (agregando condicionIva)
+        // 💡 2. Cambiamos razonSocialNombre() por nombre()
         Cliente nuevoCliente = new Cliente(
                 dto.tipo(),
-                dto.razonSocialNombre(),
+                dto.nombre(),
                 dto.cuilDni(),
                 dto.telefono(),
                 dto.email(),
-                dto.notas()
+                dto.notas(),
+                dto.condicionIva()
         );
+
+        // 💡 3. Seteamos los campos de logística que no están en el constructor
+        nuevoCliente.setCalle(dto.calle());
+        nuevoCliente.setNumero(dto.numero());
+        nuevoCliente.setPiso(dto.piso());
+        nuevoCliente.setDepto(dto.depto());
+        nuevoCliente.setLocalidad(dto.localidad());
+        nuevoCliente.setProvincia(dto.provincia());
+        nuevoCliente.setDireccion(dto.direccion());
 
         Cliente guardado = clienteRepository.save(nuevoCliente);
         return mapToDTO(guardado);
     }
 
     private ClienteDTO mapToDTO(Cliente cliente) {
+        // Asegurate de que tu ClienteDTO (Record) tenga estos campos en este orden
         return new ClienteDTO(
                 cliente.getId(),
-                cliente.getClienteTipo(),  // 💡 Usamos el getter correcto
-                cliente.getNombre(),       // 💡 Usamos getNombre para estar prolijos
+                cliente.getClienteTipo(),
+                cliente.getNombre(),
                 cliente.getCuilDni(),
                 cliente.getTelefono(),
                 cliente.getEmail(),
-                cliente.getNotas()         // 💡 Ahora sí existe en la entidad
+                cliente.getNotas(),
+                cliente.getCondicionIva(), // ✅ Agregado
+                cliente.getCalle(),        // ✅ Agregado
+                cliente.getNumero(),       // ✅ Agregado
+                cliente.getPiso(),         // ✅ Agregado
+                cliente.getDepto(),        // ✅ Agregado
+                cliente.getLocalidad(),    // ✅ Agregado
+                cliente.getProvincia(),    // ✅ Agregado
+                cliente.getDireccion()     // ✅ Agregado
         );
     }
 }

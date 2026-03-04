@@ -1,35 +1,21 @@
 import React from 'react';
 
-export default function Input({ label, error, style, ...props }) {
+export default function Input({ label, error, className = '', ...props }) {
     return (
-        <div style={{ marginBottom: '18px', width: '100%' }}>
+        <div className="mb-4 w-full">
             {label && (
-                <label style={{ 
-                    display: 'block', 
-                    fontSize: '12px', 
-                    fontWeight: '900', 
-                    color: '#111111', // Negro sólido para el título
-                    marginBottom: '8px',
-                    textTransform: 'uppercase'
-                }}>
+                <label className="block text-[11px] font-black text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">
                     {label}
                 </label>
             )}
             
             <input 
                 {...props} 
-                style={{
-                    width: '100%',
-                    padding: '14px',
-                    borderRadius: '8px',
-                    border: error ? '2px solid #F23D4F' : '1px solid #DDDDDD',
-                    backgroundColor: '#FFFFFF',
-                    color: '#111111', // Texto de escritura negro sólido
-                    fontSize: '16px', // Tamaño ideal para mobile (evita el zoom del iPhone)
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                    ...style
-                }} 
+                className={`w-full p-3.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-[16px] outline-none transition-all duration-200
+                ${error 
+                    ? 'border-2 border-rose-500 focus:ring-2 focus:ring-rose-500/50' 
+                    : 'border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                } ${className}`}
             />
         </div>
     );

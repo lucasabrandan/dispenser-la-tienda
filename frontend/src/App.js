@@ -8,12 +8,13 @@ import Layout from './components/layout/Layout';
 import ServicioForm from './components/ServicioForm';
 import ServicioList from './components/ServicioList';
 import ClienteManager from './components/ClienteManager';
-import RepuestoManager from './components/RepuestoManager'; 
+import RepuestoManager from './components/RepuestoManager';
+import RadarMantenimiento from './components/RadarMantenimiento';
 
 export default function App() {
     // Controlamos la sección. 'caja' es la pantalla de inicio.
-    const [seccionActual, setSeccionActual] = useState('caja'); 
-    
+    const [seccionActual, setSeccionActual] = useState('caja');
+
     // 🚀 NUEVO: Estado para guardar el presupuesto que queremos editar
     const [servicioAEditar, setServicioAEditar] = useState(null);
 
@@ -27,7 +28,7 @@ export default function App() {
     // Si tocás "Caja" manualmente en el menú, limpiamos la edición para que arranques uno en blanco.
     const cambiarSeccionDesdeMenu = (nuevaSeccion) => {
         if (nuevaSeccion === 'caja' && seccionActual !== 'caja') {
-            setServicioAEditar(null); 
+            setServicioAEditar(null);
         }
         setSeccionActual(nuevaSeccion);
     };
@@ -38,14 +39,20 @@ export default function App() {
             case 'caja':
                 return (
                     <div className="card-animate">
-                        <ServicioForm 
+                        <ServicioForm
                             // 🚀 Le pasamos el servicio si estamos editando, o null si es nuevo
-                            servicioParaEditar={servicioAEditar} 
+                            servicioParaEditar={servicioAEditar}
                             onSaved={() => {
                                 setServicioAEditar(null); // Limpiamos al guardar
                                 setSeccionActual('historial');
-                            }} 
+                            }}
                         />
+                    </div>
+                );
+            case 'radar':
+                return (
+                    <div className="card-animate">
+                        <RadarMantenimiento />
                     </div>
                 );
             case 'historial':
@@ -78,27 +85,27 @@ export default function App() {
 
     return (
         <>
-            <Toaster 
-                position="top-right" 
-                toastOptions={{ 
-                    duration: 3000, 
-                    style: { 
-                        background: '#333', 
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 3000,
+                    style: {
+                        background: '#333',
                         color: '#fff',
                         borderRadius: '12px',
-                        fontSize: '14px' 
-                    } 
-                }} 
+                        fontSize: '14px'
+                    }
+                }}
             />
 
             {/* 🚀 En vez de setSeccionActual directo, usamos nuestra función inteligente */}
             <Layout vistaActual={seccionActual} setVistaActual={cambiarSeccionDesdeMenu}>
-                
-                <div style={{ 
-                    maxWidth: '1000px', 
-                    margin: '0 auto', 
+
+                <div style={{
+                    maxWidth: '1000px',
+                    margin: '0 auto',
                     padding: '10px',
-                    width: '100%' 
+                    width: '100%'
                 }}>
                     {renderSeccion()}
                 </div>

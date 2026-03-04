@@ -1,20 +1,10 @@
 import React from 'react';
 
-export default function Card({ children, style, className }) {
+export default function Card({ children, className = '', ...props }) {
     return (
         <div 
-            className={className}
-            style={{
-                backgroundColor: '#FFFFFF', // Blanco puro garantizado
-                borderRadius: '12px',
-                padding: '20px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.05)', // Sombra suave tipo ML
-                border: '1px solid #E5E7EB', // Borde gris claro
-                marginBottom: '15px',
-                width: '100%',
-                boxSizing: 'border-box',
-                ...style // Permite ajustes extra si son necesarios
-            }}
+            className={`w-full bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors duration-300 ${className}`}
+            {...props}
         >
             {children}
         </div>
