@@ -3,8 +3,10 @@ package com.dispenserlatienda.service;
 import com.dispenserlatienda.domain.Cliente;
 import com.dispenserlatienda.dto.cliente.ClienteCreateDTO;
 import com.dispenserlatienda.dto.cliente.ClienteDTO;
+import com.dispenserlatienda.dto.sede.SedeDTO; // ⬅️ Importar
 import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.ClienteRepository;
+import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,9 +16,15 @@ import java.util.List;
 public class ClienteService {
 
     private final ClienteRepository clienteRepository;
+    private final EntityManager entityManager;
+    private final SedeService sedeService; // ✅ NUEVO: Inyectamos el servicio de sedes
 
-    public ClienteService(ClienteRepository clienteRepository) {
+    public ClienteService(ClienteRepository clienteRepository,
+                          EntityManager entityManager,
+                          SedeService sedeService) { // ✅ Actualizar constructor
         this.clienteRepository = clienteRepository;
+        this.entityManager = entityManager;
+        this.sedeService = sedeService;
     }
 
     @Transactional(readOnly = true)
@@ -35,18 +43,14 @@ public class ClienteService {
 
     @Transactional
     public ClienteDTO crear(ClienteCreateDTO dto) {
-        // Validación de CUIL/DNI
         if (dto.cuilDni() != null && !dto.cuilDni().trim().isEmpty()) {
-            clienteRepository.findByCuilDni(dto.cuilDni())
-                    .ifPresent(c -> {
-                        throw new IllegalArgumentException("Ya existe un cliente con el CUIL/DNI: " + dto.cuilDni());
-                    });
+            clienteRepository.findByCuilDni(dto.cuilDni()).ifPresent(c -> {
+                throw new IllegalArgumentException("Ya existe un cliente con el CUIL/DNI: " + dto.cuilDni());
+            });
         }
 
-        // 💡 1. Usamos el constructor de 7 parámetros (agregando condicionIva)
-        // 💡 2. Cambiamos razonSocialNombre() por nombre()
-        Cliente nuevoCliente = new Cliente(
-                dto.tipo(),
+        Cliente cliente = new Cliente(
+                dto.clienteTipo(),
                 dto.nombre(),
                 dto.cuilDni(),
                 dto.telefono(),
@@ -55,21 +59,55 @@ public class ClienteService {
                 dto.condicionIva()
         );
 
-        // 💡 3. Seteamos los campos de logística que no están en el constructor
-        nuevoCliente.setCalle(dto.calle());
-        nuevoCliente.setNumero(dto.numero());
-        nuevoCliente.setPiso(dto.piso());
-        nuevoCliente.setDepto(dto.depto());
-        nuevoCliente.setLocalidad(dto.localidad());
-        nuevoCliente.setProvincia(dto.provincia());
-        nuevoCliente.setDireccion(dto.direccion());
-
-        Cliente guardado = clienteRepository.save(nuevoCliente);
-        return mapToDTO(guardado);
+        mapearDatosLogistica(cliente, dto);
+        return mapToDTO(clienteRepository.save(cliente));
     }
 
+    @Transactional
+    public ClienteDTO actualizar(Long id, ClienteCreateDTO dto) {
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe el cliente con ID: " + id));
+
+        cliente.setNombre(dto.nombre());
+        cliente.setCuilDni(dto.cuilDni());
+        cliente.setTelefono(dto.telefono());
+        cliente.setEmail(dto.email());
+        cliente.setNotas(dto.notas());
+        cliente.setClienteTipo(dto.clienteTipo());
+        cliente.setCondicionIva(dto.condicionIva());
+
+        mapearDatosLogistica(cliente, dto);
+        return mapToDTO(clienteRepository.save(cliente));
+    }
+
+    @Transactional
+    public void eliminarEnCascada(Long id) {
+        // 🔥 Tu lógica de borrado nativo se mantiene intacta aquí
+        entityManager.createNativeQuery("DELETE FROM servicio_items WHERE servicio_id IN (SELECT id FROM servicio WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ?))").setParameter(1, id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM servicio_item WHERE equipo_id IN (SELECT id FROM equipo WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ?))").setParameter(1, id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM servicio WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ? )").setParameter(1, id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM equipo WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ? )").setParameter(1, id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM sede WHERE cliente_id = ?").setParameter(1, id).executeUpdate();
+        clienteRepository.deleteById(id);
+    }
+
+    private void mapearDatosLogistica(Cliente cliente, ClienteCreateDTO dto) {
+        cliente.setCalle(dto.calle());
+        cliente.setNumero(dto.numero());
+        cliente.setPiso(dto.piso());
+        cliente.setDepto(dto.depto());
+        cliente.setLocalidad(dto.localidad());
+        cliente.setProvincia(dto.provincia());
+        cliente.setDireccion(dto.direccion());
+    }
+
+    // ✅ MAPEO FINAL: El que hace que React vea las sedes y equipos
     private ClienteDTO mapToDTO(Cliente cliente) {
-        // Asegurate de que tu ClienteDTO (Record) tenga estos campos en este orden
+        // Transformamos las sedes de la entidad a DTO usando el SedeService
+        List<SedeDTO> sedesDTO = cliente.getSedes().stream()
+                .map(sedeService::mapToDTO) // ⬅️ Esto requiere que mapToDTO en SedeService sea PUBLIC
+                .toList();
+
         return new ClienteDTO(
                 cliente.getId(),
                 cliente.getClienteTipo(),
@@ -78,14 +116,15 @@ public class ClienteService {
                 cliente.getTelefono(),
                 cliente.getEmail(),
                 cliente.getNotas(),
-                cliente.getCondicionIva(), // ✅ Agregado
-                cliente.getCalle(),        // ✅ Agregado
-                cliente.getNumero(),       // ✅ Agregado
-                cliente.getPiso(),         // ✅ Agregado
-                cliente.getDepto(),        // ✅ Agregado
-                cliente.getLocalidad(),    // ✅ Agregado
-                cliente.getProvincia(),    // ✅ Agregado
-                cliente.getDireccion()     // ✅ Agregado
+                cliente.getCondicionIva(),
+                cliente.getCalle(),
+                cliente.getNumero(),
+                cliente.getPiso(),
+                cliente.getDepto(),
+                cliente.getLocalidad(),
+                cliente.getProvincia(),
+                cliente.getDireccion(),
+                sedesDTO // 🏁 El ingrediente secreto
         );
     }
 }

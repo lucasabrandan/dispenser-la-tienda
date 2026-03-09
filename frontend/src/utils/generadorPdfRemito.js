@@ -11,14 +11,12 @@ export const generarRemitoPDFPremium = ({
     }
 
     const doc = new jsPDF();
-    const BRAND_RED = [229, 77, 66]; // Rojo Técnica
-    const BRAND_GREEN = [0, 128, 0]; // Verde Venta
+    const BRAND_RED = [229, 77, 66]; 
+    const BRAND_GREEN = [0, 128, 0]; 
     
-    // 🛡️ FIX FECHA: Evita el "Invalid Date"
     const procesarFecha = (f) => {
         try {
             if (!f) return new Date().toLocaleDateString('es-AR');
-            // Si viene YYYY-MM-DD le sumamos la hora para que el fuso horario no lo mueva de día
             const d = new Date(f.includes('T') ? f : `${f}T12:00:00`);
             return isNaN(d.getTime()) ? new Date().toLocaleDateString('es-AR') : d.toLocaleDateString('es-AR');
         } catch (e) {
@@ -27,12 +25,11 @@ export const generarRemitoPDFPremium = ({
     };
     const fechaFinal = procesarFecha(fechaServicio);
 
-    // 🛡️ FIX MODO INTELIGENTE: Si hay S/N real, es técnica (Rojo)
     const esModoTecnico = ticketItems.some(it => it.equipoSerial && it.equipoSerial !== "MOSTRADOR");
     const colorModo = esModoTecnico ? BRAND_RED : BRAND_GREEN;
     const tituloModo = esModoTecnico ? "REMITO DE SERVICIO TÉCNICO" : "VENTA DE PRODUCTOS / INSUMOS";
 
-    // 1. FRANJA SUPERIOR DINÁMICA
+    // 1. FRANJA SUPERIOR
     doc.setFillColor(...colorModo); 
     doc.rect(0, 0, 210, 30, 'F');
     doc.setFontSize(22);
@@ -43,33 +40,42 @@ export const generarRemitoPDFPremium = ({
     doc.setFont(undefined, 'normal');
     doc.text(tituloModo, 196, 20, { align: "right" });
 
-    // 2. BLOQUE DE DATOS DEL CLIENTE
+    // 2. BLOQUE DE DATOS DEL CLIENTE (Actualizado con ARCA)
     let finalY = 40;
     doc.setDrawColor(200, 200, 200);
     doc.setFillColor(250, 250, 250);
-    doc.roundedRect(14, finalY, 182, 35, 3, 3, 'FD');
+    doc.roundedRect(14, finalY, 182, 40, 3, 3, 'FD'); // Aumenté un poquito el alto (40)
 
-    doc.setFontSize(10);
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Fecha: ${fechaFinal}`, 18, finalY + 7);
+    if(esModoTecnico) doc.text(`Técnico: ${tecnico || 'Marcos'}`, 100, finalY + 7);
+    
+    doc.line(18, finalY + 11, 192, finalY + 11); 
+
+    doc.setFontSize(11);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Fecha: ${fechaFinal}`, 18, finalY + 8);
-    if(esModoTecnico) doc.text(`Técnico: ${tecnico || 'Marcos'}`, 100, finalY + 8);
-    
-    doc.line(18, finalY + 12, 192, finalY + 12); 
-
     doc.setFont(undefined, 'bold');
-    doc.text(`CLIENTE: ${cliente.nombre?.toUpperCase() || 'PARTICULAR'}`, 18, finalY + 20);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Ubicación: ${sede?.nombreSede || 'S/D'} - ${sede?.direccion || 'Mostrador'}`, 18, finalY + 26);
-    doc.text(`Contacto: ${cliente.telefono || '-'} | ${cliente.email || '-'}`, 18, finalY + 32);
+    doc.text(`CLIENTE: ${cliente.nombre?.toUpperCase() || 'PARTICULAR'}`, 18, finalY + 18);
     
-    finalY += 45;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(80, 80, 80);
+    // 🏛️ LÍNEA ARCA: CUIT + Condición Fiscal
+    const infoFiscal = `CUIT/DNI: ${cliente.cuilDni || '-'}  |  IVA: ${cliente.condicionIva || 'CONSUMIDOR FINAL'}`;
+    doc.text(infoFiscal, 18, finalY + 24);
+    
+    doc.text(`Ubicación: ${sede?.nombreSede || 'S/D'} - ${sede?.direccion || 'Mostrador'}`, 18, finalY + 30);
+    doc.text(`Contacto: ${cliente.telefono || '-'} | ${cliente.email || '-'}`, 18, finalY + 36);
+    
+    finalY += 50;
 
     // 3. DESGLOSE DE ÍTEMS
     ticketItems.forEach((item, index) => {
         if (finalY > 230) { doc.addPage(); finalY = 20; }
         
-        // --- MODO TÉCNICO ---
         if (item.equipoSerial && item.equipoSerial !== "MOSTRADOR") {
+            // ... (Lógica de Modo Técnico se mantiene igual)
             doc.setFillColor(240, 240, 240); 
             doc.rect(14, finalY, 182, 10, 'F');
             doc.setFontSize(11);
@@ -113,8 +119,8 @@ export const generarRemitoPDFPremium = ({
             doc.text(`Subtotal Equipo: $ ${Number(item.totalCalculado || item.costo).toLocaleString('es-AR')}`, 196, finalY, { align: 'right' });
             finalY += 15;
         } 
-        // --- MODO VENTA ---
         else {
+            // --- MODO VENTA (Con Envío Inteligente) ---
             const filasVenta = [];
             item.repuestosUsados?.forEach(r => {
                 filasVenta.push([
@@ -125,8 +131,15 @@ export const generarRemitoPDFPremium = ({
                 ]);
             });
 
-            if (item.costoExtra > 0) {
-                filasVenta.push(["COSTO DE ENVÍO / EXTRA", "1", "-", `$ ${Number(item.costoExtra).toLocaleString('es-AR')}`]);
+            // 🚚 Lógica de Envío Pro:
+            if (item.costoExtra !== null && item.costoExtra !== undefined && item.costoExtra !== "") {
+                const valorEnvio = Number(item.costoExtra);
+                filasVenta.push([
+                    valorEnvio === 0 ? "ENTREGA Y LOGÍSTICA (PROMO)" : "COSTO DE ENVÍO / EXTRA",
+                    "1",
+                    "-",
+                    valorEnvio === 0 ? "¡SIN CARGO!" : `$ ${valorEnvio.toLocaleString('es-AR')}`
+                ]);
             }
 
             autoTable(doc, {
@@ -135,13 +148,21 @@ export const generarRemitoPDFPremium = ({
                 body: filasVenta,
                 theme: 'striped',
                 headStyles: { fillColor: BRAND_GREEN },
-                columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' } }
+                styles: { fontSize: 9 },
+                columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+                didParseCell: function(data) {
+                    // Si dice "SIN CARGO", lo ponemos en verde y negrita
+                    if (data.cell.text[0] === "¡SIN CARGO!") {
+                        data.cell.styles.textColor = BRAND_GREEN;
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
             });
             finalY = doc.lastAutoTable.finalY + 15;
         }
     });
 
-    // 4. TOTAL FINAL (CAJA NEGRA)
+    // 4. TOTAL FINAL
     if (finalY > 260) { doc.addPage(); finalY = 20; }
     doc.setFillColor(0, 0, 0);
     doc.rect(130, finalY, 66, 12, 'F');
@@ -151,7 +172,7 @@ export const generarRemitoPDFPremium = ({
     doc.text(`TOTAL: $ ${Number(totalFinal).toLocaleString('es-AR')}`, 192, finalY + 8, { align: 'right' });
 
     // 5. PIE DE PÁGINA
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     const notaFooter = esModoTecnico 
         ? "Garantía de servicio: 30 días sobre mano de obra. Repuestos según fabricante."

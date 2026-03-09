@@ -37,7 +37,6 @@ public class DevSeedRunner implements CommandLineRunner {
             System.out.println("🚀 DISPENSER LA TIENDA: Iniciando Carga de Sistema");
 
             // 1. CLIENTE: Sanatorio Guemes
-            // ✅ CORRECCIÓN: Agregamos el 7mo parámetro (Condición IVA) para que matchee el constructor
             Cliente cliente = clienteRepository.findByCuilDni("20123456789")
                     .orElseGet(() -> clienteRepository.saveAndFlush(new Cliente(
                             ClienteTipo.EMPRESA,
@@ -45,22 +44,46 @@ public class DevSeedRunner implements CommandLineRunner {
                             "20123456789",
                             "1122334455",
                             "contacto@guemes.com",
-                            "Cliente Seed",            // notas
-                            "RESPONSABLE_INSCRIPTO"    // condicionIva (ARCA 2026)
+                            "Cliente Seed",
+                            "RESPONSABLE_INSCRIPTO"
                     )));
 
-            // 2. SEDE: Casa Central
+            // 2. SEDE: Casa Central (Actualizado a 10 parámetros)
             Sede casaCentral = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Casa Central")
                     .orElseGet(() -> sedeRepository.saveAndFlush(new Sede(
-                            cliente, "Casa Central", "Av. Córdoba 3400", "CABA", null)));
+                            cliente,                // 1. Cliente
+                            "Casa Central",         // 2. Nombre Sede
+                            "Av. Córdoba",          // 3. Calle
+                            "3400",                 // 4. Numero
+                            "1",                    // 5. Piso
+                            "A",                    // 6. Depto
+                            "CABA",                 // 7. Localidad
+                            "CABA",                 // 8. Provincia
+                            "Av. Córdoba 3400, CABA", // 9. Direccion completa
+                            "Sede central administrativa" // 10. Notas
+                    )));
 
-            // 3. DISPENSERS
+            // 3. DISPENSERS (6 parámetros: Sede, Marca, Modelo, S/N, Ubicación, Notas)
             if (!equipoRepository.existsByNumeroSerie("495050")) {
-                equipoRepository.saveAndFlush(new Equipo(casaCentral, "MarcaX", "Premium", "495050", "Piso 1", null));
+                equipoRepository.saveAndFlush(new Equipo(
+                        casaCentral,
+                        "Bacope",
+                        "RED",
+                        "495050",
+                        "Cocina Planta Baja",
+                        "Filtro recién instalado"
+                ));
             }
 
             if (!equipoRepository.existsByNumeroSerie("123")) {
-                equipoRepository.saveAndFlush(new Equipo(casaCentral, "MarcaY", "Estandar", "123", "Piso 2", null));
+                equipoRepository.saveAndFlush(new Equipo(
+                        casaCentral,
+                        "Humma",
+                        "BIDÓN",
+                        "123",
+                        "Pasillo 2do Piso",
+                        "Sin observaciones"
+                ));
             }
 
             // 4. TÉCNICO: Marcos
@@ -68,7 +91,7 @@ public class DevSeedRunner implements CommandLineRunner {
                     .orElseGet(() -> usuarioRepository.saveAndFlush(new Usuario(
                             "Marcos", "marcos", "pass123", RolUsuario.TECNICO)));
 
-            // 5. REPUUESTOS
+            // 5. REPUESTOS
             cargarRepuestoSiNoExiste("Filtro Carbón Activado", new BigDecimal("4500"));
             cargarRepuestoSiNoExiste("Kit de Mangueras", new BigDecimal("1200"));
             cargarRepuestoSiNoExiste("Canilla Frio/Calor", new BigDecimal("3800"));
@@ -77,7 +100,8 @@ public class DevSeedRunner implements CommandLineRunner {
             System.out.println("----------------------------------------------");
 
         } catch (Exception e) {
-            System.err.println("⚠️ Nota del Runner: " + e.getMessage());
+            System.err.println("❌ Error en DevSeedRunner: " + e.getMessage());
+            e.printStackTrace(); // Esto te dirá exactamente qué constructor falló
         }
     }
 

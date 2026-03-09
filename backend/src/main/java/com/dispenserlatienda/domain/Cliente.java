@@ -1,6 +1,9 @@
 package com.dispenserlatienda.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List; // ✅ No te olvides de estos imports
 
 @Entity
 @Table(name = "cliente")
@@ -24,8 +27,12 @@ public class Cliente {
     private String email;
     private String notas;
 
-    // 🏛️ NUEVO: Condición Fiscal ARCA 2026
     private String condicionIva;
+
+    // 🔗 NUEVO: Conexión con las Sedes
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore // Evita que se rompa todo si intentás devolver el Cliente puro
+    private List<Sede> sedes = new ArrayList<>();
 
     // 📍 Campos de Logística
     private String calle;
@@ -49,64 +56,51 @@ public class Cliente {
     }
 
     // =================================================================
-    // 🛠️ MÉTODOS DE COMPATIBILIDAD (PUENTE)
+    // 🛠️ MÉTODO QUE ARREGLA EL ERROR
     // =================================================================
 
-    public String getRazonSocialNombre() {
-        return this.nombre;
+    public List<Sede> getSedes() {
+        return sedes;
     }
 
-    public void setRazonSocialNombre(String razonSocialNombre) {
-        this.nombre = razonSocialNombre;
+    public void setSedes(List<Sede> sedes) {
+        this.sedes = sedes;
     }
 
     // =================================================================
-    // ⚙️ GETTERS Y SETTERS ESTÁNDAR
+    // ⚙️ GETTERS Y SETTERS (Mantenemos los tuyos)
     // =================================================================
+
+    public String getRazonSocialNombre() { return this.nombre; }
+    public void setRazonSocialNombre(String razonSocialNombre) { this.nombre = razonSocialNombre; }
 
     public Long getId() { return id; }
-
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-
     public String getCuilDni() { return cuilDni; }
     public void setCuilDni(String cuilDni) { this.cuilDni = cuilDni; }
-
     public String getTelefono() { return telefono; }
     public void setTelefono(String telefono) { this.telefono = telefono; }
-
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
-
     public ClienteTipo getClienteTipo() { return clienteTipo; }
     public void setClienteTipo(ClienteTipo clienteTipo) { this.clienteTipo = clienteTipo; }
-
-    // ✅ GETTER Y SETTER PARA ARCA
     public String getCondicionIva() { return condicionIva; }
     public void setCondicionIva(String condicionIva) { this.condicionIva = condicionIva; }
-
-    // 📍 Getters/Setters Logística
     public String getCalle() { return calle; }
     public void setCalle(String calle) { this.calle = calle; }
-
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
-
     public String getPiso() { return piso; }
     public void setPiso(String piso) { this.piso = piso; }
-
     public String getDepto() { return depto; }
     public void setDepto(String depto) { this.depto = depto; }
-
     public String getLocalidad() { return localidad; }
     public void setLocalidad(String localidad) { this.localidad = localidad; }
-
     public String getProvincia() { return provincia; }
     public void setProvincia(String provincia) { this.provincia = provincia; }
-
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
 }
