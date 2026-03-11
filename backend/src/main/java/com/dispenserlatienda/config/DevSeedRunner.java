@@ -34,9 +34,9 @@ public class DevSeedRunner implements CommandLineRunner {
     public void run(String... args) {
         try {
             System.out.println("----------------------------------------------");
-            System.out.println("🚀 DISPENSER LA TIENDA: Iniciando Carga de Sistema");
+            System.out.println("Iniciando Carga de Sistema");
 
-            // 1. CLIENTE: Sanatorio Guemes
+            // CAMBIO: Pasar CondicionIva.RESPONSABLE_INSCRIPTO en lugar de String
             Cliente cliente = clienteRepository.findByCuilDni("20123456789")
                     .orElseGet(() -> clienteRepository.saveAndFlush(new Cliente(
                             ClienteTipo.EMPRESA,
@@ -45,25 +45,23 @@ public class DevSeedRunner implements CommandLineRunner {
                             "1122334455",
                             "contacto@guemes.com",
                             "Cliente Seed",
-                            "RESPONSABLE_INSCRIPTO"
+                            CondicionIva.RESPONSABLE_INSCRIPTO  // CAMBIO: Enum en lugar de String
                     )));
 
-            // 2. SEDE: Casa Central (Actualizado a 10 parámetros)
             Sede casaCentral = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Casa Central")
                     .orElseGet(() -> sedeRepository.saveAndFlush(new Sede(
-                            cliente,                // 1. Cliente
-                            "Casa Central",         // 2. Nombre Sede
-                            "Av. Córdoba",          // 3. Calle
-                            "3400",                 // 4. Numero
-                            "1",                    // 5. Piso
-                            "A",                    // 6. Depto
-                            "CABA",                 // 7. Localidad
-                            "CABA",                 // 8. Provincia
-                            "Av. Córdoba 3400, CABA", // 9. Direccion completa
-                            "Sede central administrativa" // 10. Notas
+                            cliente,
+                            "Casa Central",
+                            "Av. Córdoba",
+                            "3400",
+                            "1",
+                            "A",
+                            "CABA",
+                            "CABA",
+                            "Av. Córdoba 3400, CABA",
+                            "Sede central administrativa"
                     )));
 
-            // 3. DISPENSERS (6 parámetros: Sede, Marca, Modelo, S/N, Ubicación, Notas)
             if (!equipoRepository.existsByNumeroSerie("495050")) {
                 equipoRepository.saveAndFlush(new Equipo(
                         casaCentral,
@@ -86,22 +84,20 @@ public class DevSeedRunner implements CommandLineRunner {
                 ));
             }
 
-            // 4. TÉCNICO: Marcos
             usuarioRepository.findByUsername("marcos")
                     .orElseGet(() -> usuarioRepository.saveAndFlush(new Usuario(
                             "Marcos", "marcos", "pass123", RolUsuario.TECNICO)));
 
-            // 5. REPUESTOS
             cargarRepuestoSiNoExiste("Filtro Carbón Activado", new BigDecimal("4500"));
             cargarRepuestoSiNoExiste("Kit de Mangueras", new BigDecimal("1200"));
             cargarRepuestoSiNoExiste("Canilla Frio/Calor", new BigDecimal("3800"));
 
-            System.out.println("📊 Base de Datos PostgreSQL: ESTADO OK");
+            System.out.println("Base de Datos PostgreSQL: ESTADO OK");
             System.out.println("----------------------------------------------");
 
         } catch (Exception e) {
-            System.err.println("❌ Error en DevSeedRunner: " + e.getMessage());
-            e.printStackTrace(); // Esto te dirá exactamente qué constructor falló
+            System.err.println("Error en DevSeedRunner: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -111,7 +107,7 @@ public class DevSeedRunner implements CommandLineRunner {
 
         if (!existe) {
             repuestoRepository.saveAndFlush(new Repuesto(nombre, precio, 10));
-            System.out.println("✅ Repuesto cargado: " + nombre);
+            System.out.println("Repuesto cargado: " + nombre);
         }
     }
 }

@@ -29,8 +29,11 @@ public class Servicio {
     @Column(nullable = false, length = 20)
     private ServicioTipo servicioTipo;
 
+    // CAMBIO: De String a EstadoServicio enum
+    // Ahora solo pueden ser: PRESUPUESTO, APROBADO, EN_PROGRESO, REALIZADO, RECHAZADO, CANCELADO
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String estado = "PRESUPUESTO"; // 🛡️ Por defecto presupuesto
+    private EstadoServicio estado = EstadoServicio.PRESUPUESTO;
 
     @Column(name = "cliente_nombre")
     private String clienteNombre;
@@ -47,8 +50,6 @@ public class Servicio {
     @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ServicioItem> items = new ArrayList<>();
 
-    // 🛡️ FIX 1: Cambiado a PUBLIC.
-    // Si es 'protected', el ServicioService no puede hacer "new Servicio()"
     public Servicio() {}
 
     public Servicio(Sede sede, Usuario usuario, LocalDate fechaServicio, ServicioTipo servicioTipo) {
@@ -66,18 +67,16 @@ public class Servicio {
     // --- Getters y Setters ---
     public Long getId() { return id; }
 
-    // 🛡️ FIX 2: Agregados setters que el Service necesita para actualizar
     public void setSede(Sede sede) { this.sede = sede; }
     public Sede getSede() { return sede; }
 
     public void setUsuario(Usuario usuario) { this.usuario = usuario; }
     public Usuario getUsuario() { return usuario; }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    // CAMBIO: getter y setter ahora usan EstadoServicio en lugar de String
+    public EstadoServicio getEstado() { return estado; }
+    public void setEstado(EstadoServicio estado) { this.estado = estado; }
 
-    // 🛡️ FIX 3: Quitamos el 'Collections.unmodifiableList'.
-    // El Service necesita hacer "servicio.getItems().clear()" para editar.
     public List<ServicioItem> getItems() { return items; }
 
     public LocalDate getFechaServicio() { return fechaServicio; }

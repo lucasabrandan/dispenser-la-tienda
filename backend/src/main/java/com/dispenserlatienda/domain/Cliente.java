@@ -3,7 +3,7 @@ package com.dispenserlatienda.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.ArrayList;
-import java.util.List; // ✅ No te olvides de estos imports
+import java.util.List;
 
 @Entity
 @Table(name = "cliente")
@@ -27,14 +27,17 @@ public class Cliente {
     private String email;
     private String notas;
 
-    private String condicionIva;
+    // CAMBIO: De String a CondicionIva enum
+    // Ahora solo pueden ser: RESPONSABLE_INSCRIPTO, MONOTRIBUTO, NO_RESPONSABLE, CONSUMIDOR_FINAL
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private CondicionIva condicionIva;
 
-    // 🔗 NUEVO: Conexión con las Sedes
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore // Evita que se rompa todo si intentás devolver el Cliente puro
+    @JsonIgnore
     private List<Sede> sedes = new ArrayList<>();
 
-    // 📍 Campos de Logística
+    // Campos de Logística
     private String calle;
     private String numero;
     private String piso;
@@ -45,7 +48,8 @@ public class Cliente {
 
     protected Cliente() {}
 
-    public Cliente(ClienteTipo clienteTipo, String nombre, String cuilDni, String telefono, String email, String notas, String condicionIva) {
+    public Cliente(ClienteTipo clienteTipo, String nombre, String cuilDni, String telefono,
+                   String email, String notas, CondicionIva condicionIva) {
         this.clienteTipo = clienteTipo;
         this.nombre = nombre;
         this.cuilDni = cuilDni;
@@ -55,10 +59,6 @@ public class Cliente {
         this.condicionIva = condicionIva;
     }
 
-    // =================================================================
-    // 🛠️ MÉTODO QUE ARREGLA EL ERROR
-    // =================================================================
-
     public List<Sede> getSedes() {
         return sedes;
     }
@@ -67,9 +67,7 @@ public class Cliente {
         this.sedes = sedes;
     }
 
-    // =================================================================
-    // ⚙️ GETTERS Y SETTERS (Mantenemos los tuyos)
-    // =================================================================
+    // --- Getters y Setters ---
 
     public String getRazonSocialNombre() { return this.nombre; }
     public void setRazonSocialNombre(String razonSocialNombre) { this.nombre = razonSocialNombre; }
@@ -87,8 +85,11 @@ public class Cliente {
     public void setNotas(String notas) { this.notas = notas; }
     public ClienteTipo getClienteTipo() { return clienteTipo; }
     public void setClienteTipo(ClienteTipo clienteTipo) { this.clienteTipo = clienteTipo; }
-    public String getCondicionIva() { return condicionIva; }
-    public void setCondicionIva(String condicionIva) { this.condicionIva = condicionIva; }
+
+    // CAMBIO: getter y setter ahora usan CondicionIva en lugar de String
+    public CondicionIva getCondicionIva() { return condicionIva; }
+    public void setCondicionIva(CondicionIva condicionIva) { this.condicionIva = condicionIva; }
+
     public String getCalle() { return calle; }
     public void setCalle(String calle) { this.calle = calle; }
     public String getNumero() { return numero; }

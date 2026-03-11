@@ -64,23 +64,33 @@ public class ServicioService {
         Sede sede = sedeRepository.findById(dto.getSedeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada"));
 
+        // CAMBIO: Ahora lanzamos excepción si usuario no existe (en lugar de usar .get(0))
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
-                .orElseGet(() -> usuarioRepository.findAll().get(0));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
 
         servicio.setSede(sede);
         servicio.setUsuario(usuario);
         servicio.setFechaServicio(LocalDate.parse(dto.getFecha()));
         servicio.setClienteNombre(dto.getClienteNombre());
         servicio.setSedeNombre(dto.getSedeNombre());
-        servicio.setEstado(dto.getEstado() != null ? dto.getEstado() : "PRESUPUESTO");
+
+        // CAMBIO: Si el estado viene en String del DTO, convertir a enum
+        // Si viene vacío, usar PRESUPUESTO por defecto
+        if (dto.getEstado() != null && !dto.getEstado().isEmpty()) {
+            try {
+                servicio.setEstado(EstadoServicio.valueOf(dto.getEstado()));
+            } catch (IllegalArgumentException e) {
+                servicio.setEstado(EstadoServicio.PRESUPUESTO);
+            }
+        } else {
+            servicio.setEstado(EstadoServicio.PRESUPUESTO);
+        }
+
         servicio.setFotoRemito(dto.getFotoRemito());
 
-        // 🧠 MEJORA: Detección Automática de Tipo de Servicio
-        // Empezamos asumiendo VENTA, si encontramos un S/N real pasa a TECNICA.
         ServicioTipo tipoDetectado = ServicioTipo.VENTA;
 
         for (var itemDto : dto.getItems()) {
-            // 🛡️ Lógica de detección: Si el serial no es nulo ni es "MOSTRADOR", es técnica.
             if (itemDto.equipoSerial() != null && !itemDto.equipoSerial().equalsIgnoreCase("MOSTRADOR")) {
                 tipoDetectado = ServicioTipo.TECNICA;
             }
@@ -92,10 +102,19 @@ public class ServicioService {
                 fechaGarantia = LocalDate.parse(itemDto.garantiaHasta());
             }
 
-            // 🛡️ MEJORA: Blindaje de Negativos (Si el costo es negativo, se guarda como 0)
             BigDecimal costoBlindado = itemDto.costo().max(BigDecimal.ZERO);
             BigDecimal extraBlindado = (itemDto.costoExtra() != null) ? itemDto.costoExtra().max(BigDecimal.ZERO) : BigDecimal.ZERO;
             BigDecimal internoBlindado = (itemDto.costoInterno() != null) ? itemDto.costoInterno().max(BigDecimal.ZERO) : BigDecimal.ZERO;
+
+            // CAMBIO: Convertir el String metodoPago del DTO a enum MetodoPago
+            MetodoPago metodoPago = MetodoPago.EFECTIVO; // Valor por defecto
+            if (itemDto.metodoPago() != null && !itemDto.metodoPago().isEmpty()) {
+                try {
+                    metodoPago = MetodoPago.valueOf(itemDto.metodoPago());
+                } catch (IllegalArgumentException e) {
+                    metodoPago = MetodoPago.EFECTIVO; // Si no es válido, usar default
+                }
+            }
 
             ServicioItem nuevoItem = new ServicioItem(
                     equipo,
@@ -103,7 +122,7 @@ public class ServicioService {
                     costoBlindado,
                     internoBlindado,
                     BigDecimal.ZERO,
-                    itemDto.metodoPago(),
+                    metodoPago,  // CAMBIO: Ahora es enum
                     itemDto.trabajoRealizado(),
                     fechaGarantia
             );
@@ -118,7 +137,6 @@ public class ServicioService {
             servicio.addItem(nuevoItem);
         }
 
-        // 🚀 Aplicamos el tipo detectado (IGNORAMOS lo que mande el frontend si es incorrecto)
         servicio.setServicioTipo(tipoDetectado);
 
         return mapToDTO(servicioRepository.save(servicio));
@@ -127,7 +145,14 @@ public class ServicioService {
     @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado) {
         Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
-        s.setEstado(nuevoEstado);
+
+        // CAMBIO: Convertir String a EstadoServicio enum
+        try {
+            s.setEstado(EstadoServicio.valueOf(nuevoEstado));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Estado inválido: " + nuevoEstado + ". Valores permitidos: " + java.util.Arrays.toString(EstadoServicio.values()));
+        }
+
         return mapToDTO(servicioRepository.save(s));
     }
 
@@ -148,7 +173,9 @@ public class ServicioService {
                     i.getEquipo() != null ? i.getEquipo().getNumeroSerie() : "MOSTRADOR",
                     i.getEquipo() != null ? i.getEquipo().getUbicacion() : "MOSTRADOR",
                     i.getTecnico(), i.getCosto(), i.getCostoExtra(), i.getCostoInterno(),
-                    i.getDescuento(), i.getMetodoPago(), i.getTrabajoRealizado(),
+                    i.getDescuento(),
+                    i.getMetodoPago() != null ? i.getMetodoPago().name() : "EFECTIVO",  // CAMBIO: Convertir enum a String para DTO
+                    i.getTrabajoRealizado(),
                     garantiaStr,
                     listaRepuestos, i.getFotoAntes(), i.getFotoDespues()
             );
@@ -161,7 +188,7 @@ public class ServicioService {
                 s.getClienteNombre(),
                 s.getSedeNombre(),
                 items,
-                s.getEstado(),
+                s.getEstado() != null ? s.getEstado().name() : "PRESUPUESTO",  // CAMBIO: Convertir enum a String para DTO
                 s.getFotoRemito()
         );
     }

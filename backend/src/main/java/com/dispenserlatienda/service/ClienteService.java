@@ -1,9 +1,10 @@
 package com.dispenserlatienda.service;
 
 import com.dispenserlatienda.domain.Cliente;
+import com.dispenserlatienda.domain.CondicionIva;
 import com.dispenserlatienda.dto.cliente.ClienteCreateDTO;
 import com.dispenserlatienda.dto.cliente.ClienteDTO;
-import com.dispenserlatienda.dto.sede.SedeDTO; // ⬅️ Importar
+import com.dispenserlatienda.dto.sede.SedeDTO;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.ClienteRepository;
 import jakarta.persistence.EntityManager;
@@ -17,11 +18,11 @@ public class ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final EntityManager entityManager;
-    private final SedeService sedeService; // ✅ NUEVO: Inyectamos el servicio de sedes
+    private final SedeService sedeService;
 
     public ClienteService(ClienteRepository clienteRepository,
                           EntityManager entityManager,
-                          SedeService sedeService) { // ✅ Actualizar constructor
+                          SedeService sedeService) {
         this.clienteRepository = clienteRepository;
         this.entityManager = entityManager;
         this.sedeService = sedeService;
@@ -82,7 +83,8 @@ public class ClienteService {
 
     @Transactional
     public void eliminarEnCascada(Long id) {
-        // 🔥 Tu lógica de borrado nativo se mantiene intacta aquí
+        // Borrado en cascada de todas las entidades relacionadas
+        // Primero elimina items de servicio, luego servicios, luego equipos, luego sedes
         entityManager.createNativeQuery("DELETE FROM servicio_items WHERE servicio_id IN (SELECT id FROM servicio WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ?))").setParameter(1, id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM servicio_item WHERE equipo_id IN (SELECT id FROM equipo WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ?))").setParameter(1, id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM servicio WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ? )").setParameter(1, id).executeUpdate();
@@ -101,12 +103,17 @@ public class ClienteService {
         cliente.setDireccion(dto.direccion());
     }
 
-    // ✅ MAPEO FINAL: El que hace que React vea las sedes y equipos
+    // Convierte entidad Cliente a DTO para enviar al frontend
     private ClienteDTO mapToDTO(Cliente cliente) {
-        // Transformamos las sedes de la entidad a DTO usando el SedeService
         List<SedeDTO> sedesDTO = cliente.getSedes().stream()
-                .map(sedeService::mapToDTO) // ⬅️ Esto requiere que mapToDTO en SedeService sea PUBLIC
+                .map(sedeService::mapToDTO)
                 .toList();
+
+        // CAMBIO: Convertir CondicionIva enum a String para el DTO
+        // Si condicionIva es null, usar un valor por defecto
+        String condicionIvaStr = cliente.getCondicionIva() != null
+                ? cliente.getCondicionIva().name()
+                : "CONSUMIDOR_FINAL";
 
         return new ClienteDTO(
                 cliente.getId(),
@@ -116,7 +123,7 @@ public class ClienteService {
                 cliente.getTelefono(),
                 cliente.getEmail(),
                 cliente.getNotas(),
-                cliente.getCondicionIva(),
+                condicionIvaStr,  // CAMBIO: Pasar String en lugar de enum
                 cliente.getCalle(),
                 cliente.getNumero(),
                 cliente.getPiso(),
@@ -124,7 +131,7 @@ public class ClienteService {
                 cliente.getLocalidad(),
                 cliente.getProvincia(),
                 cliente.getDireccion(),
-                sedesDTO // 🏁 El ingrediente secreto
+                sedesDTO
         );
     }
 }

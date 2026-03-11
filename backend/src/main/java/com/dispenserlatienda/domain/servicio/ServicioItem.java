@@ -24,7 +24,6 @@ public class ServicioItem {
     private String tecnico;
     private BigDecimal costo;
 
-    // 🚀 NUEVO: Para guardar la Mano de Obra o Envío por separado
     @Column(name = "costo_extra")
     private BigDecimal costoExtra;
 
@@ -32,11 +31,16 @@ public class ServicioItem {
     private BigDecimal costoInterno;
 
     private BigDecimal descuento;
-    private String metodoPago;
+
+    // CAMBIO: De String a MetodoPago enum
+    // Ahora solo pueden ser: EFECTIVO, TARJETA, TRANSFERENCIA, CHEQUE
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private MetodoPago metodoPago;
+
     private String trabajoRealizado;
     private LocalDate garantiaHasta;
 
-    // 🚀 NUEVO: Guardamos el detalle de repuestos como un texto largo (JSON)
     @Column(name = "repuestos_json", columnDefinition = "TEXT")
     private String repuestosUsados;
 
@@ -48,14 +52,15 @@ public class ServicioItem {
 
     public ServicioItem() {}
 
-    public ServicioItem(Equipo equipo, String tecnico, BigDecimal costo, BigDecimal costoInterno, BigDecimal descuento, String metodoPago, String trabajoRealizado, LocalDate garantiaHasta) {
+    public ServicioItem(Equipo equipo, String tecnico, BigDecimal costo, BigDecimal costoInterno,
+                        BigDecimal descuento, MetodoPago metodoPago, String trabajoRealizado, LocalDate garantiaHasta) {
         this.equipo = equipo;
         this.tecnico = tecnico;
         this.costo = costo;
-        this.costoExtra = BigDecimal.ZERO; // Valor por defecto
+        this.costoExtra = BigDecimal.ZERO;
         this.costoInterno = (costoInterno != null) ? costoInterno : BigDecimal.ZERO;
         this.descuento = (descuento != null) ? descuento : BigDecimal.ZERO;
-        this.metodoPago = (metodoPago != null) ? metodoPago : "EFECTIVO";
+        this.metodoPago = metodoPago;
         this.trabajoRealizado = trabajoRealizado;
         this.garantiaHasta = garantiaHasta;
     }
@@ -77,8 +82,11 @@ public class ServicioItem {
     public void setCostoInterno(BigDecimal costoInterno) { this.costoInterno = costoInterno; }
     public BigDecimal getDescuento() { return descuento; }
     public void setDescuento(BigDecimal descuento) { this.descuento = descuento; }
-    public String getMetodoPago() { return metodoPago; }
-    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+
+    // CAMBIO: getter y setter ahora usan MetodoPago en lugar de String
+    public MetodoPago getMetodoPago() { return metodoPago; }
+    public void setMetodoPago(MetodoPago metodoPago) { this.metodoPago = metodoPago; }
+
     public String getTrabajoRealizado() { return trabajoRealizado; }
     public void setTrabajoRealizado(String trabajoRealizado) { this.trabajoRealizado = trabajoRealizado; }
     public LocalDate getGarantiaHasta() { return garantiaHasta; }
