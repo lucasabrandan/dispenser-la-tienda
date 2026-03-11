@@ -1,4 +1,4 @@
-package com.dispenserlatienda.dto;
+package com.dispenserlatienda.dto.gasto;
 
 import com.dispenserlatienda.domain.CategoriaGasto;
 import java.math.BigDecimal;

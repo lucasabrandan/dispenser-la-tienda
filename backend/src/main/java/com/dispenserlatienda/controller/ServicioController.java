@@ -9,14 +9,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
+// Agrega @Validated para que Spring valide automáticamente los DTOs
+// CAMBIO: Cambiar @CrossOrigin(origins = "*") a dominio específico
 @RestController
 @RequestMapping("/api/servicios")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:3000")
+@Validated
 public class ServicioController {
     private final ServicioService servicioService;
     private final ServicioRepository servicioRepository;
@@ -33,19 +39,19 @@ public class ServicioController {
         this.objectMapper = objectMapper;
     }
 
-    // 🔍 Listar todos (para el historial y tablero de control)
+    // Listar todos los servicios (para historial)
     @GetMapping
     public ResponseEntity<List<ServicioDTO>> listar() {
         return ResponseEntity.ok(servicioService.listarTodos());
     }
 
-    // 🔍 NUEVO: Buscar uno solo por ID (Para que React "levante" un presupuesto viejo)
+    // Buscar un servicio por ID (para editar)
     @GetMapping("/{id}")
     public ResponseEntity<ServicioDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(servicioService.buscarPorId(id));
     }
 
-    // 🚀 Crear (Lo que ya usaba Marcos)
+    // Crear un nuevo servicio con foto (multipart)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServicioDTO> crear(
             @RequestPart("servicio") String servicioJson,
@@ -61,8 +67,7 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.crearServicioCompleto(dto));
     }
 
-    // ✏️ NUEVO: Actualizar un presupuesto existente
-    // Este método servirá tanto para editar datos como para pasarlo de "PRESUPUESTO" a "REALIZADO"
+    // Actualizar un servicio existente (con foto opcional)
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServicioDTO> actualizar(
             @PathVariable Long id,
@@ -79,7 +84,7 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.actualizarServicio(id, dto));
     }
 
-    // ✅ Cambiar estado rápido (Ej: de PRESUPUESTO a RECHAZADO)
+    // Cambiar estado de un servicio (PRESUPUESTO → APROBADO, etc)
     @PatchMapping("/{id}/estado")
     public ResponseEntity<ServicioDTO> cambiarEstado(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         String nuevoEstado = payload.get("estado");

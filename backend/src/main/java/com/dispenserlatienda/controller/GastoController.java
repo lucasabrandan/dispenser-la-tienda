@@ -1,15 +1,19 @@
 package com.dispenserlatienda.controller;
 
 import com.dispenserlatienda.domain.Gasto;
-import com.dispenserlatienda.dto.GastoCreateDTO;
+import com.dispenserlatienda.dto.gasto.GastoCreateDTO;
 import com.dispenserlatienda.repository.GastoRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
+// Agrega @Validated para que Spring valide automáticamente los DTOs
 @RestController
 @RequestMapping("/api/gastos")
+@Validated
 public class GastoController {
 
     private final GastoRepository repository;
@@ -23,8 +27,9 @@ public class GastoController {
         return repository.findAll();
     }
 
+    // Agrega @Valid para validar el DTO de entrada
     @PostMapping
-    public ResponseEntity<Gasto> crear(@RequestBody GastoCreateDTO dto) {
+    public ResponseEntity<Gasto> crear(@Valid @RequestBody GastoCreateDTO dto) {
         Gasto nuevoGasto = new Gasto(
                 dto.descripcion(),
                 dto.monto(),

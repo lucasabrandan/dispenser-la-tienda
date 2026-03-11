@@ -8,16 +8,20 @@ import com.dispenserlatienda.service.EquipoService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
+// Agrega @Validated para que Spring valide automáticamente los DTOs
 @RestController
 @RequestMapping("/api/equipos")
 @CrossOrigin(origins = "http://localhost:3000")
+@Validated
 public class EquipoController {
 
-    private final EquipoService equipoService; // ✅ Solo inyectamos el Service
+    private final EquipoService equipoService;
 
     public EquipoController(EquipoService equipoService) {
         this.equipoService = equipoService;
@@ -28,14 +32,16 @@ public class EquipoController {
         return equipoService.listarTodos();
     }
 
+    // Agrega @Valid para validar el DTO de entrada
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Equipo crear(@RequestBody EquipoCreateDTO dto) {
+    public Equipo crear(@Valid @RequestBody EquipoCreateDTO dto) {
         return equipoService.crear(dto);
     }
 
+    // Agrega @Valid para validar el DTO de entrada
     @PutMapping("/{id}")
-    public Equipo editar(@PathVariable Long id, @RequestBody EquipoCreateDTO dto) {
+    public Equipo editar(@PathVariable Long id, @Valid @RequestBody EquipoCreateDTO dto) {
         return equipoService.actualizar(id, dto);
     }
 
@@ -48,7 +54,4 @@ public class EquipoController {
             return ResponseEntity.badRequest().body("No se puede eliminar el dispenser porque ya tiene historial asociado.");
         }
     }
-
-    // Los métodos de sugerencias y garantía también podrían ir al Service
-    // pero para este commit, con esto ya limpiaste el 80% del ruido.
 }
