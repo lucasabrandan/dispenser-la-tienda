@@ -7,6 +7,8 @@ import CreatableSelect from 'react-select/creatable';
 // Átomos UI
 import Card from './ui/Card';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
+// NUEVA IMPORTACIÓN: Modal crear cliente
+import CrearClienteModal from './CrearClienteModal';
 
 export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
     const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
@@ -16,6 +18,10 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
     const [idEdicion, setIdEdicion] = useState(null);
     const [estaBloqueado, setEstaBloqueado] = useState(false);
     const [historialEquipo, setHistorialEquipo] = useState(null);
+    
+    // NUEVOS ESTADOS: Para el modal de crear cliente
+    const [modalClienteAbierto, setModalClienteAbierto] = useState(false);
+    const [nombreClientePrellenado, setNombreClientePrellenado] = useState('');
     
     const [itemActual, setItemActual] = useState({ 
         sedeId: '', sedeNombre: '', equipoSerial: '', 
@@ -269,10 +275,26 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
 
             <Card className="shadow-sm">
                 <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Cliente</label>
-                <CreatableSelect isDisabled={estaBloqueado} styles={premiumStyles}
+                {/* MEJORADO: CreatableSelect con lógica para abrir modal */}
+                <CreatableSelect 
+                    isDisabled={estaBloqueado} 
+                    styles={premiumStyles}
                     options={db.clientes?.map(c => ({ value: c.id.toString(), label: c.nombre }))}
                     value={db.clientes?.find(c => c.id.toString() === clienteId) ? { label: db.clientes.find(c => c.id.toString() === clienteId).nombre } : null}
-                    onChange={(s) => setClienteId(s?.value)}
+                    onChange={(s) => {
+                        // Si selecciona crear nuevo (objeto con __isNew__), abrir modal
+                        if (s?.__isNew__) {
+                            setNombreClientePrellenado(s.label);
+                            setModalClienteAbierto(true);
+                        } else {
+                            setClienteId(s?.value);
+                        }
+                    }}
+                    onCreateOption={(inputValue) => {
+                        // Trigger cuando escribe algo que no existe
+                        setNombreClientePrellenado(inputValue);
+                        setModalClienteAbierto(true);
+                    }}
                     placeholder="Buscar o crear cliente..."
                 />
             </Card>
@@ -412,6 +434,21 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
                     </div>
                 </div>
             )}
+
+            {/* 🆕 MODAL CREAR CLIENTE - Se abre cuando usuario intenta crear uno */}
+            <CrearClienteModal
+                isOpen={modalClienteAbierto}
+                onClose={() => setModalClienteAbierto(false)}
+                onClienteCreado={(clienteNuevo) => {
+                    // Agregar nuevo cliente a la lista
+                    setDb({ ...db, clientes: [...db.clientes, clienteNuevo] });
+                    // Seleccionarlo automáticamente
+                    setClienteId(clienteNuevo.id.toString());
+                    // Cerrar modal
+                    setModalClienteAbierto(false);
+                }}
+                clienteNombrePrellenado={nombreClientePrellenado}
+            />
         </div>
     );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import Input from './ui/Input';
+import CrearClienteModal from './CrearClienteModal';
 
 export default function ClienteForm({ form, setForm, errors, onSubmit, onClose }) {
     return (
