@@ -14,12 +14,15 @@ export default function ServicioList({ onEditar }) {
     useEffect(() => { cargarServicios(); }, []);
 
     const cargarServicios = () => {
-        api.get('/servicios')
+        api.get('/servicios?page=0&size=1000')
             .then(res => {
-                const data = Array.isArray(res.data) ? res.data : [];
-                setServicios(data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)));
+                const data = res.data.content || res.data || [];
+                setServicios(Array.isArray(data) ? data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) : []);
             })
-            .catch(() => toast.error("Error al conectar con el historial"));
+            .catch(err => {
+                console.error('Error cargando servicios:', err);
+                toast.error("Error al conectar con el historial");
+            });
     };
 
     const aprobarPresupuesto = async (id) => {
@@ -111,55 +114,55 @@ export default function ServicioList({ onEditar }) {
 
             {/* --- LISTADO DE TARJETAS --- */}
             <div className="flex flex-col gap-4 mt-1">
-                {filtrados.map(s => (
-                    <div key={s.id} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <div className="flex gap-2 items-center mb-2">
-                                    <span className="text-xs text-slate-400 font-bold">#{s.id}</span>
-                                    <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wide ${
-                                        s.estado === 'PRESUPUESTO' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 
-                                        s.servicioTipo === 'TECNICA' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' : 
-                                        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                    }`}>
-                                        {s.estado === 'PRESUPUESTO' ? 'Pendiente' : s.servicioTipo}
-                                    </span>
+                {filtrados.length === 0 ? (
+                    <div className="text-center p-10 text-slate-400 font-semibold bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        📋 No se encontraron registros.
+                    </div>
+                ) : (
+                    filtrados.map(s => (
+                        <div key={s.id} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <div className="flex gap-2 items-center mb-2">
+                                        <span className="text-xs text-slate-400 font-bold">#{s.id}</span>
+                                        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wide ${
+                                            s.estado === 'PRESUPUESTO' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 
+                                            s.servicioTipo === 'TECNICA' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' : 
+                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                        }`}>
+                                            {s.estado === 'PRESUPUESTO' ? 'Pendiente' : s.servicioTipo}
+                                        </span>
+                                    </div>
+                                    <h4 className="text-lg font-extrabold m-0 text-slate-900 dark:text-white tracking-tight">{s.clienteNombre}</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-1 font-medium">📍 {s.sedeNombre}</p>
                                 </div>
-                                <h4 className="text-lg font-extrabold m-0 text-slate-900 dark:text-white tracking-tight">{s.clienteNombre}</h4>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 m-0 mt-1 font-medium">📍 {s.sedeNombre}</p>
+                                <div className="text-right">
+                                    <div className="text-xl font-black text-slate-900 dark:text-white tracking-tight">$ {calcularCosto(s).toLocaleString()}</div>
+                                    <div className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-1">{s.fecha}</div>
+                                </div>
                             </div>
-                            <div className="text-right">
-                                <div className="text-xl font-black text-slate-900 dark:text-white tracking-tight">$ {calcularCosto(s).toLocaleString()}</div>
-                                <div className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-1">{s.fecha}</div>
+
+                            <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                
+                                {s.estado === 'PRESUPUESTO' && (
+                                    <button onClick={() => onEditar(s)} className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">✏️</button>
+                                )}
+                                
+                                <button onClick={() => setModalDetalle(s)} className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">👁️</button>
+                                
+                                <button onClick={() => generarRemitoPDFPremium({
+                                    esPresupuesto: s.estado === 'PRESUPUESTO', cliente: { nombre: s.clienteNombre }, sede: { nombreSede: s.sedeNombre },
+                                    tecnico: "Marcos", ticketItems: s.items.map(it => ({ ...it, totalCalculado: it.costo })), totalFinal: calcularCosto(s), fechaServicio: s.fecha
+                                })} className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">📄</button>
+                                
+                                {s.estado === 'PRESUPUESTO' && (
+                                    <button onClick={() => aprobarPresupuesto(s.id)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 font-extrabold text-xs shadow-md shadow-blue-500/30 transition-all">COBRAR</button>
+                                )}
+                                
+                                <button onClick={() => eliminarServicio(s.id)} className="bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl p-2.5 text-base flex items-center justify-center ml-auto transition-colors">🗑️</button>
                             </div>
                         </div>
-
-                        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                            
-                            {s.estado === 'PRESUPUESTO' && (
-                                <button onClick={() => onEditar(s)} className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">✏️</button>
-                            )}
-                            
-                            <button onClick={() => setModalDetalle(s)} className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">👁️</button>
-                            
-                            <button onClick={() => generarRemitoPDFPremium({
-                                esPresupuesto: s.estado === 'PRESUPUESTO', cliente: { nombre: s.clienteNombre }, sede: { nombreSede: s.sedeNombre },
-                                tecnico: "Marcos", ticketItems: s.items.map(it => ({ ...it, totalCalculado: it.costo })), totalFinal: calcularCosto(s), fechaServicio: s.fecha
-                            })} className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-300 rounded-xl p-2.5 text-base flex items-center justify-center transition-colors">📄</button>
-                            
-                            {s.estado === 'PRESUPUESTO' && (
-                                <button onClick={() => aprobarPresupuesto(s.id)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-5 font-extrabold text-xs shadow-md shadow-blue-500/30 transition-all">COBRAR</button>
-                            )}
-                            
-                            <button onClick={() => eliminarServicio(s.id)} className="bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl p-2.5 text-base flex items-center justify-center ml-auto transition-colors">🗑️</button>
-                        </div>
-                    </div>
-                ))}
-
-                {filtrados.length === 0 && (
-                    <div className="text-center p-10 text-slate-400 font-semibold">
-                        No se encontraron registros.
-                    </div>
+                    ))
                 )}
             </div>
 

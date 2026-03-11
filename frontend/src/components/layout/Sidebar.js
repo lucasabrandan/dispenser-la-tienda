@@ -7,7 +7,7 @@ export default function Sidebar({ setVistaActual, vistaActual }) {
         { id: 'caja', nombre: '💰 Cargar Venta' },
         { id: 'historial', nombre: '📋 Historial' }, 
         { id: 'clientes', nombre: '👥 Clientes' },
-        { id: 'repuestos', nombre: '🔧 Stock' },
+        { id: 'productos', nombre: '📦 Productos' },  // ← NUEVO
         { id: 'radar', nombre: '🚨 Radar' },
     ];
 

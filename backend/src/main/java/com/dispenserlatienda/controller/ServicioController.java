@@ -4,22 +4,19 @@ import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
 import com.dispenserlatienda.dto.servicio.ServicioDTO;
 import com.dispenserlatienda.repository.ServicioRepository;
 import com.dispenserlatienda.service.servicio.ServicioService;
-import com.dispenserlatienda.service.FileStorageService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
-import java.util.Map;
 
-// Controlador para gestionar servicios y presupuestos
-// Implementa paginación para el listado de servicios
+/**
+ * ServicioController
+ * Gestiona servicios y presupuestos
+ */
 @RestController
 @RequestMapping("/api/servicios")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -27,68 +24,49 @@ import java.util.Map;
 public class ServicioController {
     private final ServicioService servicioService;
     private final ServicioRepository servicioRepository;
-    private final FileStorageService fileStorageService;
-    private final ObjectMapper objectMapper;
 
     public ServicioController(ServicioService servicioService,
-                              ServicioRepository servicioRepository,
-                              FileStorageService fileStorageService,
-                              ObjectMapper objectMapper) {
+                              ServicioRepository servicioRepository) {
         this.servicioService = servicioService;
         this.servicioRepository = servicioRepository;
-        this.fileStorageService = fileStorageService;
-        this.objectMapper = objectMapper;
     }
 
-    // CAMBIO: Ahora devuelve Page<ServicioDTO> en lugar de List<ServicioDTO>
-    // Ejemplo: GET /api/servicios?page=0&size=20&sort=fechaServicio,desc
+    // GET: Listar todos los servicios con paginación
     @GetMapping
     public ResponseEntity<Page<ServicioDTO>> listar(Pageable pageable) {
         return ResponseEntity.ok(servicioService.listarTodos(pageable));
     }
 
+    // GET: Obtener servicio por ID
     @GetMapping("/{id}")
     public ResponseEntity<ServicioDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(servicioService.buscarPorId(id));
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ServicioDTO> crear(
-            @RequestPart("servicio") String servicioJson,
-            @RequestPart(value = "foto", required = false) MultipartFile foto) throws Exception {
-
-        ServicioCreateDTO dto = objectMapper.readValue(servicioJson, ServicioCreateDTO.class);
-
-        if (foto != null && !foto.isEmpty()) {
-            String nombreImagen = fileStorageService.guardarArchivo(foto);
-            dto.setFotoRemito(nombreImagen);
-        }
-
-        return ResponseEntity.ok(servicioService.crearServicioCompleto(dto));
+    // POST: Crear servicio (JSON puro, sin FormData)
+    @PostMapping
+    public ResponseEntity<ServicioDTO> crear(@Valid @RequestBody ServicioCreateDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(servicioService.crearServicioCompleto(dto));
     }
 
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    // PUT: Actualizar servicio (JSON puro, sin FormData)
+    @PutMapping("/{id}")
     public ResponseEntity<ServicioDTO> actualizar(
             @PathVariable Long id,
-            @RequestPart("servicio") String servicioJson,
-            @RequestPart(value = "foto", required = false) MultipartFile foto) throws Exception {
-
-        ServicioCreateDTO dto = objectMapper.readValue(servicioJson, ServicioCreateDTO.class);
-
-        if (foto != null && !foto.isEmpty()) {
-            String nombreImagen = fileStorageService.guardarArchivo(foto);
-            dto.setFotoRemito(nombreImagen);
-        }
-
+            @Valid @RequestBody ServicioCreateDTO dto) {
         return ResponseEntity.ok(servicioService.actualizarServicio(id, dto));
     }
 
+    // PATCH: Cambiar estado
     @PatchMapping("/{id}/estado")
-    public ResponseEntity<ServicioDTO> cambiarEstado(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<ServicioDTO> cambiarEstado(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> payload) {
         String nuevoEstado = payload.get("estado");
         return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado));
     }
 
+    // DELETE: Eliminar servicio
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {

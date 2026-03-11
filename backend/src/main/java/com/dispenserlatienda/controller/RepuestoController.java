@@ -2,17 +2,23 @@ package com.dispenserlatienda.controller;
 
 import com.dispenserlatienda.domain.Repuesto;
 import com.dispenserlatienda.repository.RepuestoRepository;
+import com.dispenserlatienda.service.FileStorageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.validation.Valid;
+import java.io.IOException;
+import java.math.BigDecimal;
 
-// Controlador para gestionar repuestos
-// Implementa paginación para el listado
+/**
+ * RepuestoController
+ * Gestiona repuestos con soporte para fotos y cálculo de precios
+ */
 @RestController
 @RequestMapping("/api/repuestos")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -20,43 +26,128 @@ import jakarta.validation.Valid;
 public class RepuestoController {
 
     private final RepuestoRepository repuestoRepository;
+    private final FileStorageService fileStorageService;
 
-    public RepuestoController(RepuestoRepository repuestoRepository) {
+    public RepuestoController(RepuestoRepository repuestoRepository, FileStorageService fileStorageService) {
         this.repuestoRepository = repuestoRepository;
+        this.fileStorageService = fileStorageService;
     }
 
-    // CAMBIO: Ahora devuelve Page<Repuesto> en lugar de List<Repuesto>
-    // Ejemplo: GET /api/repuestos?page=0&size=20&sort=nombre,asc
+    // GET: Listar todos los repuestos con paginación
     @GetMapping
     public ResponseEntity<Page<Repuesto>> listar(Pageable pageable) {
         return ResponseEntity.ok(repuestoRepository.findAll(pageable));
     }
 
-    @PostMapping
+    // POST: Crear repuesto con foto (FormData) ← AGREGADO consumes
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public Repuesto crear(@Valid @RequestBody Repuesto repuesto) {
-        if (repuesto.getStock() != null && repuesto.getStock() < 0) repuesto.setStock(0);
-        return repuestoRepository.save(repuesto);
+    public ResponseEntity<Repuesto> crear(
+            @RequestParam("sku") String sku,
+            @RequestParam("nombre") String nombre,
+            @RequestParam(value = "descripcion", required = false) String descripcion,
+            @RequestParam(value = "costo", required = false) BigDecimal costo,
+            @RequestParam(value = "porcentajeGanancia", required = false) BigDecimal porcentajeGanancia,
+            @RequestParam(value = "porcentajeMarkup", required = false) BigDecimal porcentajeMarkup,
+            @RequestParam(value = "precioLista", required = false) BigDecimal precioLista,
+            @RequestParam(value = "precio", required = false) BigDecimal precio,
+            @RequestParam(value = "stock", required = false, defaultValue = "0") Integer stock,
+            @RequestParam(value = "foto", required = false) MultipartFile foto
+    ) {
+        try {
+            Repuesto repuesto = new Repuesto();
+            repuesto.setSku(sku);
+            repuesto.setNombre(nombre);
+            repuesto.setDescripcion(descripcion);
+            repuesto.setCosto(costo);
+            repuesto.setPorcentajeGanancia(porcentajeGanancia);
+            repuesto.setPorcentajeMarkup(porcentajeMarkup);
+            repuesto.setPrecioLista(precioLista != null ? precioLista : precio);
+            repuesto.setPrecio(precio != null ? precio : precioLista);
+            repuesto.setStock(stock < 0 ? 0 : stock);
+
+            // Guardar foto si se proporciona
+            if (foto != null && !foto.isEmpty()) {
+                String nombreFoto = fileStorageService.guardarArchivo(foto);
+                repuesto.setFotoUrl(nombreFoto);
+            }
+
+            Repuesto guardado = repuestoRepository.save(repuesto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Repuesto> editar(@PathVariable Long id, @Valid @RequestBody Repuesto detalles) {
-        return repuestoRepository.findById(id).map(repuesto -> {
-            repuesto.setSku(detalles.getSku());
-            repuesto.setNombre(detalles.getNombre());
-            repuesto.setDescripcion(detalles.getDescripcion());
-            repuesto.setCosto(detalles.getCosto());
-            repuesto.setPorcentajeGanancia(detalles.getPorcentajeGanancia());
-            repuesto.setPrecio(detalles.getPrecio());
-            repuesto.setStock(detalles.getStock() < 0 ? 0 : detalles.getStock());
-            repuesto.setImagen(detalles.getImagen());
-            return ResponseEntity.ok(repuestoRepository.save(repuesto));
-        }).orElse(ResponseEntity.notFound().build());
+    // PUT: Editar repuesto con foto ← AGREGADO consumes
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Repuesto> editar(
+            @PathVariable Long id,
+            @RequestParam("sku") String sku,
+            @RequestParam("nombre") String nombre,
+            @RequestParam(value = "descripcion", required = false) String descripcion,
+            @RequestParam(value = "costo", required = false) BigDecimal costo,
+            @RequestParam(value = "porcentajeGanancia", required = false) BigDecimal porcentajeGanancia,
+            @RequestParam(value = "porcentajeMarkup", required = false) BigDecimal porcentajeMarkup,
+            @RequestParam(value = "precioLista", required = false) BigDecimal precioLista,
+            @RequestParam(value = "precio", required = false) BigDecimal precio,
+            @RequestParam(value = "stock", required = false, defaultValue = "0") Integer stock,
+            @RequestParam(value = "foto", required = false) MultipartFile foto
+    ) {
+        var repuestoOpt = repuestoRepository.findById(id);
+
+        if (repuestoOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Repuesto repuesto = repuestoOpt.get();
+
+        try {
+            repuesto.setSku(sku);
+            repuesto.setNombre(nombre);
+            repuesto.setDescripcion(descripcion);
+            repuesto.setCosto(costo);
+            repuesto.setPorcentajeGanancia(porcentajeGanancia);
+            repuesto.setPorcentajeMarkup(porcentajeMarkup);
+            repuesto.setPrecioLista(precioLista != null ? precioLista : precio);
+            repuesto.setPrecio(precio != null ? precio : precioLista);
+            repuesto.setStock(stock < 0 ? 0 : stock);
+
+            // Actualizar foto si se proporciona
+            if (foto != null && !foto.isEmpty()) {
+                // Eliminar foto anterior si existe
+                if (repuesto.getFotoUrl() != null) {
+                    fileStorageService.eliminarArchivo(repuesto.getFotoUrl());
+                }
+                String nombreFoto = fileStorageService.guardarArchivo(foto);
+                repuesto.setFotoUrl(nombreFoto);
+            }
+
+            Repuesto actualizado = repuestoRepository.save(repuesto);
+            return ResponseEntity.ok(actualizado);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
+    // DELETE: Eliminar repuesto
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {
-        repuestoRepository.deleteById(id);
+        repuestoRepository.findById(id).ifPresent(repuesto -> {
+            try {
+                // Eliminar foto si existe
+                if (repuesto.getFotoUrl() != null) {
+                    fileStorageService.eliminarArchivo(repuesto.getFotoUrl());
+                }
+                repuestoRepository.deleteById(id);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

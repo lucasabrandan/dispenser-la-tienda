@@ -8,7 +8,7 @@ import Layout from './components/layout/Layout';
 import ServicioForm from './components/ServicioForm';
 import ServicioList from './components/ServicioList';
 import ClienteManager from './components/ClienteManager';
-import RepuestoManager from './components/RepuestoManager';
+import GestorProductos from './components/GestorProductos'; // ← NUEVO
 import RadarMantenimiento from './components/RadarMantenimiento';
 
 export default function App() {
@@ -68,10 +68,10 @@ export default function App() {
                         <ClienteManager />
                     </div>
                 );
-            case 'repuestos':
+            case 'productos':  // ← NUEVO
                 return (
                     <div className="card-animate">
-                        <RepuestoManager />
+                        <GestorProductos />
                     </div>
                 );
             default:
