@@ -5,21 +5,37 @@ import com.dispenserlatienda.domain.CondicionIva;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-// Este DTO se usa para crear o actualizar clientes
-// CAMBIO: condicionIva ahora es CondicionIva enum en lugar de String
+// DTO para crear o actualizar clientes
+// Todas las anotaciones @NotBlank, @NotNull aseguran validación automática
 public record ClienteCreateDTO(
-        @NotNull ClienteTipo clienteTipo,
-        @NotBlank String nombre,
-        @NotBlank String cuilDni,
+        @NotNull(message = "El tipo de cliente es obligatorio")
+        ClienteTipo clienteTipo,
+
+        @NotBlank(message = "El nombre del cliente es obligatorio")
+        String nombre,
+
+        String cuilDni,
         String telefono,
         String email,
         String notas,
-        @NotNull CondicionIva condicionIva,  // CAMBIO: Enum en lugar de String
+
+        @NotNull(message = "La condición IVA es obligatoria")
+        CondicionIva condicionIva,
+
+        @NotBlank(message = "La calle es obligatoria")
         String calle,
+
+        @NotBlank(message = "El número es obligatorio")
         String numero,
+
         String piso,
         String depto,
+
+        @NotBlank(message = "La localidad es obligatoria")
         String localidad,
+
+        @NotBlank(message = "La provincia es obligatoria")
         String provincia,
+
         String direccion
 ) {}

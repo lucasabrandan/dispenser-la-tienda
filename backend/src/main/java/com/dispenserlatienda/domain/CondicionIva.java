@@ -1,19 +1,23 @@
 package com.dispenserlatienda.domain;
 
-// Enum que define las condiciones de IVA válidas en Argentina
-// Reemplaza al String "condicionIva" que estaba en Cliente
-// Esto es importante para emitir facturas correctamente
-// Uso: cliente.setCondicionIva(CondicionIva.RESPONSABLE_INSCRIPTO);
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.dispenserlatienda.config.CondicionIvaDeserializer;
+
+// Enum para condición IVA del cliente
+@JsonDeserialize(using = CondicionIvaDeserializer.class)
 public enum CondicionIva {
-    // Empresa registrada en ARCA, emite facturas A
-    RESPONSABLE_INSCRIPTO,
+    RESPONSABLE_INSCRIPTO("Responsable Inscripto"),
+    MONOTRIBUTO("Monotributo"),
+    NO_RESPONSABLE("No Responsable"),
+    CONSUMIDOR_FINAL("Consumidor Final");
 
-    // Personas/empresas que pagan monotributo
-    MONOTRIBUTO,
+    private final String descripcion;
 
-    // Empresa que no está registrada ante AFIP
-    NO_RESPONSABLE,
+    CondicionIva(String descripcion) {
+        this.descripcion = descripcion;
+    }
 
-    // Consumidor final sin obligación fiscal
-    CONSUMIDOR_FINAL
+    public String getDescripcion() {
+        return descripcion;
+    }
 }

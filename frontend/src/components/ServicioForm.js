@@ -58,9 +58,19 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
         const cargar = async () => {
             try {
                 const [c, s, e, r] = await Promise.all([
-                    api.get('/clientes'), api.get('/sedes'), api.get('/equipos'), api.get('/repuestos')
+                    api.get('/clientes?page=0&size=1000'), 
+                    api.get('/sedes?page=0&size=1000'), 
+                    api.get('/equipos?page=0&size=1000'), 
+                    api.get('/repuestos?page=0&size=1000')
                 ]);
-                setDb({ clientes: c.data || [], sedes: s.data || [], equipos: e.data || [], repuestos: r.data || [] });
+                
+                // CAMBIO: Extraer .content de la Page, o usar data directamente si es array
+                const clientes = c.data.content || c.data;
+                const sedes = s.data.content || s.data;
+                const equipos = e.data.content || e.data;
+                const repuestos = r.data.content || r.data;
+                
+                setDb({ clientes, sedes, equipos, repuestos });
 
                 if (servicioParaEditar) {
                     if (servicioParaEditar.estado !== "PRESUPUESTO") {
@@ -82,7 +92,10 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
                     })));
                     setItemActual(prev => ({ ...prev, sedeId: servicioParaEditar.sedeId }));
                 }
-            } catch (err) { toast.error("Error de conexión"); }
+            } catch (err) { 
+                console.error(err);
+                toast.error("Error de conexión"); 
+            }
         };
         cargar();
     }, [servicioParaEditar]);

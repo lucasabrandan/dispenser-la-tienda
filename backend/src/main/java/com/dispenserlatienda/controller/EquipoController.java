@@ -2,19 +2,19 @@ package com.dispenserlatienda.controller;
 
 import com.dispenserlatienda.domain.Equipo;
 import com.dispenserlatienda.dto.equipo.EquipoCreateDTO;
-import com.dispenserlatienda.dto.equipo.EquipoSugerenciaDTO;
-import com.dispenserlatienda.dto.equipo.GarantiaStatusDTO;
 import com.dispenserlatienda.service.EquipoService;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
-// Agrega @Validated para que Spring valide automáticamente los DTOs
+// Controlador para gestionar equipos/dispensers
+// Implementa paginación para mejorar performance
 @RestController
 @RequestMapping("/api/equipos")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -27,19 +27,20 @@ public class EquipoController {
         this.equipoService = equipoService;
     }
 
+    // CAMBIO: Ahora devuelve Page<Equipo> en lugar de List<Equipo>
+    // Parámetros: page=0 (primera página), size=20 (20 elementos)
+    // Ejemplo: GET /api/equipos?page=0&size=20
     @GetMapping
-    public List<Equipo> listar() {
-        return equipoService.listarTodos();
+    public ResponseEntity<Page<Equipo>> listar(Pageable pageable) {
+        return ResponseEntity.ok(equipoService.listarTodos(pageable));
     }
 
-    // Agrega @Valid para validar el DTO de entrada
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Equipo crear(@Valid @RequestBody EquipoCreateDTO dto) {
         return equipoService.crear(dto);
     }
 
-    // Agrega @Valid para validar el DTO de entrada
     @PutMapping("/{id}")
     public Equipo editar(@PathVariable Long id, @Valid @RequestBody EquipoCreateDTO dto) {
         return equipoService.actualizar(id, dto);

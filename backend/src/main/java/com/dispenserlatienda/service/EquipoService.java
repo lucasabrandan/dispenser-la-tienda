@@ -6,12 +6,13 @@ import com.dispenserlatienda.dto.equipo.EquipoCreateDTO;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.EquipoRepository;
 import com.dispenserlatienda.repository.SedeRepository;
-import com.dispenserlatienda.repository.ServicioItemRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
+// Servicio para gestionar equipos/dispensers
+// Implementa paginación para mejorar performance
 @Service
 public class EquipoService {
 
@@ -19,20 +20,22 @@ public class EquipoService {
     private final SedeRepository sedeRepository;
 
     public EquipoService(EquipoRepository equipoRepository,
-                         SedeRepository sedeRepository,
-                         ServicioItemRepository servicioItemRepository) {
+                         SedeRepository sedeRepository) {
         this.equipoRepository = equipoRepository;
         this.sedeRepository = sedeRepository;
     }
 
+    // CAMBIO: Ahora devuelve Page<Equipo> en lugar de List<Equipo>
+    // Parámetros: page=0 (primera página), size=20 (20 elementos)
+    // Ejemplo: GET /api/equipos?page=0&size=20
     @Transactional(readOnly = true)
-    public List<Equipo> listarTodos() {
-        return equipoRepository.findAll();
+    public Page<Equipo> listarTodos(Pageable pageable) {
+        return equipoRepository.findAll(pageable);
     }
 
     @Transactional
     public Equipo crear(EquipoCreateDTO dto) {
-        // 1. 🛡️ Mejora: Validar que el S/N no exista ya en la base de datos
+        // Validar que el número de serie no exista ya en la base de datos
         if (equipoRepository.existsByNumeroSerie(dto.numeroSerie())) {
             throw new IllegalArgumentException("El número de serie " + dto.numeroSerie() + " ya está registrado en otro equipo.");
         }

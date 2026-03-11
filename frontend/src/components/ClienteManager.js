@@ -12,8 +12,8 @@ export default function ClienteManager() {
     const [busqueda, setBusqueda] = useState('');
     const [modalOpen, setModalOpen] = useState(null); 
     const [selectedCliente, setSelectedCliente] = useState(null);
-    const [selectedEquipo, setSelectedEquipo] = useState(null); // ✅ Para editar dispenser
-    const [expandedId, setExpandedId] = useState(null); // ✅ Acordeón
+    const [selectedEquipo, setSelectedEquipo] = useState(null);
+    const [expandedId, setExpandedId] = useState(null);
     const [errors, setErrors] = useState({});
     
     const initialForm = { 
@@ -29,13 +29,19 @@ export default function ClienteManager() {
     const cargarDatos = async () => {
         try {
             const [resCli, resSed, resEqu] = await Promise.all([
-                api.get('/clientes'),
-                api.get('/sedes'),
-                api.get('/equipos')
+                api.get('/clientes?page=0&size=1000'),
+                api.get('/sedes?page=0&size=1000'),
+                api.get('/equipos?page=0&size=1000')
             ]);
-            setClientes(resCli.data);
-            setSedes(resSed.data);
-            setEquipos(resEqu.data);
+            
+            // CAMBIO: Extraer .content de la Page
+            const clientes = resCli.data.content || resCli.data;
+            const sedes = resSed.data.content || resSed.data;
+            const equipos = resEqu.data.content || resEqu.data;
+            
+            setClientes(clientes);
+            setSedes(sedes);
+            setEquipos(equipos);
         } catch (err) {
             toast.error("Error de conexión");
         }
@@ -154,7 +160,6 @@ export default function ClienteManager() {
                                                             <div className="flex items-center gap-2">
                                                                 {eq.ubicacion && <span className="text-[7px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded-md uppercase border border-blue-100 dark:border-blue-800">{eq.ubicacion}</span>}
                                                                 
-                                                                {/* ✅ BOTÓN EDITAR EQUIPO INDIVIDUAL */}
                                                                 <button 
                                                                     onClick={() => { setSelectedEquipo(eq); setSelectedCliente(c); setModalOpen('equipo'); }}
                                                                     className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
@@ -209,7 +214,7 @@ export default function ClienteManager() {
                 <EquipoModal 
                     cliente={selectedCliente} 
                     sedes={sedes.filter(s => s.cliente?.id === selectedCliente.id)} 
-                    equipoParaEditar={selectedEquipo} // ⬅️ PASAMOS EL EQUIPO A EDITAR
+                    equipoParaEditar={selectedEquipo}
                     onRefresh={() => { cargarDatos(); setSelectedEquipo(null); }} 
                     onClose={() => { setModalOpen(null); setSelectedEquipo(null); }} 
                 />

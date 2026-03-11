@@ -8,11 +8,15 @@ import com.dispenserlatienda.dto.sede.SedeDTO;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.ClienteRepository;
 import jakarta.persistence.EntityManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+// Servicio para gestionar clientes
+// Implementa paginación para mejorar performance con muchos registros
 @Service
 public class ClienteService {
 
@@ -28,11 +32,13 @@ public class ClienteService {
         this.sedeService = sedeService;
     }
 
+    // CAMBIO: Ahora devuelve Page<ClienteDTO> en lugar de List<ClienteDTO>
+    // Parámetros: page=0 (primera página), size=20 (20 elementos), sort=nombre,asc
+    // Ejemplo: GET /api/clientes?page=0&size=20&sort=nombre,asc
     @Transactional(readOnly = true)
-    public List<ClienteDTO> listarTodos() {
-        return clienteRepository.findAll().stream()
-                .map(this::mapToDTO)
-                .toList();
+    public Page<ClienteDTO> listarTodos(Pageable pageable) {
+        return clienteRepository.findAll(pageable)
+                .map(this::mapToDTO);
     }
 
     @Transactional(readOnly = true)
@@ -44,6 +50,7 @@ public class ClienteService {
 
     @Transactional
     public ClienteDTO crear(ClienteCreateDTO dto) {
+        // Validar que no exista cliente con el mismo CUIL/DNI
         if (dto.cuilDni() != null && !dto.cuilDni().trim().isEmpty()) {
             clienteRepository.findByCuilDni(dto.cuilDni()).ifPresent(c -> {
                 throw new IllegalArgumentException("Ya existe un cliente con el CUIL/DNI: " + dto.cuilDni());
@@ -109,8 +116,7 @@ public class ClienteService {
                 .map(sedeService::mapToDTO)
                 .toList();
 
-        // CAMBIO: Convertir CondicionIva enum a String para el DTO
-        // Si condicionIva es null, usar un valor por defecto
+        // Convertir CondicionIva enum a String para el DTO
         String condicionIvaStr = cliente.getCondicionIva() != null
                 ? cliente.getCondicionIva().name()
                 : "CONSUMIDOR_FINAL";
@@ -123,7 +129,7 @@ public class ClienteService {
                 cliente.getTelefono(),
                 cliente.getEmail(),
                 cliente.getNotas(),
-                condicionIvaStr,  // CAMBIO: Pasar String en lugar de enum
+                condicionIvaStr,
                 cliente.getCalle(),
                 cliente.getNumero(),
                 cliente.getPiso(),

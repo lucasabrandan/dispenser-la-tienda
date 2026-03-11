@@ -3,14 +3,16 @@ package com.dispenserlatienda.controller;
 import com.dispenserlatienda.dto.cliente.ClienteCreateDTO;
 import com.dispenserlatienda.dto.cliente.ClienteDTO;
 import com.dispenserlatienda.service.ClienteService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
-// Agrega @Validated para que Spring valide automáticamente los DTOs
+// Controlador para gestionar clientes
+// Implementa paginación para mejorar performance con muchos registros
 @RestController
 @RequestMapping("/api/clientes")
 @Validated
@@ -22,9 +24,12 @@ public class ClienteController {
         this.clienteService = clienteService;
     }
 
+    // CAMBIO: Ahora devuelve Page<ClienteDTO> en lugar de List<ClienteDTO>
+    // Parámetros: page=0 (primera página), size=20 (20 elementos), sort=nombre,asc
+    // Ejemplo: GET /api/clientes?page=0&size=20&sort=nombre,asc
     @GetMapping
-    public List<ClienteDTO> listar() {
-        return clienteService.listarTodos();
+    public ResponseEntity<Page<ClienteDTO>> listar(Pageable pageable) {
+        return ResponseEntity.ok(clienteService.listarTodos(pageable));
     }
 
     @GetMapping("/{id}")
@@ -32,13 +37,11 @@ public class ClienteController {
         return ResponseEntity.ok(clienteService.buscarPorId(id));
     }
 
-    // Agrega @Valid para validar el DTO de entrada
     @PostMapping
     public ResponseEntity<ClienteDTO> crear(@Valid @RequestBody ClienteCreateDTO dto) {
         return ResponseEntity.ok(clienteService.crear(dto));
     }
 
-    // Agrega @Valid para validar el DTO de entrada
     @PutMapping("/{id}")
     public ResponseEntity<ClienteDTO> editar(@PathVariable Long id, @Valid @RequestBody ClienteCreateDTO dto) {
         return ResponseEntity.ok(clienteService.actualizar(id, dto));

@@ -9,6 +9,8 @@ import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -16,6 +18,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+// Servicio para gestionar servicios y presupuestos
+// Implementa paginación para el listado de servicios
 @Service
 public class ServicioService {
     private final ServicioRepository servicioRepository;
@@ -34,9 +38,12 @@ public class ServicioService {
         this.objectMapper = objectMapper;
     }
 
+    // CAMBIO: Ahora devuelve Page<ServicioDTO> en lugar de List<ServicioDTO>
+    // Ejemplo: GET /api/servicios?page=0&size=20&sort=fechaServicio,desc
     @Transactional(readOnly = true)
-    public List<ServicioDTO> listarTodos() {
-        return servicioRepository.findAll().stream().map(this::mapToDTO).toList();
+    public Page<ServicioDTO> listarTodos(Pageable pageable) {
+        return servicioRepository.findAll(pageable)
+                .map(this::mapToDTO);
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +71,7 @@ public class ServicioService {
         Sede sede = sedeRepository.findById(dto.getSedeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada"));
 
-        // CAMBIO: Ahora lanzamos excepción si usuario no existe (en lugar de usar .get(0))
+        // Ahora lanzamos excepción si usuario no existe (en lugar de usar .get(0))
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
 
@@ -74,7 +81,7 @@ public class ServicioService {
         servicio.setClienteNombre(dto.getClienteNombre());
         servicio.setSedeNombre(dto.getSedeNombre());
 
-        // CAMBIO: Si el estado viene en String del DTO, convertir a enum
+        // Si el estado viene en String del DTO, convertir a enum
         // Si viene vacío, usar PRESUPUESTO por defecto
         if (dto.getEstado() != null && !dto.getEstado().isEmpty()) {
             try {
@@ -106,7 +113,7 @@ public class ServicioService {
             BigDecimal extraBlindado = (itemDto.costoExtra() != null) ? itemDto.costoExtra().max(BigDecimal.ZERO) : BigDecimal.ZERO;
             BigDecimal internoBlindado = (itemDto.costoInterno() != null) ? itemDto.costoInterno().max(BigDecimal.ZERO) : BigDecimal.ZERO;
 
-            // CAMBIO: Convertir el String metodoPago del DTO a enum MetodoPago
+            // Convertir el String metodoPago del DTO a enum MetodoPago
             MetodoPago metodoPago = MetodoPago.EFECTIVO; // Valor por defecto
             if (itemDto.metodoPago() != null && !itemDto.metodoPago().isEmpty()) {
                 try {
@@ -122,7 +129,7 @@ public class ServicioService {
                     costoBlindado,
                     internoBlindado,
                     BigDecimal.ZERO,
-                    metodoPago,  // CAMBIO: Ahora es enum
+                    metodoPago,
                     itemDto.trabajoRealizado(),
                     fechaGarantia
             );
@@ -146,7 +153,7 @@ public class ServicioService {
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado) {
         Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
 
-        // CAMBIO: Convertir String a EstadoServicio enum
+        // Convertir String a EstadoServicio enum
         try {
             s.setEstado(EstadoServicio.valueOf(nuevoEstado));
         } catch (IllegalArgumentException e) {
@@ -174,7 +181,7 @@ public class ServicioService {
                     i.getEquipo() != null ? i.getEquipo().getUbicacion() : "MOSTRADOR",
                     i.getTecnico(), i.getCosto(), i.getCostoExtra(), i.getCostoInterno(),
                     i.getDescuento(),
-                    i.getMetodoPago() != null ? i.getMetodoPago().name() : "EFECTIVO",  // CAMBIO: Convertir enum a String para DTO
+                    i.getMetodoPago() != null ? i.getMetodoPago().name() : "EFECTIVO",
                     i.getTrabajoRealizado(),
                     garantiaStr,
                     listaRepuestos, i.getFotoAntes(), i.getFotoDespues()
@@ -188,7 +195,7 @@ public class ServicioService {
                 s.getClienteNombre(),
                 s.getSedeNombre(),
                 items,
-                s.getEstado() != null ? s.getEstado().name() : "PRESUPUESTO",  // CAMBIO: Convertir enum a String para DTO
+                s.getEstado() != null ? s.getEstado().name() : "PRESUPUESTO",
                 s.getFotoRemito()
         );
     }

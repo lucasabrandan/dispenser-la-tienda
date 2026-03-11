@@ -3,14 +3,16 @@ package com.dispenserlatienda.controller;
 import com.dispenserlatienda.domain.Gasto;
 import com.dispenserlatienda.dto.gasto.GastoCreateDTO;
 import com.dispenserlatienda.repository.GastoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
-// Agrega @Validated para que Spring valide automáticamente los DTOs
+// Controlador para gestionar gastos
+// Implementa paginación para el listado
 @RestController
 @RequestMapping("/api/gastos")
 @Validated
@@ -22,12 +24,13 @@ public class GastoController {
         this.repository = repository;
     }
 
+    // CAMBIO: Ahora devuelve Page<Gasto> en lugar de List<Gasto>
+    // Ejemplo: GET /api/gastos?page=0&size=20&sort=fecha,desc
     @GetMapping
-    public List<Gasto> listar() {
-        return repository.findAll();
+    public ResponseEntity<Page<Gasto>> listar(Pageable pageable) {
+        return ResponseEntity.ok(repository.findAll(pageable));
     }
 
-    // Agrega @Valid para validar el DTO de entrada
     @PostMapping
     public ResponseEntity<Gasto> crear(@Valid @RequestBody GastoCreateDTO dto) {
         Gasto nuevoGasto = new Gasto(

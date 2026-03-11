@@ -2,16 +2,17 @@ package com.dispenserlatienda.controller;
 
 import com.dispenserlatienda.domain.Repuesto;
 import com.dispenserlatienda.repository.RepuestoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
-// Agrega @Validated para que Spring valide automáticamente los DTOs
-// CAMBIO: Cambiar @CrossOrigin(origins = "*") a dominio específico
+// Controlador para gestionar repuestos
+// Implementa paginación para el listado
 @RestController
 @RequestMapping("/api/repuestos")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -24,21 +25,20 @@ public class RepuestoController {
         this.repuestoRepository = repuestoRepository;
     }
 
+    // CAMBIO: Ahora devuelve Page<Repuesto> en lugar de List<Repuesto>
+    // Ejemplo: GET /api/repuestos?page=0&size=20&sort=nombre,asc
     @GetMapping
-    public List<Repuesto> listar() {
-        return repuestoRepository.findAll();
+    public ResponseEntity<Page<Repuesto>> listar(Pageable pageable) {
+        return ResponseEntity.ok(repuestoRepository.findAll(pageable));
     }
 
-    // Agrega @Valid para validar el DTO de entrada
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Repuesto crear(@Valid @RequestBody Repuesto repuesto) {
-        // Validación de seguridad en el backend para que no pasen negativos
         if (repuesto.getStock() != null && repuesto.getStock() < 0) repuesto.setStock(0);
         return repuestoRepository.save(repuesto);
     }
 
-    // Agrega @Valid para validar el DTO de entrada
     @PutMapping("/{id}")
     public ResponseEntity<Repuesto> editar(@PathVariable Long id, @Valid @RequestBody Repuesto detalles) {
         return repuestoRepository.findById(id).map(repuesto -> {
@@ -48,12 +48,8 @@ public class RepuestoController {
             repuesto.setCosto(detalles.getCosto());
             repuesto.setPorcentajeGanancia(detalles.getPorcentajeGanancia());
             repuesto.setPrecio(detalles.getPrecio());
-
-            // Validación anti-negativos
             repuesto.setStock(detalles.getStock() < 0 ? 0 : detalles.getStock());
-
             repuesto.setImagen(detalles.getImagen());
-
             return ResponseEntity.ok(repuestoRepository.save(repuesto));
         }).orElse(ResponseEntity.notFound().build());
     }

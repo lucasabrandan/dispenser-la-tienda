@@ -6,6 +6,8 @@ import com.dispenserlatienda.repository.ServicioRepository;
 import com.dispenserlatienda.service.servicio.ServicioService;
 import com.dispenserlatienda.service.FileStorageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,11 +16,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
 
-// Agrega @Validated para que Spring valide automáticamente los DTOs
-// CAMBIO: Cambiar @CrossOrigin(origins = "*") a dominio específico
+// Controlador para gestionar servicios y presupuestos
+// Implementa paginación para el listado de servicios
 @RestController
 @RequestMapping("/api/servicios")
 @CrossOrigin(origins = "http://localhost:3000")
@@ -39,19 +40,18 @@ public class ServicioController {
         this.objectMapper = objectMapper;
     }
 
-    // Listar todos los servicios (para historial)
+    // CAMBIO: Ahora devuelve Page<ServicioDTO> en lugar de List<ServicioDTO>
+    // Ejemplo: GET /api/servicios?page=0&size=20&sort=fechaServicio,desc
     @GetMapping
-    public ResponseEntity<List<ServicioDTO>> listar() {
-        return ResponseEntity.ok(servicioService.listarTodos());
+    public ResponseEntity<Page<ServicioDTO>> listar(Pageable pageable) {
+        return ResponseEntity.ok(servicioService.listarTodos(pageable));
     }
 
-    // Buscar un servicio por ID (para editar)
     @GetMapping("/{id}")
     public ResponseEntity<ServicioDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(servicioService.buscarPorId(id));
     }
 
-    // Crear un nuevo servicio con foto (multipart)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServicioDTO> crear(
             @RequestPart("servicio") String servicioJson,
@@ -67,7 +67,6 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.crearServicioCompleto(dto));
     }
 
-    // Actualizar un servicio existente (con foto opcional)
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServicioDTO> actualizar(
             @PathVariable Long id,
@@ -84,7 +83,6 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.actualizarServicio(id, dto));
     }
 
-    // Cambiar estado de un servicio (PRESUPUESTO → APROBADO, etc)
     @PatchMapping("/{id}/estado")
     public ResponseEntity<ServicioDTO> cambiarEstado(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         String nuevoEstado = payload.get("estado");
