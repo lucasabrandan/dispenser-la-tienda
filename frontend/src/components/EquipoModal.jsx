@@ -3,7 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import Input from './ui/Input';
 
-export default function EquipoModal({ cliente, sedes, equipos, equipoParaEditar, onRefresh, onClose }) {
+export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEditar, onRefresh, onClose }) {
     const [form, setForm] = useState({ 
         numeroSerie: '', 
         marca: '', 
@@ -17,14 +17,13 @@ export default function EquipoModal({ cliente, sedes, equipos, equipoParaEditar,
     const MARCAS = ["BACOPE", "HUMMA", "TERMOPLAST", "TRIA", "USHUAIA", "OTRA"];
     const MODELOS = ["RED", "BIDÓN", "MESADA + RED", "MESADA + BIDÓN", "OTROS"];
 
-    // 🔄 EFECTO: Si viene un equipo para editar, llenamos el formulario
     useEffect(() => {
         if (equipoParaEditar) {
             setForm({
                 numeroSerie: equipoParaEditar.numeroSerie || '',
                 marca: equipoParaEditar.marca || '',
                 modelo: equipoParaEditar.modelo || '',
-                sedeId: equipoParaEditar.sede?.id || '', // Importante: sacamos el ID de la sede
+                sedeId: equipoParaEditar.sede?.id || '',
                 ubicacion: equipoParaEditar.ubicacion || '',
                 observaciones: equipoParaEditar.observaciones || '',
                 otraMarca: ''
@@ -45,17 +44,15 @@ export default function EquipoModal({ cliente, sedes, equipos, equipoParaEditar,
             const payload = { ...form, marca: marcaFinal };
             
             if (equipoParaEditar) {
-                // ✏️ MODO EDICIÓN
                 await api.put(`/equipos/${equipoParaEditar.id}`, payload);
                 toast.success("Equipo actualizado con éxito", { id: loading });
             } else {
-                // 💧 MODO ALTA
                 await api.post('/equipos', payload);
                 toast.success("Equipo vinculado con éxito", { id: loading });
             }
 
             onRefresh();
-            onClose(); // Cerramos después de editar/crear para limpiar el estado
+            onClose();
         } catch (err) { 
             const backendError = err.response?.data?.message || err.response?.data;
             const errorMsg = typeof backendError === 'object' ? "Error en los datos" : (backendError || "Error en la operación");
@@ -75,7 +72,6 @@ export default function EquipoModal({ cliente, sedes, equipos, equipoParaEditar,
                     <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase">{cliente.nombre}</p>
                 </header>
                 
-                {/* Solo mostramos la lista de existentes si NO estamos editando, para no distraer */}
                 {!equipoParaEditar && (
                     <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-2">
                         {equipos.length === 0 ? (

@@ -1,21 +1,8 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
-
-/**
- * useServicioForm - Custom Hook
- * Centraliza toda la lógica del formulario de servicio
- * 
- * RETORNA:
- * - Estados
- * - Funciones de lógica
- * - Datos cargados
- */
-
+ 
 export function useServicioForm(servicioParaEditar = null) {
-  // ==========================================
-  // ESTADOS PRINCIPALES
-  // ==========================================
   const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
   const [clienteId, setClienteId] = useState(null);
   const [esPresupuesto, setEsPresupuesto] = useState(true);
@@ -23,28 +10,20 @@ export function useServicioForm(servicioParaEditar = null) {
   const [idEdicion, setIdEdicion] = useState(null);
   const [estaBloqueado, setEstaBloqueado] = useState(false);
   const [historialEquipo, setHistorialEquipo] = useState(null);
-
-  // Estados para modales
+  const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(0);
+ 
   const [modalClienteAbierto, setModalClienteAbierto] = useState(false);
   const [nombreClientePrellenado, setNombreClientePrellenado] = useState('');
   const [modalSedeAbierto, setModalSedeAbierto] = useState(false);
   const [nombreSedePrellenado, setNombreSedePrellenado] = useState('');
-
-  // Estado del item actual
+ 
   const [itemActual, setItemActual] = useState({
-    sedeId: '',
-    sedeNombre: '',
-    equipoSerial: '',
-    trabajo: '',
-    costoExtra: 0,
-    repuestosUsados: []
+    sedeId: '', sedeNombre: '', equipoSerial: '',
+    trabajo: '', costoExtra: 0, repuestosUsados: []
   });
-
+ 
   const [repuestoElegido, setRepuestoElegido] = useState(null);
-
-  // ==========================================
-  // CARGAR DATOS AL MONTAR
-  // ==========================================
+ 
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -54,24 +33,19 @@ export function useServicioForm(servicioParaEditar = null) {
           api.get('/equipos?page=0&size=1000'),
           api.get('/repuestos?page=0&size=1000')
         ]);
-
-        const clientes = c.data.content || c.data;
-        const sedes = s.data.content || s.data;
-        const equipos = e.data.content || e.data;
-        const repuestos = r.data.content || r.data;
-
-        setDb({ clientes, sedes, equipos, repuestos });
-
-        // Si estamos editando, cargar datos
+        setDb({
+          clientes: c.data.content || c.data,
+          sedes: s.data.content || s.data,
+          equipos: e.data.content || e.data,
+          repuestos: r.data.content || r.data
+        });
+ 
         if (servicioParaEditar) {
-          if (servicioParaEditar.estado !== 'PRESUPUESTO') {
-            setEstaBloqueado(true);
-          } else {
-            setEstaBloqueado(false);
-          }
+          setEstaBloqueado(servicioParaEditar.estado !== 'PRESUPUESTO');
           setIdEdicion(servicioParaEditar.id);
           setClienteId(servicioParaEditar.clienteId?.toString());
           setEsPresupuesto(servicioParaEditar.servicioTipo === 'TECNICA');
+          setDescuentoPorcentaje(servicioParaEditar.descuentoPorcentaje || 0);
           setTicketItems(
             servicioParaEditar.items.map(it => ({
               sedeId: servicioParaEditar.sedeId,
@@ -79,6 +53,7 @@ export function useServicioForm(servicioParaEditar = null) {
               trabajo: it.trabajoRealizado,
               costoExtra: Math.max(0, it.costoExtra || 0),
               totalCalculado: Math.max(0, it.costo),
+              totalSinDescuento: Math.max(0, it.costo),
               repuestosUsados: it.repuestosUsados || [],
               resumenTexto: it.trabajoRealizado
             }))
@@ -92,16 +67,68 @@ export function useServicioForm(servicioParaEditar = null) {
     };
     cargar();
   }, [servicioParaEditar]);
-
-  // ==========================================
-  // FUNCIONES DE LÓGICA
-  // ==========================================
-
-  const consultarAntecedentes = async serial => {
-    if (!serial || serial === 'MOSTRADOR') {
-      setHistorialEquipo(null);
-      return;
+ 
+  const onClienteSeleccionado = (id) => {
+    setClienteId(id);
+    const sedesDelCliente = db.sedes.filter(s => s.cliente?.id?.toString() === id);
+    if (sedesDelCliente.length === 1) {
+      const sede = sedesDelCliente[0];
+      setItemActual(prev => ({ ...prev, sedeId: sede.id, sedeNombre: sede.nombreSede }));
+    } else {
+      setItemActual(prev => ({ ...prev, sedeId: '', sedeNombre: '' }));
     }
+  };
+ 
+  // ── Calcular ganancia real de un repuesto ───────────────────────────────────
+  // Parseamos todo a float para evitar problemas con BigDecimal que llega como string
+  const calcularGananciaRepuesto = (repuesto, cantidad) => {
+    const precioVenta = parseFloat(repuesto.precio) || 0;
+    const costo = parseFloat(repuesto.costo) || 0;
+    const qty = parseFloat(cantidad) || 1;
+    const subtotal = precioVenta * qty;
+ 
+    if (costo > 0) {
+      const costoTotal = costo * qty;
+      const ganancia = subtotal - costoTotal;
+      const margen = subtotal > 0 ? ((ganancia / subtotal) * 100).toFixed(1) : 0;
+      return { subtotal, costoTotal, ganancia, margen };
+    }
+ 
+    // Fallback: porcentajeGanancia
+    const pct = parseFloat(repuesto.porcentajeGanancia) || 0;
+    if (pct > 0) {
+      const costoImplicito = subtotal / (1 + pct / 100);
+      const ganancia = subtotal - costoImplicito;
+      return { subtotal, costoTotal: costoImplicito, ganancia, margen: pct.toFixed(1) };
+    }
+ 
+    return { subtotal, costoTotal: 0, ganancia: 0, margen: 0 };
+  };
+ 
+  // ── Ganancia total del ticket ───────────────────────────────────────────────
+  const calcularResumenGanancia = () => {
+    let totalVenta = 0;
+    let totalCosto = 0;
+ 
+    ticketItems.forEach(item => {
+      item.repuestosUsados.forEach(r => {
+        const g = calcularGananciaRepuesto(r, r.cantidad);
+        totalVenta += g.subtotal;
+        totalCosto += g.costoTotal;
+      });
+      totalVenta += parseFloat(item.costoExtra) || 0;
+    });
+ 
+    const descuento = (totalVenta * descuentoPorcentaje) / 100;
+    const totalConDescuento = totalVenta - descuento;
+    const gananciaBruta = totalConDescuento - totalCosto;
+    const margenFinal = totalConDescuento > 0 ? ((gananciaBruta / totalConDescuento) * 100).toFixed(1) : 0;
+ 
+    return { totalVenta, totalCosto, descuento, totalConDescuento, gananciaBruta, margenFinal };
+  };
+ 
+  const consultarAntecedentes = async serial => {
+    if (!serial || serial === 'MOSTRADOR') { setHistorialEquipo(null); return; }
     try {
       const res = await api.get(`/servicios?equipoSerial=${serial}`);
       if (res.data?.length > 0) {
@@ -114,11 +141,9 @@ export function useServicioForm(servicioParaEditar = null) {
       } else {
         setHistorialEquipo(null);
       }
-    } catch (e) {
-      console.error('Error antecedentes');
-    }
+    } catch (e) { console.error('Error antecedentes'); }
   };
-
+ 
   const enviarWhatsAppMantenimiento = () => {
     const cliente = db.clientes.find(c => c.id.toString() === clienteId);
     if (!cliente?.telefono) return toast.error('Sin teléfono');
@@ -126,52 +151,61 @@ export function useServicioForm(servicioParaEditar = null) {
     const msg = `Hola ${cliente.nombre}, revisando el historial del dispenser S/N ${itemActual.equipoSerial}, notamos que ya le toca su mantenimiento...`;
     window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
   };
-
+ 
   const sumarRepuesto = () => {
     if (estaBloqueado || !repuestoElegido) return;
     const nuevos = [...itemActual.repuestosUsados];
     const idx = nuevos.findIndex(r => r.id === repuestoElegido.id);
     if (idx > -1) {
       nuevos[idx].cantidad += 1;
-      nuevos[idx].subtotal = nuevos[idx].cantidad * nuevos[idx].precio;
+      nuevos[idx].subtotal = nuevos[idx].cantidad * parseFloat(nuevos[idx].precio);
     } else {
-      nuevos.push({ ...repuestoElegido, cantidad: 1, subtotal: repuestoElegido.precio });
+      // Guardamos costo y porcentajeGanancia explícitamente para el cálculo de ganancia
+      nuevos.push({
+        id: repuestoElegido.id,
+        nombre: repuestoElegido.nombre,
+        sku: repuestoElegido.sku,
+        precio: parseFloat(repuestoElegido.precio),
+        costo: parseFloat(repuestoElegido.costo) || 0,
+        porcentajeGanancia: parseFloat(repuestoElegido.porcentajeGanancia) || 0,
+        cantidad: 1,
+        subtotal: parseFloat(repuestoElegido.precio)
+      });
     }
     setItemActual({ ...itemActual, repuestosUsados: nuevos });
     setRepuestoElegido(null);
   };
-
+ 
   const actualizarCantidad = (idx, valor) => {
     const nuevos = [...itemActual.repuestosUsados];
     const qty = Math.max(1, parseInt(valor) || 1);
     nuevos[idx].cantidad = qty;
-    nuevos[idx].subtotal = qty * nuevos[idx].precio;
+    nuevos[idx].subtotal = qty * parseFloat(nuevos[idx].precio);
     setItemActual({ ...itemActual, repuestosUsados: nuevos });
   };
-
+ 
   const quitarRepuesto = idx => {
     if (estaBloqueado) return;
     const nuevos = [...itemActual.repuestosUsados];
     nuevos.splice(idx, 1);
     setItemActual({ ...itemActual, repuestosUsados: nuevos });
   };
-
+ 
   const editarItem = idx => {
     if (estaBloqueado) return;
-    const itemParaEditar = ticketItems[idx];
-    setItemActual(itemParaEditar);
+    setItemActual(ticketItems[idx]);
     const nuevaLista = [...ticketItems];
     nuevaLista.splice(idx, 1);
     setTicketItems(nuevaLista);
   };
-
+ 
   const eliminarItem = idx => {
     if (estaBloqueado) return;
     const nuevaLista = [...ticketItems];
     nuevaLista.splice(idx, 1);
     setTicketItems(nuevaLista);
   };
-
+ 
   const agregarAlTicket = () => {
     if (estaBloqueado) return;
     if (esPresupuesto && !itemActual.equipoSerial) return toast.error('❌ Falta S/N');
@@ -181,27 +215,24 @@ export function useServicioForm(servicioParaEditar = null) {
       ...itemActual,
       costoExtra: extra,
       totalCalculado: extra + totalR,
-      resumenTexto:
-        itemActual.equipoSerial && itemActual.equipoSerial !== 'MOSTRADOR'
-          ? `${itemActual.trabajo} | MO: $${extra}`
-          : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`
+      resumenTexto: itemActual.equipoSerial && itemActual.equipoSerial !== 'MOSTRADOR'
+        ? `${itemActual.trabajo} | MO: $${extra}`
+        : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`
     };
     setTicketItems([...ticketItems, nuevoRenglon]);
     setItemActual({ ...itemActual, equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
     setHistorialEquipo(null);
   };
-
+ 
   const finalizar = async (confirmarTrabajo = false) => {
     if (estaBloqueado || ticketItems.length === 0) return;
     const loading = toast.loading(confirmarTrabajo ? 'Confirmando...' : 'Guardando...');
-    
     try {
-      console.log('📤 Iniciando guardado...');
-      
       const clienteObj = db.clientes?.find(c => c.id.toString() === clienteId);
       const sedeIdReal = itemActual.sedeId || ticketItems[0]?.sedeId;
       const tieneEquipo = ticketItems.some(it => it.equipoSerial && it.equipoSerial !== 'MOSTRADOR');
-
+      const { totalConDescuento } = calcularResumenGanancia();
+ 
       const servicioData = {
         sedeId: parseInt(sedeIdReal),
         usuarioId: 1,
@@ -210,9 +241,10 @@ export function useServicioForm(servicioParaEditar = null) {
         estado: confirmarTrabajo ? 'REALIZADO' : 'PRESUPUESTO',
         clienteNombre: clienteObj?.nombre || 'Particular',
         sedeNombre: db.sedes?.find(s => s.id === sedeIdReal)?.nombreSede || 'Mostrador',
+        descuentoPorcentaje,
+        totalConDescuento,
         items: ticketItems.map(it => {
-          const esFiltro =
-            it.trabajo?.toUpperCase().includes('FILTRO') ||
+          const esFiltro = it.trabajo?.toUpperCase().includes('FILTRO') ||
             it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes('FILTRO'));
           return {
             equipoSerial: it.equipoSerial || 'MOSTRADOR',
@@ -223,49 +255,31 @@ export function useServicioForm(servicioParaEditar = null) {
             trabajoRealizado: it.resumenTexto,
             trabajoTipo: tieneEquipo ? (esFiltro ? 'CAMBIO_FILTRO' : 'REPARACION') : 'VENTA',
             repuestosUsados: it.repuestosUsados || [],
-            garantiaHasta:
-              confirmarTrabajo && tieneEquipo
-                ? new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3)))
-                    .toISOString()
-                    .split('T')[0]
-                : null
+            garantiaHasta: confirmarTrabajo && tieneEquipo
+              ? new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3))).toISOString().split('T')[0]
+              : null
           };
         })
       };
-
-      console.log('📊 Datos a enviar:', servicioData);
-
-      let respuesta;
+ 
       if (idEdicion) {
-        console.log(`🔄 Actualizando servicio ${idEdicion}...`);
-        respuesta = await api.put(`/servicios/${idEdicion}`, servicioData);
-        console.log('✅ Respuesta PUT:', respuesta.data);
+        await api.put(`/servicios/${idEdicion}`, servicioData);
       } else {
-        console.log('➕ Creando nuevo servicio...');
-        respuesta = await api.post('/servicios', servicioData);
-        console.log('✅ Respuesta POST:', respuesta.data);
+        await api.post('/servicios', servicioData);
       }
-
-      console.log('🎉 Guardado exitoso!');
+ 
       toast.success('✅ ¡Guardado!', { id: loading });
       setTicketItems([]);
       setClienteId(null);
       setIdEdicion(null);
+      setDescuentoPorcentaje(0);
       return true;
-      
     } catch (err) {
-      console.error('❌ Error completo:', err);
-      console.error('📨 Respuesta del servidor:', err.response?.data);
-      console.error('⚠️ Mensaje:', err.message);
-      
       toast.error(`❌ ${err.response?.data?.mensaje || err.message || 'Error de servidor'}`, { id: loading });
       return false;
     }
   };
-
-  // ==========================================
-  // REFRESCAR DATOS (para cuando crean algo)
-  // ==========================================
+ 
   const refrescarDatos = async () => {
     try {
       const [c, s, e, r] = await Promise.all([
@@ -274,53 +288,30 @@ export function useServicioForm(servicioParaEditar = null) {
         api.get('/equipos?page=0&size=1000'),
         api.get('/repuestos?page=0&size=1000')
       ]);
-
-      const clientes = c.data.content || c.data;
-      const sedes = s.data.content || s.data;
-      const equipos = e.data.content || e.data;
-      const repuestos = r.data.content || r.data;
-
-      setDb({ clientes, sedes, equipos, repuestos });
-    } catch (err) {
-      console.error('Error refrescando datos');
-    }
+      setDb({
+        clientes: c.data.content || c.data,
+        sedes: s.data.content || s.data,
+        equipos: e.data.content || e.data,
+        repuestos: r.data.content || r.data
+      });
+    } catch (err) { console.error('Error refrescando datos'); }
   };
-
-  // ==========================================
-  // RETORNAR TODOS LOS ESTADOS Y FUNCIONES
-  // ==========================================
+ 
   return {
-    // Datos
-    db,
-    setDb,
-    clienteId,
-    setClienteId,
-    esPresupuesto,
-    setEsPresupuesto,
-    ticketItems,
-    setTicketItems,
-    idEdicion,
-    setIdEdicion,
-    estaBloqueado,
-    setEstaBloqueado,
-    historialEquipo,
-    setHistorialEquipo,
-    itemActual,
-    setItemActual,
-    repuestoElegido,
-    setRepuestoElegido,
-    
-    // Modales
-    modalClienteAbierto,
-    setModalClienteAbierto,
-    nombreClientePrellenado,
-    setNombreClientePrellenado,
-    modalSedeAbierto,
-    setModalSedeAbierto,
-    nombreSedePrellenado,
-    setNombreSedePrellenado,
-    
-    // Funciones
+    db, setDb,
+    clienteId, setClienteId,
+    esPresupuesto, setEsPresupuesto,
+    ticketItems, setTicketItems,
+    idEdicion, setIdEdicion,
+    estaBloqueado, setEstaBloqueado,
+    historialEquipo, setHistorialEquipo,
+    itemActual, setItemActual,
+    repuestoElegido, setRepuestoElegido,
+    descuentoPorcentaje, setDescuentoPorcentaje,
+    modalClienteAbierto, setModalClienteAbierto,
+    nombreClientePrellenado, setNombreClientePrellenado,
+    modalSedeAbierto, setModalSedeAbierto,
+    nombreSedePrellenado, setNombreSedePrellenado,
     consultarAntecedentes,
     enviarWhatsAppMantenimiento,
     sumarRepuesto,
@@ -330,6 +321,9 @@ export function useServicioForm(servicioParaEditar = null) {
     eliminarItem,
     agregarAlTicket,
     finalizar,
-    refrescarDatos
+    refrescarDatos,
+    onClienteSeleccionado,
+    calcularGananciaRepuesto,
+    calcularResumenGanancia
   };
 }

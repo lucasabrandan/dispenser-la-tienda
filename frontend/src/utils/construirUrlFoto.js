@@ -1,6 +1,9 @@
+// URL base del backend — misma IP que usa la API
+const BACKEND_URL = 'http://100.72.16.36:8080';
+
 /**
- * Construye la URL completa para acceder a una foto desde el backend
- * El backend sirve las fotos en: /uploads/{nombreArchivo}
+ * Construye la URL completa para acceder a una foto desde el backend.
+ * Funciona tanto en localhost como desde el celular por Tailscale.
  */
 export function construirUrlFoto(nombreArchivo) {
   if (!nombreArchivo) return null;
@@ -9,5 +12,5 @@ export function construirUrlFoto(nombreArchivo) {
     return nombreArchivo;
   }
 
-  return `http://localhost:8080/uploads/${nombreArchivo}`;
+  return `${BACKEND_URL}/uploads/${nombreArchivo}`;
 }

@@ -4,14 +4,13 @@ import Sidebar from './Sidebar';
 
 export default function Layout({ children, vistaActual, setVistaActual }) {
     return (
-        // Quitamos estilos inline que forzaban colores claros
         <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 transition-colors duration-300 antialiased">
             
             {/* SIDEBAR DESKTOP */}
             <Sidebar vistaActual={vistaActual} setVistaActual={setVistaActual} />
 
             <div className="flex-1 flex flex-col min-w-0">
-                {/* HEADER MOBILE: Logo imponente */}
+                {/* HEADER MOBILE */}
                 <header className="md:hidden bg-white dark:bg-slate-900 h-20 px-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors">
                     <img src={logo} alt="Logo" className="h-20 w-auto" />
                     <div className="text-right">
@@ -22,9 +21,8 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                     </div>
                 </header>
 
-                {/* CONTENIDO: Ahora ocupa todo el ancho posible */}
+                {/* CONTENIDO */}
                 <main className="flex-1 p-2 md:p-6 lg:p-8">
-                    {/* Quitamos el mx-auto y max-w-2xl para que el contenido respire y llene la pantalla */}
                     <div className="w-full">
                         {children}
                     </div>
@@ -33,11 +31,11 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
 
             {/* BARRA DE TAREAS MOBILE */}
             <nav className="md:hidden fixed bottom-0 w-full h-20 bg-white dark:bg-slate-900 flex justify-around items-center border-t border-slate-100 dark:border-slate-800 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-50 pb-safe transition-colors">
-                <NavItem icon="🏠" label="Inicio" isActive={vistaActual === 'caja'} onClick={() => setVistaActual('caja')} />
+                <NavItem icon="🏠" label="Inicio"    isActive={vistaActual === 'caja'}      onClick={() => setVistaActual('caja')} />
                 <NavItem icon="📋" label="Historial" isActive={vistaActual === 'historial'} onClick={() => setVistaActual('historial')} />
-                <NavItem icon="👥" label="Clientes" isActive={vistaActual === 'clientes'} onClick={() => setVistaActual('clientes')} />
-                <NavItem icon="🔧" label="Stock" isActive={vistaActual === 'repuestos'} onClick={() => setVistaActual('repuestos')} />
-                <NavItem icon="🚨" label="Radar" isActive={vistaActual === 'radar'} onClick={() => setVistaActual('radar')} />
+                <NavItem icon="👥" label="Clientes"  isActive={vistaActual === 'clientes'}  onClick={() => setVistaActual('clientes')} />
+                <NavItem icon="📦" label="Productos" isActive={vistaActual === 'productos'} onClick={() => setVistaActual('productos')} /> {/* ← CORREGIDO */}
+                <NavItem icon="🚨" label="Radar"     isActive={vistaActual === 'radar'}     onClick={() => setVistaActual('radar')} />
             </nav>
         </div>
     );

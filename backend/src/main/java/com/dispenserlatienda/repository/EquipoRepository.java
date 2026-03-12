@@ -11,8 +11,8 @@ import java.util.Optional;
 public interface EquipoRepository extends JpaRepository<Equipo, Long> {
     Optional<Equipo> findByNumeroSerie(String numeroSerie);
     boolean existsByNumeroSerie(String numeroSerie);
+    boolean existsBySedeId(Long sedeId);  // ← AGREGADO
 
-    // 🔎 Estos son los que el buscador de dispensers necesita (Controller)
     List<Equipo> findByNumeroSerieContainingIgnoreCase(String numeroSerie, Pageable pageable);
     List<Equipo> findBySedeIdAndNumeroSerieContainingIgnoreCase(Long sedeId, String numeroSerie, Pageable pageable);
     List<Equipo> findBySedeId(Long sedeId);

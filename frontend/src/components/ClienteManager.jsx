@@ -33,15 +33,9 @@ export default function ClienteManager() {
                 api.get('/sedes?page=0&size=1000'),
                 api.get('/equipos?page=0&size=1000')
             ]);
-            
-            // CAMBIO: Extraer .content de la Page
-            const clientes = resCli.data.content || resCli.data;
-            const sedes = resSed.data.content || resSed.data;
-            const equipos = resEqu.data.content || resEqu.data;
-            
-            setClientes(clientes);
-            setSedes(sedes);
-            setEquipos(equipos);
+            setClientes(resCli.data.content || resCli.data);
+            setSedes(resSed.data.content || resSed.data);
+            setEquipos(resEqu.data.content || resEqu.data);
         } catch (err) {
             toast.error("Error de conexión");
         }
@@ -94,7 +88,7 @@ export default function ClienteManager() {
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 pb-20">
-            {/* BUSCADOR GLASS */}
+            {/* BUSCADOR */}
             <div className="sticky top-0 z-30 py-6 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl -mx-4 px-4 border-b border-slate-200 dark:border-slate-800 mb-8">
                 <div className="relative max-w-3xl mx-auto">
                     <input
@@ -143,7 +137,7 @@ export default function ClienteManager() {
                                 <p className="text-[11px] font-bold text-slate-400 uppercase leading-relaxed">📍 {c.calle} {c.numero} • {c.localidad}</p>
                             </div>
 
-                            {/* SECCIÓN EXPANDIBLE (INVENTARIO) */}
+                            {/* SECCIÓN EXPANDIBLE */}
                             <div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0 invisible'}`}>
                                 <div className="px-8 pb-6 pt-2 bg-slate-50/50 dark:bg-slate-950/30 border-t border-slate-100 dark:border-slate-800">
                                     <div className="space-y-5 mt-4">
@@ -159,7 +153,6 @@ export default function ClienteManager() {
                                                             </div>
                                                             <div className="flex items-center gap-2">
                                                                 {eq.ubicacion && <span className="text-[7px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 px-2 py-0.5 rounded-md uppercase border border-blue-100 dark:border-blue-800">{eq.ubicacion}</span>}
-                                                                
                                                                 <button 
                                                                     onClick={() => { setSelectedEquipo(eq); setSelectedCliente(c); setModalOpen('equipo'); }}
                                                                     className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
@@ -213,7 +206,11 @@ export default function ClienteManager() {
             {modalOpen === 'equipo' && selectedCliente && (
                 <EquipoModal 
                     cliente={selectedCliente} 
-                    sedes={sedes.filter(s => s.cliente?.id === selectedCliente.id)} 
+                    sedes={sedes.filter(s => s.cliente?.id === selectedCliente.id)}
+                    equipos={equipos.filter(eq => {         {/* ← AGREGADO */}
+                        const sedesDelCliente = sedes.filter(s => s.cliente?.id === selectedCliente.id).map(s => s.id);
+                        return sedesDelCliente.includes(eq.sede?.id);
+                    })}
                     equipoParaEditar={selectedEquipo}
                     onRefresh={() => { cargarDatos(); setSelectedEquipo(null); }} 
                     onClose={() => { setModalOpen(null); setSelectedEquipo(null); }} 
