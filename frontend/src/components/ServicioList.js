@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
-
+ 
 // Utilidades
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
-
+ 
 export default function ServicioList({ onEditar }) {
     const [servicios, setServicios] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [filtroTab, setFiltroTab] = useState('TODOS');
     const [modalDetalle, setModalDetalle] = useState(null);
-
+ 
     useEffect(() => { cargarServicios(); }, []);
-
+ 
     const cargarServicios = () => {
         api.get('/servicios?page=0&size=1000')
             .then(res => {
@@ -24,7 +24,7 @@ export default function ServicioList({ onEditar }) {
                 toast.error("Error al conectar con el historial");
             });
     };
-
+ 
     const aprobarPresupuesto = async (id) => {
         const loading = toast.loading("Confirmando operación...");
         try {
@@ -33,7 +33,7 @@ export default function ServicioList({ onEditar }) {
             cargarServicios(); 
         } catch (err) { toast.error("Error al procesar", { id: loading }); }
     };
-
+ 
     const eliminarServicio = async (id) => {
         if(window.confirm("⚠️ ¿Eliminar permanentemente este registro?")) {
             try {
@@ -43,7 +43,7 @@ export default function ServicioList({ onEditar }) {
             } catch (err) { toast.error("Error al eliminar"); }
         }
     };
-
+ 
     const calcularCosto = (s) => s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
     
     // --- 🧠 LÓGICA DE FILTRADO COMPLETA ---
@@ -54,24 +54,24 @@ export default function ServicioList({ onEditar }) {
         if (filtroTab === 'PRESUPUESTO') pasaTab = s.estado === 'PRESUPUESTO';
         if (filtroTab === 'VENTA') pasaTab = s.servicioTipo === 'VENTA' && s.estado !== 'PRESUPUESTO';
         if (filtroTab === 'TECNICA') pasaTab = s.servicioTipo === 'TECNICA' && s.estado !== 'PRESUPUESTO';
-
+ 
         return pasaTab && (
             (s.clienteNombre?.toLowerCase() || '').includes(txt) || 
             (s.sedeNombre?.toLowerCase() || '').includes(txt) ||
             s.items?.some(it => it.equipoSerial?.toLowerCase().includes(txt))
         );
     });
-
+ 
     const totalVentas = servicios
         .filter(s => s.servicioTipo === 'VENTA' && s.estado !== 'PRESUPUESTO')
         .reduce((acc, s) => acc + calcularCosto(s), 0);
-
+ 
     const totalTecnica = servicios
         .filter(s => s.servicioTipo === 'TECNICA' && s.estado !== 'PRESUPUESTO')
         .reduce((acc, s) => acc + calcularCosto(s), 0);
-
+ 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 pb-28 font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 pb-28 md:pb-0 font-sans transition-colors duration-300">
             
             {/* --- DASHBOARD SUPERIOR --- */}
             <div className="grid grid-cols-2 gap-3 mb-5">
@@ -84,9 +84,9 @@ export default function ServicioList({ onEditar }) {
                     <p className="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">$ {totalTecnica.toLocaleString()}</p>
                 </div>
             </div>
-
+ 
             {/* --- BUSCADOR Y TABS (STICKY) --- */}
-            <div className="sticky top-2 z-40 bg-slate-50 dark:bg-slate-900 pb-4 transition-colors duration-300">
+            <div className="sticky top-0 z-40 bg-slate-50 dark:bg-slate-900 pt-3 pb-4 -mx-4 px-4 shadow-md transition-colors duration-300">
                 <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔍</span>
                     <input 
@@ -111,7 +111,7 @@ export default function ServicioList({ onEditar }) {
                     ))}
                 </div>
             </div>
-
+ 
             {/* --- LISTADO DE TARJETAS --- */}
             <div className="flex flex-col gap-4 mt-1">
                 {filtrados.length === 0 ? (
@@ -141,7 +141,7 @@ export default function ServicioList({ onEditar }) {
                                     <div className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-1">{s.fecha}</div>
                                 </div>
                             </div>
-
+ 
                             <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                                 
                                 {s.estado === 'PRESUPUESTO' && (
@@ -165,7 +165,7 @@ export default function ServicioList({ onEditar }) {
                     ))
                 )}
             </div>
-
+ 
             {/* --- MODAL DE DETALLE --- */}
             {modalDetalle && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end z-[2000] transition-opacity">
