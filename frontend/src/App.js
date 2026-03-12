@@ -1,52 +1,79 @@
 import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
-
+ 
 // 📦 Importamos el esqueleto visual unificado
 import Layout from './components/layout/Layout';
-
+ 
 // 📦 Importamos tus componentes principales
-import ServicioForm from './components/ServicioForm';
+import DashboardInicio from './components/DashboardInicio';         // ← DASHBOARD
+import DashboardFinanzas from './components/DashboardFinanzas';     // ← FINANZAS
+import VentaForm from './components/VentaForm';                    // ← NUEVO
+import ServicioTecnicoForm from './components/ServicioTecnicoForm'; // ← NUEVO
 import ServicioList from './components/ServicioList';
 import ClienteManager from './components/ClienteManager';
-import GestorProductos from './components/GestorProductos'; // ← NUEVO
+import GestorProductos from './components/GestorProductos';
 import RadarMantenimiento from './components/RadarMantenimiento';
-
+ 
 export default function App() {
-    // Controlamos la sección. 'caja' es la pantalla de inicio.
+    // Controlamos la sección actual
     const [seccionActual, setSeccionActual] = useState('caja');
-
-    // 🚀 NUEVO: Estado para guardar el presupuesto que queremos editar
+ 
+    // 🚀 Estado para guardar el registro que queremos editar
     const [servicioAEditar, setServicioAEditar] = useState(null);
-
-    // 🚀 NUEVO: Función que se dispara cuando tocás el lápiz en el Historial
+ 
+    // 🚀 Función que se dispara cuando tocás editar en Historial
     const manejarEdicion = (servicio) => {
-        setServicioAEditar(servicio);  // Guardamos los datos
-        setSeccionActual('caja');      // Te mandamos a la vista del formulario
+        setServicioAEditar(servicio);
+        // Navegamos a la sección correcta según el tipo
+        if (servicio.servicioTipo === 'VENTA') {
+            setSeccionActual('venta');
+        } else if (servicio.servicioTipo === 'TECNICA') {
+            setSeccionActual('servicio-tecnico');
+        }
     };
-
-    // 🚀 NUEVO: Función inteligente para cambiar de sección desde el menú
-    // Si tocás "Caja" manualmente en el menú, limpiamos la edición para que arranques uno en blanco.
+ 
+    // 🚀 Función inteligente para cambiar de sección desde el menú
     const cambiarSeccionDesdeMenu = (nuevaSeccion) => {
-        if (nuevaSeccion === 'caja' && seccionActual !== 'caja') {
+        if ((nuevaSeccion === 'venta' || nuevaSeccion === 'servicio-tecnico') && seccionActual !== nuevaSeccion) {
             setServicioAEditar(null);
         }
         setSeccionActual(nuevaSeccion);
     };
-
+ 
     // Función que decide qué componente mostrar
     const renderSeccion = () => {
         switch (seccionActual) {
             case 'caja':
                 return (
                     <div className="card-animate">
-                        <ServicioForm
-                            // 🚀 Le pasamos el servicio si estamos editando, o null si es nuevo
+                        <DashboardInicio onNavigateTo={cambiarSeccionDesdeMenu} />
+                    </div>
+                );
+            case 'venta':
+                return (
+                    <div className="card-animate">
+                        <VentaForm onSaved={() => {
+                            setServicioAEditar(null);
+                            setSeccionActual('historial');
+                        }} />
+                    </div>
+                );
+            case 'servicio-tecnico':
+                return (
+                    <div className="card-animate">
+                        <ServicioTecnicoForm 
                             servicioParaEditar={servicioAEditar}
                             onSaved={() => {
-                                setServicioAEditar(null); // Limpiamos al guardar
+                                setServicioAEditar(null);
                                 setSeccionActual('historial');
-                            }}
+                            }} 
                         />
+                    </div>
+                );
+            case 'finanzas':
+                return (
+                    <div className="card-animate">
+                        <DashboardFinanzas />
                     </div>
                 );
             case 'radar':
@@ -58,7 +85,6 @@ export default function App() {
             case 'historial':
                 return (
                     <div className="card-animate">
-                        {/* 🚀 Le pasamos la función manejarEdicion al botón del lápiz */}
                         <ServicioList onEditar={manejarEdicion} />
                     </div>
                 );
@@ -68,7 +94,7 @@ export default function App() {
                         <ClienteManager />
                     </div>
                 );
-            case 'productos':  // ← NUEVO
+            case 'productos':
                 return (
                     <div className="card-animate">
                         <GestorProductos />
@@ -82,7 +108,7 @@ export default function App() {
                 );
         }
     };
-
+ 
     return (
         <>
             <Toaster
@@ -97,10 +123,8 @@ export default function App() {
                     }
                 }}
             />
-
-            {/* 🚀 En vez de setSeccionActual directo, usamos nuestra función inteligente */}
+ 
             <Layout vistaActual={seccionActual} setVistaActual={cambiarSeccionDesdeMenu}>
-
                 <div style={{
                     maxWidth: '1000px',
                     margin: '0 auto',
@@ -109,7 +133,6 @@ export default function App() {
                 }}>
                     {renderSeccion()}
                 </div>
-
             </Layout>
         </>
     );

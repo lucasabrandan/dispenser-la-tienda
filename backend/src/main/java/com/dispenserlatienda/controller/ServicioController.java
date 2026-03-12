@@ -1,5 +1,6 @@
 package com.dispenserlatienda.controller.servicio;
 
+import com.dispenserlatienda.dto.servicio.EstadisticasMensualDTO;
 import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
 import com.dispenserlatienda.dto.servicio.ServicioDTO;
 import com.dispenserlatienda.repository.ServicioRepository;
@@ -71,5 +72,13 @@ public class ServicioController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {
         servicioRepository.deleteById(id);
+    }
+
+    // GET: Estadísticas mensuales para análisis financiero
+    @GetMapping("/stats/mensual")
+    public ResponseEntity<EstadisticasMensualDTO> estadisticasMensual(
+            @RequestParam String mes) {
+        // Format esperado: mes=2026-03
+        return ResponseEntity.ok(servicioService.calcularEstadisticasMensual(mes));
     }
 }

@@ -1,5 +1,6 @@
 package com.dispenserlatienda.service.servicio;
-
+import com.dispenserlatienda.dto.servicio.EstadisticasMensualDTO;
+import java.time.LocalDate;
 import com.dispenserlatienda.domain.*;
 import com.dispenserlatienda.domain.servicio.*;
 import com.dispenserlatienda.domain.usuario.Usuario;
@@ -26,15 +27,17 @@ public class ServicioService {
     private final SedeRepository sedeRepository;
     private final UsuarioRepository usuarioRepository;
     private final EquipoRepository equipoRepository;
+    private final GastoRepository gastoRepository;
     private final ObjectMapper objectMapper;
 
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
                            UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
-                           ObjectMapper objectMapper) {
+                           GastoRepository gastoRepository, ObjectMapper objectMapper) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
         this.equipoRepository = equipoRepository;
+        this.gastoRepository = gastoRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -197,6 +200,77 @@ public class ServicioService {
                 items,
                 s.getEstado() != null ? s.getEstado().name() : "PRESUPUESTO",
                 s.getFotoRemito()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public EstadisticasMensualDTO calcularEstadisticasMensual(String mes) {
+        LocalDate inicioMes = LocalDate.parse(mes + "-01");
+        LocalDate finMes = inicioMes.plusMonths(1).minusDays(1);
+
+        List<Servicio> serviciosMes = servicioRepository.findAll().stream()
+                .filter(s -> s.getFechaServicio() != null
+                        && !s.getFechaServicio().isBefore(inicioMes)
+                        && !s.getFechaServicio().isAfter(finMes))
+                .toList();
+
+        BigDecimal facturacion = BigDecimal.ZERO;
+        BigDecimal costoRepuestos = BigDecimal.ZERO;
+        List<EstadisticasMensualDTO.TransaccionDTO> transacciones = new ArrayList<>();
+
+        for (Servicio servicio : serviciosMes) {
+            for (ServicioItem item : servicio.getItems()) {
+                BigDecimal venta = item.getCosto()
+                        .add(item.getCostoExtra() != null ? item.getCostoExtra() : BigDecimal.ZERO)
+                        .subtract(item.getDescuento() != null ? item.getDescuento() : BigDecimal.ZERO);
+
+                facturacion = facturacion.add(venta);
+
+                BigDecimal costosRepuestos = BigDecimal.ZERO;
+                try {
+                    if (item.getRepuestosUsados() != null && !item.getRepuestosUsados().isEmpty()) {
+                        List<RepuestoUsadoDTO> repuestos = objectMapper.readValue(
+                                item.getRepuestosUsados(),
+                                new TypeReference<List<RepuestoUsadoDTO>>(){}
+                        );
+                        for (RepuestoUsadoDTO repuesto : repuestos) {
+                            costosRepuestos = costosRepuestos.add(repuesto.subtotal());
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                costoRepuestos = costoRepuestos.add(costosRepuestos);
+
+                String concepto = servicio.getClienteNombre() + " - " + item.getTrabajoRealizado();
+                EstadisticasMensualDTO.TransaccionDTO transaccion = new EstadisticasMensualDTO.TransaccionDTO(
+                        servicio.getId(),
+                        servicio.getFechaServicio().toString(),
+                        concepto,
+                        costosRepuestos,
+                        venta,
+                        servicio.getServicioTipo().name()
+                );
+                transacciones.add(transaccion);
+            }
+        }
+
+        // Obtener gastos del mes y sumarlos
+        List<Gasto> gastosMes = gastoRepository.findByFechaBetween(inicioMes, finMes);
+        BigDecimal gastosVarios = gastosMes.stream()
+                .map(Gasto::getMonto)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal gananciaReal = facturacion.subtract(costoRepuestos).subtract(gastosVarios);
+
+        return new EstadisticasMensualDTO(
+                mes,
+                facturacion,
+                costoRepuestos,
+                gastosVarios,
+                gananciaReal,
+                transacciones
         );
     }
 }

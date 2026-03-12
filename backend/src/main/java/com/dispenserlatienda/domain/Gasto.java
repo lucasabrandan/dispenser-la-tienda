@@ -21,13 +21,12 @@ public class Gasto {
     @Column(nullable = false)
     private LocalDate fecha;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "categoria", nullable = false)
-    private CategoriaGasto categoria;
+    private String categoria;
 
     protected Gasto() {}
 
-    public Gasto(String descripcion, BigDecimal monto, LocalDate fecha, CategoriaGasto categoria) {
+    public Gasto(String descripcion, BigDecimal monto, LocalDate fecha, String categoria) {
         this.descripcion = descripcion;
         this.monto = monto;
         this.fecha = fecha;
@@ -36,8 +35,16 @@ public class Gasto {
 
     // Getters
     public Long getId() { return id; }
+
     public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+
     public BigDecimal getMonto() { return monto; }
+    public void setMonto(BigDecimal monto) { this.monto = monto; }
+
     public LocalDate getFecha() { return fecha; }
-    public CategoriaGasto getCategoria() { return categoria; }
+    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
 }
