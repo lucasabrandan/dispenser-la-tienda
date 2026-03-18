@@ -3,7 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
  
 // Utilidades
-import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
+import { generarRemitoPDFPremium } from './utils/generadorPdfRemito';
  
 export default function ServicioList({ onEditar }) {
     const [servicios, setServicios] = useState([]);

@@ -3,9 +3,11 @@ import logo from '../../assets/logo-dispenser.svg';
 import Sidebar from './Sidebar';
 import Drawer from './Drawer';
 import BottomNav from './BottomNav';
+import { useTheme } from '../../hooks/useTheme';
  
 export default function Layout({ children, vistaActual, setVistaActual }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const { isDark, toggleTheme } = useTheme();
  
     return (
         <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 transition-colors duration-300 antialiased">
@@ -37,6 +39,17 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
  
                     {/* Right Icons */}
                     <div className="flex items-center gap-2">
+                        {/* Dark Mode Toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-600 dark:text-slate-400"
+                            title={isDark ? "Modo claro" : "Modo oscuro"}
+                        >
+                            <span className="text-xl">
+                                {isDark ? '☀️' : '🌙'}
+                            </span>
+                        </button>
+ 
                         <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-slate-600 dark:text-slate-400">
                             <span className="text-xl">🔔</span>
                         </button>

@@ -3,7 +3,7 @@ import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 
 import { useServicioForm } from '../hooks/useServicioForm';
-import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
+import { generarRemitoPDFPremium } from './utils/generadorPdfRemito';
 
 import Card from './ui/Card';
 import CrearClienteModal from './CrearClienteModal';

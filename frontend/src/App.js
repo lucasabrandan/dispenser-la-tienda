@@ -1,26 +1,27 @@
 import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
- 
+
 // 📦 Importamos el esqueleto visual unificado
 import Layout from './components/layout/Layout';
- 
+
 // 📦 Importamos tus componentes principales
 import DashboardInicio from './components/DashboardInicio';         // ← DASHBOARD
 import DashboardFinanzas from './components/DashboardFinanzas';     // ← FINANZAS
 import VentaForm from './components/VentaForm';                    // ← NUEVO
 import ServicioTecnicoForm from './components/ServicioTecnicoForm'; // ← NUEVO
 import ServicioList from './components/ServicioList';
+import PresupuestosManager from './components/PresupuestosManager'; // ← PRESUPUESTOS
 import ClienteManager from './components/ClienteManager';
 import GestorProductos from './components/GestorProductos';
 import RadarMantenimiento from './components/RadarMantenimiento';
- 
+
 export default function App() {
     // Controlamos la sección actual
     const [seccionActual, setSeccionActual] = useState('caja');
- 
+
     // 🚀 Estado para guardar el registro que queremos editar
     const [servicioAEditar, setServicioAEditar] = useState(null);
- 
+
     // 🚀 Función que se dispara cuando tocás editar en Historial
     const manejarEdicion = (servicio) => {
         setServicioAEditar(servicio);
@@ -31,7 +32,7 @@ export default function App() {
             setSeccionActual('servicio-tecnico');
         }
     };
- 
+
     // 🚀 Función inteligente para cambiar de sección desde el menú
     const cambiarSeccionDesdeMenu = (nuevaSeccion) => {
         if ((nuevaSeccion === 'venta' || nuevaSeccion === 'servicio-tecnico') && seccionActual !== nuevaSeccion) {
@@ -39,7 +40,7 @@ export default function App() {
         }
         setSeccionActual(nuevaSeccion);
     };
- 
+
     // Función que decide qué componente mostrar
     const renderSeccion = () => {
         switch (seccionActual) {
@@ -88,6 +89,12 @@ export default function App() {
                         <ServicioList onEditar={manejarEdicion} />
                     </div>
                 );
+            case 'presupuestos':
+                return (
+                    <div className="card-animate">
+                        <PresupuestosManager onEditar={manejarEdicion} />
+                    </div>
+                );
             case 'clientes':
                 return (
                     <div className="card-animate">
@@ -108,7 +115,7 @@ export default function App() {
                 );
         }
     };
- 
+
     return (
         <>
             <Toaster
@@ -123,7 +130,7 @@ export default function App() {
                     }
                 }}
             />
- 
+
             <Layout vistaActual={seccionActual} setVistaActual={cambiarSeccionDesdeMenu}>
                 <div style={{
                     maxWidth: '1000px',

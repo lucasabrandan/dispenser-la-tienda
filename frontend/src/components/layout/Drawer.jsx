@@ -6,6 +6,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
         { id: 'venta', nombre: '🛒 Venta / Insumos', seccion: 'operaciones' },
         { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico', seccion: 'operaciones' },
         { id: 'historial', nombre: '📋 Historial', seccion: 'operaciones' },
+        { id: 'presupuestos', nombre: '💰 Presupuestos', seccion: 'operaciones' },
         { id: 'clientes', nombre: '👥 Clientes', seccion: 'admin' },
         { id: 'productos', nombre: '📦 Productos', seccion: 'admin' },
         { id: 'radar', nombre: '🚨 Radar', seccion: 'admin' },

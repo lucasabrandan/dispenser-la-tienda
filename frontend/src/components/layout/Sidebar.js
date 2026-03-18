@@ -1,18 +1,19 @@
 import React from 'react';
 import logo from '../../assets/logo-dispenser.svg';
- 
+
 export default function Sidebar({ setVistaActual, vistaActual }) {
     
     const menu = [
         { id: 'venta', nombre: '🛒 Venta / Insumos' },
         { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico' },
         { id: 'historial', nombre: '📋 Historial' }, 
+        { id: 'presupuestos', nombre: '💰 Presupuestos' },
         { id: 'clientes', nombre: '👥 Clientes' },
         { id: 'productos', nombre: '📦 Productos' },
         { id: 'radar', nombre: '🚨 Radar' },
         { id: 'finanzas', nombre: '💹 Finanzas' },
     ];
- 
+
     return (
         // Ensanchamos de 260px a 280px para que no parezca tan "flaquito" en PC
         <aside className="hidden md:flex flex-col w-[280px] h-screen sticky top-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-8 transition-colors duration-300 z-50">
@@ -44,7 +45,7 @@ export default function Sidebar({ setVistaActual, vistaActual }) {
                     );
                 })}
             </nav>
- 
+
             {/* Footer del Menú */}
             <div className="mt-auto pt-6 text-[9px] text-slate-300 dark:text-slate-600 text-center font-black uppercase tracking-widest">
                 Logística Dispenser v3.0
