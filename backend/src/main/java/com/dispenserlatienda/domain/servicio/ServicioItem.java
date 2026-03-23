@@ -1,6 +1,6 @@
 package com.dispenserlatienda.domain.servicio;
 
-import com.dispenserlatienda.domain.Equipo;
+import com.dispenserlatienda.domain.equipo.Equipo;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;

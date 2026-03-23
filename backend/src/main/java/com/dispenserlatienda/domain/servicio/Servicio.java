@@ -1,6 +1,6 @@
 package com.dispenserlatienda.domain.servicio;
 
-import com.dispenserlatienda.domain.Sede;
+import com.dispenserlatienda.domain.sede.Sede;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDate;

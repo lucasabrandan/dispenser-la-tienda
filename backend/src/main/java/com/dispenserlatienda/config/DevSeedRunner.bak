@@ -1,0 +1,122 @@
+package com.dispenserlatienda.config;
+
+import com.dispenserlatienda.domain.cliente.Cliente;
+import com.dispenserlatienda.domain.cliente.ClienteTipo;
+import com.dispenserlatienda.domain.cliente.CondicionIva;
+import com.dispenserlatienda.domain.equipo.Equipo;
+import com.dispenserlatienda.domain.repuesto.Repuesto;
+import com.dispenserlatienda.domain.sede.Sede;
+import com.dispenserlatienda.domain.usuario.RolUsuario;
+import com.dispenserlatienda.domain.usuario.Usuario;
+import com.dispenserlatienda.repository.cliente.ClienteRepository;
+import com.dispenserlatienda.repository.equipo.EquipoRepository;
+import com.dispenserlatienda.repository.repuesto.RepuestoRepository;
+import com.dispenserlatienda.repository.sede.SedeRepository;
+import com.dispenserlatienda.repository.usuario.UsuarioRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+
+@Profile("local")
+@Component
+public class DevSeedRunner implements CommandLineRunner {
+
+    private final ClienteRepository clienteRepository;
+    private final SedeRepository sedeRepository;
+    private final EquipoRepository equipoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final RepuestoRepository repuestoRepository;
+
+    public DevSeedRunner(ClienteRepository clienteRepository, SedeRepository sedeRepository,
+                         EquipoRepository equipoRepository, UsuarioRepository usuarioRepository,
+                         RepuestoRepository repuestoRepository) {
+        this.clienteRepository = clienteRepository;
+        this.sedeRepository = sedeRepository;
+        this.equipoRepository = equipoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.repuestoRepository = repuestoRepository;
+    }
+
+    @Override
+    public void run(String... args) {
+        try {
+            System.out.println("----------------------------------------------");
+            System.out.println("Iniciando Carga de Sistema");
+
+            // CAMBIO: Pasar CondicionIva.RESPONSABLE_INSCRIPTO en lugar de String
+            Cliente cliente = clienteRepository.findByCuilDni("20123456789")
+                    .orElseGet(() -> clienteRepository.saveAndFlush(new Cliente(
+                            ClienteTipo.EMPRESA,
+                            "Sanatorio Guemes",
+                            "20123456789",
+                            "1122334455",
+                            "contacto@guemes.com",
+                            "Cliente Seed",
+                            CondicionIva.RESPONSABLE_INSCRIPTO  // CAMBIO: Enum en lugar de String
+                    )));
+
+            Sede casaCentral = sedeRepository.findByClienteIdAndNombreSede(cliente.getId(), "Casa Central")
+                    .orElseGet(() -> sedeRepository.saveAndFlush(new Sede(
+                            cliente,
+                            "Casa Central",
+                            "Av. Córdoba",
+                            "3400",
+                            "1",
+                            "A",
+                            "CABA",
+                            "CABA",
+                            "Av. Córdoba 3400, CABA",
+                            "Sede central administrativa"
+                    )));
+
+            if (!equipoRepository.existsByNumeroSerie("495050")) {
+                equipoRepository.saveAndFlush(new Equipo(
+                        casaCentral,
+                        "Bacope",
+                        "RED",
+                        "495050",
+                        "Cocina Planta Baja",
+                        "Filtro recién instalado"
+                ));
+            }
+
+            if (!equipoRepository.existsByNumeroSerie("123")) {
+                equipoRepository.saveAndFlush(new Equipo(
+                        casaCentral,
+                        "Humma",
+                        "BIDÓN",
+                        "123",
+                        "Pasillo 2do Piso",
+                        "Sin observaciones"
+                ));
+            }
+
+            usuarioRepository.findByUsername("marcos")
+                    .orElseGet(() -> usuarioRepository.saveAndFlush(new Usuario(
+                            "Marcos", "marcos", "pass123", RolUsuario.TECNICO)));
+
+            cargarRepuestoSiNoExiste("Filtro Carbón Activado", new BigDecimal("4500"));
+            cargarRepuestoSiNoExiste("Kit de Mangueras", new BigDecimal("1200"));
+            cargarRepuestoSiNoExiste("Canilla Frio/Calor", new BigDecimal("3800"));
+
+            System.out.println("Base de Datos PostgreSQL: ESTADO OK");
+            System.out.println("----------------------------------------------");
+
+        } catch (Exception e) {
+            System.err.println("Error en DevSeedRunner: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void cargarRepuestoSiNoExiste(String nombre, BigDecimal precio) {
+        boolean existe = repuestoRepository.findAll().stream()
+                .anyMatch(r -> r.getNombre().equalsIgnoreCase(nombre));
+
+        if (!existe) {
+            repuestoRepository.saveAndFlush(new Repuesto(nombre, precio, 10));
+            System.out.println("Repuesto cargado: " + nombre);
+        }
+    }
+}

@@ -1,6 +1,6 @@
 package com.dispenserlatienda.dto.cliente;
 
-import com.dispenserlatienda.domain.ClienteTipo;
+import com.dispenserlatienda.domain.cliente.ClienteTipo;
 import com.dispenserlatienda.dto.sede.SedeDTO; // ⬅️ Importamos el DTO de sedes
 import java.util.List;
 

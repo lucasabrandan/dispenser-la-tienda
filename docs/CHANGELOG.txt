@@ -1,0 +1,234 @@
+# 📝 CHANGELOG - Dispenser La Tienda
+
+Todas las versiones notables del proyecto serán documentadas en este archivo.
+
+Formato basado en [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## [1.0.0] - 2026-03-19
+
+### Estado
+🎉 **MVP (Minimum Viable Product)** - Primera versión completamente funcional
+
+### ✅ Agregado
+
+#### Backend
+- Estructura de carpetas profesional (Domain, Service, Repository, Controller, DTO)
+- Clases base `BaseEntity` y `BaseService` para reutilización
+- **CRUD de Clientes** - Gestión de clientes con tipos e información de contacto
+- **CRUD de Equipos** - Registro de dispensers, seguimiento por sede
+- **CRUD de Sedes** - Ubicaciones/sucursales
+- **CRUD de Servicios Técnicos** - Reparaciones, mano de obra, garantías
+- **CRUD de Gastos** - Gastos operativos categorizados
+- **CRUD de Repuestos** - Catálogo de productos
+- **✨ CRUD DE VENTAS (NUEVO)** - Ventas de repuestos con cálculos automáticos
+  - Crear venta con múltiples items
+  - Cálculo automático de: costo, ganancia, descuentos, IVA
+  - Editar/eliminar items individuales
+  - Cambiar estado (CONFIRMADA → PAGADA)
+  - Duplicar venta
+  - Estadísticas por período
+  - Filtros: cliente, fecha, mes, año
+- Manejo centralizado de excepciones (`GlobalExceptionHandler`)
+- Tipos de excepción: `BusinessException`, `ValidationException`, `ResourceNotFoundException`
+- DTOs estandarizados con auditoría (createdAt, updatedAt, active)
+- Migraciones SQL con Flyway (V1-V8)
+- CORS configurado para localhost:3000
+- Logging automático en servicios
+
+#### Frontend
+- Componentes React reutilizables
+- Custom hooks: `useClienteData()`, `useEquipoActions()`, `useServicioData()`, etc
+- **✨ VENTAS MANAGER (NUEVO)** - Panel completo de ventas
+  - Tabla con listado de ventas
+  - Filtros: cliente, mes, año, rango de fechas
+  - Crear venta con modal
+  - Editar venta completa o item individual
+  - Eliminar venta/item con confirmación
+  - Duplicar venta
+  - Ver detalles
+  - Cards resumen (total ingresos, ganancia, margen)
+- Dark mode toggle
+- Responsive design (mobile-friendly)
+- Sidebar navegación
+- Dashboard principal con gráficos
+- Página de servicios técnicos
+- Página de clientes
+- Página de equipos
+- Página de gastos
+- Radar de actividad (datos mock)
+- Finanzas con gráficos
+
+#### Documentación
+- `README.md` - Descripción general y quick start
+- `ARCHITECTURE.md` - Arquitectura, patrones, capas
+- `SETUP.md` - Guía instalación y configuración
+- `CHANGELOG.md` - Este archivo
+- Comentarios en código: métodos públicos, lógica compleja, reglas de negocio
+
+#### DevOps/Git
+- `.gitignore` - Ignora node_modules, target, .env, etc
+- Estructura profesional de carpetas
+- Package.json y pom.xml configurados
+
+### 🔄 Cambios
+- Reorganización de carpetas (preparación para escalabilidad)
+- Actualización de GlobalExceptionHandler con formato ErrorResponseDTO
+- Mejora de validaciones en múltiples capas
+
+### 🐛 Bugs Conocidos
+
+#### Frontend
+- ⚠️ Radar en light mode: sección "Radar Activo" se ve oscura
+- ⚠️ Radar usa datos mock/random, no datos reales
+- ⚠️ No hay paginación en tablas (todo en una página)
+
+#### Backend
+- ⚠️ Sin autenticación (cualquiera puede acceder)
+- ⚠️ Sin rate limiting (vulnerable a abuse)
+- ⚠️ Sin validación de datos sensibles
+
+### ⚠️ Limitaciones Conocidas
+
+- No hay autenticación / autorización
+- No hay generación de PDF/Email
+- No hay exportación a Excel
+- No hay búsqueda avanzada
+- No hay reportes analíticos complejos
+- No hay API documentada con Swagger
+- No hay tests automatizados
+- No hay caché de datos
+
+### 📦 Dependencias Principales
+
+**Backend:**
+- Spring Boot 3.2.5
+- Spring Data JPA
+- PostgreSQL Driver
+- Flyway (migraciones)
+- Lombok (optional)
+
+**Frontend:**
+- React 18.2
+- Vite 4.0
+- Tailwind CSS
+- Axios
+- React Router
+
+---
+
+## [1.1.0] - Planificado (Abril 2026)
+
+### 🎯 Objetivos
+- Autenticación y autorización
+- Mejoras en UI/UX
+- Tests automatizados
+- Documentación de API
+
+### Planeado
+- [ ] JWT Token authentication
+- [ ] Roles y permissions (Admin, Vendedor, Técnico)
+- [ ] Validación de email en registro
+- [ ] Recuperación de contraseña
+- [ ] Paginación real en todas las tablas
+- [ ] Búsqueda avanzada de ventas
+- [ ] Tests unitarios (ServiceLayer)
+- [ ] Tests de integración (Controller)
+- [ ] Swagger/OpenAPI documentation
+- [ ] Fix Radar en light mode
+- [ ] Radar con datos reales
+- [ ] UI refresh (mejor diseño)
+- [ ] Mobile app improvements
+
+---
+
+## [1.2.0] - Planificado (Mayo 2026)
+
+### Planeado
+- [ ] Generación de PDF (Facturas, Presupuestos)
+- [ ] Envío de emails (confirmación, recordatorios)
+- [ ] Exportación a Excel
+- [ ] Reportes mensuales/anuales
+- [ ] Gráficos avanzados
+- [ ] Notificaciones en tiempo real
+- [ ] Auditoría detallada (quién hizo qué)
+
+---
+
+## [2.0.0] - Planificado (Junio 2026+)
+
+### Cambios Mayores
+- [ ] Refactor completo con CQRS
+- [ ] Event Sourcing
+- [ ] Microservicios
+- [ ] App móvil (React Native)
+- [ ] Sincronización offline
+- [ ] Machine Learning (predicción de ventas)
+
+---
+
+## 📊 Estadísticas
+
+### v1.0.0
+- **Archivos:** ~150+ archivos de código
+- **Líneas de código:** ~15,000+ LOC
+- **Tests:** 0 (agregar en v1.1.0)
+- **Documentación:** 5 archivos principales
+- **Tiempo de desarrollo:** ~40 horas (estimado)
+
+---
+
+## 🎓 Notas Académicas
+
+Este proyecto fue desarrollado como:
+- **Carrera:** Técnicatura Superior en Desarrollo de Sistemas
+- **Materia:** Proyecto Integrador / Práctica Profesional
+- **Período:** 2026 (trimestral)
+- **Objetivo:** Demostrar competencias en full-stack development
+
+**Competencias demostradas en v1.0.0:**
+- ✅ Backend con Spring Boot y JPA
+- ✅ Frontend con React
+- ✅ Base de datos relacional (PostgreSQL)
+- ✅ API REST y comunicación HTTP
+- ✅ Arquitectura en capas y patrones de diseño
+- ✅ Versionado con Git
+- ✅ Documentación técnica
+- ✅ Testing manual
+- ✅ Resolución de problemas
+- ✅ Escalabilidad y mantenibilidad
+
+**Competencias a demostrar en v1.1.0+:**
+- [ ] Autenticación/Seguridad
+- [ ] Testing automatizado
+- [ ] DevOps (Docker, CI/CD)
+- [ ] Optimización de performance
+- [ ] Machine Learning (futuro)
+
+---
+
+## 🔗 Referencias
+
+- [Git Commits](https://github.com/lucasabrandan/dispenser-la-tienda/commits/master)
+- [Pull Requests](https://github.com/lucasabrandan/dispenser-la-tienda/pulls)
+- [Issues](https://github.com/lucasabrandan/dispenser-la-tienda/issues)
+
+---
+
+## 📝 Notas
+
+- Seguir [Semantic Versioning](https://semver.org/) - MAJOR.MINOR.PATCH
+- Mayor: Cambios incompatibles
+- Menor: Nuevas features
+- Patch: Bug fixes
+
+**Ejemplo:**
+- 1.0.0 → 1.0.1 (patch: bug fix)
+- 1.0.0 → 1.1.0 (minor: nueva feature)
+- 1.0.0 → 2.0.0 (major: cambios arquitectónicos)
+
+---
+
+**Última actualización:** 2026-03-19
+**Página:** https://github.com/lucasabrandan/dispenser-la-tienda

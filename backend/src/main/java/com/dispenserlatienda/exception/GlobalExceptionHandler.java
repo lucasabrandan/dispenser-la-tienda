@@ -1,5 +1,7 @@
 package com.dispenserlatienda.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -7,133 +9,132 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
-// Maneja excepciones globales en toda la aplicación
-// Devuelve respuestas de error consistentes al frontend
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // ============================================
-    // 1️⃣ MANEJO: ResourceNotFoundException (404)
-    // ============================================
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
             ResourceNotFoundException ex,
             WebRequest request) {
-
-        logger.warn("❌ Recurso no encontrado: {}", ex.getMessage());
+        logger.warn("Recurso no encontrado: {}", ex.getMessage());
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
-                "RECURSO_NO_ENCONTRADO"
+                "RESOURCE_NOT_FOUND"
         );
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
-    // ============================================
-    // 2️⃣ MANEJO: IllegalArgumentException (400)
-    // ============================================
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(
-            IllegalArgumentException ex,
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(
+            BusinessException ex,
             WebRequest request) {
-
-        logger.warn("⚠️ Argumento inválido: {}", ex.getMessage());
+        logger.warn("Error de negocio [{}]: {}", ex.getCode(), ex.getMessage());
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
-                "ARGUMENTO_INVALIDO"
+                ex.getCode()
         );
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // ============================================
-    // 3️⃣ MANEJO: MethodArgumentNotValidException (400)
-    // Errores de validación (@NotNull, @NotBlank, etc)
-    // ============================================
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(
-            MethodArgumentNotValidException ex,
+            ValidationException ex,
             WebRequest request) {
-
-        logger.warn("❌ Error de validación en request");
+        logger.warn("Error de validación: {} (campos: {})", ex.getMessage(), ex.getErrors().size());
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Los datos proporcionados no son válidos",
-                "VALIDACION_FALLIDA"
+                ex.getMessage(),
+                "VALIDATION_ERROR"
         );
-
-        // Agregar detalles de cada campo que falló la validación
-        Map<String, String> erroresPorCampo = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(err -> {
-            if (err instanceof FieldError) {
-                FieldError fieldError = (FieldError) err;
-                String nombreCampo = fieldError.getField();
-                String mensaje = fieldError.getDefaultMessage();
-                erroresPorCampo.put(nombreCampo, mensaje);
-                logger.warn("  • Campo '{}': {}", nombreCampo, mensaje);
-            }
-        });
-
-        error.getDetalles().put("camposInvalidos", erroresPorCampo);
-        error.getDetalles().put("cantidadErrores", erroresPorCampo.size());
+        error.setDetalles(new HashMap<>(ex.getErrors()));
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // ============================================
-    // 4️⃣ MANEJO: DataIntegrityViolationException (409)
-    // Violaciones de integridad de BD (ej: unique constraint)
-    // ============================================
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
-            org.springframework.dao.DataIntegrityViolationException ex,
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
             WebRequest request) {
+        logger.warn("Validación de argumentos fallida");
 
-        logger.warn("⚠️ Violación de integridad en BD: {}", ex.getMessage());
+        final Map<String, Object> errors = new HashMap<>();  // ✅ AGREGAR final
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
 
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "Los datos violan una restricción de la base de datos (ej: duplicado único)",
-                "CONFLICTO_INTEGRIDAD"
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Errores de validación en los datos enviados",
+                "VALIDATION_ERROR"
         );
+        errorResponse.setDetalles(errors);
+        errorResponse.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
 
-        error.getDetalles().put("causa", "Posiblemente un registro duplicado o referencia inválida");
-
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    // ============================================
-    // 5️⃣ MANEJO: Exception genérica (500)
-    // Cualquier otra excepción no manejada
-    // ============================================
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex,
+            WebRequest request) {
+        logger.warn("Argumento ilegal: {}", ex.getMessage());
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                "INVALID_ARGUMENT"
+        );
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<ErrorResponse> handleNullPointer(
+            NullPointerException ex,
+            WebRequest request) {
+        logger.error("NullPointerException - ERROR INTERNO: ", ex);
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Error interno: valor nulo no esperado",
+                "NULL_POINTER_ERROR"
+        );
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
+
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex,
             WebRequest request) {
-
-        logger.error("🔥 ERROR INTERNO DEL SERVIDOR: ", ex);
+        logger.error("Excepción no controlada: ", ex);
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Error interno del servidor. Por favor, contacte al administrador.",
-                "ERROR_INTERNO"
+                "Error interno del servidor: " + ex.getMessage(),
+                "INTERNAL_SERVER_ERROR"
         );
-
-        error.getDetalles().put("excepcion", ex.getClass().getSimpleName());
-        error.getDetalles().put("mensajeOriginal", ex.getMessage());
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }

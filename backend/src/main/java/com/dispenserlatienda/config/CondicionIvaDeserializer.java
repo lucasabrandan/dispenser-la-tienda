@@ -3,7 +3,7 @@ package com.dispenserlatienda.config;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.dispenserlatienda.domain.CondicionIva;
+import com.dispenserlatienda.domain.cliente.CondicionIva;
 
 import java.io.IOException;
 

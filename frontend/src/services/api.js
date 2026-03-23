@@ -1,45 +1,53 @@
 import axios from 'axios';
 
 const api = axios.create({
-    // Tu IP de servidor
-    baseURL: 'http://100.72.16.36:8080/api', 
+    baseURL: 'http://192.168.100.2:8080/api',
+    headers: { 'Content-Type': 'application/json' }
 });
 
-// --- CLIENTES ---
-export const getClientes = () => api.get('/clientes');
+// ── Paginación estándar ──────────────────────────────────────────────────────
+const PAGE = '?page=0&size=1000';
 
-// --- SEDES ---
-export const getSedes = () => api.get('/sedes');
+// ── Clientes ─────────────────────────────────────────────────────────────────
+export const getClientes  = () => api.get(`/clientes${PAGE}`);
+export const crearCliente = (data) => api.post('/clientes', data);
+export const editarCliente = (id, data) => api.put(`/clientes/${id}`, data);
+export const eliminarCliente = (id) => api.delete(`/clientes/${id}`);
 
-// --- EQUIPOS ---
-export const getEquipos = () => api.get('/equipos');
+// ── Sedes ─────────────────────────────────────────────────────────────────────
+export const getSedes   = () => api.get(`/sedes${PAGE}`);
+export const crearSede  = (data) => api.post('/sedes', data);
+export const editarSede = (id, data) => api.put(`/sedes/${id}`, data);
+export const eliminarSede = (id) => api.delete(`/sedes/${id}`);
+export const eliminarSedeDefinitivo = (id) => api.delete(`/sedes/${id}/definitivo`);
 
-// --- REPUESTOS / INSUMOS ---
-export const getRepuestos = () => api.get('/repuestos'); 
+// ── Equipos ───────────────────────────────────────────────────────────────────
+export const getEquipos   = () => api.get(`/equipos${PAGE}`);
+export const crearEquipo  = (data) => api.post('/equipos', data);
+export const editarEquipo = (id, data) => api.put(`/equipos/${id}`, data);
+export const archivarEquipo = (id) => api.delete(`/equipos/${id}`);
+export const restaurarEquipo = (id) => api.patch(`/equipos/${id}/restaurar`);
+export const eliminarEquipoDefinitivo = (id) => api.delete(`/equipos/${id}/definitivo`);
 
-// --- SERVICIOS (EL HISTORIAL) ---
-export const getServicios = () => api.get('/servicios');
+// ── Repuestos ─────────────────────────────────────────────────────────────────
+export const getRepuestos   = () => api.get(`/repuestos${PAGE}`);
+export const crearRepuesto  = (data) => api.post('/repuestos', data);
+export const editarRepuesto = (id, data) => api.put(`/repuestos/${id}`, data);
+export const eliminarRepuesto = (id) => api.delete(`/repuestos/${id}`);
 
-/**
- * CREAR SERVICIO (PRESUPUESTO O VENTA)
- * Axios detectará automáticamente si es JSON o FormData
- */
-export const crearServicio = (data) => {
-    return api.post('/servicios', data);
-};
+// ── Servicios ─────────────────────────────────────────────────────────────────
+export const getServicios   = () => api.get(`/servicios${PAGE}`);
+export const crearServicio  = (data) => api.post('/servicios', data);
+export const editarServicio = (id, data) => api.put(`/servicios/${id}`, data);
+export const eliminarServicio = (id) => api.delete(`/servicios/${id}`);
 
-/**
- * ACTUALIZAR ESTADO (PARA EL BOTÓN DE COBRAR 💰)
- */
-export const patchEstadoServicio = (id, nuevoEstado) => {
-    return api.patch(`/servicios/${id}/estado`, { estado: nuevoEstado });
-};
+// ── Ventas ────────────────────────────────────────────────────────────────────
+export const getVentas  = () => api.get(`/ventas${PAGE}`);
+export const crearVenta = (data) => api.post('/ventas', data);
 
-/**
- * ELIMINAR REGISTRO (PARA EL BOTÓN 🗑️)
- */
-export const deleteServicio = (id) => {
-    return api.delete(`/servicios/${id}`);
-};
+// ── Gastos ────────────────────────────────────────────────────────────────────
+export const getGastos  = () => api.get(`/gastos${PAGE}`);
+export const crearGasto = (data) => api.post('/gastos', data);
+export const eliminarGasto = (id) => api.delete(`/gastos/${id}`);
 
 export default api;

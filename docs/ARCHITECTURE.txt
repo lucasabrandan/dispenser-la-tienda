@@ -1,0 +1,538 @@
+# 🏗️ ARQUITECTURA - Dispenser La Tienda
+
+Documento que explica la arquitectura, patrones de diseño y organización de la aplicación.
+
+---
+
+## 📊 Visión General
+
+La aplicación sigue el patrón **MVC (Model-View-Controller)** con principios de **DDD (Domain Driven Design)**.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   FRONTEND (React)                      │
+│  Componentes | Hooks | Utils | State Management        │
+└──────────────────────┬──────────────────────────────────┘
+                       │ HTTP/REST
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│                  BACKEND (Spring Boot)                  │
+│                                                          │
+│  Controllers → Services → Repositories → Database       │
+│                                                          │
+│  [Request] → [Controller] → [Service] → [Repository]   │
+│   [Response] ← [DTO] ← [Entity] ← [DB Query]          │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────┐
+│            DATABASE (PostgreSQL)                        │
+│  Tables: cliente, equipo, venta, servicio, etc         │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔷 CAPAS DE LA ARQUITECTURA
+
+### 1. CAPA PRESENTATION (Frontend)
+
+**Responsabilidad:** Mostrar datos y capturar interacciones del usuario.
+
+```
+frontend/src/
+├── pages/           # Páginas principales (Ventas, Clientes, etc)
+├── components/      # Componentes reutilizables
+│   ├── cliente/    # Componentes de cliente
+│   ├── venta/      # Componentes de venta
+│   └── common/     # Componentes genéricos
+├── hooks/          # Custom React hooks
+│   ├── useVentaData()        # Para obtener datos
+│   └── useVentaActions()     # Para operaciones CRUD
+├── utils/          # Funciones utilitarias
+│   ├── api.js      # Cliente HTTP (Axios)
+│   └── formatters.js
+└── context/        # Context API (state global)
+```
+
+**Flujo:**
+```
+Usuario interactúa → Component → Hook (useVentaActions) → API call → Service → Response → setState → Re-render
+```
+
+**Ejemplo:**
+```javascript
+// Component
+function VentasTable() {
+  const { ventas, loading } = useVentaData();
+  const { handleCrear, handleEditar, handleEliminar } = useVentaActions();
+  
+  return <table>{ventas.map(v => ...)}</table>;
+}
+```
+
+---
+
+### 2. CAPA API (Backend - Controllers)
+
+**Responsabilidad:** Recibir requests HTTP, validar, delegar a Service.
+
+```
+src/main/java/controller/
+├── cliente/
+│   └── ClienteController.java
+├── venta/
+│   └── VentaController.java
+└── ... otras
+```
+
+**Estructura de un Controller:**
+```java
+@RestController
+@RequestMapping("/api/ventas")
+public class VentaController {
+    
+    @PostMapping                    // POST /api/ventas
+    public VentaDTO crear(@RequestBody VentaCreateDTO dto) {
+        return ventaService.crearVenta(dto);
+    }
+    
+    @GetMapping                     // GET /api/ventas
+    public Page<VentaDTO> listar(Pageable pageable) {
+        return ventaService.listarVentas(...);
+    }
+    
+    @GetMapping("/{id}")            // GET /api/ventas/{id}
+    public VentaDTO obtener(@PathVariable Long id) {
+        return ventaService.obtenerVenta(id);
+    }
+}
+```
+
+**Responsabilidades del Controller:**
+- ✅ Recibir request HTTP
+- ✅ Mapear parámetros
+- ✅ Validar formato @Valid
+- ✅ Delegar a Service
+- ✅ Retornar DTO con status HTTP
+
+**NO debería:**
+- ❌ Hacer lógica de negocio
+- ❌ Acceder directo a base de datos
+- ❌ Modificar entidades del dominio
+
+---
+
+### 3. CAPA DE SERVICIOS (Business Logic)
+
+**Responsabilidad:** Lógica de negocio, validaciones, cálculos, transacciones.
+
+```
+src/main/java/service/
+├── common/
+│   └── BaseService.java         # CRUD base genérico
+├── venta/
+│   └── VentaService.java        # Lógica específica de ventas
+└── ... otras
+```
+
+**Estructura de un Service:**
+
+```java
+@Service
+public class VentaService extends BaseService<Venta, VentaRepository> {
+    
+    // Métodos CRUD heredados de BaseService
+    // obtenerPorId(), guardar(), actualizar(), eliminar(), etc
+    
+    // Métodos específicos del dominio
+    @Transactional
+    public VentaDTO crearVenta(VentaCreateDTO dto) {
+        // 1. Validaciones
+        if (dto.items().isEmpty()) {
+            throw new BusinessException("Items vacío");
+        }
+        
+        // 2. Obtener datos relacionados
+        Cliente cliente = clienteRepository.findById(dto.clienteId())
+                .orElseThrow(...);
+        
+        // 3. Crear entidad
+        Venta venta = new Venta(cliente, dto.fecha());
+        
+        // 4. Agregar items
+        venta.setItems(crearItems(dto.items()));
+        
+        // 5. Calculos de negocio
+        calcularTotalesVenta(venta, dto.descuentoPorcentaje());
+        
+        // 6. Persistir (BD)
+        venta = repository.save(venta);
+        
+        // 7. Loguear
+        logger.info("Venta creada: ID {}", venta.getId());
+        
+        // 8. Retornar DTO
+        return mapToDTO(venta);
+    }
+    
+    // Métodos private para lógica interna
+    private void calcularTotalesVenta(Venta venta, BigDecimal descuento) {
+        // Fórmulas complejas...
+    }
+}
+```
+
+**Responsabilidades del Service:**
+- ✅ Lógica de negocio
+- ✅ Validaciones
+- ✅ Cálculos
+- ✅ Transacciones (@Transactional)
+- ✅ Logging
+- ✅ Coordinación de repositorios
+
+---
+
+### 4. CAPA DE DATOS (Repositories & Domain)
+
+**Responsabilidad:** Acceso a datos y definición de entidades.
+
+```
+src/main/java/
+├── domain/
+│   ├── common/
+│   │   ├── BaseEntity.java      # Base con auditoría
+│   │   └── Auditable.java       # Interface
+│   ├── venta/
+│   │   ├── Venta.java           # Entidad principal
+│   │   └── VentaItem.java       # Entidad relacion (1:N)
+│   └── ... otras
+│
+└── repository/
+    ├── venta/
+    │   ├── VentaRepository.java
+    │   └── VentaItemRepository.java
+    └── ... otras
+```
+
+**Entidades (Domain Objects):**
+
+```java
+@Entity
+@Table(name = "venta")
+public class Venta extends BaseEntity {
+    
+    // Relaciones
+    @ManyToOne
+    private Cliente cliente;
+    
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<VentaItem> items;
+    
+    // Datos
+    @Column(nullable = false)
+    private LocalDate fecha;
+    
+    @Column(precision = 10, scale = 2)
+    private BigDecimal totalIngreso;
+    
+    // Métodos de dominio (NO SQL)
+    public boolean isPagada() {
+        return estado == EstadoVenta.PAGADA;
+    }
+    
+    public void marcarComoPagada() {
+        this.estado = EstadoVenta.PAGADA;
+    }
+}
+```
+
+**Repositories:**
+
+```java
+@Repository
+public interface VentaRepository extends JpaRepository<Venta, Long> {
+    
+    // Búsquedas simples
+    Page<Venta> findByClienteId(Long clienteId, Pageable pageable);
+    
+    // Búsquedas complejas con @Query
+    @Query("SELECT v FROM Venta v WHERE v.fecha BETWEEN :inicio AND :fin")
+    Page<Venta> findByPeriodo(@Param("inicio") LocalDate inicio,
+                              @Param("fin") LocalDate fin,
+                              Pageable pageable);
+    
+    // Agregaciones
+    @Query("SELECT SUM(v.totalIngreso) FROM Venta v WHERE ...")
+    BigDecimal sumIngresosByPeriodo(...);
+}
+```
+
+**Responsabilidades:**
+- ✅ Persistencia de datos (BD)
+- ✅ Queries (búsquedas)
+- ✅ Agregaciones (SUM, COUNT, etc)
+- ✅ Manejo de relaciones
+
+---
+
+### 5. CAPA DE TRANSFERENCIA (DTOs)
+
+**Responsabilidad:** Transferir datos entre Frontend ↔ Backend.
+
+```
+src/main/java/dto/
+├── base/
+│   ├── BaseDTO.java              # Base con auditoría
+│   └── ErrorResponseDTO.java     # Errores
+├── venta/
+│   ├── VentaCreateDTO.java       # Para POST/PUT
+│   ├── VentaDTO.java             # Para GET (response)
+│   ├── VentaItemDTO.java         # Items
+│   └── VentasEstadisticasDTO.java # Estadísticas
+└── ... otras
+```
+
+**Por qué usar DTOs:**
+
+```
+❌ SIN DTOs (Malo):
+Controller retorna Entidad → Frontend recibe TODO (incluye relaciones circulares, datos internos)
+
+✅ CON DTOs (Bueno):
+Controller retorna DTO → Frontend recibe SOLO lo necesario (JSON limpio, seguro)
+```
+
+**Ejemplo:**
+
+```java
+// DTO para CREAR/ACTUALIZAR (input)
+public record VentaCreateDTO(
+    Long clienteId,
+    LocalDate fecha,
+    List<VentaItemDTO> items,
+    BigDecimal descuentoPorcentaje
+) {}
+
+// DTO para RESPUESTA (output)
+public record VentaDTO(
+    Long id,
+    String clienteNombre,
+    LocalDate fecha,
+    BigDecimal totalIngreso,
+    BigDecimal gananciaReal,
+    String estado
+) {}
+```
+
+---
+
+## 🔄 FLUJOS PRINCIPALES
+
+### Flujo de Creación de Venta
+
+```
+1. Frontend
+   ├─ Usuario completa formulario
+   ├─ Valida datos en cliente
+   └─ POST /api/ventas con VentaCreateDTO
+
+2. Backend (VentaController)
+   ├─ Recibe request
+   ├─ Valida @Valid
+   └─ Llama ventaService.crearVenta(dto)
+
+3. Backend (VentaService)
+   ├─ Valida cliente existe
+   ├─ Valida items no vacío
+   ├─ Crea entidad Venta
+   ├─ Agrega items
+   ├─ Calcula totales (descuento, IVA, ganancia)
+   ├─ Guarda en BD (repository.save)
+   ├─ Loguea operación
+   └─ Convierte a VentaDTO
+
+4. Backend (Respuesta)
+   ├─ HTTP 201 CREATED
+   └─ Retorna VentaDTO con datos completos
+
+5. Frontend
+   ├─ Recibe response
+   ├─ Actualiza estado (ventas list)
+   ├─ Muestra confirmación
+   └─ Cierra modal
+```
+
+---
+
+### Flujo de Cálculo de Totales
+
+```
+DATOS DE ENTRADA:
+- items = [
+    {cantidad: 2, costoUnitario: 100, precioAplicado: 150},
+    {cantidad: 1, costoUnitario: 50, precioAplicado: 80}
+  ]
+- descuentoPorcentaje = 10
+
+CÁLCULO:
+┌─ POR ITEM
+│  Item 1: ganancia = 150 - 100 = 50
+│           subtotal_costo = 2 × 100 = 200
+│           subtotal_venta = 2 × 150 = 300
+│  Item 2: ganancia = 80 - 50 = 30
+│           subtotal_costo = 1 × 50 = 50
+│           subtotal_venta = 1 × 80 = 80
+│
+├─ POR VENTA
+│  Subtotal sin desc = 300 + 80 = 380
+│  Descuento = 380 × (10/100) = 38
+│  Subtotal con desc = 380 - 38 = 342
+│  IVA (21%) = 342 × 0.21 = 71.82
+│  TOTAL INGRESO = 342 + 71.82 = 413.82
+│
+└─ GANANCIA REAL
+   Costo total = 200 + 50 = 250
+   Ganancia = 413.82 - 250 = 163.82
+
+RESULTADO:
+{
+  subtotalCosto: 250,
+  subtotalVenta: 380,
+  descuentoPorcentaje: 10,
+  descuentoMonto: 38,
+  iva: 71.82,
+  totalIngreso: 413.82,
+  gananciaReal: 163.82
+}
+```
+
+---
+
+## 🎯 PATRONES DE DISEÑO UTILIZADOS
+
+### 1. **MVC (Model-View-Controller)**
+- **Model:** Entidades (Venta, Cliente, etc)
+- **View:** Frontend (React)
+- **Controller:** Controllers que orquestan
+
+### 2. **DAO (Data Access Object)**
+- **Repositories:** Acceso abstracto a datos
+- Facilita testing (cambiar implementación)
+
+### 3. **Service Locator**
+- **Inyección de dependencias:** @Autowired
+- Spring administra ciclo de vida
+
+### 4. **Factory**
+- **mapToDTO():** Convierte Entity → DTO
+- **crearVentaItem():** Crea items desde DTO
+
+### 5. **Template Method**
+- **BaseService:** Define estructura CRUD
+- Subclases implementan métodos específicos
+
+### 6. **Observer**
+- **@PrePersist, @PreUpdate:** Hooks de JPA
+- Auditoría automática (createdAt, updatedAt)
+
+---
+
+## 🔒 MANEJO DE EXCEPCIONES
+
+**Patrón:**
+```
+Service lanza excepción → GlobalExceptionHandler captura → Retorna ErrorResponseDTO
+```
+
+**Tipos de excepciones:**
+
+```java
+// 1. No encontrado (404)
+throw new ResourceNotFoundException("Venta no encontrada");
+
+// 2. Error de negocio (400)
+throw new BusinessException("NO_ITEMS", "La venta debe tener items");
+
+// 3. Error de validación (400)
+throw new ValidationException("email", "Email no válido");
+
+// 4. Genérica (500)
+throw new Exception("Error interno");
+```
+
+**GlobalExceptionHandler retorna:**
+```json
+{
+  "code": "VALIDATION_ERROR",
+  "message": "Errores de validación en los datos",
+  "status": 400,
+  "timestamp": "2024-03-19T10:30:00",
+  "path": "/api/ventas",
+  "details": {
+    "cantidad": "Debe ser mayor a 0",
+    "email": "Email no válido"
+  }
+}
+```
+
+---
+
+## 📚 CONVENCIONES
+
+### Transacciones
+```java
+@Transactional                     // Lectura y escritura
+@Transactional(readOnly = true)   // Solo lectura (más eficiente)
+```
+
+### Logging
+```java
+logger.info("Creando venta...");
+logger.warn("Descuento > 100%");
+logger.error("Error al guardar", exception);
+```
+
+### Fetch Lazy vs Eager
+```java
+// LAZY: Carga bajo demanda (más eficiente)
+@ManyToOne(fetch = FetchType.LAZY)
+private Cliente cliente;
+
+// EAGER: Carga inmediato (más llamadas a BD)
+@ManyToOne(fetch = FetchType.EAGER)
+private Cliente cliente;
+```
+
+---
+
+## 🚀 ESCALABILIDAD
+
+**Para agregar nueva entidad (Ejemplo: Producto):**
+
+1. **Domain:** Crear `Producto.java` en `domain/producto/`
+2. **DTO:** Crear `ProductoDTO.java` en `dto/producto/`
+3. **Repository:** `ProductoRepository.java` en `repository/producto/`
+4. **Service:** `ProductoService.java` en `service/producto/`
+5. **Controller:** `ProductoController.java` en `controller/producto/`
+6. **SQL:** Agregar migración `V9__Create_Producto_Table.sql`
+
+**Todo sigue el mismo patrón = Fácil de mantener y escalar**
+
+---
+
+## 📈 EVOLUCIÓN FUTURA
+
+### v1.1.0
+- [ ] Autenticación JWT
+- [ ] Caché (Redis)
+- [ ] Testing automáticos
+
+### v2.0.0
+- [ ] Elasticsearch para búsquedas
+- [ ] Eventos de dominio
+- [ ] CQRS (Command Query Responsibility Segregation)
+
+---
+
+**Última actualización:** Marzo 2026

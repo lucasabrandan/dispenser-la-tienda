@@ -1,0 +1,380 @@
+# 🔧 SETUP - Guía de Instalación y Configuración
+
+Instrucciones paso a paso para configurar el proyecto localmente.
+
+---
+
+## 📋 Requisitos Previos
+
+### Hardware Mínimo
+- CPU: Dual core 2GHz+
+- RAM: 4GB (8GB recomendado)
+- Disco: 5GB disponibles
+
+### Software Requerido
+
+| Software | Versión Mínima | Descargar |
+|----------|---|---|
+| Java JDK | 21 | https://jdk.java.net/21/ |
+| Maven | 3.8+ | https://maven.apache.org/ |
+| Node.js | 18 LTS | https://nodejs.org/ |
+| npm | 9+ | Incluido con Node.js |
+| PostgreSQL | 15 | https://www.postgresql.org/ |
+| Git | 2.30+ | https://git-scm.com/ |
+
+### Verificar Instalación
+
+```bash
+# Java
+java -version
+
+# Maven
+mvn -version
+
+# Node.js y npm
+node -v
+npm -v
+
+# Git
+git --version
+
+# PostgreSQL
+psql --version
+```
+
+---
+
+## 🗄️ Configuración de Base de Datos
+
+### 1. Crear Base de Datos
+
+```bash
+# Abrir terminal PostgreSQL
+psql -U postgres
+
+# Crear BD
+CREATE DATABASE dispenser_la_tienda;
+
+# Crear usuario (opcional)
+CREATE USER dispenser_admin WITH PASSWORD 'tu_password_seguro';
+GRANT ALL PRIVILEGES ON DATABASE dispenser_la_tienda TO dispenser_admin;
+
+# Conectar a BD
+\c dispenser_la_tienda
+```
+
+### 2. Verificar Conexión
+
+```bash
+# Desde terminal
+psql -U postgres -d dispenser_la_tienda -c "SELECT version();"
+
+# Debería mostrar información de PostgreSQL
+```
+
+---
+
+## 📥 Clonar Repositorio
+
+```bash
+# Clonar
+git clone https://github.com/lucasabrandan/dispenser-la-tienda.git
+
+# Entrar a carpeta
+cd dispenser-la-tienda
+
+# Ver ramas disponibles
+git branch -a
+
+# Estar en master
+git checkout master
+```
+
+---
+
+## ⚙️ Configurar Backend
+
+### 1. Navegar a carpeta backend
+
+```bash
+cd backend
+```
+
+### 2. Configurar application-dev.properties
+
+```bash
+# Abrir archivo de configuración
+nano src/main/resources/application-dev.properties
+```
+
+**Contenido típico:**
+
+```properties
+# Server
+server.port=8080
+
+# Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/dispenser_la_tienda
+spring.datasource.username=postgres
+spring.datasource.password=tu_password
+
+# JPA/Hibernate
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# Flyway (migraciones SQL)
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+
+# Logging
+logging.level.root=INFO
+logging.level.com.dispenserlatienda=DEBUG
+
+# CORS
+app.cors.allowed-origins=http://localhost:3000
+```
+
+### 3. Compilar Backend
+
+```bash
+# Desde carpeta /backend
+mvn clean package
+
+# Debería terminar con: BUILD SUCCESS
+```
+
+### 4. Ejecutar Backend
+
+```bash
+# Opción 1: Con Maven
+mvn spring-boot:run
+
+# Opción 2: JAR generado
+java -jar target/dispenser-la-tienda-1.0.0.jar
+
+# Debería mostrar:
+# Started DispenserLaTiendaApplication in X seconds
+```
+
+### 5. Verificar Backend
+
+```bash
+# En otra terminal
+curl http://localhost:8080/health
+
+# Debería retornar: {"status":"UP"}
+```
+
+---
+
+## 💻 Configurar Frontend
+
+### 1. Navegar a carpeta frontend
+
+```bash
+cd frontend
+```
+
+### 2. Instalar Dependencias
+
+```bash
+npm install
+
+# Esto crea carpeta node_modules/ (puede tardar)
+```
+
+### 3. Crear .env (opcional)
+
+```bash
+# Crear archivo
+echo "VITE_API_BASE_URL=http://localhost:8080" > .env.local
+```
+
+### 4. Ejecutar Frontend
+
+```bash
+# Desarrollo con hot-reload
+npm run dev
+
+# Debería mostrar:
+# VITE v4.0.0  ready in XXX ms
+# ➜  Local:   http://localhost:3000/
+```
+
+### 5. Acceder a Frontend
+
+Abrir navegador:
+```
+http://localhost:3000
+```
+
+---
+
+## ✅ Verificar Instalación Completa
+
+### Backend OK si:
+- ✅ `mvn clean package` termina con BUILD SUCCESS
+- ✅ Spring Boot inicia sin errores
+- ✅ GET http://localhost:8080/health retorna {"status":"UP"}
+
+### Frontend OK si:
+- ✅ `npm install` completa sin errores
+- ✅ `npm run dev` inicia sin warnings críticos
+- ✅ Navegador muestra interfaz en http://localhost:3000
+
+### BD OK si:
+- ✅ Se puede conectar con `psql`
+- ✅ Migraciones Flyway se ejecutan al iniciar Backend
+- ✅ Aparecen tablas en BD:
+
+```sql
+\d
+-- Debería mostrar: cliente, equipo, venta, venta_items, etc.
+```
+
+---
+
+## 🧪 Tests Manuales
+
+### Test Backend - Crear Venta
+
+```bash
+# POST /api/ventas
+curl -X POST http://localhost:8080/api/ventas \
+  -H "Content-Type: application/json" \
+  -d '{
+    "clienteId": 1,
+    "fecha": "2024-03-19",
+    "items": [
+      {
+        "descripcion": "Compresor",
+        "cantidad": 2,
+        "costoUnitario": 100,
+        "precioListaUnitario": 150,
+        "precioAplicadoUnitario": 150
+      }
+    ],
+    "descuentoPorcentaje": 0
+  }'
+```
+
+### Test Backend - Obtener Venta
+
+```bash
+# GET /api/ventas/{id}
+curl http://localhost:8080/api/ventas/1
+```
+
+### Test Frontend
+
+1. Abrir http://localhost:3000
+2. Navegar a "Ventas"
+3. Crear nueva venta
+4. Llenar formulario
+5. Guardar
+6. Debe aparecer en tabla
+
+---
+
+## 🐛 Solucionar Problemas
+
+### Error: "Port 8080 already in use"
+
+```bash
+# Linux/Mac
+lsof -i :8080
+kill -9 <PID>
+
+# Windows
+netstat -ano | findstr :8080
+taskkill /PID <PID> /F
+```
+
+### Error: "Cannot connect to database"
+
+```bash
+# Verificar BD está corriendo
+# En otra terminal:
+psql -U postgres -d dispenser_la_tienda
+
+# Si error de credenciales, cambiar en application-dev.properties
+```
+
+### Error: "Module not found" (Frontend)
+
+```bash
+# Limpiar e reinstalar
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+```
+
+### Error: "Compilation failed" (Backend)
+
+```bash
+# Limpiar caché Maven
+mvn clean
+
+# Reintentar compilación
+mvn package
+```
+
+---
+
+## 📁 Estructura de Archivos Generados
+
+Después de compilar/ejecutar, se crean:
+
+```
+backend/
+├── target/                    # Archivos compilados
+│   └── dispenser-la-tienda-1.0.0.jar
+└── .m2/                       # Caché Maven (local)
+
+frontend/
+├── node_modules/              # Dependencias npm (~500MB)
+├── dist/                       # Build para producción
+└── .env.local                  # Configuración local (ignorado en git)
+```
+
+**Nota:** Estos archivos NO se commitean a GitHub (están en .gitignore)
+
+---
+
+## 🔐 Seguridad Local
+
+Estos pasos son para DESARROLLO LOCAL SOLO:
+
+- ✅ Usar `localhost` (no exponer)
+- ✅ Contraseñas simples en local (no usar en producción)
+- ✅ Desactivar CORS en local (reactivar en prod)
+- ✅ Logs en DEBUG (reducir en prod)
+
+---
+
+## 🚀 Próximas Versiones
+
+### v1.1.0 (Cuando deploy)
+- Docker Compose para automatizar setup
+- Variables de entorno mejor estructuradas
+- Script de inicialización auto
+
+### v2.0.0
+- Setup asistido (wizard)
+- Docker official images
+- Kubernetes manifests
+
+---
+
+## 📞 Ayuda
+
+Si tienes problemas:
+
+1. Revisar logs: `backend/logs/` o consola
+2. Ver [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) (cuando esté disponible)
+3. Abrir issue en GitHub
+
+---
+
+**Última actualización:** Marzo 2026

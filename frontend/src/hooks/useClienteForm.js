@@ -1,82 +1,59 @@
 import { useState } from 'react';
 
-/**
- * useClienteForm - Custom Hook
- * Maneja toda la lógica del formulario de cliente
- * 
- * VENTAJAS:
- * - Separar lógica del componente visual
- * - Reutilizable en otros componentes
- * - Más fácil de testear
- */
-
 const INITIAL_STATE = {
-  clienteTipo: 'PARTICULAR',
-  nombre: '',
-  cuilDni: '',
-  telefono: '',
-  email: '',
-  notas: '',
-  condicionIva: '',
-  calle: '',
-  numero: '',
-  piso: '',
-  depto: '',
-  localidad: '',
-  provincia: 'Buenos Aires',
-  direccion: ''
+  clienteTipo:  'PARTICULAR',
+  nombre:       '',
+  cuilDni:      '',
+  telefono:     '',
+  email:        '',
+  notas:        '',
+  condicionIva: 'CONSUMIDOR_FINAL',
+  calle:        '',
+  numero:       '',
+  piso:         '',
+  depto:        '',
+  localidad:    '',
+  provincia:    'Buenos Aires',
+  direccion:    ''
 };
 
-export function useClienteForm(nombrePrellenado = '') {
-  // Estados
-  const [formData, setFormData] = useState({
-    ...INITIAL_STATE,
-    nombre: nombrePrellenado
-  });
-  const [errores, setErrores] = useState({});
+/**
+ * useClienteForm
+ * modoFlota = false → solo nombre obligatorio (cliente ocasional)
+ * modoFlota = true  → nombre + dirección + condiciónIVA obligatorios
+ */
+export function useClienteForm(nombrePrellenado = '', modoFlota = false) {
+  const [formData, setFormData] = useState({ ...INITIAL_STATE, nombre: nombrePrellenado });
+  const [errores,  setErrores]  = useState({});
   const [cargando, setCargando] = useState(false);
 
-  // Validar campo específico
-  const validarCampo = (nombreCampo, valor) => {
+  const camposObligatoriosFlota = ['nombre', 'calle', 'numero', 'localidad', 'condicionIva'];
+  const camposObligatoriosRapido = ['nombre'];
+
+  const camposObligatorios = modoFlota ? camposObligatoriosFlota : camposObligatoriosRapido;
+
+  const validarCampo = (campo, valor) => {
     const nuevosErrores = { ...errores };
-    let tieneError = false;
+    const esObligatorio = camposObligatorios.includes(campo);
 
-    const camposObligatorios = [
-      'nombre', 'calle', 'numero', 'localidad', 'condicionIva'
-    ];
-
-    if (camposObligatorios.includes(nombreCampo) && !valor?.trim()) {
-      tieneError = true;
-    }
-
-    if (nombreCampo === 'nombre' && valor?.length < 3) {
-      tieneError = true;
-    }
-
-    if (nombreCampo === 'telefono' && valor && valor.replace(/\D/g, '').length < 10) {
-      tieneError = true;
-    }
-
-    if (tieneError) {
-      nuevosErrores[nombreCampo] = true;
+    if (esObligatorio && (!valor?.trim() || (campo === 'nombre' && valor.trim().length < 2))) {
+      nuevosErrores[campo] = true;
     } else {
-      delete nuevosErrores[nombreCampo];
+      delete nuevosErrores[campo];
     }
 
     setErrores(nuevosErrores);
-    return !tieneError;
+    return !nuevosErrores[campo];
   };
 
-  // Cambio en campo
   const handleChange = (e) => {
     const { name, value } = e.target;
     const nuevoForm = { ...formData, [name]: value };
 
-    // Auto-generar dirección
     if (['calle', 'numero', 'piso', 'localidad', 'provincia'].includes(name)) {
-      const calle = nuevoForm.calle || '';
-      const numero = nuevoForm.numero || '';
-      const piso = nuevoForm.piso ? `, Piso ${nuevoForm.piso}` : '';
+      const calle    = nuevoForm.calle    || '';
+      const numero   = nuevoForm.numero   || '';
+      const piso     = nuevoForm.piso ? `, Piso ${nuevoForm.piso}` : '';
       const localidad = nuevoForm.localidad || '';
       nuevoForm.direccion = `${calle} ${numero}${piso}, ${localidad}`.trim();
     }
@@ -85,38 +62,29 @@ export function useClienteForm(nombrePrellenado = '') {
     validarCampo(name, value);
   };
 
-  // Validar TODO el formulario
   const validarTodo = () => {
-    const camposObligatorios = ['nombre', 'calle', 'numero', 'localidad', 'condicionIva'];
     const nuevosErrores = {};
-    let tieneErrores = false;
-
     camposObligatorios.forEach(campo => {
-      if (!formData[campo] || formData[campo].toString().trim() === '') {
+      const val = formData[campo];
+      if (!val || val.toString().trim() === '') {
         nuevosErrores[campo] = true;
-        tieneErrores = true;
       }
     });
-
+    if (formData.nombre && formData.nombre.trim().length < 2) {
+      nuevosErrores.nombre = true;
+    }
     setErrores(nuevosErrores);
-    return !tieneErrores;
+    return Object.keys(nuevosErrores).length === 0;
   };
 
-  // Resetear formulario
   const resetear = () => {
     setFormData({ ...INITIAL_STATE, nombre: nombrePrellenado });
     setErrores({});
   };
 
   return {
-    formData,
-    errores,
-    cargando,
-    handleChange,
-    validarTodo,
-    resetear,
-    setFormData,
-    setErrores,
-    setCargando
+    formData, errores, cargando,
+    handleChange, validarTodo, resetear,
+    setFormData, setErrores, setCargando
   };
 }

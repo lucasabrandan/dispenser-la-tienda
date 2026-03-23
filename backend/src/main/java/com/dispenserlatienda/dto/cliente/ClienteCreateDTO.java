@@ -1,7 +1,7 @@
 package com.dispenserlatienda.dto.cliente;
 
-import com.dispenserlatienda.domain.ClienteTipo;
-import com.dispenserlatienda.domain.CondicionIva;
+import com.dispenserlatienda.domain.cliente.ClienteTipo;
+import com.dispenserlatienda.domain.cliente.CondicionIva;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
