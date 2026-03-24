@@ -1,129 +1,99 @@
 import React from 'react';
-import EquipoItem from '../EquipoItem';
-import { abrirMaps, abrirWhatsApp } from '../../utils/clienteUtils';
+import Card from '../ui/Card';
+import ClienteFormFields from './ClienteFormFields';
+import ClienteFormDireccion from './ClienteFormDireccion';
 
-export default function ClienteCard({
-    cliente, sedes, equipos,
-    isExpanded, onToggleExpand,
-    onEditCliente, onDeleteCliente,
-    onEditEquipo, onArchivarEquipo, onRestaurarEquipo, onEliminarEquipoDefinitivo,
-    onAddSede, onAddEquipo
-}) {
-    const sedesCli       = sedes.filter(s => s.cliente?.id === cliente.id);
-    const eqCli          = equipos.filter(eq => sedesCli.map(s => s.id).includes(eq.sede?.id));
-    const equiposActivos  = eqCli.filter(eq => eq.activo !== false);
-    const equiposArchivados = eqCli.filter(eq => eq.activo === false);
+/**
+ * ClienteForm — modal de EDICIÓN de cliente existente.
+ * Sin selector de tipo — solo editar los datos que ya tiene.
+ */
+export default function ClienteForm({ form, setForm, onSubmit, onClose }) {
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        const nuevoForm = { ...form, [name]: value };
+
+        if (['calle', 'numero', 'piso', 'localidad', 'provincia'].includes(name)) {
+            const calle     = nuevoForm.calle     || '';
+            const numero    = nuevoForm.numero    || '';
+            const piso      = nuevoForm.piso ? `, Piso ${nuevoForm.piso}` : '';
+            const localidad = nuevoForm.localidad || '';
+            nuevoForm.direccion = `${calle} ${numero}${piso}, ${localidad}`.trim();
+        }
+
+        setForm(nuevoForm);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!form.nombre?.trim() || form.nombre.trim().length < 2) return;
+        onSubmit(e);
+    };
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group overflow-hidden">
+        <>
+            <div className="fixed inset-0 bg-black/50 z-[999] backdrop-blur-sm" onClick={onClose} />
+            <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
+                <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
 
-            {/* HEADER */}
-            <div className="p-8 pb-6">
-                <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                        <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase leading-none mb-2">
-                            {cliente.nombre}
-                        </h4>
-                        <button
-                            onClick={onToggleExpand}
-                            className={`text-[9px] font-black px-3 py-1 rounded-full border transition-all ${
-                                isExpanded
-                                    ? 'bg-blue-600 border-blue-600 text-white'
-                                    : 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800 text-blue-600'
-                            }`}
-                        >
-                            💧 {eqCli.length} equipos {isExpanded ? '▲' : '▼'}
+                    <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
+                        <div>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">✏️ Editar Cliente</h2>
+                            <p className="text-xs text-slate-400 mt-1">{form.nombre}</p>
+                        </div>
+                        <button onClick={onClose}
+                            className="text-2xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                            ✕
                         </button>
                     </div>
-                    <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-xl grayscale group-hover:grayscale-0 transition-all">
-                        👤
-                    </div>
-                </div>
-                <p className="text-[11px] font-bold text-slate-400 uppercase leading-relaxed">
-                    📍 {cliente.calle} {cliente.numero} • {cliente.localidad}
-                </p>
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+
+                        <ClienteFormFields
+                            formData={form}
+                            errores={{}}
+                            handleChange={handleChange}
+                        />
+
+                        <div className="rounded-2xl border-2 border-slate-100 dark:border-slate-800 p-4">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+                                📍 Dirección
+                            </p>
+                            <ClienteFormDireccion
+                                formData={form}
+                                errores={{}}
+                                handleChange={handleChange}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-black text-slate-400 uppercase tracking-wide">
+                                Condición IVA
+                            </label>
+                            <select name="condicionIva"
+                                value={form.condicionIva || 'CONSUMIDOR_FINAL'}
+                                onChange={handleChange}
+                                className="w-full p-3 mt-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                                <option value="CONSUMIDOR_FINAL">👥 Consumidor Final</option>
+                                <option value="MONOTRIBUTO">💼 Monotributo</option>
+                                <option value="RESPONSABLE_INSCRIPTO">📋 Responsable Inscripto</option>
+                                <option value="NO_RESPONSABLE">❌ No Responsable</option>
+                            </select>
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <button type="button" onClick={onClose}
+                                className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-black text-sm uppercase hover:bg-slate-300 transition-all">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-sm uppercase hover:bg-blue-700 transition-all active:scale-95">
+                                ✅ Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </Card>
             </div>
-
-            {/* EXPANDIBLE */}
-            {isExpanded && (
-                <div className="px-8 pb-6 pt-2 bg-slate-50/50 dark:bg-slate-950/30 border-t border-slate-100 dark:border-slate-800">
-                    <div className="space-y-5 mt-4">
-                        {sedesCli.map(sede => (
-                            <div key={sede.id} className="space-y-2">
-                                <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase flex items-center gap-2">
-                                    🏠 {sede.nombreSede}
-                                </p>
-
-                                {/* Activos */}
-                                <div className="grid gap-2 ml-4">
-                                    {equiposActivos.filter(eq => eq.sede?.id === sede.id).map(eq => (
-                                        <EquipoItem
-                                            key={eq.id} equipo={eq} cliente={cliente}
-                                            onEditar={onEditEquipo}
-                                            onArchivar={onArchivarEquipo}
-                                            onRestaurar={onRestaurarEquipo}
-                                            onEliminarDefinitivo={onEliminarEquipoDefinitivo}
-                                        />
-                                    ))}
-                                </div>
-
-                                {/* Archivados */}
-                                {equiposArchivados.filter(eq => eq.sede?.id === sede.id).length > 0 && (
-                                    <div className="ml-4 mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                                        <p className="text-[8px] font-black text-slate-500 uppercase mb-2">📦 Archivados</p>
-                                        <div className="grid gap-2">
-                                            {equiposArchivados.filter(eq => eq.sede?.id === sede.id).map(eq => (
-                                                <EquipoItem
-                                                    key={eq.id} equipo={eq} cliente={cliente}
-                                                    onEditar={onEditEquipo}
-                                                    onArchivar={onArchivarEquipo}
-                                                    onRestaurar={onRestaurarEquipo}
-                                                    onEliminarDefinitivo={onEliminarEquipoDefinitivo}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="flex gap-2 mt-6">
-                        <button onClick={() => onAddSede(cliente)}
-                            className="flex-1 py-3 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-black text-[9px] uppercase hover:bg-slate-300 transition-all">
-                            + Sede
-                        </button>
-                        <button onClick={() => onAddEquipo(cliente)}
-                            className="flex-1 py-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-xl font-black text-[9px] uppercase hover:bg-blue-200 transition-all">
-                            + Equipo
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* FOOTER */}
-            <div className="px-8 py-6 mt-auto border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-                <div className="flex gap-2">
-                    <button onClick={() => abrirMaps(cliente)}
-                        className="w-10 h-10 bg-slate-900 dark:bg-slate-700 text-white rounded-xl flex items-center justify-center hover:scale-110 transition-all shadow-md">
-                        📍
-                    </button>
-                    <button onClick={() => abrirWhatsApp(cliente.telefono, cliente.nombre)}
-                        className="w-10 h-10 bg-[#25D366] text-white rounded-xl flex items-center justify-center hover:scale-110 transition-all shadow-md">
-                        💬
-                    </button>
-                </div>
-                <div className="flex gap-2">
-                    <button onClick={() => onEditCliente(cliente)}
-                        className="w-10 h-10 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">
-                        ✏️
-                    </button>
-                    <button onClick={() => onDeleteCliente(cliente.id)}
-                        className="w-10 h-10 bg-rose-50 dark:bg-rose-900/10 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all">
-                        🗑️
-                    </button>
-                </div>
-            </div>
-        </div>
+        </>
     );
 }

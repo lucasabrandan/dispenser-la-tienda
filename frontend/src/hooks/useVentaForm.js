@@ -3,10 +3,6 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 
-/**
- * useVentaForm
- * Acepta sedeIdOverride para el modo Mostrador (Venta Rápida).
- */
 export function useVentaForm(onSaved) {
     const [clientes,  setClientes]  = useState([]);
     const [repuestos, setRepuestos] = useState([]);
@@ -14,6 +10,7 @@ export function useVentaForm(onSaved) {
     const [productos, setProductos] = useState([]);
     const [repuestoElegido, setRepuestoElegido] = useState(null);
     const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(0);
+    const [costoEnvio, setCostoEnvio] = useState(0);
     const [modalClienteAbierto, setModalClienteAbierto] = useState(false);
     const [nombreClientePrellenado, setNombreClientePrellenado] = useState('');
 
@@ -35,14 +32,23 @@ export function useVentaForm(onSaved) {
 
     const agregarProducto = () => {
         if (!repuestoElegido) return;
-        setProductos(prev => [...prev, {
-            id:       repuestoElegido.id,
-            nombre:   repuestoElegido.nombre,
-            sku:      repuestoElegido.sku,
-            precio:   parseFloat(repuestoElegido.precio),
-            cantidad: 1,
-            subtotal: parseFloat(repuestoElegido.precio)
-        }]);
+        setProductos(prev => {
+            const idx = prev.findIndex(p => p.id === repuestoElegido.id);
+            if (idx > -1) {
+                const nuevos = [...prev];
+                nuevos[idx].cantidad += 1;
+                nuevos[idx].subtotal  = nuevos[idx].cantidad * nuevos[idx].precio;
+                return nuevos;
+            }
+            return [...prev, {
+                id:       repuestoElegido.id,
+                nombre:   repuestoElegido.nombre,
+                sku:      repuestoElegido.sku,
+                precio:   parseFloat(repuestoElegido.precio),
+                cantidad: 1,
+                subtotal: parseFloat(repuestoElegido.precio)
+            }];
+        });
         setRepuestoElegido(null);
     };
 
@@ -57,65 +63,120 @@ export function useVentaForm(onSaved) {
 
     const quitarProducto = (idx) => setProductos(prev => prev.filter((_, i) => i !== idx));
 
-    const totalBruto     = productos.reduce((a, b) => a + b.subtotal, 0);
-    const descuentoMonto = (totalBruto * descuentoPorcentaje) / 100;
-    const totalFinal     = totalBruto - descuentoMonto;
-    const clienteObj     = clientes.find(c => c.id.toString() === clienteId);
+    const subtotalProductos = productos.reduce((a, b) => a + b.subtotal, 0);
+    const envioNum          = parseFloat(costoEnvio) || 0;
+    const totalBruto        = subtotalProductos + envioNum;
+    const descuentoMonto    = (totalBruto * descuentoPorcentaje) / 100;
+    const totalFinal        = totalBruto - descuentoMonto;
+    const clienteObj        = clientes.find(c => c.id.toString() === clienteId);
 
-    // sedeIdOverride = sedeId del Mostrador cuando es Venta Rápida
-    const guardarVenta = async (confirmar = false, sedeIdOverride = null) => {
+    /**
+     * crearClienteRapido
+     * Crea un cliente con datos mínimos y retorna su ID.
+     */
+    const crearClienteRapido = async (datosCliente) => {
+        try {
+            const res = await api.post('/clientes', {
+                clienteTipo:  'PARTICULAR',
+                nombre:       datosCliente.nombre.trim(),
+                telefono:     datosCliente.telefono?.trim() || null,
+                email:        datosCliente.email?.trim()    || null,
+                condicionIva: 'CONSUMIDOR_FINAL',
+                calle:        datosCliente.calle?.trim()    || 'Sin dirección',
+                numero:       datosCliente.numero?.trim()   || '0',
+                localidad:    datosCliente.localidad?.trim() || 'Sin localidad',
+                provincia:    datosCliente.provincia?.trim() || 'Buenos Aires',
+                direccion:    datosCliente.calle ? `${datosCliente.calle} ${datosCliente.numero}, ${datosCliente.localidad}` : null,
+                notas:        datosCliente.notas?.trim() || null,
+            });
+            setClientes(prev => [...prev, res.data]);
+            return res.data;
+        } catch (err) {
+            toast.error('Error al registrar cliente');
+            return null;
+        }
+    };
+
+    /**
+     * guardarVenta
+     * Si registrarCliente=true y datosCliente tiene nombre,
+     * primero crea el cliente en BD y lo asocia a la venta.
+     */
+    const guardarVenta = async (
+        confirmar        = false,
+        sedeIdOverride   = null,
+        nombreOverride   = null,
+        telefonoOverride = null,
+        registrarCliente = false,
+        datosCliente     = null
+    ) => {
         if (!clienteId || productos.length === 0) {
             toast.error('Falta cliente o productos');
             return;
         }
 
-        const sedeIdFinal = sedeIdOverride || 1;
         const loading = toast.loading(confirmar ? 'Confirmando...' : 'Guardando...');
 
         try {
+            let sedeIdFinal = sedeIdOverride || 1;
+            let nombreFinal = nombreOverride?.trim() || clienteObj?.nombre || 'Mostrador';
+            let sedeNombreFinal = sedeIdOverride ? 'Mostrador' : 'Mostrador';
+
+            // Si quiere registrar el cliente, crearlo primero
+            if (registrarCliente && datosCliente?.nombre?.trim()) {
+                const nuevoCliente = await crearClienteRapido(datosCliente);
+                if (nuevoCliente) {
+                    nombreFinal = nuevoCliente.nombre;
+                    toast.success(`👤 Cliente "${nuevoCliente.nombre}" registrado`, { duration: 2000 });
+                }
+            }
+
             await api.post('/servicios', {
                 sedeId:       parseInt(sedeIdFinal),
                 usuarioId:    1,
                 fecha:        new Date().toISOString().split('T')[0],
                 servicioTipo: 'VENTA',
                 estado:       confirmar ? 'REALIZADO' : 'PRESUPUESTO',
-                clienteNombre: clienteObj?.nombre || 'Mostrador',
-                sedeNombre:   sedeIdOverride ? 'Mostrador' : 'Mostrador',
+                clienteNombre: nombreFinal,
+                sedeNombre:   sedeNombreFinal,
                 descuentoPorcentaje,
                 totalConDescuento: totalFinal,
                 items: [{
                     equipoSerial:    'MOSTRADOR',
                     tecnico:         'Mostrador',
                     costo:           totalFinal,
-                    costoExtra:      0,
+                    costoExtra:      envioNum,
                     metodoPago:      'EFECTIVO',
-                    trabajoRealizado: `VENTA: ${productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')}`,
+                    trabajoRealizado: `VENTA: ${productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')}${envioNum > 0 ? ` | Envío: $${envioNum}` : ''}`,
                     trabajoTipo:     'VENTA',
                     repuestosUsados: productos,
                     garantiaHasta:   null
                 }]
             });
+
             toast.success('✅ ¡Venta guardada!', { id: loading });
             setProductos([]);
             setClienteId(null);
             setDescuentoPorcentaje(0);
+            setCostoEnvio(0);
             if (onSaved) onSaved();
         } catch (err) {
             toast.error(`❌ ${err.response?.data?.mensaje || err.message}`, { id: loading });
         }
     };
 
-    const dispararPDF = () => {
+    const dispararPDF = (nombreOverride = null) => {
+        const nombreFinal = nombreOverride?.trim() || clienteObj?.nombre || 'Mostrador';
         generarRemitoPDFPremium({
             esPresupuesto: false,
-            cliente:       clienteObj,
-            sede:          { nombreSede: 'Mostrador' },
-            tecnico:       'Mostrador',
+            cliente:  { nombre: nombreFinal },
+            sede:     { nombreSede: 'Mostrador' },
+            tecnico:  'Mostrador',
             ticketItems: [{
                 equipoSerial:    'MOSTRADOR',
                 trabajo:         `VENTA: ${productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')}`,
                 repuestosUsados: productos,
-                costoExtra:      0,
+                costoExtra:      envioNum,
                 totalCalculado:  totalFinal,
                 resumenTexto:    `VENTA: ${productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')}`
             }],
@@ -138,7 +199,8 @@ export function useVentaForm(onSaved) {
         productos,
         repuestoElegido, setRepuestoElegido,
         descuentoPorcentaje, setDescuentoPorcentaje,
-        descuentoMonto, totalBruto, totalFinal,
+        costoEnvio, setCostoEnvio,
+        descuentoMonto, subtotalProductos, totalBruto, totalFinal, envioNum,
         modalClienteAbierto, setModalClienteAbierto,
         nombreClientePrellenado, setNombreClientePrellenado,
         agregarProducto, actualizarCantidad, quitarProducto,

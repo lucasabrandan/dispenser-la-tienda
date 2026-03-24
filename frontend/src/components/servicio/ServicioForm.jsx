@@ -33,6 +33,7 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
     finalizar, refrescarDatos, onClienteSeleccionado,
     calcularGananciaRepuesto, calcularResumenGanancia,
     leyenda, setLeyenda,
+    fechaServicio, setFechaServicio,
   } = useServicioForm(servicioParaEditar);
 
   const [modalEquipoAbierto, setModalEquipoAbierto]       = React.useState(false);
@@ -69,7 +70,7 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
       esPresupuesto, cliente: clienteObj, sede: sedeObj,
       tecnico: 'Marcos', ticketItems, descuentoPorcentaje,
       totalFinal: totalConDescuento,
-      fechaServicio: new Date().toISOString().split('T')[0],
+      fechaServicio: fechaServicio,
       leyenda,
     });
   };
@@ -98,6 +99,35 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null }) {
             className={`flex-1 py-4 rounded-xl font-black text-xs transition-all duration-300 ${!esPresupuesto ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30' : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700'}`}>
             🛒 Venta / Insumos
           </button>
+        </div>
+      )}
+
+      {/* FECHA DEL SERVICIO */}
+      {!estaBloqueado && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 mb-4 shadow-sm flex items-center gap-4">
+          <div className="flex-1">
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+              Fecha del servicio
+            </label>
+            <input
+              type="date"
+              value={fechaServicio}
+              onChange={e => setFechaServicio(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              className="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+            />
+          </div>
+          {fechaServicio !== new Date().toISOString().split('T')[0] && (
+            <div className="shrink-0 text-right">
+              <p className="text-[9px] font-black text-amber-500 uppercase">Carga histórica</p>
+              <button
+                onClick={() => setFechaServicio(new Date().toISOString().split('T')[0])}
+                className="text-[9px] text-slate-400 hover:text-blue-500 font-bold mt-1"
+              >
+                Usar hoy
+              </button>
+            </div>
+          )}
         </div>
       )}
 

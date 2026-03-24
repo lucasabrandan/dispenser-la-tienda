@@ -4,41 +4,51 @@ import { toast } from 'react-hot-toast';
 import { useClienteData } from '../../hooks/useClienteData';
 import { useEquipoActions } from '../../hooks/useEquipoActions';
 import { filtrarClientesPorBusqueda } from '../../utils/clienteUtils';
-import ClienteCard from './ClienteCard';
-import ClienteForm from './ClienteForm';
-import SedeModal from '../SedeModal';
-import EquipoModal from '../EquipoModal';
+import ClienteCard        from './ClienteCard';
+import ClienteForm        from './ClienteForm';
+import CrearClienteModal  from './CrearClienteModal';
+import SedeModal          from '../SedeModal';
+import EquipoModal        from '../EquipoModal';
 
 export default function ClienteManager() {
     const { clientes, sedes, equipos, cargarDatos } = useClienteData();
     const { handleArchivar, handleRestaurar, handleEliminarDefinitivo } = useEquipoActions(cargarDatos);
 
-    const [busqueda, setBusqueda]         = useState('');
-    const [modalOpen, setModalOpen]       = useState(null);
+    const [busqueda, setBusqueda]               = useState('');
+    const [modalOpen, setModalOpen]             = useState(null);
     const [selectedCliente, setSelectedCliente] = useState(null);
     const [selectedEquipo, setSelectedEquipo]   = useState(null);
-    const [expandedId, setExpandedId]     = useState(null);
+    const [expandedId, setExpandedId]           = useState(null);
+
+    // Solo para edición
     const [form, setForm] = useState({
         id: null, nombre: '', calle: '', numero: '', piso: '', depto: '',
         localidad: '', provincia: 'Buenos Aires', telefono: '', cuilDni: '',
-        notas: '', condicionIva: ''
+        notas: '', condicionIva: 'CONSUMIDOR_FINAL', clienteTipo: 'PARTICULAR'
     });
 
     const filtrados = filtrarClientesPorBusqueda(clientes, sedes, equipos, busqueda);
 
-    // ── Handlers cliente ──────────────────────────────────────────────────────
+    // ── Editar cliente existente ───────────────────────────────────────────────
     const handleGuardarCliente = async (e) => {
         e.preventDefault();
         const loading = toast.loading('Guardando...');
         try {
-            const payload = { ...form, clienteTipo: 'PARTICULAR' };
-            if (form.id) await api.put(`/clientes/${form.id}`, payload);
-            else         await api.post('/clientes', payload);
-            toast.success('✅ Guardado', { id: loading });
+            const payload = {
+                ...form,
+                clienteTipo:  form.clienteTipo  || 'PARTICULAR',
+                condicionIva: form.condicionIva || 'CONSUMIDOR_FINAL',
+                calle:    form.calle?.trim()    || 'Sin dirección',
+                numero:   form.numero?.trim()   || '0',
+                localidad: form.localidad?.trim() || 'Sin localidad',
+                provincia: form.provincia?.trim() || 'Buenos Aires',
+            };
+            await api.put(`/clientes/${form.id}`, payload);
+            toast.success('✅ Cliente actualizado', { id: loading });
             setModalOpen(null);
             cargarDatos();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Error al guardar', { id: loading });
+            toast.error(err.response?.data?.mensaje || 'Error al guardar', { id: loading });
         }
     };
 
@@ -55,19 +65,10 @@ export default function ClienteManager() {
 
     const handleEditarCliente = (cliente) => {
         setForm({ ...cliente, id: cliente.id });
-        setModalOpen('cliente');
+        setModalOpen('editar');
     };
 
-    const handleNuevoCliente = () => {
-        setForm({
-            id: null, nombre: '', calle: '', numero: '', piso: '', depto: '',
-            localidad: '', provincia: 'Buenos Aires', telefono: '', cuilDni: '',
-            notas: '', condicionIva: ''
-        });
-        setModalOpen('cliente');
-    };
-
-    // ── Handlers equipo / sede ────────────────────────────────────────────────
+    // ── Equipos y sedes ───────────────────────────────────────────────────────
     const handleEditarEquipo = (equipo, cliente) => {
         setSelectedEquipo(equipo);
         setSelectedCliente(cliente);
@@ -108,7 +109,7 @@ export default function ClienteManager() {
                     <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-1">Gestión de Flota</p>
                 </div>
                 <button
-                    onClick={handleNuevoCliente}
+                    onClick={() => setModalOpen('nuevo')}
                     className="bg-blue-600 hover:bg-blue-700 text-white h-14 px-8 rounded-2xl font-black text-xs uppercase shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                 >
                     + Nuevo
@@ -137,8 +138,15 @@ export default function ClienteManager() {
                 ))}
             </div>
 
-            {/* MODALES */}
-            {modalOpen === 'cliente' && (
+            {/* MODAL NUEVO — usa CrearClienteModal con selector Particular/Flota */}
+            <CrearClienteModal
+                isOpen={modalOpen === 'nuevo'}
+                onClose={() => setModalOpen(null)}
+                onClienteCreado={() => { setModalOpen(null); cargarDatos(); }}
+            />
+
+            {/* MODAL EDITAR — usa ClienteForm con selector Particular/Flota */}
+            {modalOpen === 'editar' && (
                 <ClienteForm
                     form={form}
                     setForm={setForm}

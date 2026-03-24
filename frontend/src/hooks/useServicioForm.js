@@ -24,6 +24,7 @@ export function useServicioForm(servicioParaEditar = null) {
 
   const [repuestoElegido, setRepuestoElegido] = useState(null);
   const [leyenda, setLeyenda] = useState('');
+  const [fechaServicio, setFechaServicio] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     const cargar = async () => {
@@ -250,7 +251,7 @@ export function useServicioForm(servicioParaEditar = null) {
       const servicioData = {
         sedeId:       parseInt(sedeIdReal),
         usuarioId:    1,
-        fecha:        new Date().toISOString().split('T')[0],
+        fecha:        fechaServicio,
         servicioTipo: tieneEquipo ? 'TECNICA' : 'VENTA',
         estado:       confirmarTrabajo ? 'REALIZADO' : 'PRESUPUESTO',
         clienteNombre: nombreCliente,
@@ -288,6 +289,7 @@ export function useServicioForm(servicioParaEditar = null) {
       setIdEdicion(null);
       setDescuentoPorcentaje(0);
       setLeyenda('');
+      setFechaServicio(new Date().toISOString().split('T')[0]);
       return true;
     } catch (err) {
       toast.error(`❌ ${err.response?.data?.mensaje || err.message || 'Error de servidor'}`, { id: loading });
@@ -341,5 +343,6 @@ export function useServicioForm(servicioParaEditar = null) {
     calcularGananciaRepuesto,
     calcularResumenGanancia,
     leyenda, setLeyenda,
+    fechaServicio, setFechaServicio,
   };
 }
