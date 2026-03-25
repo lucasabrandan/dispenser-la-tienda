@@ -253,6 +253,7 @@ export default function ServicioManager() {
                         <ServicioForm
                             onSaved={() => { cerrarModal(); cargarServicios(); }}
                             servicioParaEditar={servicioEditar}
+                            soloTecnico
                         />
                     </div>
                 </div>

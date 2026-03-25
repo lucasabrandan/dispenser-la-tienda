@@ -4,10 +4,6 @@ import { toast } from 'react-hot-toast';
 import Card from '../ui/Card';
 import { useProductoForm } from '../../hooks/useProductoForm';
 
-/**
- * ProductoForm
- * Modal para crear/editar productos con cálculos automáticos.
- */
 export default function ProductoForm({
     isOpen,
     onClose,
@@ -34,18 +30,37 @@ export default function ProductoForm({
         const loadingToast = toast.loading('Guardando producto...');
 
         try {
-            const fd = new FormData();
-            fd.append('sku',                formData.sku.trim());
-            fd.append('nombre',             formData.nombre.trim());
-            fd.append('costo',              parseFloat(formData.costo));
-            fd.append('porcentajeGanancia', parseFloat(formData.porcentajeGanancia));
-            fd.append('porcentajeMarkup',   parseFloat(formData.porcentajeMarkup));
-            fd.append('precioLista',        precioLista);
-            if (formData.foto) fd.append('foto', formData.foto);
+            let response;
 
-            const response = productoEdicion?.id
-                ? await api.put(`/repuestos/${productoEdicion.id}`, fd)
-                : await api.post('/repuestos', fd);
+            if (productoEdicion?.id) {
+                // Siempre FormData en PUT — Spring Boot requiere multipart
+                const fd = new FormData();
+                fd.append('sku',                formData.sku.trim());
+                fd.append('nombre',             formData.nombre.trim());
+                fd.append('descripcion',        formData.descripcion?.trim() || '');
+                fd.append('costo',              parseFloat(formData.costo)              || 0);
+                fd.append('porcentajeGanancia', parseFloat(formData.porcentajeGanancia) || 0);
+                fd.append('porcentajeMarkup',   parseFloat(formData.porcentajeMarkup)   || 0);
+                fd.append('precioLista',        parseFloat(precioLista)                 || 0);
+                if (formData.foto) fd.append('foto', formData.foto);
+                response = await api.put(
+                    `/repuestos/${productoEdicion.id}`,
+                    fd,
+                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                );
+            } else {
+                // Crear → FormData siempre (puede o no tener foto)
+                const fd = new FormData();
+                fd.append('sku',                formData.sku.trim());
+                fd.append('nombre',             formData.nombre.trim());
+                fd.append('descripcion',        formData.descripcion?.trim() || '');
+                fd.append('costo',              parseFloat(formData.costo)              || 0);
+                fd.append('porcentajeGanancia', parseFloat(formData.porcentajeGanancia) || 0);
+                fd.append('porcentajeMarkup',   parseFloat(formData.porcentajeMarkup)   || 0);
+                fd.append('precioLista',        parseFloat(precioLista)                 || 0);
+                if (formData.foto) fd.append('foto', formData.foto);
+                response = await api.post('/repuestos', fd);
+            }
 
             toast.success(`✅ Producto "${formData.nombre}" guardado`, { id: loadingToast });
             if (onProductoGuardado) onProductoGuardado(response.data);
@@ -107,7 +122,6 @@ export default function ProductoForm({
                                     <input type="file" onChange={handleFotoChange} accept="image/*" className="hidden" />
                                 </label>
                             </div>
-                            {errores.foto && <p className="text-xs text-rose-500 mt-2">{errores.foto}</p>}
                         </div>
 
                         {/* SKU + NOMBRE */}
@@ -146,7 +160,6 @@ export default function ProductoForm({
                         {/* MÁRGENES */}
                         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800 space-y-4">
                             <h3 className="font-black text-sm text-blue-900 dark:text-blue-100">💰 Configurar Precios</h3>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-black text-slate-400 uppercase tracking-wide">% Ganancia Base</label>
