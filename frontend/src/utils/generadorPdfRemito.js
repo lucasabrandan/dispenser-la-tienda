@@ -2,30 +2,31 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import {
-    DARK, RED, GOLD, WHITE, GRAY_LIGHT, GRAY_MID, GRAY_TEXT, WARM_BG, WARM_BORDER,
-    procesarFecha, dibujarHeaderPDF, dibujarFooterPDF, pdfLabel as label, pdfValue as value,
-    comprimirFoto
+    DARK, RED, GOLD, WHITE, GRAY_LIGHT, GRAY_MID, GRAY_TEXT,
+    procesarFecha, dibujarHeaderPDF, dibujarFooterPDF, comprimirFoto
 } from './pdfTheme';
 
 export const generarRemitoPDFPremium = async ({
-    esPresupuesto, cliente, sede, tecnico, ticketItems, totalFinal, fechaServicio,
+    esPresupuesto, cliente, sede, tecnico, ticketItems, fechaServicio,
     descuentoPorcentaje = 0,
     leyenda = ''
 }) => {
     if (!cliente || ticketItems.length === 0) {
-        return toast.error('⚠️ Datos insuficientes para generar el PDF.');
+        return toast.error('Datos insuficientes para generar el PDF.');
     }
 
-    const doc       = new jsPDF();
-    const fecha     = procesarFecha(fechaServicio);
+    const doc   = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    const fecha = procesarFecha(fechaServicio);
     const esTecnico = ticketItems.some(it => it.equipoSerial && it.equipoSerial !== 'MOSTRADOR');
+
     const tipoLabel = esPresupuesto
-        ? (esTecnico ? 'PRESUPUESTO TÉCNICO' : 'PRESUPUESTO VENTAS')
-        : (esTecnico ? 'REMITO DE SERVICIO'  : 'COMPROBANTE DE VENTA');
+        ? (esTecnico ? 'PRESUPUESTO DE SERVICIO TÉCNICO' : 'PRESUPUESTO DE VENTA')
+        : (esTecnico ? 'REMITO DE SERVICIO TÉCNICO'      : 'COMPROBANTE DE VENTA');
 
     const subtotalBruto = ticketItems.reduce((a, b) => a + (parseFloat(b.totalCalculado) || parseFloat(b.costo) || 0), 0);
     const pctDesc       = parseFloat(descuentoPorcentaje) || 0;
-    const montoDesc     = pctDesc > 0 ? (subtotalBruto * pctDesc / 100) : 0;
+    const montoDesc     = pctDesc > 0 ? subtotalBruto * pctDesc / 100 : 0;
     const totalFinal_   = subtotalBruto - montoDesc;
 
     // ── HEADER ───────────────────────────────────────────────────────────────
@@ -35,257 +36,219 @@ export const generarRemitoPDFPremium = async ({
     );
 
     // ── BLOQUE CLIENTE ───────────────────────────────────────────────────────
-    let y = 46;
-    doc.setFillColor(245, 245, 245);
-    doc.rect(14, y - 2, 182, 34, 'F');
-    doc.setDrawColor(...GRAY_MID);
-    doc.setLineWidth(0.3);
-    doc.rect(14, y - 2, 182, 34, 'S');
-    doc.setFillColor(...GOLD);
-    doc.rect(14, y - 2, 3, 34, 'F');
+    // Sin cajas decorativas — solo texto con jerarquía clara
+    let y = 52;
 
-    label(doc, 'Cliente', 22, y + 3);
+    doc.setDrawColor(...GRAY_MID);
+    doc.setLineWidth(0.2);
+    doc.line(14, y, pageW - 14, y);
+
+    y += 7;
+
+    // Label "Para:"
+    doc.setFontSize(7);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...RED);
+    doc.text('PARA', 14, y);
+
+    // Nombre del cliente — grande y en negrita
+    y += 5;
     doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
-    doc.text(cliente.nombre?.toUpperCase() || 'PARTICULAR', 22, y + 10);
+    doc.text(cliente.nombre?.toUpperCase() || 'PARTICULAR', 14, y);
+
+    // Datos de contacto — una línea discreta
+    y += 6;
+    const contacto = [
+        cliente.cuilDni  ? `DNI/CUIT: ${cliente.cuilDni}` : null,
+        cliente.telefono ? `Tel: ${cliente.telefono}`      : null,
+        sede?.direccion  || null,
+        cliente.email    || null
+    ].filter(Boolean).join('   ·   ');
 
     doc.setFontSize(8);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...GRAY_TEXT);
+    doc.text(contacto, 14, y, { maxWidth: pageW - 28 });
 
-    const lineas = [
-        [cliente.cuilDni ? `DNI/CUIT: ${cliente.cuilDni}` : null, `IVA: ${cliente.condicionIva || 'CONSUMIDOR FINAL'}`].filter(Boolean).join('   ·   '),
-        [sede?.nombreSede, sede?.direccion].filter(Boolean).join(' — '),
-        [cliente.telefono ? `Tel: ${cliente.telefono}` : null, cliente.email].filter(Boolean).join('   ·   ')
-    ].filter(Boolean);
-
-    lineas.forEach((l, i) => doc.text(l, 22, y + 17 + i * 5));
-
-    y += 42;
+    y += 3;
+    doc.setLineWidth(0.2);
+    doc.line(14, y + 4, pageW - 14, y + 4);
+    y += 12;
 
     // ── ITEMS ────────────────────────────────────────────────────────────────
     if (esTecnico) {
 
         for (const [idx, item] of ticketItems.entries()) {
-            if (y > 220) { doc.addPage(); y = 20; }
+            if (y > 230) { doc.addPage(); y = 20; }
 
             const subtotalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
-
-            // ── TARJETA EQUIPO ────────────────────────────────────────────
-            // Header tarjeta oscuro
-            doc.setFillColor(...DARK);
-            doc.rect(14, y, 182, 12, 'F');
-
-            // Círculo rojo con número
-            doc.setFillColor(...RED);
-            doc.circle(22, y + 6, 5, 'F');
-            doc.setFontSize(9);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(...WHITE);
-            doc.text(`${idx + 1}`, 22, y + 8.5, { align: 'center' });
-
-            // Título equipo + S/N
-            doc.setFontSize(10);
-            doc.setTextColor(...WHITE);
-            doc.text(`EQUIPO ${idx + 1}`, 30, y + 5.5);
-            const sn = item.equipoSerial && item.equipoSerial !== 'MOSTRADOR' ? item.equipoSerial : null;
-            doc.setFontSize(8);
-            doc.setTextColor(180, 180, 180);
-            doc.text(sn ? `N/S: ${sn}` : 'Sin N/S registrado', 30, y + 10);
-
-            // Subtotal en dorado (derecha)
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(...GOLD);
-            doc.text(`$ ${subtotalEquipo.toLocaleString('es-AR')}`, 194, y + 8, { align: 'right' });
-
-            y += 12;
-
-            // ── Metadatos (modelo + ubicación) — fondo cálido ─────────────
-            const modelo    = item.modeloEquipo    || null;
+            const modelo   = item.modeloEquipo    || null;
+            const serial   = (item.equipoSerial && item.equipoSerial !== 'MOSTRADOR') ? item.equipoSerial : null;
             const ubicacion = item.ubicacionEquipo || null;
 
-            if (modelo || ubicacion) {
-                doc.setFillColor(...WARM_BG);
-                doc.rect(14, y, 182, 12, 'F');
-                doc.setDrawColor(...WARM_BORDER);
-                doc.line(14, y + 12, 196, y + 12);
+            // ── Título del equipo ─────────────────────────────────────────
+            // Número en rojo + nombre/modelo en negrita
+            doc.setFontSize(7);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...RED);
+            doc.text(`EQUIPO ${idx + 1}`, 14, y);
 
-                let xMeta = 18;
-                if (modelo) {
-                    label(doc, 'Modelo', xMeta, y + 5);
-                    doc.setFontSize(9);
-                    doc.setFont(undefined, 'normal');
-                    doc.setTextColor(80, 80, 80);
-                    doc.text(modelo, xMeta, y + 10);
-                    xMeta += 90;
-                }
-                if (ubicacion) {
-                    label(doc, 'Ubicación', xMeta, y + 5);
-                    doc.setFontSize(9);
-                    doc.setFont(undefined, 'normal');
-                    doc.setTextColor(80, 80, 80);
-                    doc.text(ubicacion, xMeta, y + 10);
-                }
-                y += 12;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...DARK);
+            doc.text(modelo ? modelo.toUpperCase() : 'Dispenser', 14, y + 6);
+
+            // Serial y ubicación
+            const metaLinea = [
+                serial     ? `N/S: ${serial}`        : null,
+                ubicacion  ? `Ubicación: ${ubicacion}` : null
+            ].filter(Boolean).join('   ·   ');
+
+            if (metaLinea) {
+                doc.setFontSize(7.5);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(...GRAY_TEXT);
+                doc.text(metaLinea, 14, y + 12);
             }
 
-            // ── Descripción trabajo ───────────────────────────────────────
+            // Subtotal del equipo — derecha, mismo nivel que el título
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...DARK);
+            doc.text(`$ ${subtotalEquipo.toLocaleString('es-AR')}`, pageW - 14, y + 6, { align: 'right' });
+
+            y += metaLinea ? 18 : 12;
+
+            // ── Trabajo realizado ─────────────────────────────────────────
             const textoTrabajo = (item.trabajo || item.trabajoRealizado || item.resumenTexto || '')
                 .replace(/\| MO:.*/, '').trim();
 
             if (textoTrabajo) {
-                doc.setFillColor(252, 252, 252);
-                const lines = doc.splitTextToSize(textoTrabajo, 172);
-                const hDesc = lines.length * 4.5 + 8;
-                doc.rect(14, y, 182, hDesc, 'F');
-                doc.setDrawColor(...GRAY_MID);
-                doc.line(14, y + hDesc, 196, y + hDesc);
+                doc.setFontSize(7);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(...GRAY_TEXT);
+                doc.text('TRABAJO REALIZADO', 14, y);
+                y += 4;
+
+                const lines = doc.splitTextToSize(textoTrabajo, pageW - 28);
                 doc.setFontSize(8.5);
-                doc.setFont(undefined, 'italic');
-                doc.setTextColor(80, 80, 80);
-                doc.text(lines, 18, y + 6);
-                y += hDesc;
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(60, 58, 56);
+                doc.text(lines, 14, y);
+                y += lines.length * 4.5 + 4;
             }
 
-            // ── Tabla desglose ────────────────────────────────────────────
+            // ── Tabla de repuestos y mano de obra ─────────────────────────
             const rows = [];
             const moVal = parseFloat(item.costoExtra || 0);
             if (moVal > 0) {
-                rows.push({
-                    concepto: 'Mano de obra / Servicio técnico',
-                    cant: '1',
-                    importe: `$ ${moVal.toLocaleString('es-AR')}`,
-                    esMO: true
-                });
+                rows.push(['Mano de obra / Servicio técnico', '1', `$ ${moVal.toLocaleString('es-AR')}`]);
             }
             item.repuestosUsados?.forEach(r => {
-                rows.push({
-                    concepto: r.nombre,
-                    cant: r.cantidad.toString(),
-                    importe: `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`,
-                    esMO: false
-                });
+                rows.push([
+                    r.nombre,
+                    r.cantidad.toString(),
+                    `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`
+                ]);
             });
 
             if (rows.length > 0) {
                 autoTable(doc, {
                     startY: y,
                     head: [['Concepto', 'Cant.', 'Importe']],
-                    body: rows.map(r => [r.concepto, r.cant, r.importe]),
+                    body: rows,
                     theme: 'plain',
                     headStyles: {
-                        fillColor: [240, 240, 240],
-                        textColor: DARK,
+                        fillColor: false,
+                        textColor: GRAY_TEXT,
                         fontStyle: 'bold',
-                        fontSize: 8,
-                        cellPadding: 4
+                        fontSize: 7,
+                        cellPadding: { top: 2, bottom: 3, left: 0, right: 0 },
+                        lineColor: GRAY_MID,
+                        lineWidth: { bottom: 0.3 }
                     },
-                    bodyStyles: { fontSize: 8.5, cellPadding: 3.5 },
-                    columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right', fontStyle: 'bold' } },
+                    bodyStyles: {
+                        fontSize: 8.5,
+                        cellPadding: { top: 2.5, bottom: 2.5, left: 0, right: 0 },
+                        textColor: DARK,
+                        lineColor: GRAY_LIGHT,
+                        lineWidth: { bottom: 0.2 }
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 'auto' },
+                        1: { halign: 'center', cellWidth: 16 },
+                        2: { halign: 'right',  cellWidth: 30, fontStyle: 'bold' }
+                    },
                     margin: { left: 14, right: 14 },
-                    tableLineColor: GRAY_MID,
-                    tableLineWidth: 0.2,
+                    // MO en rojo
                     didParseCell: (data) => {
-                        if (data.section === 'body' && rows[data.row.index]?.esMO) {
+                        if (data.section === 'body' && data.row.index === 0 && moVal > 0) {
                             data.cell.styles.textColor = RED;
-                            data.cell.styles.fontStyle = 'bold';
                         }
                     }
                 });
-                y = doc.lastAutoTable.finalY;
+                y = doc.lastAutoTable.finalY + 4;
             }
 
-            // ── Subtotal equipo ───────────────────────────────────────────
-            doc.setFillColor(245, 245, 245);
-            doc.rect(14, y, 182, 9, 'F');
-            doc.setFontSize(8.5);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(...GRAY_TEXT);
-            doc.text('Subtotal equipo:', 18, y + 6);
-            doc.setTextColor(...DARK);
-            doc.text(`$ ${subtotalEquipo.toLocaleString('es-AR')}`, 194, y + 6, { align: 'right' });
-            y += 9;
-
-            // ── Fotos antes / después (opcionales) ───────────────────────
-            // Comprimir via canvas → JPEG estándar que jsPDF acepta sin fallar
+            // ── Fotos ─────────────────────────────────────────────────────
             const fotoA = await comprimirFoto(item.fotoAntesB64);
             const fotoD = await comprimirFoto(item.fotoDespuesB64);
 
             if (fotoA || fotoD) {
-                // Altura del bloque: label(7) + foto(78) + padding(7) = 92mm
-                const FOTO_BLOCK_H = 92;
-                const FOTO_W = 85;   // cada foto: 85mm ancho
-                const FOTO_H = 78;   // alto (portrait se escala automáticamente)
-                const GAP    = 8;    // separación entre fotos
+                const FOTO_W = 84, FOTO_H = 64, GAP = 10;
+                const BLOQUE_H = FOTO_H + 14;
 
-                if (y + FOTO_BLOCK_H > 262) { doc.addPage(); y = 20; }
+                if (y + BLOQUE_H > 262) { doc.addPage(); y = 20; }
 
-                // Fondo del bloque
-                doc.setFillColor(250, 248, 246);
-                doc.rect(14, y, 182, FOTO_BLOCK_H, 'F');
-                doc.setDrawColor(...WARM_BORDER);
-                doc.setLineWidth(0.3);
-                doc.rect(14, y, 182, FOTO_BLOCK_H, 'S');
-                doc.setLineWidth(0.2);
-
-                // Encabezado "Registro fotográfico"
-                doc.setFillColor(...DARK);
-                doc.rect(14, y, 182, 7, 'F');
-                doc.setFontSize(7);
-                doc.setFont(undefined, 'bold');
-                doc.setTextColor(...WHITE);
-                doc.text('REGISTRO FOTOGRÁFICO', 18, y + 5);
-
-                // Calcular posiciones: centrar el par de fotos dentro del bloque
-                const totalFotosW  = FOTO_W * 2 + GAP;
-                const xStart       = 14 + (182 - totalFotosW) / 2;
-                const xL           = xStart;
-                const xR           = xStart + FOTO_W + GAP;
-                const yLabel       = y + 7 + 5;   // 5mm debajo del header
-                const yFoto        = yLabel + 4;   // 4mm debajo del label
-
-                // FOTO ANTES
                 doc.setFontSize(7);
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(...GRAY_TEXT);
-                doc.text('ANTES', xL + FOTO_W / 2, yLabel, { align: 'center' });
+                doc.text('REGISTRO FOTOGRÁFICO', 14, y + 4);
+                y += 8;
+
+                const xL = 14;
+                const xR = xL + FOTO_W + GAP;
+
+                // Labels
+                doc.setFontSize(7);
+                doc.setTextColor(...GRAY_TEXT);
+                doc.text('Antes', xL + FOTO_W / 2, y, { align: 'center' });
+                doc.text('Después', xR + FOTO_W / 2, y, { align: 'center' });
+                y += 3;
+
                 if (fotoA) {
-                    doc.addImage(fotoA, 'JPEG', xL, yFoto, FOTO_W, FOTO_H);
-                    doc.setDrawColor(...GRAY_MID);
-                    doc.rect(xL, yFoto, FOTO_W, FOTO_H, 'S');
+                    doc.addImage(fotoA, 'JPEG', xL, y, FOTO_W, FOTO_H);
+                    doc.setDrawColor(...GRAY_MID); doc.setLineWidth(0.2);
+                    doc.rect(xL, y, FOTO_W, FOTO_H, 'S');
                 } else {
-                    doc.setFillColor(220, 218, 214);
-                    doc.rect(xL, yFoto, FOTO_W, FOTO_H, 'F');
+                    doc.setFillColor(...GRAY_LIGHT);
+                    doc.rect(xL, y, FOTO_W, FOTO_H, 'F');
                     doc.setFontSize(7); doc.setTextColor(...GRAY_TEXT);
-                    doc.text('Sin foto', xL + FOTO_W / 2, yFoto + FOTO_H / 2, { align: 'center' });
+                    doc.text('Sin foto', xL + FOTO_W / 2, y + FOTO_H / 2, { align: 'center' });
                 }
 
-                // FOTO DESPUÉS
-                doc.setFontSize(7); doc.setFont(undefined, 'bold'); doc.setTextColor(...GRAY_TEXT);
-                doc.text('DESPUÉS', xR + FOTO_W / 2, yLabel, { align: 'center' });
                 if (fotoD) {
-                    doc.addImage(fotoD, 'JPEG', xR, yFoto, FOTO_W, FOTO_H);
-                    doc.setDrawColor(...GRAY_MID);
-                    doc.rect(xR, yFoto, FOTO_W, FOTO_H, 'S');
+                    doc.addImage(fotoD, 'JPEG', xR, y, FOTO_W, FOTO_H);
+                    doc.setDrawColor(...GRAY_MID); doc.setLineWidth(0.2);
+                    doc.rect(xR, y, FOTO_W, FOTO_H, 'S');
                 } else {
-                    doc.setFillColor(220, 218, 214);
-                    doc.rect(xR, yFoto, FOTO_W, FOTO_H, 'F');
+                    doc.setFillColor(...GRAY_LIGHT);
+                    doc.rect(xR, y, FOTO_W, FOTO_H, 'F');
                     doc.setFontSize(7); doc.setTextColor(...GRAY_TEXT);
-                    doc.text('Sin foto', xR + FOTO_W / 2, yFoto + FOTO_H / 2, { align: 'center' });
+                    doc.text('Sin foto', xR + FOTO_W / 2, y + FOTO_H / 2, { align: 'center' });
                 }
 
-                y += FOTO_BLOCK_H;
+                y += FOTO_H + 6;
             }
 
             // Separador entre equipos
             if (idx < ticketItems.length - 1) {
                 doc.setDrawColor(...GRAY_MID);
-                doc.setLineDashPattern([2, 2], 0);
-                doc.line(14, y + 4, 196, y + 4);
-                doc.setLineDashPattern([], 0);
-                y += 12;
+                doc.setLineWidth(0.2);
+                doc.line(14, y + 4, pageW - 14, y + 4);
+                y += 14;
             } else {
                 y += 8;
             }
@@ -296,73 +259,110 @@ export const generarRemitoPDFPremium = async ({
         const rows = [];
         ticketItems.forEach(item => {
             item.repuestosUsados?.forEach(r => {
-                rows.push([r.nombre, r.sku || '-', r.cantidad.toString(),
+                rows.push([
+                    r.nombre,
+                    r.sku || '—',
+                    r.cantidad.toString(),
                     `$ ${Number(r.precio).toLocaleString('es-AR')}`,
-                    `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`]);
+                    `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`
+                ]);
             });
-            if (item.costoExtra > 0)
-                rows.push(['Envío / Logística', '-', '1', '-', `$ ${Number(item.costoExtra).toLocaleString('es-AR')}`]);
+            if (item.costoExtra > 0) {
+                rows.push(['Envío / Logística', '—', '1', '—', `$ ${Number(item.costoExtra).toLocaleString('es-AR')}`]);
+            }
         });
 
         if (rows.length > 0) {
             autoTable(doc, {
                 startY: y,
-                head: [['Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']],
+                head: [['Producto', 'SKU', 'Cant.', 'P. Unitario', 'Subtotal']],
                 body: rows,
-                theme: 'striped',
-                headStyles: { fillColor: DARK, textColor: WHITE, fontStyle: 'bold', fontSize: 8.5, cellPadding: 5 },
-                bodyStyles: { fontSize: 8.5, cellPadding: 4 },
-                alternateRowStyles: { fillColor: GRAY_LIGHT },
-                columnStyles: { 1: { textColor: GRAY_TEXT, fontSize: 7.5 }, 2: { halign: 'center' }, 3: { halign: 'right' }, 4: { halign: 'right', fontStyle: 'bold' } },
+                theme: 'plain',
+                headStyles: {
+                    fillColor: false,
+                    textColor: GRAY_TEXT,
+                    fontStyle: 'bold',
+                    fontSize: 7,
+                    cellPadding: { top: 2, bottom: 3, left: 0, right: 0 },
+                    lineColor: DARK,
+                    lineWidth: { bottom: 0.4 }
+                },
+                bodyStyles: {
+                    fontSize: 8.5,
+                    cellPadding: { top: 3, bottom: 3, left: 0, right: 0 },
+                    lineColor: GRAY_LIGHT,
+                    lineWidth: { bottom: 0.2 }
+                },
+                columnStyles: {
+                    1: { textColor: GRAY_TEXT, fontSize: 7.5 },
+                    2: { halign: 'center' },
+                    3: { halign: 'right' },
+                    4: { halign: 'right', fontStyle: 'bold' }
+                },
                 margin: { left: 14, right: 14 },
             });
-            y = doc.lastAutoTable.finalY + 8;
+            y = doc.lastAutoTable.finalY + 10;
         }
     }
 
     // ── TOTALES ──────────────────────────────────────────────────────────────
     if (y > 248) { doc.addPage(); y = 20; }
 
+    // Línea antes de totales
+    doc.setDrawColor(...GRAY_MID);
+    doc.setLineWidth(0.2);
+    doc.line(pageW - 80, y, pageW - 14, y);
+    y += 6;
+
     if (pctDesc > 0) {
-        doc.setFillColor(245, 245, 245);
-        doc.rect(110, y, 86, 34, 'F');
-        doc.setDrawColor(...GRAY_MID);
-        doc.rect(110, y, 86, 34, 'S');
-        doc.setFontSize(9); doc.setFont(undefined, 'normal'); doc.setTextColor(...GRAY_TEXT);
-        doc.text('Subtotal:', 116, y + 8);
-        doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, 194, y + 8, { align: 'right' });
+        doc.setFontSize(8.5);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...GRAY_TEXT);
+        doc.text('Subtotal', pageW - 80, y);
+        doc.setTextColor(...DARK);
+        doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 14, y, { align: 'right' });
+        y += 7;
+
         doc.setTextColor(...RED);
-        doc.text(`Descuento (${pctDesc}%):`, 116, y + 18);
-        doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, 194, y + 18, { align: 'right' });
-        doc.setDrawColor(...GRAY_MID); doc.line(116, y + 22, 194, y + 22);
-        doc.setFillColor(...DARK); doc.rect(110, y + 24, 86, 10, 'F');
-        doc.setFontSize(11); doc.setFont(undefined, 'bold'); doc.setTextColor(...WHITE);
-        doc.text('TOTAL', 116, y + 31);
-        doc.setTextColor(...GOLD);
-        doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, 194, y + 31, { align: 'right' });
-        y += 44;
-    } else {
-        doc.setFillColor(...DARK); doc.rect(110, y, 86, 14, 'F');
-        doc.setFontSize(11); doc.setFont(undefined, 'bold'); doc.setTextColor(...WHITE);
-        doc.text('TOTAL', 116, y + 9.5);
-        doc.setTextColor(...GOLD);
-        doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, 194, y + 9.5, { align: 'right' });
-        y += 24;
+        doc.text(`Descuento (${pctDesc}%)`, pageW - 80, y);
+        doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 14, y, { align: 'right' });
+        y += 5;
+
+        doc.setDrawColor(...GRAY_MID);
+        doc.line(pageW - 80, y, pageW - 14, y);
+        y += 6;
     }
+
+    // Total final — tipografía grande, sin caja
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text('TOTAL', pageW - 80, y);
+
+    doc.setFontSize(15);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 14, y + 1, { align: 'right' });
+
+    // Subrayado dorado bajo el total
+    y += 4;
+    doc.setFillColor(...RED);
+    doc.rect(pageW - 80, y, 66, 0.8, 'F');
+    y += 12;
 
     // ── LEYENDA ──────────────────────────────────────────────────────────────
     const leyendaTxt = (leyenda || '').trim();
     if (leyendaTxt) {
         if (y > 254) { doc.addPage(); y = 20; }
-        doc.setDrawColor(...RED); doc.setLineWidth(0.5);
-        doc.line(14, y, 196, y); doc.setLineWidth(0.2);
-        y += 6;
-        doc.setFontSize(8); doc.setFont(undefined, 'bold'); doc.setTextColor(...DARK);
-        doc.text('OBSERVACIONES / CONDICIONES:', 14, y);
+        doc.setFontSize(7);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...GRAY_TEXT);
+        doc.text('OBSERVACIONES', 14, y);
         y += 5;
-        doc.setFont(undefined, 'normal'); doc.setTextColor(...GRAY_TEXT);
-        const lines = doc.splitTextToSize(leyendaTxt, 180);
-        doc.text(lines, 14, y);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(80, 78, 76);
+        doc.text(doc.splitTextToSize(leyendaTxt, pageW - 28), 14, y);
     }
 
     // ── FOOTER EN TODAS LAS PÁGINAS ──────────────────────────────────────────

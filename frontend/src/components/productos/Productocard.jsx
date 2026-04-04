@@ -1,26 +1,35 @@
 import React from 'react';
 import { formatearPrecio } from '../../utils/formatearPrecio';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
+import { useMontos } from '../../context/MontosContext';
 
-const DETALLES = (costo, porcGanancia, gananciaUnidad, precioBase, porcMarkup, precioLista) => [
-    { label: 'Costo',        value: `$${formatearPrecio(costo)}`,          color: 'text-[#1C1917] dark:text-[#F0EEE9]' },
-    { label: '% Ganancia',   value: `${porcGanancia.toFixed(1)}%`,         color: 'text-[#1C1917] dark:text-[#F0EEE9]' },
-    { label: 'Ganancia/u',   value: `$${formatearPrecio(gananciaUnidad)}`, color: 'text-[#D48800] dark:text-[#F0A500]' },
-    { label: 'Precio Base',  value: `$${formatearPrecio(precioBase)}`,     color: 'text-[#D48800] dark:text-[#F0A500]' },
-    { label: '% Markup',     value: `${porcMarkup.toFixed(1)}%`,           color: 'text-[#1C1917] dark:text-[#F0EEE9]' },
-    { label: 'Precio Lista', value: `$${formatearPrecio(precioLista)}`,    color: 'text-[#D48800] dark:text-[#F0A500]' },
-];
+// Campos sensibles que se ocultan con el ojo: costo, márgenes, ganancia
+// Precio lista es el precio público — se muestra siempre
+const OCULTO = '••••';
 
 export default function ProductoCard({
     producto, estaExpandido, estaSeleccionado, modoSeleccion,
     onToggleExpandido, onToggleSeleccion, onEditar, onEliminar,
 }) {
+    const { montosVisibles } = useMontos();
+    const M = (val) => montosVisibles ? `$${formatearPrecio(val)}` : OCULTO;
+    const P = (val) => montosVisibles ? `${val.toFixed(1)}%`        : OCULTO;
+
     const costo          = parseFloat(producto.costo) || 0;
     const porcGanancia   = parseFloat(producto.porcentajeGanancia) || 25;
     const porcMarkup     = parseFloat(producto.porcentajeMarkup) || 15;
     const gananciaUnidad = (costo * porcGanancia) / 100;
     const precioBase     = costo + gananciaUnidad;
     const precioLista    = precioBase * (1 + porcMarkup / 100);
+
+    const detalles = [
+        { label: 'Costo',        value: M(costo),          color: 'text-[#1C1917] dark:text-[#F0EEE9]' },
+        { label: '% Ganancia',   value: P(porcGanancia),   color: 'text-[#1C1917] dark:text-[#F0EEE9]' },
+        { label: 'Ganancia/u',   value: M(gananciaUnidad), color: 'text-[#D48800] dark:text-[#F0A500]' },
+        { label: 'Precio Base',  value: M(precioBase),     color: 'text-[#D48800] dark:text-[#F0A500]' },
+        { label: '% Markup',     value: P(porcMarkup),     color: 'text-[#1C1917] dark:text-[#F0EEE9]' },
+        { label: 'Precio Lista', value: M(precioLista),    color: 'text-[#D48800] dark:text-[#F0A500]' },
+    ];
 
     return (
         <div className={`
@@ -71,8 +80,8 @@ export default function ProductoCard({
                     <div className="flex-1 min-w-0" onClick={() => modoSeleccion && onToggleSeleccion(producto.id)}>
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase">SKU: {producto.sku || '—'}</p>
                         <p className="text-sm font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{producto.nombre}</p>
-                        <p className="text-sm font-black text-[#D48800] dark:text-[#F0A500]">${formatearPrecio(precioLista)}</p>
-                        <p className="text-[10px] text-[#A8A29E]">Costo: ${formatearPrecio(costo)}</p>
+                        <p className="text-sm font-black text-[#D48800] dark:text-[#F0A500]">{M(precioLista)}</p>
+                        <p className="text-[10px] text-[#A8A29E]">Costo: {M(costo)}</p>
                     </div>
 
                     {/* Botones */}
@@ -103,7 +112,7 @@ export default function ProductoCard({
                         <div className="bg-[#D8D4CE] dark:bg-[#1C1C1C] p-3 rounded-xl">
                             <h4 className="font-black text-[10px] text-[#1C1917] dark:text-[#F0EEE9] mb-2 uppercase">Detalle de Márgenes</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-                                {DETALLES(costo, porcGanancia, gananciaUnidad, precioBase, porcMarkup, precioLista).map(({ label, value, color }) => (
+                                {detalles.map(({ label, value, color }) => (
                                     <div key={label}>
                                         <p className="text-[10px] text-[#A8A29E] uppercase font-bold">{label}</p>
                                         <p className={`text-sm font-black ${color}`}>{value}</p>

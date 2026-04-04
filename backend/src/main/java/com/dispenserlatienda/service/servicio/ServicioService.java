@@ -199,12 +199,21 @@ public class ServicioService {
             );
         }).toList();
 
+        // Navegar Sede → Cliente para obtener datos de contacto
+        var sede    = s.getSede();
+        var cliente = (sede != null) ? sede.getCliente() : null;
+
         return new ServicioDTO(
                 s.getId(),
                 s.getFechaServicio() != null ? s.getFechaServicio().toString() : null,
                 s.getServicioTipo() != null ? s.getServicioTipo().name() : "VENTA",
                 s.getClienteNombre(),
+                cliente != null ? cliente.getTelefono() : null,
+                cliente != null ? cliente.getEmail()    : null,
+                cliente != null ? cliente.getCuilDni()  : null,
+                cliente != null && cliente.getCondicionIva() != null ? cliente.getCondicionIva().name() : null,
                 s.getSedeNombre(),
+                sede != null ? sede.getDireccion() : null,
                 items,
                 s.getEstado() != null ? s.getEstado().name() : "PRESUPUESTO",
                 s.getFotoRemito()

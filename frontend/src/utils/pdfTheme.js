@@ -1,21 +1,21 @@
 /**
- * pdfTheme.js — Sistema de diseño compartido para todos los PDFs de la app
- * Paleta alineada con CLAUDE.md: brand #D13A28, gold #D48800, text #1C1917
+ * pdfTheme.js — Sistema de diseño para PDFs
+ * Principio: tipografía clara, fondo blanco, color de marca como acento único
  */
 import logoUrl from '../assets/logo-dispenser.png';
 
-// ── Paleta de marca ──────────────────────────────────────────────────────────
-export const DARK        = [28,  25,  23 ];   // #1C1917
-export const RED         = [209, 58,  40 ];   // #D13A28 — rojo principal
-export const GOLD        = [212, 136, 0  ];   // #D48800 — acento dorado
-export const WHITE       = [255, 255, 255];
-export const GRAY_LIGHT  = [237, 234, 230];   // #EDEAE6 — bg-card
-export const GRAY_MID    = [192, 188, 182];   // #C0BCB6 — bg-raised
-export const GRAY_TEXT   = [100, 98,  94 ];   // texto muted
-export const WARM_BG     = [250, 248, 245];
-export const WARM_BORDER = [220, 212, 200];
+// ── Paleta ───────────────────────────────────────────────────────────────────
+export const DARK       = [20,  18,  16 ];
+export const RED        = [209, 58,  40 ];
+export const GOLD       = [212, 136, 0  ];
+export const WHITE      = [255, 255, 255];
+export const GRAY_LIGHT = [245, 244, 242];
+export const GRAY_MID   = [200, 196, 190];
+export const GRAY_TEXT  = [120, 116, 110];
+export const WARM_BG    = [250, 248, 245];
+export const WARM_BORDER= [220, 212, 200];
 
-// ── Procesador de fecha ──────────────────────────────────────────────────────
+// ── Fecha ────────────────────────────────────────────────────────────────────
 export function procesarFecha(f) {
     try {
         if (!f) return new Date().toLocaleDateString('es-AR');
@@ -24,121 +24,111 @@ export function procesarFecha(f) {
     } catch { return new Date().toLocaleDateString('es-AR'); }
 }
 
-// ── Header premium ───────────────────────────────────────────────────────────
-// Fondo oscuro · barra roja · logo · badge tipo · fecha + subtítulo opcionales
+// ── Header ───────────────────────────────────────────────────────────────────
+// Logo izquierda · empresa derecha · línea roja fina abajo
 export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null) {
     const pageW = doc.internal.pageSize.getWidth();
 
-    doc.setFillColor(...DARK);
-    doc.rect(0, 0, pageW, 36, 'F');
-    doc.setFillColor(...RED);
-    doc.rect(0, 32, pageW, 4, 'F');
-
+    // Logo — grande, izquierda
     if (logoUrl) {
-        try { doc.addImage(logoUrl, 'PNG', 6, 6, 46, 20); } catch {}
+        try { doc.addImage(logoUrl, 'PNG', 14, 8, 44, 19); } catch {}
     }
 
-    // Badge tipo de documento
-    doc.setFillColor(...RED);
-    doc.roundedRect(56, 13, 62, 9, 2, 2, 'F');
-    doc.setFontSize(7.5);
+    // Nombre empresa — derecha, alineado arriba
+    doc.setFontSize(13);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...WHITE);
-    doc.text(tipoLabel, 87, 19, { align: 'center' });
+    doc.setTextColor(...DARK);
+    doc.text('DISPENSER LA TIENDA', pageW - 14, 13, { align: 'right' });
 
-    // Fecha y subtítulo a la derecha
+    doc.setFontSize(7.5);
     doc.setFont(undefined, 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY_MID);
-    doc.text(`Fecha: ${fecha}`, pageW - 6, 12, { align: 'right' });
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text('Servicio técnico de dispensers de agua', pageW - 14, 19, { align: 'right' });
+
+    // Línea roja separadora — el único elemento de color del header
+    doc.setFillColor(...RED);
+    doc.rect(14, 30, pageW - 28, 1.2, 'F');
+
+    // Tipo de documento — grande, izquierda, debajo de la línea
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(tipoLabel, 14, 41);
+
+    // Fecha y técnico — derecha, misma altura
+    doc.setFontSize(8.5);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text(`Fecha: ${fecha}`, pageW - 14, 37, { align: 'right' });
     if (subtitulo) {
-        doc.setFontSize(7);
-        doc.setTextColor(140, 136, 130);
-        doc.text(subtitulo, pageW - 6, 20, { align: 'right' });
+        doc.text(subtitulo, pageW - 14, 43, { align: 'right' });
     }
 }
 
-// ── Footer estándar ──────────────────────────────────────────────────────────
-// Barra oscura + acento dorado + rojo + numeración de páginas
+// ── Footer ───────────────────────────────────────────────────────────────────
 export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoCentral = null) {
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
 
-    // Texto legal sobre la barra
+    // Línea superior del footer
+    doc.setDrawColor(...GRAY_MID);
+    doc.setLineWidth(0.3);
+    doc.line(14, pageH - 14, pageW - 14, pageH - 14);
+
+    // Texto legal centrado
     if (textoCentral) {
-        doc.setFontSize(7.5);
-        doc.setTextColor(150, 150, 150);
-        doc.setFont(undefined, 'normal');
-        doc.text(textoCentral, pageW / 2, pageH - 12, { align: 'center' });
+        doc.setFontSize(7);
+        doc.setFont(undefined, 'italic');
+        doc.setTextColor(...GRAY_TEXT);
+        doc.text(textoCentral, pageW / 2, pageH - 9, { align: 'center' });
     }
 
-    // Barra base
-    doc.setFillColor(...DARK);
-    doc.rect(0, pageH - 10, pageW, 10, 'F');
-    doc.setFillColor(...GOLD);
-    doc.rect(0, pageH - 10, 10, 10, 'F');
-    doc.setFillColor(...RED);
-    doc.rect(10, pageH - 10, 18, 10, 'F');
-
-    // Branding
+    // Nombre empresa izquierda
     doc.setFontSize(7);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(150, 150, 150);
-    doc.text('Dispenser La Tienda', 32, pageH - 4);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...RED);
+    doc.text('Dispenser La Tienda', 14, pageH - 4);
 
-    // Paginación
+    // Paginación derecha
     if (pagina && totalPaginas) {
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Pág. ${pagina} / ${totalPaginas}`, pageW - 6, pageH - 4, { align: 'right' });
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...GRAY_TEXT);
+        doc.text(`Pág. ${pagina} / ${totalPaginas}`, pageW - 14, pageH - 4, { align: 'right' });
     }
 }
 
-// ── Compresión de imágenes ───────────────────────────────────────────────────
-/**
- * Recibe cualquier base64/data-URL y devuelve un JPEG comprimido
- * apto para jsPDF. Limita a 1200x900px y 80% de calidad.
- * Esto resuelve el fallo silencioso de addImage con fotos de celular (5-10MB).
- */
+// ── Compresión de fotos ──────────────────────────────────────────────────────
 export function comprimirFoto(src) {
     return new Promise(resolve => {
-        if (!src) { console.log('[comprimirFoto] src es null/undefined'); return resolve(null); }
-        console.log('[comprimirFoto] procesando src length:', src.length, 'starts:', src.substring(0, 30));
+        if (!src) return resolve(null);
         const img = new Image();
         img.onload = () => {
-            console.log('[comprimirFoto] imagen cargada:', img.naturalWidth, 'x', img.naturalHeight);
             try {
-                const MAX_W = 1200;
-                const MAX_H = 900;
-                const ratio = Math.min(MAX_W / img.naturalWidth, MAX_H / img.naturalHeight, 1);
+                const ratio = Math.min(1200 / img.naturalWidth, 900 / img.naturalHeight, 1);
                 const canvas = document.createElement('canvas');
                 canvas.width  = Math.round(img.naturalWidth  * ratio);
                 canvas.height = Math.round(img.naturalHeight * ratio);
                 const ctx = canvas.getContext('2d');
-                if (!ctx) { console.error('[comprimirFoto] canvas context null'); return resolve(null); }
+                if (!ctx) return resolve(null);
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const result = canvas.toDataURL('image/jpeg', 0.8);
-                console.log('[comprimirFoto] comprimida OK, length:', result.length);
-                resolve(result);
-            } catch (e) {
-                console.error('[comprimirFoto] error en canvas:', e);
-                resolve(null);
-            }
+                resolve(canvas.toDataURL('image/jpeg', 0.8));
+            } catch { resolve(null); }
         };
-        img.onerror = (e) => { console.error('[comprimirFoto] img.onerror:', e); resolve(null); };
+        img.onerror = () => resolve(null);
         img.src = src;
     });
 }
 
-// ── Helpers de texto ─────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 export function pdfLabel(doc, txt, x, y) {
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...GRAY_TEXT);
     doc.text(txt.toUpperCase(), x, y);
 }
 
 export function pdfValue(doc, txt, x, y, color = DARK) {
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...color);
     doc.text(txt, x, y);

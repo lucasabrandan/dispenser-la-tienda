@@ -156,8 +156,17 @@ export default function PresupuestosManager() {
 
     const generarPDF = (s) => generarRemitoPDFPremium({
         esPresupuesto: true,
-        cliente:      { nombre: s.clienteNombre },
-        sede:         { nombreSede: s.sedeNombre },
+        cliente: {
+            nombre:       s.clienteNombre,
+            telefono:     s.clienteTelefono,
+            email:        s.clienteEmail,
+            cuilDni:      s.clienteDni,
+            condicionIva: s.clienteCondicionIva,
+        },
+        sede: {
+            nombreSede: s.sedeNombre,
+            direccion:  s.sedeDireccion,
+        },
         tecnico:      'Marcos',
         ticketItems:  s.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
         totalFinal:   calcularTotal(s),

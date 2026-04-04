@@ -2,6 +2,7 @@ import React from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useProductoForm } from '../../hooks/useProductoForm';
+import { useMontos } from '../../context/MontosContext';
 
 const inputCls = (error) => `
     w-full p-3 mt-2 rounded-xl outline-none transition-all
@@ -21,6 +22,8 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
     } = useProductoForm(productoEdicion);
 
     const { gananciaUnidad, precioBase, precioLista } = calcularGanancias();
+    const { montosVisibles } = useMontos();
+    const M = (val) => montosVisibles ? `$${parseFloat(val).toFixed(2)}` : '••••';
 
     const handleGuardar = async (e) => {
         e.preventDefault();
@@ -158,15 +161,15 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
                             <div className="bg-[#EDEAE6] dark:bg-[#242424] p-4 rounded-xl space-y-2 border border-black/[0.07] dark:border-white/[0.07]">
                                 <div className="flex justify-between text-sm">
                                     <span className="font-bold text-[#A8A29E]">Ganancia/u:</span>
-                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">${gananciaUnidad.toFixed(2)}</span>
+                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">{M(gananciaUnidad)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="font-bold text-[#A8A29E]">Precio Base:</span>
-                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">${precioBase.toFixed(2)}</span>
+                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">{M(precioBase)}</span>
                                 </div>
                                 <div className="flex justify-between text-lg pt-2 border-t border-black/[0.07] dark:border-white/[0.07]">
                                     <span className="font-black text-[#1C1917] dark:text-[#F0EEE9]">Precio Lista:</span>
-                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">${precioLista.toFixed(2)}</span>
+                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">{M(precioLista)}</span>
                                 </div>
                             </div>
                         </div>

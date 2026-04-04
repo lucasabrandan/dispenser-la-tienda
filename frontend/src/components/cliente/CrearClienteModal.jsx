@@ -16,7 +16,7 @@ export default function CrearClienteModal({
     const {
         formData, errores, cargando,
         handleChange, validarTodo, resetear,
-        setCargando, setErrores
+        setCargando, setErrores, setFormData
     } = useClienteForm(clienteNombrePrellenado, modoFlota);
 
     const handleGuardar = async (e) => {
@@ -104,7 +104,10 @@ export default function CrearClienteModal({
                     <div className="grid grid-cols-2 gap-3 p-5 pb-0">
                         <button
                             type="button"
-                            onClick={() => setModoFlota(false)}
+                            onClick={() => {
+                                setModoFlota(false);
+                                setFormData(prev => ({ ...prev, clienteTipo: 'PARTICULAR' }));
+                            }}
                             className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
                                 !modoFlota
                                     ? 'border-[#D13A28] dark:border-[#E8422F] bg-[var(--danger-bg)]'
@@ -118,7 +121,10 @@ export default function CrearClienteModal({
 
                         <button
                             type="button"
-                            onClick={() => setModoFlota(true)}
+                            onClick={() => {
+                                setModoFlota(true);
+                                setFormData(prev => ({ ...prev, clienteTipo: 'EMPRESA' }));
+                            }}
                             className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
                                 modoFlota
                                     ? 'border-[#D48800] dark:border-[#F0A500] bg-[var(--warning-bg)]'

@@ -87,8 +87,17 @@ export function useServicioManager() {
             toast.dismiss(loading);
             await generarRemitoPDFPremium({
                 esPresupuesto: servicio.estado === 'PRESUPUESTO',
-                cliente:       { nombre: servicio.clienteNombre, ...servicio.cliente },
-                sede:          { nombreSede: servicio.sedeNombre },
+                cliente: {
+                    nombre:        servicio.clienteNombre,
+                    telefono:      servicio.clienteTelefono,
+                    email:         servicio.clienteEmail,
+                    cuilDni:       servicio.clienteDni,
+                    condicionIva:  servicio.clienteCondicionIva,
+                },
+                sede: {
+                    nombreSede: servicio.sedeNombre,
+                    direccion:  servicio.sedeDireccion,
+                },
                 tecnico:       'Marcos',
                 ticketItems:   itemsConFotos,
                 totalFinal:    calcularTotal(servicio),
