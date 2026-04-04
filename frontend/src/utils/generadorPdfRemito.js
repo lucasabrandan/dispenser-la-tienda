@@ -3,8 +3,30 @@ import autoTable from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import {
     DARK, RED, GOLD, WHITE, GRAY_LIGHT, GRAY_MID, GRAY_TEXT,
-    procesarFecha, dibujarHeaderPDF, dibujarFooterPDF, comprimirFoto
+    procesarFecha, dibujarHeaderPDF, dibujarFooterPDF
 } from './pdfTheme';
+import { construirUrlFoto } from './construirUrlFoto';
+
+// Carga una foto desde el backend y la convierte a base64 para embeber en el PDF
+async function cargarFoto(src) {
+    if (!src) return null;
+    // Si ya es base64 la usamos directo
+    if (src.startsWith('data:')) return src;
+    // Si es filename, la bajamos del backend
+    try {
+        const url = construirUrlFoto(src);
+        if (!url) return null;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror  = () => resolve(null);
+            reader.readAsDataURL(blob);
+        });
+    } catch { return null; }
+}
 
 export const generarRemitoPDFPremium = async ({
     esPresupuesto, cliente, sede, tecnico, ticketItems, fechaServicio,
@@ -193,8 +215,9 @@ export const generarRemitoPDFPremium = async ({
             }
 
             // ── Fotos ─────────────────────────────────────────────────────
-            const fotoA = await comprimirFoto(item.fotoAntesB64);
-            const fotoD = await comprimirFoto(item.fotoDespuesB64);
+            // Acepta base64 ya convertido (fotoAntesB64) o filename directo (fotoAntes)
+            const fotoA = await cargarFoto(item.fotoAntesB64 || item.fotoAntes);
+            const fotoD = await cargarFoto(item.fotoDespuesB64 || item.fotoDespues);
 
             if (fotoA || fotoD) {
                 const FOTO_W = 84, FOTO_H = 64, GAP = 10;
