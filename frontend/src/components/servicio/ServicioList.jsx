@@ -5,6 +5,7 @@ import { useFiltros } from '../../hooks/useFiltros';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion   from '../ui/Paginacion';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
+import { fotoUrlABase64 } from '../../utils/construirUrlFoto';
 import { useMontos } from '../../context/MontosContext';
 
 // ── Helper monto ─────────────────────────────────────────────────────────────
@@ -258,15 +259,34 @@ export default function ServicioList({ onEditar }) {
                                         👁️
                                     </button>
                                     <button
-                                        onClick={() => generarRemitoPDFPremium({
-                                            esPresupuesto: esPendiente,
-                                            cliente: { nombre: s.clienteNombre },
-                                            sede: { nombreSede: s.sedeNombre },
-                                            tecnico: 'Marcos',
-                                            ticketItems: s.items.map(it => ({ ...it, totalCalculado: it.costo })),
-                                            totalFinal: costo,
-                                            fechaServicio: s.fecha,
-                                        })}
+                                        onClick={async () => {
+                                            const loading = toast.loading('Preparando PDF...');
+                                            const itemsConFotos = await Promise.all(
+                                                (s.items || []).map(async it => ({
+                                                    ...it,
+                                                    totalCalculado: it.costo,
+                                                    fotoAntesB64:   await fotoUrlABase64(it.fotoAntes),
+                                                    fotoDespuesB64: await fotoUrlABase64(it.fotoDespues),
+                                                }))
+                                            );
+                                            toast.dismiss(loading);
+                                            generarRemitoPDFPremium({
+                                                esPresupuesto: esPendiente,
+                                                cliente: {
+                                                    nombre:       s.clienteNombre,
+                                                    telefono:     s.clienteTelefono,
+                                                    email:        s.clienteEmail,
+                                                    cuilDni:      s.clienteDni,
+                                                    condicionIva: s.clienteCondicionIva,
+                                                },
+                                                sede: { nombreSede: s.sedeNombre, direccion: s.sedeDireccion },
+                                                tecnico: s.items?.[0]?.tecnico || '',
+                                                ticketItems: itemsConFotos,
+                                                fechaServicio: s.fecha,
+                                                descuentoPorcentaje: s.descuentoPorcentaje || 0,
+                                                leyenda: s.leyenda || '',
+                                            });
+                                        }}
                                         className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]"
                                         title="Generar PDF">
                                         📄
