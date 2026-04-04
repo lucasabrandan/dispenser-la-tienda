@@ -10,6 +10,7 @@ import java.util.List;
 public record ServicioItemDTO(
         Long equipoId,
         String equipoSerial,
+        String equipoModelo,
         String equipoUbicacion,
         String tecnico,
         BigDecimal costo,

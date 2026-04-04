@@ -46,17 +46,18 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         if (servicioParaEditar) {
           setEstaBloqueado(servicioParaEditar.estado !== 'PRESUPUESTO');
           setIdEdicion(servicioParaEditar.id);
-          setClienteId(servicioParaEditar.clienteId?.toString());
           setEsPresupuesto(servicioParaEditar.servicioTipo === 'TECNICA');
           setDescuentoPorcentaje(servicioParaEditar.descuentoPorcentaje || 0);
           setTicketItems(
             servicioParaEditar.items.map(it => ({
               sedeId:            servicioParaEditar.sedeId,
               equipoSerial:      it.equipoSerial,
+              modeloEquipo:      it.equipoModelo   || null,
+              ubicacionEquipo:   it.equipoUbicacion || null,
               trabajo:           it.trabajoRealizado,
-              costoExtra:        Math.max(0, it.costoExtra || 0),
-              totalCalculado:    Math.max(0, it.costo),
-              totalSinDescuento: Math.max(0, it.costo),
+              costoExtra:        Math.max(0, Number(it.costoExtra) || 0),
+              totalCalculado:    Math.max(0, Number(it.costo)),
+              totalSinDescuento: Math.max(0, Number(it.costo)),
               repuestosUsados:   it.repuestosUsados || [],
               resumenTexto:      it.trabajoRealizado,
               fotoAntes:         it.fotoAntes   || null,
@@ -64,6 +65,10 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             }))
           );
           setItemActual(prev => ({ ...prev, sedeId: servicioParaEditar.sedeId }));
+          // clienteId viene del backend ahora
+          if (servicioParaEditar.clienteId) {
+            setClienteId(servicioParaEditar.clienteId.toString());
+          }
         }
       } catch {
         toast.error('Error de conexión');
