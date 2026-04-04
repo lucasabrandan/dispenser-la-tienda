@@ -1,6 +1,7 @@
 import React from 'react';
 import logo from '../../assets/logo-dispenser.svg';
 import { useTheme } from '../../hooks/useTheme';
+import { useMontos } from '../../context/MontosContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IDs deben coincidir EXACTAMENTE con App.js, Drawer y BottomNav
@@ -22,6 +23,7 @@ const MENU_ADMIN = [
 
 export default function Sidebar({ vistaActual, setVistaActual }) {
     const { isDark, toggleTheme } = useTheme();
+    const { montosVisibles, toggleMontos } = useMontos();
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
@@ -81,15 +83,39 @@ export default function Sidebar({ vistaActual, setVistaActual }) {
             {/* FOOTER */}
             <div className="px-6 py-5 border-t border-black/[0.07] dark:border-white/[0.07] flex items-center justify-between">
                 <span className="text-[9px] text-[#A8A29E] font-black uppercase tracking-widest">
-                    v3.0
+                    v1.0
                 </span>
-                <button
-                    onClick={toggleTheme}
-                    className="p-2 hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] rounded-xl transition-colors text-[#57534E] dark:text-[#A8A29E]"
-                    title={isDark ? 'Modo claro' : 'Modo oscuro'}
-                >
-                    <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
-                </button>
+                <div className="flex items-center gap-1">
+                    {/* Ojito — ocultar/mostrar montos */}
+                    <button
+                        onClick={toggleMontos}
+                        className={`p-2 rounded-xl transition-all hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] ${
+                            montosVisibles ? 'text-[#57534E] dark:text-[#A8A29E]' : 'text-[#D13A28] dark:text-[#E8422F]'
+                        }`}
+                        title={montosVisibles ? 'Ocultar montos' : 'Mostrar montos'}
+                    >
+                        {montosVisibles ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        )}
+                    </button>
+                    {/* Toggle dark/light */}
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2 hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] rounded-xl transition-colors text-[#57534E] dark:text-[#A8A29E]"
+                        title={isDark ? 'Modo claro' : 'Modo oscuro'}
+                    >
+                        <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
+                    </button>
+                </div>
             </div>
         </aside>
     );

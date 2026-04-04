@@ -285,7 +285,9 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                                         </p>
                                     )}
                                     {it.costoExtra > 0 && (
-                                        <p className="text-[10px] text-[#A8A29E] mt-1">MO: ${Number(it.costoExtra).toLocaleString()}</p>
+                                        <p className="text-[10px] text-[#A8A29E] mt-1">
+                                            MO: <M valor={Number(it.costoExtra)} className="font-bold" />
+                                        </p>
                                     )}
 
                                     {/* Fotos antes / después */}
