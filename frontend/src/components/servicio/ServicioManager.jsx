@@ -179,9 +179,7 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                                                             </span>
                                                             <span className="text-[10px] text-[#A8A29E] truncate">{it.trabajoRealizado}</span>
                                                         </div>
-                                                        <span className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-3 shrink-0">
-                                                            ${Number(it.costo || 0).toLocaleString()}
-                                                        </span>
+                                                        <M valor={Number(it.costo || 0)} className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-3 shrink-0" />
                                                     </div>
                                                 ))}
                                             </div>
@@ -273,9 +271,7 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                                      style={{ border: '0.5px solid rgba(0,0,0,0.06)' }}>
                                     <div className="flex justify-between mb-1">
                                         <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
-                                        <span className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]">
-                                            ${Number(it.costo || 0).toLocaleString()}
-                                        </span>
+                                        <M valor={Number(it.costo || 0)} className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]" />
                                     </div>
                                     <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] mb-2">{it.trabajoRealizado}</p>
                                     {it.repuestosUsados?.length > 0 && (
