@@ -25,10 +25,11 @@ export async function generarPDFListaPrecios(productos) {
   const pageW   = doc.internal.pageSize.getWidth();
   const pageH   = doc.internal.pageSize.getHeight();
   const margin  = 12;
-  const headerH = 36;
-  const cardH   = 36;      // altura de cada card
+  const headerH = 40;      // 38mm header + 2mm respiro
+  const cardH   = 34;      // altura de cada card
   const cardGap = 4;       // espacio entre cards
-  const fotoDim = 28;      // foto cuadrada
+  const fotoDim = 26;      // foto cuadrada
+  const footerMargin = 18; // espacio reservado para footer + texto legal
 
   const fecha = new Date().toLocaleDateString('es-AR');
   const dibujarHeader = () => dibujarHeaderPDF(doc, 'LISTA DE PRECIOS', fecha, 'Precios sujetos a variación');
@@ -40,7 +41,7 @@ export async function generarPDFListaPrecios(productos) {
 
   for (const producto of productos) {
     // Nueva página si no entra
-    if (y + cardH > pageH - 14) {
+    if (y + cardH > pageH - footerMargin) {
       doc.addPage();
       dibujarHeader();
       y = headerH + 6;
