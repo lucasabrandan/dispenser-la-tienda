@@ -1,18 +1,11 @@
 import React from 'react';
 import CreatableSelect from 'react-select/creatable';
 
-/**
- * SeccionCliente
- * Props nuevas:
- *  soloSelector — solo muestra el buscador de cliente (sin sede/equipo)
- *  sinSelector  — solo muestra sede/equipo (cliente ya elegido, oculta el selector)
- */
 export default function SeccionCliente({
     db, clienteId, clienteObj,
     itemActual, setItemActual,
     esPresupuesto, estaBloqueado,
-    historialEquipo,
-    selectStyles,
+    historialEquipo, selectStyles,
     onClienteSeleccionado,
     consultarAntecedentes,
     enviarWhatsAppMantenimiento,
@@ -25,11 +18,11 @@ export default function SeccionCliente({
 }) {
     return (
         <>
-            {/* SELECTOR CLIENTE — oculto en sinSelector */}
+            {/* SELECTOR CLIENTE */}
             {!sinSelector && (
                 <div className="mb-0">
                     {!soloSelector && (
-                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                        <label className="block text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest mb-2">
                             Cliente
                         </label>
                     )}
@@ -49,23 +42,24 @@ export default function SeccionCliente({
 
                     {/* Info cliente */}
                     {clienteObj && !soloSelector && (
-                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 grid grid-cols-2 gap-2">
+                        <div className="mt-3 p-3 rounded-xl grid grid-cols-2 gap-2"
+                             style={{ background: '#FDECEA', border: '0.5px solid rgba(209,58,40,0.15)' }}>
                             {clienteObj.telefono && (
                                 <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase">Teléfono</p>
-                                    <p className="text-xs font-bold text-slate-700 dark:text-white">{clienteObj.telefono}</p>
+                                    <p className="text-[9px] font-bold text-[#A8A29E] uppercase">Teléfono</p>
+                                    <p className="text-xs font-bold text-[#1C1917] dark:text-[#F0EEE9]">{clienteObj.telefono}</p>
                                 </div>
                             )}
                             {clienteObj.localidad && (
                                 <div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase">Localidad</p>
-                                    <p className="text-xs font-bold text-slate-700 dark:text-white">{clienteObj.localidad}</p>
+                                    <p className="text-[9px] font-bold text-[#A8A29E] uppercase">Localidad</p>
+                                    <p className="text-xs font-bold text-[#1C1917] dark:text-[#F0EEE9]">{clienteObj.localidad}</p>
                                 </div>
                             )}
                             {clienteObj.calle && (
                                 <div className="col-span-2">
-                                    <p className="text-[9px] font-black text-slate-400 uppercase">Dirección</p>
-                                    <p className="text-xs font-bold text-slate-700 dark:text-white">
+                                    <p className="text-[9px] font-bold text-[#A8A29E] uppercase">Dirección</p>
+                                    <p className="text-xs font-bold text-[#1C1917] dark:text-[#F0EEE9]">
                                         {clienteObj.calle} {clienteObj.numero}{clienteObj.piso ? `, piso ${clienteObj.piso}` : ''}
                                     </p>
                                 </div>
@@ -75,10 +69,10 @@ export default function SeccionCliente({
                 </div>
             )}
 
-            {/* SEDE — visible si hay cliente y no soloSelector */}
+            {/* SEDE */}
             {clienteId && !soloSelector && (
-                <div className="mt-5">
-                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                <div className="mt-4">
+                    <label className="block text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest mb-2">
                         Sede / Domicilio (opcional)
                     </label>
                     <CreatableSelect

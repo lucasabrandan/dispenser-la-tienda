@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
+import { fotoUrlABase64 } from '../utils/construirUrlFoto';
 
 /**
  * useServicioManager
@@ -71,16 +72,34 @@ export function useServicioManager() {
         }
     };
 
-    const generarPDF = (servicio) => {
-        generarRemitoPDFPremium({
-            esPresupuesto: servicio.estado === 'PRESUPUESTO',
-            cliente:       { nombre: servicio.clienteNombre },
-            sede:          { nombreSede: servicio.sedeNombre },
-            tecnico:       'Marcos',
-            ticketItems:   servicio.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
-            totalFinal:    calcularTotal(servicio),
-            fechaServicio: servicio.fecha
-        });
+    const generarPDF = async (servicio) => {
+        const loading = toast.loading('Preparando PDF...');
+        try {
+            // Convertir fotos guardadas en el backend a base64 para embeber en el PDF
+            const itemsConFotos = await Promise.all(
+                (servicio.items || []).map(async it => ({
+                    ...it,
+                    totalCalculado: it.costo,
+                    fotoAntesB64:   await fotoUrlABase64(it.fotoAntes),
+                    fotoDespuesB64: await fotoUrlABase64(it.fotoDespues),
+                }))
+            );
+            toast.dismiss(loading);
+            await generarRemitoPDFPremium({
+                esPresupuesto: servicio.estado === 'PRESUPUESTO',
+                cliente:       { nombre: servicio.clienteNombre, ...servicio.cliente },
+                sede:          { nombreSede: servicio.sedeNombre },
+                tecnico:       'Marcos',
+                ticketItems:   itemsConFotos,
+                totalFinal:    calcularTotal(servicio),
+                fechaServicio: servicio.fecha,
+                descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
+                leyenda:       servicio.leyenda || '',
+            });
+        } catch (e) {
+            console.error('Error generando PDF:', e);
+            toast.error('Error al generar PDF', { id: loading });
+        }
     };
 
     // ── Cálculos ───────────────────────────────────────────────────────────────

@@ -1,8 +1,5 @@
 import React from 'react';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// IDs deben coincidir EXACTAMENTE con App.js, Sidebar y Drawer
-// ─────────────────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
     { id: 'caja',             nombre: 'Caja',     icon: '🏠' },
     { id: 'venta',            nombre: 'Venta',    icon: '🛒' },
@@ -11,32 +8,59 @@ const NAV_ITEMS = [
     { id: 'finanzas',         nombre: 'Finanzas', icon: '💹' },
 ];
 
+// ─── Colores de marca ────────────────────────────────────────────────────────
+// Activo:   rojo #E8422F (dark) / #D13A28 (light)
+// Inactivo: gris #606060 (dark) / #9E9E9E (light)
+// Fondo:    #1A1A1A (dark) / #FFFFFF (light)
+// Borde:    rgba(255,255,255,0.08) / rgba(0,0,0,0.08)
+// ────────────────────────────────────────────────────────────────────────────
+
 export default function BottomNav({ vistaActual, setVistaActual }) {
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 z-40">
-            <div className="flex justify-around items-center h-20">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#D8D4CE] dark:bg-[#1C1C1C] transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">
+
+            {/* Indicador de sección activa — línea roja arriba */}
+            <div className="flex">
+                {NAV_ITEMS.map(item => {
+                    const activo = vistaActual === item.id;
+                    return (
+                        <div
+                            key={item.id + '-indicator'}
+                            className={`flex-1 h-[2px] transition-all duration-200 ${activo ? 'bg-[#E8422F]' : 'bg-transparent'}`}
+                        />
+                    );
+                })}
+            </div>
+
+            <div className="flex justify-around items-center h-16">
                 {NAV_ITEMS.map(item => {
                     const activo = vistaActual === item.id;
                     return (
                         <button
                             key={item.id}
                             onClick={() => setVistaActual(item.id)}
-                            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all active:scale-90 ${
-                                activo
-                                    ? 'text-blue-600 dark:text-blue-400 font-black'
-                                    : 'text-slate-500 dark:text-slate-400 font-bold'
-                            }`}
+                            className="flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all active:scale-90"
                         >
-                            <span className={`text-2xl transition-transform ${activo ? 'scale-110' : ''}`}>
+                            <span
+                                className="text-[20px] transition-transform duration-200"
+                                style={{ transform: activo ? 'scale(1.15)' : 'scale(1)' }}
+                            >
                                 {item.icon}
                             </span>
-                            <span className="text-[9px] uppercase font-black tracking-tight">
+                            <span
+                                className={`text-[9px] font-bold uppercase tracking-tight transition-colors duration-200 ${
+                                    activo ? 'text-[#E8422F]' : 'text-[#9E9A94]'
+                                }`}
+                            >
                                 {item.nombre}
                             </span>
                         </button>
                     );
                 })}
             </div>
+
+            {/* Safe area para iPhone con home indicator */}
+            <div className="h-safe-area-inset-bottom" />
         </nav>
     );
 }

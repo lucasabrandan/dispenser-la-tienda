@@ -3,16 +3,26 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 
-export function useVentaForm(onSaved) {
+export function useVentaForm(onSaved, clienteInicialId = null) {
     const [clientes,  setClientes]  = useState([]);
     const [repuestos, setRepuestos] = useState([]);
-    const [clienteId, setClienteId] = useState(null);
+    const [clienteId, setClienteId] = useState(clienteInicialId ? String(clienteInicialId) : null);
     const [productos, setProductos] = useState([]);
     const [repuestoElegido, setRepuestoElegido] = useState(null);
     const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(0);
     const [costoEnvio, setCostoEnvio] = useState(0);
+    const [fechaVenta, setFechaVenta] = useState(new Date().toISOString().split('T')[0]);
+    const [leyenda, setLeyenda] = useState('');
     const [modalClienteAbierto, setModalClienteAbierto] = useState(false);
     const [nombreClientePrellenado, setNombreClientePrellenado] = useState('');
+
+    // Estado del flujo de 3 pasos
+    const [modoRapido, setModoRapido] = useState(false);
+    const [registrarCliente, setRegistrarCliente] = useState(false);
+    const [datosCliente, setDatosCliente] = useState({
+        nombre: '', telefono: '', email: '',
+        calle: '', numero: '', localidad: '', provincia: 'Buenos Aires', notas: ''
+    });
 
     useEffect(() => {
         const cargar = async () => {
@@ -30,6 +40,22 @@ export function useVentaForm(onSaved) {
         cargar();
     }, []);
 
+    const handleDatosChange = (e) =>
+        setDatosCliente(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+    // Activar modo rápido (MOSTRADOR)
+    const activarRapido = (mostradorCid) => {
+        if (mostradorCid) { setClienteId(mostradorCid.toString()); setModoRapido(true); }
+    };
+
+    // Volver al modo con cliente
+    const activarNormal = () => {
+        setClienteId(null);
+        setModoRapido(false);
+        setRegistrarCliente(false);
+        setDatosCliente({ nombre: '', telefono: '', email: '', calle: '', numero: '', localidad: '', provincia: 'Buenos Aires', notas: '' });
+    };
+
     const agregarProducto = () => {
         if (!repuestoElegido) return;
         setProductos(prev => {
@@ -44,9 +70,9 @@ export function useVentaForm(onSaved) {
                 id:       repuestoElegido.id,
                 nombre:   repuestoElegido.nombre,
                 sku:      repuestoElegido.sku,
-                precio:   parseFloat(repuestoElegido.precio),
+                precio:   parseFloat(repuestoElegido.precio) || 0,
                 cantidad: 1,
-                subtotal: parseFloat(repuestoElegido.precio)
+                subtotal: parseFloat(repuestoElegido.precio) || 0
             }];
         });
         setRepuestoElegido(null);
@@ -63,6 +89,18 @@ export function useVentaForm(onSaved) {
 
     const quitarProducto = (idx) => setProductos(prev => prev.filter((_, i) => i !== idx));
 
+    // Crear repuesto al vuelo desde el selector
+    const crearRepuestoRapido = async (nombre) => {
+        try {
+            const res = await api.post('/repuestos', { nombre: nombre.trim(), precio: 0, sku: '' });
+            setRepuestos(prev => [...prev, res.data]);
+            setRepuestoElegido(res.data);
+            toast.success(`Repuesto "${res.data.nombre}" creado`);
+        } catch {
+            toast.error('Error al crear repuesto');
+        }
+    };
+
     const subtotalProductos = productos.reduce((a, b) => a + b.subtotal, 0);
     const envioNum          = parseFloat(costoEnvio) || 0;
     const totalBruto        = subtotalProductos + envioNum;
@@ -70,11 +108,8 @@ export function useVentaForm(onSaved) {
     const totalFinal        = totalBruto - descuentoMonto;
     const clienteObj        = clientes.find(c => c.id.toString() === clienteId);
 
-    /**
-     * crearClienteRapido
-     * Crea un cliente con datos mínimos y retorna su ID.
-     */
-    const crearClienteRapido = async (datosCliente) => {
+    // Crea un cliente con datos mínimos antes de guardar la venta
+    const crearClienteRapido = async () => {
         try {
             const res = await api.post('/clientes', {
                 clienteTipo:  'PARTICULAR',
@@ -91,25 +126,25 @@ export function useVentaForm(onSaved) {
             });
             setClientes(prev => [...prev, res.data]);
             return res.data;
-        } catch (err) {
+        } catch {
             toast.error('Error al registrar cliente');
             return null;
         }
     };
 
-    /**
-     * guardarVenta
-     * Si registrarCliente=true y datosCliente tiene nombre,
-     * primero crea el cliente en BD y lo asocia a la venta.
-     */
-    const guardarVenta = async (
-        confirmar        = false,
-        sedeIdOverride   = null,
-        nombreOverride   = null,
-        telefonoOverride = null,
-        registrarCliente = false,
-        datosCliente     = null
-    ) => {
+    const resetForm = () => {
+        setProductos([]);
+        setClienteId(null);
+        setDescuentoPorcentaje(0);
+        setCostoEnvio(0);
+        setLeyenda('');
+        setModoRapido(false);
+        setRegistrarCliente(false);
+        setDatosCliente({ nombre: '', telefono: '', email: '', calle: '', numero: '', localidad: '', provincia: 'Buenos Aires', notas: '' });
+    };
+
+    // mostradorSid: ID de sede MOSTRADOR para ventas rápidas (de useMostrador)
+    const guardarVenta = async (confirmar = false, mostradorSid = null) => {
         if (!clienteId || productos.length === 0) {
             toast.error('Falta cliente o productos');
             return;
@@ -118,55 +153,54 @@ export function useVentaForm(onSaved) {
         const loading = toast.loading(confirmar ? 'Confirmando...' : 'Guardando...');
 
         try {
-            let sedeIdFinal = sedeIdOverride || 1;
-            let nombreFinal = nombreOverride?.trim() || clienteObj?.nombre || 'Mostrador';
-            let sedeNombreFinal = sedeIdOverride ? 'Mostrador' : 'Mostrador';
+            let nombreFinal = modoRapido
+                ? (datosCliente.nombre?.trim() || 'Mostrador')
+                : (clienteObj?.nombre || 'Mostrador');
 
-            // Si quiere registrar el cliente, crearlo primero
-            if (registrarCliente && datosCliente?.nombre?.trim()) {
-                const nuevoCliente = await crearClienteRapido(datosCliente);
+            // Si el usuario quiere registrar el cliente, crearlo antes de guardar
+            if (modoRapido && registrarCliente && datosCliente?.nombre?.trim()) {
+                const nuevoCliente = await crearClienteRapido();
                 if (nuevoCliente) {
                     nombreFinal = nuevoCliente.nombre;
-                    toast.success(`👤 Cliente "${nuevoCliente.nombre}" registrado`, { duration: 2000 });
+                    toast.success(`Cliente "${nuevoCliente.nombre}" registrado`, { duration: 2000 });
                 }
             }
 
             await api.post('/servicios', {
-                sedeId:       parseInt(sedeIdFinal),
-                usuarioId:    1,
-                fecha:        new Date().toISOString().split('T')[0],
-                servicioTipo: 'VENTA',
-                estado:       confirmar ? 'REALIZADO' : 'PRESUPUESTO',
-                clienteNombre: nombreFinal,
-                sedeNombre:   sedeNombreFinal,
+                sedeId:            parseInt(mostradorSid || 1),
+                usuarioId:         1,
+                fecha:             fechaVenta,
+                servicioTipo:      'VENTA',
+                estado:            confirmar ? 'REALIZADO' : 'PRESUPUESTO',
+                clienteNombre:     nombreFinal,
+                sedeNombre:        'Mostrador',
                 descuentoPorcentaje,
                 totalConDescuento: totalFinal,
                 items: [{
-                    equipoSerial:    'MOSTRADOR',
-                    tecnico:         'Mostrador',
-                    costo:           totalFinal,
-                    costoExtra:      envioNum,
-                    metodoPago:      'EFECTIVO',
+                    equipoSerial:     'MOSTRADOR',
+                    tecnico:          'Mostrador',
+                    costo:            totalFinal,
+                    costoExtra:       envioNum,
+                    metodoPago:       'EFECTIVO',
                     trabajoRealizado: `VENTA: ${productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')}${envioNum > 0 ? ` | Envío: $${envioNum}` : ''}`,
-                    trabajoTipo:     'VENTA',
-                    repuestosUsados: productos,
-                    garantiaHasta:   null
+                    trabajoTipo:      'VENTA',
+                    repuestosUsados:  productos,
+                    garantiaHasta:    null
                 }]
             });
 
-            toast.success('✅ ¡Venta guardada!', { id: loading });
-            setProductos([]);
-            setClienteId(null);
-            setDescuentoPorcentaje(0);
-            setCostoEnvio(0);
+            toast.success('¡Venta guardada!', { id: loading });
+            resetForm();
             if (onSaved) onSaved();
         } catch (err) {
-            toast.error(`❌ ${err.response?.data?.mensaje || err.message}`, { id: loading });
+            toast.error(`${err.response?.data?.mensaje || err.message}`, { id: loading });
         }
     };
 
-    const dispararPDF = (nombreOverride = null) => {
-        const nombreFinal = nombreOverride?.trim() || clienteObj?.nombre || 'Mostrador';
+    const dispararPDF = () => {
+        const nombreFinal = modoRapido
+            ? (datosCliente.nombre?.trim() || 'Mostrador')
+            : (clienteObj?.nombre || 'Mostrador');
         generarRemitoPDFPremium({
             esPresupuesto: false,
             cliente:  { nombre: nombreFinal },
@@ -182,7 +216,7 @@ export function useVentaForm(onSaved) {
             }],
             descuentoPorcentaje,
             totalFinal,
-            fechaServicio: new Date().toISOString().split('T')[0]
+            fechaServicio: fechaVenta
         });
     };
 
@@ -200,10 +234,16 @@ export function useVentaForm(onSaved) {
         repuestoElegido, setRepuestoElegido,
         descuentoPorcentaje, setDescuentoPorcentaje,
         costoEnvio, setCostoEnvio,
+        leyenda, setLeyenda,
+        fechaVenta, setFechaVenta,
         descuentoMonto, subtotalProductos, totalBruto, totalFinal, envioNum,
         modalClienteAbierto, setModalClienteAbierto,
         nombreClientePrellenado, setNombreClientePrellenado,
+        modoRapido, registrarCliente, setRegistrarCliente,
+        datosCliente, handleDatosChange,
+        activarRapido, activarNormal,
         agregarProducto, actualizarCantidad, quitarProducto,
+        crearRepuestoRapido,
         guardarVenta, dispararPDF, onClienteNuevo,
     };
 }

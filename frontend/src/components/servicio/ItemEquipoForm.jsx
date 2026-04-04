@@ -2,64 +2,44 @@ import React from 'react';
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 
-/**
- * ItemEquipoForm
- * Formulario de UN equipo para el ticket de servicio.
- * Reemplaza SeccionRepuestos + el selector S/N de SeccionCliente.
- *
- * Campos:
- *  - S/N (del inventario o texto libre)
- *  - Modelo / descripción del equipo (texto libre)
- *  - Ubicación dentro del local (texto libre)
- *  - Repuestos usados
- *  - Descripción del trabajo
- *  - Mano de obra ($)
- */
 export default function ItemEquipoForm({
-    db,
-    clienteId,
+    db, clienteId,
     itemActual, setItemActual,
     repuestoElegido, setRepuestoElegido,
     estaBloqueado, esPresupuesto,
     selectStyles,
-    sumarRepuesto,
-    actualizarCantidad,
-    quitarRepuesto,
-    agregarAlTicket,
-    calcularGananciaRepuesto,
-    consultarAntecedentes,
-    historialEquipo,
+    sumarRepuesto, actualizarCantidad, quitarRepuesto,
+    agregarAlTicket, calcularGananciaRepuesto,
+    consultarAntecedentes, historialEquipo,
     enviarWhatsAppMantenimiento,
-    setNumeroSeriePrellenado,
-    setModalEquipoAbierto,
+    setNumeroSeriePrellenado, setModalEquipoAbierto,
     numeroEquipo = 1,
 }) {
-    const inputCls = "w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold";
+    const inputCls = "w-full p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] text-sm font-medium outline-none placeholder-[#A8A29E] border border-black/[0.07] dark:border-white/[0.07] focus:ring-2 focus:ring-[#D13A28] transition-all";
 
     const sedesDelCliente = (() => {
         if (!clienteId) return [];
-        const idsSedesDelCliente = db.sedes
-            ?.filter(s => s.cliente?.id?.toString() === clienteId)
-            .map(s => s.id) || [];
-        return db.equipos?.filter(e => idsSedesDelCliente.includes(e.sede?.id)) || [];
+        const ids = db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId).map(s => s.id) || [];
+        return db.equipos?.filter(e => ids.includes(e.sede?.id)) || [];
     })();
 
     return (
         <div className="space-y-4">
-
-            {/* HEADER DEL EQUIPO */}
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
-                <div className="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center text-white font-black text-sm shrink-0">
+            {/* HEADER EQUIPO */}
+            <div className="flex items-center gap-3 pb-3"
+                 style={{ borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white font-black text-xs shrink-0"
+                     style={{ background: '#D13A28' }}>
                     {numeroEquipo}
                 </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest">
                     Equipo {numeroEquipo}
                 </p>
             </div>
 
-            {/* S/N — del inventario o libre */}
+            {/* S/N */}
             <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                <label className="block text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest mb-2">
                     N/S Dispenser (opcional)
                 </label>
                 <CreatableSelect
@@ -72,75 +52,65 @@ export default function ItemEquipoForm({
                     value={itemActual.equipoSerial ? { label: itemActual.equipoSerial, value: itemActual.equipoSerial } : null}
                     onChange={s => {
                         if (!s) { setItemActual({ ...itemActual, equipoSerial: '' }); return; }
-                        if (s.__isNew__) {
-                            setNumeroSeriePrellenado(s.label);
-                            setItemActual({ ...itemActual, equipoSerial: s.label });
-                        } else {
-                            setItemActual({ ...itemActual, equipoSerial: s.value });
-                            consultarAntecedentes(s.value);
-                        }
+                        if (s.__isNew__) { setNumeroSeriePrellenado(s.label); setItemActual({ ...itemActual, equipoSerial: s.label }); }
+                        else { setItemActual({ ...itemActual, equipoSerial: s.value }); consultarAntecedentes(s.value); }
                     }}
-                    onCreateOption={val => {
-                        setItemActual({ ...itemActual, equipoSerial: val });
-                        consultarAntecedentes(val);
-                    }}
+                    onCreateOption={val => { setItemActual({ ...itemActual, equipoSerial: val }); consultarAntecedentes(val); }}
                     isClearable
                     placeholder="Buscar del inventario o escribir S/N libre..."
                 />
             </div>
 
-            {/* MODELO / DESCRIPCIÓN DEL EQUIPO */}
+            {/* MODELO */}
             <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                    Modelo / descripción del equipo (opcional)
+                <label className="block text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest mb-2">
+                    Modelo / descripción (opcional)
                 </label>
-                <input
-                    disabled={estaBloqueado}
-                    type="text"
+                <input disabled={estaBloqueado} type="text"
                     value={itemActual.modeloEquipo || ''}
                     onChange={e => setItemActual({ ...itemActual, modeloEquipo: e.target.value })}
-                    placeholder="Ej: Dispenser frío/calor marca X, heladera Samsung..."
+                    placeholder="Ej: Dispenser frío/calor marca X..."
                     className={inputCls}
                 />
             </div>
 
             {/* UBICACIÓN */}
             <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                <label className="block text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest mb-2">
                     Ubicación dentro del local (opcional)
                 </label>
-                <input
-                    disabled={estaBloqueado}
-                    type="text"
+                <input disabled={estaBloqueado} type="text"
                     value={itemActual.ubicacionEquipo || ''}
                     onChange={e => setItemActual({ ...itemActual, ubicacionEquipo: e.target.value })}
-                    placeholder="Ej: Piso 2 — Oficina de RRHH, Depósito trasero..."
+                    placeholder="Ej: Piso 2 — Oficina de RRHH..."
                     className={inputCls}
                 />
             </div>
 
-            {/* ANTECEDENTES (si hay historial del S/N) */}
+            {/* ANTECEDENTES */}
             {historialEquipo && (
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                <div className="p-4 rounded-xl"
+                     style={{ background: '#FDECEA', border: '0.5px solid rgba(209,58,40,0.2)' }}>
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">
+                        <span className="text-[10px] font-bold text-[#D13A28] uppercase tracking-widest">
                             Último servicio registrado
                         </span>
                         <button onClick={enviarWhatsAppMantenimiento}
-                            className="bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-black active:scale-95">
+                            className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-white active:scale-95"
+                            style={{ background: '#1E8A4A' }}>
                             💬 WhatsApp
                         </button>
                     </div>
-                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                        <span className="opacity-50">{historialEquipo.fecha}</span>{' '}
-                        — {historialEquipo.items?.[0]?.trabajoRealizado}
+                    <p className="text-xs font-medium text-[#57534E]">
+                        <span className="text-[#A8A29E]">{historialEquipo.fecha}</span>
+                        {' '}— {historialEquipo.items?.[0]?.trabajoRealizado}
                     </p>
                 </div>
             )}
 
-            {/* SEPARADOR */}
-            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+            {/* SEPARADOR TRABAJO */}
+            <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.07)', paddingTop: '16px' }}>
+                <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest mb-3">
                     Trabajo a realizar
                 </p>
             </div>
@@ -149,7 +119,7 @@ export default function ItemEquipoForm({
             {!estaBloqueado && (
                 <div className="flex gap-2 items-end">
                     <div className="flex-1">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                        <label className="block text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest mb-2">
                             Agregar repuesto — nombre o SKU
                         </label>
                         <Select
@@ -161,16 +131,15 @@ export default function ItemEquipoForm({
                             }))}
                             filterOption={(opt, input) => {
                                 const v = input.toLowerCase();
-                                return opt.data.nombre?.toLowerCase().includes(v) ||
-                                       opt.data.sku?.toLowerCase().includes(v);
+                                return opt.data.nombre?.toLowerCase().includes(v) || opt.data.sku?.toLowerCase().includes(v);
                             }}
                             formatOptionLabel={opt => (
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        {opt.sku && <span className="text-[9px] font-black text-blue-400 mr-2">{opt.sku}</span>}
+                                        {opt.sku && <span className="text-[9px] font-black mr-2" style={{ color: '#D13A28' }}>{opt.sku}</span>}
                                         <span className="font-bold text-sm">{opt.nombre}</span>
                                     </div>
-                                    <span className="text-emerald-500 font-black text-xs">${opt.precio}</span>
+                                    <span className="font-black text-xs" style={{ color: '#1E8A4A' }}>${opt.precio}</span>
                                 </div>
                             )}
                             onChange={setRepuestoElegido}
@@ -179,7 +148,8 @@ export default function ItemEquipoForm({
                         />
                     </div>
                     <button onClick={sumarRepuesto}
-                        className="h-[55px] w-14 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-2xl font-black active:scale-90 transition-transform">
+                        className="h-12 w-12 rounded-xl text-xl font-black text-white active:scale-90 transition-transform flex-shrink-0"
+                        style={{ background: '#D13A28' }}>
                         +
                     </button>
                 </div>
@@ -187,31 +157,33 @@ export default function ItemEquipoForm({
 
             {/* LISTA REPUESTOS */}
             {itemActual.repuestosUsados?.length > 0 && (
-                <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                <div className="p-3 rounded-xl"
+                     style={{ background: '#D8D4CE', border: '0.5px solid rgba(0,0,0,0.07)' }}>
                     {itemActual.repuestosUsados.map((r, i) => {
                         const g = calcularGananciaRepuesto(r, r.cantidad);
                         return (
-                            <div key={i} className="py-2 border-b border-slate-200 dark:border-slate-700 last:border-0">
+                            <div key={i} className="py-2.5" style={{ borderBottom: i < itemActual.repuestosUsados.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
                                 <div className="flex justify-between items-center">
                                     <div className="flex-1">
-                                        <div className="font-bold text-sm text-slate-900 dark:text-white">{r.nombre}</div>
-                                        <div className="text-[10px] text-slate-400">${r.precio} c/u</div>
+                                        <p className="font-bold text-sm text-[#1C1917] dark:text-[#F0EEE9]">{r.nombre}</p>
+                                        <p className="text-[10px] text-[#A8A29E]">${r.precio} c/u</p>
                                     </div>
                                     <input disabled={estaBloqueado} type="number" min="1" value={r.cantidad}
                                         onChange={e => actualizarCantidad(i, e.target.value)}
-                                        className="w-12 h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-center font-black dark:text-white mr-3"
+                                        className="w-11 h-9 rounded-lg text-center font-black text-sm text-[#1C1917] dark:text-[#F0EEE9] mr-3 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07]"
                                     />
-                                    <div className="font-black text-sm w-16 text-right text-slate-900 dark:text-white">
+                                    <p className="font-black text-sm w-16 text-right text-[#1C1917] dark:text-[#F0EEE9]">
                                         ${g.subtotal.toLocaleString()}
-                                    </div>
+                                    </p>
                                     {!estaBloqueado && (
-                                        <button onClick={() => quitarRepuesto(i)} className="ml-3 text-rose-500 text-lg">✕</button>
+                                        <button onClick={() => quitarRepuesto(i)}
+                                            className="ml-3 text-rose-500 text-lg leading-none">✕</button>
                                     )}
                                 </div>
                                 {g.ganancia > 0 && (
                                     <div className="flex gap-3 mt-1">
-                                        <span className="text-[9px] font-black text-emerald-500">+${g.ganancia.toFixed(0)}</span>
-                                        <span className="text-[9px] text-slate-400">Margen: {g.margen}%</span>
+                                        <span className="text-[9px] font-bold" style={{ color: '#1E8A4A' }}>+${g.ganancia.toFixed(0)}</span>
+                                        <span className="text-[9px] text-[#A8A29E]">Margen: {g.margen}%</span>
                                     </div>
                                 )}
                             </div>
@@ -221,22 +193,19 @@ export default function ItemEquipoForm({
             )}
 
             {/* DESCRIPCIÓN TRABAJO */}
-            <textarea
-                disabled={estaBloqueado}
+            <textarea disabled={estaBloqueado}
                 placeholder="Descripción detallada del trabajo realizado o a realizar..."
                 value={itemActual.trabajo || ''}
                 onChange={e => setItemActual({ ...itemActual, trabajo: e.target.value })}
-                className="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-h-[90px] resize-none"
+                className="w-full p-4 rounded-xl text-sm font-medium text-[#1C1917] dark:text-[#F0EEE9] outline-none resize-none min-h-[90px] focus:ring-2 focus:ring-[#D13A28] bg-[#D8D4CE] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07] placeholder-[#A8A29E]"
             />
 
             {/* MANO DE OBRA */}
-            <div className="bg-slate-900 dark:bg-slate-800 p-5 rounded-2xl shadow-inner">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <div className="p-5 rounded-2xl bg-[#1C1917] dark:bg-[#0F0F0F]">
+                <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-widest">
                     Mano de obra ($)
                 </label>
-                <input
-                    disabled={estaBloqueado}
-                    type="number" min="0"
+                <input disabled={estaBloqueado} type="number" min="0"
                     value={itemActual.costoExtra}
                     onChange={e => setItemActual({ ...itemActual, costoExtra: Math.max(0, parseFloat(e.target.value) || 0) })}
                     className="w-full bg-transparent border-none text-white text-4xl font-black outline-none mt-1"
@@ -246,8 +215,9 @@ export default function ItemEquipoForm({
             {/* BOTÓN SUMAR */}
             {!estaBloqueado && (
                 <button onClick={agregarAlTicket}
-                    className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-sm shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all">
-                    + SUMAR EQUIPO AL TICKET
+                    className="w-full h-13 py-4 rounded-xl font-black text-sm text-white active:scale-[0.98] transition-all"
+                    style={{ background: '#D13A28' }}>
+                    + Sumar equipo al ticket
                 </button>
             )}
         </div>

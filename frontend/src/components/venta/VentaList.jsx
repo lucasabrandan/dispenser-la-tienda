@@ -1,16 +1,33 @@
 import React from 'react';
+import { useMontos } from '../../context/MontosContext';
 
 /**
- * VentaList
- * Lista de ventas con tabs, búsqueda y acciones por fila.
- * Componente presentacional puro.
+ * VentaList — lista de ventas con acciones por fila.
+ * Componente presentacional puro, usa sistema de colores del proyecto.
  */
 
-const TABS = [
-    { id: 'TODOS',      label: 'Todas'      },
-    { id: 'COBRADAS',   label: 'Cobradas'   },
-    { id: 'PENDIENTES', label: 'Pendientes' },
-];
+function M({ valor, prefix = '$', className = '' }) {
+    const { montosVisibles } = useMontos();
+    if (!montosVisibles) return <span className={className}>••••••</span>;
+    return (
+        <span className={className}>
+            {prefix}{typeof valor === 'number' ? valor.toLocaleString() : valor}
+        </span>
+    );
+}
+
+// Badge de estado usando variables CSS del sistema
+const badgeClass = (v) => {
+    if (v.estado === 'PRESUPUESTO') return 'bg-[var(--warning-bg)] text-[var(--warning-tx)]';
+    if (v.estado === 'REALIZADO')   return 'bg-[var(--success-bg)] text-[var(--success-tx)]';
+    return 'bg-[#C0BCB6] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]';
+};
+
+const badgeLabel = (v) => {
+    if (v.estado === 'PRESUPUESTO') return 'Pendiente';
+    if (v.estado === 'REALIZADO')   return 'Cobrada';
+    return v.estado;
+};
 
 export default function VentaList({
     ventas, cargando,
@@ -22,129 +39,97 @@ export default function VentaList({
     onEliminar,
     onPDF,
 }) {
-    const badgeClass = (v) => {
-        if (v.estado === 'PRESUPUESTO') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
-        if (v.estado === 'REALIZADO')   return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
-        return 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
-    };
-
-    const badgeLabel = (v) => {
-        if (v.estado === 'PRESUPUESTO') return 'Pendiente';
-        if (v.estado === 'REALIZADO')   return 'Cobrada';
-        return v.estado;
-    };
-
     return (
         <div>
-            {/* BUSCADOR */}
-            <div className="relative mb-4">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">🔍</span>
-                <input
-                    placeholder="Buscar por cliente, sede o producto..."
-                    value={busqueda}
-                    onChange={e => setBusqueda(e.target.value)}
-                    className="w-full py-3.5 pl-11 pr-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
-
-            {/* TABS */}
-            <div className="flex gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl mb-5">
-                {TABS.map(tab => (
-                    <button key={tab.id} onClick={() => setFiltroTab(tab.id)}
-                        className={`flex-1 py-2.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wide transition-all ${
-                            filtroTab === tab.id
-                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-300/50'
-                        }`}>
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
-
             {/* LISTA */}
             {cargando ? (
-                <div className="text-center py-16 text-slate-400 font-bold">
-                    ⏳ Cargando ventas...
+                <div className="text-center py-16 text-[#A8A29E] font-bold">
+                    Cargando ventas...
                 </div>
             ) : ventas.length === 0 ? (
-                <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-400 font-bold">
-                    🛒 No hay ventas en esta categoría.
+                <div className="text-center py-16 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] text-[#A8A29E] font-bold">
+                    No hay ventas en esta categoría.
                 </div>
             ) : (
                 <div className="flex flex-col gap-3">
                     {ventas.map(v => (
                         <div key={v.id}
-                            className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:shadow-md">
+                            className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden transition-colors">
 
-                            {/* HEADER */}
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <div className="flex gap-2 items-center mb-1">
-                                        <span className="text-xs text-slate-400 font-bold">#{v.id}</span>
-                                        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase ${badgeClass(v)}`}>
-                                            {badgeLabel(v)}
-                                        </span>
-                                    </div>
-                                    <h4 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
-                                        {v.clienteNombre}
-                                    </h4>
-                                    <p className="text-xs text-slate-400 font-medium mt-0.5">
-                                        📍 {v.sedeNombre} · {v.fecha}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                                        ${calcularTotal(v).toLocaleString()}
-                                    </p>
-                                    {v.descuentoPorcentaje > 0 && (
-                                        <p className="text-[10px] text-rose-500 font-bold">
-                                            -{v.descuentoPorcentaje}% desc.
+                            {/* CUERPO */}
+                            <div className="p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <div className="flex gap-2 items-center mb-1">
+                                            <span className="text-[11px] text-[#A8A29E] font-bold">#{v.id}</span>
+                                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase ${badgeClass(v)}`}>
+                                                {badgeLabel(v)}
+                                            </span>
+                                        </div>
+                                        <h4 className="text-[15px] font-extrabold text-[#1C1917] dark:text-[#F0EEE9] tracking-tight leading-tight">
+                                            {v.clienteNombre}
+                                        </h4>
+                                        <p className="text-[11px] text-[#A8A29E] font-medium mt-0.5">
+                                            {v.sedeNombre} · {v.fecha}
                                         </p>
-                                    )}
+                                    </div>
+                                    <div className="text-right">
+                                        <M valor={calcularTotal(v)} className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none block" />
+                                        {v.descuentoPorcentaje > 0 && (
+                                            <p className="text-[10px] text-[#D13A28] dark:text-[#E8422F] font-bold">
+                                                -{v.descuentoPorcentaje}% desc.
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
+
+                                {/* DETALLE PRODUCTOS */}
+                                {v.items?.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-black/[0.05] dark:border-white/[0.05]">
+                                        <p className="text-[10px] text-[#A8A29E] truncate">
+                                            {v.items.slice(0, 2).map(it => it.trabajoRealizado || it.equipoSerial).join(', ')}
+                                            {v.items.length > 2 && ` +${v.items.length - 2} más`}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* DETALLE PRODUCTOS */}
-                            {v.items?.length > 0 && (
-                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 mb-3 space-y-1">
-                                    {v.items.map((it, i) => (
-                                        <div key={i} className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
-                                            • {it.trabajoRealizado || it.equipoSerial}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* ACCIONES */}
-                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+                            {/* BARRA ACCIONES */}
+                            <div className="flex items-center gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
                                 {/* Editar — solo pendientes */}
                                 {v.estado === 'PRESUPUESTO' && (
-                                    <button onClick={() => onEditar(v)}
-                                        className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl transition-all hover:bg-blue-100"
+                                    <button
+                                        onClick={() => onEditar(v)}
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                                         title="Editar">
                                         ✏️
                                     </button>
                                 )}
 
                                 {/* PDF */}
-                                <button onClick={() => onPDF(v)}
-                                    className="p-2.5 bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-xl transition-all hover:bg-slate-100"
+                                <button
+                                    onClick={() => onPDF(v)}
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                                     title="Generar PDF">
                                     📄
                                 </button>
 
+                                <div className="flex-1" />
+
                                 {/* Confirmar / Cobrar — solo pendientes */}
                                 {v.estado === 'PRESUPUESTO' && (
-                                    <button onClick={() => onConfirmar(v.id)}
-                                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs shadow-md shadow-emerald-500/20 transition-all active:scale-95"
+                                    <button
+                                        onClick={() => onConfirmar(v.id)}
+                                        className="h-9 px-4 rounded-xl font-bold text-xs text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-80"
                                         title="Confirmar cobro">
-                                        ✅ Cobrar
+                                        ✓ Cobrar
                                     </button>
                                 )}
 
                                 {/* Eliminar */}
-                                <button onClick={() => onEliminar(v.id)}
-                                    className="p-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl ml-auto transition-all hover:bg-rose-100"
+                                <button
+                                    onClick={() => onEliminar(v.id)}
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[var(--danger-bg)] text-[var(--danger-tx)] active:scale-90 transition-all"
                                     title="Eliminar">
                                     🗑️
                                 </button>
@@ -155,4 +140,4 @@ export default function VentaList({
             )}
         </div>
     );
-}   
+}

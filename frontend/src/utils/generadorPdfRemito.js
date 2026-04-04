@@ -1,41 +1,13 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
-import logoUrl from '../assets/logo-dispenser.png';
+import {
+    DARK, RED, GOLD, WHITE, GRAY_LIGHT, GRAY_MID, GRAY_TEXT, WARM_BG, WARM_BORDER,
+    procesarFecha, dibujarHeaderPDF, dibujarFooterPDF, pdfLabel as label, pdfValue as value,
+    comprimirFoto
+} from './pdfTheme';
 
-const DARK      = [35, 31, 32];
-const RED       = [231, 76, 60];
-const GOLD      = [246, 184, 26];
-const WHITE     = [255, 255, 255];
-const GRAY_LIGHT= [248, 248, 248];
-const GRAY_MID  = [200, 200, 200];
-const GRAY_TEXT = [100, 100, 100];
-const WARM_BG   = [255, 248, 240];
-const WARM_BORDER=[240, 224, 208];
-
-function procesarFecha(f) {
-    try {
-        if (!f) return new Date().toLocaleDateString('es-AR');
-        const d = new Date(f.includes('T') ? f : `${f}T12:00:00`);
-        return isNaN(d.getTime()) ? new Date().toLocaleDateString('es-AR') : d.toLocaleDateString('es-AR');
-    } catch { return new Date().toLocaleDateString('es-AR'); }
-}
-
-function label(doc, txt, x, y) {
-    doc.setFontSize(7);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...GRAY_TEXT);
-    doc.text(txt.toUpperCase(), x, y);
-}
-
-function value(doc, txt, x, y, color = DARK) {
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(...color);
-    doc.text(txt, x, y);
-}
-
-export const generarRemitoPDFPremium = ({
+export const generarRemitoPDFPremium = async ({
     esPresupuesto, cliente, sede, tecnico, ticketItems, totalFinal, fechaServicio,
     descuentoPorcentaje = 0,
     leyenda = ''
@@ -57,31 +29,10 @@ export const generarRemitoPDFPremium = ({
     const totalFinal_   = subtotalBruto - montoDesc;
 
     // ── HEADER ───────────────────────────────────────────────────────────────
-    doc.setFillColor(...DARK);
-    doc.rect(0, 0, 210, 36, 'F');
-    doc.setFillColor(...RED);
-    doc.rect(0, 32, 210, 4, 'F');
-
-    // Logo — mantener proporción 700x300 → aprox 2.33:1
-    // A 48px de ancho → 48/2.33 = ~20px de alto
-    if (logoUrl) {
-        try { doc.addImage(logoUrl, 'PNG', 6, 6, 46, 20); } catch { }
-    }
-
-    // Badge tipo
-    doc.setFillColor(...RED);
-    doc.roundedRect(56, 13, 58, 9, 2, 2, 'F');
-    doc.setFontSize(7.5);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...WHITE);
-    doc.text(tipoLabel, 85, 19, { align: 'center' });
-
-    // Fecha + técnico
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY_MID);
-    doc.text(`Fecha: ${fecha}`, 196, 12, { align: 'right' });
-    if (esTecnico && tecnico) doc.text(`Técnico: ${tecnico}`, 196, 20, { align: 'right' });
+    dibujarHeaderPDF(
+        doc, tipoLabel, fecha,
+        esTecnico && tecnico ? `Técnico: ${tecnico}` : null
+    );
 
     // ── BLOQUE CLIENTE ───────────────────────────────────────────────────────
     let y = 46;
@@ -116,7 +67,7 @@ export const generarRemitoPDFPremium = ({
     // ── ITEMS ────────────────────────────────────────────────────────────────
     if (esTecnico) {
 
-        ticketItems.forEach((item, idx) => {
+        for (const [idx, item] of ticketItems.entries()) {
             if (y > 220) { doc.addPage(); y = 20; }
 
             const subtotalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
@@ -257,6 +208,77 @@ export const generarRemitoPDFPremium = ({
             doc.text(`$ ${subtotalEquipo.toLocaleString('es-AR')}`, 194, y + 6, { align: 'right' });
             y += 9;
 
+            // ── Fotos antes / después (opcionales) ───────────────────────
+            // Comprimir via canvas → JPEG estándar que jsPDF acepta sin fallar
+            const fotoA = await comprimirFoto(item.fotoAntesB64);
+            const fotoD = await comprimirFoto(item.fotoDespuesB64);
+
+            if (fotoA || fotoD) {
+                // Altura del bloque: label(7) + foto(78) + padding(7) = 92mm
+                const FOTO_BLOCK_H = 92;
+                const FOTO_W = 85;   // cada foto: 85mm ancho
+                const FOTO_H = 78;   // alto (portrait se escala automáticamente)
+                const GAP    = 8;    // separación entre fotos
+
+                if (y + FOTO_BLOCK_H > 262) { doc.addPage(); y = 20; }
+
+                // Fondo del bloque
+                doc.setFillColor(250, 248, 246);
+                doc.rect(14, y, 182, FOTO_BLOCK_H, 'F');
+                doc.setDrawColor(...WARM_BORDER);
+                doc.setLineWidth(0.3);
+                doc.rect(14, y, 182, FOTO_BLOCK_H, 'S');
+                doc.setLineWidth(0.2);
+
+                // Encabezado "Registro fotográfico"
+                doc.setFillColor(...DARK);
+                doc.rect(14, y, 182, 7, 'F');
+                doc.setFontSize(7);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(...WHITE);
+                doc.text('REGISTRO FOTOGRÁFICO', 18, y + 5);
+
+                // Calcular posiciones: centrar el par de fotos dentro del bloque
+                const totalFotosW  = FOTO_W * 2 + GAP;
+                const xStart       = 14 + (182 - totalFotosW) / 2;
+                const xL           = xStart;
+                const xR           = xStart + FOTO_W + GAP;
+                const yLabel       = y + 7 + 5;   // 5mm debajo del header
+                const yFoto        = yLabel + 4;   // 4mm debajo del label
+
+                // FOTO ANTES
+                doc.setFontSize(7);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(...GRAY_TEXT);
+                doc.text('ANTES', xL + FOTO_W / 2, yLabel, { align: 'center' });
+                if (fotoA) {
+                    doc.addImage(fotoA, 'JPEG', xL, yFoto, FOTO_W, FOTO_H);
+                    doc.setDrawColor(...GRAY_MID);
+                    doc.rect(xL, yFoto, FOTO_W, FOTO_H, 'S');
+                } else {
+                    doc.setFillColor(220, 218, 214);
+                    doc.rect(xL, yFoto, FOTO_W, FOTO_H, 'F');
+                    doc.setFontSize(7); doc.setTextColor(...GRAY_TEXT);
+                    doc.text('Sin foto', xL + FOTO_W / 2, yFoto + FOTO_H / 2, { align: 'center' });
+                }
+
+                // FOTO DESPUÉS
+                doc.setFontSize(7); doc.setFont(undefined, 'bold'); doc.setTextColor(...GRAY_TEXT);
+                doc.text('DESPUÉS', xR + FOTO_W / 2, yLabel, { align: 'center' });
+                if (fotoD) {
+                    doc.addImage(fotoD, 'JPEG', xR, yFoto, FOTO_W, FOTO_H);
+                    doc.setDrawColor(...GRAY_MID);
+                    doc.rect(xR, yFoto, FOTO_W, FOTO_H, 'S');
+                } else {
+                    doc.setFillColor(220, 218, 214);
+                    doc.rect(xR, yFoto, FOTO_W, FOTO_H, 'F');
+                    doc.setFontSize(7); doc.setTextColor(...GRAY_TEXT);
+                    doc.text('Sin foto', xR + FOTO_W / 2, yFoto + FOTO_H / 2, { align: 'center' });
+                }
+
+                y += FOTO_BLOCK_H;
+            }
+
             // Separador entre equipos
             if (idx < ticketItems.length - 1) {
                 doc.setDrawColor(...GRAY_MID);
@@ -267,7 +289,7 @@ export const generarRemitoPDFPremium = ({
             } else {
                 y += 8;
             }
-        });
+        }
 
     } else {
         // ── VENTA ─────────────────────────────────────────────────────────
@@ -343,16 +365,16 @@ export const generarRemitoPDFPremium = ({
         doc.text(lines, 14, y);
     }
 
-    // ── PIE ──────────────────────────────────────────────────────────────────
-    doc.setFontSize(7.5); doc.setTextColor(150, 150, 150); doc.setFont(undefined, 'normal');
-    doc.text(
-        esTecnico ? 'Garantía: 30 días sobre mano de obra · Repuestos según fabricante'
-                  : 'Presupuesto válido 7 días · Precios sujetos a variación sin previo aviso',
-        105, 284, { align: 'center' }
-    );
-    doc.setFillColor(...DARK); doc.rect(0, 287, 210, 10, 'F');
-    doc.setFillColor(...GOLD); doc.rect(0, 287, 10, 10, 'F');
-    doc.setFillColor(...RED); doc.rect(10, 287, 18, 10, 'F');
+    // ── FOOTER EN TODAS LAS PÁGINAS ──────────────────────────────────────────
+    const textoPie = esTecnico
+        ? 'Garantía: 30 días sobre mano de obra · Repuestos según fabricante'
+        : 'Presupuesto válido 7 días · Precios sujetos a variación sin previo aviso';
+
+    const totalPaginas = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPaginas; i++) {
+        doc.setPage(i);
+        dibujarFooterPDF(doc, i, totalPaginas, textoPie);
+    }
 
     doc.save(`${esTecnico ? 'Servicio' : 'Venta'}_${cliente.nombre || 'Remito'}_${fecha.replace(/\//g, '-')}.pdf`);
 };

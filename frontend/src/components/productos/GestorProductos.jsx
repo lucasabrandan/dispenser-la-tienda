@@ -142,7 +142,7 @@ export default function GestorProductos() {
         seleccionados.size === productosFiltrados.length && productosFiltrados.length > 0;
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-3 md:p-6 pb-24">
+        <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] p-3 md:p-6 pb-24 transition-colors">
             <div className="max-w-6xl mx-auto">
 
                 <BarraAccionesProductos

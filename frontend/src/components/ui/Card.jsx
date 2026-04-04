@@ -1,9 +1,27 @@
 import React from 'react';
 
-export default function Card({ children, className = '', ...props }) {
+/**
+ * Card — contenedor base del sistema de diseño.
+ * Usa variables CSS del sistema para respetar las 4 capas de color:
+ *   bg-base → bg-surface → bg-card → bg-raised
+ *
+ * Por defecto usa --bg-card (capa 3).
+ * Para usar otra capa: <Card layer="surface"> o <Card layer="raised">
+ */
+// Mapa de capas a clases Tailwind del sistema de diseño
+const LAYER_CLASSES = {
+    base:    'bg-[#C8C4BE] dark:bg-[#141414]',
+    surface: 'bg-[#D8D4CE] dark:bg-[#1C1C1C]',
+    card:    'bg-[#EDEAE6] dark:bg-[#242424]',
+    raised:  'bg-[#C0BCB6] dark:bg-[#2E2E2E]',
+};
+
+export default function Card({ children, className = '', layer = 'card', ...props }) {
+    const layerClass = LAYER_CLASSES[layer] || LAYER_CLASSES.card;
+
     return (
-        <div 
-            className={`w-full bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 mb-4 transition-colors duration-300 ${className}`}
+        <div
+            className={`w-full rounded-2xl p-5 mb-4 transition-colors duration-300 border border-black/[0.07] dark:border-white/[0.07] ${layerClass} ${className}`}
             {...props}
         >
             {children}

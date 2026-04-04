@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 
 import Layout from './components/layout/Layout';
+import { MontosProvider } from './context/MontosContext';
 
 // Caja
 import DashboardCaja from './components/DashboardCaja';
@@ -19,21 +20,31 @@ import DashboardFinanzas  from './components/finanzas/DashboardFinanzas';
 
 export default function App() {
     const [seccionActual, setSeccionActual] = useState('caja');
+    // Cliente precargado para abrir VentaManager/ServicioManager desde ClienteManager
+    const [clientePreload, setClientePreload] = useState(null);
+
+    const irASeccionConCliente = (seccion, cliente) => {
+        setClientePreload(cliente);
+        setSeccionActual(seccion);
+    };
 
     const renderSeccion = () => {
         switch (seccionActual) {
             case 'caja':
                 return <DashboardCaja setVistaActual={setSeccionActual} />;
             case 'venta':
-                return <VentaManager />;
+                return <VentaManager clienteInicial={clientePreload} onClienteConsumido={() => setClientePreload(null)} />;
             case 'servicio-tecnico':
-                return <ServicioManager />;
+                return <ServicioManager clienteInicial={clientePreload} onClienteConsumido={() => setClientePreload(null)} />;
             case 'historial':
                 return <ServicioList />;
             case 'presupuestos':
                 return <PresupuestosManager />;
             case 'clientes':
-                return <ClienteManager />;
+                return <ClienteManager
+                    onNuevoServicio={(c) => irASeccionConCliente('servicio-tecnico', c)}
+                    onNuevaVenta={(c) => irASeccionConCliente('venta', c)}
+                />;
             case 'productos':
                 return <GestorProductos />;
             case 'radar':
@@ -42,7 +53,7 @@ export default function App() {
                 return <DashboardFinanzas />;
             default:
                 return (
-                    <div className="flex items-center justify-center h-64 text-slate-400 font-black text-sm uppercase tracking-widest">
+                    <div className="flex items-center justify-center h-64 text-[#A8A29E] font-black text-sm uppercase tracking-widest">
                         Sección en construcción
                     </div>
                 );
@@ -50,16 +61,19 @@ export default function App() {
     };
 
     return (
-        <>
+        <MontosProvider>
             <Toaster
                 position="top-right"
-                toastOptions={{ duration: 3000, style: { fontSize: '1.1em', fontWeight: 'bold' } }}
+                toastOptions={{
+                    duration: 3000,
+                    style: { fontSize: '1.1em', fontWeight: 'bold' }
+                }}
             />
             <Layout vistaActual={seccionActual} setVistaActual={setSeccionActual}>
                 <div className="max-w-5xl mx-auto">
                     {renderSeccion()}
                 </div>
             </Layout>
-        </>
+        </MontosProvider>
     );
 }

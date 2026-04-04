@@ -1,10 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://192.168.100.2:8080/api',
+    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api',
     headers: { 'Content-Type': 'application/json' }
 });
-
 // ── Paginación estándar ──────────────────────────────────────────────────────
 const PAGE = '?page=0&size=1000';
 

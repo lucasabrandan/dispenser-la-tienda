@@ -1,29 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useVentaManager } from '../../hooks/useVentaManager';
-import VentaStats from './VentaStats';
-import VentaList  from './VentaList';
-import VentaForm  from './VentaForm';
+import { useFiltros } from '../../hooks/useFiltros';
+import VentaStats  from './VentaStats';
+import VentaList   from './VentaList';
+import VentaForm   from './VentaForm';
+import FiltrosPanel from '../ui/FiltrosPanel';
+import Paginacion   from '../ui/Paginacion';
 
-/**
- * VentaManager
- * Módulo completo de Ventas.
- * 
- * Estructura:
- * ┌─ Stats del mes (4 métricas) ──────────────────┐
- * ├─ Botón nueva venta ────────────────────────────┤
- * ├─ Lista con filtros (Todas / Cobradas / Pendientes)┤
- * │   · Ver detalle de productos                    │
- * │   · Editar presupuesto pendiente                │
- * │   · Confirmar / cobrar                          │
- * │   · Generar PDF                                 │
- * │   · Eliminar                                    │
- * └────────────────────────────────────────────────┘
- */
-export default function VentaManager() {
+const ESTADOS_VENTA = [
+    { value: 'PRESUPUESTO', label: 'Pendiente' },
+    { value: 'REALIZADO',   label: 'Cobrada'   },
+    { value: 'RECHAZADO',   label: 'Rechazada' },
+];
+
+export default function VentaManager({ clienteInicial = null, onClienteConsumido }) {
     const {
         ventas, cargando, stats,
-        busqueda, setBusqueda,
-        filtroTab, setFiltroTab,
         modalCrear, setModalCrear,
         ventaEditar,
         cargarVentas,
@@ -35,87 +27,103 @@ export default function VentaManager() {
         cerrarModal,
     } = useVentaManager();
 
-    return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 pb-28 font-sans transition-colors">
+    // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
+    useEffect(() => {
+        if (clienteInicial) setModalCrear(true);
+    }, [clienteInicial]);
 
-            {/* HEADER */}
-            <div className="flex justify-between items-end mb-6">
+    const filtros = useFiltros(ventas, {
+        porPagina: 10,
+        campoFecha: 'fecha',
+        campoEstado: 'estado',
+        campoBusqueda: ['clienteNombre', 'sedeNombre'],
+    });
+
+    return (
+        <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] p-4 pb-28 font-sans transition-colors">
+
+            {/* ── HEADER ───────────────────────────────────────────────── */}
+            <div className="flex justify-between items-end mb-5 pt-1 md:pt-0">
                 <div>
-                    <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">
+                    <h2 className="text-[28px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
                         Ventas
                     </h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">
+                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-[0.3em] mt-1">
                         Gestión comercial
                     </p>
                 </div>
                 <button
                     onClick={() => setModalCrear(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white h-14 px-8 rounded-2xl font-black text-xs uppercase shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                    className="h-10 px-5 rounded-xl font-bold text-xs text-white uppercase transition-all active:scale-95 hover:opacity-90 bg-[#D48800] dark:bg-[#F0A500]"
                 >
                     + Nueva Venta
                 </button>
             </div>
 
-            {/* STATS */}
             <VentaStats stats={stats} />
 
-            {/* ALERTA PENDIENTES */}
+            {/* ── ALERTA PENDIENTES ─────────────────────────────────────── */}
             {stats.pendientesCount > 0 && (
-                <div
-                    className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 mb-5 flex items-center gap-3 cursor-pointer transition-all hover:bg-amber-100 dark:hover:bg-amber-900/30"
-                    onClick={() => setFiltroTab('PENDIENTES')}
-                >
-                    <span className="text-2xl">⚠️</span>
+                <div className="bg-[var(--warning-bg)] border border-[rgba(212,136,0,0.25)] rounded-2xl p-4 mb-4 flex items-center gap-3 cursor-pointer transition-all hover:opacity-90">
+                    <span className="text-xl">⚠️</span>
                     <div>
-                        <p className="text-sm font-black text-amber-800 dark:text-amber-300">
+                        <p className="text-sm font-black text-[var(--warning-tx)]">
                             {stats.pendientesCount} presupuesto{stats.pendientesCount > 1 ? 's' : ''} pendiente{stats.pendientesCount > 1 ? 's' : ''} de cobro
                         </p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400 font-bold">
-                            ${stats.pendientesVal.toLocaleString()} por cobrar · Click para ver
+                        <p className="text-xs text-[var(--warning)] font-bold">
+                            ${stats.pendientesVal.toLocaleString()} por cobrar
                         </p>
                     </div>
                 </div>
             )}
 
-            {/* LISTA */}
-            <VentaList
-                ventas={ventas}
-                cargando={cargando}
-                busqueda={busqueda}     setBusqueda={setBusqueda}
-                filtroTab={filtroTab}   setFiltroTab={setFiltroTab}
-                calcularTotal={calcularTotal}
-                onEditar={abrirEditar}
-                onConfirmar={confirmarVenta}
-                onEliminar={eliminarVenta}
-                onPDF={generarPDF}
-            />
+            {/* ── FILTROS ARRIBA ─────────────────────────────────────────── */}
+            <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda conRango />
+            <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
-            {/* MODAL CREAR / EDITAR */}
+            {cargando ? (
+                <div className="text-center py-16 text-[#A8A29E] font-bold">Cargando ventas...</div>
+            ) : (
+                <VentaList
+                    ventas={filtros.itemsPagina}
+                    cargando={false}
+                    busqueda={filtros.busqueda}     setBusqueda={filtros.setBusqueda}
+                    filtroTab="TODOS"               setFiltroTab={() => {}}
+                    calcularTotal={calcularTotal}
+                    onEditar={abrirEditar}
+                    onConfirmar={confirmarVenta}
+                    onEliminar={eliminarVenta}
+                    onPDF={generarPDF}
+                />
+            )}
+
+            {/* ── PAGINACIÓN ABAJO ──────────────────────────────────────── */}
+            <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
+
+            {/* ── MODAL CREAR / EDITAR ──────────────────────────────────── */}
             {modalCrear && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end md:items-center justify-center p-0 md:p-4">
-                    <div className="bg-slate-50 dark:bg-slate-900 w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
-                        {/* Header del modal */}
-                        <div className="sticky top-0 bg-white dark:bg-slate-800 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center z-10 md:rounded-t-3xl">
+                    <div className="bg-[#EDEAE6] dark:bg-[#141414] w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+                        <div className="sticky top-0 bg-[#D8D4CE] dark:bg-[#1C1C1C] px-5 py-4 border-b border-black/[0.08] dark:border-white/[0.07] flex justify-between items-center z-10 md:rounded-t-3xl">
                             <div>
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                                    {ventaEditar ? '✏️ Editar Venta' : '🛒 Nueva Venta'}
+                                <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                    {ventaEditar ? 'Editar Venta' : 'Nueva Venta'}
                                 </h3>
-                                <p className="text-xs text-slate-400 mt-0.5">
+                                <p className="text-[11px] text-[#A8A29E] mt-0.5">
                                     {ventaEditar ? `Presupuesto #${ventaEditar.id}` : 'Seleccioná cliente y productos'}
                                 </p>
                             </div>
                             <button
                                 onClick={cerrarModal}
-                                className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-all"
+                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90"
                             >
                                 ✕
                             </button>
                         </div>
-
-                        {/* VentaForm dentro del modal */}
                         <VentaForm
-                            onSaved={() => { cerrarModal(); cargarVentas(); }}
+                            onSaved={() => { cerrarModal(); cargarVentas(); if (onClienteConsumido) onClienteConsumido(); }}
                             ventaParaEditar={ventaEditar}
+                            clienteInicialId={clienteInicial?.id}
                         />
                     </div>
                 </div>

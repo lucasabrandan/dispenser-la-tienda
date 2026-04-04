@@ -30,8 +30,8 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
             onClick={() => handleClick(item.id)}
             className={`w-full px-4 py-3 rounded-xl text-left text-sm font-bold transition-all ${
                 vistaActual === item.id
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
+                    : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E]'
             }`}
         >
             {item.nombre}
@@ -49,21 +49,26 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
             )}
 
             {/* Panel */}
-            <div className={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-slate-900 shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
+            <div className={`fixed top-0 left-0 h-full w-64 bg-[#D8D4CE] dark:bg-[#1C1C1C] shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
                 isOpen ? 'translate-x-0' : '-translate-x-full'
             }`}>
 
                 {/* Header */}
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                    <h2 className="text-lg font-black text-slate-900 dark:text-white">MENÚ</h2>
-                    <button onClick={onClose} className="text-2xl text-slate-500 hover:text-slate-900 dark:hover:text-white transition">✕</button>
+                <div className="p-6 border-b border-black/[0.07] dark:border-white/[0.07] flex justify-between items-center">
+                    <h2 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9]">MENÚ</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-2xl text-[#A8A29E] hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition"
+                    >
+                        ✕
+                    </button>
                 </div>
 
                 {/* Items */}
                 <div className="overflow-y-auto h-[calc(100%-140px)]">
 
                     <div className="p-4">
-                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
                             Operaciones
                         </p>
                         <div className="space-y-1">
@@ -71,8 +76,8 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                         </div>
                     </div>
 
-                    <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                    <div className="p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
                             Administración
                         </p>
                         <div className="space-y-1">
@@ -80,22 +85,22 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                         </div>
                     </div>
 
-                    <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+                    <div className="p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
                             Cuenta
                         </p>
-                        <button className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                        <button className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] transition-all">
                             ⚙️ Configuración
                         </button>
-                        <button className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
+                        <button className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all">
                             🚪 Logout
                         </button>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <p className="text-[9px] text-slate-400 dark:text-slate-500 text-center uppercase tracking-widest font-black">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07] bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                    <p className="text-[9px] text-[#A8A29E] text-center uppercase tracking-widest font-black">
                         Logística Dispenser v3.0
                     </p>
                 </div>

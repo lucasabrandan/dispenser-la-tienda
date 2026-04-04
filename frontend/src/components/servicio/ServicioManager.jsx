@@ -1,24 +1,35 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { construirUrlFoto } from '../../utils/construirUrlFoto';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import ServicioForm from '../servicio/ServicioForm';
+import { useFiltros } from '../../hooks/useFiltros';
+import FiltrosPanel from '../ui/FiltrosPanel';
+import Paginacion from '../ui/Paginacion';
+import { useMontos } from '../../context/MontosContext';
 
-/**
- * ServicioManager
- * Módulo completo de Servicio Técnico.
- *
- * ┌─ Stats del mes ────────────────────────────────┐
- * ├─ Botón nuevo servicio ─────────────────────────┤
- * ├─ Lista: Todos / Realizados / Pendientes ────────┤
- * │   · Detalle de items y repuestos               │
- * │   · Editar presupuesto                         │
- * │   · Confirmar / Rechazar / PDF / Eliminar      │
- * └────────────────────────────────────────────────┘
- */
-export default function ServicioManager() {
+function M({ valor, className = '' }) {
+    const { montosVisibles } = useMontos();
+    if (!montosVisibles) return <span className={className}>••••••</span>;
+    return <span className={className}>${typeof valor === 'number' ? valor.toLocaleString() : valor}</span>;
+}
+
+const ESTADOS_SERVICIO = [
+    { value: 'PRESUPUESTO', label: 'Pendiente' },
+    { value: 'REALIZADO',   label: 'Realizado' },
+    { value: 'RECHAZADO',   label: 'Rechazado' },
+];
+
+// Badges usando variables CSS del sistema de diseño
+const badgeInfo = (s) => {
+    if (s.estado === 'PRESUPUESTO') return { label: 'Pendiente', cls: 'bg-[var(--warning-bg)] text-[var(--warning-tx)]' };
+    if (s.estado === 'REALIZADO')   return { label: 'Realizado', cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' };
+    if (s.estado === 'RECHAZADO')   return { label: 'Rechazado', cls: 'bg-[var(--danger-bg)] text-[var(--danger-tx)]' };
+    return { label: s.estado, cls: 'bg-[#C0BCB6] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' };
+};
+
+export default function ServicioManager({ clienteInicial = null, onClienteConsumido }) {
     const {
         servicios, cargando, stats,
-        busqueda, setBusqueda,
-        filtroTab, setFiltroTab,
         modalCrear, setModalCrear,
         servicioEditar,
         modalDetalle, setModalDetalle,
@@ -26,276 +37,282 @@ export default function ServicioManager() {
         confirmarServicio, rechazarServicio,
         eliminarServicio, generarPDF,
         calcularTotal, abrirEditar, cerrarModal,
+        setFiltroTab,
     } = useServicioManager();
 
-    const TABS = [
-        { id: 'TODOS',      label: 'Todos'      },
-        { id: 'REALIZADOS', label: 'Realizados' },
-        { id: 'PENDIENTES', label: 'Pendientes' },
-    ];
+    // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
+    useEffect(() => {
+        if (clienteInicial) setModalCrear(true);
+    }, [clienteInicial]);
 
-    const badgeClass = (s) => {
-        if (s.estado === 'PRESUPUESTO') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
-        if (s.estado === 'REALIZADO')   return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
-        if (s.estado === 'RECHAZADO')   return 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400';
-        return 'bg-slate-100 text-slate-600';
-    };
-
-    const badgeLabel = (s) => {
-        if (s.estado === 'PRESUPUESTO') return 'Pendiente';
-        if (s.estado === 'REALIZADO')   return 'Realizado';
-        if (s.estado === 'RECHAZADO')   return 'Rechazado';
-        return s.estado;
-    };
+    const filtros = useFiltros(servicios, {
+        porPagina: 10,
+        campoFecha: 'fecha',
+        campoEstado: 'estado',
+        campoBusqueda: ['clienteNombre', 'sedeNombre'],
+    });
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 pb-28 font-sans transition-colors">
+        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
 
-            {/* HEADER */}
-            <div className="flex justify-between items-end mb-6">
+            {/* ── HEADER ───────────────────────────────────────────────── */}
+            <div className="px-4 md:px-0 pt-5 md:pt-0 pb-4 flex justify-between items-end">
                 <div>
-                    <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">
+                    <h2 className="text-[28px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
                         Servicio Técnico
                     </h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">
-                        Gestión de servicios
-                    </p>
+                    <p className="text-[11px] font-medium mt-1 text-[#A8A29E]">Gestión de servicios</p>
                 </div>
                 <button
                     onClick={() => setModalCrear(true)}
-                    className="bg-rose-500 hover:bg-rose-600 text-white h-14 px-8 rounded-2xl font-black text-xs uppercase shadow-lg shadow-rose-500/20 active:scale-95 transition-all"
+                    className="h-10 px-5 rounded-xl font-bold text-xs text-white uppercase transition-all active:scale-95 hover:opacity-90"
+                    style={{ background: '#D13A28' }}
                 >
-                    + Nuevo Servicio
+                    + Nuevo
                 </button>
             </div>
 
-            {/* STATS */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-l-4 border-slate-200 dark:border-slate-700 border-l-rose-500 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Facturado el mes</p>
-                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">${stats.totalMes.toLocaleString()}</p>
-                    <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">{stats.cantidadMes} servicios</p>
-                </div>
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-l-4 border-slate-200 dark:border-slate-700 border-l-blue-500 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Hoy</p>
-                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">${stats.totalHoy.toLocaleString()}</p>
-                    <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">{stats.cantidadHoy} servicios hoy</p>
-                </div>
-                <div className={`bg-white dark:bg-slate-800 p-5 rounded-2xl border border-l-4 shadow-sm ${
-                    stats.pendientesCount > 0
-                        ? 'border-slate-200 dark:border-slate-700 border-l-amber-500'
-                        : 'border-slate-200 dark:border-slate-700 border-l-slate-300'
-                }`}>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Pendientes</p>
-                    <p className={`text-2xl font-black mt-1 ${stats.pendientesCount > 0 ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
-                        {stats.pendientesCount}
-                    </p>
-                    <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">presupuestos</p>
-                </div>
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-l-4 border-slate-200 dark:border-slate-700 border-l-emerald-500 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">MO del mes</p>
-                    <p className="text-2xl font-black text-emerald-600 mt-1">${stats.gananciaTotal.toLocaleString()}</p>
-                    <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">mano de obra</p>
-                </div>
-            </div>
+            <div className="px-4 md:px-0 space-y-3">
 
-            {/* ALERTA PENDIENTES */}
-            {stats.pendientesCount > 0 && (
-                <div
-                    className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 mb-5 flex items-center gap-3 cursor-pointer hover:bg-amber-100 transition-all"
-                    onClick={() => setFiltroTab('PENDIENTES')}
-                >
-                    <span className="text-2xl">⚠️</span>
-                    <div>
-                        <p className="text-sm font-black text-amber-800 dark:text-amber-300">
-                            {stats.pendientesCount} presupuesto{stats.pendientesCount > 1 ? 's' : ''} sin confirmar
-                        </p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400 font-bold">
-                            ${stats.pendientesVal.toLocaleString()} por cobrar · Click para ver
-                        </p>
+                {/* ── STATS ────────────────────────────────────────────── */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                         style={{ borderLeft: '3px solid #D13A28' }}>
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">Facturado el mes</p>
+                        <M valor={stats.totalMes} className="text-[20px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block" />
+                        <p className="text-[9px] text-[#A8A29E] mt-1">{stats.cantidadMes} servicios</p>
                     </div>
-                </div>
-            )}
-
-            {/* BUSCADOR */}
-            <div className="relative mb-4">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-40">🔍</span>
-                <input
-                    placeholder="Buscar por cliente, sede o S/N..."
-                    value={busqueda}
-                    onChange={e => setBusqueda(e.target.value)}
-                    className="w-full py-3.5 pl-11 pr-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
-
-            {/* TABS */}
-            <div className="flex gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl mb-5">
-                {TABS.map(tab => (
-                    <button key={tab.id} onClick={() => setFiltroTab(tab.id)}
-                        className={`flex-1 py-2.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wide transition-all ${
-                            filtroTab === tab.id
-                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-300/50'
+                    <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                         style={{ borderLeft: '3px solid #D48800' }}>
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">MO del mes</p>
+                        <M valor={stats.gananciaTotal} className="text-[20px] font-black leading-none text-[#D48800] dark:text-[#F0A500] block" />
+                        <p className="text-[9px] text-[#A8A29E] mt-1">mano de obra</p>
+                    </div>
+                    <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">Hoy</p>
+                        <M valor={stats.totalHoy} className="text-[20px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block" />
+                        <p className="text-[9px] text-[#A8A29E] mt-1">{stats.cantidadHoy} servicios</p>
+                    </div>
+                    <button
+                        onClick={() => setFiltroTab?.('PENDIENTES')}
+                        className={`rounded-2xl p-4 text-left border border-black/[0.07] dark:border-white/[0.07] transition-all active:scale-95 ${
+                            stats.pendientesCount > 0
+                                ? 'bg-[var(--warning-bg)]'
+                                : 'bg-[#EDEAE6] dark:bg-[#242424]'
+                        }`}
+                        style={stats.pendientesCount > 0 ? { borderLeft: '3px solid #D48800' } : {}}
+                    >
+                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">Pendientes</p>
+                        <p className={`text-[20px] font-black leading-none ${
+                            stats.pendientesCount > 0
+                                ? 'text-[var(--warning-tx)]'
+                                : 'text-[#1C1917] dark:text-[#F0EEE9]'
                         }`}>
-                        {tab.label}
+                            {stats.pendientesCount}
+                        </p>
+                        <p className="text-[9px] text-[#A8A29E] mt-1">presupuestos</p>
                     </button>
-                ))}
-            </div>
-
-            {/* LISTA */}
-            {cargando ? (
-                <div className="text-center py-16 text-slate-400 font-bold">⏳ Cargando servicios...</div>
-            ) : servicios.length === 0 ? (
-                <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-400 font-bold">
-                    🔧 No hay servicios en esta categoría.
                 </div>
-            ) : (
-                <div className="flex flex-col gap-3">
-                    {servicios.map(s => (
-                        <div key={s.id} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all">
 
-                            {/* HEADER CARD */}
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <div className="flex gap-2 items-center mb-1">
-                                        <span className="text-xs text-slate-400 font-bold">#{s.id}</span>
-                                        <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase ${badgeClass(s)}`}>
-                                            {badgeLabel(s)}
-                                        </span>
-                                    </div>
-                                    <h4 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
-                                        {s.clienteNombre}
-                                    </h4>
-                                    <p className="text-xs text-slate-400 font-medium mt-0.5">
-                                        📍 {s.sedeNombre} · {s.fecha}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xl font-black text-slate-900 dark:text-white">
-                                        ${calcularTotal(s).toLocaleString()}
-                                    </p>
-                                </div>
-                            </div>
+                {/* ── ALERTA PENDIENTES ─────────────────────────────────── */}
+                {stats.pendientesCount > 0 && (
+                    <div
+                        className="rounded-2xl p-4 flex items-center gap-3 cursor-pointer transition-all active:scale-[0.99] bg-[var(--warning-bg)] border border-[rgba(212,136,0,0.25)]"
+                        onClick={() => setFiltroTab?.('PENDIENTES')}
+                    >
+                        <span className="text-xl">⚠️</span>
+                        <div>
+                            <p className="text-sm font-black text-[var(--warning-tx)]">
+                                {stats.pendientesCount} presupuesto{stats.pendientesCount > 1 ? 's' : ''} sin confirmar
+                            </p>
+                            <p className="text-xs text-[var(--warning)] font-bold">
+                                <M valor={stats.pendientesVal} /> por cobrar
+                            </p>
+                        </div>
+                    </div>
+                )}
 
-                            {/* ITEMS */}
-                            {s.items?.length > 0 && (
-                                <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 mb-3 space-y-1.5">
-                                    {s.items.map((it, i) => (
-                                        <div key={i} className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <span className="text-[10px] font-black text-rose-500 mr-2">
-                                                    {it.equipoSerial}
-                                                </span>
-                                                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                                    {it.trabajoRealizado}
+                {/* ── FILTROS ───────────────────────────────────────────── */}
+                <FiltrosPanel hook={filtros} estados={ESTADOS_SERVICIO} conBusqueda conRango />
+                <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
+
+                {/* ── LISTA ─────────────────────────────────────────────── */}
+                {cargando ? (
+                    <div className="text-center py-16 font-bold text-[#A8A29E]">Cargando servicios...</div>
+                ) : filtros.itemsPagina.length === 0 ? (
+                    <div className="text-center py-16 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] text-[#A8A29E] font-bold">
+                        No hay servicios en esta categoría.
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-3">
+                        {filtros.itemsPagina.map(s => {
+                            const badge = badgeInfo(s);
+                            return (
+                                <div key={s.id}
+                                     className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] overflow-hidden"
+                                     style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+
+                                    <div className="p-4">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[11px] font-bold text-[#A8A29E]">#{s.id}</span>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${badge.cls}`}>
+                                                    {badge.label}
                                                 </span>
                                             </div>
-                                            <span className="text-xs font-black text-slate-700 dark:text-white ml-3 shrink-0">
-                                                ${Number(it.costo || 0).toLocaleString()}
-                                            </span>
+                                            <div className="text-right">
+                                                <M valor={calcularTotal(s)} className="text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block" />
+                                                <p className="text-[10px] text-[#A8A29E] mt-0.5">{s.fecha}</p>
+                                            </div>
                                         </div>
-                                    ))}
+
+                                        <p className="font-bold text-[15px] text-[#1C1917] dark:text-[#F0EEE9]">{s.clienteNombre}</p>
+                                        <p className="text-[11px] text-[#A8A29E] mt-0.5">📍 {s.sedeNombre}</p>
+
+                                        {s.items?.length > 0 && (
+                                            <div className="mt-2 pt-2 border-t border-black/[0.05] dark:border-white/[0.05] space-y-1">
+                                                {s.items.map((it, i) => (
+                                                    <div key={i} className="flex justify-between">
+                                                        <div className="flex-1 min-w-0">
+                                                            <span className="text-[10px] font-black text-[#D13A28] dark:text-[#E8422F] mr-2">
+                                                                {it.equipoSerial}
+                                                            </span>
+                                                            <span className="text-[10px] text-[#A8A29E] truncate">{it.trabajoRealizado}</span>
+                                                        </div>
+                                                        <span className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-3 shrink-0">
+                                                            ${Number(it.costo || 0).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Barra acciones */}
+                                    <div className="flex items-center gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                                         style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                                        {s.estado === 'PRESUPUESTO' && (
+                                            <button onClick={() => abrirEditar(s)}
+                                                className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]">✏️</button>
+                                        )}
+                                        <button onClick={() => setModalDetalle(s)}
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]">👁️</button>
+                                        <button onClick={() => generarPDF(s)}
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]">📄</button>
+
+                                        <div className="flex-1" />
+
+                                        <button onClick={() => eliminarServicio(s.id)}
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[var(--danger-bg)] text-[var(--danger-tx)]">🗑️</button>
+
+                                        {s.estado === 'PRESUPUESTO' && (
+                                            <>
+                                                <button onClick={() => rechazarServicio(s.id)}
+                                                    className="h-9 px-3 rounded-xl font-bold text-xs text-white active:scale-95 bg-[#1C1917] dark:bg-[#2E2E2E] hover:opacity-80">
+                                                    ✗ Rechazar
+                                                </button>
+                                                <button onClick={() => confirmarServicio(s.id)}
+                                                    className="h-9 px-3 rounded-xl font-bold text-xs text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-80">
+                                                    ✓ Cobrar
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
+                            );
+                        })}
+                    </div>
+                )}
 
-                            {/* ACCIONES */}
-                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-700 flex-wrap">
-                                {s.estado === 'PRESUPUESTO' && (
-                                    <button onClick={() => abrirEditar(s)}
-                                        className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl hover:bg-blue-100 transition-all"
-                                        title="Editar">✏️</button>
-                                )}
-                                <button onClick={() => setModalDetalle(s)}
-                                    className="p-2.5 bg-slate-50 dark:bg-slate-700 text-slate-500 rounded-xl hover:bg-slate-100 transition-all"
-                                    title="Ver detalles">👁️</button>
-                                <button onClick={() => generarPDF(s)}
-                                    className="p-2.5 bg-slate-50 dark:bg-slate-700 text-slate-500 rounded-xl hover:bg-slate-100 transition-all"
-                                    title="PDF">📄</button>
-                                {s.estado === 'PRESUPUESTO' && (
-                                    <>
-                                        <button onClick={() => confirmarServicio(s.id)}
-                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all">
-                                            ✅ Cobrar
-                                        </button>
-                                        <button onClick={() => rechazarServicio(s.id)}
-                                            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-extrabold text-xs shadow-md active:scale-95 transition-all">
-                                            ✗ Rechazar
-                                        </button>
-                                    </>
-                                )}
-                                <button onClick={() => eliminarServicio(s.id)}
-                                    className="p-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-xl ml-auto hover:bg-rose-100 transition-all"
-                                    title="Eliminar">🗑️</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
+            </div>
 
-            {/* MODAL CREAR / EDITAR */}
+            {/* ── MODAL CREAR / EDITAR ──────────────────────────────────── */}
             {modalCrear && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end md:items-center justify-center p-0 md:p-4">
-                    <div className="bg-slate-50 dark:bg-slate-900 w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
-                        <div className="sticky top-0 bg-white dark:bg-slate-800 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center z-10 md:rounded-t-3xl">
+                <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center"
+                     style={{ background: 'rgba(0,0,0,0.55)' }}>
+                    <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-[#EDEAE6] dark:bg-[#141414]">
+                        <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                             style={{ borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
                             <div>
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                                <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                                     {servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
                                 </h3>
-                                <p className="text-xs text-slate-400 mt-0.5">
+                                <p className="text-[11px] text-[#A8A29E] mt-0.5">
                                     {servicioEditar ? `Presupuesto #${servicioEditar.id}` : 'Cargá el trabajo a realizar'}
                                 </p>
                             </div>
                             <button onClick={cerrarModal}
-                                className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-all">
+                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90">
                                 ✕
                             </button>
                         </div>
                         <ServicioForm
-                            onSaved={() => { cerrarModal(); cargarServicios(); }}
+                            onSaved={() => { cerrarModal(); cargarServicios(); if (onClienteConsumido) onClienteConsumido(); }}
                             servicioParaEditar={servicioEditar}
+                            clienteInicialId={clienteInicial?.id}
                             soloTecnico
                         />
                     </div>
                 </div>
             )}
 
-            {/* MODAL DETALLE */}
+            {/* ── MODAL DETALLE ─────────────────────────────────────────── */}
             {modalDetalle && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end z-[2000]">
-                    <div className="bg-white dark:bg-slate-800 w-full rounded-t-3xl p-6 shadow-2xl max-h-[80vh] flex flex-col">
-                        <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
-                        <h3 className="text-lg font-black mb-1 text-slate-900 dark:text-white">
-                            {modalDetalle.clienteNombre}
-                        </h3>
-                        <p className="text-xs text-slate-400 font-bold mb-5 uppercase">
-                            📍 {modalDetalle.sedeNombre} · {modalDetalle.fecha}
-                        </p>
-                        <div className="overflow-y-auto flex-1 mb-5 space-y-3 pr-1">
+                <div className="fixed inset-0 z-[2000] flex items-end"
+                     style={{ background: 'rgba(0,0,0,0.5)' }}
+                     onClick={() => setModalDetalle(null)}>
+                    <div className="w-full rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-[#EDEAE6] dark:bg-[#242424]"
+                         onClick={e => e.stopPropagation()}>
+                        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                        <h3 className="text-[16px] font-black mb-1 text-[#1C1917] dark:text-[#F0EEE9]">{modalDetalle.clienteNombre}</h3>
+                        <p className="text-[11px] text-[#A8A29E] mb-4">📍 {modalDetalle.sedeNombre} · {modalDetalle.fecha}</p>
+                        <div className="overflow-y-auto flex-1 mb-4 space-y-3">
                             {modalDetalle.items?.map((it, idx) => (
-                                <div key={idx} className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-600">
-                                    <div className="flex justify-between mb-2">
-                                        <span className="font-extrabold text-rose-500">{it.equipoSerial}</span>
-                                        <span className="font-black text-slate-900 dark:text-white">
+                                <div key={idx} className="p-4 rounded-2xl bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                                     style={{ border: '0.5px solid rgba(0,0,0,0.06)' }}>
+                                    <div className="flex justify-between mb-1">
+                                        <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
+                                        <span className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]">
                                             ${Number(it.costo || 0).toLocaleString()}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{it.trabajoRealizado}</p>
+                                    <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] mb-2">{it.trabajoRealizado}</p>
                                     {it.repuestosUsados?.length > 0 && (
-                                        <div className="text-xs text-slate-400 border-t border-slate-200 dark:border-slate-600 pt-2">
-                                            <strong className="text-slate-600 dark:text-slate-300">Repuestos: </strong>
+                                        <p className="text-[10px] text-[#A8A29E] pt-2 border-t border-black/[0.05] dark:border-white/[0.05]">
+                                            <span className="font-bold">Repuestos: </span>
                                             {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
-                                        </div>
+                                        </p>
                                     )}
                                     {it.costoExtra > 0 && (
-                                        <p className="text-xs text-slate-400 mt-1">
-                                            MO: ${Number(it.costoExtra).toLocaleString()}
-                                        </p>
+                                        <p className="text-[10px] text-[#A8A29E] mt-1">MO: ${Number(it.costoExtra).toLocaleString()}</p>
+                                    )}
+
+                                    {/* Fotos antes / después */}
+                                    {(it.fotoAntes || it.fotoDespues) && (
+                                        <div className="mt-3 pt-2 border-t border-black/[0.06] dark:border-white/[0.06]">
+                                            <p className="text-[9px] font-black text-[#A8A29E] uppercase mb-2">📷 Registro fotográfico</p>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {['fotoAntes', 'fotoDespues'].map((campo, i) => it[campo] ? (
+                                                    <div key={campo} className="relative">
+                                                        <img
+                                                            src={construirUrlFoto(it[campo])}
+                                                            alt={i === 0 ? 'Antes' : 'Después'}
+                                                            className="w-full aspect-[3/4] object-cover rounded-xl"
+                                                        />
+                                                        <span className="absolute bottom-1 left-0 right-0 text-center text-[8px] font-black text-white uppercase bg-black/50 py-0.5 rounded-b-xl">
+                                                            {i === 0 ? 'Antes' : 'Después'}
+                                                        </span>
+                                                    </div>
+                                                ) : null)}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             ))}
                         </div>
                         <button onClick={() => setModalDetalle(null)}
-                            className="w-full py-4 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl font-extrabold transition-colors">
+                            className="w-full py-3.5 rounded-2xl font-bold text-sm text-white active:scale-95 bg-[#1C1917] dark:bg-[#F0EEE9] dark:text-[#1C1917]">
                             Cerrar
                         </button>
                     </div>

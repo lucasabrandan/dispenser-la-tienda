@@ -143,6 +143,8 @@ public class ServicioService {
                     fechaGarantia
             );
             nuevoItem.setCostoExtra(extraBlindado);
+            nuevoItem.setFotoAntes(itemDto.fotoAntes());
+            nuevoItem.setFotoDespues(itemDto.fotoDespues());
 
             try {
                 if (itemDto.repuestosUsados() != null) {

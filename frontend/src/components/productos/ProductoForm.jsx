@@ -1,15 +1,19 @@
 import React from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import Card from '../ui/Card';
 import { useProductoForm } from '../../hooks/useProductoForm';
 
-export default function ProductoForm({
-    isOpen,
-    onClose,
-    onProductoGuardado,
-    productoEdicion = null
-}) {
+const inputCls = (error) => `
+    w-full p-3 mt-2 rounded-xl outline-none transition-all
+    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+    text-[#1C1917] dark:text-[#F0EEE9]
+    ${error
+        ? 'border-2 border-[#D13A28] dark:border-[#E8422F]'
+        : 'border border-black/[0.07] dark:border-white/[0.07] focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]'
+    }
+`;
+
+export default function ProductoForm({ isOpen, onClose, onProductoGuardado, productoEdicion = null }) {
     const {
         formData, errores, cargando,
         previewFoto, handleChange, handleFotoChange,
@@ -20,56 +24,34 @@ export default function ProductoForm({
 
     const handleGuardar = async (e) => {
         e.preventDefault();
-
-        if (!validarTodo()) {
-            toast.error('❌ Completa los campos obligatorios');
-            return;
-        }
+        if (!validarTodo()) { toast.error('Completa los campos obligatorios'); return; }
 
         setCargando(true);
         const loadingToast = toast.loading('Guardando producto...');
-
         try {
-            let response;
+            const fd = new FormData();
+            fd.append('sku',                formData.sku.trim());
+            fd.append('nombre',             formData.nombre.trim());
+            fd.append('descripcion',        formData.descripcion?.trim() || '');
+            fd.append('costo',              parseFloat(formData.costo) || 0);
+            fd.append('porcentajeGanancia', parseFloat(formData.porcentajeGanancia) || 0);
+            fd.append('porcentajeMarkup',   parseFloat(formData.porcentajeMarkup) || 0);
+            fd.append('precioLista',        parseFloat(precioLista) || 0);
+            if (formData.foto) fd.append('foto', formData.foto);
 
+            let response;
             if (productoEdicion?.id) {
-                // Siempre FormData en PUT — Spring Boot requiere multipart
-                const fd = new FormData();
-                fd.append('sku',                formData.sku.trim());
-                fd.append('nombre',             formData.nombre.trim());
-                fd.append('descripcion',        formData.descripcion?.trim() || '');
-                fd.append('costo',              parseFloat(formData.costo)              || 0);
-                fd.append('porcentajeGanancia', parseFloat(formData.porcentajeGanancia) || 0);
-                fd.append('porcentajeMarkup',   parseFloat(formData.porcentajeMarkup)   || 0);
-                fd.append('precioLista',        parseFloat(precioLista)                 || 0);
-                if (formData.foto) fd.append('foto', formData.foto);
-                response = await api.put(
-                    `/repuestos/${productoEdicion.id}`,
-                    fd,
-                    { headers: { 'Content-Type': 'multipart/form-data' } }
-                );
+                response = await api.put(`/repuestos/${productoEdicion.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
             } else {
-                // Crear → FormData siempre (puede o no tener foto)
-                const fd = new FormData();
-                fd.append('sku',                formData.sku.trim());
-                fd.append('nombre',             formData.nombre.trim());
-                fd.append('descripcion',        formData.descripcion?.trim() || '');
-                fd.append('costo',              parseFloat(formData.costo)              || 0);
-                fd.append('porcentajeGanancia', parseFloat(formData.porcentajeGanancia) || 0);
-                fd.append('porcentajeMarkup',   parseFloat(formData.porcentajeMarkup)   || 0);
-                fd.append('precioLista',        parseFloat(precioLista)                 || 0);
-                if (formData.foto) fd.append('foto', formData.foto);
                 response = await api.post('/repuestos', fd);
             }
 
-            toast.success(`✅ Producto "${formData.nombre}" guardado`, { id: loadingToast });
+            toast.success(`Producto "${formData.nombre}" guardado`, { id: loadingToast });
             if (onProductoGuardado) onProductoGuardado(response.data);
             resetear();
             onClose();
-
         } catch (err) {
-            const errorMsg = err.response?.data?.mensaje || 'Error al guardar producto';
-            toast.error(`❌ ${errorMsg}`, { id: loadingToast });
+            toast.error(err.response?.data?.mensaje || 'Error al guardar producto', { id: loadingToast });
         } finally {
             setCargando(false);
         }
@@ -77,35 +59,28 @@ export default function ProductoForm({
 
     if (!isOpen) return null;
 
-    const inputClass = (campo) =>
-        `w-full p-3 mt-2 rounded-xl border-2 transition-all dark:bg-slate-800 dark:text-white ${
-            errores[campo]
-                ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'
-                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
-        }`;
-
     return (
         <>
-            <div className="fixed inset-0 bg-black/50 z-[999] backdrop-blur-sm" onClick={onClose} />
+            <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
-                <Card className="w-full max-w-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] w-full max-w-3xl max-h-[95vh] overflow-y-auto border border-black/[0.07] dark:border-white/[0.07] shadow-2xl p-6">
 
-                    {/* HEADER */}
-                    <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-6 pb-4 border-b border-black/[0.07] dark:border-white/[0.07]">
                         <div>
-                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-                                {productoEdicion ? '✏️ Editar Producto' : '➕ Nuevo Producto'}
+                            <h2 className="text-xl font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tighter">
+                                {productoEdicion ? 'Editar Producto' : 'Nuevo Producto'}
                             </h2>
-                            <p className="text-xs text-slate-400 mt-1">Configura precios y ganancias</p>
+                            <p className="text-[10px] font-bold text-[#A8A29E] uppercase mt-1">Configurar precios y ganancias</p>
                         </div>
-                        <button onClick={onClose} className="text-2xl text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
+                        <button onClick={onClose} className="text-xl text-[#A8A29E] hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors">✕</button>
                     </div>
 
                     <form onSubmit={handleGuardar} className="space-y-5">
 
-                        {/* FOTO */}
-                        <div className="bg-slate-50 dark:bg-slate-900/30 p-4 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700">
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-wide">📷 Foto del Producto</label>
+                        {/* Foto */}
+                        <div className="bg-[#D8D4CE] dark:bg-[#1C1C1C] p-4 rounded-2xl border border-dashed border-black/[0.10] dark:border-white/[0.10]">
+                            <label className="text-[10px] font-black text-[#A8A29E] uppercase">Foto del Producto</label>
                             <div className="mt-3 flex gap-4">
                                 {previewFoto && (
                                     <img src={previewFoto} alt="preview"
@@ -113,102 +88,102 @@ export default function ProductoForm({
                                         onError={e => { e.target.style.display = 'none'; }}
                                     />
                                 )}
-                                <label className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                                <label className="flex-1 flex items-center justify-center border-2 border-dashed border-black/[0.10] dark:border-white/[0.10] rounded-xl p-4 cursor-pointer hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-all">
                                     <div className="text-center">
                                         <div className="text-2xl mb-2">📸</div>
-                                        <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Click o arrastrá foto</p>
-                                        <p className="text-[10px] text-slate-400">PNG, JPG, WebP (máx 5MB)</p>
+                                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Click o arrastrá foto</p>
+                                        <p className="text-[10px] text-[#A8A29E]">PNG, JPG, WebP (máx 5MB)</p>
                                     </div>
                                     <input type="file" onChange={handleFotoChange} accept="image/*" className="hidden" />
                                 </label>
                             </div>
                         </div>
 
-                        {/* SKU + NOMBRE */}
+                        {/* SKU + Nombre */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-wide">SKU *</label>
+                                <label className="text-[10px] font-black text-[#A8A29E] uppercase">SKU *</label>
                                 <input type="text" name="sku" value={formData.sku} onChange={handleChange}
-                                    placeholder="Ej: TC-001" className={inputClass('sku')} />
-                                {errores.sku && <p className="text-xs text-rose-500 mt-1">{errores.sku}</p>}
+                                    placeholder="Ej: TC-001" className={inputCls(errores.sku)} />
+                                {errores.sku && <p className="text-[10px] text-[#D13A28] dark:text-[#E8422F] mt-1">{errores.sku}</p>}
                             </div>
                             <div>
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-wide">Nombre *</label>
+                                <label className="text-[10px] font-black text-[#A8A29E] uppercase">Nombre *</label>
                                 <input type="text" name="nombre" value={formData.nombre} onChange={handleChange}
-                                    placeholder="Ej: Termostato 85°" className={inputClass('nombre')} />
-                                {errores.nombre && <p className="text-xs text-rose-500 mt-1">{errores.nombre}</p>}
+                                    placeholder="Ej: Termostato 85°" className={inputCls(errores.nombre)} />
+                                {errores.nombre && <p className="text-[10px] text-[#D13A28] dark:text-[#E8422F] mt-1">{errores.nombre}</p>}
                             </div>
                         </div>
 
-                        {/* DESCRIPCIÓN */}
+                        {/* Descripción */}
                         <div>
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-wide">Descripción (opcional)</label>
+                            <label className="text-[10px] font-black text-[#A8A29E] uppercase">Descripción (opcional)</label>
                             <textarea name="descripcion" value={formData.descripcion || ''} onChange={handleChange}
                                 placeholder="Ej: Termostato para dispensers con control de temperatura..."
-                                className="w-full p-3 mt-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white outline-none focus:border-blue-500 min-h-[80px] resize-none"
+                                className={`${inputCls(false)} min-h-[80px] resize-none`}
                             />
                         </div>
 
-                        {/* COSTO */}
+                        {/* Costo */}
                         <div>
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-wide">Costo de Compra ($) *</label>
+                            <label className="text-[10px] font-black text-[#A8A29E] uppercase">Costo de Compra ($) *</label>
                             <input type="number" name="costo" value={formData.costo} onChange={handleChange}
-                                min="0" step="0.01" placeholder="100" className={inputClass('costo')} />
-                            {errores.costo && <p className="text-xs text-rose-500 mt-1">{errores.costo}</p>}
+                                min="0" step="0.01" placeholder="100" className={inputCls(errores.costo)} />
+                            {errores.costo && <p className="text-[10px] text-[#D13A28] dark:text-[#E8422F] mt-1">{errores.costo}</p>}
                         </div>
 
-                        {/* MÁRGENES */}
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800 space-y-4">
-                            <h3 className="font-black text-sm text-blue-900 dark:text-blue-100">💰 Configurar Precios</h3>
+                        {/* Márgenes */}
+                        <div className="bg-[#D48800]/5 dark:bg-[#F0A500]/5 p-4 rounded-2xl border border-[#D48800]/20 dark:border-[#F0A500]/20 space-y-4">
+                            <h3 className="font-black text-[12px] text-[#1C1917] dark:text-[#F0EEE9] uppercase">Configurar Precios</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-wide">% Ganancia Base</label>
+                                    <label className="text-[10px] font-black text-[#A8A29E] uppercase">% Ganancia Base</label>
                                     <input type="number" name="porcentajeGanancia" value={formData.porcentajeGanancia}
                                         onChange={handleChange} min="0" step="0.5"
-                                        className="w-full p-3 mt-2 rounded-xl border-2 border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 dark:text-white outline-none focus:border-blue-500"
+                                        className={`${inputCls(false)} border-[#D48800]/30 dark:border-[#F0A500]/30 focus:border-[#D48800] dark:focus:border-[#F0A500]`}
                                     />
-                                    <p className="text-[10px] text-blue-600 dark:text-blue-300 mt-1">Ganancia inicial</p>
+                                    <p className="text-[10px] text-[#D48800] dark:text-[#F0A500] mt-1 font-bold">Ganancia inicial</p>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-wide">% Markup</label>
+                                    <label className="text-[10px] font-black text-[#A8A29E] uppercase">% Markup</label>
                                     <input type="number" name="porcentajeMarkup" value={formData.porcentajeMarkup}
                                         onChange={handleChange} min="0" step="0.5"
-                                        className="w-full p-3 mt-2 rounded-xl border-2 border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 dark:text-white outline-none focus:border-blue-500"
+                                        className={`${inputCls(false)} border-[#D48800]/30 dark:border-[#F0A500]/30 focus:border-[#D48800] dark:focus:border-[#F0A500]`}
                                     />
-                                    <p className="text-[10px] text-blue-600 dark:text-blue-300 mt-1">Para descuentos posteriores</p>
+                                    <p className="text-[10px] text-[#D48800] dark:text-[#F0A500] mt-1 font-bold">Para descuentos posteriores</p>
                                 </div>
                             </div>
 
-                            {/* RESUMEN */}
-                            <div className="bg-white dark:bg-slate-800 p-4 rounded-lg space-y-3 border border-blue-200 dark:border-blue-700">
+                            {/* Resumen de precios */}
+                            <div className="bg-[#EDEAE6] dark:bg-[#242424] p-4 rounded-xl space-y-2 border border-black/[0.07] dark:border-white/[0.07]">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600 dark:text-slate-400 font-bold">Ganancia/u:</span>
-                                    <span className="font-black text-emerald-600 dark:text-emerald-400">${gananciaUnidad.toFixed(2)}</span>
+                                    <span className="font-bold text-[#A8A29E]">Ganancia/u:</span>
+                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">${gananciaUnidad.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600 dark:text-slate-400 font-bold">Precio Base:</span>
-                                    <span className="font-black text-blue-600 dark:text-blue-400">${precioBase.toFixed(2)}</span>
+                                    <span className="font-bold text-[#A8A29E]">Precio Base:</span>
+                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">${precioBase.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between text-lg pt-3 border-t border-slate-300 dark:border-slate-700">
-                                    <span className="font-black text-slate-900 dark:text-white">Precio Lista:</span>
-                                    <span className="font-black text-emerald-600 dark:text-emerald-400">${precioLista.toFixed(2)}</span>
+                                <div className="flex justify-between text-lg pt-2 border-t border-black/[0.07] dark:border-white/[0.07]">
+                                    <span className="font-black text-[#1C1917] dark:text-[#F0EEE9]">Precio Lista:</span>
+                                    <span className="font-black text-[#D48800] dark:text-[#F0A500]">${precioLista.toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* BOTONES */}
-                        <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        {/* Botones */}
+                        <div className="flex gap-3 pt-4 border-t border-black/[0.07] dark:border-white/[0.07]">
                             <button type="button" onClick={onClose} disabled={cargando}
-                                className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-black text-sm uppercase hover:bg-slate-300 transition-all disabled:opacity-50">
+                                className="flex-1 py-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
                                 Cancelar
                             </button>
                             <button type="submit" disabled={cargando}
-                                className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-black text-sm uppercase hover:bg-emerald-700 transition-all disabled:opacity-50 active:scale-95">
-                                {cargando ? '⏳ Guardando...' : productoEdicion ? '✅ Actualizar' : '✅ Guardar Producto'}
+                                className="flex-1 py-3 bg-[#D13A28] dark:bg-[#E8422F] text-white rounded-xl font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 disabled:opacity-50">
+                                {cargando ? 'Guardando...' : productoEdicion ? 'Actualizar' : 'Guardar Producto'}
                             </button>
                         </div>
                     </form>
-                </Card>
+                </div>
             </div>
         </>
     );

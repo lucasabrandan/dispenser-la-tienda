@@ -1,66 +1,77 @@
 import React from 'react';
+import { useMontos } from '../../context/MontosContext';
 
 /**
- * VentaStats
- * Tarjetas de métricas del módulo Ventas.
- * Componente presentacional puro.
+ * VentaStats — tarjetas de métricas del módulo Ventas.
+ * Usa el sistema de colores del proyecto, sin slate-* ni emerald-*.
  */
+function M({ valor, prefix = '$', className = '' }) {
+    const { montosVisibles } = useMontos();
+    if (!montosVisibles) return <span className={className}>••••••</span>;
+    return (
+        <span className={className}>
+            {prefix}{typeof valor === 'number' ? valor.toLocaleString() : valor}
+        </span>
+    );
+}
+
 export default function VentaStats({ stats }) {
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
 
-            {/* Total del mes */}
-            <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-l-4 border-slate-200 dark:border-slate-700 border-l-emerald-500 shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Facturado el mes</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">
-                    ${stats.totalMes.toLocaleString()}
-                </p>
-                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">
+            {/* Facturado el mes */}
+            <div className="bg-[#EDEAE6] dark:bg-[#242424] p-4 rounded-2xl border border-black/[0.07] dark:border-white/[0.07]"
+                 style={{ borderLeft: '3px solid #D13A28' }}>
+                <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-widest">Facturado el mes</p>
+                <M valor={stats.totalMes} className="text-[22px] font-black text-[#1C1917] dark:text-[#F0EEE9] mt-1 block leading-none" />
+                <p className="text-[9px] text-[#A8A29E] font-bold mt-1 uppercase">
                     {stats.cantidadMes} ventas cobradas
                 </p>
             </div>
 
             {/* Hoy */}
-            <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-l-4 border-slate-200 dark:border-slate-700 border-l-blue-500 shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Hoy</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1 tracking-tight">
-                    ${stats.totalHoy.toLocaleString()}
-                </p>
-                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">
+            <div className="bg-[#EDEAE6] dark:bg-[#242424] p-4 rounded-2xl border border-black/[0.07] dark:border-white/[0.07]">
+                <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-widest">Hoy</p>
+                <M valor={stats.totalHoy} className="text-[22px] font-black text-[#1C1917] dark:text-[#F0EEE9] mt-1 block leading-none" />
+                <p className="text-[9px] text-[#A8A29E] font-bold mt-1 uppercase">
                     {stats.cantidadHoy} ventas hoy
                 </p>
             </div>
 
             {/* Pendientes — cantidad */}
-            <div className={`bg-white dark:bg-slate-800 p-5 rounded-2xl border border-l-4 shadow-sm ${
+            <div className={`p-4 rounded-2xl border border-black/[0.07] dark:border-white/[0.07] ${
                 stats.pendientesCount > 0
-                    ? 'border-slate-200 dark:border-slate-700 border-l-amber-500'
-                    : 'border-slate-200 dark:border-slate-700 border-l-slate-300'
-            }`}>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Pendientes</p>
-                <p className={`text-2xl font-black mt-1 tracking-tight ${
-                    stats.pendientesCount > 0 ? 'text-amber-500' : 'text-slate-900 dark:text-white'
+                    ? 'bg-[var(--warning-bg)]'
+                    : 'bg-[#EDEAE6] dark:bg-[#242424]'
+            }`}
+                style={stats.pendientesCount > 0 ? { borderLeft: '3px solid #D48800' } : {}}>
+                <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-widest">Pendientes</p>
+                <p className={`text-[22px] font-black mt-1 leading-none ${
+                    stats.pendientesCount > 0
+                        ? 'text-[var(--warning-tx)]'
+                        : 'text-[#1C1917] dark:text-[#F0EEE9]'
                 }`}>
                     {stats.pendientesCount}
                 </p>
-                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">
+                <p className="text-[9px] text-[#A8A29E] font-bold mt-1 uppercase">
                     presupuestos sin cobrar
                 </p>
             </div>
 
             {/* Pendientes — valor */}
-            <div className={`bg-white dark:bg-slate-800 p-5 rounded-2xl border border-l-4 shadow-sm ${
+            <div className={`p-4 rounded-2xl border border-black/[0.07] dark:border-white/[0.07] ${
                 stats.pendientesVal > 0
-                    ? 'border-slate-200 dark:border-slate-700 border-l-amber-400'
-                    : 'border-slate-200 dark:border-slate-700 border-l-slate-300'
-            }`}>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wide">Por cobrar</p>
-                <p className={`text-2xl font-black mt-1 tracking-tight ${
-                    stats.pendientesVal > 0 ? 'text-amber-500' : 'text-slate-900 dark:text-white'
-                }`}>
-                    ${stats.pendientesVal.toLocaleString()}
-                </p>
-                <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">
+                    ? 'bg-[var(--warning-bg)]'
+                    : 'bg-[#EDEAE6] dark:bg-[#242424]'
+            }`}
+                style={stats.pendientesVal > 0 ? { borderLeft: '3px solid #D48800' } : {}}>
+                <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-widest">Por cobrar</p>
+                <M valor={stats.pendientesVal} className={`text-[22px] font-black mt-1 block leading-none ${
+                    stats.pendientesVal > 0
+                        ? 'text-[var(--warning-tx)]'
+                        : 'text-[#1C1917] dark:text-[#F0EEE9]'
+                }`} />
+                <p className="text-[9px] text-[#A8A29E] font-bold mt-1 uppercase">
                     valor total pendiente
                 </p>
             </div>

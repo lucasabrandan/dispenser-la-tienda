@@ -1,22 +1,40 @@
 package com.dispenserlatienda.controller.file;
 
+import com.dispenserlatienda.service.servicio.FileStorageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/uploads")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class FileController {
 
     @Value("${storage.location}")
     private String storageLocation;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> subirArchivo(@RequestParam("file") MultipartFile file) {
+        try {
+            String nombreArchivo = fileStorageService.guardarArchivo(file);
+            return ResponseEntity.ok(Map.of("filename", nombreArchivo));
+        } catch (Exception e) {
+            System.out.println("❌ Error subiendo archivo: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     @GetMapping("/{filename:.+}")
     public ResponseEntity<byte[]> servirArchivo(@PathVariable String filename) {

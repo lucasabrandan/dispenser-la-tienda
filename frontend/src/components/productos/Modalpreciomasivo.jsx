@@ -1,68 +1,63 @@
 import React from 'react';
 
 export default function ModalPrecioMasivo({
-  cantidadSeleccionados,
-  porcentajeMasivo,
-  tipoPorcentaje,
-  onPorcentajeChange,
-  onTipoChange,
-  onAplicar,
-  onCerrar,
+    cantidadSeleccionados, porcentajeMasivo, tipoPorcentaje,
+    onPorcentajeChange, onTipoChange, onAplicar, onCerrar,
 }) {
-  return (
-    <>
-      <div className="fixed inset-0 bg-black/50 z-[999] backdrop-blur-sm" onClick={onCerrar} />
-      <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+    return (
+        <>
+            <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onCerrar} />
+            <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
+                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] p-6 w-full max-w-sm border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
-          <h3 className="text-lg font-black text-slate-900 dark:text-white mb-1">💰 Actualizar Porcentaje</h3>
-          <p className="text-xs text-slate-400 mb-4">{cantidadSeleccionados} producto(s) seleccionados</p>
+                    <h3 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase mb-1">Actualizar Porcentaje</h3>
+                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase mb-5">
+                        {cantidadSeleccionados} producto{cantidadSeleccionados !== 1 ? 's' : ''} seleccionado{cantidadSeleccionados !== 1 ? 's' : ''}
+                    </p>
 
-          {/* TIPO */}
-          <div className="flex gap-2 mb-4">
-            {['ganancia', 'markup'].map(tipo => (
-              <button
-                key={tipo}
-                onClick={() => onTipoChange(tipo)}
-                className={`flex-1 py-2 rounded-xl text-xs font-black uppercase transition-all ${
-                  tipoPorcentaje === tipo
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                % {tipo}
-              </button>
-            ))}
-          </div>
+                    {/* Tipo */}
+                    <div className="flex gap-2 mb-4">
+                        {['ganancia', 'markup'].map(tipo => (
+                            <button key={tipo} onClick={() => onTipoChange(tipo)}
+                                className={`flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase transition-all ${
+                                    tipoPorcentaje === tipo
+                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+                                        : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'
+                                }`}>
+                                % {tipo}
+                            </button>
+                        ))}
+                    </div>
 
-          {/* INPUT */}
-          <input
-            type="number"
-            value={porcentajeMasivo}
-            onChange={e => onPorcentajeChange(e.target.value)}
-            placeholder="Ej: 30"
-            min="0"
-            step="0.5"
-            className="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white text-sm mb-4 outline-none focus:border-blue-500"
-          />
+                    {/* Input */}
+                    <input
+                        type="number" value={porcentajeMasivo}
+                        onChange={e => onPorcentajeChange(e.target.value)}
+                        placeholder="Ej: 30" min="0" step="0.5"
+                        className="
+                            w-full p-3.5 rounded-xl outline-none transition-all mb-5
+                            bg-[#C0BCB6] dark:bg-[#2E2E2E]
+                            border border-black/[0.07] dark:border-white/[0.07]
+                            text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
+                            focus:ring-2 focus:ring-[#D13A28]/20
+                            focus:border-[#D13A28] dark:focus:border-[#E8422F]
+                            placeholder:text-[#A8A29E]
+                        "
+                    />
 
-          {/* BOTONES */}
-          <div className="flex gap-2">
-            <button
-              onClick={onCerrar}
-              className="flex-1 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-black text-xs uppercase"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={onAplicar}
-              className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-black text-xs uppercase hover:bg-blue-700 transition-all"
-            >
-              ✅ Aplicar
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+                    {/* Botones */}
+                    <div className="flex gap-2">
+                        <button onClick={onCerrar}
+                            className="flex-1 py-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            Cancelar
+                        </button>
+                        <button onClick={onAplicar}
+                            className="flex-1 py-3 bg-[#D13A28] dark:bg-[#E8422F] text-white rounded-xl font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95">
+                            Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
 }

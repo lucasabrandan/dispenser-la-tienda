@@ -3,71 +3,40 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
 export default function RadarMantenimiento() {
-    const [alertas, setAlertas] = useState([]);
+    const [alertas, setAlertas]   = useState([]);
     const [cargando, setCargando] = useState(true);
 
-    useEffect(() => {
-        generarRadar();
-    }, []);
+    useEffect(() => { generarRadar(); }, []);
 
     const generarRadar = async () => {
         try {
-            // 🛑 SI QUERÉS USAR DATOS REALES, DESCOMENTÁ ESTO Y BORRÁ LOS DATOS FALSOS 🛑
-            /*
             const [resClientes, resServicios] = await Promise.all([
-                api.get('/clientes'),
-                api.get('/servicios')
+                api.get('/clientes?page=0&size=1000'),
+                api.get('/servicios?page=0&size=1000'),
             ]);
-            const clientes = resClientes.data || [];
-            const servicios = resServicios.data || [];
-            */
 
-            // 🧪 INYECTAMOS DATOS FALSOS (SIMULADOR) 🧪
-            // -----------------------------------------------------------
+            const clientes  = resClientes.data.content  || resClientes.data  || [];
+            const servicios = resServicios.data.content || resServicios.data || [];
 
-            const clientes = [
-                { nombre: "Lucas Prueba", telefono: "1123456789" },
-                { nombre: "Empresa Falsa S.A.", telefono: "1198765432" }
-            ];
-
-            const servicios = [
-                {
-                    estado: 'REALIZADO', fecha: '2024-10-15T10:00:00Z', clienteNombre: "Lucas Prueba", sedeNombre: "Casa Central",
-                    items: [{ equipoSerial: "SN-VENCIDO-01", trabajoRealizado: "CAMBIO DE FILTRO", trabajoTipo: "CAMBIO_FILTRO" }]
-                },
-                {
-                    estado: 'REALIZADO', fecha: '2025-08-20T10:00:00Z', clienteNombre: "Empresa Falsa S.A.", sedeNombre: "Oficina Planta Baja",
-                    items: [{ equipoSerial: "SN-SUCIO-99", trabajoRealizado: "REPARACION MANGUERA", trabajoTipo: "REPARACION" }]
-                },
-                {
-                    estado: 'REALIZADO', fecha: '2026-02-15T10:00:00Z', clienteNombre: "Lucas Prueba", sedeNombre: "Casa Central",
-                    items: [{ equipoSerial: "SN-NUEVO-55", trabajoRealizado: "CAMBIO DE FILTRO", trabajoTipo: "CAMBIO_FILTRO" }]
-                }
-            ];
-            
+            // Diccionario teléfonos por nombre de cliente
             const telefonosDict = {};
             clientes.forEach(c => { telefonosDict[c.nombre] = c.telefono; });
 
+            // Agrupar historial por equipo (solo servicios REALIZADOS)
             const historialPorEquipo = {};
-
             servicios.forEach(srv => {
                 if (srv.estado !== 'REALIZADO') return;
-
                 srv.items?.forEach(it => {
                     const serial = it.equipoSerial;
-                    if (!serial || serial === "MOSTRADOR") return;
-
-                    if (!historialPorEquipo[serial]) {
-                        historialPorEquipo[serial] = [];
-                    }
-
+                    if (!serial || serial === 'MOSTRADOR') return;
+                    if (!historialPorEquipo[serial]) historialPorEquipo[serial] = [];
                     historialPorEquipo[serial].push({
-                        fechaObj: new Date(srv.fecha),
+                        fechaObj: new Date(srv.fecha.includes('T') ? srv.fecha : srv.fecha + 'T12:00:00'),
                         fechaStr: srv.fecha.split('T')[0],
-                        cliente: srv.clienteNombre,
-                        sede: srv.sedeNombre,
-                        trabajo: it.trabajoRealizado,
-                        esFiltro: it.trabajoRealizado?.toUpperCase().includes("FILTRO") || it.trabajoTipo === "CAMBIO_FILTRO"
+                        cliente:  srv.clienteNombre,
+                        sede:     srv.sedeNombre,
+                        trabajo:  it.trabajoRealizado,
+                        esFiltro: it.trabajoRealizado?.toUpperCase().includes('FILTRO') || it.trabajoTipo === 'CAMBIO_FILTRO',
                     });
                 });
             });
@@ -76,118 +45,135 @@ export default function RadarMantenimiento() {
             const alertasGeneradas = [];
 
             Object.keys(historialPorEquipo).forEach(serial => {
-                const historial = historialPorEquipo[serial].sort((a, b) => b.fechaObj - a.fechaObj);
+                const historial      = historialPorEquipo[serial].sort((a, b) => b.fechaObj - a.fechaObj);
                 const ultimoServicio = historial[0];
-                const ultimoFiltro = historial.find(h => h.esFiltro);
+                const ultimoFiltro   = historial.find(h => h.esFiltro);
 
-                const mesesDesdeUltimo = (hoy.getFullYear() - ultimoServicio.fechaObj.getFullYear()) * 12 + (hoy.getMonth() - ultimoServicio.fechaObj.getMonth());
-                
-                let mesesDesdeFiltro = 0;
-                if (ultimoFiltro) {
-                    mesesDesdeFiltro = (hoy.getFullYear() - ultimoFiltro.fechaObj.getFullYear()) * 12 + (hoy.getMonth() - ultimoFiltro.fechaObj.getMonth());
-                } else {
-                    mesesDesdeFiltro = mesesDesdeUltimo; 
-                }
+                const mesesDesde = (ref) =>
+                    (hoy.getFullYear() - ref.getFullYear()) * 12 + (hoy.getMonth() - ref.getMonth());
+
+                const mesesDesdeUltimo = mesesDesde(ultimoServicio.fechaObj);
+                const mesesDesdeFiltro = ultimoFiltro ? mesesDesde(ultimoFiltro.fechaObj) : mesesDesdeUltimo;
 
                 let tipoAlerta = null;
-                let mensajeBase = "";
+                let mensajeBase = '';
 
                 if (mesesDesdeFiltro >= 11) {
-                    tipoAlerta = "FILTRO";
+                    tipoAlerta  = 'FILTRO';
                     mensajeBase = `¡Hola! Pasó un año del último cambio de filtro de tu dispenser. ¿Coordinamos una visita para dejar el agua impecable de nuevo?`;
                 } else if (mesesDesdeUltimo >= 5 && mesesDesdeUltimo < 11) {
-                    tipoAlerta = "SANITIZACIÓN";
+                    tipoAlerta  = 'SANITIZACIÓN';
                     mensajeBase = `¡Hola! Ya pasaron 6 meses de la última revisión de tu dispenser. ¿Te parece si coordinamos una visita de sanitización de rutina?`;
                 }
 
                 if (tipoAlerta) {
                     alertasGeneradas.push({
                         serial,
-                        cliente: ultimoServicio.cliente,
-                        sede: ultimoServicio.sede,
-                        fechaUltimo: ultimoFiltro && tipoAlerta === "FILTRO" ? ultimoFiltro.fechaStr : ultimoServicio.fechaStr,
-                        telefono: telefonosDict[ultimoServicio.cliente],
+                        cliente:     ultimoServicio.cliente,
+                        sede:        ultimoServicio.sede,
+                        fechaUltimo: tipoAlerta === 'FILTRO' && ultimoFiltro ? ultimoFiltro.fechaStr : ultimoServicio.fechaStr,
+                        telefono:    telefonosDict[ultimoServicio.cliente],
                         tipoAlerta,
                         mensajeBase,
-                        meses: tipoAlerta === "FILTRO" ? mesesDesdeFiltro : mesesDesdeUltimo
+                        meses: tipoAlerta === 'FILTRO' ? mesesDesdeFiltro : mesesDesdeUltimo,
                     });
                 }
             });
 
             setAlertas(alertasGeneradas.sort((a, b) => b.meses - a.meses));
-            setCargando(false);
-
-        } catch (error) {
-            toast.error("Error al generar el Radar");
+        } catch {
+            toast.error('Error al generar el Radar');
+        } finally {
             setCargando(false);
         }
     };
 
     const enviarWA = (alerta) => {
-        if (!alerta.telefono) return toast.error("Este cliente no tiene teléfono guardado");
+        if (!alerta.telefono) return toast.error('Este cliente no tiene teléfono guardado');
         const tel = alerta.telefono.replace(/\D/g, '');
         window.open(`https://wa.me/${tel}?text=${encodeURIComponent(alerta.mensajeBase)}`, '_blank');
     };
 
     if (cargando) return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-5 transition-colors duration-300">
-            <div className="font-black text-slate-500 dark:text-slate-400 animate-pulse text-lg">
-                📡 Escaneando base de datos...
-            </div>
+        <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] flex items-center justify-center p-5 transition-colors">
+            <p className="font-black text-[#A8A29E] animate-pulse uppercase text-sm tracking-widest">
+                Escaneando base de datos...
+            </p>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 pb-28 font-sans transition-colors duration-300">
-            
-            {/* ENCABEZADO RADAR */}
-            <div className="bg-slate-900 dark:bg-slate-800 text-white p-6 rounded-3xl mb-6 shadow-lg shadow-slate-900/10 transition-colors duration-300">
-                <h2 className="m-0 font-black text-2xl tracking-tight flex items-center gap-2">
-                    🚨 Radar Activo
-                </h2>
-                <p className="m-0 mt-2 text-slate-300 text-sm font-medium">
-                    Encontramos <b className="text-white bg-white/20 px-2 py-0.5 rounded-md">{alertas.length}</b> dispensers que necesitan atención este mes.
-                </p>
+        <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] p-4 pb-28 transition-colors">
+
+            {/* Header */}
+            <div className="bg-[#1C1917] dark:bg-[#1C1C1C] text-[#F0EEE9] p-6 rounded-[2rem] mb-5 border border-black/20 dark:border-white/[0.07]">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="font-black text-2xl uppercase tracking-tighter leading-none text-[#E8422F]">
+                            Radar Activo
+                        </h2>
+                        <p className="text-[#A8A29E] text-[11px] font-bold uppercase mt-1">
+                            Dispensers que necesitan atención
+                        </p>
+                    </div>
+                    <div className="bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-2xl w-14 h-14 rounded-2xl flex items-center justify-center">
+                        {alertas.length}
+                    </div>
+                </div>
             </div>
 
-            {/* LISTA DE ALERTAS */}
+            {/* Sin alertas */}
             {alertas.length === 0 ? (
-                <div className="text-center p-10 bg-white dark:bg-slate-800 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 transition-colors duration-300">
-                    <h3 className="text-emerald-500 font-black text-xl m-0">¡Todo al día! ✅</h3>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">No hay dispensers vencidos este mes.</p>
+                <div className="text-center p-10 bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07]">
+                    <p className="text-[#D13A28] dark:text-[#E8422F] font-black text-xl uppercase">Todo al día</p>
+                    <p className="text-[#A8A29E] text-[11px] font-bold uppercase mt-2">No hay dispensers vencidos.</p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-4">
-                    {alertas.map((a, i) => (
-                        <div key={i} className={`bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 border-l-8 transition-colors duration-300 ${
-                            a.tipoAlerta === 'FILTRO' ? 'border-l-rose-500' : 'border-l-amber-500'
-                        }`}>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    {/* ETIQUETA DE ALERTA */}
-                                    <div className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide uppercase mb-3 ${
-                                        a.tipoAlerta === 'FILTRO' 
-                                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' 
-                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                    }`}>
-                                        {a.tipoAlerta} ({a.meses} MESES)
+                <div className="flex flex-col gap-3">
+                    {alertas.map((a, i) => {
+                        const esFiltro = a.tipoAlerta === 'FILTRO';
+                        return (
+                            <div key={i} className={`
+                                bg-[#EDEAE6] dark:bg-[#242424] rounded-[1.5rem]
+                                border border-black/[0.07] dark:border-white/[0.07]
+                                border-l-4 overflow-hidden
+                                ${esFiltro
+                                    ? 'border-l-[#D13A28] dark:border-l-[#E8422F]'
+                                    : 'border-l-[#D48800] dark:border-l-[#F0A500]'
+                                }
+                            `}>
+                                <div className="p-5">
+                                    <div className="flex justify-between items-start gap-3 mb-4">
+                                        <div className="flex-1 min-w-0">
+                                            {/* Badge tipo */}
+                                            <span className={`inline-block px-2.5 py-1 rounded-lg text-[9px] font-black uppercase mb-2 ${
+                                                esFiltro
+                                                    ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]'
+                                                    : 'bg-[#D48800]/10 dark:bg-[#F0A500]/10 text-[#D48800] dark:text-[#F0A500]'
+                                            }`}>
+                                                {a.tipoAlerta} · {a.meses} meses
+                                            </span>
+                                            <h3 className="font-black text-[16px] text-[#1C1917] dark:text-[#F0EEE9] uppercase leading-none">
+                                                {a.cliente}
+                                            </h3>
+                                            <p className="text-[10px] font-bold text-[#A8A29E] uppercase mt-1">
+                                                📍 {a.sede} · S/N: <span className="text-[#1C1917] dark:text-[#F0EEE9]">{a.serial}</span>
+                                            </p>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <p className="text-[9px] font-black text-[#A8A29E] uppercase">Último service</p>
+                                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] mt-0.5">{a.fechaUltimo}</p>
+                                        </div>
                                     </div>
-                                    <h3 className="m-0 text-[17px] font-black text-slate-900 dark:text-white tracking-tight">{a.cliente}</h3>
-                                    <p className="m-0 mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                        📍 {a.sede} | S/N: <b className="text-slate-700 dark:text-slate-300">{a.serial}</b>
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Último Service</span><br/>
-                                    <span className="text-sm font-black text-slate-700 dark:text-slate-200">{a.fechaUltimo}</span>
+
+                                    <button onClick={() => enviarWA(a)}
+                                        className="w-full py-3.5 bg-[#25D366] hover:opacity-90 text-white rounded-xl text-[13px] font-black flex justify-center items-center gap-2 active:scale-[0.98] transition-all">
+                                        💬 Avisar por WhatsApp
+                                    </button>
                                 </div>
                             </div>
-
-                            <button onClick={() => enviarWA(a)} className="w-full mt-5 py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl text-[15px] font-extrabold flex justify-center items-center gap-2 shadow-md shadow-green-500/20 transition-all transform active:scale-[0.98]">
-                                <span className="text-xl">💬</span> Avisar por WhatsApp
-                            </button>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
-export function useServicioForm(servicioParaEditar = null) {
+export function useServicioForm(servicioParaEditar = null, clienteInicialId = null) {
   const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
-  const [clienteId, setClienteId] = useState(null);
+  const [clienteId, setClienteId] = useState(clienteInicialId ? String(clienteInicialId) : null);
   const [esPresupuesto, setEsPresupuesto] = useState(true);
   const [ticketItems, setTicketItems] = useState([]);
   const [idEdicion, setIdEdicion] = useState(null);
@@ -19,7 +19,8 @@ export function useServicioForm(servicioParaEditar = null) {
 
   const [itemActual, setItemActual] = useState({
     sedeId: '', sedeNombre: '', equipoSerial: '',
-    trabajo: '', costoExtra: 0, repuestosUsados: []
+    trabajo: '', costoExtra: 0, repuestosUsados: [],
+    fotoAntes: null, fotoDespues: null,
   });
 
   const [repuestoElegido, setRepuestoElegido] = useState(null);
@@ -36,9 +37,9 @@ export function useServicioForm(servicioParaEditar = null) {
           api.get('/repuestos?page=0&size=1000')
         ]);
         setDb({
-          clientes: c.data.content || c.data,
-          sedes:    s.data.content || s.data,
-          equipos:  e.data.content || e.data,
+          clientes:  c.data.content || c.data,
+          sedes:     s.data.content || s.data,
+          equipos:   e.data.content || e.data,
           repuestos: r.data.content || r.data
         });
 
@@ -50,14 +51,16 @@ export function useServicioForm(servicioParaEditar = null) {
           setDescuentoPorcentaje(servicioParaEditar.descuentoPorcentaje || 0);
           setTicketItems(
             servicioParaEditar.items.map(it => ({
-              sedeId:          servicioParaEditar.sedeId,
-              equipoSerial:    it.equipoSerial,
-              trabajo:         it.trabajoRealizado,
-              costoExtra:      Math.max(0, it.costoExtra || 0),
-              totalCalculado:  Math.max(0, it.costo),
+              sedeId:            servicioParaEditar.sedeId,
+              equipoSerial:      it.equipoSerial,
+              trabajo:           it.trabajoRealizado,
+              costoExtra:        Math.max(0, it.costoExtra || 0),
+              totalCalculado:    Math.max(0, it.costo),
               totalSinDescuento: Math.max(0, it.costo),
-              repuestosUsados: it.repuestosUsados || [],
-              resumenTexto:    it.trabajoRealizado
+              repuestosUsados:   it.repuestosUsados || [],
+              resumenTexto:      it.trabajoRealizado,
+              fotoAntes:         it.fotoAntes   || null,
+              fotoDespues:       it.fotoDespues || null,
             }))
           );
           setItemActual(prev => ({ ...prev, sedeId: servicioParaEditar.sedeId }));
@@ -116,10 +119,10 @@ export function useServicioForm(servicioParaEditar = null) {
       totalVenta += parseFloat(item.costoExtra) || 0;
     });
 
-    const descuento        = (totalVenta * descuentoPorcentaje) / 100;
+    const descuento         = (totalVenta * descuentoPorcentaje) / 100;
     const totalConDescuento = totalVenta - descuento;
-    const gananciaBruta    = totalConDescuento - totalCosto;
-    const margenFinal      = totalConDescuento > 0
+    const gananciaBruta     = totalConDescuento - totalCosto;
+    const margenFinal       = totalConDescuento > 0
       ? ((gananciaBruta / totalConDescuento) * 100).toFixed(1) : 0;
 
     return { totalVenta, totalCosto, descuento, totalConDescuento, gananciaBruta, margenFinal };
@@ -174,10 +177,10 @@ export function useServicioForm(servicioParaEditar = null) {
   };
 
   const actualizarCantidad = (idx, valor) => {
-    const nuevos    = [...itemActual.repuestosUsados];
-    const qty       = Math.max(1, parseInt(valor) || 1);
+    const nuevos         = [...itemActual.repuestosUsados];
+    const qty            = Math.max(1, parseInt(valor) || 1);
     nuevos[idx].cantidad = qty;
-    nuevos[idx].subtotal  = qty * parseFloat(nuevos[idx].precio);
+    nuevos[idx].subtotal = qty * parseFloat(nuevos[idx].precio);
     setItemActual({ ...itemActual, repuestosUsados: nuevos });
   };
 
@@ -191,88 +194,144 @@ export function useServicioForm(servicioParaEditar = null) {
   const editarItem = idx => {
     if (estaBloqueado) return;
     setItemActual(ticketItems[idx]);
-    const nuevaLista = [...ticketItems];
-    nuevaLista.splice(idx, 1);
-    setTicketItems(nuevaLista);
+    const nueva = [...ticketItems];
+    nueva.splice(idx, 1);
+    setTicketItems(nueva);
   };
 
   const eliminarItem = idx => {
     if (estaBloqueado) return;
-    const nuevaLista = [...ticketItems];
-    nuevaLista.splice(idx, 1);
-    setTicketItems(nuevaLista);
+    const nueva = [...ticketItems];
+    nueva.splice(idx, 1);
+    setTicketItems(nueva);
   };
 
   const agregarAlTicket = () => {
     if (estaBloqueado) return;
+
+    const tieneSerial    = itemActual.equipoSerial?.trim();
+    const tieneDescripcion = itemActual.trabajo?.trim();
+    const tieneRepuestos = itemActual.repuestosUsados?.length > 0;
+    const tieneMO        = (parseFloat(itemActual.costoExtra) || 0) > 0;
+
+    // Mínimo: descripción del trabajo O al menos un repuesto O mano de obra
+    if (!tieneDescripcion && !tieneRepuestos && !tieneMO) {
+      toast.error('Completá al menos la descripción del trabajo o agregá un repuesto');
+      return;
+    }
+
     const extra  = Math.max(0, parseFloat(itemActual.costoExtra) || 0);
     const totalR = itemActual.repuestosUsados.reduce((a, b) => a + b.subtotal, 0);
     const nuevoRenglon = {
       ...itemActual,
+      equipoSerial:   tieneSerial || 'SIN-SN',
       costoExtra:     extra,
       totalCalculado: extra + totalR,
-      resumenTexto:   itemActual.equipoSerial && itemActual.equipoSerial !== 'MOSTRADOR'
-        ? `${itemActual.trabajo} | MO: $${extra}`
+      resumenTexto:   tieneSerial
+        ? `${tieneDescripcion || ''} | MO: $${extra}`
         : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`
     };
-    setTicketItems([...ticketItems, nuevoRenglon]);
-    setItemActual({ ...itemActual, equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
+    setTicketItems(prev => [...prev, nuevoRenglon]);
+    setItemActual(prev => ({
+      ...prev,
+      equipoSerial: '', trabajo: '', costoExtra: 0,
+      repuestosUsados: [], modeloEquipo: '', ubicacionEquipo: '',
+      fotoAntes: null, fotoDespues: null,
+    }));
     setHistorialEquipo(null);
+    setRepuestoElegido(null);
+    toast.success('✓ Equipo agregado al ticket');
   };
 
-  /**
-   * finalizar
-   * @param confirmarTrabajo boolean
-   * @param overrides { clienteNombre?, sedeId?, sedeNombre? }
-   *   Usado por el modo rápido para inyectar nombre libre + sede Mostrador
-   */
+  // Sube una foto al backend y devuelve su filename, o null si no hay foto
+  const subirFoto = async (file) => {
+    if (!file) return null;
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const r = await api.post('/uploads', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      return r.data.filename || null;
+    } catch { return null; }
+  };
+
   const finalizar = async (confirmarTrabajo = false, overrides = {}) => {
     if (estaBloqueado || ticketItems.length === 0) return;
 
     const loading = toast.loading(confirmarTrabajo ? 'Confirmando...' : 'Guardando...');
     try {
-      const clienteObj = db.clientes?.find(c => c.id.toString() === clienteId);
+      const clienteObj = db.clientes?.find(c => c.id?.toString() === clienteId);
 
-      // Si viene override de sedeId (modo rápido) lo usamos, sino el del item
-      const sedeIdReal = overrides.sedeId || itemActual.sedeId || ticketItems[0]?.sedeId;
-      const nombreCliente = overrides.clienteNombre || clienteObj?.nombre || 'Particular';
-      const nombreSede    = overrides.sedeNombre
-        || db.sedes?.find(s => s.id === sedeIdReal)?.nombreSede
-        || 'Mostrador';
+      // ── Resolver sede ────────────────────────────────────────────────────
+      // Para cliente NUEVO (sin registrar) → siempre Mostrador
+      // Para cliente REGISTRADO → su sede seleccionada, o su única sede, o Mostrador
+      const sedeMostrador = db.sedes?.find(s =>
+        s.nombreSede?.toLowerCase().includes('mostrador') ||
+        s.nombreSede?.toLowerCase().includes('particular')
+      );
 
-      if (!sedeIdReal) {
-        toast.error('❌ Falta seleccionar una sede', { id: loading });
+      let sedeIdFinal, nombreSedeF;
+
+      if (!clienteId) {
+        // Cliente nuevo → Mostrador obligatorio
+        sedeIdFinal  = overrides.sedeId || sedeMostrador?.id || db.sedes?.[0]?.id;
+        nombreSedeF  = overrides.sedeNombre || sedeMostrador?.nombreSede || 'Mostrador';
+      } else {
+        // Cliente registrado → sede elegida > única sede del cliente > Mostrador
+        const sedesCliente = db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId) || [];
+        const sedeElegida  = itemActual.sedeId || ticketItems[0]?.sedeId;
+        const sedePorDefecto = sedesCliente.length === 1 ? sedesCliente[0] : null;
+
+        sedeIdFinal = sedeElegida
+          || sedePorDefecto?.id
+          || sedeMostrador?.id
+          || db.sedes?.[0]?.id;
+
+        nombreSedeF = db.sedes?.find(s => s.id === sedeIdFinal)?.nombreSede || 'Mostrador';
+      }
+
+      if (!sedeIdFinal) {
+        toast.error('No hay ninguna sede en la base de datos. Creá una sede primero.', { id: loading });
         return false;
       }
 
-      const tieneEquipo = ticketItems.some(it => it.equipoSerial && it.equipoSerial !== 'MOSTRADOR');
+      const tieneEquipo = ticketItems.some(it => it.equipoSerial && it.equipoSerial !== 'MOSTRADOR' && it.equipoSerial !== 'SIN-SN');
       const { totalConDescuento } = calcularResumenGanancia();
+      const nombreCliente = overrides.clienteNombre || clienteObj?.nombre || 'Particular';
+
+      // Subir fotos al backend antes de construir el DTO
+      const itemsConFotos = await Promise.all(ticketItems.map(async it => ({
+        ...it,
+        fotoAntesFilename:   await subirFoto(it.fotoAntes   instanceof File ? it.fotoAntes   : null),
+        fotoDespuesFilename: await subirFoto(it.fotoDespues instanceof File ? it.fotoDespues : null),
+      })));
 
       const servicioData = {
-        sedeId:       parseInt(sedeIdReal),
-        usuarioId:    1,
-        fecha:        fechaServicio,
-        servicioTipo: tieneEquipo ? 'TECNICA' : 'VENTA',
-        estado:       confirmarTrabajo ? 'REALIZADO' : 'PRESUPUESTO',
-        clienteNombre: nombreCliente,
-        sedeNombre:   nombreSede,
+        sedeId:             parseInt(sedeIdFinal),
+        usuarioId:          1,
+        fecha:              fechaServicio,
+        servicioTipo:       tieneEquipo ? 'TECNICA' : 'VENTA',
+        estado:             confirmarTrabajo ? 'REALIZADO' : 'PRESUPUESTO',
+        clienteNombre:      nombreCliente,
+        sedeNombre:         nombreSedeF,
         descuentoPorcentaje,
         totalConDescuento,
-        items: ticketItems.map(it => {
+        items: itemsConFotos.map(it => {
           const esFiltro = it.trabajo?.toUpperCase().includes('FILTRO') ||
             it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes('FILTRO'));
           return {
-            equipoSerial:    it.equipoSerial || 'MOSTRADOR',
-            tecnico:         'Marcos',
-            costo:           parseFloat(it.totalCalculado),
-            costoExtra:      parseFloat(it.costoExtra) || 0,
-            metodoPago:      'EFECTIVO',
-            trabajoRealizado: it.resumenTexto,
-            trabajoTipo:     tieneEquipo ? (esFiltro ? 'CAMBIO_FILTRO' : 'REPARACION') : 'VENTA',
-            repuestosUsados: it.repuestosUsados || [],
-            garantiaHasta:   confirmarTrabajo && tieneEquipo
+            equipoSerial:     it.equipoSerial || 'MOSTRADOR',
+            tecnico:          'Marcos',
+            costo:            parseFloat(it.totalCalculado) || parseFloat(it.costoExtra) || 0,
+            costoExtra:       parseFloat(it.costoExtra) || 0,
+            metodoPago:       'EFECTIVO',
+            trabajoRealizado: it.trabajo || it.resumenTexto || '',
+            trabajoTipo:      tieneEquipo ? (esFiltro ? 'CAMBIO_FILTRO' : 'REPARACION') : 'VENTA',
+            repuestosUsados:  it.repuestosUsados || [],
+            garantiaHasta:    confirmarTrabajo && tieneEquipo
               ? new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3))).toISOString().split('T')[0]
-              : null
+              : null,
+            fotoAntes:        it.fotoAntesFilename   || null,
+            fotoDespues:      it.fotoDespuesFilename || null,
           };
         })
       };
@@ -283,14 +342,18 @@ export function useServicioForm(servicioParaEditar = null) {
         await api.post('/servicios', servicioData);
       }
 
-      toast.success('✅ ¡Guardado!', { id: loading });
+      toast.success(confirmarTrabajo ? '✅ ¡Confirmado!' : '💾 ¡Guardado!', { id: loading });
+
+      // Reset
       setTicketItems([]);
       setClienteId(null);
       setIdEdicion(null);
       setDescuentoPorcentaje(0);
       setLeyenda('');
       setFechaServicio(new Date().toISOString().split('T')[0]);
+      setItemActual({ sedeId: '', sedeNombre: '', equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
       return true;
+
     } catch (err) {
       toast.error(`❌ ${err.response?.data?.mensaje || err.message || 'Error de servidor'}`, { id: loading });
       return false;

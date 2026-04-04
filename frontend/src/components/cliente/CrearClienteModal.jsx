@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import Card from '../ui/Card';
 import ClienteFormFields from './ClienteFormFields';
 import ClienteFormDireccion from './ClienteFormDireccion';
 import { useClienteForm } from '../../hooks/useClienteForm';
@@ -24,7 +23,7 @@ export default function CrearClienteModal({
         e.preventDefault();
 
         if (!validarTodo()) {
-            toast.error('❌ Completá los campos obligatorios');
+            toast.error('Completá los campos obligatorios');
             return;
         }
 
@@ -49,7 +48,7 @@ export default function CrearClienteModal({
                 direccion: formData.direccion?.trim() || null,
             });
 
-            toast.success(`✅ Cliente "${formData.nombre}" creado`, { id: loadingToast });
+            toast.success(`Cliente "${formData.nombre}" creado`, { id: loadingToast });
             if (onClienteCreado) onClienteCreado(response.data);
             resetear();
             setModoFlota(false);
@@ -59,7 +58,7 @@ export default function CrearClienteModal({
             const errorMsg = err.response?.data?.detalles?.camposInvalidos
                 ? Object.values(err.response.data.detalles.camposInvalidos).join(', ')
                 : err.response?.data?.mensaje || 'Error al crear cliente';
-            toast.error(`❌ ${errorMsg}`, { id: loadingToast });
+            toast.error(errorMsg, { id: loadingToast });
 
             if (err.response?.data?.tipo === 'VALIDACION_FALLIDA') {
                 const camposErr = err.response.data.detalles.camposInvalidos || {};
@@ -75,76 +74,82 @@ export default function CrearClienteModal({
 
     if (!isOpen) return null;
 
+    // Input base del sistema
+    const inputBase = 'w-full p-3 mt-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all';
+    const inputError = 'border-[#D13A28] bg-[var(--danger-bg)]';
+
     return (
         <>
-            <div className="fixed inset-0 bg-black/50 z-[999] backdrop-blur-sm" onClick={onClose} />
+            <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
-                <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     {/* HEADER */}
-                    <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-between items-center p-5 pb-4 border-b border-black/[0.07] dark:border-white/[0.07]">
                         <div>
-                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">➕ Nuevo Cliente</h2>
-                            <p className="text-xs text-slate-400 mt-1">
+                            <h2 className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Nuevo Cliente</h2>
+                            <p className="text-[11px] text-[#A8A29E] mt-1">
                                 {modoFlota ? 'Cliente de flota — datos completos' : 'Cliente ocasional — solo nombre requerido'}
                             </p>
                         </div>
-                        <button onClick={onClose} className="text-2xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">✕</button>
+                        <button
+                            onClick={onClose}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                        >
+                            ✕
+                        </button>
                     </div>
 
                     {/* SELECTOR TIPO */}
-                    <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="grid grid-cols-2 gap-3 p-5 pb-0">
                         <button
                             type="button"
                             onClick={() => setModoFlota(false)}
-                            className={`p-4 rounded-2xl border-2 text-left transition-all ${!modoFlota
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-slate-200 dark:border-slate-700 hover:border-blue-200'
-                                }`}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
+                                !modoFlota
+                                    ? 'border-[#D13A28] dark:border-[#E8422F] bg-[var(--danger-bg)]'
+                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#1C1C1C] hover:opacity-80'
+                            }`}
                         >
                             <p className="text-xl mb-1">👤</p>
-                            <p className="font-black text-sm text-slate-900 dark:text-white">Particular / Ocasional</p>
-                            <p className="text-[10px] text-slate-400 font-bold mt-0.5">Solo nombre obligatorio</p>
+                            <p className="font-black text-sm text-[#1C1917] dark:text-[#F0EEE9]">Particular / Ocasional</p>
+                            <p className="text-[10px] text-[#A8A29E] font-bold mt-0.5">Solo nombre obligatorio</p>
                         </button>
 
                         <button
                             type="button"
                             onClick={() => setModoFlota(true)}
-                            className={`p-4 rounded-2xl border-2 text-left transition-all ${modoFlota
-                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                                    : 'border-slate-200 dark:border-slate-700 hover:border-emerald-200'
-                                }`}
+                            className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
+                                modoFlota
+                                    ? 'border-[#D48800] dark:border-[#F0A500] bg-[var(--warning-bg)]'
+                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#1C1C1C] hover:opacity-80'
+                            }`}
                         >
                             <p className="text-xl mb-1">🏢</p>
-                            <p className="font-black text-sm text-slate-900 dark:text-white">Cliente de Flota</p>
-                            <p className="text-[10px] text-slate-400 font-bold mt-0.5">Dirección + IVA requeridos</p>
+                            <p className="font-black text-sm text-[#1C1917] dark:text-[#F0EEE9]">Cliente de Flota</p>
+                            <p className="text-[10px] text-[#A8A29E] font-bold mt-0.5">Dirección + IVA requeridos</p>
                         </button>
                     </div>
 
-                    <form onSubmit={handleGuardar} className="space-y-5">
+                    <form onSubmit={handleGuardar} className="p-5 space-y-5">
 
-                        {/* CAMPOS BÁSICOS — siempre visibles */}
                         <ClienteFormFields
                             formData={formData}
                             errores={errores}
                             handleChange={handleChange}
                         />
 
-                        {/* DIRECCIÓN + IVA — siempre visibles pero obligatorios solo en flota */}
-                        <div className={`rounded-2xl border-2 p-4 transition-all ${modoFlota
-                                ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10'
-                                : 'border-slate-100 dark:border-slate-800'
+                        {/* DIRECCIÓN */}
+                        <div className={`rounded-2xl border p-4 transition-all ${
+                            modoFlota
+                                ? 'border-[#D48800] dark:border-[#F0A500] bg-[var(--warning-bg)]'
+                                : 'border-black/[0.07] dark:border-white/[0.07] bg-[#D8D4CE] dark:bg-[#1C1C1C]'
+                        }`}>
+                            <p className={`text-[10px] font-black uppercase tracking-widest mb-3 ${
+                                modoFlota ? 'text-[var(--warning-tx)]' : 'text-[#A8A29E]'
                             }`}>
-                            {modoFlota && (
-                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3">
-                                    📍 Datos obligatorios para flota
-                                </p>
-                            )}
-                            {!modoFlota && (
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-                                    📍 Dirección (opcional)
-                                </p>
-                            )}
+                                {modoFlota ? 'Datos obligatorios para flota' : 'Dirección (opcional)'}
+                            </p>
                             <ClienteFormDireccion
                                 formData={formData}
                                 errores={errores}
@@ -154,39 +159,45 @@ export default function CrearClienteModal({
 
                         {/* CONDICIÓN IVA */}
                         <div>
-                            <label className="text-xs font-black text-slate-400 uppercase tracking-wide">
+                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wide">
                                 Condición IVA {modoFlota ? '*' : '(opcional)'}
                             </label>
                             <select
                                 name="condicionIva"
                                 value={formData.condicionIva}
                                 onChange={handleChange}
-                                className={`w-full p-3 mt-2 rounded-xl border-2 transition-all dark:bg-slate-800 dark:text-white ${errores.condicionIva
-                                        ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'
-                                        : 'border-slate-200 dark:border-slate-700'
-                                    }`}
+                                className={`${inputBase} ${errores.condicionIva ? inputError : ''}`}
                             >
-                                <option value="CONSUMIDOR_FINAL">👥 Consumidor Final</option>
-                                <option value="MONOTRIBUTO">💼 Monotributo</option>
-                                <option value="RESPONSABLE_INSCRIPTO">📋 Responsable Inscripto</option>
-                                <option value="NO_RESPONSABLE">❌ No Responsable</option>
+                                <option value="CONSUMIDOR_FINAL">Consumidor Final</option>
+                                <option value="MONOTRIBUTO">Monotributo</option>
+                                <option value="RESPONSABLE_INSCRIPTO">Responsable Inscripto</option>
+                                <option value="NO_RESPONSABLE">No Responsable</option>
                             </select>
-                            {errores.condicionIva && <p className="text-xs text-rose-500 mt-1">Obligatorio para cliente de flota</p>}
+                            {errores.condicionIva && (
+                                <p className="text-[11px] text-[#D13A28] mt-1">Obligatorio para cliente de flota</p>
+                            )}
                         </div>
 
                         {/* BOTONES */}
-                        <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                            <button type="button" onClick={onClose} disabled={cargando}
-                                className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white rounded-xl font-black text-sm uppercase hover:bg-slate-300 transition-all disabled:opacity-50">
+                        <div className="flex gap-3 pt-4 border-t border-black/[0.07] dark:border-white/[0.07]">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                disabled={cargando}
+                                className="flex-1 py-3 rounded-xl font-black text-sm uppercase transition-all hover:opacity-80 active:scale-95 disabled:opacity-50 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]"
+                            >
                                 Cancelar
                             </button>
-                            <button type="submit" disabled={cargando}
-                                className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-sm uppercase hover:bg-blue-700 transition-all disabled:opacity-50 active:scale-95">
-                                {cargando ? '⏳ Creando...' : '✅ Crear Cliente'}
+                            <button
+                                type="submit"
+                                disabled={cargando}
+                                className="flex-1 py-3 rounded-xl font-black text-sm uppercase transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 bg-[#D13A28] dark:bg-[#E8422F] text-white"
+                            >
+                                {cargando ? 'Creando...' : 'Crear Cliente'}
                             </button>
                         </div>
                     </form>
-                </Card>
+                </div>
             </div>
         </>
     );
