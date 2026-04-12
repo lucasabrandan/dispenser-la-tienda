@@ -1,13 +1,62 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import Select from 'react-select';
+import imageCompression from 'browser-image-compression';
 import { Label, NextBtn, BackBtn, DSCard, DSInput, DSTextarea, M } from './ServicioUI';
+import { construirUrlFoto } from '../../utils/construirUrlFoto';
+import RepuestoRapidoModal from '../repuesto/RepuestoRapidoModal';
 
-// Upload compacto de foto con preview portrait (formato celular)
+// Comprime la foto usando browser-image-compression (Web Worker) para no
+// bloquear el hilo principal ni crashear por OOM en Android.
+async function comprimirFoto(file) {
+    try {
+        return await imageCompression(file, {
+            maxSizeMB:        0.3,
+            maxWidthOrHeight: 900,
+            useWebWorker:     true,
+            fileType:         'image/jpeg',
+        });
+    } catch {
+        return file; // si falla la compresión usamos el archivo original
+    }
+}
+
+// Convierte un File a data URL (string estable que persiste en estado React).
+// Guardar data URL en vez del File evita que el blob sea liberado por el GC
+// antes de que jsPDF lo pueda leer al generar el PDF.
+function fileADataUrl(file) {
+    return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror  = () => resolve(null);
+        reader.readAsDataURL(file);
+    });
+}
+
+// Upload compacto de foto con preview portrait (formato celular).
+// Dos inputs separados: uno con capture="environment" (cámara) y otro sin (galería).
+// En Android, un solo input sin capture a veces no muestra la opción de cámara.
+// foto puede ser: data URL (nuevo), filename del backend (edición) o null.
 function FotoUpload({ label, foto, onChange }) {
-    const preview = foto ? URL.createObjectURL(foto) : null;
+    const refCamara  = useRef(null);
+    const refGaleria = useRef(null);
+
+    const preview = !foto ? null
+        : foto.startsWith('data:') ? foto
+        : construirUrlFoto(foto);
+
+    const handleFile = async e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = ''; // permite re-seleccionar el mismo archivo
+        const compressed = await comprimirFoto(file);
+        const dataUrl    = await fileADataUrl(compressed);
+        if (dataUrl) onChange(dataUrl);
+    };
+
     return (
-        <label className="cursor-pointer block">
+        <div className="flex flex-col gap-1">
+            {/* Preview */}
             <div className="relative rounded-xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-[#C0BCB6] dark:bg-[#2E2E2E] aspect-[3/4] flex items-center justify-center">
                 {preview ? (
                     <img src={preview} alt={label} className="w-full h-full object-cover" />
@@ -17,26 +66,45 @@ function FotoUpload({ label, foto, onChange }) {
                         <p className="text-[9px] font-black text-[#A8A29E] uppercase">{label}</p>
                     </div>
                 )}
-                {/* Etiqueta siempre visible abajo */}
                 <div className={`absolute bottom-0 left-0 right-0 py-1 text-center text-[9px] font-black uppercase text-white ${preview ? 'bg-black/50' : 'bg-[#D13A28]/80 dark:bg-[#E8422F]/80'}`}>
                     {preview ? `✓ ${label}` : `+ ${label}`}
                 </div>
             </div>
-            <input type="file" accept="image/*" capture="environment" className="hidden"
-                onChange={e => e.target.files?.[0] && onChange(e.target.files[0])} />
-        </label>
+
+            {/* Botones cámara / galería */}
+            <div className="grid grid-cols-2 gap-1">
+                <button type="button"
+                    onClick={() => refCamara.current?.click()}
+                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
+                    📷 Cámara
+                </button>
+                <button type="button"
+                    onClick={() => refGaleria.current?.click()}
+                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-95 transition-all">
+                    🖼️ Galería
+                </button>
+            </div>
+
+            {/* Inputs ocultos */}
+            <input ref={refCamara}  type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+            <input ref={refGaleria} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        </div>
     );
 }
 
 export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const {
-        db, clienteId, ticketItems,
+        db, setDb, clienteId, ticketItems,
         itemActual, setItemActual,
         repuestoElegido, setRepuestoElegido,
         sumarRepuesto, actualizarCantidad, quitarRepuesto,
         agregarAlTicket, calcularGananciaRepuesto,
         consultarAntecedentes, historialEquipo,
     } = hook;
+
+    // Estado del modal de creación rápida de repuesto
+    const [modalRepuesto, setModalRepuesto]   = useState(false);
+    const [nombreRepuesto, setNombreRepuesto] = useState('');
 
     // Equipos del inventario del cliente
     const equiposInventario = (() => {
@@ -81,6 +149,8 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
         transition-all
     `;
 
+    const { editarItem, eliminarItem } = hook;
+
     return (
         <div className="flex flex-col gap-4 px-5 pb-6">
 
@@ -105,7 +175,20 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                         </p>
                                     </div>
                                 </div>
-                                <M valor={it.totalCalculado} className="text-[13px] font-black flex-shrink-0 ml-2 text-[#1C1917] dark:text-[#F0EEE9]" />
+                                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                    <M valor={it.totalCalculado} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
+                                    {/* Editar item — vuelve al formulario con los datos cargados */}
+                                    <button
+                                        onClick={() => editarItem(idx)}
+                                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] bg-[#D48800]/20 text-[#D48800] dark:text-[#F0A500] active:scale-90 transition-all"
+                                        title="Editar equipo"
+                                    >✏️</button>
+                                    <button
+                                        onClick={() => eliminarItem(idx)}
+                                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F] active:scale-90 transition-all"
+                                        title="Eliminar equipo"
+                                    >✕</button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -178,12 +261,12 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         />
                     </div>
 
-                    {/* Repuestos */}
+                    {/* Repuestos — CreatableSelect permite crear al vuelo */}
                     <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.07)', paddingTop: '12px' }}>
                         <Label>Repuestos (opcional)</Label>
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <Select
+                                <CreatableSelect
                                     styles={selectStyles}
                                     options={db.repuestos?.map(r => ({
                                         ...r,
@@ -195,14 +278,29 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                         return opt.data.nombre?.toLowerCase().includes(v) || opt.data.sku?.toLowerCase().includes(v);
                                     }}
                                     formatOptionLabel={opt => (
-                                        <div className="flex justify-between">
-                                            <span className="font-bold text-sm">{opt.nombre}</span>
-                                            <span className="font-black text-xs text-[#1E8A4A]">${opt.precio}</span>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                {opt.sku && (
+                                                    <span className="text-[9px] font-black text-[#D13A28] dark:text-[#E8422F] mr-1">
+                                                        {opt.sku}
+                                                    </span>
+                                                )}
+                                                <span className="font-bold text-[13px]">{opt.nombre}</span>
+                                            </div>
+                                            {opt.precio > 0 && (
+                                                <span className="font-black text-xs text-[#1E8A4A]">${opt.precio}</span>
+                                            )}
                                         </div>
                                     )}
                                     onChange={setRepuestoElegido}
+                                    onCreateOption={nombre => {
+                                        // Abrir mini-modal con el nombre pre-llenado
+                                        setNombreRepuesto(nombre);
+                                        setModalRepuesto(true);
+                                    }}
                                     value={repuestoElegido}
-                                    placeholder="Buscar repuesto..."
+                                    placeholder="Buscar o crear repuesto..."
+                                    formatCreateLabel={v => `+ Crear "${v}"`}
                                     isClearable
                                 />
                             </div>
@@ -275,7 +373,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                     </div>
 
                     {/* Botón agregar */}
-                    <button onClick={agregarAlTicket}
+                    <button onClick={() => agregarAlTicket()}
                         className="w-full py-3.5 rounded-xl font-black text-sm text-white active:scale-[0.98] transition-all bg-[#D13A28] dark:bg-[#E8422F]">
                         + Agregar equipo al ticket
                     </button>
@@ -289,6 +387,18 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
             )}
 
             <BackBtn onClick={onBack} />
+
+            {/* Modal creación rápida de repuesto */}
+            <RepuestoRapidoModal
+                isOpen={modalRepuesto}
+                onClose={() => setModalRepuesto(false)}
+                nombreInicial={nombreRepuesto}
+                onCreado={repuesto => {
+                    // Agregar al listado local y seleccionarlo automáticamente
+                    setDb(prev => ({ ...prev, repuestos: [...(prev.repuestos || []), repuesto] }));
+                    setRepuestoElegido({ ...repuesto, label: `[${repuesto.sku}] ${repuesto.nombre}`, value: repuesto.id });
+                }}
+            />
         </div>
     );
 }
