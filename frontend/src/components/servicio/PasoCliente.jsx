@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, buildSelectStyles } from './ServicioUI';
 
@@ -46,6 +46,11 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
 
     const [modo, setModo]               = useState(clienteId ? 'registrado' : 'nuevo');
     const [nombreLibre, setNombreLibre] = useState('');
+
+    // Sincronizar modo cuando clienteId se setea externamente (ej: recuperar borrador)
+    useEffect(() => {
+        if (clienteId && modo === 'nuevo') setModo('registrado');
+    }, [clienteId]);
 
     const clienteObj   = db.clientes?.find(c => c.id?.toString() === clienteId);
     const sedesCliente = db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId) || [];

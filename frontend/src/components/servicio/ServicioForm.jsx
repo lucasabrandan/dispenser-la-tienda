@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { useServicioForm } from '../../hooks/useServicioForm';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
@@ -34,6 +34,16 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null, clien
     const [paso, setPaso]             = useState(0);
     const [nombreLibre, setNombreLibre] = useState('');
     hook._setNombreLibre = setNombreLibre;
+
+    // Cuando se recupera un borrador con equipos, avanzar al paso correcto automáticamente
+    const prevBorrador = useRef(borradorDisponible);
+    useEffect(() => {
+        // Detectar el momento en que borradorDisponible pasa de true → false (acaba de recuperarse)
+        if (prevBorrador.current && !borradorDisponible) {
+            if (ticketItems.length > 0) setPaso(1);
+        }
+        prevBorrador.current = borradorDisponible;
+    }, [borradorDisponible, ticketItems.length]);
 
     const isDark = document.documentElement.classList.contains('dark');
     const selectStyles = buildSelectStyles(isDark);
