@@ -13,7 +13,7 @@ async function comprimirFoto(file) {
         return await imageCompression(file, {
             maxSizeMB:        0.3,
             maxWidthOrHeight: 900,
-            useWebWorker:     true,
+            useWebWorker:     false,
             fileType:         'image/jpeg',
         });
     } catch {
