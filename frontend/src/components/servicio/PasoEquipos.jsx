@@ -213,6 +213,8 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         <Label>N/S Dispenser (opcional)</Label>
                         <CreatableSelect
                             styles={selectStyles}
+                            menuPosition="fixed"
+                            menuPlacement="auto"
                             options={opcionesSerial}
                             value={itemActual.equipoSerial ? { label: itemActual.equipoSerial, value: itemActual.equipoSerial } : null}
                             onChange={s => {
@@ -272,6 +274,8 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             <div className="flex-1">
                                 <CreatableSelect
                                     styles={selectStyles}
+                                    menuPosition="fixed"
+                                    menuPlacement="auto"
                                     options={db.repuestos?.map(r => ({
                                         ...r,
                                         label: `${r.sku ? `[${r.sku}] ` : ''}${r.nombre}`,

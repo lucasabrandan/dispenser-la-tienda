@@ -143,6 +143,8 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                         <Label>Buscar cliente</Label>
                         <CreatableSelect
                             styles={selectStyles}
+                            menuPosition="fixed"
+                            menuPlacement="auto"
                             options={db.clientes?.map(c => ({ value: c.id.toString(), label: c.nombre }))}
                             value={clienteObj ? { value: clienteObj.id.toString(), label: clienteObj.nombre } : null}
                             onChange={s => {
@@ -180,6 +182,8 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                                 <Label>Sede / Domicilio (opcional)</Label>
                                 <CreatableSelect
                                     styles={selectStyles}
+                                    menuPosition="fixed"
+                                    menuPlacement="auto"
                                     options={sedesCliente.map(s => ({ value: s.id.toString(), label: s.nombreSede }))}
                                     value={sedesCliente.find(s => s.id === itemActual.sedeId)
                                         ? { label: sedesCliente.find(s => s.id === itemActual.sedeId).nombreSede }
