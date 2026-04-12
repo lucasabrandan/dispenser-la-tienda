@@ -2,22 +2,17 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import {
-    DARK, RED, GOLD, WHITE, GRAY_LIGHT, GRAY_MID, GRAY_TEXT,
+    DARK, RED, GRAY_LIGHT, GRAY_MID, GRAY_TEXT,
     procesarFecha, dibujarHeaderPDF, dibujarHeaderPDFCompacto, dibujarFooterPDF
 } from './pdfTheme';
 import { construirUrlFoto } from './construirUrlFoto';
 
-// Carga una foto (data URL base64 o filename del backend) y la devuelve
-// como { data, format } lista para doc.addImage.
-// Las fotos nuevas ya llegan como JPEG comprimido desde FotoUpload.
-// Las fotos del backend se buscan por filename.
+// Carga una foto (data URL base64 o filename del backend) lista para doc.addImage
 async function cargarFoto(src) {
     if (!src) return null;
-
     let dataUrl = null;
 
     if (src instanceof File) {
-        // File object en memoria (foto nueva antes de guardar)
         dataUrl = await new Promise(resolve => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
@@ -25,10 +20,8 @@ async function cargarFoto(src) {
             reader.readAsDataURL(src);
         });
     } else if (typeof src === 'string' && src.startsWith('data:')) {
-        // Ya es data URL (foto convertida previamente)
         dataUrl = src;
     } else {
-        // Es filename — buscar en el backend
         try {
             const url = construirUrlFoto(src);
             if (!url) return null;
@@ -45,19 +38,31 @@ async function cargarFoto(src) {
     }
 
     if (!dataUrl) return null;
-
-    // Detectar formato: fotos nuevas son JPEG (comprimidas por FotoUpload)
-    // Las del backend también deberían ser JPEG, pero soportamos PNG como fallback
     const format = dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
     return { data: dataUrl, format };
+}
+
+// Estima la altura en mm que ocupará un item técnico para anticipar saltos de página
+function estimarAlturaItem(item, FOTO_W, FOTO_H, esCompacto) {
+    let h = 14; // título + modelo + meta
+
+    const texto = (item.trabajo || item.trabajoRealizado || item.resumenTexto || '')
+        .replace(/\| MO:.*/, '').trim();
+    if (texto) h += 10 + Math.ceil(texto.length / 80) * 4;
+
+    const nRows = (parseFloat(item.costoExtra || 0) > 0 ? 1 : 0)
+        + (item.repuestosUsados?.length || 0);
+    if (nRows > 0) h += 8 + nRows * (esCompacto ? 6 : 7);
+
+    if (item.fotoAntes || item.fotoDespues) h += FOTO_H + 14;
+
+    return h;
 }
 
 export const generarRemitoPDFPremium = async ({
     esPresupuesto, cliente, sede, tecnico, ticketItems, fechaServicio,
     descuentoPorcentaje = 0,
     leyenda = '',
-    // Override para cuando equipoSerial es 'MOSTRADOR' por no estar en el inventario
-    // (pasa al generar PDF desde la lista para servicios con equipos sin S/N registrado)
     esTecnicoForzado = null
 }) => {
     if (!cliente || ticketItems.length === 0) {
@@ -66,23 +71,24 @@ export const generarRemitoPDFPremium = async ({
 
     const doc   = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
     const fecha = procesarFecha(fechaServicio);
-    // Si viene forzado, usar ese valor; si no, detectar por equipoSerial
+
     const esTecnico = esTecnicoForzado !== null
         ? esTecnicoForzado
         : ticketItems.some(it => it.equipoSerial && it.equipoSerial !== 'MOSTRADOR');
 
-    // Modo compacto: 3+ equipos → header más chico, fotos y tablas reducidas
-    const esCompacto = ticketItems.length >= 3;
+    // Compacto a partir de 2 equipos para aprovechar mejor el espacio
+    const esCompacto = ticketItems.length >= 2;
 
-    // Dimensiones adaptivas
-    const FOTO_W = esCompacto ? 62 : 84;
-    const FOTO_H = esCompacto ? 46 : 64;
-    const tblBodySize  = esCompacto ? 7.5 : 8.5;
-    const tblHeadSize  = esCompacto ? 6.5 : 7;
-    const tblBodyPad   = { top: esCompacto ? 2 : 2.5,  bottom: esCompacto ? 2 : 2.5,  left: 0, right: 0 };
-    const tblHeadPad   = { top: 2, bottom: esCompacto ? 2 : 3, left: 0, right: 0 };
-    const secGap       = esCompacto ? 10 : 14; // espacio entre equipos
+    const FOTO_W = esCompacto ? 58 : 82;
+    const FOTO_H = esCompacto ? 44 : 62;
+    const tblBodySize = esCompacto ? 7.5 : 8.5;
+    const tblHeadSize = esCompacto ? 6.5 : 7;
+    const tblBodyPad  = { top: esCompacto ? 1.5 : 2, bottom: esCompacto ? 1.5 : 2, left: 0, right: 0 };
+    const tblHeadPad  = { top: 1.5, bottom: esCompacto ? 1.5 : 2, left: 0, right: 0 };
+    const SEC_GAP     = esCompacto ? 5 : 8;   // espacio entre equipos — reducido
+    const MARGEN_INF  = pageH - 18;            // límite inferior antes del footer
 
     const tipoLabel = esPresupuesto
         ? (esTecnico ? 'PRESUPUESTO DE SERVICIO TÉCNICO' : 'PRESUPUESTO DE VENTA')
@@ -94,9 +100,7 @@ export const generarRemitoPDFPremium = async ({
     const totalFinal_   = subtotalBruto - montoDesc;
 
     // ── HEADER ───────────────────────────────────────────────────────────────
-    // Con 3+ equipos usamos el header compacto para ganar ~18mm de espacio
     const subtitulo = esTecnico && tecnico ? `Técnico: ${tecnico}` : null;
-
     if (esCompacto) {
         dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo);
     } else {
@@ -104,111 +108,121 @@ export const generarRemitoPDFPremium = async ({
     }
 
     // ── BLOQUE CLIENTE ───────────────────────────────────────────────────────
-    // Sin cajas decorativas — solo texto con jerarquía clara
-    let y = esCompacto ? 36 : 52;
+    let y = esCompacto ? 34 : 50;
 
     doc.setDrawColor(...GRAY_MID);
     doc.setLineWidth(0.2);
     doc.line(14, y, pageW - 14, y);
+    y += 5;
 
-    y += 7;
-
-    // Label "Para:"
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...RED);
     doc.text('PARA', 14, y);
 
-    // Nombre del cliente — grande y en negrita
-    y += 5;
-    doc.setFontSize(13);
+    y += 4;
+    doc.setFontSize(esCompacto ? 11 : 13);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
     doc.text(cliente.nombre?.toUpperCase() || 'PARTICULAR', 14, y);
 
-    // Datos de contacto — una línea discreta
-    y += 6;
+    // Datos en una sola línea compacta
     const contacto = [
         cliente.cuilDni  ? `DNI/CUIT: ${cliente.cuilDni}` : null,
         cliente.telefono ? `Tel: ${cliente.telefono}`      : null,
-        sede?.direccion  || null,
-        cliente.email    || null
-    ].filter(Boolean).join('   ·   ');
+        sede?.direccion  || sede?.nombreSede               || null,
+        cliente.email    || null,
+    ].filter(Boolean).join('  ·  ');
 
-    doc.setFontSize(8);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(...GRAY_TEXT);
-    doc.text(contacto, 14, y, { maxWidth: pageW - 28 });
+    if (contacto) {
+        y += 5;
+        doc.setFontSize(7.5);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...GRAY_TEXT);
+        doc.text(contacto, 14, y, { maxWidth: pageW - 28 });
+    }
 
     y += 3;
     doc.setLineWidth(0.2);
-    doc.line(14, y + 4, pageW - 14, y + 4);
-    y += 12;
+    doc.line(14, y + 3, pageW - 14, y + 3);
+    y += 9;
 
-    // ── ITEMS ────────────────────────────────────────────────────────────────
+    // ── ITEMS TÉCNICOS ───────────────────────────────────────────────────────
     if (esTecnico) {
 
         for (const [idx, item] of ticketItems.entries()) {
-            if (y > 230) { doc.addPage(); y = 20; }
+
+            // Salto de página inteligente: verificar si el item entra completo
+            const alturaEstimada = estimarAlturaItem(item, FOTO_W, FOTO_H, esCompacto);
+            if (y + alturaEstimada > MARGEN_INF) {
+                doc.addPage();
+                y = 18;
+            }
 
             const subtotalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
-            const modelo   = item.modeloEquipo    || null;
-            const serial   = (item.equipoSerial && item.equipoSerial !== 'MOSTRADOR') ? item.equipoSerial : null;
+            const modelo    = item.modeloEquipo    || null;
+            const serial    = (item.equipoSerial && item.equipoSerial !== 'MOSTRADOR' && item.equipoSerial !== 'SIN-SN')
+                ? item.equipoSerial : null;
             const ubicacion = item.ubicacionEquipo || null;
 
-            // ── Título del equipo ─────────────────────────────────────────
-            // Número en rojo + nombre/modelo en negrita
-            doc.setFontSize(7);
+            // Número de equipo en rojo
+            doc.setFontSize(6.5);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...RED);
             doc.text(`EQUIPO ${idx + 1}`, 14, y);
 
-            doc.setFontSize(10);
+            // Modelo / tipo
+            doc.setFontSize(esCompacto ? 9 : 10);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...DARK);
-            doc.text(modelo ? modelo.toUpperCase() : 'Dispenser', 14, y + 6);
+            doc.text(modelo ? modelo.toUpperCase() : 'Dispenser', 14, y + 5);
 
-            // Serial y ubicación
+            // Subtotal derecha
+            doc.setFontSize(esCompacto ? 9 : 10);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...DARK);
+            doc.text(`$ ${subtotalEquipo.toLocaleString('es-AR')}`, pageW - 14, y + 5, { align: 'right' });
+
+            // Serial + ubicación en línea gris
             const metaLinea = [
-                serial     ? `N/S: ${serial}`        : null,
-                ubicacion  ? `Ubicación: ${ubicacion}` : null
-            ].filter(Boolean).join('   ·   ');
+                serial    ? `N/S: ${serial}`          : null,
+                ubicacion ? `Ubic.: ${ubicacion}`     : null,
+            ].filter(Boolean).join('  ·  ');
 
             if (metaLinea) {
-                doc.setFontSize(7.5);
+                doc.setFontSize(7);
                 doc.setFont(undefined, 'normal');
                 doc.setTextColor(...GRAY_TEXT);
-                doc.text(metaLinea, 14, y + 12);
+                doc.text(metaLinea, 14, y + 10);
+                y += 15;
+            } else {
+                y += 10;
             }
-
-            // Subtotal del equipo — derecha, mismo nivel que el título
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(...DARK);
-            doc.text(`$ ${subtotalEquipo.toLocaleString('es-AR')}`, pageW - 14, y + 6, { align: 'right' });
-
-            y += metaLinea ? 18 : 12;
 
             // ── Trabajo realizado ─────────────────────────────────────────
             const textoTrabajo = (item.trabajo || item.trabajoRealizado || item.resumenTexto || '')
                 .replace(/\| MO:.*/, '').trim();
 
             if (textoTrabajo) {
-                doc.setFontSize(7);
+                // Verificar si la descripción entra en la página actual
+                const lineas = doc.splitTextToSize(textoTrabajo, pageW - 28);
+                const altDesc = 4 + lineas.length * 4 + 3;
+                if (y + altDesc > MARGEN_INF) { doc.addPage(); y = 18; }
+
+                doc.setFontSize(6.5);
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(...GRAY_TEXT);
                 doc.text('TRABAJO REALIZADO', 14, y);
                 y += 4;
 
-                const lines = doc.splitTextToSize(textoTrabajo, pageW - 28);
-                doc.setFontSize(8.5);
+                doc.setFontSize(esCompacto ? 8 : 8.5);
                 doc.setFont(undefined, 'normal');
                 doc.setTextColor(60, 58, 56);
-                doc.text(lines, 14, y);
-                y += lines.length * 4.5 + 4;
+                doc.text(lineas, 14, y);
+                y += lineas.length * 4 + 3;
             }
 
-            // ── Tabla de repuestos y mano de obra ─────────────────────────
+            // ── Tabla repuestos y mano de obra ────────────────────────────
             const rows = [];
             const moVal = parseFloat(item.costoExtra || 0);
             if (moVal > 0) {
@@ -223,6 +237,9 @@ export const generarRemitoPDFPremium = async ({
             });
 
             if (rows.length > 0) {
+                const altTabla = 8 + rows.length * (esCompacto ? 6 : 7);
+                if (y + altTabla > MARGEN_INF) { doc.addPage(); y = 18; }
+
                 autoTable(doc, {
                     startY: y,
                     head: [['Concepto', 'Cant.', 'Importe']],
@@ -246,46 +263,43 @@ export const generarRemitoPDFPremium = async ({
                     },
                     columnStyles: {
                         0: { cellWidth: 'auto' },
-                        1: { halign: 'center', cellWidth: 16 },
-                        2: { halign: 'right',  cellWidth: 30, fontStyle: 'bold' }
+                        1: { halign: 'center', cellWidth: 15 },
+                        2: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' }
                     },
                     margin: { left: 14, right: 14 },
-                    // MO en rojo
                     didParseCell: (data) => {
                         if (data.section === 'body' && data.row.index === 0 && moVal > 0) {
                             data.cell.styles.textColor = RED;
                         }
                     }
                 });
-                y = doc.lastAutoTable.finalY + 4;
+                y = doc.lastAutoTable.finalY + 3;
             }
 
             // ── Fotos ─────────────────────────────────────────────────────
-            // cargarFoto acepta: File (nueva), filename (guardada), data URL
             const fotoA = await cargarFoto(item.fotoAntes);
             const fotoD = await cargarFoto(item.fotoDespues);
 
             if (fotoA || fotoD) {
-                const GAP = esCompacto ? 8 : 10;
-                const BLOQUE_H = FOTO_H + 14;
+                const BLOQUE_H = FOTO_H + 12;
+                // Salto de página si las fotos no entran — siempre juntas
+                if (y + BLOQUE_H > MARGEN_INF) { doc.addPage(); y = 18; }
 
-                if (y + BLOQUE_H > 262) { doc.addPage(); y = 20; }
-
-                doc.setFontSize(7);
+                doc.setFontSize(6.5);
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(...GRAY_TEXT);
-                doc.text('REGISTRO FOTOGRÁFICO', 14, y + 4);
-                y += 8;
+                doc.text('REGISTRO FOTOGRÁFICO', 14, y + 3);
+                y += 7;
 
-                const xL = 14;
-                const xR = xL + FOTO_W + GAP;
+                const GAP = 6;
+                const xL  = 14;
+                const xR  = xL + FOTO_W + GAP;
 
-                // Labels
-                doc.setFontSize(7);
+                doc.setFontSize(6.5);
                 doc.setTextColor(...GRAY_TEXT);
-                doc.text('Antes', xL + FOTO_W / 2, y, { align: 'center' });
+                doc.text('Antes',   xL + FOTO_W / 2, y, { align: 'center' });
                 doc.text('Después', xR + FOTO_W / 2, y, { align: 'center' });
-                y += 3;
+                y += 2;
 
                 if (fotoA) {
                     doc.addImage(fotoA.data, fotoA.format, xL, y, FOTO_W, FOTO_H);
@@ -294,7 +308,7 @@ export const generarRemitoPDFPremium = async ({
                 } else {
                     doc.setFillColor(...GRAY_LIGHT);
                     doc.rect(xL, y, FOTO_W, FOTO_H, 'F');
-                    doc.setFontSize(7); doc.setTextColor(...GRAY_TEXT);
+                    doc.setFontSize(6.5); doc.setTextColor(...GRAY_TEXT);
                     doc.text('Sin foto', xL + FOTO_W / 2, y + FOTO_H / 2, { align: 'center' });
                 }
 
@@ -305,21 +319,22 @@ export const generarRemitoPDFPremium = async ({
                 } else {
                     doc.setFillColor(...GRAY_LIGHT);
                     doc.rect(xR, y, FOTO_W, FOTO_H, 'F');
-                    doc.setFontSize(7); doc.setTextColor(...GRAY_TEXT);
+                    doc.setFontSize(6.5); doc.setTextColor(...GRAY_TEXT);
                     doc.text('Sin foto', xR + FOTO_W / 2, y + FOTO_H / 2, { align: 'center' });
                 }
 
-                y += FOTO_H + 6;
+                y += FOTO_H + 4;
             }
 
-            // Separador entre equipos
+            // Separador entre equipos (línea punteada fina)
             if (idx < ticketItems.length - 1) {
+                y += 3;
                 doc.setDrawColor(...GRAY_MID);
-                doc.setLineWidth(0.2);
-                doc.line(14, y + 4, pageW - 14, y + 4);
-                y += secGap;
+                doc.setLineWidth(0.15);
+                doc.line(14, y, pageW - 14, y);
+                y += SEC_GAP;
             } else {
-                y += 8;
+                y += 6;
             }
         }
 
@@ -328,14 +343,13 @@ export const generarRemitoPDFPremium = async ({
         const PROD_IMG_W = 18;
         const PROD_IMG_H = 18;
 
-        // Armar filas y precargar fotos en paralelo
         const filas = [];
         ticketItems.forEach(item => {
             item.repuestosUsados?.forEach(r => {
                 filas.push({
                     fotoSrc: r.fotoUrl || null,
                     row: [
-                        '',   // col 0: imagen (se dibuja en didDrawCell)
+                        '',
                         r.nombre,
                         r.sku || '—',
                         r.cantidad.toString(),
@@ -354,28 +368,20 @@ export const generarRemitoPDFPremium = async ({
 
         if (filas.length > 0) {
             const fotosVenta = await Promise.all(filas.map(f => cargarFoto(f.fotoSrc)));
-
             autoTable(doc, {
                 startY: y,
                 head: [['', 'Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']],
                 body: filas.map(f => f.row),
                 theme: 'plain',
                 headStyles: {
-                    fillColor: false,
-                    textColor: GRAY_TEXT,
-                    fontStyle: 'bold',
-                    fontSize: 7,
-                    cellPadding: { top: 2, bottom: 3, left: 2, right: 2 },
-                    lineColor: DARK,
-                    lineWidth: { bottom: 0.4 }
+                    fillColor: false, textColor: GRAY_TEXT, fontStyle: 'bold',
+                    fontSize: 7, cellPadding: { top: 2, bottom: 3, left: 2, right: 2 },
+                    lineColor: DARK, lineWidth: { bottom: 0.4 }
                 },
                 bodyStyles: {
-                    fontSize: 8.5,
-                    cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
-                    lineColor: GRAY_LIGHT,
-                    lineWidth: { bottom: 0.2 },
-                    minCellHeight: PROD_IMG_H + 6,
-                    valign: 'middle',
+                    fontSize: 8.5, cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+                    lineColor: GRAY_LIGHT, lineWidth: { bottom: 0.2 },
+                    minCellHeight: PROD_IMG_H + 6, valign: 'middle',
                 },
                 columnStyles: {
                     0: { cellWidth: PROD_IMG_W + 4 },
@@ -404,74 +410,57 @@ export const generarRemitoPDFPremium = async ({
                     }
                 }
             });
-            y = doc.lastAutoTable.finalY + 10;
+            y = doc.lastAutoTable.finalY + 8;
         }
     }
 
     // ── TOTALES ──────────────────────────────────────────────────────────────
-    if (y > 248) { doc.addPage(); y = 20; }
+    if (y + 30 > MARGEN_INF) { doc.addPage(); y = 18; }
 
-    // Línea antes de totales
     doc.setDrawColor(...GRAY_MID);
     doc.setLineWidth(0.2);
-    doc.line(pageW - 80, y, pageW - 14, y);
-    y += 6;
+    doc.line(pageW - 75, y, pageW - 14, y);
+    y += 5;
 
     if (pctDesc > 0) {
-        doc.setFontSize(8.5);
+        doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...GRAY_TEXT);
-        doc.text('Subtotal', pageW - 80, y);
+        doc.text('Subtotal', pageW - 75, y);
         doc.setTextColor(...DARK);
         doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 14, y, { align: 'right' });
-        y += 7;
+        y += 6;
 
         doc.setTextColor(...RED);
-        doc.text(`Descuento (${pctDesc}%)`, pageW - 80, y);
+        doc.text(`Descuento (${pctDesc}%)`, pageW - 75, y);
         doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 14, y, { align: 'right' });
-        y += 5;
+        y += 4;
 
         doc.setDrawColor(...GRAY_MID);
-        doc.line(pageW - 80, y, pageW - 14, y);
-        y += 6;
+        doc.line(pageW - 75, y, pageW - 14, y);
+        y += 5;
     }
 
-    // Total final — tipografía grande, sin caja
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...GRAY_TEXT);
-    doc.text('TOTAL', pageW - 80, y);
+    doc.text('TOTAL', pageW - 75, y);
 
-    doc.setFontSize(15);
+    doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
     doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 14, y + 1, { align: 'right' });
 
-    // Subrayado dorado bajo el total
-    y += 4;
+    y += 3;
     doc.setFillColor(...RED);
-    doc.rect(pageW - 80, y, 66, 0.8, 'F');
-    y += 12;
-
-    // ── LEYENDA ──────────────────────────────────────────────────────────────
-    const leyendaTxt = (leyenda || '').trim();
-    if (leyendaTxt) {
-        if (y > 254) { doc.addPage(); y = 20; }
-        doc.setFontSize(7);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...GRAY_TEXT);
-        doc.text('OBSERVACIONES', 14, y);
-        y += 5;
-        doc.setFontSize(8);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(80, 78, 76);
-        doc.text(doc.splitTextToSize(leyendaTxt, pageW - 28), 14, y);
-    }
+    doc.rect(pageW - 75, y, 61, 0.7, 'F');
 
     // ── FOOTER EN TODAS LAS PÁGINAS ──────────────────────────────────────────
-    const textoPie = esTecnico
+    // Si hay leyenda, usarla como pie; si no, usar el texto por defecto
+    const leyendaTxt = (leyenda || '').trim();
+    const textoPie = leyendaTxt || (esTecnico
         ? 'Garantía: 30 días sobre mano de obra · Repuestos según fabricante'
-        : 'Presupuesto válido 7 días · Precios sujetos a variación sin previo aviso';
+        : 'Presupuesto válido 7 días · Precios sujetos a variación sin previo aviso');
 
     const totalPaginas = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPaginas; i++) {
