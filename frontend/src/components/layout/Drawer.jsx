@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IDs deben coincidir EXACTAMENTE con App.js, Sidebar y BottomNav
@@ -19,6 +19,12 @@ const MENU_ADMIN = [
 ];
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
+    const [tecnico, setTecnico] = useState(localStorage.getItem('tecnico_nombre') || '');
+
+    const handleTecnicoBlur = (e) => {
+        const val = e.target.value.trim();
+        if (val) localStorage.setItem('tecnico_nombre', val);
+    };
 
     const handleClick = (id) => {
         setVistaActual(id);
@@ -89,6 +95,19 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
                             Cuenta
                         </p>
+                        {/* Nombre del técnico — se guarda en localStorage */}
+                        <div className="mb-2 px-1">
+                            <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">Técnico</p>
+                            <input
+                                type="text"
+                                value={tecnico}
+                                onChange={e => setTecnico(e.target.value)}
+                                onBlur={handleTecnicoBlur}
+                                onKeyDown={e => e.key === 'Enter' && e.target.blur()}
+                                placeholder="Tu nombre..."
+                                className="w-full px-3 py-2 rounded-xl text-sm font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F]"
+                            />
+                        </div>
                         <button className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] transition-all">
                             ⚙️ Configuración
                         </button>

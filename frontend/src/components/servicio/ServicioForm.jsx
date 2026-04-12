@@ -47,7 +47,7 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null, clien
                 esPresupuesto: true,
                 cliente: clienteObj || { nombre: nombreLibre || 'Particular' },
                 sede: sedeObj || { nombreSede: 'Mostrador' },
-                tecnico: 'Marcos', ticketItems, descuentoPorcentaje,
+                tecnico: localStorage.getItem('tecnico_nombre') || 'Técnico', ticketItems, descuentoPorcentaje,
                 totalFinal: totalConDescuento, fechaServicio, leyenda,
             });
         } catch (e) {

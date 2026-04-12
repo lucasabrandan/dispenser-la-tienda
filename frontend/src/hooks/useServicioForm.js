@@ -344,7 +344,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes('FILTRO'));
           return {
             equipoSerial:     it.equipoSerial || 'MOSTRADOR',
-            tecnico:          'Marcos',
+            tecnico:          localStorage.getItem('tecnico_nombre') || 'Técnico',
             costo:            parseFloat(it.totalCalculado) || parseFloat(it.costoExtra) || 0,
             costoExtra:       parseFloat(it.costoExtra) || 0,
             metodoPago:       'EFECTIVO',

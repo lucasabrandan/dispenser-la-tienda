@@ -167,7 +167,7 @@ export default function PresupuestosManager() {
             nombreSede: s.sedeNombre,
             direccion:  s.sedeDireccion,
         },
-        tecnico:      'Marcos',
+        tecnico:      localStorage.getItem('tecnico_nombre') || 'Técnico',
         ticketItems:  s.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
         totalFinal:   calcularTotal(s),
         fechaServicio: s.fecha,

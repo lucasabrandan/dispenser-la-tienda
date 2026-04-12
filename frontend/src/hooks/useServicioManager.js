@@ -92,7 +92,7 @@ export function useServicioManager() {
                     nombreSede: servicio.sedeNombre,
                     direccion:  servicio.sedeDireccion,
                 },
-                tecnico:            'Marcos',
+                tecnico:            localStorage.getItem('tecnico_nombre') || 'Técnico',
                 ticketItems:        itemsConFotos,
                 totalFinal:         calcularTotal(servicio),
                 fechaServicio:      servicio.fecha,
