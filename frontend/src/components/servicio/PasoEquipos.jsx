@@ -216,11 +216,15 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             options={opcionesSerial}
                             value={itemActual.equipoSerial ? { label: itemActual.equipoSerial, value: itemActual.equipoSerial } : null}
                             onChange={s => {
-                                if (!s) { setItemActual({ ...itemActual, equipoSerial: '' }); return; }
-                                setItemActual({ ...itemActual, equipoSerial: s.value });
+                                if (!s) { setItemActual({ ...itemActual, equipoSerial: '', esNuevoEquipo: false }); return; }
+                                setItemActual({ ...itemActual, equipoSerial: s.value, esNuevoEquipo: false });
                                 consultarAntecedentes(s.value);
                             }}
-                            onCreateOption={val => { setItemActual({ ...itemActual, equipoSerial: val }); consultarAntecedentes(val); }}
+                            onCreateOption={val => {
+                                // Marcar como nuevo para guardarlo en la BD al agregar al ticket
+                                setItemActual({ ...itemActual, equipoSerial: val, esNuevoEquipo: true });
+                                consultarAntecedentes(val);
+                            }}
                             isClearable
                             placeholder="Buscar o escribir S/N..."
                             noOptionsMessage={() => 'Escribí el S/N manualmente'}

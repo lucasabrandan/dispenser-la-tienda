@@ -267,18 +267,38 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     setTicketItems(nueva);
   };
 
-  const agregarAlTicket = () => {
+  const agregarAlTicket = async () => {
     if (estaBloqueado) return;
 
-    const tieneSerial    = itemActual.equipoSerial?.trim();
+    const tieneSerial      = itemActual.equipoSerial?.trim();
     const tieneDescripcion = itemActual.trabajo?.trim();
-    const tieneRepuestos = itemActual.repuestosUsados?.length > 0;
-    const tieneMO        = (parseFloat(itemActual.costoExtra) || 0) > 0;
+    const tieneRepuestos   = itemActual.repuestosUsados?.length > 0;
+    const tieneMO          = (parseFloat(itemActual.costoExtra) || 0) > 0;
 
-    // Mínimo: descripción del trabajo O al menos un repuesto O mano de obra
     if (!tieneDescripcion && !tieneRepuestos && !tieneMO) {
       toast.error('Completá al menos la descripción del trabajo o agregá un repuesto');
       return;
+    }
+
+    // Guardar equipo nuevo en la BD silenciosamente si fue creado al vuelo
+    if (itemActual.esNuevoEquipo && tieneSerial && itemActual.sedeId) {
+      // Verificar que no exista ya en el inventario local
+      const yaExiste = db.equipos?.some(e => e.numeroSerie === tieneSerial);
+      if (!yaExiste) {
+        try {
+          const res = await api.post('/equipos', {
+            numeroSerie: tieneSerial,
+            modelo:      itemActual.modeloEquipo   || null,
+            ubicacion:   itemActual.ubicacionEquipo || null,
+            sedeId:      itemActual.sedeId,
+          });
+          // Agregarlo al listado local para que aparezca en el próximo selector
+          setDb(prev => ({ ...prev, equipos: [...(prev.equipos || []), res.data] }));
+        } catch (e) {
+          console.error('Error guardando equipo al vuelo:', e);
+          // No bloquear el flujo si falla
+        }
+      }
     }
 
     const extra  = Math.max(0, parseFloat(itemActual.costoExtra) || 0);
@@ -297,7 +317,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       ...prev,
       equipoSerial: '', trabajo: '', costoExtra: 0,
       repuestosUsados: [], modeloEquipo: '', ubicacionEquipo: '',
-      fotoAntes: null, fotoDespues: null,
+      fotoAntes: null, fotoDespues: null, esNuevoEquipo: false,
     }));
     setHistorialEquipo(null);
     setRepuestoElegido(null);
