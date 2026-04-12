@@ -1,6 +1,7 @@
 import React from 'react';
 import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, BackBtn, buildSelectStyles } from '../servicio/ServicioUI';
+import RepuestoRapidoModal from '../repuesto/RepuestoRapidoModal';
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PasoProductosVenta({ hook, onNext, onBack }) {
@@ -11,7 +12,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
         costoEnvio, setCostoEnvio,
         envioNum,
         agregarProducto, actualizarCantidad, quitarProducto,
-        crearRepuestoRapido,
+        modalRepuesto, setModalRepuesto, nombreRepuesto, repuestoCreado, abrirModalRepuesto,
     } = hook;
 
     const isDark = document.documentElement.classList.contains('dark');
@@ -57,11 +58,11 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                 </div>
                             )}
                             onChange={setRepuestoElegido}
-                            onCreateOption={crearRepuestoRapido}
+                            onCreateOption={abrirModalRepuesto}
                             value={repuestoElegido}
                             placeholder="Buscar o escribir para crear..."
                             isClearable
-                            formatCreateLabel={val => `Crear repuesto "${val}"`}
+                            formatCreateLabel={val => `+ Crear "${val}"`}
                         />
                     </div>
                     <button
@@ -133,6 +134,14 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                 Siguiente — Resumen
             </NextBtn>
             <BackBtn onClick={onBack} />
+
+            {/* Modal creación rápida de repuesto */}
+            <RepuestoRapidoModal
+                isOpen={modalRepuesto}
+                onClose={() => setModalRepuesto(false)}
+                nombreInicial={nombreRepuesto}
+                onCreado={repuestoCreado}
+            />
         </div>
     );
 }

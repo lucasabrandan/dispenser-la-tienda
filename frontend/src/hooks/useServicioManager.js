@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
-import { fotoUrlABase64 } from '../utils/construirUrlFoto';
 
 /**
  * useServicioManager
@@ -75,15 +74,10 @@ export function useServicioManager() {
     const generarPDF = async (servicio) => {
         const loading = toast.loading('Preparando PDF...');
         try {
-            // Convertir fotos guardadas en el backend a base64 para embeber en el PDF
-            const itemsConFotos = await Promise.all(
-                (servicio.items || []).map(async it => ({
-                    ...it,
-                    totalCalculado: it.costo,
-                    fotoAntesB64:   await fotoUrlABase64(it.fotoAntes),
-                    fotoDespuesB64: await fotoUrlABase64(it.fotoDespues),
-                }))
-            );
+            // Las fotos (filenames del backend) las resuelve cargarFoto dentro del generador
+            const itemsConFotos = (servicio.items || []).map(it => ({
+                ...it, totalCalculado: it.costo,
+            }));
             toast.dismiss(loading);
             await generarRemitoPDFPremium({
                 esPresupuesto: servicio.estado === 'PRESUPUESTO',
@@ -98,12 +92,15 @@ export function useServicioManager() {
                     nombreSede: servicio.sedeNombre,
                     direccion:  servicio.sedeDireccion,
                 },
-                tecnico:       'Marcos',
-                ticketItems:   itemsConFotos,
-                totalFinal:    calcularTotal(servicio),
-                fechaServicio: servicio.fecha,
+                tecnico:            'Marcos',
+                ticketItems:        itemsConFotos,
+                totalFinal:         calcularTotal(servicio),
+                fechaServicio:      servicio.fecha,
                 descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
-                leyenda:       servicio.leyenda || '',
+                leyenda:            servicio.leyenda || '',
+                // El DTO puede devolver equipoSerial='MOSTRADOR' aunque sea TECNICA
+                // (equipo no registrado en inventario), así que usamos el tipo del backend
+                esTecnicoForzado:   servicio.servicioTipo === 'TECNICA',
             });
         } catch (e) {
             console.error('Error generando PDF:', e);

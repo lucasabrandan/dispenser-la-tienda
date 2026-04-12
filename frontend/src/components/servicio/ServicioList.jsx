@@ -5,7 +5,6 @@ import { useFiltros } from '../../hooks/useFiltros';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion   from '../ui/Paginacion';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
-import { fotoUrlABase64 } from '../../utils/construirUrlFoto';
 import { useMontos } from '../../context/MontosContext';
 
 // ── Helper monto ─────────────────────────────────────────────────────────────
@@ -259,17 +258,11 @@ export default function ServicioList({ onEditar }) {
                                         👁️
                                     </button>
                                     <button
-                                        onClick={async () => {
-                                            const loading = toast.loading('Preparando PDF...');
-                                            const itemsConFotos = await Promise.all(
-                                                (s.items || []).map(async it => ({
-                                                    ...it,
-                                                    totalCalculado: it.costo,
-                                                    fotoAntesB64:   await fotoUrlABase64(it.fotoAntes),
-                                                    fotoDespuesB64: await fotoUrlABase64(it.fotoDespues),
-                                                }))
-                                            );
-                                            toast.dismiss(loading);
+                                        onClick={() => {
+                                            // Las fotos (filenames) las resuelve cargarFoto dentro del generador
+                                            const items = (s.items || []).map(it => ({
+                                                ...it, totalCalculado: it.costo,
+                                            }));
                                             generarRemitoPDFPremium({
                                                 esPresupuesto: esPendiente,
                                                 cliente: {
@@ -281,7 +274,7 @@ export default function ServicioList({ onEditar }) {
                                                 },
                                                 sede: { nombreSede: s.sedeNombre, direccion: s.sedeDireccion },
                                                 tecnico: s.items?.[0]?.tecnico || '',
-                                                ticketItems: itemsConFotos,
+                                                ticketItems: items,
                                                 fechaServicio: s.fecha,
                                                 descuentoPorcentaje: s.descuentoPorcentaje || 0,
                                                 leyenda: s.leyenda || '',

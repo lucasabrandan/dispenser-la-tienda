@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { fotoUrlABase64 } from '../../utils/construirUrlFoto';
 import { useServicioForm } from '../../hooks/useServicioForm';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import CrearClienteModal from '../cliente/CrearClienteModal';
@@ -39,56 +38,16 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null, clien
     const selectStyles = buildSelectStyles(isDark);
     const clienteObj   = db.clientes?.find(c => c.id?.toString() === clienteId);
 
-    // Convierte un File a base64 data URL
-    const fileToBase64 = (file) => new Promise((resolve) => {
-        if (!file) return resolve(null);
-        const reader = new FileReader();
-        reader.onload  = e => resolve(e.target.result);
-        reader.onerror = ()  => resolve(null);
-        reader.readAsDataURL(file);
-    });
-
     const dispararPDF = async () => {
         const sedeObj = db.sedes?.find(s => s.id === itemActual.sedeId);
         const { totalConDescuento } = calcularResumenGanancia();
-
-        // DEBUG — ver qué hay en ticketItems antes de convertir
-        console.log('[PDF] ticketItems:', ticketItems.map(it => ({
-            serial: it.equipoSerial,
-            fotoAntes: it.fotoAntes,
-            fotoAntesType: it.fotoAntes ? (it.fotoAntes instanceof File ? 'File' : typeof it.fotoAntes) : 'null',
-            fotoDespues: it.fotoDespues,
-            fotoDespuesType: it.fotoDespues ? (it.fotoDespues instanceof File ? 'File' : typeof it.fotoDespues) : 'null',
-        })));
-
-        // Convertir fotos a base64: File (nueva) o string filename (editando)
-        const resolverFoto = async (foto) => {
-            if (!foto) return null;
-            if (foto instanceof File) {
-                const b64 = await fileToBase64(foto);
-                console.log('[PDF] fileToBase64 result length:', b64?.length, 'starts:', b64?.substring(0, 30));
-                return b64;
-            }
-            const b64 = await fotoUrlABase64(foto);
-            console.log('[PDF] fotoUrlABase64 result length:', b64?.length, 'starts:', b64?.substring(0, 30));
-            return b64;
-        };
-        const itemsConFotos = await Promise.all(
-            ticketItems.map(async it => ({
-                ...it,
-                fotoAntesB64:   await resolverFoto(it.fotoAntes),
-                fotoDespuesB64: await resolverFoto(it.fotoDespues),
-            }))
-        );
-
-        console.log('[PDF] itemsConFotos[0]?.fotoAntesB64 length:', itemsConFotos[0]?.fotoAntesB64?.length);
-
+        // Las fotos (File o filename) las resuelve cargarFoto dentro del generador
         try {
             await generarRemitoPDFPremium({
                 esPresupuesto: true,
                 cliente: clienteObj || { nombre: nombreLibre || 'Particular' },
                 sede: sedeObj || { nombreSede: 'Mostrador' },
-                tecnico: 'Marcos', ticketItems: itemsConFotos, descuentoPorcentaje,
+                tecnico: 'Marcos', ticketItems, descuentoPorcentaje,
                 totalFinal: totalConDescuento, fechaServicio, leyenda,
             });
         } catch (e) {

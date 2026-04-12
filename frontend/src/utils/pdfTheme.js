@@ -65,6 +65,40 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null) {
     }
 }
 
+// ── Header compacto (para 2+ equipos — ahorra ~18mm vs el completo) ──────────
+// El contenido debe empezar en y=36 después de llamar esta función.
+export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null) {
+    const pageW = doc.internal.pageSize.getWidth();
+
+    if (logoUrl) {
+        try { doc.addImage(logoUrl, 'PNG', 14, 6, 28, 12); } catch {}
+    }
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...DARK);
+    doc.text('DISPENSER LA TIENDA', pageW - 14, 11, { align: 'right' });
+
+    doc.setFontSize(6.5);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text('Servicio técnico de dispensers de agua', pageW - 14, 16, { align: 'right' });
+
+    doc.setFillColor(...RED);
+    doc.rect(14, 21, pageW - 28, 0.8, 'F');
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(tipoLabel, 14, 29);
+
+    doc.setFontSize(7);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text(`Fecha: ${fecha}`, pageW - 14, 25, { align: 'right' });
+    if (subtitulo) doc.text(subtitulo, pageW - 14, 31, { align: 'right' });
+}
+
 // ── Footer ───────────────────────────────────────────────────────────────────
 export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoCentral = null) {
     const pageW = doc.internal.pageSize.getWidth();

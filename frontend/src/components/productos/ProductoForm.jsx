@@ -1,8 +1,11 @@
 import React from 'react';
-import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useProductoForm } from '../../hooks/useProductoForm';
 import { useMontos } from '../../context/MontosContext';
+
+// fetch nativo: Axios tiene Content-Type: application/json fijo en la instancia,
+// lo que rompe el multipart/form-data que requiere el endpoint de repuestos.
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 const inputCls = (error) => `
     w-full p-3 mt-2 rounded-xl outline-none transition-all
@@ -42,19 +45,23 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
             fd.append('precioLista',        parseFloat(precioLista) || 0);
             if (formData.foto) fd.append('foto', formData.foto);
 
-            let response;
-            if (productoEdicion?.id) {
-                response = await api.put(`/repuestos/${productoEdicion.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-            } else {
-                response = await api.post('/repuestos', fd);
+            const url    = productoEdicion?.id ? `${BASE_URL}/repuestos/${productoEdicion.id}` : `${BASE_URL}/repuestos`;
+            const method = productoEdicion?.id ? 'PUT' : 'POST';
+            const res    = await fetch(url, { method, body: fd });
+
+            if (!res.ok) {
+                const msg = res.status === 409 ? 'Ya existe un repuesto con ese SKU' : 'Error al guardar producto';
+                toast.error(msg, { id: loadingToast });
+                return;
             }
 
+            const data = await res.json();
             toast.success(`Producto "${formData.nombre}" guardado`, { id: loadingToast });
-            if (onProductoGuardado) onProductoGuardado(response.data);
+            if (onProductoGuardado) onProductoGuardado(data);
             resetear();
             onClose();
         } catch (err) {
-            toast.error(err.response?.data?.mensaje || 'Error al guardar producto', { id: loadingToast });
+            toast.error('Error al guardar producto', { id: loadingToast });
         } finally {
             setCargando(false);
         }

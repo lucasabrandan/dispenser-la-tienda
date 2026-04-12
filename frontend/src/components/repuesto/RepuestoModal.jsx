@@ -1,6 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+
+// fetch nativo para multipart: Axios 1.x no sobreescribe Content-Type: application/json
+// aunque se pase FormData, lo que rompe el endpoint que requiere multipart/form-data.
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+
+// Comprime la foto a JPEG ≤ 800px para que no pese más de ~150KB.
+// Idéntica estrategia que PasoEquipos: una sola llamada a createImageBitmap
+// para minimizar el pico de memoria en Android.
+async function comprimirFoto(file) {
+    const MAX = file.size > 3_000_000 ? 700 : 900;
+    const QUALITY = 0.78;
+
+    if (typeof createImageBitmap !== 'undefined') {
+        try {
+            const bmp = await createImageBitmap(file, { resizeWidth: MAX, resizeQuality: 'medium' });
+            const canvas = document.createElement('canvas');
+            canvas.width  = bmp.width;
+            canvas.height = bmp.height;
+            canvas.getContext('2d').drawImage(bmp, 0, 0);
+            bmp.close();
+            return new Promise(resolve => {
+                canvas.toBlob(
+                    blob => resolve(blob ? new File([blob], 'foto.jpg', { type: 'image/jpeg' }) : file),
+                    'image/jpeg', QUALITY
+                );
+            });
+        } catch { /* fallback abajo */ }
+    }
+
+    return new Promise(resolve => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            let w = img.naturalWidth || MAX, h = img.naturalHeight || MAX;
+            if (w > MAX || h > MAX) {
+                if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                else       { w = Math.round(w * MAX / h); h = MAX; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            canvas.toBlob(
+                blob => resolve(blob ? new File([blob], 'foto.jpg', { type: 'image/jpeg' }) : file),
+                'image/jpeg', QUALITY
+            );
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+    });
+}
 
 /**
  * RepuestoModal
@@ -17,6 +67,8 @@ const INITIAL_FORM = {
 export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdicion }) {
     const [form, setForm]         = useState(INITIAL_FORM);
     const [cargando, setCargando] = useState(false);
+    // fotoFile: File a subir. imagen: data URL solo para preview.
+    const [fotoFile, setFotoFile] = useState(null);
 
     // Poblar form al editar
     useEffect(() => {
@@ -25,6 +77,7 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
         } else {
             setForm(INITIAL_FORM);
         }
+        setFotoFile(null);
     }, [repuestoEdicion, isOpen]);
 
     // ── Lógica financiera ──────────────────────────────────────────────────────
@@ -39,19 +92,19 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
     };
 
     // ── Imagen ─────────────────────────────────────────────────────────────────
-    const manejarFoto = (e) => {
+    const manejarFoto = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-            toast.error('Imagen muy pesada (máx 2MB)');
-            return;
-        }
+        // Comprimir primero (resuelve fotos de cámara > 4MB en Android)
+        const compressed = await comprimirFoto(file);
+        setFotoFile(compressed);
         const reader = new FileReader();
         reader.onloadend = () => setForm(prev => ({ ...prev, imagen: reader.result }));
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(compressed);
     };
 
     // ── Guardar ────────────────────────────────────────────────────────────────
+    // El backend requiere multipart/form-data — enviamos FormData siempre.
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!form.sku || !form.nombre) {
@@ -59,24 +112,30 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
             return;
         }
 
-        const loading = toast.loading('Sincronizando stock...');
+        const loading = toast.loading(form.id ? 'Actualizando...' : 'Creando...');
         setCargando(true);
         try {
-            const payload = {
-                ...form,
-                costo:              Number(form.costo),
-                porcentajeGanancia: Number(form.porcentajeGanancia),
-                precio:             Number(form.precio),
-                stock:              Number(form.stock),
-            };
+            const fd = new FormData();
+            fd.append('sku',    form.sku.trim().toUpperCase());
+            fd.append('nombre', form.nombre.trim());
+            if (form.descripcion)              fd.append('descripcion',        form.descripcion);
+            if (form.costo !== '')             fd.append('costo',              parseFloat(form.costo) || 0);
+            if (form.porcentajeGanancia !== '') fd.append('porcentajeGanancia', parseFloat(form.porcentajeGanancia) || 0);
+            fd.append('precio', parseFloat(form.precio) || 0);
+            fd.append('stock',  parseInt(form.stock)    || 0);
+            if (fotoFile) fd.append('foto', fotoFile);
 
-            if (form.id) {
-                await api.put(`/repuestos/${form.id}`, payload);
-            } else {
-                await api.post('/repuestos', payload);
+            const url    = form.id ? `${BASE_URL}/repuestos/${form.id}` : `${BASE_URL}/repuestos`;
+            const method = form.id ? 'PUT' : 'POST';
+            const res    = await fetch(url, { method, body: fd });
+
+            if (!res.ok) {
+                const msg = res.status === 409 ? 'Ya existe un repuesto con ese SKU' : 'Error al guardar';
+                toast.error(msg, { id: loading });
+                return;
             }
 
-            toast.success('✅ Stock actualizado', { id: loading });
+            toast.success('✅ Guardado', { id: loading });
             onGuardado();
             onClose();
         } catch {
@@ -174,6 +233,18 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                             type="number" value={form.stock}
                             onChange={e => setForm({ ...form, stock: e.target.value })}
                             className={inputClass}
+                        />
+                    </div>
+
+                    {/* DESCRIPCIÓN */}
+                    <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase">Descripción (opcional)</label>
+                        <textarea
+                            value={form.descripcion || ''}
+                            onChange={e => setForm({ ...form, descripcion: e.target.value })}
+                            placeholder="Características, compatibilidad, observaciones..."
+                            rows={2}
+                            className={`${inputClass} resize-none`}
                         />
                     </div>
 

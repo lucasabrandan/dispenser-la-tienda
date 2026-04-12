@@ -248,15 +248,32 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     toast.success('✓ Equipo agregado al ticket');
   };
 
-  // Sube una foto al backend y devuelve su filename, o null si no hay foto
-  const subirFoto = async (file) => {
-    if (!file) return null;
-    const fd = new FormData();
-    fd.append('file', file);
+  // Sube una foto al backend y devuelve su filename, o null si no hay foto.
+  // Acepta data URL (string 'data:...') — las fotos se guardan así en el estado
+  // desde que FotoUpload convierte el File a data URL al seleccionarlo.
+  // Usa fetch nativo (NO Axios): la instancia Axios tiene Content-Type: application/json
+  // hardcodeado y en Axios 1.x no se sobreescribe aunque se pase FormData.
+  const subirFoto = async (src) => {
+    if (!src) return null;
+    // Convertir data URL a Blob para poder subirla como multipart
+    let blob;
     try {
-      const r = await api.post('/uploads', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      return r.data.filename || null;
+      const r = await fetch(src);
+      blob = await r.blob();
     } catch { return null; }
+
+    const fd = new FormData();
+    fd.append('file', blob, 'foto.jpg');
+    try {
+      const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+      const res = await fetch(`${baseUrl}/uploads`, { method: 'POST', body: fd });
+      if (!res.ok) { console.error('Error subiendo foto, status:', res.status); return null; }
+      const data = await res.json();
+      return data.filename || null;
+    } catch (e) {
+      console.error('Error subiendo foto:', e);
+      return null;
+    }
   };
 
   const finalizar = async (confirmarTrabajo = false, overrides = {}) => {
@@ -303,11 +320,13 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       const { totalConDescuento } = calcularResumenGanancia();
       const nombreCliente = overrides.clienteNombre || clienteObj?.nombre || 'Particular';
 
-      // Subir fotos al backend antes de construir el DTO
+      // Subir fotos nuevas (data URL) al backend antes de construir el DTO.
+      // Las fotos ya guardadas (filename string sin 'data:') no se vuelven a subir.
+      const esNueva = s => typeof s === 'string' && s.startsWith('data:');
       const itemsConFotos = await Promise.all(ticketItems.map(async it => ({
         ...it,
-        fotoAntesFilename:   await subirFoto(it.fotoAntes   instanceof File ? it.fotoAntes   : null),
-        fotoDespuesFilename: await subirFoto(it.fotoDespues instanceof File ? it.fotoDespues : null),
+        fotoAntesFilename:   await subirFoto(esNueva(it.fotoAntes)   ? it.fotoAntes   : null),
+        fotoDespuesFilename: await subirFoto(esNueva(it.fotoDespues) ? it.fotoDespues : null),
       })));
 
       const servicioData = {
@@ -335,8 +354,10 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             garantiaHasta:    confirmarTrabajo && tieneEquipo
               ? new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3))).toISOString().split('T')[0]
               : null,
-            fotoAntes:        it.fotoAntesFilename   || null,
-            fotoDespues:      it.fotoDespuesFilename || null,
+            // Prioridad: filename de subida nueva > filename existente del backend
+            // Las data URLs no se mandan al backend (ya se subieron arriba)
+            fotoAntes:   it.fotoAntesFilename   || (!esNueva(it.fotoAntes)   ? it.fotoAntes   : null),
+            fotoDespues: it.fotoDespuesFilename || (!esNueva(it.fotoDespues) ? it.fotoDespues : null),
           };
         })
       };

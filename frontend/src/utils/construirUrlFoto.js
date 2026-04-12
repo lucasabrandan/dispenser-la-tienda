@@ -1,5 +1,5 @@
-// URL base del backend — misma IP que usa la API
-const BACKEND_URL = 'http://100.72.16.36:8080';
+// URL base del backend — misma que usa la API (incluye /api)
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 /**
  * Construye la URL completa para acceder a una foto desde el backend.
@@ -10,7 +10,7 @@ export function construirUrlFoto(nombreArchivo) {
   if (nombreArchivo.startsWith('http://') || nombreArchivo.startsWith('https://')) {
     return nombreArchivo;
   }
-  return `${BACKEND_URL}/uploads/${nombreArchivo}`;
+  return `${API_URL}/uploads/${nombreArchivo}`;
 }
 
 /**

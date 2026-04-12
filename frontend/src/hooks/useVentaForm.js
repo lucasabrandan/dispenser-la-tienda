@@ -72,7 +72,8 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
                 sku:      repuestoElegido.sku,
                 precio:   parseFloat(repuestoElegido.precio) || 0,
                 cantidad: 1,
-                subtotal: parseFloat(repuestoElegido.precio) || 0
+                subtotal: parseFloat(repuestoElegido.precio) || 0,
+                fotoUrl:  repuestoElegido.fotoUrl || null,
             }];
         });
         setRepuestoElegido(null);
@@ -89,16 +90,20 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
 
     const quitarProducto = (idx) => setProductos(prev => prev.filter((_, i) => i !== idx));
 
-    // Crear repuesto al vuelo desde el selector
-    const crearRepuestoRapido = async (nombre) => {
-        try {
-            const res = await api.post('/repuestos', { nombre: nombre.trim(), precio: 0, sku: '' });
-            setRepuestos(prev => [...prev, res.data]);
-            setRepuestoElegido(res.data);
-            toast.success(`Repuesto "${res.data.nombre}" creado`);
-        } catch {
-            toast.error('Error al crear repuesto');
-        }
+    // Estado del modal de creación rápida de repuesto
+    const [modalRepuesto, setModalRepuesto]   = useState(false);
+    const [nombreRepuesto, setNombreRepuesto] = useState('');
+
+    // Al crear un repuesto desde el modal rápido, añadirlo a la lista y seleccionarlo
+    const repuestoCreado = (repuesto) => {
+        setRepuestos(prev => [...prev, repuesto]);
+        setRepuestoElegido({ ...repuesto, label: `[${repuesto.sku}] ${repuesto.nombre}`, value: repuesto.id });
+    };
+
+    // Abrir el modal de creación desde CreatableSelect
+    const abrirModalRepuesto = (nombre) => {
+        setNombreRepuesto(nombre);
+        setModalRepuesto(true);
     };
 
     const subtotalProductos = productos.reduce((a, b) => a + b.subtotal, 0);
@@ -243,7 +248,7 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
         datosCliente, handleDatosChange,
         activarRapido, activarNormal,
         agregarProducto, actualizarCantidad, quitarProducto,
-        crearRepuestoRapido,
+        modalRepuesto, setModalRepuesto, nombreRepuesto, repuestoCreado, abrirModalRepuesto,
         guardarVenta, dispararPDF, onClienteNuevo,
     };
 }
