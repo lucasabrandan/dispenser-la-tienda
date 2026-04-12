@@ -1,9 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
+const DRAFT_KEY = 'servicio_borrador';
+
 export function useServicioForm(servicioParaEditar = null, clienteInicialId = null) {
   const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
+
+  // Borrador: true si existe un draft guardado al montar el formulario (solo en creación)
+  const [borradorDisponible, setBorradorDisponible] = useState(() => {
+    if (servicioParaEditar) return false;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      return (d.ticketItems?.length > 0) || !!d.itemActual?.trabajo || !!d.itemActual?.equipoSerial;
+    } catch { return false; }
+  });
+  // Evita que el effect de auto-save borre el draft antes de que el usuario lo recupere
+  const autoSaveReady = useRef(false);
   const [clienteId, setClienteId] = useState(clienteInicialId ? String(clienteInicialId) : null);
   const [esPresupuesto, setEsPresupuesto] = useState(true);
   const [ticketItems, setTicketItems] = useState([]);
@@ -76,6 +91,47 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     };
     cargar();
   }, [servicioParaEditar]);
+
+  // Auto-guardar borrador en localStorage cada vez que cambia el formulario.
+  // Se salta el primer render (mount) para no borrar un draft existente con estado vacío.
+  useEffect(() => {
+    if (servicioParaEditar) return;
+    if (!autoSaveReady.current) { autoSaveReady.current = true; return; }
+
+    const hayContenido = ticketItems.length > 0
+      || itemActual.trabajo?.trim()
+      || itemActual.equipoSerial?.trim()
+      || itemActual.repuestosUsados?.length > 0;
+
+    if (!hayContenido) { localStorage.removeItem(DRAFT_KEY); return; }
+
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        ticketItems, itemActual, clienteId,
+        fechaServicio, descuentoPorcentaje, leyenda,
+        ts: Date.now(),
+      }));
+    } catch { /* localStorage lleno — ignorar */ }
+  }, [ticketItems, itemActual, clienteId, fechaServicio, descuentoPorcentaje, leyenda]);
+
+  const recuperarBorrador = () => {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}');
+      if (d.ticketItems)             setTicketItems(d.ticketItems);
+      if (d.itemActual)              setItemActual(d.itemActual);
+      if (d.clienteId)               setClienteId(d.clienteId);
+      if (d.fechaServicio)           setFechaServicio(d.fechaServicio);
+      if (d.descuentoPorcentaje !== undefined) setDescuentoPorcentaje(d.descuentoPorcentaje);
+      if (d.leyenda)                 setLeyenda(d.leyenda);
+      setBorradorDisponible(false);
+      toast.success('✅ Borrador recuperado');
+    } catch { toast.error('Error al recuperar el borrador'); }
+  };
+
+  const descartarBorrador = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setBorradorDisponible(false);
+  };
 
   const onClienteSeleccionado = (id) => {
     setClienteId(id);
@@ -369,6 +425,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       }
 
       toast.success(confirmarTrabajo ? '✅ ¡Confirmado!' : '💾 ¡Guardado!', { id: loading });
+      localStorage.removeItem(DRAFT_KEY);
 
       // Reset
       setTicketItems([]);
@@ -433,5 +490,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     calcularResumenGanancia,
     leyenda, setLeyenda,
     fechaServicio, setFechaServicio,
+    borradorDisponible,
+    recuperarBorrador,
+    descartarBorrador,
   };
 }

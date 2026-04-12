@@ -28,6 +28,7 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null, clien
         nombreSedePrellenado, setNombreSedePrellenado,
         finalizar, refrescarDatos, onClienteSeleccionado,
         calcularResumenGanancia, estaBloqueado,
+        borradorDisponible, recuperarBorrador, descartarBorrador,
     } = hook;
 
     const [paso, setPaso]             = useState(0);
@@ -67,7 +68,26 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null, clien
     return (
         <div className="font-sans transition-colors bg-[#EDEAE6] dark:bg-[#141414]" style={{ minHeight: '100%' }}>
 
-            {estaBloqueado && (
+            {/* Banner de borrador — aparece si hay un trabajo sin guardar del día anterior */}
+        {borradorDisponible && !servicioParaEditar && (
+            <div className="mx-5 mt-4 p-3 rounded-xl bg-[#D48800]/10 border border-[#D48800]/30 flex items-center justify-between gap-3">
+                <p className="text-[13px] font-bold text-[#D48800] dark:text-[#F0A500]">
+                    💾 Tenés un trabajo sin guardar
+                </p>
+                <div className="flex gap-2 flex-shrink-0">
+                    <button onClick={descartarBorrador}
+                        className="text-[11px] font-bold text-[#A8A29E] px-2 py-1">
+                        Descartar
+                    </button>
+                    <button onClick={recuperarBorrador}
+                        className="px-3 py-1.5 rounded-lg text-[11px] font-black text-white bg-[#D48800] dark:bg-[#F0A500] active:scale-95">
+                        Recuperar
+                    </button>
+                </div>
+            </div>
+        )}
+
+        {estaBloqueado && (
                 <div className="mx-5 mt-4 p-3 rounded-xl text-center font-bold text-[13px]"
                      style={{ background: 'var(--danger-bg)', color: 'var(--danger-tx)' }}>
                     🔒 Registro cobrado — solo lectura
