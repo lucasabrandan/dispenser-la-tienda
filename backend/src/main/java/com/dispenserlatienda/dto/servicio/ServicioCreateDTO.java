@@ -18,6 +18,7 @@ public class ServicioCreateDTO {
     @NotEmpty private List<ServicioItemCreateDTO> items;
     private String estado;
     private String fotoRemito;
+    private java.math.BigDecimal descuentoPorcentaje;
 
     public ServicioCreateDTO() {}
 
@@ -42,4 +43,6 @@ public class ServicioCreateDTO {
     public void setEstado(String estado) { this.estado = estado; }
     public String getFotoRemito() { return fotoRemito; }
     public void setFotoRemito(String fotoRemito) { this.fotoRemito = fotoRemito; }
+    public java.math.BigDecimal getDescuentoPorcentaje() { return descuentoPorcentaje; }
+    public void setDescuentoPorcentaje(java.math.BigDecimal descuentoPorcentaje) { this.descuentoPorcentaje = descuentoPorcentaje; }
 }

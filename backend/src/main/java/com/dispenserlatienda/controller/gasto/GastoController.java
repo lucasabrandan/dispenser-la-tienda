@@ -19,7 +19,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/gastos")
-@CrossOrigin(origins = "http://localhost:3000")
 @Validated
 public class GastoController {
 

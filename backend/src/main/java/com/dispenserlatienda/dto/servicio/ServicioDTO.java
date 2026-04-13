@@ -17,5 +17,7 @@ public record ServicioDTO(
         String sedeDireccion,
         List<ServicioItemDTO> items,
         String estado,
-        String fotoRemito
+        String fotoRemito,
+        java.math.BigDecimal descuentoPorcentaje,
+        String observaciones
 ) {}

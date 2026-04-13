@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/sedes")
-@CrossOrigin(origins = "http://localhost:3000")
 @Validated
 public class SedeController {
 

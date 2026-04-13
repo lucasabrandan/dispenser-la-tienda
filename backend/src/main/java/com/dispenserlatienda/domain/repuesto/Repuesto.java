@@ -36,9 +36,8 @@ public class Repuesto {
     // ← MODIFICADO: Ahora guarda URL relativa de foto (/uploads/productos/nombre.jpg)
     private String fotoUrl;
 
-    // ← MANTENER: Por backward compatibility
-    @Lob
-    @Column(columnDefinition = "LONGTEXT")
+    // ← MANTENER: Por backward compatibility (ya no se usa, fotoUrl reemplaza esto)
+    @Column(columnDefinition = "TEXT")
     private String imagen;
 
     public Repuesto() {}

@@ -219,7 +219,15 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             value={itemActual.equipoSerial ? { label: itemActual.equipoSerial, value: itemActual.equipoSerial } : null}
                             onChange={s => {
                                 if (!s) { setItemActual({ ...itemActual, equipoSerial: '', esNuevoEquipo: false }); return; }
-                                setItemActual({ ...itemActual, equipoSerial: s.value, esNuevoEquipo: false });
+                                // Auto-rellenar modelo y ubicación desde el inventario si existen
+                                const equipoDB = db.equipos?.find(e => e.numeroSerie === s.value);
+                                setItemActual({
+                                    ...itemActual,
+                                    equipoSerial:    s.value,
+                                    esNuevoEquipo:   false,
+                                    modeloEquipo:    itemActual.modeloEquipo    || equipoDB?.modelo    || '',
+                                    ubicacionEquipo: itemActual.ubicacionEquipo || equipoDB?.ubicacion || '',
+                                });
                                 consultarAntecedentes(s.value);
                             }}
                             onCreateOption={val => {
@@ -347,15 +355,30 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         </div>
                     )}
 
-                    {/* Descripción */}
+                    {/* Descripción con contador de caracteres */}
                     <div>
                         <Label>Descripción del trabajo</Label>
                         <textarea
                             className={`${inputClass} resize-none min-h-[80px]`}
                             placeholder="Describí el trabajo realizado o a realizar..."
+                            maxLength={400}
                             value={itemActual.trabajo || ''}
                             onChange={e => setItemActual({ ...itemActual, trabajo: e.target.value })}
                         />
+                        <div className="flex justify-end mt-1">
+                            {(() => {
+                                const n = (itemActual.trabajo || '').length;
+                                return (
+                                    <span className={`text-[10px] font-bold transition-colors ${
+                                        n >= 380 ? 'text-[#D13A28] dark:text-[#E8422F]' :
+                                        n >= 300 ? 'text-[#D48800] dark:text-[#F0A500]' :
+                                        'text-[#A8A29E]'
+                                    }`}>
+                                        {n}/400
+                                    </span>
+                                );
+                            })()}
+                        </div>
                     </div>
 
                     {/* Fotos antes / después */}

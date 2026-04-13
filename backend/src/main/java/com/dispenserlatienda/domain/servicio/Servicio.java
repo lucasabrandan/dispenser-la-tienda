@@ -47,6 +47,9 @@ public class Servicio {
     @Column(name = "foto_remito")
     private String fotoRemito;
 
+    @Column(name = "descuento_porcentaje")
+    private java.math.BigDecimal descuentoPorcentaje;
+
     @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ServicioItem> items = new ArrayList<>();
 
@@ -93,6 +96,9 @@ public class Servicio {
 
     public String getFotoRemito() { return fotoRemito; }
     public void setFotoRemito(String fotoRemito) { this.fotoRemito = fotoRemito; }
+
+    public java.math.BigDecimal getDescuentoPorcentaje() { return descuentoPorcentaje; }
+    public void setDescuentoPorcentaje(java.math.BigDecimal descuentoPorcentaje) { this.descuentoPorcentaje = descuentoPorcentaje; }
 
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }

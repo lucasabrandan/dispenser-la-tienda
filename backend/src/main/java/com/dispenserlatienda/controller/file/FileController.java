@@ -15,8 +15,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/uploads")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/uploads")
 public class FileController {
 
     @Value("${storage.location}")
@@ -50,8 +49,13 @@ public class FileController {
             byte[] fileContent = Files.readAllBytes(filePath);
             System.out.println("✅ Sirviendo: " + filename);
 
+            // Detectar content-type real para que el cliente pueda decodificar correctamente
+            String contentType = Files.probeContentType(filePath);
+            if (contentType == null) contentType = "image/jpeg";
+            MediaType mediaType = MediaType.parseMediaType(contentType);
+
             return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG)
+                    .contentType(mediaType)
                     .body(fileContent);
 
         } catch (Exception e) {

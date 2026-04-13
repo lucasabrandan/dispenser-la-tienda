@@ -2,16 +2,141 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import {
-    DARK, RED, GRAY_LIGHT, GRAY_MID, GRAY_TEXT,
+    DARK, RED, GRAY_MID,
     procesarFecha, dibujarHeaderPDF, dibujarHeaderPDFCompacto, dibujarFooterPDF
 } from './pdfTheme';
 import { construirUrlFoto } from './construirUrlFoto';
 
-// Carga una foto (data URL base64 o filename del backend) lista para doc.addImage
+// ── Paleta ───────────────────────────────────────────────────────────────────
+const CARD_BG     = [248, 248, 247];
+const CARD_SHADOW = [232, 230, 228];
+const TOTAL_BG    = [244, 243, 241];
+const META_TEXT   = [155, 150, 144];
+const ZEBRA       = [251, 250, 249];
+
+// ── Niveles de compresión progresiva ─────────────────────────────────────────
+// Se itera de menor a mayor compresión hasta que el contenido entra en la hoja.
+const NIVELES_COMPRESION = [
+    { maxLineas: 4, fotoW: 58, fotoH: 76, gap: 4, cardPad: 3, maxTablaRows: 99 },
+    { maxLineas: 3, fotoW: 52, fotoH: 66, gap: 3, cardPad: 2, maxTablaRows: 8  },
+    { maxLineas: 2, fotoW: 46, fotoH: 56, gap: 2, cardPad: 2, maxTablaRows: 6  },
+    { maxLineas: 1, fotoW: 40, fotoH: 48, gap: 2, cardPad: 1, maxTablaRows: 4  },
+];
+
+// ── Margen de seguridad inferior (nunca dibujar por debajo) ──────────────────
+const MARGEN_SEG = 22; // mm
+
+// ── Sanitización de texto ────────────────────────────────────────────────────
+function sanitizarTexto(texto, maxLen = 400) {
+    if (!texto) return '';
+    return texto
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, maxLen)
+        // Cortar palabras sueltas de más de 30 caracteres
+        .split(' ')
+        .map(w => w.length > 30 ? w.substring(0, 28) + '…' : w)
+        .join(' ');
+}
+
+function sanitizarLeyenda(leyenda, maxLen = 110) {
+    if (!leyenda) return '';
+    return leyenda
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, maxLen);
+}
+
+// ── Truncar texto a N líneas con ellipsis ────────────────────────────────────
+function truncarLineas(doc, texto, maxWidth, maxLineas) {
+    if (!texto) return [];
+    const todas = doc.splitTextToSize(texto, maxWidth);
+    if (todas.length <= maxLineas) return todas;
+    const cortadas = todas.slice(0, maxLineas);
+    const ultima   = cortadas[maxLineas - 1];
+    cortadas[maxLineas - 1] = ultima.length > 4
+        ? ultima.substring(0, ultima.length - 3) + '...'
+        : '...';
+    return cortadas;
+}
+
+// ── Construir línea de metadata con prioridad y sin superponer precio ─────────
+// Prioridad: modelo > serial > ubicacion > garantia
+function buildMetaLinea(doc, modelo, serial, ubicacion, garantia, maxW, fontSize) {
+    doc.setFontSize(fontSize);
+    const mide = s => doc.getStringUnitWidth(s) * fontSize / doc.internal.scaleFactor;
+
+    const base = modelo || 'Dispenser';
+    const partes = [
+        serial    ? `N/S: ${serial}`      : null,
+        ubicacion ? `Ubic.: ${ubicacion}` : null,
+        garantia  ? `Gta: ${garantia}`    : null,
+    ].filter(Boolean);
+
+    // Intentar agregar partes de a una
+    let linea = base;
+    for (const p of partes) {
+        const candidato = linea + '  ·  ' + p;
+        if (mide(candidato) <= maxW) {
+            linea = candidato;
+        } else {
+            break; // no agrega más — las de menor prioridad tampoco
+        }
+    }
+
+    // Si el base solo ya no entra, truncar
+    if (mide(linea) > maxW) {
+        let s = linea;
+        while (s.length > 4 && mide(s + '...') > maxW) s = s.slice(0, -1);
+        linea = s + '...';
+    }
+
+    return linea;
+}
+
+// ── Limitar filas de tabla agrupando las sobrantes ────────────────────────────
+function limitarFilas(rows, maxRows, moVal) {
+    if (rows.length <= maxRows) return rows;
+    const moRows   = moVal > 0 ? 1 : 0;
+    const limite   = Math.max(moRows, maxRows - 1); // dejar lugar para el "resumen"
+    const cortadas = rows.slice(0, limite);
+    const restantes = rows.length - limite;
+    cortadas.push([`+ ${restantes} ítem${restantes > 1 ? 's' : ''} más`, '', '—']);
+    return cortadas;
+}
+
+// ── Estimar altura de un item con una config de compresión ────────────────────
+function estimarAlturaConCfg(item, cfg, doc) {
+    let h = 14; // label equipo + línea meta + padding superior
+
+    const texto = sanitizarTexto(item.trabajo || item.trabajoRealizado || item.resumenTexto || '');
+    if (texto) {
+        doc.setFontSize(7.5);
+        const lineas = Math.min(cfg.maxLineas,
+            doc.splitTextToSize(texto, 155).length);
+        h += 6 + lineas * 4 + 4;
+    }
+
+    const moVal = parseFloat(item.costoExtra || 0);
+    const nRaw  = (moVal > 0 ? 1 : 0) + (item.repuestosUsados?.length || 0);
+    const nRows = Math.min(cfg.maxTablaRows, nRaw) + (nRaw > cfg.maxTablaRows ? 1 : 0);
+    if (nRows > 0) h += 8 + nRows * 5.5;
+
+    const nFotos = (item.fotoAntes ? 1 : 0) + (item.fotoDespues ? 1 : 0);
+    if (nFotos > 0) h += cfg.fotoH + 16;
+
+    h += 20; // total dentro de card
+    h += cfg.cardPad * 2 + cfg.gap;
+
+    return h;
+}
+
+// ── Carga foto lista para addImage ───────────────────────────────────────────
 async function cargarFoto(src) {
     if (!src) return null;
     let dataUrl = null;
-
     if (src instanceof File) {
         dataUrl = await new Promise(resolve => {
             const reader = new FileReader();
@@ -36,29 +161,55 @@ async function cargarFoto(src) {
             });
         } catch { return null; }
     }
-
     if (!dataUrl) return null;
-    const format = dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-    return { data: dataUrl, format };
+    return { data: dataUrl, format: dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG' };
 }
 
-// Estima la altura en mm que ocupará un item técnico para anticipar saltos de página
-function estimarAlturaItem(item, FOTO_W, FOTO_H, esCompacto) {
-    let h = 14; // título + modelo + meta
-
-    const texto = (item.trabajo || item.trabajoRealizado || item.resumenTexto || '')
-        .replace(/\| MO:.*/, '').trim();
-    if (texto) h += 10 + Math.ceil(texto.length / 80) * 4;
-
-    const nRows = (parseFloat(item.costoExtra || 0) > 0 ? 1 : 0)
-        + (item.repuestosUsados?.length || 0);
-    if (nRows > 0) h += 8 + nRows * (esCompacto ? 6 : 7);
-
-    if (item.fotoAntes || item.fotoDespues) h += FOTO_H + 14;
-
-    return h;
+// ── Dibuja una foto individual con label y sombra ────────────────────────────
+function dibujarFoto(doc, foto, x, y, w, h, label) {
+    doc.setFontSize(6.5);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...META_TEXT);
+    doc.text(label, x + w / 2, y, { align: 'center' });
+    const fy = y + 3;
+    doc.setFillColor(...CARD_SHADOW);
+    doc.roundedRect(x + 1.5, fy + 1.5, w, h, 1.5, 1.5, 'F');
+    if (foto) {
+        doc.addImage(foto.data, foto.format, x, fy, w, h);
+        doc.setDrawColor(210, 207, 203);
+        doc.setLineWidth(0.15);
+        doc.roundedRect(x, fy, w, h, 1.5, 1.5, 'S');
+    } else {
+        doc.setFillColor(...CARD_BG);
+        doc.roundedRect(x, fy, w, h, 1.5, 1.5, 'F');
+        doc.setFontSize(6);
+        doc.setTextColor(...META_TEXT);
+        doc.text('No disponible', x + w / 2, fy + h / 2, { align: 'center' });
+    }
 }
 
+// ── Número de presupuesto único por documento ────────────────────────────────
+// Formato: PP-DDMM-INITECNICO-XX (PP = presupuesto, RS = remito)
+function generarNroDocumento(esPresupuesto, fecha, tecnico) {
+    const partesFecha = (fecha || '').split('/');
+    const ddmm = partesFecha.length >= 2
+        ? `${partesFecha[0].padStart(2,'0')}${partesFecha[1].padStart(2,'0')}`
+        : new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' }).replace('/','');
+
+    const palabras = (tecnico || 'TEC').trim().split(/\s+/);
+    const ini = palabras.length >= 2
+        ? (palabras[0][0] + palabras[1][0]).toUpperCase()
+        : palabras[0].substring(0, 2).toUpperCase();
+
+    const storageKey = `pdf_counter_${ddmm}`;
+    const n = (parseInt(localStorage.getItem(storageKey) || '0')) + 1;
+    localStorage.setItem(storageKey, n.toString());
+
+    const prefijo = esPresupuesto ? 'PP' : 'RS';
+    return `${prefijo}-${ddmm}-${ini}-${String(n).padStart(2, '0')}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export const generarRemitoPDFPremium = async ({
     esPresupuesto, cliente, sede, tecnico, ticketItems, fechaServicio,
     descuentoPorcentaje = 0,
@@ -74,171 +225,186 @@ export const generarRemitoPDFPremium = async ({
     const pageH = doc.internal.pageSize.getHeight();
     const fecha = procesarFecha(fechaServicio);
 
-    const esTecnico = esTecnicoForzado !== null
+    const esTecnico  = esTecnicoForzado !== null
         ? esTecnicoForzado
         : ticketItems.some(it => it.equipoSerial && it.equipoSerial !== 'MOSTRADOR');
-
-    // Compacto a partir de 2 equipos para aprovechar mejor el espacio
+    const esSolaHoja = ticketItems.length === 1;
     const esCompacto = ticketItems.length >= 2;
 
-    const FOTO_W = esCompacto ? 58 : 82;
-    const FOTO_H = esCompacto ? 44 : 62;
-    const tblBodySize = esCompacto ? 7.5 : 8.5;
-    const tblHeadSize = esCompacto ? 6.5 : 7;
-    const tblBodyPad  = { top: esCompacto ? 1.5 : 2, bottom: esCompacto ? 1.5 : 2, left: 0, right: 0 };
-    const tblHeadPad  = { top: 1.5, bottom: esCompacto ? 1.5 : 2, left: 0, right: 0 };
-    const SEC_GAP     = esCompacto ? 5 : 8;   // espacio entre equipos — reducido
-    const MARGEN_INF  = pageH - 18;            // límite inferior antes del footer
+    // ── Número único de documento ────────────────────────────────────────────
+    const nroDoc = generarNroDocumento(esPresupuesto, fecha, tecnico || 'TEC');
+
+    // ── Tamaños para modo múltiples equipos (compacto) ───────────────────────
+    const FOTO_W_MULTI = 50;
+    const FOTO_H_MULTI = 65;
+
+    // ── Totales ──────────────────────────────────────────────────────────────
+    const subtotalBruto = ticketItems.reduce((a, b) =>
+        a + (parseFloat(b.totalCalculado) || parseFloat(b.costo) || 0), 0);
+    const pctDesc    = parseFloat(descuentoPorcentaje) || 0;
+    const montoDesc  = pctDesc > 0 ? subtotalBruto * pctDesc / 100 : 0;
+    const totalFinal_ = subtotalBruto - montoDesc;
 
     const tipoLabel = esPresupuesto
         ? (esTecnico ? 'PRESUPUESTO DE SERVICIO TÉCNICO' : 'PRESUPUESTO DE VENTA')
         : (esTecnico ? 'REMITO DE SERVICIO TÉCNICO'      : 'COMPROBANTE DE VENTA');
 
-    const subtotalBruto = ticketItems.reduce((a, b) => a + (parseFloat(b.totalCalculado) || parseFloat(b.costo) || 0), 0);
-    const pctDesc       = parseFloat(descuentoPorcentaje) || 0;
-    const montoDesc     = pctDesc > 0 ? subtotalBruto * pctDesc / 100 : 0;
-    const totalFinal_   = subtotalBruto - montoDesc;
-
     // ── HEADER ───────────────────────────────────────────────────────────────
     const subtitulo = esTecnico && tecnico ? `Técnico: ${tecnico}` : null;
     if (esCompacto) {
-        dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo);
+        dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo, nroDoc);
     } else {
-        dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo);
+        dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo, nroDoc);
     }
 
     // ── BLOQUE CLIENTE ───────────────────────────────────────────────────────
-    let y = esCompacto ? 34 : 50;
+    let y = esCompacto ? 42 : 58;
 
     doc.setDrawColor(...GRAY_MID);
     doc.setLineWidth(0.2);
     doc.line(14, y, pageW - 14, y);
-    y += 5;
+    y += 6;
 
-    doc.setFontSize(6.5);
+    doc.setFontSize(6);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...RED);
     doc.text('PARA', 14, y);
+    y += 5;
 
-    y += 4;
-    doc.setFontSize(esCompacto ? 11 : 13);
+    doc.setFontSize(esCompacto ? 12 : 14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
     doc.text(cliente.nombre?.toUpperCase() || 'PARTICULAR', 14, y);
 
-    // Datos en una sola línea compacta
-    const contacto = [
+    const contactoParts = [
         cliente.cuilDni  ? `DNI/CUIT: ${cliente.cuilDni}` : null,
         cliente.telefono ? `Tel: ${cliente.telefono}`      : null,
         sede?.direccion  || sede?.nombreSede               || null,
         cliente.email    || null,
-    ].filter(Boolean).join('  ·  ');
+    ].filter(Boolean);
 
-    if (contacto) {
+    if (contactoParts.length > 0) {
         y += 5;
-        doc.setFontSize(7.5);
+        const contactoStr = contactoParts.join('  ·  ');
+        // Una sola línea, truncar si es necesario
+        doc.setFontSize(8.5);
         doc.setFont(undefined, 'normal');
-        doc.setTextColor(...GRAY_TEXT);
-        doc.text(contacto, 14, y, { maxWidth: pageW - 28 });
+        doc.setTextColor(...DARK);
+        const lineasContacto = doc.splitTextToSize(contactoStr, pageW - 28);
+        doc.text(lineasContacto[0], 14, y);
     }
 
-    y += 3;
+    y += 4;
+    doc.setDrawColor(...GRAY_MID);
     doc.setLineWidth(0.2);
     doc.line(14, y + 3, pageW - 14, y + 3);
-    y += 9;
+    y += 11;
+
+    const alturaContenidoInicial = y; // referencia para compresión
 
     // ── ITEMS TÉCNICOS ───────────────────────────────────────────────────────
     if (esTecnico) {
 
         for (const [idx, item] of ticketItems.entries()) {
 
-            // Salto de página inteligente: verificar si el item entra completo
-            const alturaEstimada = estimarAlturaItem(item, FOTO_W, FOTO_H, esCompacto);
-            if (y + alturaEstimada > MARGEN_INF) {
-                doc.addPage();
-                y = 18;
+            // ── Elegir nivel de compresión (solo para esSolaHoja) ─────────
+            let cfg;
+            if (esSolaHoja) {
+                const alturaDisponible = pageH - alturaContenidoInicial - MARGEN_SEG;
+                cfg = NIVELES_COMPRESION[NIVELES_COMPRESION.length - 1]; // fallback mínimo
+                for (const nivel of NIVELES_COMPRESION) {
+                    if (estimarAlturaConCfg(item, nivel, doc) <= alturaDisponible) {
+                        cfg = nivel;
+                        break;
+                    }
+                }
+            } else {
+                // Multi-equipo: valores fijos compactos
+                cfg = { maxLineas: 3, fotoW: FOTO_W_MULTI, fotoH: FOTO_H_MULTI,
+                        gap: 8, cardPad: 3, maxTablaRows: 99 };
+            }
+
+            const MARGEN_INF = pageH - MARGEN_SEG;
+
+            // Salto de página para multi-equipo
+            if (!esSolaHoja) {
+                const altEst = estimarAlturaConCfg(item, cfg, doc);
+                if (y + altEst > MARGEN_INF) { doc.addPage(); y = 18; }
             }
 
             const subtotalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
-            const modelo    = item.modeloEquipo    || null;
+            const modelo    = item.modeloEquipo    || item.equipoModelo    || null;
             const serial    = (item.equipoSerial && item.equipoSerial !== 'MOSTRADOR' && item.equipoSerial !== 'SIN-SN')
                 ? item.equipoSerial : null;
-            const ubicacion = item.ubicacionEquipo || null;
+            const ubicacion = item.ubicacionEquipo || item.equipoUbicacion || null;
+            const garantia  = item.garantiaHasta   || null;
 
-            // Número de equipo en rojo
-            doc.setFontSize(6.5);
+            // ── Card background ───────────────────────────────────────────
+            const alturaCard = estimarAlturaConCfg(item, cfg, doc);
+            doc.setFillColor(...CARD_BG);
+            doc.roundedRect(12, y - cfg.cardPad, pageW - 24, alturaCard, 3, 3, 'F');
+
+            const xI = 16;
+
+            // ── Label equipo (capitalizado, no grito) ─────────────────────
+            doc.setFontSize(6);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...RED);
-            doc.text(`EQUIPO ${idx + 1}`, 14, y);
+            doc.text(`Equipo ${idx + 1}`, xI, y);
 
-            // Modelo / tipo
-            doc.setFontSize(esCompacto ? 9 : 10);
+            // ── Línea única: modelo · serial · ubic  +  precio ───────────
+            y += 5;
+            const T_TITULO  = esSolaHoja ? 10 : 9.5;
+            const precioStr = `$ ${subtotalEquipo.toLocaleString('es-AR')}`;
+            doc.setFontSize(T_TITULO);
+            const precioW   = doc.getStringUnitWidth(precioStr) * T_TITULO / doc.internal.scaleFactor + 6;
+            const maxMetaW  = pageW - xI - 16 - precioW;
+
+            const metaTexto = buildMetaLinea(doc, modelo, serial, ubicacion, garantia, maxMetaW, T_TITULO);
+
+            doc.setFontSize(T_TITULO);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...DARK);
-            doc.text(modelo ? modelo.toUpperCase() : 'Dispenser', 14, y + 5);
+            doc.text(metaTexto, xI, y);
+            doc.text(precioStr, pageW - 16, y, { align: 'right' });
+            y += 8;
 
-            // Subtotal derecha
-            doc.setFontSize(esCompacto ? 9 : 10);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(...DARK);
-            doc.text(`$ ${subtotalEquipo.toLocaleString('es-AR')}`, pageW - 14, y + 5, { align: 'right' });
-
-            // Serial + ubicación en línea gris
-            const metaLinea = [
-                serial    ? `N/S: ${serial}`          : null,
-                ubicacion ? `Ubic.: ${ubicacion}`     : null,
-            ].filter(Boolean).join('  ·  ');
-
-            if (metaLinea) {
-                doc.setFontSize(7);
-                doc.setFont(undefined, 'normal');
-                doc.setTextColor(...GRAY_TEXT);
-                doc.text(metaLinea, 14, y + 10);
-                y += 15;
-            } else {
-                y += 10;
-            }
-
-            // ── Trabajo realizado ─────────────────────────────────────────
-            const textoTrabajo = (item.trabajo || item.trabajoRealizado || item.resumenTexto || '')
-                .replace(/\| MO:.*/, '').trim();
+            // ── Detalle del servicio — altura máxima fija ─────────────────
+            const textoTrabajo = sanitizarTexto(
+                (item.trabajo || item.trabajoRealizado || item.resumenTexto || '').replace(/\| MO:.*/, '')
+            );
 
             if (textoTrabajo) {
-                // Verificar si la descripción entra en la página actual
-                const lineas = doc.splitTextToSize(textoTrabajo, pageW - 28);
-                const altDesc = 4 + lineas.length * 4 + 3;
-                if (y + altDesc > MARGEN_INF) { doc.addPage(); y = 18; }
+                const T_BODY = esSolaHoja ? 7.5 : 7.5;
+                // Nunca sobrepasar margen de seguridad
+                if (!esSolaHoja && y + 20 > MARGEN_INF) { doc.addPage(); y = 18; }
 
-                doc.setFontSize(6.5);
+                doc.setFontSize(6);
                 doc.setFont(undefined, 'bold');
-                doc.setTextColor(...GRAY_TEXT);
-                doc.text('TRABAJO REALIZADO', 14, y);
+                doc.setTextColor(...RED);
+                doc.text('DETALLE DEL SERVICIO', xI, y);
                 y += 4;
 
-                doc.setFontSize(esCompacto ? 8 : 8.5);
+                doc.setFontSize(T_BODY);
+                const lineas = truncarLineas(doc, textoTrabajo, pageW - xI - 16, cfg.maxLineas);
                 doc.setFont(undefined, 'normal');
-                doc.setTextColor(60, 58, 56);
-                doc.text(lineas, 14, y);
-                y += lineas.length * 4 + 3;
+                doc.setTextColor(55, 53, 50);
+                doc.text(lineas, xI, y);
+                y += lineas.length * 4 + 4;
             }
 
-            // ── Tabla repuestos y mano de obra ────────────────────────────
-            const rows = [];
+            // ── Tabla ─────────────────────────────────────────────────────
             const moVal = parseFloat(item.costoExtra || 0);
-            if (moVal > 0) {
-                rows.push(['Mano de obra / Servicio técnico', '1', `$ ${moVal.toLocaleString('es-AR')}`]);
-            }
-            item.repuestosUsados?.forEach(r => {
-                rows.push([
-                    r.nombre,
-                    r.cantidad.toString(),
-                    `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`
-                ]);
+            let rows = [];
+            if (moVal > 0) rows.push(['Mano de obra / Servicio técnico', '1', `$ ${moVal.toLocaleString('es-AR')}`]);
+            (item.repuestosUsados || []).forEach(r => {
+                rows.push([r.nombre, r.cantidad.toString(),
+                           `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`]);
             });
+            rows = limitarFilas(rows, cfg.maxTablaRows, moVal);
 
             if (rows.length > 0) {
-                const altTabla = 8 + rows.length * (esCompacto ? 6 : 7);
-                if (y + altTabla > MARGEN_INF) { doc.addPage(); y = 18; }
+                if (!esSolaHoja && y + 10 + rows.length * 5.5 > MARGEN_INF) { doc.addPage(); y = 18; }
 
                 autoTable(doc, {
                     startY: y,
@@ -246,123 +412,162 @@ export const generarRemitoPDFPremium = async ({
                     body: rows,
                     theme: 'plain',
                     headStyles: {
-                        fillColor: false,
-                        textColor: GRAY_TEXT,
-                        fontStyle: 'bold',
-                        fontSize: tblHeadSize,
-                        cellPadding: tblHeadPad,
-                        lineColor: GRAY_MID,
-                        lineWidth: { bottom: 0.3 }
+                        fillColor: false, textColor: [140, 135, 128], fontStyle: 'bold',
+                        fontSize: 6, cellPadding: { top: 1.5, bottom: 2, left: 2, right: 2 },
+                        lineColor: GRAY_MID, lineWidth: { bottom: 0.4 }
                     },
                     bodyStyles: {
-                        fontSize: tblBodySize,
-                        cellPadding: tblBodyPad,
-                        textColor: DARK,
-                        lineColor: GRAY_LIGHT,
-                        lineWidth: { bottom: 0.2 }
+                        fontSize: 7.5, textColor: DARK,
+                        cellPadding: { top: 1.5, bottom: 1.5, left: 2, right: 2 },
+                        lineColor: [238, 236, 233], lineWidth: { bottom: 0.2 }
                     },
                     columnStyles: {
                         0: { cellWidth: 'auto' },
-                        1: { halign: 'center', cellWidth: 15 },
-                        2: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' }
+                        1: { halign: 'center', cellWidth: 13 },
+                        2: { halign: 'right',  cellWidth: 26, fontStyle: 'bold' }
                     },
-                    margin: { left: 14, right: 14 },
-                    didParseCell: (data) => {
-                        if (data.section === 'body' && data.row.index === 0 && moVal > 0) {
+                    margin: { left: xI, right: 16 },
+                    didParseCell: data => {
+                        if (data.section === 'body' && data.row.index === 0 && moVal > 0)
                             data.cell.styles.textColor = RED;
-                        }
+                        if (data.section === 'body' && data.row.index % 2 === 0)
+                            data.cell.styles.fillColor = ZEBRA;
                     }
                 });
-                y = doc.lastAutoTable.finalY + 3;
+                y = doc.lastAutoTable.finalY + 5;
             }
 
-            // ── Fotos ─────────────────────────────────────────────────────
-            const fotoA = await cargarFoto(item.fotoAntes);
-            const fotoD = await cargarFoto(item.fotoDespues);
+            // ── Fotos centradas inteligentemente ──────────────────────────
+            const fotoA  = await cargarFoto(item.fotoAntes);
+            const fotoD  = await cargarFoto(item.fotoDespues);
+            const nFotos = (fotoA ? 1 : 0) + (fotoD ? 1 : 0);
 
-            if (fotoA || fotoD) {
-                const BLOQUE_H = FOTO_H + 12;
-                // Salto de página si las fotos no entran — siempre juntas
-                if (y + BLOQUE_H > MARGEN_INF) { doc.addPage(); y = 18; }
+            if (nFotos > 0) {
+                if (!esSolaHoja && y + cfg.fotoH + 16 > MARGEN_INF) { doc.addPage(); y = 18; }
 
-                doc.setFontSize(6.5);
+                doc.setFontSize(6);
                 doc.setFont(undefined, 'bold');
-                doc.setTextColor(...GRAY_TEXT);
-                doc.text('REGISTRO FOTOGRÁFICO', 14, y + 3);
-                y += 7;
+                doc.setTextColor(...RED);
+                doc.text('EVIDENCIA DEL SERVICIO', xI, y + 3);
+                y += 9;
 
-                const GAP = 6;
-                const xL  = 14;
-                const xR  = xL + FOTO_W + GAP;
-
-                doc.setFontSize(6.5);
-                doc.setTextColor(...GRAY_TEXT);
-                doc.text('Antes',   xL + FOTO_W / 2, y, { align: 'center' });
-                doc.text('Después', xR + FOTO_W / 2, y, { align: 'center' });
-                y += 2;
-
-                if (fotoA) {
-                    doc.addImage(fotoA.data, fotoA.format, xL, y, FOTO_W, FOTO_H);
-                    doc.setDrawColor(...GRAY_MID); doc.setLineWidth(0.2);
-                    doc.rect(xL, y, FOTO_W, FOTO_H, 'S');
+                if (nFotos === 2) {
+                    const GAP    = 8;
+                    const totalW = cfg.fotoW * 2 + GAP;
+                    const xL     = (pageW - totalW) / 2;
+                    dibujarFoto(doc, fotoA, xL,            y, cfg.fotoW, cfg.fotoH, 'Estado inicial');
+                    dibujarFoto(doc, fotoD, xL + cfg.fotoW + GAP, y, cfg.fotoW, cfg.fotoH, 'Resultado final');
                 } else {
-                    doc.setFillColor(...GRAY_LIGHT);
-                    doc.rect(xL, y, FOTO_W, FOTO_H, 'F');
-                    doc.setFontSize(6.5); doc.setTextColor(...GRAY_TEXT);
-                    doc.text('Sin foto', xL + FOTO_W / 2, y + FOTO_H / 2, { align: 'center' });
+                    const xSola = (pageW - cfg.fotoW) / 2;
+                    dibujarFoto(doc, fotoA || fotoD, xSola, y, cfg.fotoW, cfg.fotoH,
+                        fotoA ? 'Estado inicial' : 'Resultado final');
                 }
-
-                if (fotoD) {
-                    doc.addImage(fotoD.data, fotoD.format, xR, y, FOTO_W, FOTO_H);
-                    doc.setDrawColor(...GRAY_MID); doc.setLineWidth(0.2);
-                    doc.rect(xR, y, FOTO_W, FOTO_H, 'S');
-                } else {
-                    doc.setFillColor(...GRAY_LIGHT);
-                    doc.rect(xR, y, FOTO_W, FOTO_H, 'F');
-                    doc.setFontSize(6.5); doc.setTextColor(...GRAY_TEXT);
-                    doc.text('Sin foto', xR + FOTO_W / 2, y + FOTO_H / 2, { align: 'center' });
-                }
-
-                y += FOTO_H + 4;
+                y += cfg.fotoH + 8;
             }
 
-            // Separador entre equipos (línea punteada fina)
-            if (idx < ticketItems.length - 1) {
+            // ── Total dentro de card (1 equipo) ───────────────────────────
+            if (esSolaHoja) {
+                // Prioridad: total NUNCA se omite
                 y += 3;
                 doc.setDrawColor(...GRAY_MID);
-                doc.setLineWidth(0.15);
-                doc.line(14, y, pageW - 14, y);
-                y += SEC_GAP;
+                doc.setLineWidth(0.2);
+                doc.line(xI, y, pageW - 16, y);
+                y += 5;
+
+                const tH = pctDesc > 0 ? 28 : 18;
+                doc.setFillColor(...TOTAL_BG);
+                doc.roundedRect(pageW - 82, y - 4, 66, tH, 3, 3, 'F');
+
+                if (pctDesc > 0) {
+                    doc.setFontSize(7.5); doc.setFont(undefined, 'normal');
+                    doc.setTextColor(...META_TEXT);
+                    doc.text('Subtotal', pageW - 78, y);
+                    doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
+                    y += 6;
+                    doc.setTextColor(...RED);
+                    doc.text(`Descuento (${pctDesc}%)`, pageW - 78, y);
+                    doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
+                    y += 4;
+                    doc.setDrawColor(...GRAY_MID);
+                    doc.line(pageW - 78, y, pageW - 16, y);
+                    y += 5;
+                }
+
+                doc.setFontSize(7); doc.setFont(undefined, 'bold');
+                doc.setTextColor(...META_TEXT);
+                doc.text('TOTAL', pageW - 78, y);
+                doc.setFontSize(18); doc.setFont(undefined, 'bold');
+                doc.setTextColor(...DARK);
+                doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 16, y + 1, { align: 'right' });
+
             } else {
-                y += 6;
+                // Separador entre equipos
+                if (idx < ticketItems.length - 1) {
+                    y += 4;
+                    doc.setDrawColor(...GRAY_MID);
+                    doc.setLineWidth(0.1);
+                    doc.setLineDashPattern([1, 1.5], 0);
+                    doc.line(14, y, pageW - 14, y);
+                    doc.setLineDashPattern([], 0);
+                    y += cfg.gap;
+                } else {
+                    y += cfg.gap;
+                }
             }
+        }
+
+        // ── Total externo (múltiples equipos) — prioridad máxima ─────────
+        if (!esSolaHoja) {
+            const MARGEN_INF = pageH - MARGEN_SEG;
+            const tH = pctDesc > 0 ? 30 : 20;
+            if (y + tH > MARGEN_INF) { doc.addPage(); y = 18; }
+
+            doc.setFillColor(...TOTAL_BG);
+            doc.roundedRect(pageW - 82, y - 4, 66, tH, 3, 3, 'F');
+
+            if (pctDesc > 0) {
+                doc.setFontSize(7.5); doc.setFont(undefined, 'normal');
+                doc.setTextColor(...META_TEXT);
+                doc.text('Subtotal', pageW - 78, y);
+                doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
+                y += 6;
+                doc.setTextColor(...RED);
+                doc.text(`Descuento (${pctDesc}%)`, pageW - 78, y);
+                doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
+                y += 4;
+                doc.setDrawColor(...GRAY_MID);
+                doc.line(pageW - 78, y, pageW - 16, y);
+                y += 5;
+            } else { y += 3; }
+
+            doc.setFontSize(7); doc.setFont(undefined, 'bold');
+            doc.setTextColor(...META_TEXT);
+            doc.text('TOTAL', pageW - 78, y);
+            doc.setFontSize(18); doc.setFont(undefined, 'bold');
+            doc.setTextColor(...DARK);
+            doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 16, y + 1, { align: 'right' });
         }
 
     } else {
         // ── VENTA ─────────────────────────────────────────────────────────
+        const MARGEN_INF = pageH - MARGEN_SEG;
         const PROD_IMG_W = 18;
         const PROD_IMG_H = 18;
 
         const filas = [];
         ticketItems.forEach(item => {
-            item.repuestosUsados?.forEach(r => {
+            (item.repuestosUsados || []).forEach(r => {
                 filas.push({
                     fotoSrc: r.fotoUrl || null,
-                    row: [
-                        '',
-                        r.nombre,
-                        r.sku || '—',
-                        r.cantidad.toString(),
-                        `$ ${Number(r.precio).toLocaleString('es-AR')}`,
-                        `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`
-                    ]
+                    row: ['', r.nombre, r.sku || '—', r.cantidad.toString(),
+                          `$ ${Number(r.precio).toLocaleString('es-AR')}`,
+                          `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`]
                 });
             });
             if (item.costoExtra > 0) {
-                filas.push({
-                    fotoSrc: null,
-                    row: ['', 'Envío / Logística', '—', '1', '—', `$ ${Number(item.costoExtra).toLocaleString('es-AR')}`]
-                });
+                filas.push({ fotoSrc: null,
+                    row: ['', 'Envío / Logística', '—', '1', '—',
+                          `$ ${Number(item.costoExtra).toLocaleString('es-AR')}`] });
             }
         });
 
@@ -374,97 +579,87 @@ export const generarRemitoPDFPremium = async ({
                 body: filas.map(f => f.row),
                 theme: 'plain',
                 headStyles: {
-                    fillColor: false, textColor: GRAY_TEXT, fontStyle: 'bold',
-                    fontSize: 7, cellPadding: { top: 2, bottom: 3, left: 2, right: 2 },
-                    lineColor: DARK, lineWidth: { bottom: 0.4 }
+                    fillColor: false, textColor: [140, 135, 128], fontStyle: 'bold',
+                    fontSize: 6.5, cellPadding: { top: 2, bottom: 3, left: 2, right: 2 },
+                    lineColor: GRAY_MID, lineWidth: { bottom: 0.5 }
                 },
                 bodyStyles: {
-                    fontSize: 8.5, cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
-                    lineColor: GRAY_LIGHT, lineWidth: { bottom: 0.2 },
-                    minCellHeight: PROD_IMG_H + 6, valign: 'middle',
+                    fontSize: 8, cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
+                    lineColor: [238, 236, 233], lineWidth: { bottom: 0.2 },
+                    minCellHeight: PROD_IMG_H + 4, valign: 'middle',
                 },
                 columnStyles: {
                     0: { cellWidth: PROD_IMG_W + 4 },
                     1: { cellWidth: 'auto' },
-                    2: { textColor: GRAY_TEXT, fontSize: 7.5, cellWidth: 18 },
-                    3: { halign: 'center', cellWidth: 14 },
-                    4: { halign: 'right',  cellWidth: 24 },
-                    5: { halign: 'right',  fontStyle: 'bold', cellWidth: 26 }
+                    2: { textColor: META_TEXT, fontSize: 7, cellWidth: 18 },
+                    3: { halign: 'center', cellWidth: 13 },
+                    4: { halign: 'right',  cellWidth: 23 },
+                    5: { halign: 'right',  fontStyle: 'bold', cellWidth: 25 }
                 },
                 margin: { left: 14, right: 14 },
-                didDrawCell: (data) => {
+                didParseCell: data => {
+                    if (data.section === 'body' && data.row.index % 2 === 0)
+                        data.cell.styles.fillColor = ZEBRA;
+                },
+                didDrawCell: data => {
                     if (data.section === 'body' && data.column.index === 0) {
                         const foto = fotosVenta[data.row.index];
                         const ix = data.cell.x + (data.cell.width  - PROD_IMG_W) / 2;
                         const iy = data.cell.y + (data.cell.height - PROD_IMG_H) / 2;
                         if (foto) {
                             doc.addImage(foto.data, foto.format, ix, iy, PROD_IMG_W, PROD_IMG_H);
-                            doc.setDrawColor(...GRAY_MID); doc.setLineWidth(0.2);
+                            doc.setDrawColor(210, 207, 203); doc.setLineWidth(0.15);
                             doc.rect(ix, iy, PROD_IMG_W, PROD_IMG_H, 'S');
-                        } else {
-                            doc.setFillColor(...GRAY_LIGHT);
-                            doc.rect(ix, iy, PROD_IMG_W, PROD_IMG_H, 'F');
-                            doc.setFontSize(6); doc.setTextColor(...GRAY_TEXT);
-                            doc.text('Sin foto', ix + PROD_IMG_W / 2, iy + PROD_IMG_H / 2, { align: 'center' });
                         }
                     }
                 }
             });
-            y = doc.lastAutoTable.finalY + 8;
+            y = doc.lastAutoTable.finalY + 10;
         }
-    }
 
-    // ── TOTALES ──────────────────────────────────────────────────────────────
-    if (y + 30 > MARGEN_INF) { doc.addPage(); y = 18; }
-
-    doc.setDrawColor(...GRAY_MID);
-    doc.setLineWidth(0.2);
-    doc.line(pageW - 75, y, pageW - 14, y);
-    y += 5;
-
-    if (pctDesc > 0) {
-        doc.setFontSize(8);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...GRAY_TEXT);
-        doc.text('Subtotal', pageW - 75, y);
+        // Total venta
+        const tH = pctDesc > 0 ? 30 : 20;
+        if (y + tH > pageH - MARGEN_SEG) { doc.addPage(); y = 18; }
+        doc.setFillColor(...TOTAL_BG);
+        doc.roundedRect(pageW - 82, y - 4, 66, tH, 3, 3, 'F');
+        if (pctDesc > 0) {
+            doc.setFontSize(7.5); doc.setFont(undefined, 'normal');
+            doc.setTextColor(...META_TEXT);
+            doc.text('Subtotal', pageW - 78, y);
+            doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
+            y += 6;
+            doc.setTextColor(...RED);
+            doc.text(`Descuento (${pctDesc}%)`, pageW - 78, y);
+            doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
+            y += 4;
+            doc.setDrawColor(...GRAY_MID);
+            doc.line(pageW - 78, y, pageW - 16, y);
+            y += 5;
+        } else { y += 3; }
+        doc.setFontSize(7); doc.setFont(undefined, 'bold');
+        doc.setTextColor(...META_TEXT);
+        doc.text('TOTAL', pageW - 78, y);
+        doc.setFontSize(18); doc.setFont(undefined, 'bold');
         doc.setTextColor(...DARK);
-        doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 14, y, { align: 'right' });
-        y += 6;
-
-        doc.setTextColor(...RED);
-        doc.text(`Descuento (${pctDesc}%)`, pageW - 75, y);
-        doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 14, y, { align: 'right' });
-        y += 4;
-
-        doc.setDrawColor(...GRAY_MID);
-        doc.line(pageW - 75, y, pageW - 14, y);
-        y += 5;
+        doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 16, y + 1, { align: 'right' });
     }
-
-    doc.setFontSize(8.5);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...GRAY_TEXT);
-    doc.text('TOTAL', pageW - 75, y);
-
-    doc.setFontSize(14);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...DARK);
-    doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 14, y + 1, { align: 'right' });
-
-    y += 3;
-    doc.setFillColor(...RED);
-    doc.rect(pageW - 75, y, 61, 0.7, 'F');
 
     // ── FOOTER EN TODAS LAS PÁGINAS ──────────────────────────────────────────
-    // Si hay leyenda, usarla como pie; si no, usar el texto por defecto
-    const leyendaTxt = (leyenda || '').trim();
-    const textoPie = leyendaTxt || (esTecnico
-        ? 'Garantía: 30 días sobre mano de obra · Repuestos según fabricante'
+    // Prioridad de recorte: leyenda primero (nunca total ni header)
+    const leyendaLimpia = sanitizarLeyenda(leyenda || '');
+    const textoPieBase  = leyendaLimpia || (esTecnico
+        ? 'Garantía: 90 días sobre mano de obra · Repuestos según fabricante'
         : 'Presupuesto válido 7 días · Precios sujetos a variación sin previo aviso');
 
+    // Garantizar que cabe en 1 línea del footer
     const totalPaginas = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPaginas; i++) {
         doc.setPage(i);
+        // Truncar leyenda si no entra en el ancho del footer
+        doc.setFontSize(7);
+        const maxFooterW = doc.internal.pageSize.getWidth() - 80; // espacio libre entre marca y paginación
+        const linesFooter = doc.splitTextToSize(textoPieBase, maxFooterW);
+        const textoPie = linesFooter[0] + (linesFooter.length > 1 ? ' ...' : '');
         dibujarFooterPDF(doc, i, totalPaginas, textoPie);
     }
 

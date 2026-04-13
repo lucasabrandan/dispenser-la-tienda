@@ -74,9 +74,14 @@ export function useServicioManager() {
     const generarPDF = async (servicio) => {
         const loading = toast.loading('Preparando PDF...');
         try {
-            // Las fotos (filenames del backend) las resuelve cargarFoto dentro del generador
+            // Normalizar campos: el backend usa equipoModelo/equipoUbicacion/trabajoRealizado
             const itemsConFotos = (servicio.items || []).map(it => ({
-                ...it, totalCalculado: it.costo,
+                ...it,
+                totalCalculado:  parseFloat(it.costo)      || 0,
+                costoExtra:      parseFloat(it.costoExtra) || 0,
+                modeloEquipo:    it.modeloEquipo    || it.equipoModelo    || null,
+                ubicacionEquipo: it.ubicacionEquipo || it.equipoUbicacion || null,
+                trabajo:         it.trabajo         || it.trabajoRealizado || '',
             }));
             toast.dismiss(loading);
             await generarRemitoPDFPremium({
@@ -97,7 +102,7 @@ export function useServicioManager() {
                 totalFinal:         calcularTotal(servicio),
                 fechaServicio:      servicio.fecha,
                 descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
-                leyenda:            servicio.leyenda || '',
+                leyenda:            servicio.observaciones || '',
                 // El DTO puede devolver equipoSerial='MOSTRADOR' aunque sea TECNICA
                 // (equipo no registrado en inventario), así que usamos el tipo del backend
                 esTecnicoForzado:   servicio.servicioTipo === 'TECNICA',

@@ -39,7 +39,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   });
 
   const [repuestoElegido, setRepuestoElegido] = useState(null);
-  const [leyenda, setLeyenda] = useState('');
+  const LEYENDA_DEFAULT = 'Garantía: 90 días sobre mano de obra · Repuestos según fabricante';
+  const [leyenda, setLeyenda] = useState(LEYENDA_DEFAULT);
   const [fechaServicio, setFechaServicio] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             }))
           );
           setItemActual(prev => ({ ...prev, sedeId: servicioParaEditar.sedeId }));
+          if (servicioParaEditar.observaciones) setLeyenda(servicioParaEditar.observaciones);
           // clienteId viene del backend ahora
           if (servicioParaEditar.clienteId) {
             setClienteId(servicioParaEditar.clienteId.toString());
@@ -281,22 +283,32 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     }
 
     // Guardar equipo nuevo en la BD silenciosamente si fue creado al vuelo
-    if (itemActual.esNuevoEquipo && tieneSerial && itemActual.sedeId) {
-      // Verificar que no exista ya en el inventario local
+    if (itemActual.esNuevoEquipo && tieneSerial) {
       const yaExiste = db.equipos?.some(e => e.numeroSerie === tieneSerial);
       if (!yaExiste) {
-        try {
-          const res = await api.post('/equipos', {
-            numeroSerie: tieneSerial,
-            modelo:      itemActual.modeloEquipo   || null,
-            ubicacion:   itemActual.ubicacionEquipo || null,
-            sedeId:      itemActual.sedeId,
-          });
-          // Agregarlo al listado local para que aparezca en el próximo selector
-          setDb(prev => ({ ...prev, equipos: [...(prev.equipos || []), res.data] }));
-        } catch (e) {
-          console.error('Error guardando equipo al vuelo:', e);
-          // No bloquear el flujo si falla
+        // Resolver sedeId: prioridad → elegida por usuario → única sede del cliente → Mostrador
+        const sedeMostrador = db.sedes?.find(s =>
+          s.nombreSede?.toLowerCase().includes('mostrador') ||
+          s.nombreSede?.toLowerCase().includes('particular')
+        );
+        const sedesCliente   = clienteId ? db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId) : [];
+        const sedeIdEquipo   = itemActual.sedeId
+          || (sedesCliente.length === 1 ? sedesCliente[0].id : null)
+          || sedeMostrador?.id
+          || db.sedes?.[0]?.id;
+
+        if (sedeIdEquipo) {
+          try {
+            const res = await api.post('/equipos', {
+              numeroSerie: tieneSerial,
+              modelo:      itemActual.modeloEquipo    || null,
+              ubicacion:   itemActual.ubicacionEquipo || null,
+              sedeId:      sedeIdEquipo,
+            });
+            setDb(prev => ({ ...prev, equipos: [...(prev.equipos || []), res.data] }));
+          } catch (e) {
+            console.error('Error guardando equipo al vuelo:', e);
+          }
         }
       }
     }
@@ -415,6 +427,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         sedeNombre:         nombreSedeF,
         descuentoPorcentaje,
         totalConDescuento,
+        observaciones: leyenda,
         items: itemsConFotos.map(it => {
           const esFiltro = it.trabajo?.toUpperCase().includes('FILTRO') ||
             it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes('FILTRO'));
@@ -452,7 +465,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       setClienteId(null);
       setIdEdicion(null);
       setDescuentoPorcentaje(0);
-      setLeyenda('');
+      setLeyenda(LEYENDA_DEFAULT);
       setFechaServicio(new Date().toISOString().split('T')[0]);
       setItemActual({ sedeId: '', sedeNombre: '', equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
       return true;

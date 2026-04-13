@@ -21,6 +21,7 @@ public class ServicioItem {
     @JoinColumn(name = "equipo_id")
     private Equipo equipo;
 
+    @Column(length = 100)
     private String tecnico;
     private BigDecimal costo;
 
@@ -38,6 +39,7 @@ public class ServicioItem {
     @Column(length = 20)
     private MetodoPago metodoPago;
 
+    @Column(name = "trabajo_realizado", columnDefinition = "TEXT")
     private String trabajoRealizado;
     private LocalDate garantiaHasta;
 

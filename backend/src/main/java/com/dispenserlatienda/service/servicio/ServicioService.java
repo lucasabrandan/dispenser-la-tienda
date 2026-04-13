@@ -103,6 +103,8 @@ public class ServicioService {
         }
 
         servicio.setFotoRemito(dto.getFotoRemito());
+        servicio.setDescuentoPorcentaje(dto.getDescuentoPorcentaje());
+        servicio.setObservaciones(dto.getObservaciones());
 
         ServicioTipo tipoDetectado = ServicioTipo.VENTA;
 
@@ -219,7 +221,9 @@ public class ServicioService {
                 sede != null ? sede.getDireccion() : null,
                 items,
                 s.getEstado() != null ? s.getEstado().name() : "PRESUPUESTO",
-                s.getFotoRemito()
+                s.getFotoRemito(),
+                s.getDescuentoPorcentaje(),
+                s.getObservaciones()
         );
     }
 

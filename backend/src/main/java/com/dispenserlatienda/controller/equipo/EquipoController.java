@@ -16,7 +16,6 @@ import jakarta.validation.Valid;
 // Implementa paginación para mejorar performance
 @RestController
 @RequestMapping("/api/equipos")
-@CrossOrigin(origins = "http://localhost:3000")
 @Validated
 public class EquipoController {
 

@@ -168,9 +168,18 @@ export default function PresupuestosManager() {
             direccion:  s.sedeDireccion,
         },
         tecnico:      localStorage.getItem('tecnico_nombre') || 'Técnico',
-        ticketItems:  s.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
+        ticketItems:  s.items?.map(it => ({
+            ...it,
+            totalCalculado:  parseFloat(it.costo)      || 0,
+            costoExtra:      parseFloat(it.costoExtra) || 0,
+            // Alinear nombres de campo del backend con los que espera el PDF
+            modeloEquipo:    it.modeloEquipo    || it.equipoModelo    || null,
+            ubicacionEquipo: it.ubicacionEquipo || it.equipoUbicacion || null,
+            trabajo:         it.trabajo         || it.trabajoRealizado || '',
+        })) || [],
         totalFinal:   calcularTotal(s),
         fechaServicio: s.fecha,
+        leyenda:      s.observaciones || '',
     });
 
     const stats = useMemo(() => ({

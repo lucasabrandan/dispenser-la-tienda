@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logo from '../../assets/logo-dispenser.svg';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
@@ -24,6 +24,12 @@ const MENU_ADMIN = [
 export default function Sidebar({ vistaActual, setVistaActual }) {
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
+    const [tecnico, setTecnico] = useState(localStorage.getItem('tecnico_nombre') || '');
+
+    const handleTecnicoBlur = (e) => {
+        const val = e.target.value.trim();
+        if (val) localStorage.setItem('tecnico_nombre', val);
+    };
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
@@ -79,6 +85,20 @@ export default function Sidebar({ vistaActual, setVistaActual }) {
                     </div>
                 </div>
             </nav>
+
+            {/* TÉCNICO */}
+            <div className="px-5 py-4 border-t border-black/[0.07] dark:border-white/[0.07]">
+                <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider mb-1.5 px-1">Técnico</p>
+                <input
+                    type="text"
+                    value={tecnico}
+                    onChange={e => setTecnico(e.target.value)}
+                    onBlur={handleTecnicoBlur}
+                    onKeyDown={e => e.key === 'Enter' && e.target.blur()}
+                    placeholder="Tu nombre..."
+                    className="w-full px-3 py-2 rounded-xl text-[13px] font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
+                />
+            </div>
 
             {/* FOOTER */}
             <div className="px-6 py-5 border-t border-black/[0.07] dark:border-white/[0.07] flex items-center justify-between">
