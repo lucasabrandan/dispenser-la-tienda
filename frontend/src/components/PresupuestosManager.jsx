@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useFiltros } from '../hooks/useFiltros';
@@ -113,10 +113,22 @@ function ModalDetalle({ s, calcularTotal, onClose }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Parsea fecha en formato "DD/MM/YYYY" o "YYYY-MM-DD" para ordenar correctamente
+function parseFechaSort(f) {
+    if (!f) return 0;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+        const [d, m, y] = f.split('/');
+        return new Date(`${y}-${m}-${d}`).getTime();
+    }
+    return new Date(f).getTime() || 0;
+}
+
 export default function PresupuestosManager() {
     const [presupuestos, setPresupuestos] = useState([]);
     const [cargando, setCargando]         = useState(true);
     const [modalDetalle, setModalDetalle] = useState(null);
+    // Clave para refrescar nroDoc de localStorage cuando se genera un PDF
+    const [pdfKey, setPdfKey] = useState(0);
 
     useEffect(() => { cargar(); }, []);
 
@@ -126,7 +138,8 @@ export default function PresupuestosManager() {
             const res  = await api.get('/servicios?page=0&size=1000');
             const data = res.data.content || res.data || [];
             setPresupuestos(Array.isArray(data)
-                ? data.filter(s => s.estado === 'PRESUPUESTO').sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                ? data.filter(s => s.estado === 'PRESUPUESTO')
+                      .sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha))
                 : []);
         } catch { toast.error('Error al cargar presupuestos'); }
         finally  { setCargando(false); }
@@ -154,33 +167,44 @@ export default function PresupuestosManager() {
 
     const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
 
-    const generarPDF = (s) => generarRemitoPDFPremium({
-        esPresupuesto: true,
-        cliente: {
-            nombre:       s.clienteNombre,
-            telefono:     s.clienteTelefono,
-            email:        s.clienteEmail,
-            cuilDni:      s.clienteDni,
-            condicionIva: s.clienteCondicionIva,
-        },
-        sede: {
-            nombreSede: s.sedeNombre,
-            direccion:  s.sedeDireccion,
-        },
-        tecnico:      localStorage.getItem('tecnico_nombre') || 'Técnico',
-        ticketItems:  s.items?.map(it => ({
-            ...it,
-            totalCalculado:  parseFloat(it.costo)      || 0,
-            costoExtra:      parseFloat(it.costoExtra) || 0,
-            // Alinear nombres de campo del backend con los que espera el PDF
-            modeloEquipo:    it.modeloEquipo    || it.equipoModelo    || null,
-            ubicacionEquipo: it.ubicacionEquipo || it.equipoUbicacion || null,
-            trabajo:         it.trabajo         || it.trabajoRealizado || '',
-        })) || [],
-        totalFinal:   calcularTotal(s),
-        fechaServicio: s.fecha,
-        leyenda:      s.observaciones || '',
-    });
+    const generarPDF = useCallback(async (s) => {
+        await generarRemitoPDFPremium({
+            esPresupuesto: true,
+            servicioId:   s.id,
+            cliente: {
+                nombre:         s.clienteNombre,
+                telefono:       s.clienteTelefono,
+                email:          s.clienteEmail,
+                cuilDni:        s.clienteDni,
+                condicionFiscal: s.clienteCondicionIva,
+            },
+            sede: {
+                nombreSede: s.sedeNombre,
+                direccion:  s.sedeDireccion,
+            },
+            tecnico:      localStorage.getItem('tecnico_nombre') || 'Técnico',
+            ticketItems:  s.items?.map(it => ({
+                ...it,
+                totalCalculado:  parseFloat(it.costo)      || 0,
+                costoExtra:      parseFloat(it.costoExtra) || 0,
+                modeloEquipo:    it.modeloEquipo    || it.equipoModelo    || null,
+                ubicacionEquipo: it.ubicacionEquipo || it.equipoUbicacion || null,
+                trabajo:         it.trabajo         || it.trabajoRealizado || '',
+            })) || [],
+            totalFinal:    calcularTotal(s),
+            fechaServicio: s.fecha,
+            leyenda:       s.observaciones || '',
+        });
+        // Refrescar para que el nroDoc aparezca en el buscador
+        setPdfKey(k => k + 1);
+    }, []);
+
+    // Augmentar con nroDocPdf guardado en localStorage al generar cada PDF
+    // pdfKey fuerza re-cómputo cuando se genera un nuevo PDF en esta sesión
+    const presupuestosConNro = useMemo(() => presupuestos.map(p => ({
+        ...p,
+        nroDocPdf: localStorage.getItem(`pdf_nro_${p.id}`) || '',
+    })), [presupuestos, pdfKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const stats = useMemo(() => ({
         total:     presupuestos.reduce((a, p) => a + calcularTotal(p), 0),
@@ -189,9 +213,11 @@ export default function PresupuestosManager() {
         ventas:    presupuestos.filter(p => p.servicioTipo === 'VENTA').length,
     }), [presupuestos]);
 
-    const filtros = useFiltros(presupuestos, {
+    // campoBusqueda ampliado: nombre, sede, teléfono, observaciones y número de PDF
+    const filtros = useFiltros(presupuestosConNro, {
         porPagina: 10, campoFecha: 'fecha',
-        campoEstado: 'servicioTipo', campoBusqueda: ['clienteNombre', 'sedeNombre'],
+        campoEstado: 'servicioTipo',
+        campoBusqueda: ['clienteNombre', 'sedeNombre', 'clienteTelefono', 'observaciones', 'nroDocPdf'],
     });
 
     return (

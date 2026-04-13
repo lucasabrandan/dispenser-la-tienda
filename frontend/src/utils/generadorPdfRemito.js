@@ -24,7 +24,8 @@ const NIVELES_COMPRESION = [
 ];
 
 // ── Margen de seguridad inferior (nunca dibujar por debajo) ──────────────────
-const MARGEN_SEG = 22; // mm
+// 30mm = 16mm buffer visual + 14mm zona del footer (línea en pageH-14, texto en pageH-9)
+const MARGEN_SEG = 30; // mm
 
 // ── Sanitización de texto ────────────────────────────────────────────────────
 function sanitizarTexto(texto, maxLen = 400) {
@@ -216,7 +217,8 @@ export const generarRemitoPDFPremium = async ({
     esPresupuesto, cliente, sede, tecnico, ticketItems, fechaServicio,
     descuentoPorcentaje = 0,
     leyenda = '',
-    esTecnicoForzado = null
+    esTecnicoForzado = null,
+    servicioId = null,   // si se pasa, guarda el nroDoc en localStorage para búsqueda posterior
 }) => {
     if (!cliente || ticketItems.length === 0) {
         return toast.error('Datos insuficientes para generar el PDF.');
@@ -235,6 +237,8 @@ export const generarRemitoPDFPremium = async ({
 
     // ── Número único de documento ────────────────────────────────────────────
     const nroDoc = generarNroDocumento(esPresupuesto, fecha, tecnico || 'TEC');
+    // Persistir para que el buscador pueda filtrar por él
+    if (servicioId) localStorage.setItem(`pdf_nro_${servicioId}`, nroDoc);
 
     // ── Tamaños para modo múltiples equipos (compacto) ───────────────────────
     const FOTO_W_MULTI = 50;
@@ -282,11 +286,13 @@ export const generarRemitoPDFPremium = async ({
     y += 5;
 
     // Datos de contacto — estructura vertical, prioridad: tel > dir > cuit > condición
+    // condicionFiscal / condicionIva — soportar ambos nombres de campo
+    const condFiscal = cliente.condicionFiscal || cliente.condicionIva || null;
     const contactoLines = [
-        cliente.telefono        ? `Tel: ${cliente.telefono}`              : null,
-        sede?.direccion         ? `Dir: ${sede.direccion}`                : (sede?.nombreSede || null),
-        cliente.cuilDni         ? `CUIT/DNI: ${cliente.cuilDni}`         : null,
-        cliente.condicionFiscal ? `Cond: ${cliente.condicionFiscal}`      : null,
+        cliente.telefono ? `Tel: ${cliente.telefono}`         : null,
+        sede?.direccion  ? `Dir: ${sede.direccion}`           : (sede?.nombreSede || null),
+        cliente.cuilDni  ? `CUIT/DNI: ${cliente.cuilDni}`    : null,
+        condFiscal       ? `Cond: ${condFiscal}`              : null,
     ].filter(Boolean);
 
     if (contactoLines.length > 0) {
@@ -343,8 +349,9 @@ export const generarRemitoPDFPremium = async ({
             const ubicacion = item.ubicacionEquipo || item.equipoUbicacion || null;
             const garantia  = item.garantiaHasta   || null;
 
-            // ── Card background ───────────────────────────────────────────
-            const alturaCard = estimarAlturaConCfg(item, cfg, doc);
+            // ── Card background — altura capeada al margen de seguridad ──
+            const alturaCardEst = estimarAlturaConCfg(item, cfg, doc);
+            const alturaCard = Math.min(alturaCardEst, MARGEN_INF - y - cfg.cardPad);
             doc.setFillColor(...CARD_BG);
             doc.roundedRect(12, y - cfg.cardPad, pageW - 24, alturaCard, 3, 3, 'F');
 

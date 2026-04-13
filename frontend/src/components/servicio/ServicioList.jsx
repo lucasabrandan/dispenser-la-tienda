@@ -50,10 +50,21 @@ const badgeTipo = (s) => {
     };
 };
 
+// Parsea fecha "DD/MM/YYYY" o "YYYY-MM-DD" para sort correcto
+function parseFechaSort(f) {
+    if (!f) return 0;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+        const [d, m, y] = f.split('/');
+        return new Date(`${y}-${m}-${d}`).getTime();
+    }
+    return new Date(f).getTime() || 0;
+}
+
 export default function ServicioList({ onEditar }) {
     const [servicios, setServicios]       = useState([]);
     const [modalDetalle, setModalDetalle] = useState(null);
     const [tipoFiltro, setTipoFiltro]     = useState('TODOS');
+    const [pdfKey, setPdfKey]             = useState(0);
 
     useEffect(() => { cargarServicios(); }, []);
 
@@ -62,7 +73,7 @@ export default function ServicioList({ onEditar }) {
             .then(res => {
                 const data = res.data.content || res.data || [];
                 setServicios(Array.isArray(data)
-                    ? data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                    ? data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha))
                     : []);
             })
             .catch(() => toast.error('Error al conectar con el historial'));
@@ -89,15 +100,21 @@ export default function ServicioList({ onEditar }) {
     const calcularCosto = (s) =>
         s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
 
+    // Augmentar con nroDocPdf guardado en localStorage al generar cada PDF
+    const serviciosConNro = React.useMemo(() => servicios.map(s => ({
+        ...s,
+        nroDocPdf: localStorage.getItem(`pdf_nro_${s.id}`) || '',
+    })), [servicios, pdfKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const serviciosFiltrados = tipoFiltro === 'TODOS'
-        ? servicios
-        : servicios.filter(s => s.servicioTipo === tipoFiltro);
+        ? serviciosConNro
+        : serviciosConNro.filter(s => s.servicioTipo === tipoFiltro);
 
     const filtros = useFiltros(serviciosFiltrados, {
         porPagina: 10,
         campoFecha: 'fecha',
         campoEstado: 'estado',
-        campoBusqueda: ['clienteNombre', 'sedeNombre'],
+        campoBusqueda: ['clienteNombre', 'sedeNombre', 'clienteTelefono', 'observaciones', 'nroDocPdf'],
     });
 
     const totalVentas  = servicios
@@ -265,20 +282,21 @@ export default function ServicioList({ onEditar }) {
                                             }));
                                             generarRemitoPDFPremium({
                                                 esPresupuesto: esPendiente,
+                                                servicioId:   s.id,
                                                 cliente: {
-                                                    nombre:       s.clienteNombre,
-                                                    telefono:     s.clienteTelefono,
-                                                    email:        s.clienteEmail,
-                                                    cuilDni:      s.clienteDni,
-                                                    condicionIva: s.clienteCondicionIva,
+                                                    nombre:          s.clienteNombre,
+                                                    telefono:        s.clienteTelefono,
+                                                    email:           s.clienteEmail,
+                                                    cuilDni:         s.clienteDni,
+                                                    condicionFiscal: s.clienteCondicionIva,
                                                 },
                                                 sede: { nombreSede: s.sedeNombre, direccion: s.sedeDireccion },
-                                                tecnico: s.items?.[0]?.tecnico || '',
+                                                tecnico: s.items?.[0]?.tecnico || localStorage.getItem('tecnico_nombre') || '',
                                                 ticketItems: items,
                                                 fechaServicio: s.fecha,
                                                 descuentoPorcentaje: s.descuentoPorcentaje || 0,
-                                                leyenda: s.leyenda || '',
-                                            });
+                                                leyenda: s.observaciones || s.leyenda || '',
+                                            }).then(() => setPdfKey(k => k + 1));
                                         }}
                                         className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]"
                                         title="Generar PDF">
