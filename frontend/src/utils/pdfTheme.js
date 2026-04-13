@@ -1,10 +1,10 @@
 /**
  * pdfTheme.js — Sistema de diseño para PDFs
- * Principio: logo como única identidad de marca, tipografía clara, acento rojo.
+ * Principio: header ultra-compacto, logo única identidad, info derecha.
  */
 import logoUrl from '../assets/logo-dispenser.png';
 
-// ── Paleta ────────────────────────────��──────────────────────────────────────
+// ── Paleta ────────────────────────────────────────────────────────────────────
 export const DARK       = [20,  18,  16 ];
 export const RED        = [209, 58,  40 ];
 export const GOLD       = [212, 136, 0  ];
@@ -15,7 +15,7 @@ export const GRAY_TEXT  = [120, 116, 110];
 export const WARM_BG    = [250, 248, 245];
 export const WARM_BORDER= [220, 212, 200];
 
-// ── Fecha ─────────────────────────────��─────────────────────────���────────────
+// ── Fecha ─────────────────────────────────────────────────────────────────────
 export function procesarFecha(f) {
     try {
         if (!f) return new Date().toLocaleDateString('es-AR');
@@ -24,8 +24,16 @@ export function procesarFecha(f) {
     } catch { return new Date().toLocaleDateString('es-AR'); }
 }
 
-// ── Header normal (1 equipo) ──────────────────────────���──────────────────────
-// Esquema: logo izquierda | fecha + nroDoc derecha | línea | tipo + técnico
+// ── Header (todos los documentos) ─────────────────────────────────────────────
+// Esquema:
+//   [LOGO]         [Fecha: DD/MM/AAAA         ]
+//                  [PP-DDMM-XX-01  (rojo bold) ]
+//                  [Téc: Nombre     (gris)      ]
+//   ─────────────────────────────────────────────
+//   TÍTULO DEL DOCUMENTO (10pt, izquierda)
+//
+// Altura total del header normal  ≈ 41mm  → contenido empieza en y=41
+// Altura total del header compacto ≈ 35mm → contenido empieza en y=35
 export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc = null) {
     const pageW = doc.internal.pageSize.getWidth();
 
@@ -33,46 +41,46 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
     doc.setFillColor(...RED);
     doc.rect(0, 0, pageW, 2.5, 'F');
 
-    // Logo — única identidad de marca
+    // Logo — tamaño reducido para ahorrar espacio vertical
     if (logoUrl) {
-        try { doc.addImage(logoUrl, 'PNG', 14, 8, 44, 19); } catch {}
+        try { doc.addImage(logoUrl, 'PNG', 14, 7, 38, 16); } catch {}
     }
 
-    // Fecha — vértice superior derecho (reemplaza nombre empresa)
-    doc.setFontSize(8);
+    // Bloque derecho: fecha / nroDoc / técnico — alineados a la derecha
+    doc.setFontSize(7.5);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(155, 150, 144);
-    doc.text(`Fecha: ${fecha}`, pageW - 14, 14, { align: 'right' });
+    doc.text(`Fecha: ${fecha}`, pageW - 14, 12, { align: 'right' });
 
-    // Número de documento — debajo de la fecha, en rojo
     if (nroDoc) {
-        doc.setFontSize(7);
+        doc.setFontSize(9.5);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...RED);
-        doc.text(nroDoc, pageW - 14, 21, { align: 'right' });
+        doc.text(nroDoc, pageW - 14, 20, { align: 'right' });
     }
 
-    // Línea separadora
-    doc.setDrawColor(220, 216, 210);
-    doc.setLineWidth(0.4);
-    doc.line(14, 30, pageW - 14, 30);
-
-    // Tipo de documento — izquierda, debajo de línea
-    doc.setFontSize(15);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...DARK);
-    doc.text(tipoLabel, 14, 42);
-
-    // Técnico — derecha, debajo de línea
     if (subtitulo) {
-        doc.setFontSize(8);
+        doc.setFontSize(7.5);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(155, 150, 144);
-        doc.text(subtitulo, pageW - 14, 42, { align: 'right' });
+        doc.text(subtitulo, pageW - 14, 26, { align: 'right' });
     }
+
+    // Línea separadora fina
+    doc.setDrawColor(220, 216, 210);
+    doc.setLineWidth(0.3);
+    doc.line(14, 30, pageW - 14, 30);
+
+    // Título del documento — izquierda, tamaño moderado (no dominante)
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(tipoLabel, 14, 38);
 }
 
-// ── Header compacto (2+ equipos) ───────────────────────���─────────────────────
+// ── Header compacto (2+ equipos) ─────────────────────────────────────────────
+// Idéntica estructura pero todo más pequeño para maximizar espacio de contenido
+// Altura total ≈ 35mm → contenido empieza en y=35
 export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null, nroDoc = null) {
     const pageW = doc.internal.pageSize.getWidth();
 
@@ -82,45 +90,42 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
 
     // Logo
     if (logoUrl) {
-        try { doc.addImage(logoUrl, 'PNG', 14, 6, 28, 12); } catch {}
+        try { doc.addImage(logoUrl, 'PNG', 14, 5, 28, 11); } catch {}
     }
 
-    // Fecha — derecha
+    // Bloque derecho: fecha / nroDoc / técnico
     doc.setFontSize(7);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(155, 150, 144);
-    doc.text(`Fecha: ${fecha}`, pageW - 14, 11, { align: 'right' });
+    doc.text(`Fecha: ${fecha}`, pageW - 14, 10, { align: 'right' });
 
-    // Número de documento — debajo, en rojo
     if (nroDoc) {
-        doc.setFontSize(6.5);
+        doc.setFontSize(8.5);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...RED);
         doc.text(nroDoc, pageW - 14, 17, { align: 'right' });
     }
 
-    // Línea separadora
-    doc.setDrawColor(220, 216, 210);
-    doc.setLineWidth(0.3);
-    doc.line(14, 22, pageW - 14, 22);
-
-    // Tipo de documento
-    doc.setFontSize(11);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...DARK);
-    doc.text(tipoLabel, 14, 30);
-
-    // Técnico
     if (subtitulo) {
         doc.setFontSize(7);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(155, 150, 144);
-        doc.text(subtitulo, pageW - 14, 30, { align: 'right' });
+        doc.text(subtitulo, pageW - 14, 22, { align: 'right' });
     }
+
+    // Línea separadora
+    doc.setDrawColor(220, 216, 210);
+    doc.setLineWidth(0.3);
+    doc.line(14, 25, pageW - 14, 25);
+
+    // Título — izquierda, tamaño mínimo funcional
+    doc.setFontSize(8.5);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(tipoLabel, 14, 32);
 }
 
-// ── Footer ────────────────────────────────────��────────────────────────────��─
-// Sin nombre de empresa — el logo en el header es suficiente identidad de marca
+// ── Footer ────────────────────────────────────────────────────────────────────
 export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoCentral = null) {
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -134,7 +139,7 @@ export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoC
     doc.setLineWidth(0.3);
     doc.line(14, pageH - 14, pageW - 14, pageH - 14);
 
-    // Leyenda / garantía — centrada
+    // Leyenda / garantía — centrada, máximo 1 línea
     if (textoCentral) {
         doc.setFontSize(7);
         doc.setFont(undefined, 'italic');
@@ -151,7 +156,7 @@ export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoC
     }
 }
 
-// ── Helpers ──────────────────────────��──────────────────────────────────��────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 export function pdfLabel(doc, txt, x, y) {
     doc.setFontSize(6.5);
     doc.setFont(undefined, 'bold');

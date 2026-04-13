@@ -114,7 +114,7 @@ function estimarAlturaConCfg(item, cfg, doc) {
     const texto = sanitizarTexto(item.trabajo || item.trabajoRealizado || item.resumenTexto || '');
     if (texto) {
         doc.setFontSize(7.5);
-        const lineas = Math.min(cfg.maxLineas,
+        const lineas = Math.min(Math.min(cfg.maxLineas, 3),
             doc.splitTextToSize(texto, 155).length);
         h += 6 + lineas * 4 + 4;
     }
@@ -197,9 +197,11 @@ function generarNroDocumento(esPresupuesto, fecha, tecnico) {
         : new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' }).replace('/','');
 
     const palabras = (tecnico || 'TEC').trim().split(/\s+/);
+    // 2 palabras: inicial-nombre + inicial-apellido (ej: Lucas Brandan → LB)
+    // 1 palabra: primeras 3 letras (ej: Lucas → LUC)
     const ini = palabras.length >= 2
         ? (palabras[0][0] + palabras[1][0]).toUpperCase()
-        : palabras[0].substring(0, 2).toUpperCase();
+        : palabras[0].substring(0, 3).toUpperCase();
 
     const storageKey = `pdf_counter_${ddmm}`;
     const n = (parseInt(localStorage.getItem(storageKey) || '0')) + 1;
@@ -257,8 +259,9 @@ export const generarRemitoPDFPremium = async ({
         dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo, nroDoc);
     }
 
-    // ── BLOQUE CLIENTE ───────────────────────────────────────────────────────
-    let y = esCompacto ? 42 : 58;
+    // ── BLOQUE CLIENTE — layout vertical, legibilidad prioritaria ────────────
+    // Header compacto: contenido empieza en y=35 (normal) / y=35 (compacto)
+    let y = esCompacto ? 35 : 41;
 
     doc.setDrawColor(...GRAY_MID);
     doc.setLineWidth(0.2);
@@ -271,46 +274,52 @@ export const generarRemitoPDFPremium = async ({
     doc.text('PARA', 14, y);
     y += 5;
 
+    // Nombre — grande y en negrita
     doc.setFontSize(esCompacto ? 12 : 14);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
     doc.text(cliente.nombre?.toUpperCase() || 'PARTICULAR', 14, y);
+    y += 5;
 
-    const contactoParts = [
-        cliente.cuilDni  ? `DNI/CUIT: ${cliente.cuilDni}` : null,
-        cliente.telefono ? `Tel: ${cliente.telefono}`      : null,
-        sede?.direccion  || sede?.nombreSede               || null,
-        cliente.email    || null,
+    // Datos de contacto — estructura vertical, prioridad: tel > dir > cuit > condición
+    const contactoLines = [
+        cliente.telefono        ? `Tel: ${cliente.telefono}`              : null,
+        sede?.direccion         ? `Dir: ${sede.direccion}`                : (sede?.nombreSede || null),
+        cliente.cuilDni         ? `CUIT/DNI: ${cliente.cuilDni}`         : null,
+        cliente.condicionFiscal ? `Cond: ${cliente.condicionFiscal}`      : null,
     ].filter(Boolean);
 
-    if (contactoParts.length > 0) {
-        y += 5;
-        const contactoStr = contactoParts.join('  ·  ');
-        // Una sola línea, truncar si es necesario
-        doc.setFontSize(8.5);
+    if (contactoLines.length > 0) {
+        const maxLineasContacto = esCompacto ? 2 : 3;
+        doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...DARK);
-        const lineasContacto = doc.splitTextToSize(contactoStr, pageW - 28);
-        doc.text(lineasContacto[0], 14, y);
+        contactoLines.slice(0, maxLineasContacto).forEach(linea => {
+            doc.text(linea, 14, y);
+            y += 4.5;
+        });
     }
 
-    y += 4;
+    y += 2;
     doc.setDrawColor(...GRAY_MID);
     doc.setLineWidth(0.2);
-    doc.line(14, y + 3, pageW - 14, y + 3);
-    y += 11;
-
-    const alturaContenidoInicial = y; // referencia para compresión
+    doc.line(14, y, pageW - 14, y);
+    y += 8;
 
     // ── ITEMS TÉCNICOS ───────────────────────────────────────────────────────
     if (esTecnico) {
 
         for (const [idx, item] of ticketItems.entries()) {
 
-            // ── Elegir nivel de compresión (solo para esSolaHoja) ─────────
+            const MARGEN_INF = pageH - MARGEN_SEG;
+
+            // ── Elegir nivel de compresión + salto de página inteligente ──
+            // Para cada equipo: calcular altura total antes de dibujar.
+            // Si no entra completo, mover a página nueva (nunca cortar una card).
             let cfg;
             if (esSolaHoja) {
-                const alturaDisponible = pageH - alturaContenidoInicial - MARGEN_SEG;
+                // Elegir la menor compresión que quepa en el espacio disponible
+                const alturaDisponible = MARGEN_INF - y;
                 cfg = NIVELES_COMPRESION[NIVELES_COMPRESION.length - 1]; // fallback mínimo
                 for (const nivel of NIVELES_COMPRESION) {
                     if (estimarAlturaConCfg(item, nivel, doc) <= alturaDisponible) {
@@ -319,15 +328,10 @@ export const generarRemitoPDFPremium = async ({
                     }
                 }
             } else {
-                // Multi-equipo: valores fijos compactos
+                // Multi-equipo: config compacta fija
                 cfg = { maxLineas: 3, fotoW: FOTO_W_MULTI, fotoH: FOTO_H_MULTI,
                         gap: 8, cardPad: 3, maxTablaRows: 99 };
-            }
-
-            const MARGEN_INF = pageH - MARGEN_SEG;
-
-            // Salto de página para multi-equipo
-            if (!esSolaHoja) {
+                // Salto de página: si el bloque completo no cabe, iniciar nueva página
                 const altEst = estimarAlturaConCfg(item, cfg, doc);
                 if (y + altEst > MARGEN_INF) { doc.addPage(); y = 18; }
             }
@@ -386,7 +390,8 @@ export const generarRemitoPDFPremium = async ({
                 y += 4;
 
                 doc.setFontSize(T_BODY);
-                const lineas = truncarLineas(doc, textoTrabajo, pageW - xI - 16, cfg.maxLineas);
+                // Máximo 3 líneas siempre — altura fija, no empuja tabla ni total
+                const lineas = truncarLineas(doc, textoTrabajo, pageW - xI - 16, Math.min(cfg.maxLineas, 3));
                 doc.setFont(undefined, 'normal');
                 doc.setTextColor(55, 53, 50);
                 doc.text(lineas, xI, y);
@@ -437,43 +442,16 @@ export const generarRemitoPDFPremium = async ({
                 y = doc.lastAutoTable.finalY + 5;
             }
 
-            // ── Fotos centradas inteligentemente ──────────────────────────
-            const fotoA  = await cargarFoto(item.fotoAntes);
-            const fotoD  = await cargarFoto(item.fotoDespues);
-            const nFotos = (fotoA ? 1 : 0) + (fotoD ? 1 : 0);
+            // ── TOTAL — inmediatamente después de la tabla, antes de fotos ──
+            // Prioridad máxima: nunca se omite
+            y += 3;
+            doc.setDrawColor(...GRAY_MID);
+            doc.setLineWidth(0.2);
+            doc.line(xI, y, pageW - 16, y);
+            y += 5;
 
-            if (nFotos > 0) {
-                if (!esSolaHoja && y + cfg.fotoH + 16 > MARGEN_INF) { doc.addPage(); y = 18; }
-
-                doc.setFontSize(6);
-                doc.setFont(undefined, 'bold');
-                doc.setTextColor(...RED);
-                doc.text('EVIDENCIA DEL SERVICIO', xI, y + 3);
-                y += 9;
-
-                if (nFotos === 2) {
-                    const GAP    = 8;
-                    const totalW = cfg.fotoW * 2 + GAP;
-                    const xL     = (pageW - totalW) / 2;
-                    dibujarFoto(doc, fotoA, xL,            y, cfg.fotoW, cfg.fotoH, 'Estado inicial');
-                    dibujarFoto(doc, fotoD, xL + cfg.fotoW + GAP, y, cfg.fotoW, cfg.fotoH, 'Resultado final');
-                } else {
-                    const xSola = (pageW - cfg.fotoW) / 2;
-                    dibujarFoto(doc, fotoA || fotoD, xSola, y, cfg.fotoW, cfg.fotoH,
-                        fotoA ? 'Estado inicial' : 'Resultado final');
-                }
-                y += cfg.fotoH + 8;
-            }
-
-            // ── Total dentro de card (1 equipo) ───────────────────────────
             if (esSolaHoja) {
-                // Prioridad: total NUNCA se omite
-                y += 3;
-                doc.setDrawColor(...GRAY_MID);
-                doc.setLineWidth(0.2);
-                doc.line(xI, y, pageW - 16, y);
-                y += 5;
-
+                // Total completo con desglose de descuento
                 const tH = pctDesc > 0 ? 28 : 18;
                 doc.setFillColor(...TOTAL_BG);
                 doc.roundedRect(pageW - 82, y - 4, 66, tH, 3, 3, 'F');
@@ -499,9 +477,48 @@ export const generarRemitoPDFPremium = async ({
                 doc.setFontSize(18); doc.setFont(undefined, 'bold');
                 doc.setTextColor(...DARK);
                 doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 16, y + 1, { align: 'right' });
-
+                y += 8;
             } else {
-                // Separador entre equipos
+                // Subtotal por equipo dentro de su card
+                doc.setFontSize(7); doc.setFont(undefined, 'bold');
+                doc.setTextColor(...META_TEXT);
+                doc.text(`Subtotal equipo ${idx + 1}`, pageW - 78, y);
+                doc.setFontSize(11); doc.setFont(undefined, 'bold');
+                doc.setTextColor(...DARK);
+                doc.text(`$ ${subtotalEquipo.toLocaleString('es-AR')}`, pageW - 16, y + 1, { align: 'right' });
+                y += 8;
+            }
+
+            // ── Fotos — SIEMPRE al final del bloque, después del total ────
+            const fotoA  = await cargarFoto(item.fotoAntes);
+            const fotoD  = await cargarFoto(item.fotoDespues);
+            const nFotos = (fotoA ? 1 : 0) + (fotoD ? 1 : 0);
+
+            if (nFotos > 0) {
+                if (!esSolaHoja && y + cfg.fotoH + 16 > MARGEN_INF) { doc.addPage(); y = 18; }
+
+                doc.setFontSize(6);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(...RED);
+                doc.text('EVIDENCIA DEL SERVICIO', xI, y + 3);
+                y += 9;
+
+                if (nFotos === 2) {
+                    const GAP    = 8;
+                    const totalW = cfg.fotoW * 2 + GAP;
+                    const xL     = (pageW - totalW) / 2;
+                    dibujarFoto(doc, fotoA, xL,                    y, cfg.fotoW, cfg.fotoH, 'Estado inicial');
+                    dibujarFoto(doc, fotoD, xL + cfg.fotoW + GAP,  y, cfg.fotoW, cfg.fotoH, 'Resultado final');
+                } else {
+                    const xSola = (pageW - cfg.fotoW) / 2;
+                    dibujarFoto(doc, fotoA || fotoD, xSola, y, cfg.fotoW, cfg.fotoH,
+                        fotoA ? 'Estado inicial' : 'Resultado final');
+                }
+                y += cfg.fotoH + 8;
+            }
+
+            // Separador entre equipos (multi-equipo)
+            if (!esSolaHoja) {
                 if (idx < ticketItems.length - 1) {
                     y += 4;
                     doc.setDrawColor(...GRAY_MID);
