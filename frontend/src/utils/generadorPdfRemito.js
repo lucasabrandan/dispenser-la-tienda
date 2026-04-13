@@ -6,6 +6,7 @@ import {
     procesarFecha, dibujarHeaderPDF, dibujarHeaderPDFCompacto, dibujarFooterPDF
 } from './pdfTheme';
 import { construirUrlFoto } from './construirUrlFoto';
+import api from '../services/api';
 
 // ── Paleta ───────────────────────────────────────────────────────────────────
 const CARD_BG     = [248, 248, 247];
@@ -237,8 +238,11 @@ export const generarRemitoPDFPremium = async ({
 
     // ── Número único de documento ────────────────────────────────────────────
     const nroDoc = generarNroDocumento(esPresupuesto, fecha, tecnico || 'TEC');
-    // Persistir para que el buscador pueda filtrar por él
-    if (servicioId) localStorage.setItem(`pdf_nro_${servicioId}`, nroDoc);
+    if (servicioId) {
+        // Guardar en DB (persistente en cualquier dispositivo) + cache local de respaldo
+        api.patch(`/servicios/${servicioId}/nro-doc`, { nroDocumento: nroDoc }).catch(() => {});
+        localStorage.setItem(`pdf_nro_${servicioId}`, nroDoc);
+    }
 
     // ── Tamaños para modo múltiples equipos (compacto) ───────────────────────
     const FOTO_W_MULTI = 50;

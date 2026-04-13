@@ -19,5 +19,6 @@ public record ServicioDTO(
         String estado,
         String fotoRemito,
         java.math.BigDecimal descuentoPorcentaje,
-        String observaciones
+        String observaciones,
+        String nroDocumento
 ) {}

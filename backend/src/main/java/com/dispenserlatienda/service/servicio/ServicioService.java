@@ -223,8 +223,17 @@ public class ServicioService {
                 s.getEstado() != null ? s.getEstado().name() : "PRESUPUESTO",
                 s.getFotoRemito(),
                 s.getDescuentoPorcentaje(),
-                s.getObservaciones()
+                s.getObservaciones(),
+                s.getNroDocumento()
         );
+    }
+
+    @Transactional
+    public ServicioDTO guardarNroDocumento(Long id, String nroDocumento) {
+        Servicio s = servicioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe el servicio " + id));
+        s.setNroDocumento(nroDocumento);
+        return mapToDTO(servicioRepository.save(s));
     }
 
     @Transactional(readOnly = true)

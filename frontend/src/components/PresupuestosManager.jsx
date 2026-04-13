@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react'; // eslint-disable-line no-unused-vars
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useFiltros } from '../hooks/useFiltros';
@@ -127,8 +127,6 @@ export default function PresupuestosManager() {
     const [presupuestos, setPresupuestos] = useState([]);
     const [cargando, setCargando]         = useState(true);
     const [modalDetalle, setModalDetalle] = useState(null);
-    // Clave para refrescar nroDoc de localStorage cuando se genera un PDF
-    const [pdfKey, setPdfKey] = useState(0);
 
     useEffect(() => { cargar(); }, []);
 
@@ -195,16 +193,13 @@ export default function PresupuestosManager() {
             fechaServicio: s.fecha,
             leyenda:       s.observaciones || '',
         });
-        // Refrescar para que el nroDoc aparezca en el buscador
-        setPdfKey(k => k + 1);
     }, []);
 
-    // Augmentar con nroDocPdf guardado en localStorage al generar cada PDF
-    // pdfKey fuerza re-cómputo cuando se genera un nuevo PDF en esta sesión
+    // nroDocumento viene de la DB (ServicioDTO); cache localStorage como respaldo para datos antiguos
     const presupuestosConNro = useMemo(() => presupuestos.map(p => ({
         ...p,
-        nroDocPdf: localStorage.getItem(`pdf_nro_${p.id}`) || '',
-    })), [presupuestos, pdfKey]); // eslint-disable-line react-hooks/exhaustive-deps
+        nroDocPdf: p.nroDocumento || localStorage.getItem(`pdf_nro_${p.id}`) || '',
+    })), [presupuestos]);
 
     const stats = useMemo(() => ({
         total:     presupuestos.reduce((a, p) => a + calcularTotal(p), 0),

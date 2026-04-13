@@ -64,7 +64,6 @@ export default function ServicioList({ onEditar }) {
     const [servicios, setServicios]       = useState([]);
     const [modalDetalle, setModalDetalle] = useState(null);
     const [tipoFiltro, setTipoFiltro]     = useState('TODOS');
-    const [pdfKey, setPdfKey]             = useState(0);
 
     useEffect(() => { cargarServicios(); }, []);
 
@@ -100,11 +99,11 @@ export default function ServicioList({ onEditar }) {
     const calcularCosto = (s) =>
         s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
 
-    // Augmentar con nroDocPdf guardado en localStorage al generar cada PDF
+    // nroDocumento viene de la DB; localStorage como respaldo para datos generados antes de este cambio
     const serviciosConNro = React.useMemo(() => servicios.map(s => ({
         ...s,
-        nroDocPdf: localStorage.getItem(`pdf_nro_${s.id}`) || '',
-    })), [servicios, pdfKey]); // eslint-disable-line react-hooks/exhaustive-deps
+        nroDocPdf: s.nroDocumento || localStorage.getItem(`pdf_nro_${s.id}`) || '',
+    })), [servicios]);
 
     const serviciosFiltrados = tipoFiltro === 'TODOS'
         ? serviciosConNro
@@ -296,7 +295,7 @@ export default function ServicioList({ onEditar }) {
                                                 fechaServicio: s.fecha,
                                                 descuentoPorcentaje: s.descuentoPorcentaje || 0,
                                                 leyenda: s.observaciones || s.leyenda || '',
-                                            }).then(() => setPdfKey(k => k + 1));
+                                            });
                                         }}
                                         className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]"
                                         title="Generar PDF">

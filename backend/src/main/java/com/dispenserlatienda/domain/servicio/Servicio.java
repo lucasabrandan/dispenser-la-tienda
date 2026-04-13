@@ -50,6 +50,10 @@ public class Servicio {
     @Column(name = "descuento_porcentaje")
     private java.math.BigDecimal descuentoPorcentaje;
 
+    // Número de documento generado al crear el PDF (PP-1304-LB-01 / RS-...)
+    @Column(name = "nro_documento", length = 30)
+    private String nroDocumento;
+
     @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ServicioItem> items = new ArrayList<>();
 
@@ -102,4 +106,7 @@ public class Servicio {
 
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+
+    public String getNroDocumento() { return nroDocumento; }
+    public void setNroDocumento(String nroDocumento) { this.nroDocumento = nroDocumento; }
 }

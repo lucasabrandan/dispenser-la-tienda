@@ -66,6 +66,15 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado));
     }
 
+    // PATCH: Guardar número de documento generado al crear el PDF
+    @PatchMapping("/{id}/nro-doc")
+    public ResponseEntity<Void> guardarNroDoc(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> payload) {
+        servicioService.guardarNroDocumento(id, payload.get("nroDocumento"));
+        return ResponseEntity.noContent().build();
+    }
+
     // DELETE: Eliminar servicio
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
