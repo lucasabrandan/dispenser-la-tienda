@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { exportarGastosCSV } from '../../utils/exportarCSV';
 
 // Estilo base para inputs del formulario
 const inputCls = `
@@ -100,6 +101,15 @@ export default function DashboardFinanzas() {
                         className="px-4 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 disabled:opacity-50">
                         {cargando ? 'Cargando...' : 'Actualizar'}
                     </button>
+                    {gastos.length > 0 && (
+                        <button
+                            onClick={() => exportarGastosCSV(gastos, filtroMes)}
+                            title="Exportar gastos a CSV"
+                            className="px-4 py-3 rounded-xl font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                        >
+                            CSV
+                        </button>
+                    )}
                 </div>
             </div>
 

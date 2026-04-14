@@ -1,12 +1,13 @@
 import React from 'react';
 
-export default function EquipoItem({ 
-    equipo, 
-    cliente, 
-    onEditar, 
-    onArchivar, 
-    onRestaurar, 
-    onEliminarDefinitivo 
+export default function EquipoItem({
+    equipo,
+    cliente,
+    onEditar,
+    onArchivar,
+    onRestaurar,
+    onEliminarDefinitivo,
+    onVerHistorial,
 }) {
     const isArchivado = equipo.activo === false;
 
@@ -32,14 +33,23 @@ export default function EquipoItem({
                 
                 {!isArchivado && (
                     <>
-                        <button 
+                        {onVerHistorial && (
+                            <button
+                                onClick={() => onVerHistorial(equipo)}
+                                className="p-1.5 bg-[#D48800]/10 dark:bg-[#F0A500]/10 rounded-lg hover:bg-[#D48800] hover:text-white transition-all shadow-sm"
+                                title="Ver historial completo"
+                            >
+                                <span className="text-[10px]">📋</span>
+                            </button>
+                        )}
+                        <button
                             onClick={() => onEditar(equipo, cliente)}
                             className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                             title="Editar equipo"
                         >
                             <span className="text-[10px]">✏️</span>
                         </button>
-                        <button 
+                        <button
                             onClick={() => onArchivar(equipo)}
                             className="p-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg hover:bg-amber-500 hover:text-white transition-all shadow-sm"
                             title="Archivar (preserva historial)"

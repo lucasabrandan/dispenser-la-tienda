@@ -6,6 +6,7 @@ import { useFiltros } from '../../hooks/useFiltros';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion from '../ui/Paginacion';
 import { useMontos } from '../../context/MontosContext';
+import { exportarServiciosCSV } from '../../utils/exportarCSV';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -63,13 +64,22 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                     </h2>
                     <p className="text-[11px] font-medium mt-1 text-[#A8A29E]">Gestión de servicios</p>
                 </div>
-                <button
-                    onClick={() => setModalCrear(true)}
-                    className="h-10 px-5 rounded-xl font-bold text-xs text-white uppercase transition-all active:scale-95 hover:opacity-90"
-                    style={{ background: '#D13A28' }}
-                >
-                    + Nuevo
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => exportarServiciosCSV(filtros.itemsFiltrados)}
+                        title="Exportar a CSV"
+                        className="h-10 px-4 rounded-xl font-bold text-xs uppercase transition-all active:scale-95 hover:opacity-90 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                    >
+                        CSV
+                    </button>
+                    <button
+                        onClick={() => setModalCrear(true)}
+                        className="h-10 px-5 rounded-xl font-bold text-xs text-white uppercase transition-all active:scale-95 hover:opacity-90"
+                        style={{ background: '#D13A28' }}
+                    >
+                        + Nuevo
+                    </button>
+                </div>
             </div>
 
             <div className="px-4 md:px-0 space-y-3">

@@ -6,6 +6,7 @@ import VentaList   from './VentaList';
 import VentaForm   from './VentaForm';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion   from '../ui/Paginacion';
+import { exportarVentasCSV } from '../../utils/exportarCSV';
 
 const ESTADOS_VENTA = [
     { value: 'PRESUPUESTO', label: 'Pendiente' },
@@ -52,12 +53,21 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                         Gestión comercial
                     </p>
                 </div>
-                <button
-                    onClick={() => setModalCrear(true)}
-                    className="h-10 px-5 rounded-xl font-bold text-xs text-white uppercase transition-all active:scale-95 hover:opacity-90 bg-[#D48800] dark:bg-[#F0A500]"
-                >
-                    + Nueva Venta
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => exportarVentasCSV(filtros.itemsFiltrados)}
+                        title="Exportar a CSV"
+                        className="h-10 px-4 rounded-xl font-bold text-xs uppercase transition-all active:scale-95 hover:opacity-90 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                    >
+                        CSV
+                    </button>
+                    <button
+                        onClick={() => setModalCrear(true)}
+                        className="h-10 px-5 rounded-xl font-bold text-xs text-white uppercase transition-all active:scale-95 hover:opacity-90 bg-[#D48800] dark:bg-[#F0A500]"
+                    >
+                        + Nueva Venta
+                    </button>
+                </div>
             </div>
 
             <VentaStats stats={stats} />

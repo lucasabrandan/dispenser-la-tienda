@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import EquipoItem from '../EquipoItem';
+import HistorialEquipoModal from '../equipo/HistorialEquipoModal';
 import { abrirMaps, abrirWhatsApp } from '../../utils/clienteUtils';
 
 // Avatar con iniciales del cliente
@@ -43,6 +44,7 @@ export default function ClienteCard({
 }) {
     const [verHistorial, setVerHistorial] = useState(false);
     const [historialExpandido, setHistorialExpandido] = useState(false);
+    const [equipoHistorial, setEquipoHistorial] = useState(null);
 
     const sedesCli          = sedes.filter(s => s.cliente?.id === cliente.id);
     const eqCli             = equipos.filter(eq => sedesCli.map(s => s.id).includes(eq.sede?.id));
@@ -211,6 +213,7 @@ export default function ClienteCard({
                                             onArchivar={onArchivarEquipo}
                                             onRestaurar={onRestaurarEquipo}
                                             onEliminarDefinitivo={onEliminarEquipoDefinitivo}
+                                            onVerHistorial={setEquipoHistorial}
                                         />
                                     ))}
                                 </div>
@@ -247,6 +250,15 @@ export default function ClienteCard({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modal historial por equipo — usa todos los servicios para no depender del filtro por cliente */}
+            {equipoHistorial && (
+                <HistorialEquipoModal
+                    equipo={equipoHistorial}
+                    servicios={servicios}
+                    onClose={() => setEquipoHistorial(null)}
+                />
             )}
         </div>
     );
