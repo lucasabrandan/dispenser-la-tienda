@@ -28,8 +28,8 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
         const cargar = async () => {
             try {
                 const [c, r] = await Promise.all([
-                    api.get('/clientes?page=0&size=1000'),
-                    api.get('/repuestos?page=0&size=1000')
+                    api.get('/clientes?page=0&size=500'),
+                    api.get('/repuestos?page=0&size=500')
                 ]);
                 setClientes(c.data.content || c.data);
                 setRepuestos(r.data.content || r.data);

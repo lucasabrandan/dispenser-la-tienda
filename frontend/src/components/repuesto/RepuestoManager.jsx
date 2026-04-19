@@ -3,6 +3,7 @@ import { useRepuestoManager } from '../../hooks/useRepuestoManager';
 import RepuestoCard from './RepuestoCard';
 import RepuestoModal from './RepuestoModal';
 import ModalPrecioMasivo from '../productos/Modalpreciomasivo';
+import Paginacion from '../ui/Paginacion';
 
 /**
  * RepuestoManager
@@ -11,7 +12,8 @@ import ModalPrecioMasivo from '../productos/Modalpreciomasivo';
  */
 export default function RepuestoManager() {
     const {
-        productosFiltrados,
+        productosFiltrados, productosPagina,
+        pagina, totalPaginas, irA, next, prev,
         modalAbierto, productoEdicion,
         busqueda, setBusqueda,
         seleccionados, modoSeleccion, setModoSeleccion,
@@ -105,13 +107,14 @@ export default function RepuestoManager() {
             )}
 
             {/* LISTADO */}
+            <Paginacion pagina={pagina} totalPaginas={totalPaginas} irA={irA} next={next} prev={prev} />
             <div className="grid gap-3">
                 {productosFiltrados.length === 0 ? (
                     <div className="text-center p-10 text-slate-400 font-semibold">
                         {busqueda ? `Sin resultados para "${busqueda}"` : 'No hay productos. Creá uno.'}
                     </div>
                 ) : (
-                    productosFiltrados.map(r => (
+                    productosPagina.map(r => (
                         <RepuestoCard
                             key={r.id}
                             repuesto={r}
@@ -124,6 +127,7 @@ export default function RepuestoManager() {
                     ))
                 )}
             </div>
+            <Paginacion pagina={pagina} totalPaginas={totalPaginas} irA={irA} next={next} prev={prev} />
 
             {/* MODAL PRECIO MASIVO */}
             {modalPrecio && (

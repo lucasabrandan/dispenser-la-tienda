@@ -3,6 +3,7 @@ package com.dispenserlatienda.controller.servicio;
 import com.dispenserlatienda.dto.servicio.EstadisticasMensualDTO;
 import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
 import com.dispenserlatienda.dto.servicio.ServicioDTO;
+import com.dispenserlatienda.dto.servicio.ServicioResumenDTO;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.service.servicio.ServicioService;
 import org.springframework.data.domain.Page;
@@ -31,10 +32,23 @@ public class ServicioController {
         this.servicioRepository = servicioRepository;
     }
 
-    // GET: Listar todos los servicios con paginación
+    // GET: Listar servicios con filtros opcionales (tipo, estado, busqueda, desde, hasta)
     @GetMapping
-    public ResponseEntity<Page<ServicioDTO>> listar(Pageable pageable) {
-        return ResponseEntity.ok(servicioService.listarTodos(pageable));
+    public ResponseEntity<Page<ServicioDTO>> listar(
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String busqueda,
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta,
+            Pageable pageable) {
+        return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, pageable));
+    }
+
+    // GET: Stats resumen (totalMes, hoy, pendientes, ganancia MO) — accesible a todos los roles
+    @GetMapping("/resumen")
+    public ResponseEntity<ServicioResumenDTO> resumen(
+            @RequestParam(required = false) String tipo) {
+        return ResponseEntity.ok(servicioService.calcularResumen(tipo));
     }
 
     // GET: Obtener servicio por ID

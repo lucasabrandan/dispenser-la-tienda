@@ -32,9 +32,15 @@ public class RepuestoController {
         this.fileStorageService = fileStorageService;
     }
 
-    // GET: Listar todos los repuestos con paginación
+    // GET: Listar repuestos con búsqueda opcional por nombre o SKU
     @GetMapping
-    public ResponseEntity<Page<Repuesto>> listar(Pageable pageable) {
+    public ResponseEntity<Page<Repuesto>> listar(
+            @RequestParam(required = false) String busqueda,
+            Pageable pageable) {
+        if (busqueda != null && !busqueda.isBlank()) {
+            return ResponseEntity.ok(repuestoRepository
+                    .findByNombreContainingIgnoreCaseOrSkuContainingIgnoreCase(busqueda, busqueda, pageable));
+        }
         return ResponseEntity.ok(repuestoRepository.findAll(pageable));
     }
 

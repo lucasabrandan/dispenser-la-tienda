@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { generarPDFListaPrecios } from '../../utils/generadorPDFListaPrecios';
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
-import { generarPDFListaPrecios } from '../../utils/generadorPDFListaPrecios';
+const POR_PAGINA = 20;
 
 /**
  * useRepuestoManager
@@ -15,7 +16,8 @@ export function useRepuestoManager() {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [productoEdicion, setProductoEdicion] = useState(null);
     const [expandido, setExpandido]       = useState({});
-    const [busqueda, setBusqueda]         = useState('');
+    const [busqueda, setBusquedaRaw]      = useState('');
+    const [pagina, setPagina]             = useState(1);
     const [seleccionados, setSeleccionados] = useState(new Set());
     const [modoSeleccion, setModoSeleccion] = useState(false);
     const [modalPrecio, setModalPrecio]   = useState(false);
@@ -24,10 +26,13 @@ export function useRepuestoManager() {
 
     useEffect(() => { cargarProductos(); }, []);
 
+    // Reset de página al cambiar búsqueda
+    const setBusqueda = (v) => { setBusquedaRaw(v); setPagina(1); };
+
     // ── API ────────────────────────────────────────────────────────────────────
     const cargarProductos = async () => {
         try {
-            const res = await api.get('/repuestos?page=0&size=1000');
+            const res = await api.get('/repuestos?page=0&size=500');
             setProductos(res.data.content || res.data);
         } catch {
             toast.error('Error al cargar productos');
@@ -45,7 +50,7 @@ export function useRepuestoManager() {
         }
     };
 
-    // ── Filtrado ───────────────────────────────────────────────────────────────
+    // ── Filtrado + paginación ──────────────────────────────────────────────────
     const productosFiltrados = useMemo(() => {
         if (!busqueda.trim()) return productos;
         const q = busqueda.toLowerCase().trim();
@@ -54,6 +59,16 @@ export function useRepuestoManager() {
             p.sku?.toLowerCase().includes(q)
         );
     }, [productos, busqueda]);
+
+    const totalPaginas   = Math.max(1, Math.ceil(productosFiltrados.length / POR_PAGINA));
+    const paginaActual   = Math.min(pagina, totalPaginas);
+    const productosPagina = useMemo(() =>
+        productosFiltrados.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA),
+        [productosFiltrados, paginaActual]
+    );
+    const irA  = (n) => setPagina(Math.max(1, Math.min(n, totalPaginas)));
+    const next = ()  => irA(paginaActual + 1);
+    const prev = ()  => irA(paginaActual - 1);
 
     // ── Selección ──────────────────────────────────────────────────────────────
     const toggleSeleccion = (id) => {
@@ -66,9 +81,9 @@ export function useRepuestoManager() {
 
     const seleccionarTodos = () => {
         setSeleccionados(
-            seleccionados.size === productosFiltrados.length
+            todosSeleccionados
                 ? new Set()
-                : new Set(productosFiltrados.map(p => p.id))
+                : new Set(productosPagina.map(p => p.id))
         );
     };
 
@@ -156,7 +171,7 @@ export function useRepuestoManager() {
     };
 
     const todosSeleccionados =
-        seleccionados.size === productosFiltrados.length && productosFiltrados.length > 0;
+        seleccionados.size === productosPagina.length && productosPagina.length > 0;
 
     // Métricas para el header
     const valorTotalInventario = productos.reduce(
@@ -167,6 +182,9 @@ export function useRepuestoManager() {
     return {
         // Estado
         productos, productosFiltrados,
+        productosPagina,
+        pagina: paginaActual, totalPaginas,
+        irA, next, prev,
         modalAbierto, productoEdicion,
         expandido, busqueda, setBusqueda,
         seleccionados, modoSeleccion, setModoSeleccion,

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import ServicioForm from '../servicio/ServicioForm';
-import { useFiltros } from '../../hooks/useFiltros';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion from '../ui/Paginacion';
 import { useMontos } from '../../context/MontosContext';
@@ -30,7 +29,7 @@ const badgeInfo = (s) => {
 
 export default function ServicioManager({ clienteInicial = null, onClienteConsumido }) {
     const {
-        servicios, cargando, stats,
+        cargando, stats,
         modalCrear, setModalCrear,
         servicioEditar,
         modalDetalle, setModalDetalle,
@@ -39,19 +38,13 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
         eliminarServicio, generarPDF,
         calcularTotal, abrirEditar, cerrarModal,
         setFiltroTab,
+        filtros,
     } = useServicioManager();
 
     // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
     useEffect(() => {
         if (clienteInicial) setModalCrear(true);
     }, [clienteInicial]);
-
-    const filtros = useFiltros(servicios, {
-        porPagina: 10,
-        campoFecha: 'fecha',
-        campoEstado: 'estado',
-        campoBusqueda: ['clienteNombre', 'sedeNombre'],
-    });
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">

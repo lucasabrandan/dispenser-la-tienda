@@ -17,8 +17,10 @@ import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -47,12 +49,94 @@ public class ServicioService {
         this.objectMapper = objectMapper;
     }
 
-    // CAMBIO: Ahora devuelve Page<ServicioDTO> en lugar de List<ServicioDTO>
-    // Ejemplo: GET /api/servicios?page=0&size=20&sort=fechaServicio,desc
+    // Listado sin filtros (mantiene compatibilidad)
     @Transactional(readOnly = true)
     public Page<ServicioDTO> listarTodos(Pageable pageable) {
-        return servicioRepository.findAll(pageable)
+        return listarFiltrado(null, null, null, null, null, pageable);
+    }
+
+    // Listado con filtros opcionales: tipo, estado, búsqueda, rango de fechas
+    @Transactional(readOnly = true)
+    public Page<ServicioDTO> listarFiltrado(String tipoStr, String estadoStr,
+                                             String busqueda, String desde, String hasta,
+                                             Pageable pageable) {
+        return servicioRepository.findAll(buildSpec(tipoStr, estadoStr, busqueda, desde, hasta), pageable)
                 .map(this::mapToDTO);
+    }
+
+    // Stats resumen para el panel (totalMes, hoy, pendientes, ganancia MO)
+    @Transactional(readOnly = true)
+    public ServicioResumenDTO calcularResumen(String tipoStr) {
+        LocalDate hoy       = LocalDate.now();
+        LocalDate inicioMes = hoy.withDayOfMonth(1);
+        LocalDate finMes    = inicioMes.plusMonths(1).minusDays(1);
+
+        List<Servicio> realizados = servicioRepository.findAll(
+                buildSpec(tipoStr, "REALIZADO", null, null, null));
+        List<Servicio> pendientes = servicioRepository.findAll(
+                buildSpec(tipoStr, "PRESUPUESTO", null, null, null));
+
+        List<Servicio> delMes = realizados.stream()
+                .filter(s -> s.getFechaServicio() != null
+                        && !s.getFechaServicio().isBefore(inicioMes)
+                        && !s.getFechaServicio().isAfter(finMes))
+                .toList();
+
+        List<Servicio> deHoy = realizados.stream()
+                .filter(s -> hoy.equals(s.getFechaServicio()))
+                .toList();
+
+        double totalMes     = sumarItems(delMes);
+        double totalHoy     = sumarItems(deHoy);
+        double gananciaTotal = delMes.stream()
+                .flatMap(s -> s.getItems().stream())
+                .mapToDouble(i -> i.getCostoExtra() != null ? i.getCostoExtra().doubleValue() : 0)
+                .sum();
+        double pendientesVal = sumarItems(pendientes);
+
+        return new ServicioResumenDTO(
+                totalMes, delMes.size(),
+                totalHoy, deHoy.size(),
+                gananciaTotal,
+                pendientes.size(), pendientesVal
+        );
+    }
+
+    // Construye Specification dinámica con los filtros opcionales
+    private Specification<Servicio> buildSpec(String tipoStr, String estadoStr,
+                                               String busqueda, String desde, String hasta) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (tipoStr != null && !tipoStr.isBlank()) {
+                predicates.add(cb.equal(root.get("servicioTipo"), ServicioTipo.valueOf(tipoStr)));
+            }
+            if (estadoStr != null && !estadoStr.isBlank()) {
+                predicates.add(cb.equal(root.get("estado"), EstadoServicio.valueOf(estadoStr)));
+            }
+            if (busqueda != null && !busqueda.isBlank()) {
+                String like = "%" + busqueda.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("clienteNombre")), like),
+                        cb.like(cb.lower(root.get("sedeNombre")), like)
+                ));
+            }
+            if (desde != null && !desde.isBlank()) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("fechaServicio"), LocalDate.parse(desde)));
+            }
+            if (hasta != null && !hasta.isBlank()) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("fechaServicio"), LocalDate.parse(hasta)));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    private double sumarItems(List<Servicio> servicios) {
+        return servicios.stream()
+                .flatMap(s -> s.getItems().stream())
+                .mapToDouble(i -> i.getCosto() != null ? i.getCosto().doubleValue() : 0)
+                .sum();
     }
 
     @Transactional(readOnly = true)

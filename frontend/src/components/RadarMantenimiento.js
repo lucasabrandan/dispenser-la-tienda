@@ -11,8 +11,8 @@ export default function RadarMantenimiento() {
     const generarRadar = async () => {
         try {
             const [resClientes, resServicios] = await Promise.all([
-                api.get('/clientes?page=0&size=1000'),
-                api.get('/servicios?page=0&size=1000'),
+                api.get('/clientes?page=0&size=500'),
+                api.get('/servicios?page=0&size=500'),
             ]);
 
             const clientes  = resClientes.data.content  || resClientes.data  || [];

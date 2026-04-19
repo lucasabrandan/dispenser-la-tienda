@@ -13,10 +13,10 @@ export function useClienteData() {
         try {
             setCargando(true);
             const [resCli, resSed, resEqu, resSvc] = await Promise.all([
-                api.get('/clientes?page=0&size=1000'),
-                api.get('/sedes?page=0&size=1000'),
-                api.get('/equipos?page=0&size=1000'),
-                api.get('/servicios?page=0&size=1000'),
+                api.get('/clientes?page=0&size=500'),
+                api.get('/sedes?page=0&size=500'),
+                api.get('/equipos?page=0&size=500'),
+                api.get('/servicios?page=0&size=500&sort=fechaServicio,desc'),
             ]);
             setClientes(resCli.data.content || resCli.data);
             setSedes(resSed.data.content    || resSed.data);

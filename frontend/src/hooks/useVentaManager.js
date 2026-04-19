@@ -1,52 +1,141 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 
+// Convierte período rápido a fechas ISO para el backend
+function resolverFechas(periodoRapido, mesSelector, desde, hasta) {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    if (periodoRapido === 'TODO') return { desde: '', hasta: '' };
+    if (periodoRapido === 'MES') {
+        const ini = new Date(now.getFullYear(), now.getMonth(), 1);
+        const fin = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return { desde: fmt(ini), hasta: fmt(fin) };
+    }
+    if (periodoRapido === 'MES_ANT') {
+        const ini = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const fin = new Date(now.getFullYear(), now.getMonth(), 0);
+        return { desde: fmt(ini), hasta: fmt(fin) };
+    }
+    if (periodoRapido === 'ANO') {
+        return { desde: `${now.getFullYear()}-01-01`, hasta: `${now.getFullYear()}-12-31` };
+    }
+    if (periodoRapido === 'CUSTOM') {
+        if (mesSelector) {
+            const [y, m] = mesSelector.split('-').map(Number);
+            const ini = new Date(y, m - 1, 1);
+            const fin = new Date(y, m, 0);
+            return { desde: fmt(ini), hasta: fmt(fin) };
+        }
+        return { desde, hasta };
+    }
+    return { desde: '', hasta: '' };
+}
+
 /**
  * useVentaManager
- * Toda la lógica del módulo Ventas.
- * Maneja: lista, stats, filtros, acciones CRUD.
+ * Gestión de ventas con paginación y filtros server-side.
  */
 export function useVentaManager() {
-    const [ventas, setVentas]       = useState([]);
-    const [cargando, setCargando]   = useState(true);
-    const [busqueda, setBusqueda]   = useState('');
-    const [filtroTab, setFiltroTab] = useState('TODOS');
-    const [modalCrear, setModalCrear] = useState(false);
-    const [ventaEditar, setVentaEditar] = useState(null);
+    // ── Lista ───────────────────────────────────────────────────────────────────
+    const [ventas, setVentas]           = useState([]);
+    const [cargando, setCargando]       = useState(true);
+    const [pagina, setPagina]           = useState(0);
+    const [totalPaginas, setTotalPaginas] = useState(1);
+    const [totalItems, setTotalItems]   = useState(0);
 
-    useEffect(() => { cargarVentas(); }, []);
+    // ── Stats ────────────────────────────────────────────────────────────────────
+    const [stats, setStats] = useState({
+        totalMes: 0, cantidadMes: 0,
+        totalHoy: 0, cantidadHoy: 0,
+        pendientesCount: 0, pendientesVal: 0,
+    });
 
-    // ── API ────────────────────────────────────────────────────────────────────
-    const cargarVentas = async () => {
+    // ── Filtros ──────────────────────────────────────────────────────────────────
+    const [busquedaInput, setBusquedaInput] = useState('');
+    const [busquedaApi, setBusquedaApi]     = useState('');
+    const [estado, setEstadoInternal]       = useState('TODOS');
+    const [periodoRapido, setPeriodoRapido] = useState('MES');
+    const [mesSelector, setMesSelector]     = useState('');
+    const [desde, setDesde]                 = useState('');
+    const [hasta, setHasta]                 = useState('');
+
+    // ── Modales ──────────────────────────────────────────────────────────────────
+    const [modalCrear, setModalCrear]     = useState(false);
+    const [ventaEditar, setVentaEditar]   = useState(null);
+
+    // Debounce búsqueda
+    useEffect(() => {
+        const t = setTimeout(() => { setBusquedaApi(busquedaInput); setPagina(0); }, 500);
+        return () => clearTimeout(t);
+    }, [busquedaInput]);
+
+    // ── Setters con reset de página ──────────────────────────────────────────────
+    const setBusqueda   = (v) => setBusquedaInput(v);
+    const setEstado     = (v) => { setEstadoInternal(v); setPagina(0); };
+    const aplicarRapido = (tipo) => {
+        setPeriodoRapido(tipo); setMesSelector('');
+        setDesde(''); setHasta(''); setPagina(0);
+    };
+    const aplicarMesSelector = (val) => {
+        setMesSelector(val); setPeriodoRapido('CUSTOM');
+        setDesde(''); setHasta(''); setPagina(0);
+    };
+    const aplicarRango = (d, h) => {
+        setDesde(d); setHasta(h);
+        setPeriodoRapido('CUSTOM'); setMesSelector(''); setPagina(0);
+    };
+
+    // ── Fetch lista ──────────────────────────────────────────────────────────────
+    const cargarVentas = useCallback(async () => {
         setCargando(true);
         try {
-            const res = await api.get('/servicios?page=0&size=1000');
-            const data = res.data.content || res.data || [];
-            // Solo ventas — tipo VENTA o sin equipo
-            const soloVentas = Array.isArray(data)
-                ? data
-                    .filter(s => s.servicioTipo === 'VENTA')
-                    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-                : [];
-            setVentas(soloVentas);
+            const fechas = resolverFechas(periodoRapido, mesSelector, desde, hasta);
+            const params = {
+                tipo: 'VENTA',
+                page: pagina,
+                size: 20,
+                sort: 'fechaServicio,desc',
+            };
+            if (estado !== 'TODOS') params.estado   = estado;
+            if (busquedaApi)        params.busqueda  = busquedaApi;
+            if (fechas.desde)       params.desde     = fechas.desde;
+            if (fechas.hasta)       params.hasta     = fechas.hasta;
+
+            const res  = await api.get('/servicios', { params });
+            const page = res.data;
+            setVentas(page.content || []);
+            setTotalPaginas(page.totalPages || 1);
+            setTotalItems(page.totalElements || 0);
         } catch {
             toast.error('Error al cargar ventas');
         } finally {
             setCargando(false);
         }
-    };
+    }, [pagina, estado, busquedaApi, periodoRapido, mesSelector, desde, hasta]);
 
+    // ── Fetch stats ──────────────────────────────────────────────────────────────
+    const cargarStats = useCallback(async () => {
+        try {
+            const res = await api.get('/servicios/resumen', { params: { tipo: 'VENTA' } });
+            setStats(res.data);
+        } catch { /* stats no críticos */ }
+    }, []);
+
+    useEffect(() => { cargarVentas(); }, [cargarVentas]);
+    useEffect(() => { cargarStats(); }, [cargarStats]);
+
+    // ── Acciones ─────────────────────────────────────────────────────────────────
     const confirmarVenta = async (id) => {
         const loading = toast.loading('Confirmando venta...');
         try {
             await api.patch(`/servicios/${id}/estado`, { estado: 'REALIZADO' });
             toast.success('✅ Venta confirmada', { id: loading });
-            cargarVentas();
-        } catch {
-            toast.error('Error al confirmar', { id: loading });
-        }
+            cargarVentas(); cargarStats();
+        } catch { toast.error('Error al confirmar', { id: loading }); }
     };
 
     const eliminarVenta = async (id) => {
@@ -54,10 +143,8 @@ export function useVentaManager() {
         try {
             await api.delete(`/servicios/${id}`);
             toast.success('🗑️ Venta eliminada');
-            cargarVentas();
-        } catch {
-            toast.error('Error al eliminar');
-        }
+            cargarVentas(); cargarStats();
+        } catch { toast.error('Error al eliminar'); }
     };
 
     const generarPDF = (venta) => {
@@ -68,76 +155,43 @@ export function useVentaManager() {
             tecnico:       'Mostrador',
             ticketItems:   venta.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
             totalFinal:    calcularTotal(venta),
-            fechaServicio: venta.fecha
+            fechaServicio: venta.fecha,
         });
     };
 
-    // ── Cálculos ───────────────────────────────────────────────────────────────
     const calcularTotal = (v) =>
         v.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
 
-    const stats = useMemo(() => {
-        const cobradas   = ventas.filter(v => v.estado === 'REALIZADO');
-        const pendientes = ventas.filter(v => v.estado === 'PRESUPUESTO');
-        const hoy        = new Date().toISOString().split('T')[0];
-        const ventasHoy  = cobradas.filter(v => v.fecha === hoy);
+    const abrirEditar = (venta) => { setVentaEditar(venta); setModalCrear(true); };
+    const cerrarModal = ()       => { setModalCrear(false); setVentaEditar(null); };
 
-        const totalMes    = cobradas.reduce((a, v) => a + calcularTotal(v), 0);
-        const totalHoy    = ventasHoy.reduce((a, v) => a + calcularTotal(v), 0);
-        const pendientesVal = pendientes.reduce((a, v) => a + calcularTotal(v), 0);
-
-        return {
-            totalMes,
-            totalHoy,
-            cantidadMes:    cobradas.length,
-            cantidadHoy:    ventasHoy.length,
-            pendientesCount: pendientes.length,
-            pendientesVal,
-        };
-    }, [ventas]);
-
-    // ── Filtrado ───────────────────────────────────────────────────────────────
-    const ventasFiltradas = useMemo(() => {
-        const txt = busqueda.toLowerCase();
-        return ventas.filter(v => {
-            const pasaTab =
-                filtroTab === 'TODOS'      ? true :
-                filtroTab === 'COBRADAS'   ? v.estado === 'REALIZADO' :
-                filtroTab === 'PENDIENTES' ? v.estado === 'PRESUPUESTO' : true;
-
-            const pasaBusqueda =
-                !txt ||
-                v.clienteNombre?.toLowerCase().includes(txt) ||
-                v.sedeNombre?.toLowerCase().includes(txt) ||
-                v.items?.some(it => it.trabajoRealizado?.toLowerCase().includes(txt));
-
-            return pasaTab && pasaBusqueda;
-        });
-    }, [ventas, filtroTab, busqueda]);
-
-    const abrirEditar = (venta) => {
-        setVentaEditar(venta);
-        setModalCrear(true);
-    };
-
-    const cerrarModal = () => {
-        setModalCrear(false);
-        setVentaEditar(null);
+    // ── Objeto filtros compatible con FiltrosPanel ────────────────────────────────
+    const filtros = {
+        busqueda: busquedaInput, setBusqueda,
+        estado, setEstado,
+        periodoRapido, aplicarRapido,
+        mesSelector, aplicarMesSelector,
+        desde, hasta, aplicarRango,
+        mesesDisponibles: [],
+        totalItems,
+        pagina: pagina + 1,
+        totalPaginas,
+        itemsPagina:    ventas,
+        itemsFiltrados: ventas,
+        irA:  (n) => setPagina(n - 1),
+        next: ()  => setPagina((p) => Math.min(p + 1, totalPaginas - 1)),
+        prev: ()  => setPagina((p) => Math.max(p - 1, 0)),
     };
 
     return {
-        ventas: ventasFiltradas,
+        ventas,
         cargando, stats,
-        busqueda, setBusqueda,
-        filtroTab, setFiltroTab,
         modalCrear, setModalCrear,
         ventaEditar,
-        cargarVentas,
-        confirmarVenta,
-        eliminarVenta,
-        generarPDF,
-        calcularTotal,
-        abrirEditar,
-        cerrarModal,
+        cargarVentas: () => { cargarVentas(); cargarStats(); },
+        confirmarVenta, eliminarVenta,
+        generarPDF, calcularTotal,
+        abrirEditar, cerrarModal,
+        filtros,
     };
 }

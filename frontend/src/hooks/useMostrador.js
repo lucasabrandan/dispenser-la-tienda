@@ -26,7 +26,7 @@ export function useMostrador() {
     const inicializar = async () => {
         try {
             // 1. Buscar si ya existe el cliente MOSTRADOR
-            const res  = await api.get('/clientes?page=0&size=1000');
+            const res  = await api.get('/clientes?page=0&size=500');
             const data = res.data.content || res.data || [];
             let cliente = data.find(c =>
                 c.nombre?.toUpperCase() === 'MOSTRADOR' ||
@@ -49,7 +49,7 @@ export function useMostrador() {
             }
 
             // 3. Buscar sede del cliente MOSTRADOR
-            const resSedes = await api.get('/sedes?page=0&size=1000');
+            const resSedes = await api.get('/sedes?page=0&size=500');
             const sedes    = resSedes.data.content || resSedes.data || [];
             let sede = sedes.find(s => s.cliente?.id === cliente.id);
 

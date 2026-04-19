@@ -1,51 +1,143 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 
+// Convierte el período rápido (MES, MES_ANT, etc.) a fechas ISO para el backend
+function resolverFechas(periodoRapido, mesSelector, desde, hasta) {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    if (periodoRapido === 'TODO') return { desde: '', hasta: '' };
+    if (periodoRapido === 'MES') {
+        const ini = new Date(now.getFullYear(), now.getMonth(), 1);
+        const fin = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return { desde: fmt(ini), hasta: fmt(fin) };
+    }
+    if (periodoRapido === 'MES_ANT') {
+        const ini = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const fin = new Date(now.getFullYear(), now.getMonth(), 0);
+        return { desde: fmt(ini), hasta: fmt(fin) };
+    }
+    if (periodoRapido === 'ANO') {
+        return { desde: `${now.getFullYear()}-01-01`, hasta: `${now.getFullYear()}-12-31` };
+    }
+    if (periodoRapido === 'CUSTOM') {
+        if (mesSelector) {
+            const [y, m] = mesSelector.split('-').map(Number);
+            const ini = new Date(y, m - 1, 1);
+            const fin = new Date(y, m, 0);
+            return { desde: fmt(ini), hasta: fmt(fin) };
+        }
+        return { desde, hasta };
+    }
+    return { desde: '', hasta: '' };
+}
+
 /**
  * useServicioManager
- * Toda la lógica del módulo Servicio Técnico.
+ * Gestión de servicios técnicos con paginación y filtros server-side.
  */
 export function useServicioManager() {
-    const [servicios, setServicios]   = useState([]);
-    const [cargando, setCargando]     = useState(true);
-    const [busqueda, setBusqueda]     = useState('');
-    const [filtroTab, setFiltroTab]   = useState('TODOS');
-    const [modalCrear, setModalCrear] = useState(false);
-    const [servicioEditar, setServicioEditar] = useState(null);
-    const [modalDetalle, setModalDetalle]     = useState(null);
+    // ── Lista ───────────────────────────────────────────────────────────────────
+    const [servicios, setServicios]     = useState([]);
+    const [cargando, setCargando]       = useState(true);
+    const [pagina, setPagina]           = useState(0); // 0-based para Spring
+    const [totalPaginas, setTotalPaginas] = useState(1);
+    const [totalItems, setTotalItems]   = useState(0);
 
-    useEffect(() => { cargarServicios(); }, []);
+    // ── Stats ────────────────────────────────────────────────────────────────────
+    const [stats, setStats] = useState({
+        totalMes: 0, cantidadMes: 0,
+        totalHoy: 0, cantidadHoy: 0,
+        gananciaTotal: 0,
+        pendientesCount: 0, pendientesVal: 0,
+    });
 
-    // ── API ────────────────────────────────────────────────────────────────────
-    const cargarServicios = async () => {
+    // ── Filtros (interfaz compatible con FiltrosPanel) ──────────────────────────
+    const [busquedaInput, setBusquedaInput]   = useState('');
+    const [busquedaApi, setBusquedaApi]       = useState('');
+    const [estado, setEstadoInternal]         = useState('TODOS');
+    const [periodoRapido, setPeriodoRapido]   = useState('MES');
+    const [mesSelector, setMesSelector]       = useState('');
+    const [desde, setDesde]                   = useState('');
+    const [hasta, setHasta]                   = useState('');
+
+    // ── Modales ──────────────────────────────────────────────────────────────────
+    const [modalCrear, setModalCrear]             = useState(false);
+    const [servicioEditar, setServicioEditar]     = useState(null);
+    const [modalDetalle, setModalDetalle]         = useState(null);
+
+    // Debounce de búsqueda — 500ms para no saturar la API
+    useEffect(() => {
+        const t = setTimeout(() => { setBusquedaApi(busquedaInput); setPagina(0); }, 500);
+        return () => clearTimeout(t);
+    }, [busquedaInput]);
+
+    // ── Setters con reset de página ──────────────────────────────────────────────
+    const setBusqueda   = (v) => setBusquedaInput(v);
+    const setEstado     = (v) => { setEstadoInternal(v); setPagina(0); };
+    const aplicarRapido = (tipo) => {
+        setPeriodoRapido(tipo); setMesSelector('');
+        setDesde(''); setHasta(''); setPagina(0);
+    };
+    const aplicarMesSelector = (val) => {
+        setMesSelector(val); setPeriodoRapido('CUSTOM');
+        setDesde(''); setHasta(''); setPagina(0);
+    };
+    const aplicarRango = (d, h) => {
+        setDesde(d); setHasta(h);
+        setPeriodoRapido('CUSTOM'); setMesSelector(''); setPagina(0);
+    };
+
+    // ── Fetch lista ──────────────────────────────────────────────────────────────
+    const cargarServicios = useCallback(async () => {
         setCargando(true);
         try {
-            const res  = await api.get('/servicios?page=0&size=1000');
-            const data = res.data.content || res.data || [];
-            const soloTecnica = Array.isArray(data)
-                ? data
-                    .filter(s => s.servicioTipo === 'TECNICA')
-                    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-                : [];
-            setServicios(soloTecnica);
+            const fechas = resolverFechas(periodoRapido, mesSelector, desde, hasta);
+            const params = {
+                tipo: 'TECNICA',
+                page: pagina,
+                size: 20,
+                sort: 'fechaServicio,desc',
+            };
+            if (estado !== 'TODOS')  params.estado  = estado;
+            if (busquedaApi)         params.busqueda = busquedaApi;
+            if (fechas.desde)        params.desde    = fechas.desde;
+            if (fechas.hasta)        params.hasta    = fechas.hasta;
+
+            const res = await api.get('/servicios', { params });
+            const page = res.data;
+            setServicios(page.content || []);
+            setTotalPaginas(page.totalPages || 1);
+            setTotalItems(page.totalElements || 0);
         } catch {
             toast.error('Error al cargar servicios');
         } finally {
             setCargando(false);
         }
-    };
+    }, [pagina, estado, busquedaApi, periodoRapido, mesSelector, desde, hasta]);
 
+    // ── Fetch stats (separado de la lista) ───────────────────────────────────────
+    const cargarStats = useCallback(async () => {
+        try {
+            const res = await api.get('/servicios/resumen', { params: { tipo: 'TECNICA' } });
+            setStats(res.data);
+        } catch { /* stats no críticos — silenciar */ }
+    }, []);
+
+    useEffect(() => { cargarServicios(); }, [cargarServicios]);
+    useEffect(() => { cargarStats(); },   [cargarStats]);
+
+    // ── Acciones ─────────────────────────────────────────────────────────────────
     const confirmarServicio = async (id) => {
         const loading = toast.loading('Confirmando servicio...');
         try {
             await api.patch(`/servicios/${id}/estado`, { estado: 'REALIZADO' });
             toast.success('✅ Servicio confirmado', { id: loading });
-            cargarServicios();
-        } catch {
-            toast.error('Error al confirmar', { id: loading });
-        }
+            cargarServicios(); cargarStats();
+        } catch { toast.error('Error al confirmar', { id: loading }); }
     };
 
     const rechazarServicio = async (id) => {
@@ -54,10 +146,8 @@ export function useServicioManager() {
         try {
             await api.patch(`/servicios/${id}/estado`, { estado: 'RECHAZADO' });
             toast.success('Presupuesto rechazado', { id: loading });
-            cargarServicios();
-        } catch {
-            toast.error('Error al rechazar', { id: loading });
-        }
+            cargarServicios(); cargarStats();
+        } catch { toast.error('Error al rechazar', { id: loading }); }
     };
 
     const eliminarServicio = async (id) => {
@@ -65,16 +155,13 @@ export function useServicioManager() {
         try {
             await api.delete(`/servicios/${id}`);
             toast.success('🗑️ Registro eliminado');
-            cargarServicios();
-        } catch {
-            toast.error('Error al eliminar');
-        }
+            cargarServicios(); cargarStats();
+        } catch { toast.error('Error al eliminar'); }
     };
 
     const generarPDF = async (servicio) => {
         const loading = toast.loading('Preparando PDF...');
         try {
-            // Normalizar campos: el backend usa equipoModelo/equipoUbicacion/trabajoRealizado
             const itemsConFotos = (servicio.items || []).map(it => ({
                 ...it,
                 totalCalculado:  parseFloat(it.costo)      || 0,
@@ -85,27 +172,25 @@ export function useServicioManager() {
             }));
             toast.dismiss(loading);
             await generarRemitoPDFPremium({
-                esPresupuesto: servicio.estado === 'PRESUPUESTO',
+                esPresupuesto:       servicio.estado === 'PRESUPUESTO',
                 cliente: {
-                    nombre:        servicio.clienteNombre,
-                    telefono:      servicio.clienteTelefono,
-                    email:         servicio.clienteEmail,
-                    cuilDni:       servicio.clienteDni,
-                    condicionIva:  servicio.clienteCondicionIva,
+                    nombre:       servicio.clienteNombre,
+                    telefono:     servicio.clienteTelefono,
+                    email:        servicio.clienteEmail,
+                    cuilDni:      servicio.clienteDni,
+                    condicionIva: servicio.clienteCondicionIva,
                 },
                 sede: {
                     nombreSede: servicio.sedeNombre,
                     direccion:  servicio.sedeDireccion,
                 },
-                tecnico:            localStorage.getItem('tecnico_nombre') || 'Técnico',
-                ticketItems:        itemsConFotos,
-                totalFinal:         calcularTotal(servicio),
-                fechaServicio:      servicio.fecha,
+                tecnico:             localStorage.getItem('tecnico_nombre') || 'Técnico',
+                ticketItems:         itemsConFotos,
+                totalFinal:          calcularTotal(servicio),
+                fechaServicio:       servicio.fecha,
                 descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
-                leyenda:            servicio.observaciones || '',
-                // El DTO puede devolver equipoSerial='MOSTRADOR' aunque sea TECNICA
-                // (equipo no registrado en inventario), así que usamos el tipo del backend
-                esTecnicoForzado:   servicio.servicioTipo === 'TECNICA',
+                leyenda:             servicio.observaciones || '',
+                esTecnicoForzado:    servicio.servicioTipo === 'TECNICA',
             });
         } catch (e) {
             console.error('Error generando PDF:', e);
@@ -113,80 +198,48 @@ export function useServicioManager() {
         }
     };
 
-    // ── Cálculos ───────────────────────────────────────────────────────────────
     const calcularTotal = (s) =>
         s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
 
-    const stats = useMemo(() => {
-        const realizados  = servicios.filter(s => s.estado === 'REALIZADO');
-        const pendientes  = servicios.filter(s => s.estado === 'PRESUPUESTO');
-        const hoy         = new Date().toISOString().split('T')[0];
-        const serviciosHoy = realizados.filter(s => s.fecha === hoy);
+    const abrirEditar   = (servicio) => { setServicioEditar(servicio); setModalCrear(true); };
+    const cerrarModal   = ()          => { setModalCrear(false); setServicioEditar(null); };
 
-        const totalMes      = realizados.reduce((a, s) => a + calcularTotal(s), 0);
-        const totalHoy      = serviciosHoy.reduce((a, s) => a + calcularTotal(s), 0);
-        const pendientesVal = pendientes.reduce((a, s) => a + calcularTotal(s), 0);
-
-        // Ganancia aproximada — suma de costoExtra (MO) de todos los items
-        const gananciaTotal = realizados.reduce((a, s) =>
-            a + (s.items?.reduce((b, it) => b + Number(it.costoExtra || 0), 0) || 0), 0);
-
-        return {
-            totalMes,
-            totalHoy,
-            cantidadMes:     realizados.length,
-            cantidadHoy:     serviciosHoy.length,
-            pendientesCount: pendientes.length,
-            pendientesVal,
-            gananciaTotal,
-        };
-    }, [servicios]);
-
-    // ── Filtrado ───────────────────────────────────────────────────────────────
-    const serviciosFiltrados = useMemo(() => {
-        const txt = busqueda.toLowerCase();
-        return servicios.filter(s => {
-            const pasaTab =
-                filtroTab === 'TODOS'       ? true :
-                filtroTab === 'REALIZADOS'  ? s.estado === 'REALIZADO' :
-                filtroTab === 'PENDIENTES'  ? s.estado === 'PRESUPUESTO' : true;
-
-            const pasaBusqueda =
-                !txt ||
-                s.clienteNombre?.toLowerCase().includes(txt) ||
-                s.sedeNombre?.toLowerCase().includes(txt) ||
-                s.items?.some(it => it.equipoSerial?.toLowerCase().includes(txt) ||
-                    it.trabajoRealizado?.toLowerCase().includes(txt));
-
-            return pasaTab && pasaBusqueda;
-        });
-    }, [servicios, filtroTab, busqueda]);
-
-    const abrirEditar = (servicio) => {
-        setServicioEditar(servicio);
-        setModalCrear(true);
+    // setFiltroTab: alias para compatibilidad con ServicioManager (click en card Pendientes)
+    const setFiltroTab = (tab) => {
+        if      (tab === 'PENDIENTES') setEstado('PRESUPUESTO');
+        else if (tab === 'REALIZADOS') setEstado('REALIZADO');
+        else                           setEstado('TODOS');
     };
 
-    const cerrarModal = () => {
-        setModalCrear(false);
-        setServicioEditar(null);
+    // ── Objeto filtros compatible con FiltrosPanel ────────────────────────────────
+    const filtros = {
+        busqueda: busquedaInput, setBusqueda,
+        estado, setEstado,
+        periodoRapido, aplicarRapido,
+        mesSelector, aplicarMesSelector,
+        desde, hasta, aplicarRango,
+        mesesDisponibles: [], // sin dropdown de meses en modo server-side
+        totalItems,
+        pagina: pagina + 1,       // FiltrosPanel y Paginacion usan 1-based
+        totalPaginas,
+        itemsPagina:    servicios,
+        itemsFiltrados: servicios, // para exportarCSV
+        irA:  (n) => setPagina(n - 1),
+        next: ()  => setPagina((p) => Math.min(p + 1, totalPaginas - 1)),
+        prev: ()  => setPagina((p) => Math.max(p - 1, 0)),
     };
 
     return {
-        servicios: serviciosFiltrados,
+        servicios,
         cargando, stats,
-        busqueda, setBusqueda,
-        filtroTab, setFiltroTab,
         modalCrear, setModalCrear,
         servicioEditar,
         modalDetalle, setModalDetalle,
-        cargarServicios,
-        confirmarServicio,
-        rechazarServicio,
-        eliminarServicio,
-        generarPDF,
-        calcularTotal,
-        abrirEditar,
-        cerrarModal,
+        cargarServicios: () => { cargarServicios(); cargarStats(); },
+        confirmarServicio, rechazarServicio,
+        eliminarServicio, generarPDF,
+        calcularTotal, abrirEditar, cerrarModal,
+        setFiltroTab,
+        filtros,
     };
 }

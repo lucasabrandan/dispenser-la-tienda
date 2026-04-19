@@ -133,11 +133,13 @@ export default function PresupuestosManager() {
     const cargar = async () => {
         setCargando(true);
         try {
-            const res  = await api.get('/servicios?page=0&size=1000');
+            // Filtra directo en el backend — solo PRESUPUESTO, sin limite de 1000
+            const res  = await api.get('/servicios', {
+                params: { estado: 'PRESUPUESTO', page: 0, size: 200, sort: 'fechaServicio,desc' }
+            });
             const data = res.data.content || res.data || [];
             setPresupuestos(Array.isArray(data)
-                ? data.filter(s => s.estado === 'PRESUPUESTO')
-                      .sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha))
+                ? data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha))
                 : []);
         } catch { toast.error('Error al cargar presupuestos'); }
         finally  { setCargando(false); }

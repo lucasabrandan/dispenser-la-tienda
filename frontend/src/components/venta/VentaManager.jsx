@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useVentaManager } from '../../hooks/useVentaManager';
-import { useFiltros } from '../../hooks/useFiltros';
 import VentaStats  from './VentaStats';
 import VentaList   from './VentaList';
 import VentaForm   from './VentaForm';
@@ -16,7 +15,7 @@ const ESTADOS_VENTA = [
 
 export default function VentaManager({ clienteInicial = null, onClienteConsumido }) {
     const {
-        ventas, cargando, stats,
+        cargando, stats,
         modalCrear, setModalCrear,
         ventaEditar,
         cargarVentas,
@@ -26,19 +25,13 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
         calcularTotal,
         abrirEditar,
         cerrarModal,
+        filtros,
     } = useVentaManager();
 
     // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
     useEffect(() => {
         if (clienteInicial) setModalCrear(true);
     }, [clienteInicial]);
-
-    const filtros = useFiltros(ventas, {
-        porPagina: 10,
-        campoFecha: 'fecha',
-        campoEstado: 'estado',
-        campoBusqueda: ['clienteNombre', 'sedeNombre'],
-    });
 
     return (
         <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] p-4 pb-28 font-sans transition-colors">

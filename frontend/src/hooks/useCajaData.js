@@ -14,7 +14,7 @@ export function useCajaData() {
     const cargar = async () => {
         setCargando(true);
         try {
-            const res  = await api.get('/servicios?page=0&size=1000');
+            const res  = await api.get('/servicios?page=0&size=500&sort=fechaServicio,desc');
             const data = res.data.content || res.data || [];
             setServicios(Array.isArray(data) ? data : []);
         } catch {

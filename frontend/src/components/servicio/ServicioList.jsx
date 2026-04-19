@@ -68,7 +68,7 @@ export default function ServicioList({ onEditar }) {
     useEffect(() => { cargarServicios(); }, []);
 
     const cargarServicios = () => {
-        api.get('/servicios?page=0&size=1000')
+        api.get('/servicios?page=0&size=500&sort=fechaServicio,desc')
             .then(res => {
                 const data = res.data.content || res.data || [];
                 setServicios(Array.isArray(data)

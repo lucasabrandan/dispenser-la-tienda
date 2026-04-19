@@ -47,10 +47,10 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     const cargar = async () => {
       try {
         const [c, s, e, r] = await Promise.all([
-          api.get('/clientes?page=0&size=1000'),
-          api.get('/sedes?page=0&size=1000'),
-          api.get('/equipos?page=0&size=1000'),
-          api.get('/repuestos?page=0&size=1000')
+          api.get('/clientes?page=0&size=500'),
+          api.get('/sedes?page=0&size=500'),
+          api.get('/equipos?page=0&size=500'),
+          api.get('/repuestos?page=0&size=500')
         ]);
         setDb({
           clientes:  c.data.content || c.data,
@@ -479,10 +479,10 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   const refrescarDatos = async () => {
     try {
       const [c, s, e, r] = await Promise.all([
-        api.get('/clientes?page=0&size=1000'),
-        api.get('/sedes?page=0&size=1000'),
-        api.get('/equipos?page=0&size=1000'),
-        api.get('/repuestos?page=0&size=1000')
+        api.get('/clientes?page=0&size=500'),
+        api.get('/sedes?page=0&size=500'),
+        api.get('/equipos?page=0&size=500'),
+        api.get('/repuestos?page=0&size=500')
       ]);
       setDb({
         clientes:  c.data.content || c.data,

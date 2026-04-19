@@ -27,7 +27,7 @@ export default function GestorProductos() {
     // ── API ────────────────────────────────────────────────────────────────────
     const cargarProductos = async () => {
         try {
-            const res = await api.get('/repuestos?page=0&size=1000');
+            const res = await api.get('/repuestos?page=0&size=500');
             setProductos(res.data.content || res.data);
         } catch {
             toast.error('Error al cargar productos');
