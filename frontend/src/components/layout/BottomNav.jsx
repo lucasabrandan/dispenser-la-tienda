@@ -1,11 +1,17 @@
 import React from 'react';
+import { useAuth } from '../../context/AuthContext';
 
-const NAV_ITEMS = [
+const NAV_ADMIN = [
     { id: 'caja',             nombre: 'Caja',     icon: '🏠' },
     { id: 'venta',            nombre: 'Venta',    icon: '🛒' },
     { id: 'servicio-tecnico', nombre: 'Técnico',  icon: '🔧' },
     { id: 'historial',        nombre: 'Historial',icon: '📋' },
     { id: 'finanzas',         nombre: 'Finanzas', icon: '💹' },
+];
+
+const NAV_TECNICO = [
+    { id: 'servicio-tecnico', nombre: 'Técnico',  icon: '🔧' },
+    { id: 'historial',        nombre: 'Historial',icon: '📋' },
 ];
 
 // ─── Colores de marca ────────────────────────────────────────────────────────
@@ -16,6 +22,9 @@ const NAV_ITEMS = [
 // ────────────────────────────────────────────────────────────────────────────
 
 export default function BottomNav({ vistaActual, setVistaActual }) {
+    const { esAdmin } = useAuth();
+    const NAV_ITEMS = esAdmin ? NAV_ADMIN : NAV_TECNICO;
+
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#D8D4CE] dark:bg-[#1C1C1C] transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">
 

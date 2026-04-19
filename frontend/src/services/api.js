@@ -4,6 +4,44 @@ const api = axios.create({
     baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api',
     headers: { 'Content-Type': 'application/json' }
 });
+
+// Adjunta el token JWT en cada request si existe
+api.interceptors.request.use(config => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+});
+
+// Spring Boot tarda ~20-40s en arrancar, entonces 8 reintentos × 5s = 40s de ventana
+const MAX_REINTENTOS = 8;
+const DELAY_MS       = 5000;
+
+api.interceptors.response.use(
+    res => res,
+    async error => {
+        const config = error.config;
+
+        // Si recibimos 401, el token venció o es inválido — forzar logout
+        if (error.response?.status === 401 && !config.url?.includes('/auth/login')) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_usuario');
+            window.location.reload();
+            return Promise.reject(error);
+        }
+
+        // Solo reintentar si no hubo respuesta del servidor (red caída / servidor no listo)
+        if (!error.response && config) {
+            config._reintento = (config._reintento || 0) + 1;
+            if (config._reintento <= MAX_REINTENTOS) {
+                await new Promise(r => setTimeout(r, DELAY_MS));
+                return api(config);
+            }
+        }
+        return Promise.reject(error);
+    }
+);
 // ── Paginación estándar ──────────────────────────────────────────────────────
 const PAGE = '?page=0&size=1000';
 

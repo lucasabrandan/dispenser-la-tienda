@@ -53,6 +53,10 @@ public class Usuario {
         return username;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
     public RolUsuario getRol() {
         return rol;
     }

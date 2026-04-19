@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
 import logo from '../../assets/logo-dispenser.svg';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
+import { useAuth } from '../../context/AuthContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IDs deben coincidir EXACTAMENTE con App.js, Drawer y BottomNav
 // ─────────────────────────────────────────────────────────────────────────────
-const MENU_OPERACIONES = [
+const MENU_OPERACIONES_ADMIN = [
     { id: 'caja',             nombre: '🏠 Caja'              },
     { id: 'venta',            nombre: '🛒 Venta / Insumos'   },
     { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico'  },
     { id: 'historial',        nombre: '📋 Historial'         },
     { id: 'presupuestos',     nombre: '💰 Presupuestos'      },
+];
+
+// El técnico solo puede crear y ver servicios
+const MENU_OPERACIONES_TECNICO = [
+    { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico' },
+    { id: 'historial',        nombre: '📋 Historial'        },
 ];
 
 const MENU_ADMIN = [
@@ -24,12 +31,9 @@ const MENU_ADMIN = [
 export default function Sidebar({ vistaActual, setVistaActual }) {
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
-    const [tecnico, setTecnico] = useState(localStorage.getItem('tecnico_nombre') || '');
+    const { usuario, logout, esAdmin } = useAuth();
 
-    const handleTecnicoBlur = (e) => {
-        const val = e.target.value.trim();
-        if (val) localStorage.setItem('tecnico_nombre', val);
-    };
+    const menuOperaciones = esAdmin ? MENU_OPERACIONES_ADMIN : MENU_OPERACIONES_TECNICO;
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
@@ -71,33 +75,42 @@ export default function Sidebar({ vistaActual, setVistaActual }) {
                         Operaciones
                     </p>
                     <div className="space-y-1">
-                        {MENU_OPERACIONES.map(item => <MenuItem key={item.id} item={item} />)}
+                        {menuOperaciones.map(item => <MenuItem key={item.id} item={item} />)}
                     </div>
                 </div>
 
-                {/* ADMINISTRACIÓN */}
-                <div>
-                    <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-[0.2em] mb-3 px-2">
-                        Administración
-                    </p>
-                    <div className="space-y-1">
-                        {MENU_ADMIN.map(item => <MenuItem key={item.id} item={item} />)}
+                {/* ADMINISTRACIÓN — solo visible para admin */}
+                {esAdmin && (
+                    <div>
+                        <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-[0.2em] mb-3 px-2">
+                            Administración
+                        </p>
+                        <div className="space-y-1">
+                            {MENU_ADMIN.map(item => <MenuItem key={item.id} item={item} />)}
+                        </div>
                     </div>
-                </div>
+                )}
             </nav>
 
-            {/* TÉCNICO */}
+            {/* USUARIO LOGUEADO */}
             <div className="px-5 py-4 border-t border-black/[0.07] dark:border-white/[0.07]">
-                <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider mb-1.5 px-1">Técnico</p>
-                <input
-                    type="text"
-                    value={tecnico}
-                    onChange={e => setTecnico(e.target.value)}
-                    onBlur={handleTecnicoBlur}
-                    onKeyDown={e => e.key === 'Enter' && e.target.blur()}
-                    placeholder="Tu nombre..."
-                    className="w-full px-3 py-2 rounded-xl text-[13px] font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
-                />
+                <div className="flex items-center justify-between mb-3">
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">
+                            {usuario?.nombre}
+                        </p>
+                        <p className="text-[9px] font-bold text-[#A8A29E] uppercase tracking-wider">
+                            {usuario?.rol === 'ADMIN' ? 'Administrador' : 'Técnico'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={logout}
+                        title="Cerrar sesión"
+                        className="ml-2 px-2 py-1.5 rounded-lg text-[10px] font-black text-[#D13A28] dark:text-[#E8422F] hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all whitespace-nowrap"
+                    >
+                        Salir
+                    </button>
+                </div>
             </div>
 
             {/* FOOTER */}

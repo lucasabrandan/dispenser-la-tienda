@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IDs deben coincidir EXACTAMENTE con App.js, Sidebar y BottomNav
 // ─────────────────────────────────────────────────────────────────────────────
-const MENU_OPERACIONES = [
+const MENU_OPERACIONES_ADMIN = [
     { id: 'caja',             nombre: '🏠 Caja'             },
     { id: 'venta',            nombre: '🛒 Venta / Insumos'  },
     { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico' },
@@ -11,7 +12,12 @@ const MENU_OPERACIONES = [
     { id: 'presupuestos',     nombre: '💰 Presupuestos'     },
 ];
 
-const MENU_ADMIN = [
+const MENU_OPERACIONES_TECNICO = [
+    { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico' },
+    { id: 'historial',        nombre: '📋 Historial'        },
+];
+
+const MENU_ADMIN_ITEMS = [
     { id: 'clientes',  nombre: '👥 Clientes'  },
     { id: 'productos', nombre: '📦 Productos' },
     { id: 'radar',     nombre: '🚨 Radar'     },
@@ -19,12 +25,8 @@ const MENU_ADMIN = [
 ];
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
-    const [tecnico, setTecnico] = useState(localStorage.getItem('tecnico_nombre') || '');
-
-    const handleTecnicoBlur = (e) => {
-        const val = e.target.value.trim();
-        if (val) localStorage.setItem('tecnico_nombre', val);
-    };
+    const { usuario, logout, esAdmin } = useAuth();
+    const menuOperaciones = esAdmin ? MENU_OPERACIONES_ADMIN : MENU_OPERACIONES_TECNICO;
 
     const handleClick = (id) => {
         setVistaActual(id);
@@ -78,41 +80,38 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                             Operaciones
                         </p>
                         <div className="space-y-1">
-                            {MENU_OPERACIONES.map(item => <MenuButton key={item.id} item={item} />)}
+                            {menuOperaciones.map(item => <MenuButton key={item.id} item={item} />)}
                         </div>
                     </div>
 
-                    <div className="p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
-                            Administración
-                        </p>
-                        <div className="space-y-1">
-                            {MENU_ADMIN.map(item => <MenuButton key={item.id} item={item} />)}
+                    {esAdmin && (
+                        <div className="p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
+                            <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
+                                Administración
+                            </p>
+                            <div className="space-y-1">
+                                {MENU_ADMIN_ITEMS.map(item => <MenuButton key={item.id} item={item} />)}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
                             Cuenta
                         </p>
-                        {/* Nombre del técnico — se guarda en localStorage */}
-                        <div className="mb-2 px-1">
-                            <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">Técnico</p>
-                            <input
-                                type="text"
-                                value={tecnico}
-                                onChange={e => setTecnico(e.target.value)}
-                                onBlur={handleTecnicoBlur}
-                                onKeyDown={e => e.key === 'Enter' && e.target.blur()}
-                                placeholder="Tu nombre..."
-                                className="w-full px-3 py-2 rounded-xl text-sm font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F]"
-                            />
+                        <div className="mb-3 px-1">
+                            <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                {usuario?.nombre}
+                            </p>
+                            <p className="text-[9px] font-bold text-[#A8A29E] uppercase tracking-wider">
+                                {usuario?.rol === 'ADMIN' ? 'Administrador' : 'Técnico'}
+                            </p>
                         </div>
-                        <button className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] transition-all">
-                            ⚙️ Configuración
-                        </button>
-                        <button className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all">
-                            🚪 Logout
+                        <button
+                            onClick={() => { logout(); onClose(); }}
+                            className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all"
+                        >
+                            🚪 Cerrar sesión
                         </button>
                     </div>
                 </div>

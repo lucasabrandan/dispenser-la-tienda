@@ -3,6 +3,8 @@ import { Toaster } from 'react-hot-toast';
 
 import Layout from './components/layout/Layout';
 import { MontosProvider } from './context/MontosContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import LoginPage from './components/auth/LoginPage';
 
 // Caja
 import DashboardCaja from './components/DashboardCaja';
@@ -18,10 +20,13 @@ import GestorProductos    from './components/productos/GestorProductos';
 import RadarMantenimiento from './components/RadarMantenimiento';
 import DashboardFinanzas  from './components/finanzas/DashboardFinanzas';
 
-export default function App() {
-    const [seccionActual, setSeccionActual] = useState('caja');
+function AppInterna() {
+    const { autenticado, esAdmin } = useAuth();
+    const [seccionActual, setSeccionActual] = useState(esAdmin ? 'caja' : 'servicio-tecnico');
     // Cliente precargado para abrir VentaManager/ServicioManager desde ClienteManager
     const [clientePreload, setClientePreload] = useState(null);
+
+    if (!autenticado) return <LoginPage />;
 
     const irASeccionConCliente = (seccion, cliente) => {
         setClientePreload(cliente);
@@ -62,6 +67,18 @@ export default function App() {
 
     return (
         <MontosProvider>
+            <Layout vistaActual={seccionActual} setVistaActual={setSeccionActual}>
+                <div className="max-w-5xl mx-auto">
+                    {renderSeccion()}
+                </div>
+            </Layout>
+        </MontosProvider>
+    );
+}
+
+export default function App() {
+    return (
+        <AuthProvider>
             <Toaster
                 position="top-right"
                 toastOptions={{
@@ -69,11 +86,7 @@ export default function App() {
                     style: { fontSize: '1.1em', fontWeight: 'bold' }
                 }}
             />
-            <Layout vistaActual={seccionActual} setVistaActual={setSeccionActual}>
-                <div className="max-w-5xl mx-auto">
-                    {renderSeccion()}
-                </div>
-            </Layout>
-        </MontosProvider>
+            <AppInterna />
+        </AuthProvider>
     );
 }
