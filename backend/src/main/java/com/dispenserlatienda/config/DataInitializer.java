@@ -18,10 +18,13 @@ public class DataInitializer {
     @Bean
     ApplicationRunner inicializarUsuarios(UsuarioRepository repo, PasswordEncoder encoder) {
         return args -> {
-            if (repo.count() == 0) {
+            if (repo.findByUsername("admin").isEmpty()) {
                 repo.save(new Usuario("Administrador", "admin", encoder.encode("admin123"), RolUsuario.ADMIN));
+                System.out.println("[DataInitializer] Usuario admin creado");
+            }
+            if (repo.findByUsername("tecnico").isEmpty()) {
                 repo.save(new Usuario("Técnico", "tecnico", encoder.encode("tecnico123"), RolUsuario.TECNICO));
-                System.out.println("[DataInitializer] Usuarios creados — admin / tecnico");
+                System.out.println("[DataInitializer] Usuario tecnico creado");
             }
         };
     }

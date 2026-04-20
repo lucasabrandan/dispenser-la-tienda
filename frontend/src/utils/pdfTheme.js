@@ -15,6 +15,13 @@ export const GRAY_TEXT  = [120, 116, 110];
 export const WARM_BG    = [250, 248, 245];
 export const WARM_BORDER= [220, 212, 200];
 
+// ── Datos empresa (editar aquí) ───────────────────────────────────────────────
+export const EMPRESA = {
+    telefono:  '(011) XXXX-XXXX',    // ← completar con teléfono real
+    whatsapp:  '11 XXXX-XXXX',       // ← completar con WhatsApp real
+    direccion: 'Buenos Aires, Argentina',
+};
+
 // ── Fecha ─────────────────────────────────────────────────────────────────────
 export function procesarFecha(f) {
     try {
@@ -26,14 +33,14 @@ export function procesarFecha(f) {
 
 // ── Header (todos los documentos) ─────────────────────────────────────────────
 // Esquema:
-//   [LOGO]         [Fecha: DD/MM/AAAA         ]
-//                  [PP-DDMM-XX-01  (rojo bold) ]
-//                  [Téc: Nombre     (gris)      ]
-//   ─────────────────────────────────────────────
+//   [LOGO]               [Fecha: DD/MM/AAAA         ]
+//   [Tel · WA]           [PP-DDMM-XX-01  (rojo bold) ]
+//   [dirección]          [Téc: Nombre     (gris)      ]
+//   ──────────────────────────────────────────────────
 //   TÍTULO DEL DOCUMENTO (10pt, izquierda)
 //
-// Altura total del header normal  ≈ 41mm  → contenido empieza en y=41
-// Altura total del header compacto ≈ 35mm → contenido empieza en y=35
+// Altura total del header normal  ≈ 46mm  → contenido empieza en y=46
+// Altura total del header compacto ≈ 37mm → contenido empieza en y=37
 export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc = null) {
     const pageW = doc.internal.pageSize.getWidth();
 
@@ -41,9 +48,18 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
     doc.setFillColor(...RED);
     doc.rect(0, 0, pageW, 2.5, 'F');
 
-    // Logo — tamaño reducido para ahorrar espacio vertical
+    // Logo
     if (logoUrl) {
-        try { doc.addImage(logoUrl, 'PNG', 14, 7, 38, 16); } catch {}
+        try { doc.addImage(logoUrl, 'PNG', 14, 6, 38, 15); } catch {}
+    }
+
+    // Datos de contacto de la empresa — debajo del logo
+    doc.setFontSize(6.5);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text(`Tel: ${EMPRESA.telefono}  ·  WA: ${EMPRESA.whatsapp}`, 14, 27);
+    if (EMPRESA.direccion) {
+        doc.text(EMPRESA.direccion, 14, 32);
     }
 
     // Bloque derecho: fecha / nroDoc / técnico — alineados a la derecha
@@ -63,24 +79,24 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
         doc.setFontSize(7.5);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(155, 150, 144);
-        doc.text(subtitulo, pageW - 14, 26, { align: 'right' });
+        doc.text(subtitulo, pageW - 14, 27, { align: 'right' });
     }
 
     // Línea separadora fina
     doc.setDrawColor(220, 216, 210);
     doc.setLineWidth(0.3);
-    doc.line(14, 30, pageW - 14, 30);
+    doc.line(14, 36, pageW - 14, 36);
 
-    // Título del documento — izquierda, tamaño moderado (no dominante)
+    // Título del documento
     doc.setFontSize(10);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
-    doc.text(tipoLabel, 14, 38);
+    doc.text(tipoLabel, 14, 44);
 }
 
 // ── Header compacto (2+ equipos) ─────────────────────────────────────────────
 // Idéntica estructura pero todo más pequeño para maximizar espacio de contenido
-// Altura total ≈ 35mm → contenido empieza en y=35
+// Altura total ≈ 37mm → contenido empieza en y=37
 export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null, nroDoc = null) {
     const pageW = doc.internal.pageSize.getWidth();
 
@@ -92,6 +108,12 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
     if (logoUrl) {
         try { doc.addImage(logoUrl, 'PNG', 14, 5, 28, 11); } catch {}
     }
+
+    // Datos de contacto — 1 línea debajo del logo
+    doc.setFontSize(6);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...GRAY_TEXT);
+    doc.text(`Tel: ${EMPRESA.telefono}  ·  WA: ${EMPRESA.whatsapp}`, 14, 20);
 
     // Bloque derecho: fecha / nroDoc / técnico
     doc.setFontSize(7);
@@ -110,49 +132,57 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
         doc.setFontSize(7);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(155, 150, 144);
-        doc.text(subtitulo, pageW - 14, 22, { align: 'right' });
+        doc.text(subtitulo, pageW - 14, 23, { align: 'right' });
     }
 
     // Línea separadora
     doc.setDrawColor(220, 216, 210);
     doc.setLineWidth(0.3);
-    doc.line(14, 25, pageW - 14, 25);
+    doc.line(14, 27, pageW - 14, 27);
 
     // Título — izquierda, tamaño mínimo funcional
     doc.setFontSize(8.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
-    doc.text(tipoLabel, 14, 32);
+    doc.text(tipoLabel, 14, 34);
 }
 
 // ── Footer ────────────────────────────────────────────────────────────────────
+// Estructura (2 filas):
+//   ────────────────────── línea separadora ──────────────────────
+//   [leyenda/garantía centrada]
+//   [Tel · WA  (izq)]                            [pág/total (der)]
+//   ██████████████████████ banda roja ███████████████████████████
 export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoCentral = null) {
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
 
-    // Banda inferior roja — espejo de la banda superior
+    // Banda inferior roja
     doc.setFillColor(...RED);
     doc.rect(0, pageH - 2, pageW, 2, 'F');
 
-    // Línea sobre el footer
+    // Línea sobre el footer (subida 2mm para dar espacio a 2 filas de texto)
     doc.setDrawColor(220, 216, 210);
     doc.setLineWidth(0.3);
-    doc.line(14, pageH - 14, pageW - 14, pageH - 14);
+    doc.line(14, pageH - 16, pageW - 14, pageH - 16);
 
-    // Leyenda / garantía — centrada, máximo 1 línea
+    // Fila 1: leyenda / garantía — centrada
     if (textoCentral) {
         doc.setFontSize(7);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(155, 150, 144);
-        doc.text(textoCentral, pageW / 2, pageH - 9, { align: 'center' });
+        doc.text(textoCentral, pageW / 2, pageH - 11, { align: 'center' });
     }
 
-    // Paginación — solo si hay más de 1 página
+    // Fila 2: contacto izquierda + paginación derecha
+    doc.setFontSize(6.5);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(155, 150, 144);
+    doc.text(`Tel: ${EMPRESA.telefono}  ·  WA: ${EMPRESA.whatsapp}`, 14, pageH - 5);
+
     if (pagina && totalPaginas && totalPaginas > 1) {
         doc.setFontSize(7);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(155, 150, 144);
-        doc.text(`${pagina} / ${totalPaginas}`, pageW - 14, pageH - 4, { align: 'right' });
+        doc.text(`${pagina} / ${totalPaginas}`, pageW - 14, pageH - 5, { align: 'right' });
     }
 }
 

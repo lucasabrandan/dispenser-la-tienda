@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/uploads/**").permitAll()
 
                 // Solo ADMIN: finanzas sensibles
                 .requestMatchers("/api/gastos/**").hasRole("ADMIN")

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { useServicioForm } from '../../hooks/useServicioForm';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
+import { useFirmaModal } from '../../hooks/useFirmaModal';
+import FirmaModal      from '../ui/FirmaModal';
 import CrearClienteModal from '../cliente/CrearClienteModal';
 import CrearSedeModal    from '../CrearSedeModal';
 import { StepHeader, buildSelectStyles } from './ServicioUI';

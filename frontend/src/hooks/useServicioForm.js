@@ -354,7 +354,12 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     fd.append('file', blob, 'foto.jpg');
     try {
       const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
-      const res = await fetch(`${baseUrl}/uploads`, { method: 'POST', body: fd });
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${baseUrl}/uploads`, {
+        method: 'POST',
+        body: fd,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) { console.error('Error subiendo foto, status:', res.status); return null; }
       const data = await res.json();
       return data.filename || null;

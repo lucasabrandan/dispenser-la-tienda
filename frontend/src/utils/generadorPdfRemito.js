@@ -220,6 +220,7 @@ export const generarRemitoPDFPremium = async ({
     leyenda = '',
     esTecnicoForzado = null,
     servicioId = null,   // si se pasa, guarda el nroDoc en localStorage para búsqueda posterior
+    firmaDataUrl = null, // data URL PNG de la firma digital del cliente (opcional)
 }) => {
     if (!cliente || ticketItems.length === 0) {
         return toast.error('Datos insuficientes para generar el PDF.');
@@ -269,11 +270,17 @@ export const generarRemitoPDFPremium = async ({
 
     // ── BLOQUE CLIENTE — layout vertical, legibilidad prioritaria ────────────
     // Header compacto: contenido empieza en y=35 (normal) / y=35 (compacto)
-    let y = esCompacto ? 35 : 41;
+    let y = esCompacto ? 37 : 46;
 
     doc.setDrawColor(...GRAY_MID);
     doc.setLineWidth(0.2);
     doc.line(14, y, pageW - 14, y);
+
+    // Fondo suave para el bloque cliente
+    const clientBlockH = esCompacto ? 24 : 30;
+    doc.setFillColor(248, 246, 243);
+    doc.roundedRect(12, y + 1, pageW - 24, clientBlockH, 2, 2, 'F');
+
     y += 6;
 
     doc.setFontSize(6);
@@ -462,33 +469,46 @@ export const generarRemitoPDFPremium = async ({
             y += 5;
 
             if (esSolaHoja) {
-                // Total completo con desglose de descuento
-                const tH = pctDesc > 0 ? 28 : 18;
+                // Total completo — ancho completo
+                const tH = pctDesc > 0 ? 30 : 20;
                 doc.setFillColor(...TOTAL_BG);
-                doc.roundedRect(pageW - 82, y - 4, 66, tH, 3, 3, 'F');
+                doc.roundedRect(12, y - 4, pageW - 24, tH, 3, 3, 'F');
 
                 if (pctDesc > 0) {
                     doc.setFontSize(7.5); doc.setFont(undefined, 'normal');
                     doc.setTextColor(...META_TEXT);
-                    doc.text('Subtotal', pageW - 78, y);
+                    doc.text('Subtotal', 18, y);
                     doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
                     y += 6;
                     doc.setTextColor(...RED);
-                    doc.text(`Descuento (${pctDesc}%)`, pageW - 78, y);
+                    doc.text(`Descuento (${pctDesc}%)`, 18, y);
                     doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
                     y += 4;
                     doc.setDrawColor(...GRAY_MID);
-                    doc.line(pageW - 78, y, pageW - 16, y);
+                    doc.line(18, y, pageW - 16, y);
                     y += 5;
                 }
 
-                doc.setFontSize(7); doc.setFont(undefined, 'bold');
-                doc.setTextColor(...META_TEXT);
-                doc.text('TOTAL', pageW - 78, y);
-                doc.setFontSize(18); doc.setFont(undefined, 'bold');
+                doc.setFontSize(8); doc.setFont(undefined, 'bold');
+                doc.setTextColor(...RED);
+                doc.text('TOTAL', 18, y);
+                doc.setFontSize(20); doc.setFont(undefined, 'bold');
                 doc.setTextColor(...DARK);
                 doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 16, y + 1, { align: 'right' });
                 y += 8;
+
+                // Validez del presupuesto — solo si es presupuesto
+                if (esPresupuesto) {
+                    const fechaValidez = new Date();
+                    fechaValidez.setDate(fechaValidez.getDate() + 7);
+                    doc.setFontSize(6.5); doc.setFont(undefined, 'italic');
+                    doc.setTextColor(...META_TEXT);
+                    doc.text(
+                        `Presupuesto válido hasta: ${fechaValidez.toLocaleDateString('es-AR')}`,
+                        pageW - 16, y + 3, { align: 'right' }
+                    );
+                    y += 8;
+                }
             } else {
                 // Subtotal por equipo dentro de su card
                 doc.setFontSize(7); doc.setFont(undefined, 'bold');
@@ -551,29 +571,43 @@ export const generarRemitoPDFPremium = async ({
             if (y + tH > MARGEN_INF) { doc.addPage(); y = 18; }
 
             doc.setFillColor(...TOTAL_BG);
-            doc.roundedRect(pageW - 82, y - 4, 66, tH, 3, 3, 'F');
+            doc.roundedRect(12, y - 4, pageW - 24, tH, 3, 3, 'F');
 
             if (pctDesc > 0) {
                 doc.setFontSize(7.5); doc.setFont(undefined, 'normal');
                 doc.setTextColor(...META_TEXT);
-                doc.text('Subtotal', pageW - 78, y);
+                doc.text('Subtotal', 18, y);
                 doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
                 y += 6;
                 doc.setTextColor(...RED);
-                doc.text(`Descuento (${pctDesc}%)`, pageW - 78, y);
+                doc.text(`Descuento (${pctDesc}%)`, 18, y);
                 doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
                 y += 4;
                 doc.setDrawColor(...GRAY_MID);
-                doc.line(pageW - 78, y, pageW - 16, y);
+                doc.line(18, y, pageW - 16, y);
                 y += 5;
             } else { y += 3; }
 
-            doc.setFontSize(7); doc.setFont(undefined, 'bold');
-            doc.setTextColor(...META_TEXT);
-            doc.text('TOTAL', pageW - 78, y);
-            doc.setFontSize(18); doc.setFont(undefined, 'bold');
+            doc.setFontSize(8); doc.setFont(undefined, 'bold');
+            doc.setTextColor(...RED);
+            doc.text('TOTAL', 18, y);
+            doc.setFontSize(20); doc.setFont(undefined, 'bold');
             doc.setTextColor(...DARK);
             doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 16, y + 1, { align: 'right' });
+            y += 10;
+
+            // Validez del presupuesto — solo si es presupuesto
+            if (esPresupuesto) {
+                const fechaValidez = new Date();
+                fechaValidez.setDate(fechaValidez.getDate() + 7);
+                doc.setFontSize(6.5); doc.setFont(undefined, 'italic');
+                doc.setTextColor(...META_TEXT);
+                doc.text(
+                    `Presupuesto válido hasta: ${fechaValidez.toLocaleDateString('es-AR')}`,
+                    pageW - 16, y, { align: 'right' }
+                );
+                y += 6;
+            }
         }
 
     } else {
@@ -645,31 +679,122 @@ export const generarRemitoPDFPremium = async ({
             y = doc.lastAutoTable.finalY + 10;
         }
 
-        // Total venta
+        // Total venta — ancho completo
         const tH = pctDesc > 0 ? 30 : 20;
         if (y + tH > pageH - MARGEN_SEG) { doc.addPage(); y = 18; }
         doc.setFillColor(...TOTAL_BG);
-        doc.roundedRect(pageW - 82, y - 4, 66, tH, 3, 3, 'F');
+        doc.roundedRect(12, y - 4, pageW - 24, tH, 3, 3, 'F');
         if (pctDesc > 0) {
             doc.setFontSize(7.5); doc.setFont(undefined, 'normal');
             doc.setTextColor(...META_TEXT);
-            doc.text('Subtotal', pageW - 78, y);
+            doc.text('Subtotal', 18, y);
             doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
             y += 6;
             doc.setTextColor(...RED);
-            doc.text(`Descuento (${pctDesc}%)`, pageW - 78, y);
+            doc.text(`Descuento (${pctDesc}%)`, 18, y);
             doc.text(`- $ ${montoDesc.toLocaleString('es-AR')}`, pageW - 16, y, { align: 'right' });
             y += 4;
             doc.setDrawColor(...GRAY_MID);
-            doc.line(pageW - 78, y, pageW - 16, y);
+            doc.line(18, y, pageW - 16, y);
             y += 5;
         } else { y += 3; }
-        doc.setFontSize(7); doc.setFont(undefined, 'bold');
-        doc.setTextColor(...META_TEXT);
-        doc.text('TOTAL', pageW - 78, y);
-        doc.setFontSize(18); doc.setFont(undefined, 'bold');
+        doc.setFontSize(8); doc.setFont(undefined, 'bold');
+        doc.setTextColor(...RED);
+        doc.text('TOTAL', 18, y);
+        doc.setFontSize(20); doc.setFont(undefined, 'bold');
         doc.setTextColor(...DARK);
         doc.text(`$ ${totalFinal_.toLocaleString('es-AR')}`, pageW - 16, y + 1, { align: 'right' });
+        y += 10;
+
+        // Validez para presupuestos de venta
+        if (esPresupuesto) {
+            const fechaValidez = new Date();
+            fechaValidez.setDate(fechaValidez.getDate() + 7);
+            doc.setFontSize(6.5); doc.setFont(undefined, 'italic');
+            doc.setTextColor(...META_TEXT);
+            doc.text(
+                `Presupuesto válido hasta: ${fechaValidez.toLocaleDateString('es-AR')}`,
+                pageW - 16, y, { align: 'right' }
+            );
+            y += 6;
+        }
+    }
+
+    // ── FORMA DE PAGO ────────────────────────────────────────────────────────
+    {
+        const MARGEN_INF = pageH - MARGEN_SEG;
+        const BLOQUE_H = 18;
+        if (y + BLOQUE_H > MARGEN_INF) { doc.addPage(); y = 18; }
+
+        y += 8;
+
+        doc.setFontSize(6);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...RED);
+        doc.text('FORMA DE PAGO', 14, y);
+        y += 5;
+
+        const mediosPago = ['Efectivo', 'Transferencia', 'Cuenta corriente'];
+        let xPago = 14;
+        mediosPago.forEach(medio => {
+            doc.setFillColor(...CARD_BG);
+            doc.roundedRect(xPago, y - 4, 40, 7, 1.5, 1.5, 'F');
+            doc.setDrawColor(...GRAY_MID);
+            doc.setLineWidth(0.25);
+            doc.roundedRect(xPago, y - 4, 40, 7, 1.5, 1.5, 'S');
+            doc.setFontSize(7);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...DARK);
+            doc.text(medio, xPago + 20, y, { align: 'center' });
+            xPago += 44;
+        });
+        y += 8; // avanzar tras los chips de pago
+    }
+
+    // ── FIRMA DEL CLIENTE ────────────────────────────────────────────────────
+    {
+        const MARGEN_INF = pageH - MARGEN_SEG;
+        const FIRMA_W    = 76;
+        const FIRMA_H    = 26;
+        const BLOQUE_H   = firmaDataUrl ? FIRMA_H + 22 : 22;
+        if (y + BLOQUE_H > MARGEN_INF) { doc.addPage(); y = 18; }
+
+        y += 8;
+
+        doc.setFontSize(6);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...RED);
+        doc.text('FIRMA DEL CLIENTE', 14, y);
+        y += 5;
+
+        if (firmaDataUrl) {
+            // Firma digital — imagen embebida
+            doc.setFillColor(255, 255, 255);
+            doc.roundedRect(14, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'F');
+            doc.setDrawColor(...GRAY_MID);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(14, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'S');
+            try { doc.addImage(firmaDataUrl, 'PNG', 14, y - 2, FIRMA_W, FIRMA_H); } catch {}
+            doc.setFontSize(6);
+            doc.setFont(undefined, 'italic');
+            doc.setTextColor(...META_TEXT);
+            doc.text('Firma digital del cliente', 14 + FIRMA_W / 2, y + FIRMA_H + 3, { align: 'center' });
+        } else {
+            // Sin firma digital — líneas para firma en papel
+            doc.setDrawColor(...GRAY_MID);
+            doc.setLineWidth(0.4);
+            const lIzqX1 = 14, lIzqX2 = 90;
+            const lDerX1 = 110, lDerX2 = pageW - 14;
+            doc.line(lIzqX1, y + 10, lIzqX2, y + 10);
+            doc.line(lDerX1, y + 10, lDerX2, y + 10);
+            doc.setFontSize(6.5);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...META_TEXT);
+            const lblC = esPresupuesto ? 'Aceptación del presupuesto' : 'Firma y aclaración del cliente';
+            const lblT = esTecnico ? 'Técnico responsable / Sello' : 'Vendedor / Sello';
+            doc.text(lblC, (lIzqX1 + lIzqX2) / 2, y + 15, { align: 'center' });
+            doc.text(lblT, (lDerX1 + lDerX2) / 2, y + 15, { align: 'center' });
+        }
     }
 
     // ── FOOTER EN TODAS LAS PÁGINAS ──────────────────────────────────────────
