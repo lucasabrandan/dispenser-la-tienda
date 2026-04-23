@@ -22,6 +22,7 @@ const MENU_ADMIN_ITEMS = [
     { id: 'productos', nombre: '📦 Productos' },
     { id: 'radar',     nombre: '🚨 Radar'     },
     { id: 'finanzas',  nombre: '💹 Finanzas'  },
+    { id: 'usuarios',  nombre: '🔐 Usuarios'  },
 ];
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
