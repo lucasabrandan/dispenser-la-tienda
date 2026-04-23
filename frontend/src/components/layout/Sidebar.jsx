@@ -26,6 +26,7 @@ const MENU_ADMIN = [
     { id: 'productos', nombre: '📦 Productos' },
     { id: 'radar',     nombre: '🚨 Radar'     },
     { id: 'finanzas',  nombre: '💹 Finanzas'  },
+    { id: 'usuarios',  nombre: '🔐 Usuarios'  },
 ];
 
 export default function Sidebar({ vistaActual, setVistaActual }) {

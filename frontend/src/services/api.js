@@ -112,4 +112,10 @@ export const getGastos  = () => api.get(`/gastos?page=0&size=500`);
 export const crearGasto = (data) => api.post('/gastos', data);
 export const eliminarGasto = (id) => api.delete(`/gastos/${id}`);
 
+// ── Admin: Usuarios ───────────────────────────────────────────────────────────
+export const getUsuarios        = () => api.get('/admin/usuarios');
+export const crearUsuario       = (data) => api.post('/admin/usuarios', data);
+export const editarUsuario      = (id, data) => api.put(`/admin/usuarios/${id}`, data);
+export const cambiarPassword    = (id, data) => api.put(`/admin/usuarios/${id}/password`, data);
+
 export default api;

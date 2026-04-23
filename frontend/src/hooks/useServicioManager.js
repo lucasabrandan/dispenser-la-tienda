@@ -63,6 +63,7 @@ export function useServicioManager() {
     const [mesSelector, setMesSelector]       = useState('');
     const [desde, setDesde]                   = useState('');
     const [hasta, setHasta]                   = useState('');
+    const [usuarioId, setUsuarioId]           = useState('');
 
     // ── Modales ──────────────────────────────────────────────────────────────────
     const [modalCrear, setModalCrear]             = useState(false);
@@ -92,7 +93,7 @@ export function useServicioManager() {
     };
 
     // ── Fetch lista ──────────────────────────────────────────────────────────────
-    const cargarServicios = useCallback(async () => {
+    const cargarServicios = useCallback(async () => { // eslint-disable-line
         setCargando(true);
         try {
             const fechas = resolverFechas(periodoRapido, mesSelector, desde, hasta);
@@ -102,10 +103,11 @@ export function useServicioManager() {
                 size: 20,
                 sort: 'fechaServicio,desc',
             };
-            if (estado !== 'TODOS')  params.estado  = estado;
-            if (busquedaApi)         params.busqueda = busquedaApi;
-            if (fechas.desde)        params.desde    = fechas.desde;
-            if (fechas.hasta)        params.hasta    = fechas.hasta;
+            if (estado !== 'TODOS')  params.estado    = estado;
+            if (busquedaApi)         params.busqueda  = busquedaApi;
+            if (fechas.desde)        params.desde     = fechas.desde;
+            if (fechas.hasta)        params.hasta     = fechas.hasta;
+            if (usuarioId)           params.usuarioId = usuarioId;
 
             const res = await api.get('/servicios', { params });
             const page = res.data;
@@ -117,7 +119,7 @@ export function useServicioManager() {
         } finally {
             setCargando(false);
         }
-    }, [pagina, estado, busquedaApi, periodoRapido, mesSelector, desde, hasta]);
+    }, [pagina, estado, busquedaApi, periodoRapido, mesSelector, desde, hasta, usuarioId]);
 
     // ── Fetch stats (separado de la lista) ───────────────────────────────────────
     const cargarStats = useCallback(async () => {
@@ -241,5 +243,6 @@ export function useServicioManager() {
         calcularTotal, abrirEditar, cerrarModal,
         setFiltroTab,
         filtros,
+        usuarioId, setUsuarioId,
     };
 }

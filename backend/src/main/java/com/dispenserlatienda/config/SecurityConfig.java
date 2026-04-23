@@ -40,6 +40,9 @@ public class SecurityConfig {
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/uploads/**").permitAll()
 
+                // Solo ADMIN: gestión de usuarios
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                 // Solo ADMIN: finanzas sensibles
                 .requestMatchers("/api/gastos/**").hasRole("ADMIN")
                 .requestMatchers("/api/ventas/stats/**").hasRole("ADMIN")

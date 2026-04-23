@@ -4,6 +4,7 @@ import com.dispenserlatienda.domain.sede.Sede;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +54,15 @@ public class Servicio {
     // Número de documento generado al crear el PDF (PP-1304-LB-01 / RS-...)
     @Column(name = "nro_documento", length = 30)
     private String nroDocumento;
+
+    @Column(name = "creado_en")
+    private LocalDateTime creadoEn;
+
+    @Column(name = "modificado_por_nombre", length = 120)
+    private String modificadoPorNombre;
+
+    @Column(name = "fecha_modificacion")
+    private LocalDateTime fechaModificacion;
 
     @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ServicioItem> items = new ArrayList<>();
@@ -109,4 +119,13 @@ public class Servicio {
 
     public String getNroDocumento() { return nroDocumento; }
     public void setNroDocumento(String nroDocumento) { this.nroDocumento = nroDocumento; }
+
+    public LocalDateTime getCreadoEn() { return creadoEn; }
+    public void setCreadoEn(LocalDateTime creadoEn) { this.creadoEn = creadoEn; }
+
+    public String getModificadoPorNombre() { return modificadoPorNombre; }
+    public void setModificadoPorNombre(String modificadoPorNombre) { this.modificadoPorNombre = modificadoPorNombre; }
+
+    public LocalDateTime getFechaModificacion() { return fechaModificacion; }
+    public void setFechaModificacion(LocalDateTime fechaModificacion) { this.fechaModificacion = fechaModificacion; }
 }

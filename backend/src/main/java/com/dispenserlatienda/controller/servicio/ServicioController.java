@@ -40,8 +40,9 @@ public class ServicioController {
             @RequestParam(required = false) String busqueda,
             @RequestParam(required = false) String desde,
             @RequestParam(required = false) String hasta,
+            @RequestParam(required = false) Long usuarioId,
             Pageable pageable) {
-        return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, pageable));
+        return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, usuarioId, pageable));
     }
 
     // GET: Stats resumen (totalMes, hoy, pendientes, ganancia MO) — accesible a todos los roles

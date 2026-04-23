@@ -24,6 +24,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,18 +50,17 @@ public class ServicioService {
         this.objectMapper = objectMapper;
     }
 
-    // Listado sin filtros (mantiene compatibilidad)
     @Transactional(readOnly = true)
     public Page<ServicioDTO> listarTodos(Pageable pageable) {
-        return listarFiltrado(null, null, null, null, null, pageable);
+        return listarFiltrado(null, null, null, null, null, null, pageable);
     }
 
-    // Listado con filtros opcionales: tipo, estado, búsqueda, rango de fechas
+    // Listado con filtros opcionales: tipo, estado, búsqueda, rango de fechas, usuarioId
     @Transactional(readOnly = true)
     public Page<ServicioDTO> listarFiltrado(String tipoStr, String estadoStr,
                                              String busqueda, String desde, String hasta,
-                                             Pageable pageable) {
-        return servicioRepository.findAll(buildSpec(tipoStr, estadoStr, busqueda, desde, hasta), pageable)
+                                             Long usuarioId, Pageable pageable) {
+        return servicioRepository.findAll(buildSpec(tipoStr, estadoStr, busqueda, desde, hasta, usuarioId), pageable)
                 .map(this::mapToDTO);
     }
 
@@ -72,9 +72,9 @@ public class ServicioService {
         LocalDate finMes    = inicioMes.plusMonths(1).minusDays(1);
 
         List<Servicio> realizados = servicioRepository.findAll(
-                buildSpec(tipoStr, "REALIZADO", null, null, null));
+                buildSpec(tipoStr, "REALIZADO", null, null, null, null));
         List<Servicio> pendientes = servicioRepository.findAll(
-                buildSpec(tipoStr, "PRESUPUESTO", null, null, null));
+                buildSpec(tipoStr, "PRESUPUESTO", null, null, null, null));
 
         List<Servicio> delMes = realizados.stream()
                 .filter(s -> s.getFechaServicio() != null
@@ -102,18 +102,15 @@ public class ServicioService {
         );
     }
 
-    // Construye Specification dinámica con los filtros opcionales
     private Specification<Servicio> buildSpec(String tipoStr, String estadoStr,
-                                               String busqueda, String desde, String hasta) {
+                                               String busqueda, String desde, String hasta,
+                                               Long usuarioId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            if (tipoStr != null && !tipoStr.isBlank()) {
+            if (tipoStr != null && !tipoStr.isBlank())
                 predicates.add(cb.equal(root.get("servicioTipo"), ServicioTipo.valueOf(tipoStr)));
-            }
-            if (estadoStr != null && !estadoStr.isBlank()) {
+            if (estadoStr != null && !estadoStr.isBlank())
                 predicates.add(cb.equal(root.get("estado"), EstadoServicio.valueOf(estadoStr)));
-            }
             if (busqueda != null && !busqueda.isBlank()) {
                 String like = "%" + busqueda.toLowerCase() + "%";
                 predicates.add(cb.or(
@@ -121,13 +118,12 @@ public class ServicioService {
                         cb.like(cb.lower(root.get("sedeNombre")), like)
                 ));
             }
-            if (desde != null && !desde.isBlank()) {
+            if (desde != null && !desde.isBlank())
                 predicates.add(cb.greaterThanOrEqualTo(root.get("fechaServicio"), LocalDate.parse(desde)));
-            }
-            if (hasta != null && !hasta.isBlank()) {
+            if (hasta != null && !hasta.isBlank())
                 predicates.add(cb.lessThanOrEqualTo(root.get("fechaServicio"), LocalDate.parse(hasta)));
-            }
-
+            if (usuarioId != null)
+                predicates.add(cb.equal(root.get("usuario").get("id"), usuarioId));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -168,8 +164,15 @@ public class ServicioService {
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
 
+        boolean esNuevo = servicio.getId() == null;
         servicio.setSede(sede);
         servicio.setUsuario(usuario);
+        if (esNuevo) {
+            servicio.setCreadoEn(LocalDateTime.now());
+        } else {
+            servicio.setModificadoPorNombre(usuario.getNombre());
+            servicio.setFechaModificacion(LocalDateTime.now());
+        }
         servicio.setFechaServicio(LocalDate.parse(dto.getFecha()));
         servicio.setClienteNombre(dto.getClienteNombre());
         servicio.setSedeNombre(dto.getSedeNombre());
@@ -290,6 +293,10 @@ public class ServicioService {
         var sede    = s.getSede();
         var cliente = (sede != null) ? sede.getCliente() : null;
 
+        var usuario = s.getUsuario();
+        String fechaMod = s.getFechaModificacion() != null
+                ? s.getFechaModificacion().toString() : null;
+
         return new ServicioDTO(
                 s.getId(),
                 s.getFechaServicio() != null ? s.getFechaServicio().toString() : null,
@@ -308,7 +315,11 @@ public class ServicioService {
                 s.getFotoRemito(),
                 s.getDescuentoPorcentaje(),
                 s.getObservaciones(),
-                s.getNroDocumento()
+                s.getNroDocumento(),
+                usuario != null ? usuario.getId() : null,
+                usuario != null ? usuario.getNombre() : null,
+                s.getModificadoPorNombre(),
+                fechaMod
         );
     }
 

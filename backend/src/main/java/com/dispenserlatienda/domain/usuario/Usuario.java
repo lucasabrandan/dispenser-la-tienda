@@ -65,7 +65,10 @@ public class Usuario {
         return activo;
     }
 
-    public void setActivo(boolean activo) {
-        this.activo = activo;
-    }
+    public void setActivo(boolean activo) { this.activo = activo; }
+
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public void setUsername(String username) { this.username = username; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+    public void setRol(RolUsuario rol) { this.rol = rol; }
 }

@@ -19,6 +19,7 @@ import ClienteManager     from './components/cliente/ClienteManager';
 import GestorProductos    from './components/productos/GestorProductos';
 import RadarMantenimiento from './components/RadarMantenimiento';
 import DashboardFinanzas  from './components/finanzas/DashboardFinanzas';
+import UsuariosManager    from './components/usuarios/UsuariosManager';
 
 function AppInterna() {
     const { autenticado, esAdmin } = useAuth();
@@ -56,6 +57,8 @@ function AppInterna() {
                 return <RadarMantenimiento />;
             case 'finanzas':
                 return <DashboardFinanzas />;
+            case 'usuarios':
+                return <UsuariosManager />;
             default:
                 return (
                     <div className="flex items-center justify-center h-64 text-[#A8A29E] font-black text-sm uppercase tracking-widest">

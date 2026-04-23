@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import ServicioForm from '../servicio/ServicioForm';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion from '../ui/Paginacion';
 import { useMontos } from '../../context/MontosContext';
+import { useAuth } from '../../context/AuthContext';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
+import { getUsuarios } from '../../services/api';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -28,6 +30,7 @@ const badgeInfo = (s) => {
 };
 
 export default function ServicioManager({ clienteInicial = null, onClienteConsumido }) {
+    const { esAdmin } = useAuth();
     const {
         cargando, stats,
         modalCrear, setModalCrear,
@@ -39,9 +42,17 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
         calcularTotal, abrirEditar, cerrarModal,
         setFiltroTab,
         filtros,
+        usuarioId, setUsuarioId,
     } = useServicioManager();
 
-    // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
+    const [tecnicos, setTecnicos] = useState([]);
+
+    useEffect(() => {
+        if (esAdmin) {
+            getUsuarios().then(r => setTecnicos(r.data)).catch(() => {});
+        }
+    }, [esAdmin]);
+
     useEffect(() => {
         if (clienteInicial) setModalCrear(true);
     }, [clienteInicial]);
@@ -137,6 +148,20 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
 
                 {/* ── FILTROS ───────────────────────────────────────────── */}
                 <FiltrosPanel hook={filtros} estados={ESTADOS_SERVICIO} conBusqueda conRango />
+
+                {/* Filtro por técnico — solo admin */}
+                {esAdmin && tecnicos.length > 0 && (
+                    <select
+                        value={usuarioId}
+                        onChange={e => { setUsuarioId(e.target.value); }}
+                        className="w-full h-10 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]"
+                    >
+                        <option value="">Todos los técnicos</option>
+                        {tecnicos.map(t => (
+                            <option key={t.id} value={t.id}>{t.nombre} ({t.rol})</option>
+                        ))}
+                    </select>
+                )}
                 <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
                 {/* ── LISTA ─────────────────────────────────────────────── */}
@@ -171,6 +196,17 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
 
                                         <p className="font-bold text-[15px] text-[#1C1917] dark:text-[#F0EEE9]">{s.clienteNombre}</p>
                                         <p className="text-[11px] text-[#A8A29E] mt-0.5">📍 {s.sedeNombre}</p>
+                                        {s.usuarioNombre && (
+                                            <p className="text-[10px] text-[#A8A29E] mt-0.5">
+                                                👤 {s.usuarioNombre}
+                                                {s.modificadoPorNombre && (
+                                                    <span className="ml-2 text-[#D48800] dark:text-[#F0A500]">
+                                                        · editado por {s.modificadoPorNombre}
+                                                        {s.fechaModificacion && ` (${new Date(s.fechaModificacion).toLocaleDateString('es-AR')})`}
+                                                    </span>
+                                                )}
+                                            </p>
+                                        )}
 
                                         {s.items?.length > 0 && (
                                             <div className="mt-2 pt-2 border-t border-black/[0.05] dark:border-white/[0.05] space-y-1">
