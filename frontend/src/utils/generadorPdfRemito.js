@@ -126,9 +126,6 @@ function estimarAlturaConCfg(item, cfg, doc) {
     const nRows = Math.min(cfg.maxTablaRows, nRaw) + (nRaw > cfg.maxTablaRows ? 1 : 0);
     if (nRows > 0) h += 8 + nRows * 5.5;
 
-    const nFotos = (item.fotoAntes ? 1 : 0) + (item.fotoDespues ? 1 : 0);
-    if (nFotos > 0) h += cfg.fotoH + 16;
-
     h += 20; // total dentro de card
     h += cfg.cardPad * 2 + cfg.gap;
 
@@ -187,6 +184,81 @@ function dibujarFoto(doc, foto, x, y, w, h, label) {
         doc.setFontSize(6);
         doc.setTextColor(...META_TEXT);
         doc.text('No disponible', x + w / 2, fy + h / 2, { align: 'center' });
+    }
+}
+
+// ── Página dedicada de evidencia (antes/después) ─────────────────────────────
+// Se agrega al final del PDF solo si hay al menos una foto en algún item.
+// Las fotos se muestran a tamaño grande (82×100mm) para máxima claridad.
+async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc) {
+    const FOTO_W  = 82;
+    const FOTO_H  = 100;
+    const GAP     = 8;
+    const MARGIN  = 14;
+    const PAGE_W  = doc.internal.pageSize.getWidth();
+    const PAGE_H  = doc.internal.pageSize.getHeight();
+    const Y_INI   = 40;         // debajo del header compacto
+    const Y_LIM   = PAGE_H - 22; // antes de la zona de footer
+
+    // Cargar todas las fotos en paralelo antes de dibujar
+    const fotosItems = await Promise.all(ticketItems.map(async it => ({
+        item: it,
+        fotoA: await cargarFoto(it.fotoAntes),
+        fotoD: await cargarFoto(it.fotoDespues),
+    })));
+
+    const conFotos = fotosItems.filter(x => x.fotoA || x.fotoD);
+    if (conFotos.length === 0) return;
+
+    let primeraHoja = true;
+    let y = Y_INI;
+
+    const iniciarHoja = () => {
+        doc.addPage();
+        if (primeraHoja) primeraHoja = false;
+        dibujarHeaderPDFCompacto(doc, 'EVIDENCIA DEL SERVICIO', fecha, null, nroDoc);
+        y = Y_INI;
+    };
+
+    iniciarHoja();
+
+    for (const { item, fotoA, fotoD } of conFotos) {
+        const seccionH = 16 + FOTO_H + 10;
+
+        if (y + seccionH > Y_LIM) iniciarHoja();
+
+        // Separador y etiqueta del equipo
+        doc.setDrawColor(...GRAY_MID);
+        doc.setLineWidth(0.2);
+        doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+        y += 6;
+
+        const serialLabel = item.equipoSerial && item.equipoSerial !== 'SIN-SN'
+            ? `S/N: ${item.equipoSerial}` : '';
+        const modeloLabel = item.modeloEquipo || '';
+        const equipoLabel = [serialLabel, modeloLabel].filter(Boolean).join('  ·  ') || 'Equipo';
+
+        doc.setFontSize(6.5); doc.setFont(undefined, 'bold');
+        doc.setTextColor(...RED);
+        doc.text('EQUIPO', MARGIN, y);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...META_TEXT);
+        doc.text(equipoLabel, MARGIN + 22, y);
+        y += 10;
+
+        // Fotos lado a lado centradas en la página
+        const nFotos = (fotoA ? 1 : 0) + (fotoD ? 1 : 0);
+        if (nFotos === 2) {
+            const totalW = FOTO_W * 2 + GAP;
+            const xL = (PAGE_W - totalW) / 2;
+            dibujarFoto(doc, fotoA, xL, y, FOTO_W, FOTO_H, 'Estado inicial');
+            dibujarFoto(doc, fotoD, xL + FOTO_W + GAP, y, FOTO_W, FOTO_H, 'Resultado final');
+        } else {
+            const xSola = (PAGE_W - FOTO_W) / 2;
+            dibujarFoto(doc, fotoA || fotoD, xSola, y, FOTO_W, FOTO_H,
+                fotoA ? 'Estado inicial' : 'Resultado final');
+        }
+        y += FOTO_H + 10;
     }
 }
 
@@ -520,34 +592,6 @@ export const generarRemitoPDFPremium = async ({
                 y += 8;
             }
 
-            // ── Fotos — SIEMPRE al final del bloque, después del total ────
-            const fotoA  = await cargarFoto(item.fotoAntes);
-            const fotoD  = await cargarFoto(item.fotoDespues);
-            const nFotos = (fotoA ? 1 : 0) + (fotoD ? 1 : 0);
-
-            if (nFotos > 0) {
-                if (!esSolaHoja && y + cfg.fotoH + 16 > MARGEN_INF) { doc.addPage(); y = 18; }
-
-                doc.setFontSize(6);
-                doc.setFont(undefined, 'bold');
-                doc.setTextColor(...RED);
-                doc.text('EVIDENCIA DEL SERVICIO', xI, y + 3);
-                y += 9;
-
-                if (nFotos === 2) {
-                    const GAP    = 8;
-                    const totalW = cfg.fotoW * 2 + GAP;
-                    const xL     = (pageW - totalW) / 2;
-                    dibujarFoto(doc, fotoA, xL,                    y, cfg.fotoW, cfg.fotoH, 'Estado inicial');
-                    dibujarFoto(doc, fotoD, xL + cfg.fotoW + GAP,  y, cfg.fotoW, cfg.fotoH, 'Resultado final');
-                } else {
-                    const xSola = (pageW - cfg.fotoW) / 2;
-                    dibujarFoto(doc, fotoA || fotoD, xSola, y, cfg.fotoW, cfg.fotoH,
-                        fotoA ? 'Estado inicial' : 'Resultado final');
-                }
-                y += cfg.fotoH + 8;
-            }
-
             // Separador entre equipos (multi-equipo)
             if (!esSolaHoja) {
                 if (idx < ticketItems.length - 1) {
@@ -795,6 +839,11 @@ export const generarRemitoPDFPremium = async ({
             doc.text(lblC, (lIzqX1 + lIzqX2) / 2, y + 15, { align: 'center' });
             doc.text(lblT, (lDerX1 + lDerX2) / 2, y + 15, { align: 'center' });
         }
+    }
+
+    // ── PÁGINA DE EVIDENCIA (antes/después) — al final, solo servicios técnicos
+    if (esTecnico) {
+        await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc);
     }
 
     // ── FOOTER EN TODAS LAS PÁGINAS ──────────────────────────────────────────
