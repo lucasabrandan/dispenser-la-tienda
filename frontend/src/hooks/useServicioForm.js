@@ -424,7 +424,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
 
       const servicioData = {
         sedeId:             parseInt(sedeIdFinal),
-        usuarioId:          1,
+        usuarioId:          (() => { try { return JSON.parse(localStorage.getItem('auth_usuario'))?.id || 1; } catch { return 1; } })(),
         fecha:              fechaServicio,
         servicioTipo:       tieneEquipo ? 'TECNICA' : 'VENTA',
         estado:             confirmarTrabajo ? 'REALIZADO' : 'PRESUPUESTO',

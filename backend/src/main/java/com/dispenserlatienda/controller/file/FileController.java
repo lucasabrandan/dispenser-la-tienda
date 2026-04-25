@@ -56,6 +56,8 @@ public class FileController {
 
             return ResponseEntity.ok()
                     .contentType(mediaType)
+                    .header("Cache-Control", "no-store, no-cache, must-revalidate")
+                    .header("Vary", "Origin")
                     .body(fileContent);
 
         } catch (Exception e) {

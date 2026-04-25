@@ -6,5 +6,7 @@ public record UsuarioCreateDTO(
         @NotBlank String nombre,
         @NotBlank String username,
         @NotBlank String password,
-        @NotBlank String rol
+        @NotBlank String rol,
+        String telefono,
+        String whatsapp
 ) {}

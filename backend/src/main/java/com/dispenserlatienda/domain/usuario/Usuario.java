@@ -28,8 +28,11 @@ public class Usuario {
     @Column(nullable = false)
     private boolean activo = true;
 
+    @Column(length = 30)
+    private String telefono;
 
-
+    @Column(length = 30)
+    private String whatsapp;
 
     protected Usuario() {
     }
@@ -71,4 +74,8 @@ public class Usuario {
     public void setUsername(String username) { this.username = username; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public void setRol(RolUsuario rol) { this.rol = rol; }
+    public String getTelefono() { return telefono; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
+    public String getWhatsapp() { return whatsapp; }
+    public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
 }

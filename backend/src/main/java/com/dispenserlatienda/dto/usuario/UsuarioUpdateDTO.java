@@ -5,5 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 public record UsuarioUpdateDTO(
         @NotBlank String nombre,
         @NotBlank String rol,
-        boolean activo
+        boolean activo,
+        String telefono,
+        String whatsapp
 ) {}

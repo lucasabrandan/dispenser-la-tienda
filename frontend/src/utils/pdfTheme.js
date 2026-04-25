@@ -15,12 +15,18 @@ export const GRAY_TEXT  = [120, 116, 110];
 export const WARM_BG    = [250, 248, 245];
 export const WARM_BORDER= [220, 212, 200];
 
-// ── Datos empresa (editar aquí) ───────────────────────────────────────────────
-export const EMPRESA = {
-    telefono:  '(011) XXXX-XXXX',    // ← completar con teléfono real
-    whatsapp:  '11 XXXX-XXXX',       // ← completar con WhatsApp real
-    direccion: 'Buenos Aires, Argentina',
-};
+// ── Datos empresa — se toman del perfil del usuario logueado ─────────────────
+function getUsuario() {
+    try { return JSON.parse(localStorage.getItem('auth_usuario') || '{}'); } catch { return {}; }
+}
+export function getEmpresa() {
+    const u = getUsuario();
+    return {
+        telefono:  u.telefono  || '',
+        whatsapp:  u.whatsapp  || '',
+        direccion: 'Buenos Aires, Argentina',
+    };
+}
 
 // ── Fecha ─────────────────────────────────────────────────────────────────────
 export function procesarFecha(f) {
@@ -57,9 +63,9 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
     doc.setFontSize(6.5);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...GRAY_TEXT);
-    doc.text(`Tel: ${EMPRESA.telefono}  ·  WA: ${EMPRESA.whatsapp}`, 14, 27);
-    if (EMPRESA.direccion) {
-        doc.text(EMPRESA.direccion, 14, 32);
+    doc.text(`Tel: ${getEmpresa().telefono}  ·  WA: ${getEmpresa().whatsapp}`, 14, 27);
+    if (getEmpresa().direccion) {
+        doc.text(getEmpresa().direccion, 14, 32);
     }
 
     // Bloque derecho: fecha / nroDoc / técnico — alineados a la derecha
@@ -113,7 +119,7 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
     doc.setFontSize(6);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...GRAY_TEXT);
-    doc.text(`Tel: ${EMPRESA.telefono}  ·  WA: ${EMPRESA.whatsapp}`, 14, 20);
+    doc.text(`Tel: ${getEmpresa().telefono}  ·  WA: ${getEmpresa().whatsapp}`, 14, 20);
 
     // Bloque derecho: fecha / nroDoc / técnico
     doc.setFontSize(7);
@@ -178,7 +184,7 @@ export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoC
     doc.setFontSize(6.5);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(155, 150, 144);
-    doc.text(`Tel: ${EMPRESA.telefono}  ·  WA: ${EMPRESA.whatsapp}`, 14, pageH - 5);
+    doc.text(`Tel: ${getEmpresa().telefono}  ·  WA: ${getEmpresa().whatsapp}`, 14, pageH - 5);
 
     if (pagina && totalPaginas && totalPaginas > 1) {
         doc.setFontSize(7);

@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
     const login = useCallback((tokenRecibido, datosUsuario) => {
         localStorage.setItem('auth_token', tokenRecibido);
         localStorage.setItem('auth_usuario', JSON.stringify(datosUsuario));
+        if (datosUsuario?.nombre) localStorage.setItem('tecnico_nombre', datosUsuario.nombre);
         setToken(tokenRecibido);
         setUsuario(datosUsuario);
     }, []);
@@ -19,6 +20,7 @@ export function AuthProvider({ children }) {
     const logout = useCallback(() => {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_usuario');
+        localStorage.removeItem('tecnico_nombre');
         setToken(null);
         setUsuario(null);
     }, []);

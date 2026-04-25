@@ -8,7 +8,7 @@ const ROL_COLOR = {
     TECNICO: 'bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500]',
 };
 
-const FORM_VACIO = { nombre: '', username: '', password: '', rol: 'TECNICO' };
+const FORM_VACIO = { nombre: '', username: '', password: '', rol: 'TECNICO', telefono: '', whatsapp: '' };
 
 export default function UsuariosManager() {
     const [usuarios, setUsuarios]     = useState([]);
@@ -37,7 +37,7 @@ export default function UsuariosManager() {
 
     const abrirCrear = () => { setForm(FORM_VACIO); setModal('crear'); };
     const abrirEditar = (u) => {
-        setForm({ nombre: u.nombre, username: u.username, password: '', rol: u.rol });
+        setForm({ nombre: u.nombre, username: u.username, password: '', rol: u.rol, telefono: u.telefono || '', whatsapp: u.whatsapp || '' });
         setModal(u);
     };
 
@@ -51,10 +51,10 @@ export default function UsuariosManager() {
         setGuardando(true);
         try {
             if (modal === 'crear') {
-                await crearUsuario({ nombre: form.nombre, username: form.username, password: form.password, rol: form.rol });
+                await crearUsuario({ nombre: form.nombre, username: form.username, password: form.password, rol: form.rol, telefono: form.telefono || null, whatsapp: form.whatsapp || null });
                 toast.success('Usuario creado');
             } else {
-                await editarUsuario(modal.id, { nombre: form.nombre, rol: form.rol, activo: modal.activo });
+                await editarUsuario(modal.id, { nombre: form.nombre, rol: form.rol, activo: modal.activo, telefono: form.telefono || null, whatsapp: form.whatsapp || null });
                 toast.success('Usuario actualizado');
             }
             setModal(null);
@@ -66,7 +66,7 @@ export default function UsuariosManager() {
 
     const toggleActivo = async (u) => {
         try {
-            await editarUsuario(u.id, { nombre: u.nombre, rol: u.rol, activo: !u.activo });
+            await editarUsuario(u.id, { nombre: u.nombre, rol: u.rol, activo: !u.activo, telefono: u.telefono || null, whatsapp: u.whatsapp || null });
             toast.success(u.activo ? 'Usuario desactivado' : 'Usuario activado');
             cargar();
         } catch { toast.error('Error al actualizar'); }
@@ -164,7 +164,7 @@ export default function UsuariosManager() {
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-[11px] text-[#A8A29E] mt-0.5">@{u.username}</p>
+                                        <p className="text-[11px] text-[#A8A29E] mt-0.5">@{u.username}{u.telefono ? `  ·  ${u.telefono}` : ''}</p>
                                     </div>
                                     {/* Acciones */}
                                     <div className="flex gap-2 shrink-0">
@@ -232,6 +232,26 @@ export default function UsuariosManager() {
                                     </div>
                                 </>
                             )}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Teléfono</label>
+                                    <input
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        value={form.telefono}
+                                        onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
+                                        placeholder="(011) XXXX-XXXX"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">WhatsApp</label>
+                                    <input
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        value={form.whatsapp}
+                                        onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))}
+                                        placeholder="11 XXXX-XXXX"
+                                    />
+                                </div>
+                            </div>
                             <div>
                                 <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Rol</label>
                                 <select

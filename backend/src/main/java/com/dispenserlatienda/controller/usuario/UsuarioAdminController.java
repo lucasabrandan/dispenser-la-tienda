@@ -28,7 +28,7 @@ public class UsuarioAdminController {
     @GetMapping
     public List<UsuarioDTO> listar() {
         return usuarioRepository.findAll().stream()
-                .map(u -> new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo()))
+                .map(u -> new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp()))
                 .toList();
     }
 
@@ -43,9 +43,11 @@ public class UsuarioAdminController {
                 passwordEncoder.encode(dto.password()),
                 RolUsuario.valueOf(dto.rol())
         );
+        nuevo.setTelefono(dto.telefono());
+        nuevo.setWhatsapp(dto.whatsapp());
         usuarioRepository.save(nuevo);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo()));
+                .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo(), nuevo.getTelefono(), nuevo.getWhatsapp()));
     }
 
     @PutMapping("/{id}")
@@ -55,8 +57,10 @@ public class UsuarioAdminController {
         u.setNombre(dto.nombre());
         u.setRol(RolUsuario.valueOf(dto.rol()));
         u.setActivo(dto.activo());
+        u.setTelefono(dto.telefono());
+        u.setWhatsapp(dto.whatsapp());
         usuarioRepository.save(u);
-        return new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo());
+        return new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp());
     }
 
     @PutMapping("/{id}/password")
