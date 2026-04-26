@@ -109,10 +109,12 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
 }
 
 // ── BLOQUE RESUMEN DEL SERVICIO (fila de stats) ───────────────────────────────
-export function dibujarResumenServicio(doc, { y, pageW, stats = [] }) {
+// Sin emojis: barra de color izquierda + valor grande + etiqueta chica
+export function dibujarResumenServicio(doc, { y, stats = [] }) {
     if (!stats.length) return y;
 
-    const BOX_W = Math.min(46, (CONTENT_W - (stats.length - 1) * 3) / stats.length);
+    const n     = stats.length;
+    const BOX_W = (CONTENT_W - (n - 1) * 3) / n;
     const BOX_H = 16;
     let x = M;
 
@@ -120,31 +122,34 @@ export function dibujarResumenServicio(doc, { y, pageW, stats = [] }) {
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
     doc.text('RESUMEN DEL SERVICIO', M, y);
-    y += 5;
+    y += 4;
 
-    stats.forEach(({ icono, valor, etiqueta, colorValor }) => {
+    stats.forEach(({ valor, etiqueta, colorValor }) => {
+        const color = colorValor || C.navy;
+
+        // Fondo blanco con borde
         doc.setFillColor(...C.white);
         doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.25);
+        doc.setLineWidth(0.2);
         doc.roundedRect(x, y, BOX_W, BOX_H, 2, 2, 'FD');
 
-        // Icono
-        doc.setFontSize(8);
-        doc.setTextColor(...C.navy);
-        doc.text(icono || '◆', x + 5, y + 6);
+        // Barra de color izquierda
+        doc.setFillColor(...color);
+        doc.roundedRect(x, y, 3, BOX_H, 2, 2, 'F');
+        doc.rect(x + 1.5, y, 1.5, BOX_H, 'F');
 
-        // Valor
+        // Valor (grande, bold)
         doc.setFontSize(T.sm);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...(colorValor || C.dark));
-        doc.text(String(valor), x + 13, y + 6);
+        doc.setTextColor(...color);
+        doc.text(String(valor), x + 7, y + 6.5);
 
-        // Etiqueta
+        // Etiqueta (pequeña, gris)
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
-        const etLines = doc.splitTextToSize(etiqueta, BOX_W - 6);
-        doc.text(etLines[0], x + 5, y + 12);
+        const etLines = doc.splitTextToSize(etiqueta, BOX_W - 9);
+        doc.text(etLines[0], x + 7, y + 12.5);
 
         x += BOX_W + 3;
     });

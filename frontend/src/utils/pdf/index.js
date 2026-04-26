@@ -119,12 +119,12 @@ async function generarSingleTecnico(doc, {
     const cantTrabajos = (item.repuestosUsados?.length || 0) + (parseFloat(item.costoExtra || 0) > 0 ? 1 : 0);
 
     y = dibujarResumenServicio(doc, {
-        y, pageW,
+        y,
         stats: [
-            { icono: '⚒', valor: cantTrabajos, etiqueta: 'Trabajos realizados', colorValor: C.navy },
-            { icono: '⚙', valor: 1,            etiqueta: 'Equipos atendidos',   colorValor: C.navy },
-            { icono: '✓', valor: 'OK',          etiqueta: 'Estado final',        colorValor: C.green },
-            { icono: '📅', valor: fecha.substring(0, 5), etiqueta: 'Fecha servicio', colorValor: C.dark },
+            { valor: cantTrabajos,    etiqueta: 'Trabajos realizados', colorValor: C.navy  },
+            { valor: 1,               etiqueta: 'Equipos atendidos',   colorValor: C.navy  },
+            { valor: 'Completado',    etiqueta: 'Estado final',        colorValor: C.green },
+            { valor: fecha,           etiqueta: 'Fecha servicio',      colorValor: C.dark  },
         ],
     });
 
@@ -533,13 +533,13 @@ async function generarMultiPresupuesto(doc, {
 
     // Resumen general (métricas)
     y = dibujarResumenServicio(doc, {
-        y, pageW,
+        y,
         stats: [
-            { icono: '⚙', valor: ticketItems.length, etiqueta: 'Equipos',            colorValor: C.navy },
-            { icono: '⚒', valor: ticketItems.reduce((a, it) => a + (it.repuestosUsados?.length || 0), 0) + ticketItems.filter(it => parseFloat(it.costoExtra || 0) > 0).length,
+            { valor: ticketItems.length, etiqueta: 'Equipos', colorValor: C.navy },
+            { valor: ticketItems.reduce((a, it) => a + (it.repuestosUsados?.length || 0), 0) + ticketItems.filter(it => parseFloat(it.costoExtra || 0) > 0).length,
               etiqueta: 'Servicios estimados', colorValor: C.navy },
-            { icono: '📅', valor: fecha.substring(0, 5), etiqueta: 'Fecha',          colorValor: C.dark },
-            { icono: '$',  valor: `$${total.toLocaleString('es-AR')}`, etiqueta: 'Total estimado', colorValor: C.red },
+            { valor: fecha, etiqueta: 'Fecha', colorValor: C.dark },
+            { valor: `$ ${total.toLocaleString('es-AR')}`, etiqueta: 'Total estimado', colorValor: C.red },
         ],
     });
 
