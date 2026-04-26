@@ -24,14 +24,19 @@ import UsuariosManager    from './components/usuarios/UsuariosManager';
 function AppInterna() {
     const { autenticado, esAdmin } = useAuth();
     const [seccionActual, setSeccionActual] = useState(esAdmin ? 'caja' : 'servicio-tecnico');
-    // Cliente precargado para abrir VentaManager/ServicioManager desde ClienteManager
     const [clientePreload, setClientePreload] = useState(null);
+    const [presupuestoOrigen, setPresupuestoOrigen] = useState(null);
 
     if (!autenticado) return <LoginPage />;
 
     const irASeccionConCliente = (seccion, cliente) => {
         setClientePreload(cliente);
         setSeccionActual(seccion);
+    };
+
+    const ejecutarPresupuesto = (presupuesto) => {
+        setPresupuestoOrigen(presupuesto);
+        setSeccionActual('servicio-tecnico');
     };
 
     const renderSeccion = () => {
@@ -41,11 +46,16 @@ function AppInterna() {
             case 'venta':
                 return <VentaManager clienteInicial={clientePreload} onClienteConsumido={() => setClientePreload(null)} />;
             case 'servicio-tecnico':
-                return <ServicioManager clienteInicial={clientePreload} onClienteConsumido={() => setClientePreload(null)} />;
+                return <ServicioManager
+                    clienteInicial={clientePreload}
+                    onClienteConsumido={() => setClientePreload(null)}
+                    presupuestoOrigen={presupuestoOrigen}
+                    onPresupuestoOrigenConsumido={() => setPresupuestoOrigen(null)}
+                />;
             case 'historial':
                 return <ServicioList />;
             case 'presupuestos':
-                return <PresupuestosManager />;
+                return <PresupuestosManager onEjecutar={ejecutarPresupuesto} />;
             case 'clientes':
                 return <ClienteManager
                     onNuevoServicio={(c) => irASeccionConCliente('servicio-tecnico', c)}

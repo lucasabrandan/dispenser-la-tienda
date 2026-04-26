@@ -17,8 +17,8 @@ const TITULOS = [
     { titulo: 'Resumen y cierre',      subtitulo: 'Descuento, rentabilidad y condiciones' },
 ];
 
-export default function ServicioForm({ onSaved, servicioParaEditar = null, clienteInicialId = null }) {
-    const hook = useServicioForm(servicioParaEditar, clienteInicialId);
+export default function ServicioForm({ onSaved, servicioParaEditar = null, clienteInicialId = null, presupuestoOrigen = null }) {
+    const hook = useServicioForm(servicioParaEditar, clienteInicialId, presupuestoOrigen);
     const {
         db, setDb, clienteId,
         ticketItems, idEdicion,

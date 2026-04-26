@@ -47,7 +47,7 @@ export default function ClienteCard({
     const [equipoHistorial, setEquipoHistorial] = useState(null);
 
     const sedesCli          = sedes.filter(s => s.cliente?.id === cliente.id);
-    const eqCli             = equipos.filter(eq => sedesCli.map(s => s.id).includes(eq.sede?.id));
+    const eqCli             = equipos.filter(eq => sedesCli.map(s => s.id).includes(eq.sedeId));
     const equiposActivos    = eqCli.filter(eq => eq.activo !== false);
     const equiposArchivados = eqCli.filter(eq => eq.activo === false);
 
@@ -206,7 +206,7 @@ export default function ClienteCard({
                                     🏠 {sede.nombreSede}
                                 </p>
                                 <div className="grid gap-2 ml-3">
-                                    {equiposActivos.filter(eq => eq.sede?.id === sede.id).map(eq => (
+                                    {equiposActivos.filter(eq => eq.sedeId === sede.id).map(eq => (
                                         <EquipoItem
                                             key={eq.id} equipo={eq} cliente={cliente}
                                             onEditar={onEditEquipo}
@@ -218,11 +218,11 @@ export default function ClienteCard({
                                     ))}
                                 </div>
 
-                                {equiposArchivados.filter(eq => eq.sede?.id === sede.id).length > 0 && (
+                                {equiposArchivados.filter(eq => eq.sedeId === sede.id).length > 0 && (
                                     <div className="ml-3 mt-2 pt-2 border-t border-black/[0.07] dark:border-white/[0.07]">
                                         <p className="text-[8px] font-black text-[#A8A29E] uppercase mb-2">📦 Archivados</p>
                                         <div className="grid gap-2">
-                                            {equiposArchivados.filter(eq => eq.sede?.id === sede.id).map(eq => (
+                                            {equiposArchivados.filter(eq => eq.sedeId === sede.id).map(eq => (
                                                 <EquipoItem
                                                     key={eq.id} equipo={eq} cliente={cliente}
                                                     onEditar={onEditEquipo}

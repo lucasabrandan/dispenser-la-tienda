@@ -18,7 +18,7 @@ export const filtrarClientesPorBusqueda = (clientes, sedes, equipos, busqueda) =
         const term = busqueda.toLowerCase();
         const matchCliente = c.nombre?.toLowerCase().includes(term) || c.localidad?.toLowerCase().includes(term);
         const sedesId = sedes.filter(s => s.cliente?.id === c.id).map(s => s.id);
-        const matchEquipo = equipos.some(eq => sedesId.includes(eq.sede?.id) && eq.numeroSerie?.toLowerCase().includes(term));
+        const matchEquipo = equipos.some(eq => sedesId.includes(eq.sedeId) && eq.numeroSerie?.toLowerCase().includes(term));
         return matchCliente || matchEquipo;
     });
 };
@@ -40,7 +40,7 @@ export const aplicarFiltroChip = (clientes, sedes, equipos, servicios, chip) => 
 
         if (chip === 'con-archivados') {
             const sedesIds = sedes.filter(s => s.cliente?.id === c.id).map(s => s.id);
-            return equipos.some(eq => sedesIds.includes(eq.sede?.id) && eq.activo === false);
+            return equipos.some(eq => sedesIds.includes(eq.sedeId) && eq.activo === false);
         }
 
         return true;

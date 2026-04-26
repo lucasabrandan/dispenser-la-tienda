@@ -2,6 +2,7 @@ package com.dispenserlatienda.dto.equipo;
 
 public record EquipoDTO(
         Long id,
+        Long sedeId,
         String numeroSerie,
         String marca,
         String modelo,

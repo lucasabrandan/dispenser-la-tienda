@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword } from '../../services/api';
+import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword, eliminarUsuario } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const ROL_LABEL = { ADMIN: 'Administrador', TECNICO: 'Técnico' };
 const ROL_COLOR = {
@@ -8,12 +9,14 @@ const ROL_COLOR = {
     TECNICO: 'bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500]',
 };
 
-const FORM_VACIO = { nombre: '', username: '', password: '', rol: 'TECNICO', telefono: '', whatsapp: '' };
+const FORM_VACIO = { nombre: '', username: '', password: '', passwordConfirm: '', rol: 'TECNICO', telefono: '', whatsapp: '' };
 
 export default function UsuariosManager() {
+    const { usuario: usuarioActual } = useAuth();
     const [usuarios, setUsuarios]     = useState([]);
     const [cargando, setCargando]     = useState(true);
     const [filtroRol, setFiltroRol]   = useState('TODOS');
+    const [confirmEliminar, setConfirmEliminar] = useState(null); // null | usuario
 
     // Modal crear/editar
     const [modal, setModal]           = useState(null); // null | 'crear' | usuario
@@ -48,6 +51,12 @@ export default function UsuariosManager() {
         if (modal === 'crear' && !form.password.trim()) {
             toast.error('La contraseña es obligatoria'); return;
         }
+        if (modal === 'crear' && form.password.length < 6) {
+            toast.error('Mínimo 6 caracteres'); return;
+        }
+        if (modal === 'crear' && form.password !== form.passwordConfirm) {
+            toast.error('Las contraseñas no coinciden'); return;
+        }
         setGuardando(true);
         try {
             if (modal === 'crear') {
@@ -70,6 +79,15 @@ export default function UsuariosManager() {
             toast.success(u.activo ? 'Usuario desactivado' : 'Usuario activado');
             cargar();
         } catch { toast.error('Error al actualizar'); }
+    };
+
+    const eliminar = async () => {
+        try {
+            await eliminarUsuario(confirmEliminar.id);
+            toast.success('Usuario eliminado');
+            setConfirmEliminar(null);
+            cargar();
+        } catch { toast.error('Error al eliminar'); }
     };
 
     const guardarClave = async () => {
@@ -183,6 +201,13 @@ export default function UsuariosManager() {
                                             title={u.activo ? 'Desactivar' : 'Activar'}
                                             className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#D8D4CE] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                                         >{u.activo ? '🔒' : '✅'}</button>
+                                        {usuarioActual?.id !== u.id && (
+                                            <button
+                                                onClick={() => setConfirmEliminar(u)}
+                                                title="Eliminar"
+                                                className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#D13A28]/10 dark:bg-[#E8422F]/10 active:scale-90 transition-all"
+                                            >🗑️</button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -230,6 +255,20 @@ export default function UsuariosManager() {
                                             placeholder="Mínimo 6 caracteres"
                                         />
                                     </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Confirmar contraseña</label>
+                                        <input
+                                            type="password"
+                                            className={`mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none border ${
+                                                form.passwordConfirm && form.password !== form.passwordConfirm
+                                                    ? 'border-[#D13A28] dark:border-[#E8422F]'
+                                                    : 'border-black/[0.08] dark:border-white/[0.08]'
+                                            }`}
+                                            value={form.passwordConfirm}
+                                            onChange={e => setForm(f => ({ ...f, passwordConfirm: e.target.value }))}
+                                            placeholder="Repetir contraseña"
+                                        />
+                                    </div>
                                 </>
                             )}
                             <div className="grid grid-cols-2 gap-3">
@@ -275,6 +314,30 @@ export default function UsuariosManager() {
                                 disabled={guardando}
                                 className="flex-1 h-10 rounded-xl font-bold text-xs uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] disabled:opacity-50"
                             >{guardando ? 'Guardando...' : 'Guardar'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL CONFIRMAR ELIMINACIÓN */}
+            {confirmEliminar && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="w-full max-w-sm rounded-3xl p-6 bg-[#EDEAE6] dark:bg-[#242424] shadow-2xl space-y-4">
+                        <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                            Eliminar usuario
+                        </h3>
+                        <p className="text-[13px] text-[#57534E] dark:text-[#A8A29E]">
+                            ¿Seguro que querés eliminar a <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">{confirmEliminar.nombre}</span>? Esta acción no se puede deshacer.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmEliminar(null)}
+                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
+                            >Cancelar</button>
+                            <button
+                                onClick={eliminar}
+                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase text-white bg-[#D13A28] dark:bg-[#E8422F]"
+                            >Eliminar</button>
                         </div>
                     </div>
                 </div>

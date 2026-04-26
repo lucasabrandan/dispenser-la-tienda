@@ -20,7 +20,7 @@ export default function ItemEquipoForm({
     const sedesDelCliente = (() => {
         if (!clienteId) return [];
         const ids = db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId).map(s => s.id) || [];
-        return db.equipos?.filter(e => ids.includes(e.sede?.id)) || [];
+        return db.equipos?.filter(e => ids.includes(e.sedeId)) || [];
     })();
 
     return (

@@ -181,7 +181,7 @@ export default function ServicioTecnicoForm({ onSaved, servicioParaEditar = null
             <CreatableSelect
               isDisabled={estaBloqueado}
               styles={premiumStyles}
-              options={db.equipos?.filter(e => e.sede?.id?.toString() === itemActual.sedeId?.toString()).map(e => ({ value: e.numeroSerie, label: `S/N: ${e.numeroSerie}` }))}
+              options={db.equipos?.filter(e => e.sedeId?.toString() === itemActual.sedeId?.toString()).map(e => ({ value: e.numeroSerie, label: `S/N: ${e.numeroSerie}` }))}
               onChange={s => {
                 if (s?.__isNew__) {
                   setNumeroSeriePrellenado(s.label);

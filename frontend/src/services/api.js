@@ -117,5 +117,6 @@ export const getUsuarios        = () => api.get('/admin/usuarios');
 export const crearUsuario       = (data) => api.post('/admin/usuarios', data);
 export const editarUsuario      = (id, data) => api.put(`/admin/usuarios/${id}`, data);
 export const cambiarPassword    = (id, data) => api.put(`/admin/usuarios/${id}/password`, data);
+export const eliminarUsuario    = (id) => api.delete(`/admin/usuarios/${id}`);
 
 export default api;

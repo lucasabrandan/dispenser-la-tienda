@@ -33,7 +33,7 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
                 marca:         equipoParaEditar.marca         || '',
                 otraMarca:     '',
                 modelo:        equipoParaEditar.modelo        || '',
-                sedeId:        equipoParaEditar.sede?.id      || '',
+                sedeId:        equipoParaEditar.sedeId         || '',
                 ubicacion:     equipoParaEditar.ubicacion     || '',
                 observaciones: equipoParaEditar.observaciones || ''
             });
@@ -116,7 +116,7 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
                                         </p>
                                     </div>
                                     <span className="text-[8px] font-black bg-[#EDEAE6] dark:bg-[#242424] px-3 py-1.5 rounded-xl border border-black/[0.07] dark:border-white/[0.07] uppercase text-[#A8A29E]">
-                                        {eq.sede?.nombreSede}
+                                        {sedes.find(s => s.id === eq.sedeId)?.nombreSede}
                                     </span>
                                 </div>
                             ))

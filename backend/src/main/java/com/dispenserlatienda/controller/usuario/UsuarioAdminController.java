@@ -71,4 +71,13 @@ public class UsuarioAdminController {
         usuarioRepository.save(u);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        if (!usuarioRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Usuario no encontrado");
+        }
+        usuarioRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

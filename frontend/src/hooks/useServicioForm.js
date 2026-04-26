@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 
 const DRAFT_KEY = 'servicio_borrador';
 
-export function useServicioForm(servicioParaEditar = null, clienteInicialId = null) {
+export function useServicioForm(servicioParaEditar = null, clienteInicialId = null, presupuestoOrigen = null) {
   const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
 
   // Borrador: true si existe un draft guardado al montar el formulario (solo en creación)
@@ -59,7 +59,31 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           repuestos: r.data.content || r.data
         });
 
-        if (servicioParaEditar) {
+        if (presupuestoOrigen) {
+          // Pre-llenar desde presupuesto: el técnico confirma/modifica lo realmente hecho
+          setEsPresupuesto(false); // El servicio resultante será REALIZADO
+          setClienteId(presupuestoOrigen.clienteId?.toString() || null);
+          setDescuentoPorcentaje(presupuestoOrigen.descuentoPorcentaje || 0);
+          if (presupuestoOrigen.observaciones) setLeyenda(presupuestoOrigen.observaciones);
+          setItemActual(prev => ({ ...prev, sedeId: presupuestoOrigen.sedeId, sedeNombre: presupuestoOrigen.sedeNombre }));
+          setTicketItems(
+            (presupuestoOrigen.items || []).map(it => ({
+              sedeId:            presupuestoOrigen.sedeId,
+              sedeNombre:        presupuestoOrigen.sedeNombre,
+              equipoSerial:      it.equipoSerial || 'MOSTRADOR',
+              modeloEquipo:      it.equipoModelo || null,
+              ubicacionEquipo:   it.equipoUbicacion || null,
+              trabajo:           it.trabajoRealizado || '',
+              costoExtra:        Math.max(0, Number(it.costoExtra) || 0),
+              totalCalculado:    Math.max(0, Number(it.costo)),
+              totalSinDescuento: Math.max(0, Number(it.costo)),
+              repuestosUsados:   it.repuestosUsados || [],
+              resumenTexto:      it.trabajoRealizado || '',
+              fotoAntes:         null,
+              fotoDespues:       null,
+            }))
+          );
+        } else if (servicioParaEditar) {
           setEstaBloqueado(servicioParaEditar.estado !== 'PRESUPUESTO');
           setIdEdicion(servicioParaEditar.id);
           setEsPresupuesto(servicioParaEditar.servicioTipo === 'TECNICA');
@@ -427,7 +451,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         usuarioId:          (() => { try { return JSON.parse(localStorage.getItem('auth_usuario'))?.id || 1; } catch { return 1; } })(),
         fecha:              fechaServicio,
         servicioTipo:       tieneEquipo ? 'TECNICA' : 'VENTA',
-        estado:             confirmarTrabajo ? 'REALIZADO' : 'PRESUPUESTO',
+        estado:             confirmarTrabajo ? 'REALIZADO' : (presupuestoOrigen ? 'REALIZADO' : 'PRESUPUESTO'),
+        presupuestoOrigenId: presupuestoOrigen?.id || null,
         clienteNombre:      nombreCliente,
         sedeNombre:         nombreSedeF,
         descuentoPorcentaje,

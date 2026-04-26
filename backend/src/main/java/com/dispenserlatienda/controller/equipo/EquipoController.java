@@ -2,6 +2,7 @@ package com.dispenserlatienda.controller.equipo;
 
 import com.dispenserlatienda.domain.equipo.Equipo;
 import com.dispenserlatienda.dto.equipo.EquipoCreateDTO;
+import com.dispenserlatienda.dto.equipo.EquipoDTO;
 import com.dispenserlatienda.service.equipo.EquipoService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +27,7 @@ public class EquipoController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Equipo>> listar(Pageable pageable) {
+    public ResponseEntity<Page<EquipoDTO>> listar(Pageable pageable) {
         return ResponseEntity.ok(equipoService.listarTodos(pageable));
     }
 

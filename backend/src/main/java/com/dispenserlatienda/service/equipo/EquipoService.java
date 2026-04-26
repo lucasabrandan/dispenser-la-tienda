@@ -31,8 +31,8 @@ public class EquipoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Equipo> listarTodos(Pageable pageable) {
-        return equipoRepository.findAll(pageable);
+    public Page<EquipoDTO> listarTodos(Pageable pageable) {
+        return equipoRepository.findAll(pageable).map(this::mapToDTO);
     }
 
     @Transactional
@@ -90,8 +90,8 @@ public class EquipoService {
 
     public EquipoDTO mapToDTO(Equipo equipo) {
         return new EquipoDTO(
-                equipo.getId(), equipo.getNumeroSerie(), equipo.getMarca(),
-                equipo.getModelo(), equipo.getUbicacion(), equipo.getObservaciones()
+                equipo.getId(), equipo.getSede().getId(), equipo.getNumeroSerie(),
+                equipo.getMarca(), equipo.getModelo(), equipo.getUbicacion(), equipo.getObservaciones()
         );
     }
 

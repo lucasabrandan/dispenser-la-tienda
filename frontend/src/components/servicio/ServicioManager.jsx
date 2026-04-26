@@ -29,7 +29,7 @@ const badgeInfo = (s) => {
     return { label: s.estado, cls: 'bg-[#C0BCB6] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' };
 };
 
-export default function ServicioManager({ clienteInicial = null, onClienteConsumido }) {
+export default function ServicioManager({ clienteInicial = null, onClienteConsumido, presupuestoOrigen = null, onPresupuestoOrigenConsumido }) {
     const { esAdmin } = useAuth();
     const {
         cargando, stats,
@@ -56,6 +56,10 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
     useEffect(() => {
         if (clienteInicial) setModalCrear(true);
     }, [clienteInicial]);
+
+    useEffect(() => {
+        if (presupuestoOrigen) setModalCrear(true);
+    }, [presupuestoOrigen]);
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
@@ -285,9 +289,10 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                             </button>
                         </div>
                         <ServicioForm
-                            onSaved={() => { cerrarModal(); cargarServicios(); if (onClienteConsumido) onClienteConsumido(); }}
+                            onSaved={() => { cerrarModal(); cargarServicios(); if (onClienteConsumido) onClienteConsumido(); if (onPresupuestoOrigenConsumido) onPresupuestoOrigenConsumido(); }}
                             servicioParaEditar={servicioEditar}
                             clienteInicialId={clienteInicial?.id}
+                            presupuestoOrigen={presupuestoOrigen}
                             soloTecnico
                         />
                     </div>

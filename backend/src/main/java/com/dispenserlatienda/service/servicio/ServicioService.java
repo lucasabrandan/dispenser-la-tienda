@@ -192,6 +192,9 @@ public class ServicioService {
         servicio.setFotoRemito(dto.getFotoRemito());
         servicio.setDescuentoPorcentaje(dto.getDescuentoPorcentaje());
         servicio.setObservaciones(dto.getObservaciones());
+        if (dto.getPresupuestoOrigenId() != null) {
+            servicio.setPresupuestoOrigenId(dto.getPresupuestoOrigenId());
+        }
 
         ServicioTipo tipoDetectado = ServicioTipo.VENTA;
 
@@ -319,7 +322,8 @@ public class ServicioService {
                 usuario != null ? usuario.getId() : null,
                 usuario != null ? usuario.getNombre() : null,
                 s.getModificadoPorNombre(),
-                fechaMod
+                fechaMod,
+                s.getPresupuestoOrigenId()
         );
     }
 

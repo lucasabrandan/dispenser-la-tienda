@@ -188,7 +188,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     sedes={sedes.filter(s => s.cliente?.id === selectedCliente.id)}
                     equipos={equipos.filter(eq => {
                         const ids = sedes.filter(s => s.cliente?.id === selectedCliente.id).map(s => s.id);
-                        return ids.includes(eq.sede?.id);
+                        return ids.includes(eq.sedeId);
                     })}
                     equipoParaEditar={selectedEquipo}
                     onRefresh={() => { cargarDatos(); setSelectedEquipo(null); }}

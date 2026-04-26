@@ -16,13 +16,17 @@ const TIPOS_PRESU = [
 // ─────────────────────────────────────────────────────────────────────────────
 // Tarjeta individual de presupuesto
 // ─────────────────────────────────────────────────────────────────────────────
-function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar, onEliminar }) {
+function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar, onEliminar, onEjecutar, ejecutado }) {
     const esTecnico = s.servicioTipo === 'TECNICA';
     return (
-        <div className="bg-[#EDEAE6] dark:bg-[#242424] p-5 rounded-2xl border border-black/[0.07] dark:border-white/[0.07] transition-all">
+        <div className={`bg-[#EDEAE6] dark:bg-[#242424] p-5 rounded-2xl border transition-all ${
+            ejecutado
+                ? 'border-[#D48800]/40 dark:border-[#F0A500]/40'
+                : 'border-black/[0.07] dark:border-white/[0.07]'
+        }`}>
             <div className="flex justify-between items-start mb-3">
                 <div>
-                    <div className="flex gap-2 items-center mb-1">
+                    <div className="flex gap-2 items-center mb-1 flex-wrap">
                         <span className="text-[10px] font-bold text-[#A8A29E]">#{s.id}</span>
                         <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg uppercase ${
                             esTecnico
@@ -31,6 +35,11 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
                         }`}>
                             {esTecnico ? '🔧 Servicio' : '🛒 Venta'}
                         </span>
+                        {ejecutado && (
+                            <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg uppercase bg-[#D48800]/15 text-[#D48800] dark:bg-[#F0A500]/15 dark:text-[#F0A500]">
+                                ✓ Ejecutado
+                            </span>
+                        )}
                     </div>
                     <h4 className="text-[15px] font-extrabold text-[#1C1917] dark:text-[#F0EEE9]">{s.clienteNombre}</h4>
                     <p className="text-[11px] text-[#A8A29E] font-medium mt-0.5">📍 {s.sedeNombre} · {s.fecha}</p>
@@ -59,6 +68,12 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
                     className="p-2.5 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] hover:opacity-80 transition-opacity">
                     📄
                 </button>
+                {!ejecutado && (
+                    <button onClick={() => onEjecutar(s)}
+                        className="px-4 py-2 rounded-xl font-extrabold text-xs text-white active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                        ▶ Ejecutar
+                    </button>
+                )}
                 <button onClick={() => onCobrar(s.id)}
                     className="px-4 py-2 rounded-xl font-extrabold text-xs text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
                     ✓ Cobrar
@@ -123,24 +138,29 @@ function parseFechaSort(f) {
     return new Date(f).getTime() || 0;
 }
 
-export default function PresupuestosManager() {
-    const [presupuestos, setPresupuestos] = useState([]);
-    const [cargando, setCargando]         = useState(true);
-    const [modalDetalle, setModalDetalle] = useState(null);
+export default function PresupuestosManager({ onEjecutar }) {
+    const [presupuestos, setPresupuestos]   = useState([]);
+    const [cargando, setCargando]           = useState(true);
+    const [modalDetalle, setModalDetalle]   = useState(null);
+    const [ejecutadosIds, setEjecutadosIds] = useState(new Set());
 
     useEffect(() => { cargar(); }, []);
 
     const cargar = async () => {
         setCargando(true);
         try {
-            // Filtra directo en el backend — solo PRESUPUESTO, sin limite de 1000
-            const res  = await api.get('/servicios', {
-                params: { estado: 'PRESUPUESTO', page: 0, size: 200, sort: 'fechaServicio,desc' }
-            });
-            const data = res.data.content || res.data || [];
+            const [resPresu, resEjec] = await Promise.all([
+                api.get('/servicios', { params: { estado: 'PRESUPUESTO', page: 0, size: 200, sort: 'fechaServicio,desc' } }),
+                api.get('/servicios', { params: { page: 0, size: 500 } }),
+            ]);
+            const data = resPresu.data.content || resPresu.data || [];
             setPresupuestos(Array.isArray(data)
                 ? data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha))
                 : []);
+            // Construir set de IDs de presupuestos que ya tienen un servicio ejecutado
+            const todos = resEjec.data.content || resEjec.data || [];
+            const ids = new Set(todos.filter(s => s.presupuestoOrigenId).map(s => s.presupuestoOrigenId));
+            setEjecutadosIds(ids);
         } catch { toast.error('Error al cargar presupuestos'); }
         finally  { setCargando(false); }
     };
@@ -269,6 +289,8 @@ export default function PresupuestosManager() {
                             onCobrar={confirmar}
                             onRechazar={rechazar}
                             onEliminar={eliminar}
+                            onEjecutar={onEjecutar}
+                            ejecutado={ejecutadosIds.has(s.id)}
                         />
                     ))}
                 </div>

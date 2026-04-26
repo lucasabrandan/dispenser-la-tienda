@@ -24,5 +24,6 @@ public record ServicioDTO(
         Long usuarioId,
         String usuarioNombre,
         String modificadoPorNombre,
-        String fechaModificacion
+        String fechaModificacion,
+        Long presupuestoOrigenId
 ) {}

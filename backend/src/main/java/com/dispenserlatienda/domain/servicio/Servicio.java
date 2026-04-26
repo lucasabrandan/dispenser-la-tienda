@@ -55,6 +55,10 @@ public class Servicio {
     @Column(name = "nro_documento", length = 30)
     private String nroDocumento;
 
+    // ID del presupuesto a partir del cual se generó este servicio (opcional)
+    @Column(name = "presupuesto_origen_id")
+    private Long presupuestoOrigenId;
+
     @Column(name = "creado_en")
     private LocalDateTime creadoEn;
 
@@ -128,4 +132,7 @@ public class Servicio {
 
     public LocalDateTime getFechaModificacion() { return fechaModificacion; }
     public void setFechaModificacion(LocalDateTime fechaModificacion) { this.fechaModificacion = fechaModificacion; }
+
+    public Long getPresupuestoOrigenId() { return presupuestoOrigenId; }
+    public void setPresupuestoOrigenId(Long presupuestoOrigenId) { this.presupuestoOrigenId = presupuestoOrigenId; }
 }
