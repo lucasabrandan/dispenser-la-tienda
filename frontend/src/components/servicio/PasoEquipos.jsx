@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import CreatableSelect from 'react-select/creatable';
-import Select from 'react-select';
 import imageCompression from 'browser-image-compression';
 import { Label, NextBtn, BackBtn, DSCard, DSInput, DSTextarea, M } from './ServicioUI';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
 import RepuestoRapidoModal from '../repuesto/RepuestoRapidoModal';
+import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
 
 // Comprime la foto usando browser-image-compression (Web Worker) para no
 // bloquear el hilo principal ni crashear por OOM en Android.
@@ -96,15 +96,14 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const {
         db, setDb, clienteId, ticketItems,
         itemActual, setItemActual,
-        repuestoElegido, setRepuestoElegido,
-        sumarRepuesto, actualizarCantidad, quitarRepuesto,
+        actualizarCantidad, quitarRepuesto,
         agregarAlTicket, calcularGananciaRepuesto,
         consultarAntecedentes, historialEquipo,
     } = hook;
 
-    // Estado del modal de creación rápida de repuesto
-    const [modalRepuesto, setModalRepuesto]   = useState(false);
-    const [nombreRepuesto, setNombreRepuesto] = useState('');
+    const [modalRepuesto, setModalRepuesto]     = useState(false);
+    const [nombreRepuesto, setNombreRepuesto]   = useState('');
+    const [sheetRepuestos, setSheetRepuestos]   = useState(false);
 
     // Equipos del inventario del cliente
     const equiposInventario = (() => {
@@ -275,85 +274,48 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         />
                     </div>
 
-                    {/* Repuestos — CreatableSelect permite crear al vuelo */}
+                    {/* Repuestos — bottom sheet con fotos */}
                     <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.07)', paddingTop: '12px' }}>
                         <Label>Repuestos (opcional)</Label>
-                        <div className="flex gap-2">
-                            <div className="flex-1">
-                                <CreatableSelect
-                                    styles={selectStyles}
-                                    menuPosition="fixed"
-                                    menuPlacement="auto"
-                                    options={db.repuestos?.map(r => ({
-                                        ...r,
-                                        label: `${r.sku ? `[${r.sku}] ` : ''}${r.nombre}`,
-                                        value: r.id
-                                    }))}
-                                    filterOption={(opt, input) => {
-                                        const v = input.toLowerCase();
-                                        return opt.data.nombre?.toLowerCase().includes(v) || opt.data.sku?.toLowerCase().includes(v);
-                                    }}
-                                    formatOptionLabel={opt => (
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                {opt.sku && (
-                                                    <span className="text-[9px] font-black text-[#D13A28] dark:text-[#E8422F] mr-1">
-                                                        {opt.sku}
-                                                    </span>
-                                                )}
-                                                <span className="font-bold text-[13px]">{opt.nombre}</span>
-                                            </div>
-                                            {opt.precio > 0 && (
-                                                <span className="font-black text-xs text-[#1E8A4A]">${opt.precio}</span>
-                                            )}
-                                        </div>
-                                    )}
-                                    onChange={setRepuestoElegido}
-                                    onCreateOption={nombre => {
-                                        // Abrir mini-modal con el nombre pre-llenado
-                                        setNombreRepuesto(nombre);
-                                        setModalRepuesto(true);
-                                    }}
-                                    value={repuestoElegido}
-                                    placeholder="Buscar o crear repuesto..."
-                                    formatCreateLabel={v => `+ Crear "${v}"`}
-                                    isClearable
-                                />
-                            </div>
-                            <button onClick={sumarRepuesto}
-                                className="w-11 h-11 rounded-xl text-xl font-black text-white flex-shrink-0 active:scale-90 bg-[#D13A28] dark:bg-[#E8422F]">
-                                +
-                            </button>
-                        </div>
-                    </div>
 
-                    {/* Lista repuestos */}
-                    {itemActual.repuestosUsados?.length > 0 && (
-                        <div className="rounded-xl overflow-hidden bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
-                            {itemActual.repuestosUsados.map((r, i) => {
-                                const g = calcularGananciaRepuesto(r, r.cantidad);
-                                return (
-                                    <div key={i} className="px-3 py-2.5 flex items-center gap-3"
-                                         style={{ borderBottom: i < itemActual.repuestosUsados.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-[13px] truncate text-[#1C1917] dark:text-[#F0EEE9]">{r.nombre}</p>
-                                            {g.ganancia > 0 && (
-                                                <p className="text-[10px] font-bold text-[#1E8A4A]">+${g.ganancia.toFixed(0)} margen</p>
-                                            )}
+                        <button
+                            type="button"
+                            onClick={() => setSheetRepuestos(true)}
+                            className="w-full py-3 rounded-xl font-bold text-[13px] flex items-center justify-between px-4 transition-all active:scale-[0.98] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                        >
+                            <span>
+                                {itemActual.repuestosUsados?.length > 0
+                                    ? `${itemActual.repuestosUsados.length} repuesto${itemActual.repuestosUsados.length > 1 ? 's' : ''} seleccionado${itemActual.repuestosUsados.length > 1 ? 's' : ''}`
+                                    : '+ Seleccionar repuestos'
+                                }
+                            </span>
+                            <span className="text-[#A8A29E]">▾</span>
+                        </button>
+
+                        {/* Resumen repuestos elegidos */}
+                        {itemActual.repuestosUsados?.length > 0 && (
+                            <div className="mt-2 rounded-xl overflow-hidden bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
+                                {itemActual.repuestosUsados.map((r, i) => {
+                                    const g = calcularGananciaRepuesto(r, r.cantidad);
+                                    return (
+                                        <div key={i} className="px-3 py-2.5 flex items-center gap-3"
+                                             style={{ borderBottom: i < itemActual.repuestosUsados.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-[12px] truncate text-[#1C1917] dark:text-[#F0EEE9]">{r.nombre}</p>
+                                                {g.ganancia > 0 && (
+                                                    <p className="text-[10px] font-bold text-[#1E8A4A]">+${g.ganancia.toFixed(0)} margen</p>
+                                                )}
+                                            </div>
+                                            <span className="text-[11px] font-black text-[#A8A29E]">{r.cantidad}x</span>
+                                            <p className="font-black text-[13px] text-right text-[#1C1917] dark:text-[#F0EEE9]">
+                                                ${g.subtotal.toLocaleString()}
+                                            </p>
                                         </div>
-                                        <input type="number" min="1" value={r.cantidad}
-                                            onChange={e => actualizarCantidad(i, e.target.value)}
-                                            className="w-10 h-8 rounded-lg text-center font-black text-sm bg-[#EDEAE6] dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/10 outline-none"
-                                        />
-                                        <p className="font-black text-[13px] w-16 text-right text-[#1C1917] dark:text-[#F0EEE9]">
-                                            ${g.subtotal.toLocaleString()}
-                                        </p>
-                                        <button onClick={() => quitarRepuesto(i)} className="text-rose-500 text-base ml-1">✕</button>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
 
                     {/* Descripción con contador de caracteres */}
                     <div>
@@ -419,15 +381,27 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
             <BackBtn onClick={onBack} />
 
+            {/* Bottom sheet de repuestos */}
+            <RepuestosBottomSheet
+                isOpen={sheetRepuestos}
+                onClose={() => setSheetRepuestos(false)}
+                repuestos={db.repuestos || []}
+                seleccionados={itemActual.repuestosUsados || []}
+                onChange={nuevos => setItemActual(prev => ({ ...prev, repuestosUsados: nuevos }))}
+                onCrearNuevo={() => {
+                    setSheetRepuestos(false);
+                    setModalRepuesto(true);
+                }}
+            />
+
             {/* Modal creación rápida de repuesto */}
             <RepuestoRapidoModal
                 isOpen={modalRepuesto}
                 onClose={() => setModalRepuesto(false)}
                 nombreInicial={nombreRepuesto}
                 onCreado={repuesto => {
-                    // Agregar al listado local y seleccionarlo automáticamente
                     setDb(prev => ({ ...prev, repuestos: [...(prev.repuestos || []), repuesto] }));
-                    setRepuestoElegido({ ...repuesto, label: `[${repuesto.sku}] ${repuesto.nombre}`, value: repuesto.id });
+                    setSheetRepuestos(true);
                 }}
             />
         </div>

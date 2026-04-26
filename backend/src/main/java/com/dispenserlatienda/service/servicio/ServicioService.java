@@ -113,9 +113,14 @@ public class ServicioService {
                 predicates.add(cb.equal(root.get("estado"), EstadoServicio.valueOf(estadoStr)));
             if (busqueda != null && !busqueda.isBlank()) {
                 String like = "%" + busqueda.toLowerCase() + "%";
+                // JOIN items→equipo para buscar por número de serie
+                jakarta.persistence.criteria.Join<Object,Object> items  = root.join("items",  jakarta.persistence.criteria.JoinType.LEFT);
+                jakarta.persistence.criteria.Join<Object,Object> equipo = items.join("equipo", jakarta.persistence.criteria.JoinType.LEFT);
+                query.distinct(true);
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("clienteNombre")), like),
-                        cb.like(cb.lower(root.get("sedeNombre")), like)
+                        cb.like(cb.lower(root.get("sedeNombre")), like),
+                        cb.like(cb.lower(equipo.get("numeroSerie")), like)
                 ));
             }
             if (desde != null && !desde.isBlank())
