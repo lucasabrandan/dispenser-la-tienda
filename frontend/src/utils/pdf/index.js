@@ -266,20 +266,23 @@ async function generarSinglePresupuesto(doc, {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
 
-    // Bloque cliente + equipo (sin foto de evidencia, solo metadata)
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item, idx: 0, y, pageW });
+    // Cargar foto del equipo para mostrar en el bloque cliente+equipo
+    const fotoEquipoData = await cargarFoto(item.fotoAntes || item.fotoDespues || item.fotoEquipo || null);
 
-    // Problema / trabajo propuesto
-    const problemaTexto  = sanitizarTexto(item.problema || item.solicitud || '');
-    const trabajoTexto   = sanitizarTexto(item.trabajo || item.trabajoRealizado || item.resumenTexto || '');
+    // Bloque cliente + equipo con foto
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item, idx: 0, y, pageW, fotoEquipo: fotoEquipoData });
+
+    // Problema / trabajo propuesto — solo si hay contenido real
+    const problemaTexto = sanitizarTexto(item.problema || item.solicitud || item.descripcion || '');
+    const trabajoTexto  = sanitizarTexto(item.trabajo  || item.trabajoRealizado || item.resumenTexto || '');
     if (problemaTexto || trabajoTexto) {
         y = checkSalto(doc, y, 32);
         y = dibujarSeccion2Col(doc, {
             y, pageW,
-            tituloIzq: 'PROBLEMA / SOLICITUD INFORMADA',
-            textoIzq:  problemaTexto || 'Descripción no especificada',
-            tituloDer:  'TRABAJO PROPUESTO',
-            textoDer:   trabajoTexto  || 'A definir según diagnóstico',
+            tituloIzq: problemaTexto ? 'PROBLEMA / SOLICITUD INFORMADA' : null,
+            textoIzq:  problemaTexto || null,
+            tituloDer:  trabajoTexto  ? 'TRABAJO PROPUESTO' : null,
+            textoDer:   trabajoTexto  || null,
         });
     }
 
@@ -314,15 +317,30 @@ async function generarSinglePresupuesto(doc, {
     y = checkSalto(doc, y, 36);
     y = dibujarCondiciones(doc, { y, pageW });
 
-    // QR WhatsApp aprobación
+    // QR WhatsApp aprobación — siempre se muestra (con QR si hay WA, sin él si no)
+    y = checkSalto(doc, y, 48);
     if (empresa.whatsapp) {
-        y = checkSalto(doc, y, 48);
         y = await dibujarQRWhatsApp(doc, {
             x: M, y,
             telefono: empresa.whatsapp,
             mensaje:  `Hola, quiero aprobar el presupuesto ${nroDoc}`,
             nroDoc,
         });
+    } else {
+        // Card de aprobación sin QR
+        doc.setFillColor(240, 253, 244);
+        doc.setDrawColor(...C.green);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(M - 2, y, CONTENT_W + 4, 20, 2, 2, 'FD');
+        doc.setFontSize(T.sm);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.dark);
+        doc.text('¿ESTÁ DE ACUERDO CON ESTE PRESUPUESTO?', M + 4, y + 8);
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text(`Respondanos para coordinar el servicio — Nro. presupuesto: ${nroDoc}`, M + 4, y + 14);
+        y += 25;
     }
 
     // Firmas
