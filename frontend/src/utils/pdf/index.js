@@ -307,9 +307,10 @@ export const generarPDF = async ({
         y += 38;
     }
 
-    if ((tipoDetectado === 'ORDEN_SERVICIO' || tipoDetectado === 'INFORME_TECNICO') && googleReviewLink) {
+    const linkGoogle = googleReviewLink || empresa.googleReviewLink;
+    if ((tipoDetectado === 'ORDEN_SERVICIO' || tipoDetectado === 'INFORME_TECNICO') && linkGoogle) {
         y = checkSalto(doc, y, 36);
-        await dibujarQRGoogle(doc, { x: M, y: y + 4, link: googleReviewLink });
+        await dibujarQRGoogle(doc, { x: M, y: y + 4, link: linkGoogle });
         y += 38;
     }
 

@@ -53,14 +53,15 @@ export function getEmpresa() {
     try {
         const u = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
         return {
-            nombre:    'DISPENSER LA TIENDA',
-            eslogan:   'SERVICIO TÉCNICO ESPECIALIZADO',
-            telefono:  u.telefono  || '',
-            whatsapp:  u.whatsapp  || '',
-            direccion: 'Buenos Aires, Argentina',
-            web:       'www.dispenserlatienda.com',
+            nombre:            'DISPENSER LA TIENDA',
+            eslogan:           'SERVICIO TÉCNICO ESPECIALIZADO',
+            telefono:          u.telefono          || '',
+            whatsapp:          u.whatsapp          || '',
+            direccion:         'Buenos Aires, Argentina',
+            web:               'www.dispenserlatienda.com',
+            googleReviewLink:  localStorage.getItem('empresa_google_review') || '',
         };
-    } catch { return { nombre: 'DISPENSER LA TIENDA', eslogan: 'SERVICIO TÉCNICO ESPECIALIZADO', telefono: '', whatsapp: '', direccion: '', web: '' }; }
+    } catch { return { nombre: 'DISPENSER LA TIENDA', eslogan: 'SERVICIO TÉCNICO ESPECIALIZADO', telefono: '', whatsapp: '', direccion: '', web: '', googleReviewLink: '' }; }
 }
 
 export function procesarFecha(f) {

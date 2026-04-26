@@ -18,6 +18,17 @@ export default function UsuariosManager() {
     const [filtroRol, setFiltroRol]   = useState('TODOS');
     const [confirmEliminar, setConfirmEliminar] = useState(null); // null | usuario
 
+    // Configuración de empresa (solo en localStorage, solo ADMIN)
+    const [googleLink, setGoogleLink] = useState(() => localStorage.getItem('empresa_google_review') || '');
+    const [googleGuardado, setGoogleGuardado] = useState(false);
+
+    const guardarGoogleLink = () => {
+        localStorage.setItem('empresa_google_review', googleLink.trim());
+        setGoogleGuardado(true);
+        toast.success('Link de Google guardado');
+        setTimeout(() => setGoogleGuardado(false), 2000);
+    };
+
     // Modal crear/editar
     const [modal, setModal]           = useState(null); // null | 'crear' | usuario
     const [form, setForm]             = useState(FORM_VACIO);
@@ -151,6 +162,37 @@ export default function UsuariosManager() {
                         </button>
                     ))}
                 </div>
+
+                {/* CONFIGURACIÓN DE EMPRESA — solo ADMIN */}
+                {usuarioActual?.rol === 'ADMIN' && (
+                    <div className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] p-4 space-y-3">
+                        <p className="text-[11px] font-bold text-[#A8A29E] uppercase tracking-wider">Configuración de empresa</p>
+                        <div>
+                            <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">
+                                Link de reseña Google (para QR en PDFs)
+                            </label>
+                            <div className="mt-1 flex gap-2">
+                                <input
+                                    className="flex-1 h-10 px-3 rounded-xl text-[12px] bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    value={googleLink}
+                                    onChange={e => setGoogleLink(e.target.value)}
+                                    placeholder="https://g.page/r/..."
+                                />
+                                <button
+                                    onClick={guardarGoogleLink}
+                                    className={`h-10 px-4 rounded-xl font-bold text-xs text-white transition-all active:scale-95 ${
+                                        googleGuardado ? 'bg-green-600' : 'bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-90'
+                                    }`}
+                                >
+                                    {googleGuardado ? '✓' : 'Guardar'}
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-[#A8A29E] mt-1">
+                                Aparece como QR en órdenes de servicio e informes técnicos.
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {/* LISTA */}
                 {cargando ? (
