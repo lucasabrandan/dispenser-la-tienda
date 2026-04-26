@@ -363,7 +363,6 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                     </div>
                 </div>
             )}
-        </div>
 
             {/* ── MODAL FIRMAS PDF ─────────────────────────────────────── */}
             {modalFirmas && (
