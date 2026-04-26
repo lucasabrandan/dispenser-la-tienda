@@ -246,31 +246,61 @@ export function dibujarTablaDetalle(doc, {
 }
 
 // ── SECCIÓN 2 COLUMNAS (texto libre) ─────────────────────────────────────────
+// Si solo un lado tiene contenido, se dibuja a ancho completo automáticamente
 export function dibujarSeccion2Col(doc, {
     y, pageW,
     tituloIzq, textoIzq,
     tituloDer,  textoDer,
-    altoMin = 24,
+    altoMin = 22,
 }) {
-    const colW  = (CONTENT_W - 4) / 2;
+    const tieneIzq = !!(tituloIzq || textoIzq);
+    const tieneDer = !!(tituloDer  || textoDer);
+
+    // Solo un lado → full width
+    if (!tieneIzq || !tieneDer) {
+        const titulo = tituloIzq || tituloDer;
+        const texto  = textoIzq  || textoDer;
+        if (!titulo && !texto) return y;
+
+        doc.setFontSize(T.xxs);
+        const lineas = texto ? doc.splitTextToSize(texto, CONTENT_W - 6) : [];
+        const cardH  = Math.max(altoMin, lineas.length * 4 + 14);
+
+        doc.setFillColor(...C.white);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.25);
+        doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'FD');
+
+        if (titulo) {
+            doc.setFontSize(T.label);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.navy);
+            doc.text(titulo, M + 2, y + 6);
+        }
+        if (lineas.length) {
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.dark);
+            lineas.slice(0, 8).forEach((l, i) => doc.text(l, M + 2, y + 12 + i * 4));
+        }
+        return y + cardH + 4;
+    }
+
+    // Ambos lados → 2 columnas
+    const colW   = (CONTENT_W - 4) / 2;
     const rightX = M + colW + 4;
 
-    // Calcular altura necesaria
     doc.setFontSize(T.xxs);
-    const linI = textoIzq ? doc.splitTextToSize(textoIzq, colW - 6) : [];
-    const linD = textoDer  ? doc.splitTextToSize(textoDer,  colW - 6) : [];
-    const cardH = Math.max(altoMin, (Math.max(linI.length, linD.length)) * 4 + 14);
+    const linI  = textoIzq ? doc.splitTextToSize(textoIzq, colW - 6) : [];
+    const linD  = textoDer  ? doc.splitTextToSize(textoDer,  colW - 6) : [];
+    const cardH = Math.max(altoMin, Math.max(linI.length, linD.length) * 4 + 14);
 
-    // Card izquierda
     doc.setFillColor(...C.white);
     doc.setDrawColor(...C.grayBorder);
     doc.setLineWidth(0.25);
-    doc.roundedRect(M - 2, y, colW + 4, cardH, 2, 2, 'FD');
-
-    // Card derecha
+    doc.roundedRect(M - 2,    y, colW + 4, cardH, 2, 2, 'FD');
     doc.roundedRect(rightX - 2, y, colW + 4, cardH, 2, 2, 'FD');
 
-    // Contenidos izquierda
     if (tituloIzq) {
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'bold');
@@ -284,7 +314,6 @@ export function dibujarSeccion2Col(doc, {
         linI.slice(0, 6).forEach((l, i) => doc.text(l, M + 2, y + 12 + i * 4));
     }
 
-    // Contenidos derecha
     if (tituloDer) {
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'bold');
