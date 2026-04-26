@@ -4,6 +4,7 @@ import { useServicioManager } from '../../hooks/useServicioManager';
 import ServicioForm from '../servicio/ServicioForm';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion from '../ui/Paginacion';
+import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
@@ -36,6 +37,8 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
         modalCrear, setModalCrear,
         servicioEditar,
         modalDetalle, setModalDetalle,
+        modalFirmas, setModalFirmas,
+        confirmarFirmasYGenerarPDF,
         cargarServicios,
         confirmarServicio, rechazarServicio,
         eliminarServicio, generarPDF,
@@ -359,6 +362,15 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                         </button>
                     </div>
                 </div>
+            )}
+        </div>
+
+            {/* ── MODAL FIRMAS PDF ─────────────────────────────────────── */}
+            {modalFirmas && (
+                <ModalFirmasPDF
+                    onConfirm={confirmarFirmasYGenerarPDF}
+                    onCancel={() => setModalFirmas(false)}
+                />
             )}
         </div>
     );

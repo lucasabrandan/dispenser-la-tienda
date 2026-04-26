@@ -34,6 +34,9 @@ public class Usuario {
     @Column(length = 30)
     private String whatsapp;
 
+    @Column(columnDefinition = "TEXT")
+    private String firma;
+
     protected Usuario() {
     }
 
@@ -78,4 +81,6 @@ public class Usuario {
     public void setTelefono(String telefono) { this.telefono = telefono; }
     public String getWhatsapp() { return whatsapp; }
     public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
+    public String getFirma() { return firma; }
+    public void setFirma(String firma) { this.firma = firma; }
 }

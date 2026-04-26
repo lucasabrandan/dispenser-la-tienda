@@ -69,6 +69,8 @@ export function useServicioManager() {
     const [modalCrear, setModalCrear]             = useState(false);
     const [servicioEditar, setServicioEditar]     = useState(null);
     const [modalDetalle, setModalDetalle]         = useState(null);
+    const [modalFirmas, setModalFirmas]           = useState(false);
+    const [pendingPdfServicio, setPendingPdfServicio] = useState(null);
 
     // Debounce de búsqueda — 500ms para no saturar la API
     useEffect(() => {
@@ -161,7 +163,18 @@ export function useServicioManager() {
         } catch { toast.error('Error al eliminar'); }
     };
 
-    const generarPDF = async (servicio) => {
+    // Abre el modal de firmas; la generación real ocurre en confirmarFirmasYGenerarPDF
+    const generarPDF = (servicio) => {
+        setPendingPdfServicio(servicio);
+        setModalFirmas(true);
+    };
+
+    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente }) => {
+        setModalFirmas(false);
+        const servicio = pendingPdfServicio;
+        setPendingPdfServicio(null);
+        if (!servicio) return;
+
         const loading = toast.loading('Preparando PDF...');
         try {
             const itemsConFotos = (servicio.items || []).map(it => ({
@@ -188,11 +201,12 @@ export function useServicioManager() {
                 },
                 tecnico:             localStorage.getItem('tecnico_nombre') || 'Técnico',
                 ticketItems:         itemsConFotos,
-                totalFinal:          calcularTotal(servicio),
                 fechaServicio:       servicio.fecha,
                 descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
                 leyenda:             servicio.observaciones || '',
                 esTecnicoForzado:    servicio.servicioTipo === 'TECNICA',
+                firmaTecnico:        firmaTecnico  || null,
+                firmaCliente:        firmaCliente  || null,
             });
         } catch (e) {
             console.error('Error generando PDF:', e);
@@ -237,6 +251,8 @@ export function useServicioManager() {
         modalCrear, setModalCrear,
         servicioEditar,
         modalDetalle, setModalDetalle,
+        modalFirmas, setModalFirmas,
+        confirmarFirmasYGenerarPDF,
         cargarServicios: () => { cargarServicios(); cargarStats(); },
         confirmarServicio, rechazarServicio,
         eliminarServicio, generarPDF,

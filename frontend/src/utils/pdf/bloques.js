@@ -376,7 +376,9 @@ export function dibujarChecklist(doc, { y, items, pageW, titulo = 'CHECKLIST TÉ
 }
 
 // ── FIRMAS ────────────────────────────────────────────────────────────────────
-export function dibujarFirmas(doc, { y, firmaDataUrl = null, esPresupuesto = false, pageW }) {
+// firmaCliente: data URL de la firma del cliente (puede ser null)
+// firmaTecnico: data URL de la firma del técnico (puede ser null)
+export function dibujarFirmas(doc, { y, firmaCliente = null, firmaTecnico = null, esPresupuesto = false }) {
     y = checkSalto(doc, y, 36);
 
     doc.setFontSize(T.label);
@@ -387,52 +389,32 @@ export function dibujarFirmas(doc, { y, firmaDataUrl = null, esPresupuesto = fal
 
     const FIRMA_W = (CONTENT_W - 6) / 2;
     const FIRMA_H = 22;
+    const xDer    = M + FIRMA_W + 6;
 
-    if (firmaDataUrl) {
-        // Firma digital del cliente
+    const dibujarCaja = (firma, x, label) => {
         doc.setFillColor(...C.white);
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
-        doc.roundedRect(M, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'FD');
-        try { doc.addImage(firmaDataUrl, 'PNG', M, y - 2, FIRMA_W, FIRMA_H); } catch {}
-        doc.setFontSize(T.label);
+        doc.roundedRect(x, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'FD');
+
+        if (firma) {
+            try { doc.addImage(firma, 'PNG', x + 2, y, FIRMA_W - 4, FIRMA_H - 4); } catch {}
+        } else {
+            // Línea para firma en papel
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.5);
+            doc.line(x + 4, y + FIRMA_H - 4, x + FIRMA_W - 4, y + FIRMA_H - 4);
+        }
+
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
-        doc.text('Firma digital del cliente', M + FIRMA_W / 2, y + FIRMA_H + 4, { align: 'center' });
+        doc.text(label, x + FIRMA_W / 2, y + FIRMA_H + 4, { align: 'center' });
+    };
 
-        // Técnico
-        doc.setFillColor(...C.white);
-        doc.setDrawColor(...C.grayBorder);
-        doc.roundedRect(M + FIRMA_W + 6, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'FD');
-        doc.setFontSize(T.label);
-        doc.setFont(undefined, 'italic');
-        doc.setTextColor(...C.grayText);
-        doc.text('Técnico responsable / Sello', M + FIRMA_W + 6 + FIRMA_W / 2, y + FIRMA_H + 4, { align: 'center' });
-
-        return y + FIRMA_H + 10;
-    }
-
-    // Sin firma digital — líneas para papel
-    const lIzqX1 = M, lIzqX2 = M + FIRMA_W;
-    const lDerX1 = M + FIRMA_W + 6, lDerX2 = M + CONTENT_W;
-
-    doc.setFillColor(...C.white);
-    doc.setDrawColor(...C.grayBorder);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(M, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'FD');
-    doc.roundedRect(lDerX1, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'FD');
-
-    doc.setDrawColor(...C.grayBorder);
-    doc.setLineWidth(0.5);
-    doc.line(lIzqX1 + 4, y + FIRMA_H - 4, lIzqX2 - 4, y + FIRMA_H - 4);
-    doc.line(lDerX1 + 4, y + FIRMA_H - 4, lDerX2 - 4, y + FIRMA_H - 4);
-
-    doc.setFontSize(T.xxs);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(...C.grayText);
-    const lblC = esPresupuesto ? 'Aceptación del presupuesto' : 'Firma del cliente';
-    doc.text(lblC,                        (lIzqX1 + lIzqX2) / 2, y + FIRMA_H + 4, { align: 'center' });
-    doc.text('Técnico responsable / Sello', (lDerX1 + lDerX2) / 2, y + FIRMA_H + 4, { align: 'center' });
+    const lblCliente = esPresupuesto ? 'Aceptación del presupuesto' : 'Firma del cliente';
+    dibujarCaja(firmaCliente, M,    lblCliente);
+    dibujarCaja(firmaTecnico, xDer, 'Técnico responsable / Sello');
 
     return y + FIRMA_H + 10;
 }

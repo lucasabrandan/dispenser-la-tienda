@@ -7,6 +7,7 @@ import FiltrosPanel from './ui/FiltrosPanel';
 import Paginacion   from './ui/Paginacion';
 import { M } from './servicio/ServicioUI';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
+import ModalFirmasPDF from './ui/ModalFirmasPDF';
 
 const TIPOS_PRESU = [
     { value: 'TECNICA', label: 'Servicio' },
@@ -143,6 +144,8 @@ export default function PresupuestosManager({ onEjecutar }) {
     const [cargando, setCargando]           = useState(true);
     const [modalDetalle, setModalDetalle]   = useState(null);
     const [ejecutadosIds, setEjecutadosIds] = useState(new Set());
+    const [modalFirmas,  setModalFirmas]    = useState(false);
+    const [pendingPdf,   setPendingPdf]     = useState(null);
 
     useEffect(() => { cargar(); }, []);
 
@@ -187,7 +190,16 @@ export default function PresupuestosManager({ onEjecutar }) {
 
     const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
 
-    const generarPDF = useCallback(async (s) => {
+    const generarPDF = useCallback((s) => {
+        setPendingPdf(s);
+        setModalFirmas(true);
+    }, []);
+
+    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente }) => {
+        setModalFirmas(false);
+        const s = pendingPdf;
+        setPendingPdf(null);
+        if (!s) return;
         await generarRemitoPDFPremium({
             esPresupuesto: true,
             servicioId:   s.id,
@@ -211,11 +223,12 @@ export default function PresupuestosManager({ onEjecutar }) {
                 ubicacionEquipo: it.ubicacionEquipo || it.equipoUbicacion || null,
                 trabajo:         it.trabajo         || it.trabajoRealizado || '',
             })) || [],
-            totalFinal:    calcularTotal(s),
             fechaServicio: s.fecha,
             leyenda:       s.observaciones || '',
+            firmaTecnico,
+            firmaCliente,
         });
-    }, []);
+    };
 
     // nroDocumento viene de la DB (ServicioDTO); cache localStorage como respaldo para datos antiguos
     const presupuestosConNro = useMemo(() => presupuestos.map(p => ({
@@ -303,6 +316,13 @@ export default function PresupuestosManager({ onEjecutar }) {
                     s={modalDetalle}
                     calcularTotal={calcularTotal}
                     onClose={() => setModalDetalle(null)}
+                />
+            )}
+
+            {modalFirmas && (
+                <ModalFirmasPDF
+                    onConfirm={confirmarFirmasYGenerarPDF}
+                    onCancel={() => setModalFirmas(false)}
                 />
             )}
         </div>

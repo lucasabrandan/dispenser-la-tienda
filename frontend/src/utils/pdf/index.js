@@ -97,7 +97,7 @@ function construirFilasItem(item) {
 
 async function generarSingleTecnico(doc, {
     item, cliente, sede, tipo, y, fecha, nroDoc, tecnico,
-    firmaDataUrl, garantiaTexto, proximoMantenimiento, googleReviewLink,
+    firmaCliente, firmaTecnico, garantiaTexto, proximoMantenimiento, googleReviewLink,
 }) {
     const pageW = doc.internal.pageSize.getWidth();
     const RIGHT_COL_W = 62;
@@ -244,7 +244,7 @@ async function generarSingleTecnico(doc, {
 
     // Firmas
     y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaDataUrl, esPresupuesto: false, pageW });
+    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
 
     // QR Google Review
     const empresa = getEmpresa();
@@ -261,7 +261,7 @@ async function generarSingleTecnico(doc, {
 
 async function generarSinglePresupuesto(doc, {
     item, cliente, sede, y, fecha, nroDoc, tecnico,
-    firmaDataUrl, descuentoPorcentaje,
+    firmaCliente, firmaTecnico, descuentoPorcentaje,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -345,7 +345,7 @@ async function generarSinglePresupuesto(doc, {
 
     // Firmas
     y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaDataUrl, esPresupuesto: true, pageW });
+    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
 
     return y;
 }
@@ -354,7 +354,7 @@ async function generarSinglePresupuesto(doc, {
 
 async function generarMultiTecnico(doc, {
     ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico,
-    firmaDataUrl, garantiaTexto, googleReviewLink, leyenda,
+    firmaCliente, firmaTecnico, garantiaTexto, googleReviewLink, leyenda,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -402,7 +402,7 @@ async function generarMultiTecnico(doc, {
 
     // Firmas
     y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaDataUrl, esPresupuesto: false, pageW });
+    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
 
     // QR Google
     const linkGoogle = googleReviewLink || empresa.googleReviewLink;
@@ -514,7 +514,7 @@ async function generarMultiTecnico(doc, {
 
 async function generarMultiPresupuesto(doc, {
     ticketItems, cliente, sede, fecha, nroDoc, tecnico,
-    firmaDataUrl, descuentoPorcentaje,
+    firmaCliente, firmaTecnico, descuentoPorcentaje,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -653,7 +653,7 @@ async function generarMultiPresupuesto(doc, {
 
     // Firmas
     y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaDataUrl, esPresupuesto: true, pageW });
+    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
 }
 
 // ── FLUJO COMPROBANTE (venta de productos) ────────────────────────────────────
@@ -753,7 +753,7 @@ async function generarComprobante(doc, {
     y += 12;
 
     y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaDataUrl: null, esPresupuesto: false, pageW });
+    y = dibujarFirmas(doc, { y, firmaCliente: null, firmaTecnico: null, esPresupuesto: false });
 
     return y;
 }
@@ -772,7 +772,8 @@ export const generarPDF = async ({
     descuentoPorcentaje = 0,
     leyenda            = '',
     servicioId         = null,
-    firmaDataUrl       = null,
+    firmaCliente       = null,
+    firmaTecnico       = null,
     proximoMantenimiento = null,
     garantiaTexto      = null,
     estadoFinal        = null,
@@ -813,7 +814,7 @@ export const generarPDF = async ({
     // ── DISPATCH POR TIPO ─────────────────────────────────────────────────────
     const commonArgs = {
         cliente, sede, tecnico, fecha, nroDoc,
-        firmaDataUrl, descuentoPorcentaje, garantiaTexto,
+        firmaCliente, firmaTecnico, descuentoPorcentaje, garantiaTexto,
         proximoMantenimiento, googleReviewLink, leyenda,
     };
 

@@ -42,7 +42,8 @@ public class AuthController {
             usuario.getNombre(),
             usuario.getRol().name(),
             usuario.getTelefono(),
-            usuario.getWhatsapp()
+            usuario.getWhatsapp(),
+            usuario.getFirma()
         ));
     }
 }

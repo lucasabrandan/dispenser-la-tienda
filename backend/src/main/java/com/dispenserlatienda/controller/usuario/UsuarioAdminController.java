@@ -31,7 +31,7 @@ public class UsuarioAdminController {
     @GetMapping
     public List<UsuarioDTO> listar() {
         return usuarioRepository.findAll().stream()
-                .map(u -> new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp()))
+                .map(u -> new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma()))
                 .toList();
     }
 
@@ -50,7 +50,7 @@ public class UsuarioAdminController {
         nuevo.setWhatsapp(dto.whatsapp());
         usuarioRepository.save(nuevo);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo(), nuevo.getTelefono(), nuevo.getWhatsapp()));
+                .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo(), nuevo.getTelefono(), nuevo.getWhatsapp(), nuevo.getFirma()));
     }
 
     @PutMapping("/{id}")
@@ -63,7 +63,16 @@ public class UsuarioAdminController {
         u.setTelefono(dto.telefono());
         u.setWhatsapp(dto.whatsapp());
         usuarioRepository.save(u);
-        return new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp());
+        return new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma());
+    }
+
+    @PutMapping("/{id}/firma")
+    public ResponseEntity<Void> guardarFirma(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        Usuario u = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        u.setFirma(body.get("firma"));
+        usuarioRepository.save(u);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/password")

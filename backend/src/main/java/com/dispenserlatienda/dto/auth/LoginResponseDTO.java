@@ -7,5 +7,6 @@ public record LoginResponseDTO(
     String nombre,
     String rol,
     String telefono,
-    String whatsapp
+    String whatsapp,
+    String firma
 ) {}
