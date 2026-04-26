@@ -12,5 +12,7 @@ public interface ServicioRepository extends JpaRepository<Servicio, Long>, JpaSp
     boolean existsBySedeIdAndUsuarioIdAndFechaServicioAndServicioTipo(
             Long sedeId, Long usuarioId, LocalDate fechaServicio, ServicioTipo servicioTipo);
 
-    List<Servicio> findBySedeId(Long sedeId); // ← AGREGADO para borrado en cascada
+    List<Servicio> findBySedeId(Long sedeId);
+
+    boolean existsByUsuarioId(Long usuarioId);
 }

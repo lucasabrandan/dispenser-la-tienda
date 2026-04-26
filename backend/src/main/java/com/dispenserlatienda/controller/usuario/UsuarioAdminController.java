@@ -4,6 +4,7 @@ import com.dispenserlatienda.domain.usuario.RolUsuario;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.usuario.*;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
+import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,10 +20,12 @@ public class UsuarioAdminController {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ServicioRepository servicioRepository;
 
-    public UsuarioAdminController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioAdminController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, ServicioRepository servicioRepository) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.servicioRepository = servicioRepository;
     }
 
     @GetMapping
@@ -73,9 +76,13 @@ public class UsuarioAdminController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<Object> eliminar(@PathVariable Long id) {
         if (!usuarioRepository.existsById(id)) {
             throw new ResourceNotFoundException("Usuario no encontrado");
+        }
+        if (servicioRepository.existsByUsuarioId(id)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(java.util.Map.of("mensaje", "El usuario tiene servicios registrados. Desactivalo en lugar de eliminarlo."));
         }
         usuarioRepository.deleteById(id);
         return ResponseEntity.noContent().build();

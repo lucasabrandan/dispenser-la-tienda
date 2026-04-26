@@ -46,13 +46,13 @@ export default function ClienteCard({
     const [historialExpandido, setHistorialExpandido] = useState(false);
     const [equipoHistorial, setEquipoHistorial] = useState(null);
 
-    const sedesCli          = sedes.filter(s => s.cliente?.id === cliente.id);
+    const sedesCli          = sedes.filter(s => s.clienteId === cliente.id);
     const eqCli             = equipos.filter(eq => sedesCli.map(s => s.id).includes(eq.sedeId));
     const equiposActivos    = eqCli.filter(eq => eq.activo !== false);
     const equiposArchivados = eqCli.filter(eq => eq.activo === false);
 
     // Historial del cliente ordenado por fecha desc
-    const serviciosCli   = [...servicios.filter(s => s.cliente?.id === cliente.id)]
+    const serviciosCli   = [...servicios.filter(s => s.clienteId === cliente.id)]
         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     const ultimoServicio = serviciosCli[0];
 

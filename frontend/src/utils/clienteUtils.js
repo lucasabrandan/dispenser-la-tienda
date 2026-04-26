@@ -17,7 +17,7 @@ export const filtrarClientesPorBusqueda = (clientes, sedes, equipos, busqueda) =
     return clientes.filter(c => {
         const term = busqueda.toLowerCase();
         const matchCliente = c.nombre?.toLowerCase().includes(term) || c.localidad?.toLowerCase().includes(term);
-        const sedesId = sedes.filter(s => s.cliente?.id === c.id).map(s => s.id);
+        const sedesId = sedes.filter(s => s.clienteId === c.id).map(s => s.id);
         const matchEquipo = equipos.some(eq => sedesId.includes(eq.sedeId) && eq.numeroSerie?.toLowerCase().includes(term));
         return matchCliente || matchEquipo;
     });
@@ -31,7 +31,7 @@ export const aplicarFiltroChip = (clientes, sedes, equipos, servicios, chip) => 
         if (chip === 'empresa') return c.clienteTipo === 'EMPRESA';
 
         if (chip === 'sin-servicio') {
-            const serviciosCli = servicios.filter(s => s.cliente?.id === c.id);
+            const serviciosCli = servicios.filter(s => s.clienteId === c.id);
             if (serviciosCli.length === 0) return true;
             const ultimo = [...serviciosCli].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
             const dias = Math.floor((hoy - new Date(ultimo.fecha)) / (1000 * 60 * 60 * 24));
@@ -39,7 +39,7 @@ export const aplicarFiltroChip = (clientes, sedes, equipos, servicios, chip) => 
         }
 
         if (chip === 'con-archivados') {
-            const sedesIds = sedes.filter(s => s.cliente?.id === c.id).map(s => s.id);
+            const sedesIds = sedes.filter(s => s.clienteId === c.id).map(s => s.id);
             return equipos.some(eq => sedesIds.includes(eq.sedeId) && eq.activo === false);
         }
 
@@ -49,7 +49,7 @@ export const aplicarFiltroChip = (clientes, sedes, equipos, servicios, chip) => 
 
 // Días transcurridos desde la última fecha de servicio del cliente
 export const diasSinServicio = (servicios, clienteId) => {
-    const serviciosCli = servicios.filter(s => s.cliente?.id === clienteId);
+    const serviciosCli = servicios.filter(s => s.clienteId === clienteId);
     if (serviciosCli.length === 0) return null;
     const ultimo = [...serviciosCli].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
     return Math.floor((new Date() - new Date(ultimo.fecha)) / (1000 * 60 * 60 * 24));

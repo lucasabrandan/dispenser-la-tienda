@@ -87,7 +87,11 @@ export default function UsuariosManager() {
             toast.success('Usuario eliminado');
             setConfirmEliminar(null);
             cargar();
-        } catch { toast.error('Error al eliminar'); }
+        } catch (e) {
+            const msg = e.response?.data?.mensaje || 'Error al eliminar';
+            toast.error(msg);
+            setConfirmEliminar(null);
+        }
     };
 
     const guardarClave = async () => {
