@@ -1,237 +1,361 @@
-/**
- * bloques.js — Bloques de contenido reutilizables
- * cliente · equipo · total · firmas · checklist · garantía · próximo mantenimiento · QR
- */
 import autoTable from 'jspdf-autotable';
 import { C, M, T, CONTENT_W } from './theme.js';
-import { label, value, divisor, truncarLineas, buildMetaLinea, checkSalto, sanitizarTexto } from './helpers.js';
+import { checkSalto } from './helpers.js';
 
-// ── BLOQUE CLIENTE ────────────────────────────────────────────────────────────
-export function dibujarBloqueCliente(doc, { cliente, sede, y, esCompacto = false }) {
-    const pageW = doc.internal.pageSize.getWidth();
-    const cardH = esCompacto ? 26 : 32;
+// ── BLOQUE CLIENTE + EQUIPO (2 columnas) ──────────────────────────────────────
+export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null }) {
+    const LEFT_W  = CONTENT_W * 0.54;
+    const RIGHT_W = CONTENT_W - LEFT_W - 4;
+    const RIGHT_X = M + LEFT_W + 4;
+    const cardH   = 38;
 
+    // Fondo card completo
     doc.setFillColor(...C.grayLight);
-    doc.roundedRect(M - 2, y, pageW - (M - 2) * 2, cardH, 2, 2, 'F');
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'F');
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'S');
 
-    // Acento navy izquierdo
-    doc.setFillColor(...C.navy);
-    doc.rect(M - 2, y, 3, cardH, 'F');
+    // Divisor vertical
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.2);
+    doc.line(RIGHT_X - 2, y + 3, RIGHT_X - 2, y + cardH - 3);
 
-    let cy = y + 7;
+    // ── Columna izquierda: DATOS DEL CLIENTE ──
+    let cy = y + 6;
 
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text('CLIENTE', M + 4, cy);
+    doc.text('DATOS DEL CLIENTE', M + 2, cy);
     cy += 5;
 
-    // Nombre grande
-    doc.setFontSize(esCompacto ? T.lg : T.xl);
+    const nombreCliente = (cliente?.nombre || 'PARTICULAR').toUpperCase();
+    doc.setFontSize(T.md);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.dark);
-    doc.text((cliente?.nombre || 'PARTICULAR').toUpperCase(), M + 4, cy);
+    const maxNomW = LEFT_W - 4;
+    const nombreLines = doc.splitTextToSize(nombreCliente, maxNomW);
+    doc.text(nombreLines[0], M + 2, cy);
     cy += 5;
 
-    // Datos de contacto
     const condFiscal = cliente?.condicionFiscal || cliente?.condicionIva || null;
-    const contacto = [
-        cliente?.telefono  ? `Tel: ${cliente.telefono}`    : null,
-        sede?.direccion    ? `Dir: ${sede.direccion}`      : (sede?.nombreSede || null),
-        cliente?.cuilDni   ? `CUIT/DNI: ${cliente.cuilDni}` : null,
-        condFiscal         ? `Condición: ${condFiscal}`    : null,
-    ].filter(Boolean).slice(0, esCompacto ? 2 : 3);
+    const datosCliente = [
+        cliente?.telefono   ? `Tel: ${cliente.telefono}`            : null,
+        sede?.direccion     ? `Dir: ${sede.direccion}`              : (sede?.nombreSede ? `Sede: ${sede.nombreSede}` : null),
+        cliente?.cuilDni    ? `CUIT/DNI: ${cliente.cuilDni}`        : null,
+        condFiscal          ? `Cond. fiscal: ${condFiscal}`         : null,
+        cliente?.email      ? `Email: ${cliente.email}`             : null,
+    ].filter(Boolean).slice(0, 4);
 
-    if (contacto.length > 0) {
-        doc.setFontSize(T.sm);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        contacto.forEach(l => { doc.text(l, M + 4, cy); cy += 4.5; });
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    datosCliente.forEach(l => { doc.text(l, M + 2, cy); cy += 4.2; });
+
+    // ── Columna derecha: EQUIPO ──
+    let ey = y + 6;
+    const eLabel = item ? `EQUIPO ${idx + 1}` : 'EQUIPO';
+
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text(eLabel, RIGHT_X, ey);
+    ey += 5;
+
+    if (item) {
+        const tipo    = item.tipoEquipo    || item.equipoTipo    || 'Dispenser';
+        const modelo  = item.modeloEquipo  || item.equipoModelo  || null;
+        const serial  = item.equipoSerial && !['MOSTRADOR','SIN-SN'].includes(item.equipoSerial) ? item.equipoSerial : null;
+        const ubic    = item.ubicacionEquipo || item.equipoUbicacion || null;
+
+        const FOTO_W = 24;
+        const FOTO_H = 22;
+        const hasFoto = !!fotoEquipo;
+        const textMaxW = hasFoto ? RIGHT_W - FOTO_W - 3 : RIGHT_W - 2;
+
+        if (hasFoto) {
+            try {
+                doc.addImage(fotoEquipo.data, fotoEquipo.format, RIGHT_X + textMaxW + 3, ey - 4, FOTO_W, FOTO_H);
+                doc.setDrawColor(...C.grayBorder);
+                doc.setLineWidth(0.15);
+                doc.roundedRect(RIGHT_X + textMaxW + 3, ey - 4, FOTO_W, FOTO_H, 1, 1, 'S');
+            } catch {}
+        }
+
+        const campos = [
+            { l: 'TIPO',    v: tipo },
+            modelo ? { l: 'MODELO',  v: modelo } : null,
+            serial ? { l: 'N° SERIE', v: serial } : null,
+            ubic   ? { l: 'UBIC.',   v: ubic   } : null,
+        ].filter(Boolean).slice(0, 4);
+
+        campos.forEach(({ l, v }) => {
+            doc.setFontSize(T.label);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.grayText);
+            doc.text(l, RIGHT_X, ey);
+
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.dark);
+            const vLines = doc.splitTextToSize(String(v), textMaxW - 16);
+            doc.text(vLines[0], RIGHT_X + 14, ey);
+            ey += 4.5;
+        });
     }
 
     return y + cardH + 4;
 }
 
-// ── BLOQUE EQUIPO (card por equipo) ──────────────────────────────────────────
-export function dibujarBloqueEquipo(doc, { item, idx, y, pageW, esPresupuesto = false, esSolaHoja = true }) {
-    const xI = M + 2;
-    const moVal = parseFloat(item.costoExtra || 0);
-    const subtotalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
-    const modelo   = item.modeloEquipo   || item.equipoModelo   || null;
-    const serial   = (item.equipoSerial && !['MOSTRADOR','SIN-SN'].includes(item.equipoSerial)) ? item.equipoSerial : null;
-    const ubicacion = item.ubicacionEquipo || item.equipoUbicacion || null;
+// ── BLOQUE RESUMEN DEL SERVICIO (fila de stats) ───────────────────────────────
+export function dibujarResumenServicio(doc, { y, pageW, stats = [] }) {
+    if (!stats.length) return y;
 
-    // Etiqueta numerada
+    const BOX_W = Math.min(46, (CONTENT_W - (stats.length - 1) * 3) / stats.length);
+    const BOX_H = 16;
+    let x = M;
+
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text(`EQUIPO ${idx + 1}`, xI, y);
+    doc.text('RESUMEN DEL SERVICIO', M, y);
     y += 5;
 
-    // Modelo + precio en la misma línea
-    const T_TITULO = esSolaHoja ? T.md : 9.5;
-    const precioStr = `$ ${subtotalEquipo.toLocaleString('es-AR')}`;
-    doc.setFontSize(T_TITULO);
-    const precioW = doc.getStringUnitWidth(precioStr) * T_TITULO / doc.internal.scaleFactor + 6;
-    const maxMetaW = pageW - xI - M - precioW;
-    const metaTexto = buildMetaLinea(doc, modelo, serial, ubicacion, null, maxMetaW, T_TITULO);
+    stats.forEach(({ icono, valor, etiqueta, colorValor }) => {
+        doc.setFillColor(...C.white);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.25);
+        doc.roundedRect(x, y, BOX_W, BOX_H, 2, 2, 'FD');
 
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.dark);
-    doc.text(metaTexto, xI, y);
-    doc.setTextColor(...C.navy);
-    doc.text(precioStr, pageW - M, y, { align: 'right' });
-    y += 8;
+        // Icono
+        doc.setFontSize(8);
+        doc.setTextColor(...C.navy);
+        doc.text(icono || '◆', x + 5, y + 6);
 
-    // Detalle trabajo
-    const textoTrabajo = sanitizarTexto((item.trabajo || item.trabajoRealizado || item.resumenTexto || '').replace(/\| MO:.*/, ''));
-    if (textoTrabajo) {
+        // Valor
+        doc.setFontSize(T.sm);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...(colorValor || C.dark));
+        doc.text(String(valor), x + 13, y + 6);
+
+        // Etiqueta
         doc.setFontSize(T.label);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        const etLines = doc.splitTextToSize(etiqueta, BOX_W - 6);
+        doc.text(etLines[0], x + 5, y + 12);
+
+        x += BOX_W + 3;
+    });
+
+    return y + BOX_H + 5;
+}
+
+// ── TABLA DETALLE TRABAJOS Y REPUESTOS ────────────────────────────────────────
+// 4 columnas: CONCEPTO · CANT · UNITARIO · IMPORTE
+export function dibujarTablaDetalle(doc, {
+    rows,        // [{ concepto, cant, unitario, importe, esServicio }]
+    y,
+    leftX   = M,
+    tableW  = CONTENT_W,
+    titulo  = 'DETALLE DE TRABAJOS Y REPUESTOS',
+    total   = null,
+    labelTotal = 'TOTAL ESTIMADO DEL SERVICIO',
+}) {
+    if (!rows || rows.length === 0) return y;
+
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text(titulo, leftX, y);
+    y += 5;
+
+    const tableData = rows.map(r => [
+        r.concepto,
+        String(r.cant),
+        r.unitario ? `$ ${r.unitario}` : '—',
+        `$ ${r.importe}`,
+    ]);
+
+    const rightMargin = doc.internal.pageSize.getWidth() - leftX - tableW;
+
+    autoTable(doc, {
+        startY: y,
+        head: [['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+            fillColor: C.navy,
+            textColor: C.white,
+            fontStyle: 'bold',
+            fontSize: T.xxs,
+            cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+        },
+        bodyStyles: {
+            fontSize: T.xs,
+            textColor: C.dark,
+            cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+            lineColor: C.grayBorder,
+            lineWidth: 0.15,
+        },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { halign: 'center', cellWidth: 13 },
+            2: { halign: 'right',  cellWidth: 28 },
+            3: { halign: 'right',  cellWidth: 30, fontStyle: 'bold' },
+        },
+        margin: { left: leftX, right: rightMargin },
+        didParseCell: data => {
+            if (data.section === 'body') {
+                if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
+                if (rows[data.row.index]?.esServicio) data.cell.styles.textColor = C.navy;
+            }
+        },
+    });
+
+    y = doc.lastAutoTable.finalY + 3;
+
+    // Fila total
+    if (total !== null) {
+        const totalW = tableW;
+        doc.setFillColor(...C.redLight);
+        doc.setDrawColor(...C.red);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(leftX, y, totalW, 10, 1.5, 1.5, 'FD');
+
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.red);
-        doc.text('DETALLE DEL SERVICIO', xI, y);
-        y += 4;
+        doc.text(labelTotal, leftX + 4, y + 6.5);
 
-        doc.setFontSize(T.xs);
+        doc.setFontSize(T.md);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text(`$ ${total}`, leftX + totalW - 4, y + 7, { align: 'right' });
+
+        y += 15;
+    }
+
+    return y;
+}
+
+// ── SECCIÓN 2 COLUMNAS (texto libre) ─────────────────────────────────────────
+export function dibujarSeccion2Col(doc, {
+    y, pageW,
+    tituloIzq, textoIzq,
+    tituloDer,  textoDer,
+    altoMin = 24,
+}) {
+    const colW  = (CONTENT_W - 4) / 2;
+    const rightX = M + colW + 4;
+
+    // Calcular altura necesaria
+    doc.setFontSize(T.xxs);
+    const linI = textoIzq ? doc.splitTextToSize(textoIzq, colW - 6) : [];
+    const linD = textoDer  ? doc.splitTextToSize(textoDer,  colW - 6) : [];
+    const cardH = Math.max(altoMin, (Math.max(linI.length, linD.length)) * 4 + 14);
+
+    // Card izquierda
+    doc.setFillColor(...C.white);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(M - 2, y, colW + 4, cardH, 2, 2, 'FD');
+
+    // Card derecha
+    doc.roundedRect(rightX - 2, y, colW + 4, cardH, 2, 2, 'FD');
+
+    // Contenidos izquierda
+    if (tituloIzq) {
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text(tituloIzq, M + 2, y + 6);
+    }
+    if (linI.length) {
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.dark);
-        const lineas = truncarLineas(doc, textoTrabajo, pageW - xI - M, 3);
-        doc.text(lineas, xI, y);
-        y += lineas.length * 4 + 3;
+        linI.slice(0, 6).forEach((l, i) => doc.text(l, M + 2, y + 12 + i * 4));
     }
 
-    // Tabla de ítems
-    const rows = [];
-    if (moVal > 0) rows.push(['Mano de obra / Servicio técnico', '1', `$ ${moVal.toLocaleString('es-AR')}`]);
-    (item.repuestosUsados || []).forEach(r => {
-        rows.push([r.nombre, r.cantidad.toString(), `$ ${Number(r.subtotal || r.precio * r.cantidad).toLocaleString('es-AR')}`]);
-    });
-
-    if (rows.length > 0) {
-        autoTable(doc, {
-            startY: y,
-            head: [['Concepto', 'Cant.', 'Importe']],
-            body: rows,
-            theme: 'plain',
-            headStyles: {
-                fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
-                fontSize: T.label, cellPadding: { top: 2, bottom: 2.5, left: 3, right: 3 },
-            },
-            bodyStyles: {
-                fontSize: T.xs, textColor: C.dark,
-                cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
-                lineColor: C.grayBorder, lineWidth: { bottom: 0.15 }
-            },
-            columnStyles: {
-                0: { cellWidth: 'auto' },
-                1: { halign: 'center', cellWidth: 14 },
-                2: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
-            },
-            margin: { left: xI, right: M },
-            didParseCell: data => {
-                if (data.section === 'body' && data.row.index % 2 === 0)
-                    data.cell.styles.fillColor = C.grayZebra;
-                if (data.section === 'body' && data.row.index === 0 && moVal > 0)
-                    data.cell.styles.textColor = C.navy;
-            }
-        });
-        y = doc.lastAutoTable.finalY + 4;
+    // Contenidos derecha
+    if (tituloDer) {
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text(tituloDer, rightX, y + 6);
     }
-
-    return y;
-}
-
-// ── BLOQUE TOTAL ──────────────────────────────────────────────────────────────
-export function dibujarBloqueTotal(doc, { y, subtotal, descuentoPct = 0, esPresupuesto = false, pageW }) {
-    const monto_desc = descuentoPct > 0 ? subtotal * descuentoPct / 100 : 0;
-    const total = subtotal - monto_desc;
-    const tH = descuentoPct > 0 ? 34 : 22;
-
-    doc.setFillColor(...C.grayBg);
-    doc.roundedRect(M - 2, y - 4, pageW - (M - 2) * 2, tH, 3, 3, 'F');
-    doc.setDrawColor(...C.navy);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(M - 2, y - 4, pageW - (M - 2) * 2, tH, 3, 3, 'S');
-
-    if (descuentoPct > 0) {
-        doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Subtotal', M + 4, y);
-        doc.text(`$ ${subtotal.toLocaleString('es-AR')}`, pageW - M, y, { align: 'right' });
-        y += 7;
-
-        doc.setTextColor(...C.red);
-        doc.text(`Descuento (${descuentoPct}%)`, M + 4, y);
-        doc.text(`- $ ${monto_desc.toLocaleString('es-AR')}`, pageW - M, y, { align: 'right' });
-        y += 5;
-        divisor(doc, y - 1, C.grayBorder, pageW);
-        y += 4;
-    } else {
-        y += 3;
-    }
-
-    doc.setFontSize(T.xs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
-    doc.text('TOTAL', M + 4, y);
-
-    doc.setFontSize(T.xxl);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 1, { align: 'right' });
-    y += 10;
-
-    if (esPresupuesto) {
-        const validez = new Date();
-        validez.setDate(validez.getDate() + 7);
+    if (linD.length) {
         doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'italic');
-        doc.setTextColor(...C.grayText);
-        doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}`, pageW - M, y, { align: 'right' });
-        y += 6;
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.dark);
+        linD.slice(0, 6).forEach((l, i) => doc.text(l, rightX, y + 12 + i * 4));
     }
 
-    return y;
+    return y + cardH + 4;
 }
 
-// ── FORMAS DE PAGO ────────────────────────────────────────────────────────────
-export function dibujarFormasDePago(doc, { y, pageW }) {
+// ── CHECKLIST TÉCNICO ─────────────────────────────────────────────────────────
+export function dibujarChecklist(doc, { y, items, pageW, titulo = 'CHECKLIST TÉCNICO' }) {
+    if (!items || items.length === 0) return y;
+    y = checkSalto(doc, y, items.length * 5 + 16);
+
+    const cardH = Math.ceil(items.length / 2) * 5.5 + 14;
+    doc.setFillColor(...C.white);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'FD');
+
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text('FORMA DE PAGO', M, y);
-    y += 5;
+    doc.text(titulo, M + 2, y + 6);
 
-    const medios = ['Efectivo', 'Transferencia', 'Cuenta corriente'];
-    let xP = M;
-    medios.forEach(m => {
-        const w = 43;
-        doc.setFillColor(...C.grayBg);
-        doc.setDrawColor(...C.navy);
+    const colW = (CONTENT_W - 4) / 2;
+    let itemY  = y + 12;
+    items.forEach((item, i) => {
+        const col  = i % 2;
+        const row  = Math.floor(i / 2);
+        const ix   = M + 2 + col * (colW + 4);
+        const iy   = itemY + row * 5.5;
+
+        // Checkbox
+        doc.setFillColor(...(item.ok ? C.green : C.white));
+        doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
-        doc.roundedRect(xP, y - 4, w, 7, 1.5, 1.5, 'FD');
+        doc.roundedRect(ix, iy - 3.5, 5, 5, 0.8, 0.8, 'FD');
+
+        if (item.ok) {
+            doc.setFontSize(7.5);
+            doc.setTextColor(...C.white);
+            doc.text('✓', ix + 2.5, iy, { align: 'center' });
+        }
+
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.navy);
-        doc.text(m, xP + w / 2, y, { align: 'center' });
-        xP += w + 3;
+        doc.setTextColor(...C.dark);
+        doc.text(item.label || item, ix + 7, iy);
     });
-    return y + 10;
+
+    return y + cardH + 4;
 }
 
 // ── FIRMAS ────────────────────────────────────────────────────────────────────
-export function dibujarFirmas(doc, { y, firmaDataUrl = null, esPresupuesto = false, esTecnico = true, pageW }) {
+export function dibujarFirmas(doc, { y, firmaDataUrl = null, esPresupuesto = false, pageW }) {
+    y = checkSalto(doc, y, 36);
+
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
     doc.text('FIRMAS', M, y);
     y += 5;
 
-    const FIRMA_W = 76;
-    const FIRMA_H = 24;
+    const FIRMA_W = (CONTENT_W - 6) / 2;
+    const FIRMA_H = 22;
 
     if (firmaDataUrl) {
+        // Firma digital del cliente
         doc.setFillColor(...C.white);
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
@@ -240,204 +364,245 @@ export function dibujarFirmas(doc, { y, firmaDataUrl = null, esPresupuesto = fal
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
-        doc.text('Firma digital del cliente', M + FIRMA_W / 2, y + FIRMA_H + 3, { align: 'center' });
-    } else {
-        // Líneas para firma en papel — 2 columnas
-        const lIzqX1 = M, lIzqX2 = 90;
-        const lDerX1 = 108, lDerX2 = pageW - M;
+        doc.text('Firma digital del cliente', M + FIRMA_W / 2, y + FIRMA_H + 4, { align: 'center' });
+
+        // Técnico
+        doc.setFillColor(...C.white);
         doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.4);
-        doc.line(lIzqX1, y + 12, lIzqX2, y + 12);
-        doc.line(lDerX1, y + 12, lDerX2, y + 12);
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
+        doc.roundedRect(M + FIRMA_W + 6, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'FD');
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
-        const lblC = esPresupuesto ? 'Aceptación del presupuesto' : 'Firma y aclaración del cliente';
-        const lblT = esTecnico ? 'Técnico responsable / Sello' : 'Vendedor / Sello';
-        doc.text(lblC, (lIzqX1 + lIzqX2) / 2, y + 17, { align: 'center' });
-        doc.text(lblT, (lDerX1 + lDerX2) / 2, y + 17, { align: 'center' });
+        doc.text('Técnico responsable / Sello', M + FIRMA_W + 6 + FIRMA_W / 2, y + FIRMA_H + 4, { align: 'center' });
+
+        return y + FIRMA_H + 10;
     }
 
-    return y + (firmaDataUrl ? FIRMA_H + 8 : 22);
-}
+    // Sin firma digital — líneas para papel
+    const lIzqX1 = M, lIzqX2 = M + FIRMA_W;
+    const lDerX1 = M + FIRMA_W + 6, lDerX2 = M + CONTENT_W;
 
-// ── CHECKLIST TÉCNICO ─────────────────────────────────────────────────────────
-export function dibujarChecklist(doc, { y, items, titulo = 'CHECKLIST TÉCNICO', pageW }) {
-    y = checkSalto(doc, y, items.length * 7 + 20);
+    doc.setFillColor(...C.white);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(M, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'FD');
+    doc.roundedRect(lDerX1, y - 2, FIRMA_W, FIRMA_H, 2, 2, 'FD');
 
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text(titulo, M, y);
-    y += 5;
-
-    const colW = (CONTENT_W - 4) / 2;
-    items.forEach((item, i) => {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        if (col === 0 && row > 0) y += 6;
-        const x = M + col * (colW + 4);
-        const cy = y;
-
-        // Checkbox
-        doc.setFillColor(...C.grayBg);
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(x, cy - 3.5, 5, 5, 0.8, 0.8, 'FD');
-
-        if (item.ok) {
-            doc.setFontSize(8);
-            doc.setTextColor(...C.green);
-            doc.text('✓', x + 2.5, cy, { align: 'center' });
-        }
-
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.dark);
-        doc.text(item.label, x + 7, cy);
-    });
-
-    return y + 10;
-}
-
-// ── PRÓXIMO MANTENIMIENTO ─────────────────────────────────────────────────────
-export function dibujarProximoMantenimiento(doc, { y, fecha = null, observaciones = null, pageW }) {
-    y = checkSalto(doc, y, 24);
-
-    doc.setFillColor(...C.greenLight);
-    doc.setDrawColor(...C.green);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(M - 2, y - 2, pageW - (M - 2) * 2, fecha ? 20 : 14, 2, 2, 'FD');
-
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.green);
-    doc.text('⚙  PRÓXIMO MANTENIMIENTO SUGERIDO', M + 4, y + 4);
-
-    if (fecha) {
-        doc.setFontSize(T.sm);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.dark);
-        doc.text(fecha, pageW - M, y + 4, { align: 'right' });
-    }
-
-    if (observaciones) {
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text(observaciones, M + 4, y + 11);
-    }
-
-    return y + (fecha ? 26 : 20);
-}
-
-// ── GARANTÍA ─────────────────────────────────────────────────────────────────
-export function dibujarGarantia(doc, { y, texto = null, meses = 3, pageW }) {
-    y = checkSalto(doc, y, 16);
-    const textoGarantia = texto || `Garantía: ${meses} meses sobre mano de obra · Repuestos según fabricante`;
-
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text('GARANTÍA', M, y);
-    y += 5;
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.5);
+    doc.line(lIzqX1 + 4, y + FIRMA_H - 4, lIzqX2 - 4, y + FIRMA_H - 4);
+    doc.line(lDerX1 + 4, y + FIRMA_H - 4, lDerX2 - 4, y + FIRMA_H - 4);
 
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
-    doc.text(textoGarantia, M, y);
+    const lblC = esPresupuesto ? 'Aceptación del presupuesto' : 'Firma del cliente';
+    doc.text(lblC,                        (lIzqX1 + lIzqX2) / 2, y + FIRMA_H + 4, { align: 'center' });
+    doc.text('Técnico responsable / Sello', (lDerX1 + lDerX2) / 2, y + FIRMA_H + 4, { align: 'center' });
 
-    return y + 8;
+    return y + FIRMA_H + 10;
 }
 
-// ── QR WHATSAPP ───────────────────────────────────────────────────────────────
-export async function dibujarQRWhatsApp(doc, { x, y, telefono, mensaje = '' }) {
-    try {
-        // Usar qrcode si está disponible (npm install qrcode)
-        const QRCode = await import('qrcode').catch(() => null);
-        if (!QRCode) return dibujarQRPlaceholder(doc, x, y, 'WhatsApp');
+// ── GARANTÍA ─────────────────────────────────────────────────────────────────
+export function dibujarGarantia(doc, { y, texto = null, pageW }) {
+    y = checkSalto(doc, y, 14);
 
-        const waUrl = `https://wa.me/${telefono.replace(/\D/g,'')}${mensaje ? `?text=${encodeURIComponent(mensaje)}` : ''}`;
-        const dataUrl = await QRCode.default.toDataURL(waUrl, { width: 120, margin: 1, color: { dark: '#0D2B5B', light: '#ffffff' } });
-        doc.addImage(dataUrl, 'PNG', x, y, 20, 20);
+    const textoG = texto || '90 días sobre mano de obra  ·  Repuestos según fabricante';
 
-        doc.setFontSize(T.label);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text('Aprobar por', x + 10, y + 22, { align: 'center' });
-        doc.setTextColor(...C.green);
-        doc.text('WhatsApp', x + 10, y + 27, { align: 'center' });
-    } catch {
-        dibujarQRPlaceholder(doc, x, y, 'WhatsApp');
-    }
-}
-
-export async function dibujarQRGoogle(doc, { x, y, link }) {
-    try {
-        const QRCode = await import('qrcode').catch(() => null);
-        if (!QRCode) return dibujarQRPlaceholder(doc, x, y, 'Reseña');
-
-        const dataUrl = await QRCode.default.toDataURL(link, { width: 120, margin: 1, color: { dark: '#0D2B5B', light: '#ffffff' } });
-        doc.addImage(dataUrl, 'PNG', x, y, 20, 20);
-
-        doc.setFontSize(T.label);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text('Dejanos tu', x + 10, y + 22, { align: 'center' });
-        doc.setTextColor(...C.gold);
-        doc.text('Reseña ★', x + 10, y + 27, { align: 'center' });
-    } catch {
-        dibujarQRPlaceholder(doc, x, y, 'Reseña');
-    }
-}
-
-function dibujarQRPlaceholder(doc, x, y, label) {
     doc.setFillColor(...C.grayBg);
     doc.setDrawColor(...C.grayBorder);
     doc.setLineWidth(0.2);
-    doc.roundedRect(x, y, 20, 20, 2, 2, 'FD');
-    doc.setFontSize(5);
-    doc.setTextColor(...C.grayText);
-    doc.text('QR', x + 10, y + 10, { align: 'center' });
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, 12, 2, 2, 'FD');
+
     doc.setFontSize(T.label);
-    doc.setFont(undefined, 'normal');
+    doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text(label, x + 10, y + 24, { align: 'center' });
+    doc.text('GARANTÍA:', M + 2, y + 7.5);
+
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    doc.text(textoG, M + 22, y + 7.5);
+
+    return y + 17;
 }
 
-// ── BLOQUE CTA (resumen ejecutivo multi-equipo) ───────────────────────────────
-export function dibujarResumenEjecutivo(doc, { y, cliente, cantEquipos, total, estado, pageW }) {
-    const cardH = 40;
-    doc.setFillColor(...C.navy);
-    doc.roundedRect(M - 2, y, pageW - (M - 2) * 2, cardH, 3, 3, 'F');
+// ── QR WHATSAPP ───────────────────────────────────────────────────────────────
+export async function dibujarQRWhatsApp(doc, { x, y, telefono, mensaje = '', titulo = '¿ESTÁ DE ACUERDO CON ESTE PRESUPUESTO?', nroDoc = '' }) {
+    try {
+        const QRCode = await import('qrcode').catch(() => null);
+        if (!QRCode) return dibujarQRPlaceholder(doc, x, y);
 
+        const waUrl  = `https://wa.me/${telefono.replace(/\D/g,'')}${mensaje ? `?text=${encodeURIComponent(mensaje)}` : ''}`;
+        const dataUrl = await QRCode.default.toDataURL(waUrl, { width: 140, margin: 1, color: { dark: '#0D2B5B', light: '#ffffff' } });
+
+        const QR_W  = 28;
+        const QR_H  = 28;
+
+        // Card de fondo
+        const cardW = CONTENT_W + 4;
+        const cardH = 38;
+        doc.setFillColor(...C.grayLight);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.25);
+        doc.roundedRect(M - 2, y, cardW, cardH, 2, 2, 'FD');
+
+        // QR
+        doc.addImage(dataUrl, 'PNG', M + 2, y + 5, QR_W, QR_H);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.roundedRect(M + 2, y + 5, QR_W, QR_H, 1, 1, 'S');
+
+        // Texto
+        doc.setFontSize(T.sm);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.dark);
+        doc.text(titulo, M + QR_W + 8, y + 12);
+
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Respondé por WhatsApp para coordinar el servicio.', M + QR_W + 8, y + 18);
+        if (nroDoc) doc.text(`Nro. presupuesto: ${nroDoc}`, M + QR_W + 8, y + 23);
+
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.green);
+        doc.text('WhatsApp directo', M + QR_W + 8, y + 30);
+
+        return y + cardH + 6;
+    } catch {
+        return dibujarQRPlaceholder(doc, x, y);
+    }
+}
+
+export async function dibujarQRGoogle(doc, { y, link }) {
+    try {
+        const QRCode = await import('qrcode').catch(() => null);
+        if (!QRCode) return dibujarQRPlaceholderSimple(doc, M, y);
+
+        const dataUrl = await QRCode.default.toDataURL(link, { width: 140, margin: 1, color: { dark: '#1F9D55', light: '#ffffff' } });
+
+        const QR_W = 24;
+        const QR_H = 24;
+
+        doc.addImage(dataUrl, 'PNG', M, y, QR_W, QR_H);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.roundedRect(M, y, QR_W, QR_H, 1, 1, 'S');
+
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.dark);
+        doc.text('¡Dejanos tu reseña en Google!', M + QR_W + 6, y + 8);
+
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Tu opinión nos ayuda a mejorar.', M + QR_W + 6, y + 14);
+
+        doc.setFontSize(9);
+        doc.setTextColor(255, 180, 0);
+        doc.text('★ ★ ★ ★ ★', M + QR_W + 6, y + 21);
+
+        return y + QR_H + 8;
+    } catch {
+        return dibujarQRPlaceholderSimple(doc, M, y);
+    }
+}
+
+function dibujarQRPlaceholder(doc, x, y) {
+    doc.setFillColor(...C.grayBg);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, 38, 2, 2, 'FD');
+    doc.setFontSize(T.xs);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    doc.text('[QR WhatsApp]', M + 4, y + 20);
+    return y + 44;
+}
+
+function dibujarQRPlaceholderSimple(doc, x, y) {
+    doc.setFillColor(...C.grayBg);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(x, y, 24, 24, 1.5, 1.5, 'FD');
+    doc.setFontSize(T.label);
+    doc.setTextColor(...C.grayText);
+    doc.text('QR', x + 12, y + 14, { align: 'center' });
+    return y + 32;
+}
+
+// ── RESUMEN EJECUTIVO (multi-equipo, página 1) ────────────────────────────────
+export function dibujarResumenEjecutivo(doc, { y, cliente, fecha, cantEquipos, cantServicios = null, total, estado, pageW }) {
+    const cardH = 42;
+
+    doc.setFillColor(...C.navy);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 3, 3, 'F');
+
+    // Título
     doc.setFontSize(T.md);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.white);
-    doc.text('RESUMEN EJECUTIVO', M + 4, y + 10);
+    doc.text('RESUMEN EJECUTIVO', M + 4, y + 9);
 
-    const datos = [
-        { l: 'Cliente',  v: (cliente?.nombre || '').toUpperCase() },
-        { l: 'Equipos',  v: `${cantEquipos} unidades` },
-        { l: 'Total',    v: `$ ${total.toLocaleString('es-AR')}` },
-        { l: 'Estado',   v: estado || 'COMPLETADO' },
+    // Subtítulo
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayBorder);
+    const estadoTexto = estado === 'COMPLETADO' ? 'Trabajo completamente exitoso' : (estado || '');
+    doc.text(estadoTexto.toUpperCase(), M + 4, y + 14);
+
+    // Stats
+    const stats = [
+        { l: 'Total facturado', v: `$ ${total}` },
+        { l: 'Equipos',          v: String(cantEquipos)  },
+        cantServicios ? { l: 'Servicios', v: String(cantServicios) } : { l: 'Fecha',  v: fecha },
+        { l: 'Estado', v: estado === 'COMPLETADO' ? 'ÓPTIMO' : (estado || '—') },
     ];
 
-    const colW = (CONTENT_W - 8) / 2;
-    datos.forEach(({ l, v }, i) => {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const cx = M + 4 + col * (colW + 4);
-        const cy = y + 18 + row * 11;
+    const colW  = (CONTENT_W) / stats.length;
+    stats.forEach(({ l, v }, i) => {
+        const cx = M + 4 + i * colW;
+        const cy = y + 22;
+
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayBorder);
         doc.text(l, cx, cy);
+
         doc.setFontSize(T.sm);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.white);
-        doc.text(v, cx, cy + 5);
+        doc.text(v, cx, cy + 7);
     });
 
     return y + cardH + 6;
+}
+
+// ── CONDICIONES PRESUPUESTO ───────────────────────────────────────────────────
+export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
+    const condDefault = [
+        '· Presupuesto válido por 7 días corridos.',
+        '· El servicio se coordinará una vez aceptado este presupuesto.',
+        '· Los repuestos cotizados son originales o de primera marca.',
+        '· Incluye traslado dentro del área metropolitana.',
+        '· Garantía: 90 días sobre mano de obra — repuestos según fabricante.',
+    ].join('\n');
+
+    const textoCond = texto || condDefault;
+
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('CONDICIONES DEL PRESUPUESTO', M, y);
+    y += 5;
+
+    const lines = doc.splitTextToSize(textoCond, CONTENT_W);
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    lines.forEach((l, i) => doc.text(l, M, y + i * 4.2));
+
+    return y + lines.length * 4.2 + 4;
 }
