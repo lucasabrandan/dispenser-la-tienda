@@ -321,18 +321,16 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           || sedeMostrador?.id
           || db.sedes?.[0]?.id;
 
-        if (sedeIdEquipo) {
-          try {
-            const res = await api.post('/equipos', {
-              numeroSerie: tieneSerial,
-              modelo:      itemActual.modeloEquipo    || null,
-              ubicacion:   itemActual.ubicacionEquipo || null,
-              sedeId:      sedeIdEquipo,
-            });
-            setDb(prev => ({ ...prev, equipos: [...(prev.equipos || []), res.data] }));
-          } catch (e) {
-            console.error('Error guardando equipo al vuelo:', e);
-          }
+        try {
+          const res = await api.post('/equipos', {
+            numeroSerie: tieneSerial,
+            modelo:      itemActual.modeloEquipo    || null,
+            ubicacion:   itemActual.ubicacionEquipo || null,
+            sedeId:      sedeIdEquipo || null,
+          });
+          setDb(prev => ({ ...prev, equipos: [...(prev.equipos || []), res.data] }));
+        } catch (e) {
+          console.error('Error guardando equipo al vuelo:', e);
         }
       }
     }

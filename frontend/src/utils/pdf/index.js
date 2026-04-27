@@ -266,8 +266,11 @@ async function generarSinglePresupuesto(doc, {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
 
-    // Cargar foto del equipo para mostrar en el bloque cliente+equipo
-    const fotoEquipoData = await cargarFoto(item.fotoAntes || item.fotoDespues || item.fotoEquipo || null);
+    // Cargar ambas fotos del equipo
+    const [fotoEquipoData, fotoPresup2] = await Promise.all([
+        cargarFoto(item.fotoAntes || item.fotoDespues || item.fotoEquipo || null),
+        cargarFoto(item.fotoAntes && item.fotoDespues ? item.fotoDespues : null),
+    ]);
 
     // Bloque cliente + equipo con foto
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item, idx: 0, y, pageW, fotoEquipo: fotoEquipoData });
@@ -302,16 +305,37 @@ async function generarSinglePresupuesto(doc, {
         labelTotal: 'TOTAL ESTIMADO DEL SERVICIO',
     });
 
-    // Validez del presupuesto
+    // Validez del presupuesto (debajo de la tabla, no superpuesta)
     const validez = new Date();
     validez.setDate(validez.getDate() + 7);
+    y += 3;
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
     doc.text(
         `Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`,
-        pageW - M, y - 4, { align: 'right' },
+        pageW - M, y, { align: 'right' },
     );
+    y += 6;
+
+    // Segunda foto del equipo (si se subieron ambas)
+    if (fotoPresup2) {
+        y = checkSalto(doc, y, 40);
+        const COL_W = (CONTENT_W - 6) / 2;
+        const FOTO_H = Math.floor((COL_W * 3) / 4);
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('FOTO ADICIONAL DEL EQUIPO', M, y);
+        y += 5;
+        doc.setFillColor(220, 220, 225);
+        doc.roundedRect(M + 1.5, y + 1.5, COL_W, FOTO_H, 2, 2, 'F');
+        try { doc.addImage(fotoPresup2.data, fotoPresup2.format, M, y, COL_W, FOTO_H); } catch {}
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(M, y, COL_W, FOTO_H, 2, 2, 'S');
+        y += FOTO_H + 8;
+    }
 
     // Condiciones
     y = checkSalto(doc, y, 36);

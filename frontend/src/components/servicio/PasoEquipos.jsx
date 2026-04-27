@@ -104,6 +104,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const [modalRepuesto, setModalRepuesto]     = useState(false);
     const [nombreRepuesto, setNombreRepuesto]   = useState('');
     const [sheetRepuestos, setSheetRepuestos]   = useState(false);
+    const [mostrarFotos,   setMostrarFotos]     = useState(false);
 
     // Equipos del inventario del cliente
     const equiposInventario = (() => {
@@ -343,15 +344,26 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         </div>
                     </div>
 
-                    {/* Fotos antes / después */}
+                    {/* Fotos — colapsadas por defecto, solo si el cliente las envía */}
                     <div>
-                        <Label>Fotos (opcional)</Label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <FotoUpload label="Antes" foto={itemActual.fotoAntes}
-                                onChange={f => setItemActual({ ...itemActual, fotoAntes: f })} />
-                            <FotoUpload label="Después" foto={itemActual.fotoDespues}
-                                onChange={f => setItemActual({ ...itemActual, fotoDespues: f })} />
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setMostrarFotos(v => !v)}
+                            className="w-full flex items-center justify-between py-2 text-left"
+                        >
+                            <span className="text-[11px] font-bold text-[#A8A29E] uppercase tracking-widest">
+                                {(itemActual.fotoAntes || itemActual.fotoDespues) ? '📷 Fotos adjuntas' : '📷 Adjuntar fotos del cliente (opcional)'}
+                            </span>
+                            <span className="text-[#A8A29E] text-xs">{mostrarFotos ? '▲' : '▼'}</span>
+                        </button>
+                        {mostrarFotos && (
+                            <div className="grid grid-cols-2 gap-3 mt-2">
+                                <FotoUpload label="Antes" foto={itemActual.fotoAntes}
+                                    onChange={f => setItemActual({ ...itemActual, fotoAntes: f })} />
+                                <FotoUpload label="Después" foto={itemActual.fotoDespues}
+                                    onChange={f => setItemActual({ ...itemActual, fotoDespues: f })} />
+                            </div>
+                        )}
                     </div>
 
                     {/* Mano de obra */}
@@ -366,7 +378,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                     </div>
 
                     {/* Botón agregar */}
-                    <button onClick={() => agregarAlTicket()}
+                    <button onClick={() => { agregarAlTicket(); setMostrarFotos(false); }}
                         className="w-full py-3.5 rounded-xl font-black text-sm text-white active:scale-[0.98] transition-all bg-[#D13A28] dark:bg-[#E8422F]">
                         + Agregar equipo al ticket
                     </button>

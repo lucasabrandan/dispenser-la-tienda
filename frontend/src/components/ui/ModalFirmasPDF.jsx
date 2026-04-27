@@ -37,6 +37,20 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
         }
     };
 
+    const handleConfirm = async () => {
+        // Auto-guardar firma del técnico en localStorage (y backend silenciosamente)
+        if (firmaTecnico) {
+            try {
+                const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
+                if (user.id && firmaTecnico !== user.firma) {
+                    localStorage.setItem('auth_usuario', JSON.stringify({ ...user, firma: firmaTecnico }));
+                    api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
+                }
+            } catch {}
+        }
+        onConfirm({ firmaTecnico, firmaCliente });
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="w-full max-w-lg bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl shadow-2xl overflow-hidden">
@@ -101,7 +115,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                         </button>
                         <button
                             type="button"
-                            onClick={() => onConfirm({ firmaTecnico, firmaCliente })}
+                            onClick={handleConfirm}
                             className="flex-1 py-2.5 rounded-xl bg-[#D13A28] text-white text-sm font-bold hover:bg-[#b52f20] transition-colors"
                         >
                             Generar PDF
