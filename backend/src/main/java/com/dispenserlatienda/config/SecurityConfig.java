@@ -1,6 +1,7 @@
 package com.dispenserlatienda.config;
 
 import com.dispenserlatienda.security.JwtFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -58,6 +59,11 @@ public class SecurityConfig {
 
                 // Resto: cualquier usuario autenticado
                 .anyRequest().authenticated()
+            )
+            .exceptionHandling(e -> e
+                // Sin token válido → 401 (no 403), para que el frontend haga logout automático
+                .authenticationEntryPoint((req, res, ex) ->
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No autenticado"))
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
