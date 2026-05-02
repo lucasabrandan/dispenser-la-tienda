@@ -7,7 +7,19 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     const LEFT_W  = CONTENT_W * 0.54;
     const RIGHT_W = CONTENT_W - LEFT_W - 4;
     const RIGHT_X = M + LEFT_W + 4;
-    const cardH   = 38;
+
+    // Calcular altura dinámica: si la ubicación es larga y necesita 2 líneas, expandir la card
+    const FOTO_W_PRE  = 24;
+    const hasFotoPre  = !!fotoEquipo;
+    const textMaxWPre = hasFotoPre ? RIGHT_W - FOTO_W_PRE - 3 : RIGHT_W - 2;
+    const ubicPre     = item ? (item.ubicacionEquipo || item.equipoUbicacion || '') : '';
+    let extraCardH = 0;
+    if (ubicPre) {
+        doc.setFontSize(T.xxs);
+        const ubicLineCount = doc.splitTextToSize(ubicPre, textMaxWPre - 16).length;
+        if (ubicLineCount > 1) extraCardH = 4;
+    }
+    const cardH = 38 + extraCardH;
 
     // Fondo card completo
     doc.setFillColor(...C.grayLight);
@@ -100,8 +112,14 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.dark);
             const vLines = doc.splitTextToSize(String(v), textMaxW - 16);
-            doc.text(vLines[0], RIGHT_X + 14, ey);
-            ey += 4.5;
+            if (l === 'UBIC.' && vLines.length > 1) {
+                // Ubicación larga: mostrar hasta 2 líneas
+                vLines.slice(0, 2).forEach((ln, li) => doc.text(ln, RIGHT_X + 14, ey + li * 4));
+                ey += 4.5 + 4;
+            } else {
+                doc.text(vLines[0], RIGHT_X + 14, ey);
+                ey += 4.5;
+            }
         });
     }
 

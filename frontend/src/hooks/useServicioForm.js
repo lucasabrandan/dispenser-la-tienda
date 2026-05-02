@@ -335,6 +335,37 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       }
     }
 
+    // Si el equipo ya existe y el usuario cambió modelo o ubicación, actualizar en la BD
+    // para que futuros PDFs recuperen la info correctamente desde el historial
+    if (!itemActual.esNuevoEquipo && tieneSerial) {
+      const equipoDB = db.equipos?.find(e => e.numeroSerie === tieneSerial);
+      if (equipoDB?.id && equipoDB.sedeId) {
+        const modeloOk  = itemActual.modeloEquipo?.trim();
+        const ubicOk    = itemActual.ubicacionEquipo?.trim();
+        const diferente = (modeloOk && modeloOk !== equipoDB.modelo) ||
+                          (ubicOk   && ubicOk   !== equipoDB.ubicacion);
+        if (diferente) {
+          api.put(`/equipos/${equipoDB.id}`, {
+            numeroSerie:   equipoDB.numeroSerie,
+            modelo:        modeloOk  || equipoDB.modelo    || null,
+            marca:         equipoDB.marca                  || null,
+            sedeId:        equipoDB.sedeId,
+            ubicacion:     ubicOk    || equipoDB.ubicacion || null,
+            observaciones: equipoDB.observaciones          || null,
+          }).then(() => {
+            setDb(prev => ({
+              ...prev,
+              equipos: prev.equipos.map(e =>
+                e.id === equipoDB.id
+                  ? { ...e, modelo: modeloOk || e.modelo, ubicacion: ubicOk || e.ubicacion }
+                  : e
+              ),
+            }));
+          }).catch(() => {});
+        }
+      }
+    }
+
     const extra  = Math.max(0, parseFloat(itemActual.costoExtra) || 0);
     const totalR = itemActual.repuestosUsados.reduce((a, b) => a + b.subtotal, 0);
     const nuevoRenglon = {

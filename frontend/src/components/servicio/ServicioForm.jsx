@@ -17,7 +17,7 @@ const TITULOS = [
     { titulo: 'Resumen y cierre',      subtitulo: 'Descuento, rentabilidad y condiciones' },
 ];
 
-export default function ServicioForm({ onSaved, servicioParaEditar = null, clienteInicialId = null, presupuestoOrigen = null }) {
+export default function ServicioForm({ onSaved, servicioParaEditar = null, clienteInicialId = null, presupuestoOrigen = null, modoEjecucion = false }) {
     const hook = useServicioForm(servicioParaEditar, clienteInicialId, presupuestoOrigen);
     const {
         db, setDb, clienteId,
@@ -54,10 +54,11 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null, clien
     const dispararPDF = async () => {
         const sedeObj = db.sedes?.find(s => s.id === itemActual.sedeId);
         const { totalConDescuento } = calcularResumenGanancia();
-        // Las fotos (File o filename) las resuelve cargarFoto dentro del generador
         try {
             await generarRemitoPDFPremium({
-                esPresupuesto: true,
+                // Si el servicio ya está confirmado (bloqueado) → ORDEN_SERVICIO; si no → PRESUPUESTO
+                esPresupuesto: !estaBloqueado,
+                servicioId: idEdicion || null,
                 cliente: clienteObj || { nombre: nombreLibre || 'Particular' },
                 sede: sedeObj || { nombreSede: 'Mostrador' },
                 tecnico: localStorage.getItem('tecnico_nombre') || 'Técnico', ticketItems, descuentoPorcentaje,
@@ -115,7 +116,7 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null, clien
 
             {paso === 0 && <PasoCliente  hook={hook} onNext={() => setPaso(1)} selectStyles={selectStyles} />}
             {paso === 1 && <PasoEquipos  hook={hook} onNext={() => setPaso(2)} onBack={() => setPaso(0)} selectStyles={selectStyles} />}
-            {paso === 2 && <PasoResumen  hook={hook} onBack={() => setPaso(1)} onGuardar={handleGuardar} onConfirmar={handleConfirmar} dispararPDF={dispararPDF} />}
+            {paso === 2 && <PasoResumen  hook={hook} onBack={() => setPaso(1)} onGuardar={handleGuardar} onConfirmar={handleConfirmar} dispararPDF={dispararPDF} modoEjecucion={modoEjecucion} />}
 
             <CrearClienteModal isOpen={modalClienteAbierto} onClose={() => setModalClienteAbierto(false)}
                 clienteNombrePrellenado={nombreClientePrellenado}

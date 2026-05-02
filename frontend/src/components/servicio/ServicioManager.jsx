@@ -48,6 +48,11 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
         usuarioId, setUsuarioId,
     } = useServicioManager();
 
+    const [servicioEjecutar, setServicioEjecutar] = useState(null);
+
+    const abrirEjecutar = (s) => { setServicioEjecutar(s); setModalCrear(true); };
+    const cerrarModalCompleto = () => { cerrarModal(); setServicioEjecutar(null); };
+
     const [tecnicos, setTecnicos] = useState([]);
 
     useEffect(() => {
@@ -253,7 +258,11 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                                             <>
                                                 <button onClick={() => rechazarServicio(s.id)}
                                                     className="h-9 px-3 rounded-xl font-bold text-xs text-white active:scale-95 bg-[#1C1917] dark:bg-[#2E2E2E] hover:opacity-80">
-                                                    ✗ Rechazar
+                                                    ✗
+                                                </button>
+                                                <button onClick={() => abrirEjecutar(s)}
+                                                    className="h-9 px-3 rounded-xl font-bold text-xs text-white active:scale-95 bg-[#D48800] dark:bg-[#F0A500] hover:opacity-80">
+                                                    🔧 Ejecutar
                                                 </button>
                                                 <button onClick={() => confirmarServicio(s.id)}
                                                     className="h-9 px-3 rounded-xl font-bold text-xs text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-80">
@@ -280,22 +289,29 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                              style={{ borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
                             <div>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
-                                    {servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
+                                    {servicioEjecutar ? '🔧 Ejecutar Trabajo'
+                                        : servicioEditar ? '✏️ Editar Presupuesto'
+                                        : '🔧 Nuevo Servicio'}
                                 </h3>
                                 <p className="text-[11px] text-[#A8A29E] mt-0.5">
-                                    {servicioEditar ? `Presupuesto #${servicioEditar.id}` : 'Cargá el trabajo a realizar'}
+                                    {servicioEjecutar
+                                        ? `Ppto #${servicioEjecutar.id} · modificá y confirmá`
+                                        : servicioEditar
+                                            ? `Presupuesto #${servicioEditar.id}`
+                                            : 'Cargá el trabajo a realizar'}
                                 </p>
                             </div>
-                            <button onClick={cerrarModal}
+                            <button onClick={cerrarModalCompleto}
                                 className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90">
                                 ✕
                             </button>
                         </div>
                         <ServicioForm
-                            onSaved={() => { cerrarModal(); cargarServicios(); if (onClienteConsumido) onClienteConsumido(); if (onPresupuestoOrigenConsumido) onPresupuestoOrigenConsumido(); }}
-                            servicioParaEditar={servicioEditar}
+                            onSaved={() => { cerrarModalCompleto(); cargarServicios(); if (onClienteConsumido) onClienteConsumido(); if (onPresupuestoOrigenConsumido) onPresupuestoOrigenConsumido(); }}
+                            servicioParaEditar={servicioEditar || servicioEjecutar}
                             clienteInicialId={clienteInicial?.id}
                             presupuestoOrigen={presupuestoOrigen}
+                            modoEjecucion={!!servicioEjecutar}
                             soloTecnico
                         />
                     </div>

@@ -106,7 +106,7 @@ function RentabilidadPanel({ resumen, descuentoPorcentaje }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-export default function PasoResumen({ hook, onBack, onGuardar, onConfirmar, dispararPDF }) {
+export default function PasoResumen({ hook, onBack, onGuardar, onConfirmar, dispararPDF, modoEjecucion = false }) {
     const {
         ticketItems,
         descuentoPorcentaje, setDescuentoPorcentaje,
@@ -242,13 +242,15 @@ export default function PasoResumen({ hook, onBack, onGuardar, onConfirmar, disp
                             className="w-11 h-11 rounded-xl text-lg flex items-center justify-center active:scale-90 bg-[#2E2E2E]">
                             📄
                         </button>
-                        <button onClick={onGuardar}
-                            className="h-11 px-4 rounded-xl font-black text-[11px] text-white active:scale-95 bg-[#2E2E2E]">
-                            {idEdicion ? 'Actualizar' : 'Guardar'}
-                        </button>
+                        {!modoEjecucion && (
+                            <button onClick={onGuardar}
+                                className="h-11 px-4 rounded-xl font-black text-[11px] text-white active:scale-95 bg-[#2E2E2E]">
+                                {idEdicion ? 'Actualizar' : 'Guardar'}
+                            </button>
+                        )}
                         <button onClick={onConfirmar}
                             className="h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
-                            Confirmar
+                            {modoEjecucion ? '✓ Confirmar trabajo' : 'Confirmar'}
                         </button>
                     </div>
                 </div>

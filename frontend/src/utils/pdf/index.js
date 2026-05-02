@@ -105,7 +105,7 @@ async function generarSingleTecnico(doc, {
 
     // Cargar fotos de equipo
     const [fotoEquipoData, fotoA, fotoD] = await Promise.all([
-        cargarFoto(item.fotoEquipo || item.fotoDespues || null),
+        cargarFoto(item.fotoEquipo || item.fotoDespues || item.fotoAntes || null),
         cargarFoto(item.fotoAntes),
         cargarFoto(item.fotoDespues),
     ]);
@@ -454,7 +454,8 @@ async function generarMultiTecnico(doc, {
         const modelo = item.modeloEquipo || item.equipoModelo || 'Dispenser';
         const serial = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
             ? `S/N: ${item.equipoSerial}` : '';
-        const header = [`EQUIPO ${idx + 1}: ${modelo}${serial ? '  ·  ' + serial : ''}`, '', '', ''];
+        const ubic   = item.ubicacionEquipo || item.equipoUbicacion || '';
+        const header = [`EQUIPO ${idx + 1}: ${modelo}${serial ? '  ·  ' + serial : ''}${ubic ? '  ·  ' + ubic : ''}`, '', '', ''];
         bodyRows.push(header);
         bodyMeta.push({ isHeader: true });
 
@@ -572,10 +573,11 @@ async function generarMultiPresupuesto(doc, {
     const bodyMeta = [];
 
     ticketItems.forEach((item, idx) => {
-        const modelo = item.modeloEquipo || 'Dispenser';
+        const modelo = item.modeloEquipo || item.equipoModelo || 'Dispenser';
         const serial = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
             ? `S/N: ${item.equipoSerial}` : '';
-        bodyRows.push([`EQUIPO ${idx + 1}: ${modelo}${serial ? '  ·  ' + serial : ''}`, '', '', '']);
+        const ubic   = item.ubicacionEquipo || item.equipoUbicacion || '';
+        bodyRows.push([`EQUIPO ${idx + 1}: ${modelo}${serial ? '  ·  ' + serial : ''}${ubic ? '  ·  ' + ubic : ''}`, '', '', '']);
         bodyMeta.push({ isHeader: true });
 
         const filas = construirFilasItem(item);

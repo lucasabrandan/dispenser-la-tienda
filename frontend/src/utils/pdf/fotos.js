@@ -112,7 +112,8 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc) {
         // Etiqueta equipo
         const eqLabel = [
             item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? `S/N: ${item.equipoSerial}` : null,
-            item.modeloEquipo || null,
+            item.modeloEquipo || item.equipoModelo || null,
+            item.ubicacionEquipo || item.equipoUbicacion || null,
         ].filter(Boolean).join('  ·  ') || 'Equipo';
 
         doc.setFontSize(T.xxs);
