@@ -8,7 +8,7 @@ function formatMes(ym) {
     return `${MESES[parseInt(m) - 1]} ${y}`;
 }
 
-export default function FiltrosPanel({ estados = [], conBusqueda = true, conRango = true, hook }) {
+export default function FiltrosPanel({ estados = [], conBusqueda = true, conRango = true, placeholderBusqueda = 'Buscar...', hook }) {
     const {
         busqueda, setBusqueda,
         estado, setEstado,
@@ -144,7 +144,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs">🔍</span>
                             <input
                                 type="text"
-                                placeholder="Buscar..."
+                                placeholder={placeholderBusqueda}
                                 value={busqueda}
                                 onChange={e => setBusqueda(e.target.value)}
                                 className="w-full pl-8 pr-3 py-2 rounded-xl text-[12px] font-medium outline-none transition-all border border-black/[0.07] dark:border-white/[0.07] focus:border-[#D13A28] dark:focus:border-[#E8422F] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E]"

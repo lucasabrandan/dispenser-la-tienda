@@ -120,7 +120,9 @@ public class ServicioService {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("clienteNombre")), like),
                         cb.like(cb.lower(root.get("sedeNombre")), like),
-                        cb.like(cb.lower(equipo.get("numeroSerie")), like)
+                        cb.like(cb.lower(equipo.get("numeroSerie")), like),
+                        cb.like(cb.lower(cb.coalesce(equipo.get("ubicacion"), "")), like),
+                        cb.like(cb.lower(cb.coalesce(equipo.get("modelo"), "")), like)
                 ));
             }
             if (desde != null && !desde.isBlank())

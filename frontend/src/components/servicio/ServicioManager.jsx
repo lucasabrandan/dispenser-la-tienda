@@ -17,8 +17,8 @@ function M({ valor, className = '' }) {
 }
 
 const ESTADOS_SERVICIO = [
-    { value: 'PRESUPUESTO', label: 'Pendiente' },
-    { value: 'REALIZADO',   label: 'Realizado' },
+    { value: 'PRESUPUESTO', label: 'Presupuesto' },
+    { value: 'REALIZADO',   label: 'OS / Realizado' },
     { value: 'RECHAZADO',   label: 'Rechazado' },
 ];
 
@@ -159,7 +159,7 @@ export default function ServicioManager({ clienteInicial = null, onClienteConsum
                 )}
 
                 {/* ── FILTROS ───────────────────────────────────────────── */}
-                <FiltrosPanel hook={filtros} estados={ESTADOS_SERVICIO} conBusqueda conRango />
+                <FiltrosPanel hook={filtros} estados={ESTADOS_SERVICIO} conBusqueda conRango placeholderBusqueda="Cliente, S/N, ubicación, sede..." />
 
                 {/* Filtro por técnico — solo admin */}
                 {esAdmin && tecnicos.length > 0 && (

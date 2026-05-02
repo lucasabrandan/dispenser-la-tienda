@@ -243,11 +243,14 @@ export default function PresupuestosManager({ onEjecutar }) {
         ventas:    presupuestos.filter(p => p.servicioTipo === 'VENTA').length,
     }), [presupuestos]);
 
-    // campoBusqueda ampliado: nombre, sede, teléfono, observaciones y número de PDF
+    // campoBusqueda ampliado: nombre, sede, teléfono, observaciones, número de PDF y equipos
     const filtros = useFiltros(presupuestosConNro, {
         porPagina: 10, campoFecha: 'fecha',
         campoEstado: 'servicioTipo',
         campoBusqueda: ['clienteNombre', 'sedeNombre', 'clienteTelefono', 'observaciones', 'nroDocPdf'],
+        campoBusquedaFn: (s) => s.items?.map(it =>
+            [it.equipoSerial, it.equipoModelo, it.equipoUbicacion].filter(Boolean).join(' ')
+        ).join(' ') ?? '',
     });
 
     return (
@@ -282,7 +285,7 @@ export default function PresupuestosManager({ onEjecutar }) {
                 </div>
             </div>
 
-            <FiltrosPanel hook={filtros} estados={TIPOS_PRESU} conBusqueda conRango />
+            <FiltrosPanel hook={filtros} estados={TIPOS_PRESU} conBusqueda conRango placeholderBusqueda="Cliente, teléfono, sede, observaciones..." />
             <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
             {cargando ? (

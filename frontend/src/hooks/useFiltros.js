@@ -10,7 +10,7 @@ const finMes    = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
  * Recibe un array de items con campo `fecha` (YYYY-MM-DD) y `estado` opcional.
  * Devuelve los items filtrados y paginados + helpers para los controles.
  */
-export function useFiltros(items = [], { porPagina = 10, campoFecha = 'fecha', campoEstado = 'estado', campoBusqueda = null } = {}) {
+export function useFiltros(items = [], { porPagina = 10, campoFecha = 'fecha', campoEstado = 'estado', campoBusqueda = null, campoBusquedaFn = null } = {}) {
 
     const [pagina,       setPagina]       = useState(1);
     const [busqueda,     setBusqueda]     = useState('');
@@ -104,15 +104,17 @@ export function useFiltros(items = [], { porPagina = 10, campoFecha = 'fecha', c
         }
 
         // Filtro búsqueda texto
-        if (busqueda.trim() && campoBusqueda) {
+        if (busqueda.trim() && (campoBusqueda || campoBusquedaFn)) {
             const q = busqueda.toLowerCase().trim();
-            resultado = resultado.filter(it =>
-                campoBusqueda.some(campo => it[campo]?.toString().toLowerCase().includes(q))
-            );
+            resultado = resultado.filter(it => {
+                const enCampos = campoBusqueda?.some(campo => it[campo]?.toString().toLowerCase().includes(q)) ?? false;
+                const enExtra  = campoBusquedaFn ? campoBusquedaFn(it).toLowerCase().includes(q) : false;
+                return enCampos || enExtra;
+            });
         }
 
         return resultado;
-    }, [items, periodoRapido, mesSelector, desde, hasta, estado, busqueda, campoFecha, campoEstado, campoBusqueda]);
+    }, [items, periodoRapido, mesSelector, desde, hasta, estado, busqueda, campoFecha, campoEstado, campoBusqueda, campoBusquedaFn]);
 
     // ── Paginación ──────────────────────────────────────────────────────────
     const totalPaginas  = Math.max(1, Math.ceil(itemsFiltrados.length / porPagina));

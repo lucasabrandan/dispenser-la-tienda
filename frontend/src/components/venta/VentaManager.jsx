@@ -81,7 +81,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
             )}
 
             {/* ── FILTROS ARRIBA ─────────────────────────────────────────── */}
-            <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda conRango />
+            <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda conRango placeholderBusqueda="Cliente, S/N, sede..." />
             <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
             {cargando ? (

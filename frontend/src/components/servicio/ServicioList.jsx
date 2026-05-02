@@ -114,6 +114,9 @@ export default function ServicioList({ onEditar }) {
         campoFecha: 'fecha',
         campoEstado: 'estado',
         campoBusqueda: ['clienteNombre', 'sedeNombre', 'clienteTelefono', 'observaciones', 'nroDocPdf'],
+        campoBusquedaFn: (s) => s.items?.map(it =>
+            [it.equipoSerial, it.equipoModelo, it.equipoUbicacion].filter(Boolean).join(' ')
+        ).join(' ') ?? '',
     });
 
     const totalVentas  = servicios
@@ -180,7 +183,7 @@ export default function ServicioList({ onEditar }) {
                 </div>
 
                 {/* ── FILTROS ───────────────────────────────────────────── */}
-                <FiltrosPanel hook={filtros} estados={ESTADOS_HISTORIAL} conBusqueda conRango />
+                <FiltrosPanel hook={filtros} estados={ESTADOS_HISTORIAL} conBusqueda conRango placeholderBusqueda="Cliente, S/N, ubicación, sede..." />
                 <Paginacion
                     pagina={filtros.pagina}
                     totalPaginas={filtros.totalPaginas}
