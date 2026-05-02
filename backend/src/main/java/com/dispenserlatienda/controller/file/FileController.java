@@ -1,6 +1,7 @@
 package com.dispenserlatienda.controller.file;
 
 import com.dispenserlatienda.service.servicio.FileStorageService;
+import com.dispenserlatienda.service.servicio.R2StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,6 +26,9 @@ public class FileController {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private R2StorageService r2;
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> subirArchivo(@RequestParam("file") MultipartFile file) {
         try {
@@ -35,30 +40,28 @@ public class FileController {
         }
     }
 
+    // Archivos nuevos están en R2 → redirigir a URL pública.
+    // Archivos viejos están en disco local → servirlos directamente (backward compat).
     @GetMapping("/{filename:.+}")
     public ResponseEntity<byte[]> servirArchivo(@PathVariable String filename) {
         try {
             Path filePath = Paths.get(storageLocation, filename);
             File file = filePath.toFile();
 
-            if (!file.exists()) {
-                System.out.println("❌ Archivo no encontrado: " + filePath.toAbsolutePath());
-                return ResponseEntity.notFound().build();
+            if (file.exists()) {
+                byte[] fileContent = Files.readAllBytes(filePath);
+                String contentType = Files.probeContentType(filePath);
+                if (contentType == null) contentType = "image/jpeg";
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .header("Cache-Control", "no-store, no-cache, must-revalidate")
+                        .body(fileContent);
             }
 
-            byte[] fileContent = Files.readAllBytes(filePath);
-            System.out.println("✅ Sirviendo: " + filename);
-
-            // Detectar content-type real para que el cliente pueda decodificar correctamente
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) contentType = "image/jpeg";
-            MediaType mediaType = MediaType.parseMediaType(contentType);
-
-            return ResponseEntity.ok()
-                    .contentType(mediaType)
-                    .header("Cache-Control", "no-store, no-cache, must-revalidate")
-                    .header("Vary", "Origin")
-                    .body(fileContent);
+            // Archivo nuevo → redirigir a R2
+            return ResponseEntity.status(302)
+                    .location(URI.create(r2.urlPublica(filename)))
+                    .build();
 
         } catch (Exception e) {
             System.out.println("❌ Error sirviendo archivo: " + e.getMessage());
