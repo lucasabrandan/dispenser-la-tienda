@@ -7,5 +7,7 @@ public record EquipoDTO(
         String marca,
         String modelo,
         String ubicacion,
+        String piso,
+        String sector,
         String observaciones
 ) {}

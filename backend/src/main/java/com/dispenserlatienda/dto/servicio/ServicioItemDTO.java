@@ -12,6 +12,8 @@ public record ServicioItemDTO(
         String equipoSerial,
         String equipoModelo,
         String equipoUbicacion,
+        String equipoPiso,
+        String equipoSector,
         String tecnico,
         BigDecimal costo,
         BigDecimal costoExtra,

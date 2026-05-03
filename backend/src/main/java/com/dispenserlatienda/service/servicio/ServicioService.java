@@ -290,6 +290,8 @@ public class ServicioService {
                     i.getEquipo() != null ? i.getEquipo().getNumeroSerie() : "MOSTRADOR",
                     i.getEquipo() != null ? i.getEquipo().getModelo() : null,
                     i.getEquipo() != null ? i.getEquipo().getUbicacion() : "MOSTRADOR",
+                    i.getEquipo() != null ? i.getEquipo().getPiso() : null,
+                    i.getEquipo() != null ? i.getEquipo().getSector() : null,
                     i.getTecnico(), i.getCosto(), i.getCostoExtra(), i.getCostoInterno(),
                     i.getDescuento(),
                     i.getMetodoPago() != null ? i.getMetodoPago().name() : "EFECTIVO",

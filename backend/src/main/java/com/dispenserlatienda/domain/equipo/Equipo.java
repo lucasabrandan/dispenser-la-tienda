@@ -21,19 +21,23 @@ public class Equipo extends BaseEntity {
     private String numeroSerie;
 
     private String ubicacion;
+    private String piso;
+    private String sector;
     private String observaciones;
 
     // Constructor vacío exigido por JPA
     protected Equipo() {}
 
     // Constructor completo actualizado
-    public Equipo(Sede sede, String marca, String modelo, String numeroSerie, String ubicacion, String observaciones) {
+    public Equipo(Sede sede, String marca, String modelo, String numeroSerie, String ubicacion, String piso, String sector, String observaciones) {
         super();
         this.sede = sede;
         this.marca = marca;
         this.modelo = modelo;
         this.numeroSerie = numeroSerie;
         this.ubicacion = ubicacion;
+        this.piso = piso;
+        this.sector = sector;
         this.observaciones = observaciones;
     }
 
@@ -81,6 +85,22 @@ public class Equipo extends BaseEntity {
 
     public void setUbicacion(String ubicacion) {
         this.ubicacion = ubicacion;
+    }
+
+    public String getPiso() {
+        return piso;
+    }
+
+    public void setPiso(String piso) {
+        this.piso = piso;
+    }
+
+    public String getSector() {
+        return sector;
+    }
+
+    public void setSector(String sector) {
+        this.sector = sector;
     }
 
     public String getObservaciones() {

@@ -19,6 +19,7 @@ import {
 import { dibujarHeader, dibujarHeaderCompacto, dibujarFooter } from './layout.js';
 import {
     dibujarBloqueClienteEquipo,
+    dibujarBloqueEquipoDetalle,
     dibujarResumenServicio,
     dibujarTablaDetalle,
     dibujarSeccion2Col,
@@ -48,7 +49,7 @@ function getLabelTipo(tipo, esMulti) {
     const suf = esMulti ? ' — MÚLTIPLES EQUIPOS' : '';
     switch (tipo) {
         case 'PRESUPUESTO':       return `PRESUPUESTO DE SERVICIO TÉCNICO${suf}`;
-        case 'ORDEN_SERVICIO':    return `ORDEN DE SERVICIO${suf}`;
+        case 'ORDEN_SERVICIO':    return `TRABAJO REALIZADO${suf}`;
         case 'COMPROBANTE':       return 'COMPROBANTE DE VENTA';
         case 'INFORME_TECNICO':   return `INFORME TÉCNICO${suf}`;
         default:                  return tipo;
@@ -103,16 +104,19 @@ async function generarSingleTecnico(doc, {
     const RIGHT_COL_W = 62;
     const RIGHT_COL_X = pageW - M - RIGHT_COL_W;
 
-    // Cargar fotos de equipo
-    const [fotoEquipoData, fotoA, fotoD] = await Promise.all([
-        cargarFoto(item.fotoEquipo || item.fotoDespues || item.fotoAntes || null),
+    // Cargar fotos
+    const [fotoA, fotoD] = await Promise.all([
         cargarFoto(item.fotoAntes),
         cargarFoto(item.fotoDespues),
     ]);
     const tieneEvidencia = !!(fotoA || fotoD);
 
-    // Bloque cliente + equipo
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item, idx: 0, y, pageW, fotoEquipo: fotoEquipoData });
+    // Bloque cliente (full width, sin diagnóstico en OS)
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW });
+
+    // Bloque equipo separado con foto ANTES
+    y = checkSalto(doc, y, 36);
+    y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoA });
 
     // Stats de resumen
     const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
@@ -266,26 +270,32 @@ async function generarSinglePresupuesto(doc, {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
 
-    // Cargar ambas fotos del equipo
-    const [fotoEquipoData, fotoPresup2] = await Promise.all([
-        cargarFoto(item.fotoAntes || item.fotoDespues || item.fotoEquipo || null),
+    // Cargar foto ANTES (para bloque equipo) y foto DESPUÉS (evidencia adicional si hay ambas)
+    const [fotoAntes, fotoDespues] = await Promise.all([
+        cargarFoto(item.fotoAntes || item.fotoEquipo || null),
         cargarFoto(item.fotoAntes && item.fotoDespues ? item.fotoDespues : null),
     ]);
 
-    // Bloque cliente + equipo con foto
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item, idx: 0, y, pageW, fotoEquipo: fotoEquipoData });
+    // Diagnóstico/solicitud del cliente → columna derecha del bloque cliente
+    const diagnostico = sanitizarTexto(item.problema || item.solicitud || item.descripcion || '');
 
-    // Problema / trabajo propuesto — solo si hay contenido real
-    const problemaTexto = sanitizarTexto(item.problema || item.solicitud || item.descripcion || '');
-    const trabajoTexto  = sanitizarTexto(item.trabajo  || item.trabajoRealizado || item.resumenTexto || '');
-    if (problemaTexto || trabajoTexto) {
-        y = checkSalto(doc, y, 32);
+    // Bloque cliente con diagnóstico en columna derecha
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: diagnostico || null });
+
+    // Bloque equipo separado con foto ANTES a la derecha
+    y = checkSalto(doc, y, 36);
+    y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes });
+
+    // Trabajo propuesto (si existe, debajo del bloque equipo)
+    const trabajoTexto = sanitizarTexto(item.trabajo || item.trabajoRealizado || item.resumenTexto || '');
+    if (trabajoTexto) {
+        y = checkSalto(doc, y, 28);
         y = dibujarSeccion2Col(doc, {
             y, pageW,
-            tituloIzq: problemaTexto ? 'PROBLEMA / SOLICITUD INFORMADA' : null,
-            textoIzq:  problemaTexto || null,
-            tituloDer:  trabajoTexto  ? 'TRABAJO PROPUESTO' : null,
-            textoDer:   trabajoTexto  || null,
+            tituloIzq: 'TRABAJO PROPUESTO',
+            textoIzq:  trabajoTexto,
+            tituloDer:  null,
+            textoDer:   null,
         });
     }
 
@@ -318,8 +328,8 @@ async function generarSinglePresupuesto(doc, {
     );
     y += 6;
 
-    // Segunda foto del equipo (si se subieron ambas)
-    if (fotoPresup2) {
+    // Foto DESPUÉS (si hay ambas fotos subidas, mostrar la segunda como referencia)
+    if (fotoDespues) {
         y = checkSalto(doc, y, 40);
         const COL_W = (CONTENT_W - 6) / 2;
         const FOTO_H = Math.floor((COL_W * 3) / 4);
@@ -330,7 +340,7 @@ async function generarSinglePresupuesto(doc, {
         y += 5;
         doc.setFillColor(220, 220, 225);
         doc.roundedRect(M + 1.5, y + 1.5, COL_W, FOTO_H, 2, 2, 'F');
-        try { doc.addImage(fotoPresup2.data, fotoPresup2.format, M, y, COL_W, FOTO_H); } catch {}
+        try { doc.addImage(fotoDespues.data, fotoDespues.format, M, y, COL_W, FOTO_H); } catch {}
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
         doc.roundedRect(M, y, COL_W, FOTO_H, 2, 2, 'S');

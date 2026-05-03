@@ -59,6 +59,8 @@ export default function CrearEquipoModal({
         marca:         formData.marca.trim().toUpperCase(),
         modelo:        formData.modelo.trim().toUpperCase(),
         ubicacion:     formData.ubicacion?.trim()     || null,
+        piso:          formData.piso?.trim()          || null,
+        sector:        formData.sector?.trim()        || null,
         observaciones: formData.observaciones?.trim() || null
       });
 
@@ -165,7 +167,7 @@ export default function CrearEquipoModal({
               </div>
             </div>
 
-            {/* UBICACIÓN */}
+            {/* UBICACIÓN + PISO + SECTOR */}
             <div>
               <label className="text-xs font-black text-slate-400 uppercase tracking-wide">
                 Ubicación interna (opcional)
@@ -175,9 +177,33 @@ export default function CrearEquipoModal({
                 name="ubicacion"
                 value={formData.ubicacion}
                 onChange={handleChange}
-                placeholder="Ej: Depósito, Sala de reuniones, Planta baja..."
+                placeholder="Ej: Depósito, Sala de reuniones, Recepción..."
                 className="w-full p-3 mt-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-black text-slate-400 uppercase tracking-wide">Piso (opcional)</label>
+                <input
+                  type="text"
+                  name="piso"
+                  value={formData.piso || ''}
+                  onChange={handleChange}
+                  placeholder="Ej: 3, PB, Sub"
+                  className="w-full p-3 mt-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-black text-slate-400 uppercase tracking-wide">Sector / Área (opcional)</label>
+                <input
+                  type="text"
+                  name="sector"
+                  value={formData.sector || ''}
+                  onChange={handleChange}
+                  placeholder="Ej: ERAM, Guardia..."
+                  className="w-full p-3 mt-2 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white"
+                />
+              </div>
             </div>
 
             {/* NOTAS */}

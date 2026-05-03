@@ -9,5 +9,7 @@ public record EquipoCreateDTO(
         String marca,
         @NotNull Long sedeId,
         String ubicacion,
+        String piso,
+        String sector,
         String observaciones
 ) {}

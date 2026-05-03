@@ -2,36 +2,36 @@ import autoTable from 'jspdf-autotable';
 import { C, M, T, CONTENT_W } from './theme.js';
 import { checkSalto } from './helpers.js';
 
-// ── BLOQUE CLIENTE + EQUIPO (2 columnas) ──────────────────────────────────────
-export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null }) {
-    const LEFT_W  = CONTENT_W * 0.54;
+// ── BLOQUE CLIENTE (con columna opcional de diagnóstico) ─────────────────────
+// diagnostico: texto libre para mostrar en columna derecha (presupuesto)
+// Si no se pasa diagnostico, el bloque ocupa full-width
+export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null, diagnostico = null }) {
+    const tieneDiag = !!(diagnostico && diagnostico.trim());
+    const LEFT_W  = tieneDiag ? CONTENT_W * 0.54 : CONTENT_W;
     const RIGHT_W = CONTENT_W - LEFT_W - 4;
     const RIGHT_X = M + LEFT_W + 4;
 
-    // Calcular altura dinámica: si la ubicación es larga y necesita 2 líneas, expandir la card
-    const FOTO_W_PRE  = 24;
-    const hasFotoPre  = !!fotoEquipo;
-    const textMaxWPre = hasFotoPre ? RIGHT_W - FOTO_W_PRE - 3 : RIGHT_W - 2;
-    const ubicPre     = item ? (item.ubicacionEquipo || item.equipoUbicacion || '') : '';
-    let extraCardH = 0;
-    if (ubicPre) {
+    // Altura dinámica según diagnóstico
+    let cardH = 38;
+    if (tieneDiag) {
         doc.setFontSize(T.xxs);
-        const ubicLineCount = doc.splitTextToSize(ubicPre, textMaxWPre - 16).length;
-        if (ubicLineCount > 1) extraCardH = 4;
+        const diagLines = doc.splitTextToSize(diagnostico.trim(), RIGHT_W - 4);
+        cardH = Math.max(38, diagLines.length * 4.2 + 16);
     }
-    const cardH = 38 + extraCardH;
 
-    // Fondo card completo
+    // Fondo card
     doc.setFillColor(...C.grayLight);
     doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'F');
     doc.setDrawColor(...C.grayBorder);
     doc.setLineWidth(0.2);
     doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'S');
 
-    // Divisor vertical
-    doc.setDrawColor(...C.grayBorder);
-    doc.setLineWidth(0.2);
-    doc.line(RIGHT_X - 2, y + 3, RIGHT_X - 2, y + cardH - 3);
+    // Divisor vertical (solo si hay diagnóstico)
+    if (tieneDiag) {
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.2);
+        doc.line(RIGHT_X - 2, y + 3, RIGHT_X - 2, y + cardH - 3);
+    }
 
     // ── Columna izquierda: DATOS DEL CLIENTE ──
     let cy = y + 6;
@@ -46,8 +46,7 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     doc.setFontSize(T.md);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.dark);
-    const maxNomW = LEFT_W - 4;
-    const nombreLines = doc.splitTextToSize(nombreCliente, maxNomW);
+    const nombreLines = doc.splitTextToSize(nombreCliente, LEFT_W - 4);
     doc.text(nombreLines[0], M + 2, cy);
     cy += 5;
 
@@ -65,63 +64,101 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     doc.setTextColor(...C.grayText);
     datosCliente.forEach(l => { doc.text(l, M + 2, cy); cy += 4.2; });
 
-    // ── Columna derecha: EQUIPO ──
-    let ey = y + 6;
-    const eLabel = item ? `EQUIPO ${idx + 1}` : 'EQUIPO';
+    // ── Columna derecha: DIAGNÓSTICO (opcional) ──
+    if (tieneDiag) {
+        let dy = y + 6;
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('DIAGNÓSTICO / SOLICITUD', RIGHT_X, dy);
+        dy += 5;
 
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.dark);
+        const diagLines = doc.splitTextToSize(diagnostico.trim(), RIGHT_W - 4);
+        diagLines.slice(0, 8).forEach(l => { doc.text(l, RIGHT_X, dy); dy += 4.2; });
+    }
+
+    return y + cardH + 4;
+}
+
+// ── BLOQUE DATOS DEL EQUIPO (separado, con foto ANTES a la derecha) ───────────
+// Muestra: marca/modelo, N°serie, ubicación, piso, sector
+// fotoAntes: objeto { data, format } o null
+export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = null }) {
+    if (!item) return y;
+
+    const FOTO_W = 32;
+    const FOTO_H = 28;
+    const hasFoto = !!fotoAntes;
+    const textW   = hasFoto ? CONTENT_W - FOTO_W - 6 : CONTENT_W;
+
+    const serial  = item.equipoSerial && !['MOSTRADOR', 'SIN-SN'].includes(item.equipoSerial) ? item.equipoSerial : null;
+    const modelo  = item.modeloEquipo || item.equipoModelo || null;
+    const marca   = item.marcaEquipo  || item.equipoMarca  || null;
+    const ubic    = item.ubicacionEquipo || item.equipoUbicacion || null;
+    const piso    = item.equipoPiso   || null;
+    const sector  = item.equipoSector || null;
+
+    const campos = [
+        (modelo || marca) ? { l: 'EQUIPO', v: [marca, modelo].filter(Boolean).join(' · ') } : null,
+        serial  ? { l: 'N° SERIE',  v: serial } : null,
+        ubic    ? { l: 'UBICACIÓN', v: ubic   } : null,
+        piso    ? { l: 'PISO',      v: piso   } : null,
+        sector  ? { l: 'SECTOR',    v: sector  } : null,
+    ].filter(Boolean);
+
+    const cardH = Math.max(FOTO_H + 8, campos.length * 5.5 + 14);
+
+    // Fondo card
+    doc.setFillColor(...C.white);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'FD');
+
+    // Barra de color izquierda (navy)
+    doc.setFillColor(...C.navy);
+    doc.roundedRect(M - 2, y, 3, cardH, 2, 2, 'F');
+    doc.rect(M - 0.5, y, 1.5, cardH, 'F');
+
+    // Título
+    let ey = y + 7;
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text(eLabel, RIGHT_X, ey);
+    doc.text('DATOS DEL EQUIPO', M + 4, ey);
     ey += 5;
 
-    if (item) {
-        const tipo    = item.tipoEquipo    || item.equipoTipo    || 'Dispenser';
-        const modelo  = item.modeloEquipo  || item.equipoModelo  || null;
-        const serial  = item.equipoSerial && !['MOSTRADOR','SIN-SN'].includes(item.equipoSerial) ? item.equipoSerial : null;
-        const ubic    = item.ubicacionEquipo || item.equipoUbicacion || null;
-
-        const FOTO_W = 24;
-        const FOTO_H = 22;
-        const hasFoto = !!fotoEquipo;
-        const textMaxW = hasFoto ? RIGHT_W - FOTO_W - 3 : RIGHT_W - 2;
-
-        if (hasFoto) {
-            try {
-                doc.addImage(fotoEquipo.data, fotoEquipo.format, RIGHT_X + textMaxW + 3, ey - 4, FOTO_W, FOTO_H);
-                doc.setDrawColor(...C.grayBorder);
-                doc.setLineWidth(0.15);
-                doc.roundedRect(RIGHT_X + textMaxW + 3, ey - 4, FOTO_W, FOTO_H, 1, 1, 'S');
-            } catch {}
-        }
-
-        const campos = [
-            { l: 'TIPO',    v: tipo },
-            modelo ? { l: 'MODELO',  v: modelo } : null,
-            serial ? { l: 'N° SERIE', v: serial } : null,
-            ubic   ? { l: 'UBIC.',   v: ubic   } : null,
-        ].filter(Boolean).slice(0, 4);
-
-        campos.forEach(({ l, v }) => {
-            doc.setFontSize(T.label);
+    // Foto ANTES a la derecha
+    if (hasFoto) {
+        try {
+            doc.addImage(fotoAntes.data, fotoAntes.format, M + textW + 4, y + 4, FOTO_W, FOTO_H);
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.roundedRect(M + textW + 4, y + 4, FOTO_W, FOTO_H, 1, 1, 'S');
+            // Etiqueta "ANTES"
+            doc.setFontSize(6);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.grayText);
-            doc.text(l, RIGHT_X, ey);
-
-            doc.setFontSize(T.xxs);
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(...C.dark);
-            const vLines = doc.splitTextToSize(String(v), textMaxW - 16);
-            if (l === 'UBIC.' && vLines.length > 1) {
-                // Ubicación larga: mostrar hasta 2 líneas
-                vLines.slice(0, 2).forEach((ln, li) => doc.text(ln, RIGHT_X + 14, ey + li * 4));
-                ey += 4.5 + 4;
-            } else {
-                doc.text(vLines[0], RIGHT_X + 14, ey);
-                ey += 4.5;
-            }
-        });
+            doc.text('ANTES', M + textW + 4 + FOTO_W / 2, y + FOTO_H + 6, { align: 'center' });
+        } catch {}
     }
+
+    // Campos del equipo
+    campos.forEach(({ l, v }) => {
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.grayText);
+        doc.text(l, M + 4, ey);
+
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.dark);
+        const vLines = doc.splitTextToSize(String(v), textW - 24);
+        doc.text(vLines[0], M + 28, ey);
+        ey += 5.5;
+    });
 
     return y + cardH + 4;
 }
@@ -617,10 +654,8 @@ export function dibujarResumenEjecutivo(doc, { y, cliente, fecha, cantEquipos, c
 // ── CONDICIONES PRESUPUESTO ───────────────────────────────────────────────────
 export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
     const condDefault = [
-        '· Presupuesto válido por 7 días corridos.',
-        '· El servicio se coordinará una vez aceptado este presupuesto.',
-        '· Los repuestos cotizados son originales o de primera marca.',
-        '· Incluye traslado dentro del área metropolitana.',
+        '· Válido por 7 días corridos.',
+        '· El servicio se coordina una vez confirmado el presupuesto.',
         '· Garantía: 90 días sobre mano de obra — repuestos según fabricante.',
     ].join('\n');
 

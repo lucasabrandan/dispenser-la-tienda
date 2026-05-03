@@ -42,7 +42,7 @@ public class EquipoService {
 
         Equipo nuevoEquipo = new Equipo(
                 sede, dto.marca(), dto.modelo(), dto.numeroSerie(),
-                dto.ubicacion(), dto.observaciones()
+                dto.ubicacion(), dto.piso(), dto.sector(), dto.observaciones()
         );
 
         return equipoRepository.save(nuevoEquipo);
@@ -61,6 +61,8 @@ public class EquipoService {
         equipo.setModelo(dto.modelo());
         equipo.setNumeroSerie(dto.numeroSerie());
         equipo.setUbicacion(dto.ubicacion());
+        equipo.setPiso(dto.piso());
+        equipo.setSector(dto.sector());
         equipo.setObservaciones(dto.observaciones());
 
         return equipoRepository.save(equipo);
@@ -91,7 +93,8 @@ public class EquipoService {
     public EquipoDTO mapToDTO(Equipo equipo) {
         return new EquipoDTO(
                 equipo.getId(), equipo.getSede().getId(), equipo.getNumeroSerie(),
-                equipo.getMarca(), equipo.getModelo(), equipo.getUbicacion(), equipo.getObservaciones()
+                equipo.getMarca(), equipo.getModelo(), equipo.getUbicacion(),
+                equipo.getPiso(), equipo.getSector(), equipo.getObservaciones()
         );
     }
 

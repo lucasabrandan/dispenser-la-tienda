@@ -96,7 +96,8 @@ public class SedeService {
         List<EquipoDTO> listaEquipos = sede.getEquipos().stream()
                 .map(e -> new EquipoDTO(
                         e.getId(), sede.getId(), e.getNumeroSerie(),
-                        e.getMarca(), e.getModelo(), e.getUbicacion(), e.getObservaciones()
+                        e.getMarca(), e.getModelo(), e.getUbicacion(),
+                        e.getPiso(), e.getSector(), e.getObservaciones()
                 )).toList();
 
         return new SedeDTO(

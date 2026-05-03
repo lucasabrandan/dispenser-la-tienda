@@ -7,7 +7,7 @@ const MODELOS = ['RED', 'BIDÓN', 'MESADA + RED', 'MESADA + BIDÓN', 'OTROS'];
 
 const INITIAL_FORM = {
     numeroSerie: '', marca: '', otraMarca: '', modelo: '',
-    sedeId: '', ubicacion: '', observaciones: ''
+    sedeId: '', ubicacion: '', piso: '', sector: '', observaciones: ''
 };
 
 // Estilo común para inputs y selects del sistema
@@ -35,6 +35,8 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
                 modelo:        equipoParaEditar.modelo        || '',
                 sedeId:        equipoParaEditar.sedeId         || '',
                 ubicacion:     equipoParaEditar.ubicacion     || '',
+                piso:          equipoParaEditar.piso          || '',
+                sector:        equipoParaEditar.sector        || '',
                 observaciones: equipoParaEditar.observaciones || ''
             });
         } else {
@@ -57,6 +59,8 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
             marca:         marcaFinal,
             modelo:        form.modelo,
             ubicacion:     form.ubicacion.trim() || null,
+            piso:          form.piso.trim() || null,
+            sector:        form.sector.trim() || null,
             observaciones: form.observaciones.trim() || null
         };
 
@@ -162,20 +166,32 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
                         </div>
                     )}
 
-                    {/* Modelo + Ubicación */}
+                    {/* Modelo */}
+                    <div className="space-y-1">
+                        <label className="text-[9px] font-black text-[#A8A29E] uppercase ml-1">Modelo / Tipo</label>
+                        <select className={fieldCls} value={form.modelo} onChange={e => setForm({ ...form, modelo: e.target.value })}>
+                            <option value="">Seleccionar tipo...</option>
+                            {MODELOS.map(mod => <option key={mod} value={mod}>{mod}</option>)}
+                        </select>
+                    </div>
+
+                    {/* Ubicación + Piso + Sector */}
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <label className="text-[9px] font-black text-[#A8A29E] uppercase ml-1">Modelo / Tipo</label>
-                            <select className={fieldCls} value={form.modelo} onChange={e => setForm({ ...form, modelo: e.target.value })}>
-                                <option value="">Seleccionar tipo...</option>
-                                {MODELOS.map(mod => <option key={mod} value={mod}>{mod}</option>)}
-                            </select>
-                        </div>
                         <div className="space-y-1">
                             <label className="text-[9px] font-black text-[#A8A29E] uppercase ml-1">Ubicación Interna</label>
                             <input className={fieldCls} placeholder="Ej: Recepción"
                                 value={form.ubicacion} onChange={e => setForm({ ...form, ubicacion: e.target.value })} />
                         </div>
+                        <div className="space-y-1">
+                            <label className="text-[9px] font-black text-[#A8A29E] uppercase ml-1">Piso</label>
+                            <input className={fieldCls} placeholder="Ej: 3, PB, Sub"
+                                value={form.piso} onChange={e => setForm({ ...form, piso: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[9px] font-black text-[#A8A29E] uppercase ml-1">Sector / Área</label>
+                        <input className={fieldCls} placeholder="Ej: ERAM, Administración, Guardia..."
+                            value={form.sector} onChange={e => setForm({ ...form, sector: e.target.value })} />
                     </div>
 
                     {/* Notas */}
