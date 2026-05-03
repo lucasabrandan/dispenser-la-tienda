@@ -8,6 +8,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.net.URI;
@@ -71,5 +72,14 @@ public class R2StorageService {
 
     public String urlPublica(String filename) {
         return publicUrl + "/" + filename;
+    }
+
+    // Descarga los bytes del archivo desde R2 (sin redirigir al cliente)
+    public byte[] descargar(String filename) {
+        try (S3Client s3 = buildClient()) {
+            return s3.getObjectAsBytes(
+                    GetObjectRequest.builder().bucket(bucket).key(filename).build()
+            ).asByteArray();
+        }
     }
 }

@@ -1,7 +1,7 @@
 /**
  * helpers.js — Utilidades puras de rendering para jsPDF
  */
-import { construirUrlFoto } from '../construirUrlFoto';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 // ── Texto ─────────────────────────────────────────────────────────────────────
 
@@ -68,9 +68,9 @@ export async function cargarFoto(src) {
         dataUrl = src;
     } else {
         try {
-            const url = construirUrlFoto(src);
-            if (!url) return null;
-            const res = await fetch(url);
+            // Siempre pasamos por el backend para evitar CORS con R2
+            const nombre = src.startsWith('http') ? src : `${API_URL}/uploads/${src}`;
+            const res = await fetch(nombre);
             if (!res.ok) return null;
             const blob = await res.blob();
             dataUrl = await new Promise(resolve => {

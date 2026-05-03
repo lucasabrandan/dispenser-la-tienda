@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,10 +57,16 @@ public class FileController {
                         .body(fileContent);
             }
 
-            // Archivo nuevo → redirigir a R2
-            return ResponseEntity.status(302)
-                    .location(URI.create(r2.urlPublica(filename)))
-                    .build();
+            // Archivo nuevo → servir desde R2 como proxy (evita CORS en el cliente)
+            byte[] r2Bytes = r2.descargar(filename);
+            String contentType = filename.toLowerCase().endsWith(".png") ? "image/png"
+                    : filename.toLowerCase().endsWith(".webp") ? "image/webp"
+                    : "image/jpeg";
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header("Cache-Control", "public, max-age=86400")
+                    .header("Access-Control-Allow-Origin", "*")
+                    .body(r2Bytes);
 
         } catch (Exception e) {
             System.out.println("❌ Error sirviendo archivo: " + e.getMessage());
