@@ -396,8 +396,9 @@ async function generarMultiTecnico(doc, {
         pageW,
     });
 
-    // Bloque cliente (sin equipo específico)
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW });
+    // Bloque cliente con observaciones generales en columna derecha
+    const obsCliente = sanitizarTexto(leyenda || ticketItems[0]?.trabajo || '');
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: obsCliente || null, tituloDiag: 'TRABAJO REALIZADO', conBullet: true });
 
     // Observaciones generales (del primer item si existe)
     const obsGral = sanitizarTexto(ticketItems[0]?.observaciones || leyenda || '');
@@ -535,7 +536,7 @@ async function generarMultiTecnico(doc, {
 
 async function generarMultiPresupuesto(doc, {
     ticketItems, cliente, sede, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, descuentoPorcentaje,
+    firmaCliente, firmaTecnico, descuentoPorcentaje, leyenda,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -549,8 +550,9 @@ async function generarMultiPresupuesto(doc, {
     const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
     const total     = subtotalTotal - descuento;
 
-    // Bloque cliente
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW });
+    // Bloque cliente con diagnóstico/solicitud en columna derecha
+    const diagGeneral = sanitizarTexto(leyenda || ticketItems[0]?.trabajo || '');
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: diagGeneral || null });
 
     // Resumen general (métricas)
     y = dibujarResumenServicio(doc, {
