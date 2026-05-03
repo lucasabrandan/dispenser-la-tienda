@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import logo from '../../assets/logo-dispenser.svg';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IDs deben coincidir EXACTAMENTE con App.js, Drawer y BottomNav
@@ -33,11 +34,25 @@ export default function Sidebar({ vistaActual, setVistaActual }) {
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
     const { usuario, logout, esAdmin } = useAuth();
+    const [pendientes, setPendientes] = useState(0);
+
+    useEffect(() => {
+        const fetchPendientes = async () => {
+            try {
+                const res = await api.get('/servicios/resumen', { params: { tipo: 'TECNICA' } });
+                setPendientes(res.data.pendientesCount || 0);
+            } catch { /* silenciar */ }
+        };
+        fetchPendientes();
+        const interval = setInterval(fetchPendientes, 60_000);
+        return () => clearInterval(interval);
+    }, []);
 
     const menuOperaciones = esAdmin ? MENU_OPERACIONES_ADMIN : MENU_OPERACIONES_TECNICO;
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
+        const badge = item.id === 'servicio-tecnico' && pendientes > 0 ? pendientes : null;
         return (
             <div
                 onClick={() => setVistaActual(item.id)}
@@ -47,7 +62,12 @@ export default function Sidebar({ vistaActual, setVistaActual }) {
                         : 'text-[#57534E] dark:text-[#A8A29E] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] font-bold'
                 }`}
             >
-                {item.nombre}
+                <span className="flex-1">{item.nombre}</span>
+                {badge && (
+                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${activa ? 'bg-white/30 text-white' : 'bg-[#D13A28] dark:bg-[#E8422F] text-white'}`}>
+                        {badge}
+                    </span>
+                )}
             </div>
         );
     };

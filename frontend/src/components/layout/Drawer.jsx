@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IDs deben coincidir EXACTAMENTE con App.js, Sidebar y BottomNav
@@ -27,25 +28,47 @@ const MENU_ADMIN_ITEMS = [
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
     const { usuario, logout, esAdmin } = useAuth();
+    const [pendientes, setPendientes] = useState(0);
     const menuOperaciones = esAdmin ? MENU_OPERACIONES_ADMIN : MENU_OPERACIONES_TECNICO;
+
+    useEffect(() => {
+        const fetchPendientes = async () => {
+            try {
+                const res = await api.get('/servicios/resumen', { params: { tipo: 'TECNICA' } });
+                setPendientes(res.data.pendientesCount || 0);
+            } catch { /* silenciar */ }
+        };
+        fetchPendientes();
+        const interval = setInterval(fetchPendientes, 60_000);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleClick = (id) => {
         setVistaActual(id);
         onClose();
     };
 
-    const MenuButton = ({ item }) => (
-        <button
-            onClick={() => handleClick(item.id)}
-            className={`w-full px-4 py-3 rounded-xl text-left text-sm font-bold transition-all ${
-                vistaActual === item.id
-                    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
-                    : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E]'
-            }`}
-        >
-            {item.nombre}
-        </button>
-    );
+    const MenuButton = ({ item }) => {
+        const activa = vistaActual === item.id;
+        const badge = item.id === 'servicio-tecnico' && pendientes > 0 ? pendientes : null;
+        return (
+            <button
+                onClick={() => handleClick(item.id)}
+                className={`w-full px-4 py-3 rounded-xl text-left text-sm font-bold transition-all flex items-center ${
+                    activa
+                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
+                        : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E]'
+                }`}
+            >
+                <span className="flex-1">{item.nombre}</span>
+                {badge && (
+                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${activa ? 'bg-white/30 text-white' : 'bg-[#D13A28] dark:bg-[#E8422F] text-white'}`}>
+                        {badge}
+                    </span>
+                )}
+            </button>
+        );
+    };
 
     return (
         <>
