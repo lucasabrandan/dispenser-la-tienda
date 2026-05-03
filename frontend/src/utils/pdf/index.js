@@ -20,6 +20,7 @@ import { dibujarHeader, dibujarHeaderCompacto, dibujarFooter } from './layout.js
 import {
     dibujarBloqueClienteEquipo,
     dibujarBloqueEquipoDetalle,
+    dibujarBloqueDiagnosticoDetalle,
     dibujarResumenServicio,
     dibujarTablaDetalle,
     dibujarSeccion2Col,
@@ -109,13 +110,20 @@ async function generarSingleTecnico(doc, {
         cargarFoto(item.fotoDespues),
     ]);
 
-    // Bloque cliente con trabajo realizado en columna derecha
+    // • DATOS CLIENTE (con resumen de trabajo en columna derecha)
     const trabajoResumen = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || '');
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: trabajoResumen || null, tituloDiag: 'TRABAJO REALIZADO' });
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: trabajoResumen || null, tituloDiag: 'TRABAJO REALIZADO', conBullet: true });
 
-    // Bloque equipo con foto ANTES a la derecha
+    // • DATOS EQUIPO con foto ANTES a la derecha
     y = checkSalto(doc, y, 36);
-    y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoA });
+    y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoA, conBullet: true });
+
+    // • DIAGNÓSTICO DETALLE
+    const diagDetalle = sanitizarTexto(item.observaciones || item.trabajo || '');
+    if (diagDetalle) {
+        y = checkSalto(doc, y, 24);
+        y = dibujarBloqueDiagnosticoDetalle(doc, { texto: diagDetalle, y, pageW });
+    }
 
     // Stats de resumen
     const totalEquipo  = parseFloat(item.totalCalculado || item.costo || 0);
@@ -131,11 +139,11 @@ async function generarSingleTecnico(doc, {
         ],
     });
 
-    // Tabla detalle — full width
+    // • INFORMACIÓN PRECIOS
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text('DETALLE DE TRABAJOS Y REPUESTOS', M, y);
+    doc.text('• INFORMACIÓN PRECIOS', M, y);
     y += 5;
 
     const filas     = construirFilasItem(item);
@@ -196,22 +204,11 @@ async function generarSingleTecnico(doc, {
         y = dibujarRegistroFotografico(doc, { y, fotoA, fotoD });
     }
 
-    // Checklist + observaciones
-    const checklist     = item.checklist || [];
-    const observaciones = sanitizarTexto(item.observaciones || item.trabajo || '');
-
+    // Checklist — solo para INFORME_TECNICO
+    const checklist = item.checklist || [];
     if (tipo === 'INFORME_TECNICO' && checklist.length > 0) {
         y = checkSalto(doc, y, 40);
         y = dibujarChecklist(doc, { y, items: checklist, pageW });
-    } else if (checklist.length > 0 || observaciones) {
-        y = checkSalto(doc, y, 32);
-        y = dibujarSeccion2Col(doc, {
-            y, pageW,
-            tituloIzq: 'CHECKLIST TÉCNICO',
-            textoIzq:  checklist.map(c => `${c.ok ? '✓' : '□'} ${c.label || c}`).join('\n'),
-            tituloDer:  'OBSERVACIONES',
-            textoDer:   observaciones,
-        });
     }
 
     // Próximo mantenimiento

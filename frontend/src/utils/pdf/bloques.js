@@ -5,7 +5,7 @@ import { checkSalto } from './helpers.js';
 // ── BLOQUE CLIENTE (con columna opcional de diagnóstico) ─────────────────────
 // diagnostico: texto libre para mostrar en columna derecha (presupuesto)
 // Si no se pasa diagnostico, el bloque ocupa full-width
-export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null, diagnostico = null, tituloDiag = 'DIAGNÓSTICO / SOLICITUD' }) {
+export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null, diagnostico = null, tituloDiag = 'DIAGNÓSTICO / SOLICITUD', conBullet = false }) {
     const tieneDiag = !!(diagnostico && diagnostico.trim());
     const LEFT_W  = tieneDiag ? CONTENT_W * 0.54 : CONTENT_W;
     const RIGHT_W = CONTENT_W - LEFT_W - 4;
@@ -39,7 +39,7 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text('DATOS DEL CLIENTE', M + 2, cy);
+    doc.text(`${conBullet ? '• ' : ''}DATOS DEL CLIENTE`, M + 2, cy);
     cy += 5;
 
     const nombreCliente = (cliente?.nombre || 'PARTICULAR').toUpperCase();
@@ -86,7 +86,7 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
 // ── BLOQUE DATOS DEL EQUIPO (separado, con foto ANTES a la derecha) ───────────
 // Muestra: marca/modelo, N°serie, ubicación, piso, sector
 // fotoAntes: objeto { data, format } o null
-export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = null }) {
+export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = null, conBullet = false }) {
     if (!item) return y;
 
     const FOTO_W = 32;
@@ -127,7 +127,7 @@ export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = nu
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text('DATOS DEL EQUIPO', M + 4, ey);
+    doc.text(`${conBullet ? '• ' : ''}DATOS DEL EQUIPO`, M + 4, ey);
     ey += 5;
 
     // Foto ANTES a la derecha
@@ -159,6 +159,38 @@ export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = nu
         doc.text(vLines[0], M + 28, ey);
         ey += 5.5;
     });
+
+    return y + cardH + 4;
+}
+
+// ── BLOQUE DIAGNÓSTICO DETALLE (solo ORDEN_SERVICIO) ─────────────────────────
+export function dibujarBloqueDiagnosticoDetalle(doc, { texto, y, pageW }) {
+    if (!texto || !texto.trim()) return y;
+
+    const lines  = doc.splitTextToSize(texto.trim(), CONTENT_W - 8);
+    const cardH  = Math.max(18, lines.length * 4.5 + 14);
+
+    doc.setFillColor(...C.white);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'FD');
+
+    // Barra izquierda navy
+    doc.setFillColor(...C.navy);
+    doc.roundedRect(M - 2, y, 3, cardH, 2, 2, 'F');
+    doc.rect(M - 0.5, y, 1.5, cardH, 'F');
+
+    let dy = y + 7;
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('• DIAGNÓSTICO DETALLE', M + 4, dy);
+    dy += 5;
+
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.dark);
+    lines.forEach(l => { doc.text(l, M + 4, dy); dy += 4.5; });
 
     return y + cardH + 4;
 }
