@@ -651,6 +651,50 @@ export function dibujarResumenEjecutivo(doc, { y, cliente, fecha, cantEquipos, c
     return y + cardH + 6;
 }
 
+// ── REGISTRO FOTOGRÁFICO (sección dedicada, 2 fotos lado a lado) ─────────────
+// fotoA / fotoD: objetos { data, format } o null
+export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null }) {
+    if (!fotoA && !fotoD) return y;
+
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('REGISTRO FOTOGRÁFICO', M, y);
+    y += 5;
+
+    const COL_W  = (CONTENT_W - 6) / 2;
+    const FOTO_H = Math.round(COL_W * 3 / 4);
+
+    const dibujarCaja = (foto, x, label) => {
+        doc.setFillColor(220, 220, 225);
+        doc.roundedRect(x + 1, y + 1, COL_W, FOTO_H, 2, 2, 'F');
+        if (foto) {
+            try { doc.addImage(foto.data, foto.format, x, y, COL_W, FOTO_H); } catch {}
+        } else {
+            doc.setFillColor(...C.grayBg);
+            doc.roundedRect(x, y, COL_W, FOTO_H, 2, 2, 'F');
+        }
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(x, y, COL_W, FOTO_H, 2, 2, 'S');
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.grayText);
+        doc.text(label, x + COL_W / 2, y + FOTO_H + 4.5, { align: 'center' });
+    };
+
+    if (fotoA && fotoD) {
+        dibujarCaja(fotoA, M,              'ESTADO INICIAL');
+        dibujarCaja(fotoD, M + COL_W + 6, 'ESTADO FINAL');
+    } else {
+        // Una sola foto centrada
+        const xCentro = M + (CONTENT_W - COL_W) / 2;
+        dibujarCaja(fotoA || fotoD, xCentro, fotoA ? 'ESTADO INICIAL' : 'ESTADO FINAL');
+    }
+
+    return y + FOTO_H + 10;
+}
+
 // ── CONDICIONES PRESUPUESTO ───────────────────────────────────────────────────
 export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
     const condDefault = [

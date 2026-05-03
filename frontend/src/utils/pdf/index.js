@@ -30,9 +30,10 @@ import {
     dibujarQRGoogle,
     dibujarResumenEjecutivo,
     dibujarCondiciones,
+    dibujarRegistroFotografico,
 } from './bloques.js';
 import { cargarFoto, checkSalto, sanitizarTexto } from './helpers.js';
-import { dibujarEvidenciaInline, dibujarPaginaEvidencia } from './fotos.js';
+import { dibujarPaginaEvidencia } from './fotos.js';
 
 // ── Helpers de detección / labels ─────────────────────────────────────────────
 
@@ -101,49 +102,42 @@ async function generarSingleTecnico(doc, {
     firmaCliente, firmaTecnico, garantiaTexto, proximoMantenimiento, googleReviewLink,
 }) {
     const pageW = doc.internal.pageSize.getWidth();
-    const RIGHT_COL_W = 62;
-    const RIGHT_COL_X = pageW - M - RIGHT_COL_W;
 
     // Cargar fotos
     const [fotoA, fotoD] = await Promise.all([
         cargarFoto(item.fotoAntes),
         cargarFoto(item.fotoDespues),
     ]);
-    const tieneEvidencia = !!(fotoA || fotoD);
 
-    // Bloque cliente (full width, sin diagnóstico en OS)
+    // Bloque cliente (full width)
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW });
 
-    // Bloque equipo separado con foto ANTES
+    // Bloque equipo con foto ANTES a la derecha
     y = checkSalto(doc, y, 36);
     y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoA });
 
     // Stats de resumen
-    const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
+    const totalEquipo  = parseFloat(item.totalCalculado || item.costo || 0);
     const cantTrabajos = (item.repuestosUsados?.length || 0) + (parseFloat(item.costoExtra || 0) > 0 ? 1 : 0);
 
     y = dibujarResumenServicio(doc, {
         y,
         stats: [
-            { valor: cantTrabajos,    etiqueta: 'Trabajos realizados', colorValor: C.navy  },
-            { valor: 1,               etiqueta: 'Equipos atendidos',   colorValor: C.navy  },
-            { valor: 'Completado',    etiqueta: 'Estado final',        colorValor: C.green },
-            { valor: fecha,           etiqueta: 'Fecha servicio',      colorValor: C.dark  },
+            { valor: cantTrabajos, etiqueta: 'Trabajos realizados', colorValor: C.navy  },
+            { valor: 1,            etiqueta: 'Equipos atendidos',   colorValor: C.navy  },
+            { valor: 'Completado', etiqueta: 'Estado final',        colorValor: C.green },
+            { valor: fecha,        etiqueta: 'Fecha servicio',      colorValor: C.dark  },
         ],
     });
 
-    // ── Sección paralela: tabla (izq) + evidencia (der) ─────────────────────
-    const paralelY = y;
-    const TABLE_MARGIN_RIGHT = tieneEvidencia ? (pageW - RIGHT_COL_X + 5) : M;
-
-    // Título tabla
+    // Tabla detalle — full width
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
     doc.text('DETALLE DE TRABAJOS Y REPUESTOS', M, y);
     y += 5;
 
-    const filas = construirFilasItem(item);
+    const filas     = construirFilasItem(item);
     const tableData = filas.length > 0
         ? filas.map(r => [r.concepto, String(r.cant), `$ ${r.unitario}`, `$ ${r.importe}`])
         : [['Sin items registrados', '', '', '']];
@@ -168,7 +162,7 @@ async function generarSingleTecnico(doc, {
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
         },
-        margin: { left: M, right: TABLE_MARGIN_RIGHT },
+        margin: { left: M, right: M },
         didParseCell: data => {
             if (data.section === 'body') {
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
@@ -179,36 +173,30 @@ async function generarSingleTecnico(doc, {
 
     let tableEndY = doc.lastAutoTable.finalY + 3;
 
-    // Total bajo la tabla (mismo ancho)
-    const tableEndX = tieneEvidencia ? RIGHT_COL_X - 5 : pageW - M;
-    const totalW    = tableEndX - M;
+    // Total — full width
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, tableEndY, totalW, 10, 1.5, 1.5, 'FD');
+    doc.roundedRect(M, tableEndY, CONTENT_W, 10, 1.5, 1.5, 'FD');
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, tableEndY + 6.5);
+    doc.text('TOTAL DEL SERVICIO', M + 3, tableEndY + 6.5);
     doc.setFontSize(T.md);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, tableEndX - 3, tableEndY + 7, { align: 'right' });
+    doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 7, { align: 'right' });
     tableEndY += 15;
 
-    // Evidencia en columna derecha
-    let evidEndY = paralelY;
-    if (tieneEvidencia) {
-        evidEndY = await dibujarEvidenciaInline(doc, {
-            x: RIGHT_COL_X, y: paralelY,
-            w: RIGHT_COL_W,
-            fotoA, fotoD,
-        });
+    y = tableEndY;
+
+    // Registro fotográfico — sección dedicada bajo precios
+    if (fotoA || fotoD) {
+        y = checkSalto(doc, y, 50);
+        y = dibujarRegistroFotografico(doc, { y, fotoA, fotoD });
     }
 
-    y = Math.max(tableEndY, evidEndY) + 4;
-
-    // ── Checklist + observaciones ─────────────────────────────────────────────
-    const checklist = item.checklist || [];
+    // Checklist + observaciones
+    const checklist     = item.checklist || [];
     const observaciones = sanitizarTexto(item.observaciones || item.trabajo || '');
 
     if (tipo === 'INFORME_TECNICO' && checklist.length > 0) {
@@ -251,7 +239,7 @@ async function generarSingleTecnico(doc, {
     y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
 
     // QR Google Review
-    const empresa = getEmpresa();
+    const empresa   = getEmpresa();
     const linkGoogle = googleReviewLink || empresa.googleReviewLink;
     if (linkGoogle) {
         y = checkSalto(doc, y, 38);
