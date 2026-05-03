@@ -22,7 +22,7 @@ const SIGUIENTE_ESTADO = {
     EN_SITIO:   { estado: 'COMPLETADA', label: '✓ Completar', color: 'bg-[#16A34A]' },
 };
 
-function OrdenCard({ orden, onAvanzar }) {
+function OrdenCard({ orden, onAvanzar, onEjecutar }) {
     const [expandido, setExpandido] = useState(false);
     const [nota, setNota]           = useState('');
     const [confirmando, setConfirmando] = useState(false);
@@ -64,6 +64,13 @@ function OrdenCard({ orden, onAvanzar }) {
                 {/* Cliente */}
                 {orden.clienteNombre && (
                     <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] font-bold">🏢 {orden.clienteNombre}</p>
+                )}
+
+                {/* Monto estimado + forma de pago */}
+                {orden.montoEstimado && (
+                    <p className="text-[12px] font-black text-[#D48800] dark:text-[#F0A500] mt-0.5">
+                        💰 ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}
+                    </p>
                 )}
 
                 {/* Dirección con link a Maps */}
@@ -122,6 +129,12 @@ function OrdenCard({ orden, onAvanzar }) {
                             Cancelar
                         </button>
                     )}
+                    {!confirmando && onEjecutar && (
+                        <button onClick={() => onEjecutar(orden)}
+                            className="py-2.5 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all whitespace-nowrap">
+                            🔧 Ejecutar
+                        </button>
+                    )}
                     <button onClick={handleAvanzar}
                         className={`flex-1 py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all ${sig.color}`}>
                         {confirmando ? '✓ Confirmar' : sig.label}
@@ -132,7 +145,7 @@ function OrdenCard({ orden, onAvanzar }) {
     );
 }
 
-export default function MisOrdenes({ tecnicoId }) {
+export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado } = useOrdenes({ tecnicoId });
     const [tab, setTab] = useState('activas');
 
@@ -192,7 +205,7 @@ export default function MisOrdenes({ tecnicoId }) {
                         </p>
                         <div className="space-y-3">
                             {items.map(o => (
-                                <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} />
+                                <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={onEjecutarOrden} />
                             ))}
                         </div>
                     </div>

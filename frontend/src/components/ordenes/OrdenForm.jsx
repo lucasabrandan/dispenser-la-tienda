@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 
 const PRIORIDADES = [
-    { value: 'BAJA',    label: 'Baja',    color: '#A8A29E' },
-    { value: 'NORMAL',  label: 'Normal',  color: '#3B82F6' },
-    { value: 'ALTA',    label: 'Alta',    color: '#D48800' },
-    { value: 'URGENTE', label: 'Urgente', color: '#D13A28' },
+    { value: 'BAJA',    label: 'Baja'    },
+    { value: 'NORMAL',  label: 'Normal'  },
+    { value: 'ALTA',    label: 'Alta'    },
+    { value: 'URGENTE', label: 'Urgente' },
 ];
 
 const EMPTY = {
@@ -17,23 +18,37 @@ const EMPTY = {
     prioridad: 'NORMAL',
     fechaProgramada: '',
     horaEstimada: '',
+    montoEstimado: '',
+    formaPago: 'EFECTIVO',
+    presupuestoId: '',
 };
 
 export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
-    const [form, setForm] = useState(EMPTY);
+    const [form, setForm]             = useState(EMPTY);
+    const [presupuestos, setPresupuestos] = useState([]);
+
+    // Cargar presupuestos existentes para vincular
+    useEffect(() => {
+        api.get('/servicios', { params: { estado: 'PRESUPUESTO', size: 500 } })
+            .then(r => setPresupuestos(r.data.content || r.data || []))
+            .catch(() => {});
+    }, []);
 
     useEffect(() => {
         if (orden) {
             setForm({
-                tecnicoId:      orden.tecnicoId || '',
-                titulo:         orden.titulo || '',
-                descripcion:    orden.descripcion || '',
-                clienteNombre:  orden.clienteNombre || '',
+                tecnicoId:       orden.tecnicoId || '',
+                titulo:          orden.titulo || '',
+                descripcion:     orden.descripcion || '',
+                clienteNombre:   orden.clienteNombre || '',
                 clienteTelefono: orden.clienteTelefono || '',
-                direccion:      orden.direccion || '',
-                prioridad:      orden.prioridad || 'NORMAL',
+                direccion:       orden.direccion || '',
+                prioridad:       orden.prioridad || 'NORMAL',
                 fechaProgramada: orden.fechaProgramada || '',
-                horaEstimada:   orden.horaEstimada || '',
+                horaEstimada:    orden.horaEstimada || '',
+                montoEstimado:   orden.montoEstimado || '',
+                formaPago:       orden.formaPago || 'EFECTIVO',
+                presupuestoId:   orden.presupuestoId || '',
             });
         } else {
             setForm(EMPTY);
@@ -42,16 +57,30 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
+    const handlePresupuesto = (id) => {
+        set('presupuestoId', id);
+        if (!id) return;
+        const p = presupuestos.find(x => String(x.id) === String(id));
+        if (!p) return;
+        // Auto-completar cliente y monto desde el presupuesto
+        if (p.clienteNombre && !form.clienteNombre) set('clienteNombre', p.clienteNombre);
+        if (!form.titulo) set('titulo', `Presupuesto ${p.nroDocumento || p.id}`);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         onGuardar({
             ...form,
-            tecnicoId: Number(form.tecnicoId),
+            tecnicoId:     Number(form.tecnicoId),
+            montoEstimado: form.montoEstimado ? Number(form.montoEstimado) : null,
+            presupuestoId: form.presupuestoId ? Number(form.presupuestoId) : null,
         });
     };
 
     const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
     const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
+
+    const presupuestoSeleccionado = presupuestos.find(p => String(p.id) === String(form.presupuestoId));
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,11 +97,31 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                 </select>
             </div>
 
+            {/* Vincular presupuesto existente */}
+            <div>
+                <label className={labelCls}>Vincular presupuesto existente (opcional)</label>
+                <select value={form.presupuestoId}
+                    onChange={e => handlePresupuesto(e.target.value)}
+                    className={inputCls}>
+                    <option value="">Sin presupuesto vinculado</option>
+                    {presupuestos.map(p => (
+                        <option key={p.id} value={p.id}>
+                            {p.nroDocumento || `#${p.id}`} — {p.clienteNombre || 'Sin cliente'} {p.sedeNombre ? `· ${p.sedeNombre}` : ''}
+                        </option>
+                    ))}
+                </select>
+                {presupuestoSeleccionado && (
+                    <p className="mt-1 text-[10px] text-[#D48800] dark:text-[#F0A500] font-bold">
+                        ✓ El técnico verá el botón "Ejecutar presupuesto" en la orden
+                    </p>
+                )}
+            </div>
+
             {/* Título */}
             <div>
                 <label className={labelCls}>Título *</label>
                 <input value={form.titulo} onChange={e => set('titulo', e.target.value)}
-                    required placeholder="Ej: Presupuesto dispenser piso 3"
+                    required placeholder="Ej: Reparación dispenser piso 3"
                     className={inputCls} />
             </div>
 
@@ -103,6 +152,26 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                 <textarea value={form.descripcion} onChange={e => set('descripcion', e.target.value)}
                     rows={3} placeholder="Detalle del trabajo a realizar..."
                     className={`${inputCls} resize-none`} />
+            </div>
+
+            {/* Monto estimado + Forma de pago */}
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className={labelCls}>Monto estimado</label>
+                    <input type="number" min="0" step="100"
+                        value={form.montoEstimado}
+                        onChange={e => set('montoEstimado', e.target.value)}
+                        placeholder="0"
+                        className={inputCls} />
+                </div>
+                <div>
+                    <label className={labelCls}>Forma de pago</label>
+                    <select value={form.formaPago} onChange={e => set('formaPago', e.target.value)}
+                        className={inputCls}>
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                    </select>
+                </div>
             </div>
 
             {/* Fecha + Hora + Prioridad */}

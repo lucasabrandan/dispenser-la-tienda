@@ -20,6 +20,7 @@ public class ServicioCreateDTO {
     private String fotoRemito;
     private java.math.BigDecimal descuentoPorcentaje;
     private Long presupuestoOrigenId;
+    private Long ordenId;
 
     public ServicioCreateDTO() {}
 
@@ -48,4 +49,6 @@ public class ServicioCreateDTO {
     public void setDescuentoPorcentaje(java.math.BigDecimal descuentoPorcentaje) { this.descuentoPorcentaje = descuentoPorcentaje; }
     public Long getPresupuestoOrigenId() { return presupuestoOrigenId; }
     public void setPresupuestoOrigenId(Long presupuestoOrigenId) { this.presupuestoOrigenId = presupuestoOrigenId; }
+    public Long getOrdenId() { return ordenId; }
+    public void setOrdenId(Long ordenId) { this.ordenId = ordenId; }
 }

@@ -49,6 +49,16 @@ public class OrdenVisita {
     @Column(name = "notas_tecnico", length = 1000)
     private String notasTecnico;
 
+    @Column(name = "monto_estimado", precision = 12, scale = 2)
+    private java.math.BigDecimal montoEstimado;
+
+    @Column(name = "forma_pago", length = 20)
+    private String formaPago;
+
+    // Presupuesto vinculado (opcional) — el técnico lo ejecuta al completar la orden
+    @Column(name = "presupuesto_id")
+    private Long presupuestoId;
+
     @Column(name = "fecha_completada")
     private LocalDateTime fechaCompletada;
 
@@ -106,6 +116,15 @@ public class OrdenVisita {
 
     public String getNotasTecnico() { return notasTecnico; }
     public void setNotasTecnico(String notasTecnico) { this.notasTecnico = notasTecnico; }
+
+    public java.math.BigDecimal getMontoEstimado() { return montoEstimado; }
+    public void setMontoEstimado(java.math.BigDecimal montoEstimado) { this.montoEstimado = montoEstimado; }
+
+    public String getFormaPago() { return formaPago; }
+    public void setFormaPago(String formaPago) { this.formaPago = formaPago; }
+
+    public Long getPresupuestoId() { return presupuestoId; }
+    public void setPresupuestoId(Long presupuestoId) { this.presupuestoId = presupuestoId; }
 
     public LocalDateTime getFechaCompletada() { return fechaCompletada; }
     public void setFechaCompletada(LocalDateTime fechaCompletada) { this.fechaCompletada = fechaCompletada; }

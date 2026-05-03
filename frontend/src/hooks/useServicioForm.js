@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 
 const DRAFT_KEY = 'servicio_borrador';
 
-export function useServicioForm(servicioParaEditar = null, clienteInicialId = null, presupuestoOrigen = null) {
+export function useServicioForm(servicioParaEditar = null, clienteInicialId = null, presupuestoOrigen = null, ordenOrigen = null) {
   const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
 
   // Borrador: true si existe un draft guardado al montar el formulario (solo en creación)
@@ -59,7 +59,37 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           repuestos: r.data.content || r.data
         });
 
-        if (presupuestoOrigen) {
+        if (ordenOrigen) {
+          setEsPresupuesto(false);
+          if (ordenOrigen.descripcion) setLeyenda(ordenOrigen.descripcion);
+          // Si la orden tiene presupuesto vinculado, pre-llenarlo como presupuestoOrigen
+          if (ordenOrigen.presupuestoId) {
+            try {
+              const { data: p } = await api.get(`/servicios/${ordenOrigen.presupuestoId}`);
+              setClienteId(p.clienteId?.toString() || null);
+              setDescuentoPorcentaje(p.descuentoPorcentaje || 0);
+              if (p.observaciones) setLeyenda(p.observaciones);
+              setItemActual(prev => ({ ...prev, sedeId: p.sedeId, sedeNombre: p.sedeNombre }));
+              setTicketItems(
+                (p.items || []).map(it => ({
+                  sedeId:            p.sedeId,
+                  sedeNombre:        p.sedeNombre,
+                  equipoSerial:      it.equipoSerial || 'MOSTRADOR',
+                  modeloEquipo:      it.equipoModelo || null,
+                  ubicacionEquipo:   it.equipoUbicacion || null,
+                  trabajo:           it.trabajoRealizado || '',
+                  costoExtra:        Math.max(0, Number(it.costoExtra) || 0),
+                  totalCalculado:    Math.max(0, Number(it.costo)),
+                  totalSinDescuento: Math.max(0, Number(it.costo)),
+                  repuestosUsados:   it.repuestosUsados || [],
+                  resumenTexto:      it.trabajoRealizado || '',
+                  fotoAntes:         null,
+                  fotoDespues:       null,
+                }))
+              );
+            } catch { /* si falla el fetch del presupuesto, continuar sin pre-llenado */ }
+          }
+        } else if (presupuestoOrigen) {
           // Pre-llenar desde presupuesto: el técnico confirma/modifica lo realmente hecho
           setEsPresupuesto(false); // El servicio resultante será REALIZADO
           setClienteId(presupuestoOrigen.clienteId?.toString() || null);
@@ -482,6 +512,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         servicioTipo:       tieneEquipo ? 'TECNICA' : 'VENTA',
         estado:             confirmarTrabajo ? 'REALIZADO' : (presupuestoOrigen ? 'REALIZADO' : 'PRESUPUESTO'),
         presupuestoOrigenId: presupuestoOrigen?.id || null,
+        ordenId: ordenOrigen?.id || null,
         clienteNombre:      nombreCliente,
         sedeNombre:         nombreSedeF,
         descuentoPorcentaje,

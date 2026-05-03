@@ -202,6 +202,9 @@ public class ServicioService {
         if (dto.getPresupuestoOrigenId() != null) {
             servicio.setPresupuestoOrigenId(dto.getPresupuestoOrigenId());
         }
+        if (dto.getOrdenId() != null) {
+            servicio.setOrdenId(dto.getOrdenId());
+        }
 
         ServicioTipo tipoDetectado = ServicioTipo.VENTA;
 

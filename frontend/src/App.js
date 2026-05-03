@@ -28,6 +28,7 @@ function AppInterna() {
     const [seccionActual, setSeccionActual] = useState(esAdmin ? 'caja' : 'servicio-tecnico');
     const [clientePreload, setClientePreload] = useState(null);
     const [presupuestoOrigen, setPresupuestoOrigen] = useState(null);
+    const [ordenOrigen, setOrdenOrigen] = useState(null);
 
     if (!autenticado) return <LoginPage />;
 
@@ -38,6 +39,11 @@ function AppInterna() {
 
     const ejecutarPresupuesto = (presupuesto) => {
         setPresupuestoOrigen(presupuesto);
+        setSeccionActual('servicio-tecnico');
+    };
+
+    const ejecutarOrden = (orden) => {
+        setOrdenOrigen(orden);
         setSeccionActual('servicio-tecnico');
     };
 
@@ -53,6 +59,8 @@ function AppInterna() {
                     onClienteConsumido={() => setClientePreload(null)}
                     presupuestoOrigen={presupuestoOrigen}
                     onPresupuestoOrigenConsumido={() => setPresupuestoOrigen(null)}
+                    ordenOrigen={ordenOrigen}
+                    onOrdenOrigenConsumido={() => setOrdenOrigen(null)}
                 />;
             case 'historial':
                 return <ServicioList />;
@@ -74,7 +82,7 @@ function AppInterna() {
             case 'despacho':
                 return <DespachoManager />;
             case 'mis-ordenes':
-                return <MisOrdenes tecnicoId={usuario?.id} />;
+                return <MisOrdenes tecnicoId={usuario?.id} onEjecutarOrden={ejecutarOrden} />;
             default:
                 return (
                     <div className="flex items-center justify-center h-64 text-[#A8A29E] font-black text-sm uppercase tracking-widest">

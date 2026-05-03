@@ -13,5 +13,8 @@ public record OrdenVisitaCreateDTO(
     String clienteTelefono,
     String prioridad,
     @NotNull LocalDate fechaProgramada,
-    String horaEstimada
+    String horaEstimada,
+    java.math.BigDecimal montoEstimado,
+    String formaPago,
+    Long presupuestoId
 ) {}

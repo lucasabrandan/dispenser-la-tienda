@@ -47,8 +47,15 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                     </div>
                 </div>
 
-                {/* Técnico */}
-                <p className="text-[11px] font-bold text-[#A8A29E]">👤 {orden.tecnicoNombre}</p>
+                {/* Técnico + monto */}
+                <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold text-[#A8A29E]">👤 {orden.tecnicoNombre}</p>
+                    {orden.montoEstimado && (
+                        <span className="text-[11px] font-black text-[#D48800] dark:text-[#F0A500]">
+                            ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transf.' : 'Efectivo'}
+                        </span>
+                    )}
+                </div>
 
                 {/* Cliente + dirección */}
                 {orden.clienteNombre && (
@@ -60,6 +67,11 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                         className="text-[11px] text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 block hover:underline">
                         📍 {orden.direccion}
                     </a>
+                )}
+                {orden.presupuestoId && (
+                    <p className="text-[10px] font-bold text-[#D48800] dark:text-[#F0A500] mt-0.5">
+                        📋 Presupuesto #{orden.presupuestoId} vinculado
+                    </p>
                 )}
 
                 {/* Expandir descripción */}

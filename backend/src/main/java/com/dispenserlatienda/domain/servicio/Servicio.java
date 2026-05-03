@@ -59,6 +59,10 @@ public class Servicio {
     @Column(name = "presupuesto_origen_id")
     private Long presupuestoOrigenId;
 
+    // ID de la orden de visita vinculada (opcional)
+    @Column(name = "orden_id")
+    private Long ordenId;
+
     @Column(name = "creado_en")
     private LocalDateTime creadoEn;
 
@@ -135,4 +139,7 @@ public class Servicio {
 
     public Long getPresupuestoOrigenId() { return presupuestoOrigenId; }
     public void setPresupuestoOrigenId(Long presupuestoOrigenId) { this.presupuestoOrigenId = presupuestoOrigenId; }
+
+    public Long getOrdenId() { return ordenId; }
+    public void setOrdenId(Long ordenId) { this.ordenId = ordenId; }
 }

@@ -45,6 +45,9 @@ public class OrdenVisitaService {
         o.setPrioridad(dto.prioridad() != null ? PrioridadOrden.valueOf(dto.prioridad()) : PrioridadOrden.NORMAL);
         o.setFechaProgramada(dto.fechaProgramada());
         o.setHoraEstimada(dto.horaEstimada());
+        o.setMontoEstimado(dto.montoEstimado());
+        o.setFormaPago(dto.formaPago());
+        o.setPresupuestoId(dto.presupuestoId());
 
         return toDTO(repo.save(o));
     }
@@ -67,6 +70,9 @@ public class OrdenVisitaService {
         o.setPrioridad(dto.prioridad() != null ? PrioridadOrden.valueOf(dto.prioridad()) : PrioridadOrden.NORMAL);
         o.setFechaProgramada(dto.fechaProgramada());
         o.setHoraEstimada(dto.horaEstimada());
+        o.setMontoEstimado(dto.montoEstimado());
+        o.setFormaPago(dto.formaPago());
+        o.setPresupuestoId(dto.presupuestoId());
 
         return toDTO(repo.save(o));
     }
@@ -155,7 +161,10 @@ public class OrdenVisitaService {
             o.getHoraEstimada(),
             o.getNotasTecnico(),
             o.getFechaCompletada(),
-            o.getCreadoEn()
+            o.getCreadoEn(),
+            o.getMontoEstimado(),
+            o.getFormaPago(),
+            o.getPresupuestoId()
         );
     }
 }

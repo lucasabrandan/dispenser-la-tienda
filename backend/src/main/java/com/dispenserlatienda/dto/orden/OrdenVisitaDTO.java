@@ -18,5 +18,8 @@ public record OrdenVisitaDTO(
     String horaEstimada,
     String notasTecnico,
     LocalDateTime fechaCompletada,
-    LocalDateTime creadoEn
+    LocalDateTime creadoEn,
+    java.math.BigDecimal montoEstimado,
+    String formaPago,
+    Long presupuestoId
 ) {}

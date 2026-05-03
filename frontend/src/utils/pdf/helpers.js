@@ -1,7 +1,8 @@
 /**
  * helpers.js — Utilidades puras de rendering para jsPDF
  */
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+// Usar URL relativa para que el proxy del dev server (o el mismo origen en prod) maneje el request
+const UPLOADS_BASE = '/api/uploads';
 
 // ── Texto ─────────────────────────────────────────────────────────────────────
 
@@ -68,9 +69,9 @@ export async function cargarFoto(src) {
         dataUrl = src;
     } else {
         try {
-            // Siempre pasamos por el backend para evitar CORS con R2
-            const nombre = src.startsWith('http') ? src : `${API_URL}/uploads/${src}`;
-            const res = await fetch(nombre);
+            // URL relativa → proxy del dev server o mismo origen en prod (evita CORS con R2)
+            const filename = src.startsWith('http') ? src.split('/').pop() : src;
+            const res = await fetch(`${UPLOADS_BASE}/${filename}`);
             if (!res.ok) return null;
             const blob = await res.blob();
             dataUrl = await new Promise(resolve => {

@@ -45,6 +45,7 @@ const PERIODOS = [
 export default function ServicioManager({
     clienteInicial = null, onClienteConsumido,
     presupuestoOrigen = null, onPresupuestoOrigenConsumido,
+    ordenOrigen = null, onOrdenOrigenConsumido,
 }) {
     const { esAdmin } = useAuth();
     const {
@@ -95,6 +96,7 @@ export default function ServicioManager({
     useEffect(() => { if (esAdmin) getUsuarios().then(r => setTecnicos(r.data)).catch(() => {}); }, [esAdmin]);
     useEffect(() => { if (clienteInicial)    setModalCrear(true); }, [clienteInicial]);
     useEffect(() => { if (presupuestoOrigen) setModalCrear(true); }, [presupuestoOrigen]);
+    useEffect(() => { if (ordenOrigen)       setModalCrear(true); }, [ordenOrigen]);
 
     return (
         <div className="min-h-screen pb-28 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
@@ -323,10 +325,12 @@ export default function ServicioManager({
                                 cargarServicios();
                                 if (onClienteConsumido) onClienteConsumido();
                                 if (onPresupuestoOrigenConsumido) onPresupuestoOrigenConsumido();
+                                if (onOrdenOrigenConsumido) onOrdenOrigenConsumido();
                             }}
                             servicioParaEditar={servicioEditar || servicioEjecutar}
                             clienteInicialId={clienteInicial?.id}
                             presupuestoOrigen={presupuestoOrigen}
+                            ordenOrigen={ordenOrigen}
                             modoEjecucion={!!servicioEjecutar}
                             soloTecnico
                         />
