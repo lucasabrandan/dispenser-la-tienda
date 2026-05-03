@@ -40,6 +40,7 @@ public class OrdenVisitaService {
         o.setTitulo(dto.titulo().trim());
         o.setDescripcion(dto.descripcion());
         o.setDireccion(dto.direccion());
+        o.setClienteId(dto.clienteId());
         o.setClienteNombre(dto.clienteNombre());
         o.setClienteTelefono(dto.clienteTelefono());
         o.setPrioridad(dto.prioridad() != null ? PrioridadOrden.valueOf(dto.prioridad()) : PrioridadOrden.NORMAL);
@@ -65,6 +66,7 @@ public class OrdenVisitaService {
         o.setTitulo(dto.titulo().trim());
         o.setDescripcion(dto.descripcion());
         o.setDireccion(dto.direccion());
+        o.setClienteId(dto.clienteId());
         o.setClienteNombre(dto.clienteNombre());
         o.setClienteTelefono(dto.clienteTelefono());
         o.setPrioridad(dto.prioridad() != null ? PrioridadOrden.valueOf(dto.prioridad()) : PrioridadOrden.NORMAL);
@@ -153,6 +155,7 @@ public class OrdenVisitaService {
             o.getTitulo(),
             o.getDescripcion(),
             o.getDireccion(),
+            o.getClienteId(),
             o.getClienteNombre(),
             o.getClienteTelefono(),
             o.getPrioridad().name(),

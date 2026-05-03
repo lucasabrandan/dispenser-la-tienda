@@ -26,6 +26,9 @@ public class OrdenVisita {
     @Column(length = 300)
     private String direccion;
 
+    @Column(name = "cliente_id")
+    private Long clienteId;
+
     @Column(name = "cliente_nombre", length = 200)
     private String clienteNombre;
 
@@ -95,6 +98,9 @@ public class OrdenVisita {
 
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
+
+    public Long getClienteId() { return clienteId; }
+    public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
 
     public String getClienteNombre() { return clienteNombre; }
     public void setClienteNombre(String clienteNombre) { this.clienteNombre = clienteNombre; }

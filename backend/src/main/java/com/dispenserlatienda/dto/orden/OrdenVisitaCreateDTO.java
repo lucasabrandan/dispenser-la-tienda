@@ -9,6 +9,7 @@ public record OrdenVisitaCreateDTO(
     @NotBlank String titulo,
     String descripcion,
     String direccion,
+    Long clienteId,
     String clienteNombre,
     String clienteTelefono,
     String prioridad,
