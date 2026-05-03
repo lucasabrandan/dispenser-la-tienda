@@ -1,19 +1,12 @@
-const API_URL   = process.env.REACT_APP_API_URL    || 'http://localhost:8080/api';
-const R2_URL    = process.env.REACT_APP_R2_PUBLIC_URL || '';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
-// Detecta si un filename ya está en R2 (tiene prefijo UUID v4)
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_/i;
-
+// Siempre pasa por el proxy del backend.
+// El backend decide si sirve desde disco (fotos viejas) o desde R2 (fotos nuevas).
 export function construirUrlFoto(nombreArchivo) {
     if (!nombreArchivo) return null;
     if (nombreArchivo.startsWith('http://') || nombreArchivo.startsWith('https://')) {
         return nombreArchivo;
     }
-    // Archivos nuevos van directo a R2 (no pasan por el backend)
-    if (R2_URL && UUID_RE.test(nombreArchivo)) {
-        return `${R2_URL}/${nombreArchivo}`;
-    }
-    // Archivos viejos siguen usando el endpoint del backend
     return `${API_URL}/uploads/${nombreArchivo}`;
 }
 
