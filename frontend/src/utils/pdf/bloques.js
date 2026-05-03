@@ -5,7 +5,7 @@ import { checkSalto } from './helpers.js';
 // ── BLOQUE CLIENTE (con columna opcional de diagnóstico) ─────────────────────
 // diagnostico: texto libre para mostrar en columna derecha (presupuesto)
 // Si no se pasa diagnostico, el bloque ocupa full-width
-export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null, diagnostico = null }) {
+export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null, diagnostico = null, tituloDiag = 'DIAGNÓSTICO / SOLICITUD' }) {
     const tieneDiag = !!(diagnostico && diagnostico.trim());
     const LEFT_W  = tieneDiag ? CONTENT_W * 0.54 : CONTENT_W;
     const RIGHT_W = CONTENT_W - LEFT_W - 4;
@@ -70,7 +70,7 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text('DIAGNÓSTICO / SOLICITUD', RIGHT_X, dy);
+        doc.text(tituloDiag, RIGHT_X, dy);
         dy += 5;
 
         doc.setFontSize(T.xxs);

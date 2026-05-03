@@ -50,7 +50,7 @@ function getLabelTipo(tipo, esMulti) {
     const suf = esMulti ? ' — MÚLTIPLES EQUIPOS' : '';
     switch (tipo) {
         case 'PRESUPUESTO':       return `PRESUPUESTO DE SERVICIO TÉCNICO${suf}`;
-        case 'ORDEN_SERVICIO':    return `TRABAJO REALIZADO${suf}`;
+        case 'ORDEN_SERVICIO':    return `TRABAJO REALIZADO ✓${suf}`;
         case 'COMPROBANTE':       return 'COMPROBANTE DE VENTA';
         case 'INFORME_TECNICO':   return `INFORME TÉCNICO${suf}`;
         default:                  return tipo;
@@ -109,8 +109,9 @@ async function generarSingleTecnico(doc, {
         cargarFoto(item.fotoDespues),
     ]);
 
-    // Bloque cliente (full width)
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW });
+    // Bloque cliente con trabajo realizado en columna derecha
+    const trabajoResumen = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || '');
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: trabajoResumen || null, tituloDiag: 'TRABAJO REALIZADO' });
 
     // Bloque equipo con foto ANTES a la derecha
     y = checkSalto(doc, y, 36);
@@ -264,8 +265,8 @@ async function generarSinglePresupuesto(doc, {
         cargarFoto(item.fotoAntes && item.fotoDespues ? item.fotoDespues : null),
     ]);
 
-    // Diagnóstico/solicitud del cliente → columna derecha del bloque cliente
-    const diagnostico = sanitizarTexto(item.problema || item.solicitud || item.descripcion || '');
+    // Diagnóstico/solicitud → columna derecha del bloque cliente
+    const diagnostico = sanitizarTexto(item.trabajo || item.resumenTexto || item.descripcion || '');
 
     // Bloque cliente con diagnóstico en columna derecha
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: diagnostico || null });
