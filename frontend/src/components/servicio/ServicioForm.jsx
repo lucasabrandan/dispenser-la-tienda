@@ -59,6 +59,9 @@ export default function ServicioForm({ onSaved, servicioParaEditar = null, clien
                 // Si el servicio ya está confirmado (bloqueado) → ORDEN_SERVICIO; si no → PRESUPUESTO
                 esPresupuesto: !estaBloqueado,
                 servicioId: idEdicion || null,
+                nroDocumentoExistente: idEdicion
+                    ? (localStorage.getItem(`pdf_nro_${idEdicion}`) || null)
+                    : null,
                 cliente: clienteObj || { nombre: nombreLibre || 'Particular' },
                 sede: sedeObj || { nombreSede: 'Mostrador' },
                 tecnico: localStorage.getItem('tecnico_nombre') || 'Técnico', ticketItems, descuentoPorcentaje,

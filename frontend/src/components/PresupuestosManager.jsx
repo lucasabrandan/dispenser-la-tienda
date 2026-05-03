@@ -259,6 +259,7 @@ export default function PresupuestosManager({ onEjecutar }) {
         await generarRemitoPDFPremium({
             esPresupuesto: true,
             servicioId: s.id,
+            nroDocumentoExistente: s.nroDocumento || localStorage.getItem(`pdf_nro_${s.id}`) || null,
             cliente: { nombre: s.clienteNombre, telefono: s.clienteTelefono, email: s.clienteEmail, cuilDni: s.clienteDni, condicionFiscal: s.clienteCondicionIva },
             sede: { nombreSede: s.sedeNombre, direccion: s.sedeDireccion },
             tecnico: localStorage.getItem('tecnico_nombre') || 'Técnico',

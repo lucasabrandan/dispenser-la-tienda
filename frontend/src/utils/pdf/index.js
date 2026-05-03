@@ -796,6 +796,7 @@ export const generarPDF = async ({
     descuentoPorcentaje = 0,
     leyenda            = '',
     servicioId         = null,
+    nroDocumentoExistente = null,
     firmaCliente       = null,
     firmaTecnico       = null,
     proximoMantenimiento = null,
@@ -813,10 +814,14 @@ export const generarPDF = async ({
     const fecha         = procesarFecha(fechaServicio);
     const prefijo       = getPrefijoNro(tipoDetectado);
     const tipoLabel     = getLabelTipo(tipoDetectado, esMulti);
-    const nroDoc        = generarNroDocumento(prefijo, fecha, tecnico || 'TEC');
 
-    // Guardar nroDoc en backend
-    if (servicioId) {
+    // Reusar el número existente (DB o localStorage) para no generar uno nuevo cada vez
+    const nroDocGuardado = nroDocumentoExistente
+        || (servicioId ? localStorage.getItem(`pdf_nro_${servicioId}`) : null);
+    const nroDoc = nroDocGuardado || generarNroDocumento(prefijo, fecha, tecnico || 'TEC');
+
+    // Persistir solo si es nuevo (nroDocGuardado era null)
+    if (servicioId && !nroDocGuardado) {
         try {
             const { default: api } = await import('../../services/api');
             api.patch(`/servicios/${servicioId}/nro-doc`, { nroDocumento: nroDoc }).catch(() => {});
