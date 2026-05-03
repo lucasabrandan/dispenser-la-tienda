@@ -16,15 +16,16 @@ const MENU_OPERACIONES_ADMIN = [
     { id: 'presupuestos',     nombre: '💰 Presupuestos'      },
 ];
 
-// El técnico solo puede crear y ver servicios
 const MENU_OPERACIONES_TECNICO = [
     { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico' },
+    { id: 'mis-ordenes',      nombre: '📌 Mis Órdenes'      },
     { id: 'historial',        nombre: '📋 Historial'        },
 ];
 
 const MENU_ADMIN = [
     { id: 'clientes',  nombre: '👥 Clientes'  },
     { id: 'productos', nombre: '📦 Productos' },
+    { id: 'despacho',  nombre: '📌 Despacho'  },
     { id: 'radar',     nombre: '🚨 Radar'     },
     { id: 'finanzas',  nombre: '💹 Finanzas'  },
     { id: 'usuarios',  nombre: '🔐 Usuarios'  },
@@ -34,25 +35,33 @@ export default function Sidebar({ vistaActual, setVistaActual }) {
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
     const { usuario, logout, esAdmin } = useAuth();
-    const [pendientes, setPendientes] = useState(0);
+    const [pendientes, setPendientes]       = useState(0);
+    const [ordenesActivas, setOrdenesActivas] = useState(0);
 
     useEffect(() => {
-        const fetchPendientes = async () => {
+        const fetch = async () => {
             try {
-                const res = await api.get('/servicios/resumen', { params: { tipo: 'TECNICA' } });
-                setPendientes(res.data.pendientesCount || 0);
+                const [svc, ord] = await Promise.all([
+                    api.get('/servicios/resumen', { params: { tipo: 'TECNICA' } }),
+                    api.get('/ordenes/count-activas', { params: usuario?.id && !esAdmin ? { tecnicoId: usuario.id } : {} }),
+                ]);
+                setPendientes(svc.data.pendientesCount || 0);
+                setOrdenesActivas(ord.data.count || 0);
             } catch { /* silenciar */ }
         };
-        fetchPendientes();
-        const interval = setInterval(fetchPendientes, 60_000);
+        fetch();
+        const interval = setInterval(fetch, 60_000);
         return () => clearInterval(interval);
-    }, []);
+    }, [usuario, esAdmin]);
 
     const menuOperaciones = esAdmin ? MENU_OPERACIONES_ADMIN : MENU_OPERACIONES_TECNICO;
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
-        const badge = item.id === 'servicio-tecnico' && pendientes > 0 ? pendientes : null;
+        const badge =
+            item.id === 'servicio-tecnico' && pendientes > 0 ? pendientes :
+            (item.id === 'mis-ordenes' || item.id === 'despacho') && ordenesActivas > 0 ? ordenesActivas :
+            null;
         return (
             <div
                 onClick={() => setVistaActual(item.id)}

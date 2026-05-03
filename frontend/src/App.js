@@ -20,9 +20,11 @@ import GestorProductos    from './components/productos/GestorProductos';
 import RadarMantenimiento from './components/RadarMantenimiento';
 import DashboardFinanzas  from './components/finanzas/DashboardFinanzas';
 import UsuariosManager    from './components/usuarios/UsuariosManager';
+import DespachoManager    from './components/ordenes/DespachoManager';
+import MisOrdenes         from './components/ordenes/MisOrdenes';
 
 function AppInterna() {
-    const { autenticado, esAdmin } = useAuth();
+    const { autenticado, esAdmin, usuario } = useAuth();
     const [seccionActual, setSeccionActual] = useState(esAdmin ? 'caja' : 'servicio-tecnico');
     const [clientePreload, setClientePreload] = useState(null);
     const [presupuestoOrigen, setPresupuestoOrigen] = useState(null);
@@ -69,6 +71,10 @@ function AppInterna() {
                 return <DashboardFinanzas />;
             case 'usuarios':
                 return <UsuariosManager />;
+            case 'despacho':
+                return <DespachoManager />;
+            case 'mis-ordenes':
+                return <MisOrdenes tecnicoId={usuario?.id} />;
             default:
                 return (
                     <div className="flex items-center justify-center h-64 text-[#A8A29E] font-black text-sm uppercase tracking-widest">
