@@ -163,6 +163,27 @@ export function useServicioManager() {
         } catch { toast.error('Error al eliminar'); }
     };
 
+    const archivarServicio = async (id) => {
+        if (!window.confirm('¿Archivar este servicio? Quedará en la pestaña Archivados.')) return;
+        const loading = toast.loading('Archivando...');
+        try {
+            await api.patch(`/servicios/${id}/estado`, { estado: 'ARCHIVADO' });
+            toast.success('Servicio archivado', { id: loading });
+            cargarServicios(); cargarStats();
+        } catch { toast.error('Error al archivar', { id: loading }); }
+    };
+
+    const accionMasiva = async (ids, accion) => {
+        const texto = accion === 'ARCHIVADO' ? 'archivar' : 'cobrar';
+        if (!window.confirm(`¿${texto.charAt(0).toUpperCase() + texto.slice(1)} ${ids.length} servicio${ids.length > 1 ? 's' : ''}?`)) return;
+        const loading = toast.loading(`Procesando ${ids.length} servicios...`);
+        try {
+            await Promise.all(ids.map(id => api.patch(`/servicios/${id}/estado`, { estado: accion })));
+            toast.success(`${ids.length} servicios actualizados`, { id: loading });
+            cargarServicios(); cargarStats();
+        } catch { toast.error('Error en la operación masiva', { id: loading }); }
+    };
+
     // Abre el modal de firmas; la generación real ocurre en confirmarFirmasYGenerarPDF
     const generarPDF = (servicio) => {
         setPendingPdfServicio(servicio);
@@ -183,6 +204,8 @@ export function useServicioManager() {
                 costoExtra:      parseFloat(it.costoExtra) || 0,
                 modeloEquipo:    it.modeloEquipo    || it.equipoModelo    || null,
                 ubicacionEquipo: it.ubicacionEquipo || it.equipoUbicacion || null,
+                equipoPiso:      it.equipoPiso      || null,
+                equipoSector:    it.equipoSector    || null,
                 trabajo:         it.trabajo         || it.trabajoRealizado || '',
             }));
             toast.dismiss(loading);
@@ -255,7 +278,7 @@ export function useServicioManager() {
         confirmarFirmasYGenerarPDF,
         cargarServicios: () => { cargarServicios(); cargarStats(); },
         confirmarServicio, rechazarServicio,
-        eliminarServicio, generarPDF,
+        eliminarServicio, archivarServicio, accionMasiva, generarPDF,
         calcularTotal, abrirEditar, cerrarModal,
         setFiltroTab,
         filtros,

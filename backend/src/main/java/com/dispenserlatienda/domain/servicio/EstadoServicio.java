@@ -20,5 +20,8 @@ public enum EstadoServicio {
     RECHAZADO,
 
     // Servicio cancelado por ambas partes
-    CANCELADO
+    CANCELADO,
+
+    // Archivado manualmente — no se elimina, queda auditable
+    ARCHIVADO
 }
