@@ -58,7 +58,7 @@ export function useServicioManager() {
     // ── Filtros (interfaz compatible con FiltrosPanel) ──────────────────────────
     const [busquedaInput, setBusquedaInput]   = useState('');
     const [busquedaApi, setBusquedaApi]       = useState('');
-    const [estado, setEstadoInternal]         = useState('TODOS');
+    const [estado, setEstadoInternal]         = useState('PRESUPUESTO');
     const [periodoRapido, setPeriodoRapido]   = useState('MES');
     const [mesSelector, setMesSelector]       = useState('');
     const [desde, setDesde]                   = useState('');
