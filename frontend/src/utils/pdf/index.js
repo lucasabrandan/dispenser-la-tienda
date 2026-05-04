@@ -125,19 +125,7 @@ async function generarSingleTecnico(doc, {
         y = dibujarBloqueDiagnosticoDetalle(doc, { texto: diagDetalle, y, pageW });
     }
 
-    // Stats de resumen
-    const totalEquipo  = parseFloat(item.totalCalculado || item.costo || 0);
-    const cantTrabajos = (item.repuestosUsados?.length || 0) + (parseFloat(item.costoExtra || 0) > 0 ? 1 : 0);
-
-    y = dibujarResumenServicio(doc, {
-        y,
-        stats: [
-            { valor: cantTrabajos, etiqueta: 'Trabajos realizados', colorValor: C.navy  },
-            { valor: 1,            etiqueta: 'Equipos atendidos',   colorValor: C.navy  },
-            { valor: 'Completado', etiqueta: 'Estado final',        colorValor: C.green },
-            { valor: fecha,        etiqueta: 'Fecha servicio',      colorValor: C.dark  },
-        ],
-    });
+    const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
 
     // • INFORMACIÓN PRECIOS
     doc.setFontSize(T.label);
