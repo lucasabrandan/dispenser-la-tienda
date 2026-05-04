@@ -383,13 +383,9 @@ async function generarSinglePresupuesto(doc, {
         y += FOTO_H + 8;
     }
 
-    // Condiciones + CTA en el mismo bloque compacto
+    // Condiciones + CTA en el mismo bloque compacto (sin firmas — el cliente no aceptó aún)
     y = checkSalto(doc, y, 54);
     y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
-
-    // Firmas (aceptación del presupuesto)
-    y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
 
     return y;
 }
@@ -691,10 +687,6 @@ async function generarMultiPresupuesto(doc, {
             nroDoc,
         });
     }
-
-    // Firmas
-    y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
 
     // Página de fotos de equipos (solo si algún ítem tiene fotoAntes)
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
