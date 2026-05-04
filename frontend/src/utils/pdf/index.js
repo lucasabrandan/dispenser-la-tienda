@@ -100,7 +100,7 @@ function construirFilasItem(item) {
 
 async function generarSingleTecnico(doc, {
     item, cliente, sede, tipo, y, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, garantiaTexto, proximoMantenimiento, googleReviewLink,
+    firmaCliente, firmaTecnico, garantiaTexto, proximoMantenimiento, googleReviewLink, incluirFirmas = true,
 }) {
     const pageW = doc.internal.pageSize.getWidth();
 
@@ -227,13 +227,15 @@ async function generarSingleTecnico(doc, {
     // Firmas + QR Google juntos en la misma página si hay espacio
     const empresa    = getEmpresa();
     const linkGoogle = googleReviewLink || empresa.googleReviewLink;
-    const bloqueH    = 36 + (linkGoogle ? 38 : 0); // firmas + qr
+    const bloqueH    = (incluirFirmas ? 36 : 0) + (linkGoogle ? 38 : 0);
     const pageH      = doc.internal.pageSize.getHeight();
-    if (y + bloqueH > pageH - 26) {
+    if (bloqueH > 0 && y + bloqueH > pageH - 26) {
         doc.addPage();
         y = 18;
     }
-    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
+    if (incluirFirmas) {
+        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
+    }
     if (linkGoogle) {
         y = await dibujarQRGoogle(doc, { y, link: linkGoogle });
     }
@@ -381,7 +383,7 @@ async function generarSinglePresupuesto(doc, {
 
 async function generarMultiTecnico(doc, {
     ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, garantiaTexto, googleReviewLink, leyenda,
+    firmaCliente, firmaTecnico, garantiaTexto, googleReviewLink, leyenda, incluirFirmas = true,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -410,8 +412,10 @@ async function generarMultiTecnico(doc, {
     y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
 
     // Firmas
-    y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
+    if (incluirFirmas) {
+        y = checkSalto(doc, y, 36);
+        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
+    }
 
     // QR Google
     const linkGoogle = googleReviewLink || empresa.googleReviewLink;
@@ -783,6 +787,7 @@ export const generarPDF = async ({
     garantiaTexto      = null,
     estadoFinal        = null,
     googleReviewLink   = null,
+    incluirFirmas      = true,
 }) => {
     if (!cliente || ticketItems.length === 0) {
         return toast.error('Datos insuficientes para generar el PDF.');
@@ -823,7 +828,10 @@ export const generarPDF = async ({
     // ── DISPATCH POR TIPO ─────────────────────────────────────────────────────
     const commonArgs = {
         cliente, sede, tecnico, fecha, nroDoc,
-        firmaCliente, firmaTecnico, descuentoPorcentaje, garantiaTexto,
+        firmaCliente:  incluirFirmas ? firmaCliente  : null,
+        firmaTecnico:  incluirFirmas ? firmaTecnico  : null,
+        incluirFirmas,
+        descuentoPorcentaje, garantiaTexto,
         proximoMantenimiento, googleReviewLink, leyenda,
     };
 

@@ -190,7 +190,7 @@ export function useServicioManager() {
         setModalFirmas(true);
     };
 
-    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente }) => {
+    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {
         setModalFirmas(false);
         const servicio = pendingPdfServicio;
         setPendingPdfServicio(null);
@@ -230,6 +230,7 @@ export function useServicioManager() {
                 esTecnicoForzado:    servicio.servicioTipo === 'TECNICA',
                 firmaTecnico:        firmaTecnico  || null,
                 firmaCliente:        firmaCliente  || null,
+                incluirFirmas:       incluirFirmas,
             });
         } catch (e) {
             console.error('Error generando PDF:', e);

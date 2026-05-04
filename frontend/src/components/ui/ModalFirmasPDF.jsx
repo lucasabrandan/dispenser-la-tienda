@@ -4,19 +4,20 @@ import api from '../../services/api';
 
 // Si el técnico tiene firma guardada, se usa automáticamente sin mostrarse.
 // Solo se pide la firma del cliente (siempre nueva).
-// onConfirm({ firmaTecnico, firmaCliente })
+// onConfirm({ firmaTecnico, firmaCliente, incluirFirmas })
 export default function ModalFirmasPDF({ onConfirm, onCancel }) {
     const [firmaTecnico, setFirmaTecnico]         = useState(null);
     const [firmaCliente, setFirmaCliente]         = useState(null);
     const [editandoTecnico, setEditandoTecnico]   = useState(false);
     const [guardando, setGuardando]               = useState(false);
     const [guardado,  setGuardado]                = useState(false);
+    const [incluirFirmas, setIncluirFirmas]       = useState(true);
 
     useEffect(() => {
         try {
             const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
             if (user.firma) setFirmaTecnico(user.firma);
-            else setEditandoTecnico(true); // sin firma guardada → pedir una vez
+            else setEditandoTecnico(true);
         } catch {}
     }, []);
 
@@ -24,13 +25,11 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
         if (!firmaTecnico) return;
         setGuardando(true);
         try {
-            // Persistir en localStorage primero — funciona aunque la API falle
             const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
             localStorage.setItem('auth_usuario', JSON.stringify({ ...user, firma: firmaTecnico }));
             setGuardado(true);
             setEditandoTecnico(false);
             setTimeout(() => setGuardado(false), 2000);
-            // Intentar sincronizar con el servidor (silencioso si falla)
             if (user.id) {
                 api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
             }
@@ -42,15 +41,20 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
     };
 
     const handleConfirm = () => {
-        // Guardar silenciosamente si cambió
-        try {
-            const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
-            if (user.id && firmaTecnico && firmaTecnico !== user.firma) {
-                localStorage.setItem('auth_usuario', JSON.stringify({ ...user, firma: firmaTecnico }));
-                api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
-            }
-        } catch {}
-        onConfirm({ firmaTecnico, firmaCliente });
+        if (incluirFirmas) {
+            try {
+                const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
+                if (user.id && firmaTecnico && firmaTecnico !== user.firma) {
+                    localStorage.setItem('auth_usuario', JSON.stringify({ ...user, firma: firmaTecnico }));
+                    api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
+                }
+            } catch {}
+        }
+        onConfirm({
+            firmaTecnico: incluirFirmas ? firmaTecnico : null,
+            firmaCliente: incluirFirmas ? firmaCliente : null,
+            incluirFirmas,
+        });
     };
 
     const firmaGuardada = !!firmaTecnico && !editandoTecnico;
@@ -62,7 +66,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-[#C0BCB6] dark:border-[#2E2E2E]">
                     <h2 className="font-bold text-[#1C1917] dark:text-[#F0EEE9] text-base">
-                        Firma del cliente
+                        Generar PDF
                     </h2>
                     <button onClick={onCancel}
                         className="text-[#A8A29E] hover:text-[#D13A28] text-xl font-bold leading-none transition-colors">
@@ -72,49 +76,70 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
 
                 <div className="p-5 flex flex-col gap-4">
 
-                    {/* Firma técnico — compacta si ya está guardada */}
-                    {firmaGuardada ? (
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
-                            <span className="text-[12px] font-bold text-[var(--success-tx)]">✓ Firma técnico guardada</span>
-                            <button
-                                onClick={() => setEditandoTecnico(true)}
-                                className="ml-auto text-[11px] text-[#A8A29E] hover:text-[#D13A28] transition-colors font-medium"
-                            >
-                                Cambiar
-                            </button>
-                        </div>
-                    ) : (
-                        <div>
-                            <FirmaPad
-                                label="Firma del técnico"
-                                value={firmaTecnico}
-                                onChange={val => { setFirmaTecnico(val); setGuardado(false); }}
-                                height={100}
-                            />
-                            <div className="flex items-center gap-2 mt-1">
-                                <button
-                                    type="button"
-                                    onClick={guardarFirmaTecnico}
-                                    disabled={!firmaTecnico || guardando}
-                                    className="text-[11px] px-3 py-1 rounded-full bg-[#D13A28] text-white font-semibold disabled:opacity-40 transition-colors"
-                                >
-                                    {guardando ? 'Guardando…' : 'Guardar mi firma'}
-                                </button>
-                                {guardado && (
-                                    <span className="text-[11px] text-[var(--success-tx)] font-semibold">✓ Guardada</span>
-                                )}
-                                <span className="text-[10px] text-[#A8A29E] ml-auto">Se usará automáticamente</span>
-                            </div>
-                        </div>
-                    )}
+                    {/* Toggle incluir firmas */}
+                    <label className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={incluirFirmas}
+                            onChange={e => setIncluirFirmas(e.target.checked)}
+                            className="w-4 h-4 accent-[#D13A28]"
+                        />
+                        <span className="text-[13px] font-semibold text-[#1C1917] dark:text-[#F0EEE9]">
+                            Incluir firmas en el PDF
+                        </span>
+                        {!incluirFirmas && (
+                            <span className="ml-auto text-[11px] text-[#A8A29E]">No se mostrará sección de firmas</span>
+                        )}
+                    </label>
 
-                    {/* Firma cliente — siempre visible, espacio grande */}
-                    <FirmaPad
-                        label="Firma del cliente"
-                        value={firmaCliente}
-                        onChange={setFirmaCliente}
-                        height={firmaGuardada ? 160 : 120}
-                    />
+                    {/* Pads de firma — solo si está activado */}
+                    {incluirFirmas && (
+                        <>
+                            {/* Firma técnico */}
+                            {firmaGuardada ? (
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                                    <span className="text-[12px] font-bold text-[var(--success-tx)]">✓ Firma técnico guardada</span>
+                                    <button
+                                        onClick={() => setEditandoTecnico(true)}
+                                        className="ml-auto text-[11px] text-[#A8A29E] hover:text-[#D13A28] transition-colors font-medium"
+                                    >
+                                        Cambiar
+                                    </button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <FirmaPad
+                                        label="Firma del técnico"
+                                        value={firmaTecnico}
+                                        onChange={val => { setFirmaTecnico(val); setGuardado(false); }}
+                                        height={100}
+                                    />
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <button
+                                            type="button"
+                                            onClick={guardarFirmaTecnico}
+                                            disabled={!firmaTecnico || guardando}
+                                            className="text-[11px] px-3 py-1 rounded-full bg-[#D13A28] text-white font-semibold disabled:opacity-40 transition-colors"
+                                        >
+                                            {guardando ? 'Guardando…' : 'Guardar mi firma'}
+                                        </button>
+                                        {guardado && (
+                                            <span className="text-[11px] text-[var(--success-tx)] font-semibold">✓ Guardada</span>
+                                        )}
+                                        <span className="text-[10px] text-[#A8A29E] ml-auto">Se usará automáticamente</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Firma cliente */}
+                            <FirmaPad
+                                label="Firma del cliente"
+                                value={firmaCliente}
+                                onChange={setFirmaCliente}
+                                height={firmaGuardada ? 160 : 120}
+                            />
+                        </>
+                    )}
 
                     {/* Botones */}
                     <div className="flex gap-3 pt-1">
