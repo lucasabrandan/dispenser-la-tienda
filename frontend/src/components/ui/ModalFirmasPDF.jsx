@@ -22,14 +22,18 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
 
     const guardarFirmaTecnico = async () => {
         if (!firmaTecnico) return;
+        setGuardando(true);
         try {
-            setGuardando(true);
+            // Persistir en localStorage primero — funciona aunque la API falle
             const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
-            await api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico });
             localStorage.setItem('auth_usuario', JSON.stringify({ ...user, firma: firmaTecnico }));
             setGuardado(true);
             setEditandoTecnico(false);
             setTimeout(() => setGuardado(false), 2000);
+            // Intentar sincronizar con el servidor (silencioso si falla)
+            if (user.id) {
+                api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
+            }
         } catch (e) {
             console.error('Error guardando firma', e);
         } finally {
