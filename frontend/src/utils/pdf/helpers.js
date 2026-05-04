@@ -3,7 +3,9 @@
  */
 // En dev: URL relativa → proxy CRA a localhost:8080
 // En prod (Vercel): REACT_APP_API_URL apunta al backend real
-const API_BASE     = process.env.REACT_APP_API_URL || '';
+// REACT_APP_API_URL termina en /api (ej: https://api.gestiondlt.com/api)
+// Subimos un nivel para construir la URL de uploads
+const API_BASE     = (process.env.REACT_APP_API_URL || '').replace(/\/api$/, '');
 const UPLOADS_BASE = `${API_BASE}/api/uploads`;
 
 // ── Texto ─────────────────────────────────────────────────────────────────────
