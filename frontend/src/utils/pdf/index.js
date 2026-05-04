@@ -394,36 +394,17 @@ async function generarMultiTecnico(doc, {
 
     let y = HEADER_H.normal + 8;
 
-    // Resumen ejecutivo
-    y = dibujarResumenEjecutivo(doc, {
-        y, cliente, fecha,
-        cantEquipos:   ticketItems.length,
-        cantServicios: ticketItems.reduce((a, it) => a + (it.repuestosUsados?.length || 0) + (parseFloat(it.costoExtra || 0) > 0 ? 1 : 0), 0),
-        total:         subtotalTotal.toLocaleString('es-AR'),
-        estado:        tipo === 'PRESUPUESTO' ? 'PRESUPUESTO' : 'COMPLETADO',
-        pageW,
+    // Resumen: solo equipos + total
+    y = dibujarResumenServicio(doc, {
+        y,
+        stats: [
+            { valor: ticketItems.length,                              etiqueta: 'Equipos atendidos', colorValor: C.navy },
+            { valor: `$ ${subtotalTotal.toLocaleString('es-AR')}`,   etiqueta: 'Total del servicio', colorValor: C.red  },
+        ],
     });
 
-    // Bloque cliente con trabajo del primer ítem en columna derecha (no la leyenda general)
-    const obsCliente = sanitizarTexto(ticketItems[0]?.trabajo || '');
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: obsCliente || null, tituloDiag: 'TRABAJO REALIZADO', conBullet: true });
-
-    // Observaciones generales (del primer item si existe)
-    const obsGral = sanitizarTexto(ticketItems[0]?.observaciones || '');
-    if (obsGral) {
-        y = checkSalto(doc, y, 28);
-        doc.setFontSize(T.label);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text('OBSERVACIONES GENERALES', M, y);
-        y += 5;
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        const obsLines = doc.splitTextToSize(obsGral, CONTENT_W);
-        obsLines.slice(0, 6).forEach((l, i) => doc.text(l, M, y + i * 4.2));
-        y += Math.min(6, obsLines.length) * 4.2 + 6;
-    }
+    // Bloque cliente sin diagnóstico — cada equipo tiene su propio trabajo
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: null });
 
     // Garantía
     y = checkSalto(doc, y, 18);
@@ -552,19 +533,15 @@ async function generarMultiPresupuesto(doc, {
     const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
     const total     = subtotalTotal - descuento;
 
-    // Bloque cliente — diagnóstico del primer ítem, nunca leyenda/garantía
-    const diagGeneral = sanitizarTexto(ticketItems[0]?.trabajo || '');
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: diagGeneral || null });
+    // Bloque cliente sin diagnóstico — en multi cada equipo tiene su propio trabajo
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: null });
 
-    // Resumen general (métricas)
+    // Resumen: solo equipos + total
     y = dibujarResumenServicio(doc, {
         y,
         stats: [
-            { valor: ticketItems.length, etiqueta: 'Equipos', colorValor: C.navy },
-            { valor: ticketItems.reduce((a, it) => a + (it.repuestosUsados?.length || 0), 0) + ticketItems.filter(it => parseFloat(it.costoExtra || 0) > 0).length,
-              etiqueta: 'Servicios estimados', colorValor: C.navy },
-            { valor: fecha, etiqueta: 'Fecha', colorValor: C.dark },
-            { valor: `$ ${total.toLocaleString('es-AR')}`, etiqueta: 'Total estimado', colorValor: C.red },
+            { valor: ticketItems.length,                        etiqueta: 'Equipos',         colorValor: C.navy },
+            { valor: `$ ${total.toLocaleString('es-AR')}`,     etiqueta: 'Total estimado',  colorValor: C.red  },
         ],
     });
 
