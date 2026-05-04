@@ -118,8 +118,8 @@ async function generarSingleTecnico(doc, {
     y = checkSalto(doc, y, 36);
     y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoD ? fotoA : null, conBullet: true });
 
-    // • DIAGNÓSTICO DETALLE
-    const diagDetalle = sanitizarTexto(item.observaciones || item.trabajo || '');
+    // • DIAGNÓSTICO DETALLE — solo si hay observaciones propias (no repetir trabajo)
+    const diagDetalle = sanitizarTexto(item.observaciones || '');
     if (diagDetalle) {
         y = checkSalto(doc, y, 24);
         y = dibujarBloqueDiagnosticoDetalle(doc, { texto: diagDetalle, y, pageW });
@@ -568,8 +568,8 @@ async function generarMultiPresupuesto(doc, {
     const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
     const total     = subtotalTotal - descuento;
 
-    // Bloque cliente con diagnóstico/solicitud en columna derecha
-    const diagGeneral = sanitizarTexto(leyenda || ticketItems[0]?.trabajo || '');
+    // Bloque cliente — diagnóstico del primer ítem, nunca leyenda/garantía
+    const diagGeneral = sanitizarTexto(ticketItems[0]?.trabajo || '');
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: diagGeneral || null });
 
     // Resumen general (métricas)

@@ -1,8 +1,10 @@
 /**
  * helpers.js — Utilidades puras de rendering para jsPDF
  */
-// Usar URL relativa para que el proxy del dev server (o el mismo origen en prod) maneje el request
-const UPLOADS_BASE = '/api/uploads';
+// En dev: URL relativa → proxy CRA a localhost:8080
+// En prod (Vercel): REACT_APP_API_URL apunta al backend real
+const API_BASE     = process.env.REACT_APP_API_URL || '';
+const UPLOADS_BASE = `${API_BASE}/api/uploads`;
 
 // ── Texto ─────────────────────────────────────────────────────────────────────
 
