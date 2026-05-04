@@ -110,9 +110,8 @@ async function generarSingleTecnico(doc, {
         cargarFoto(item.fotoDespues),
     ]);
 
-    // • DATOS CLIENTE (con resumen de trabajo en columna derecha)
-    const trabajoResumen = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || '');
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: trabajoResumen || null, tituloDiag: 'TRABAJO REALIZADO', conBullet: true });
+    // • DATOS CLIENTE (sin columna derecha — el trabajo va en DIAGNÓSTICO DETALLE abajo)
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: null });
 
     // • DATOS EQUIPO — thumbnail solo si hay ambas fotos (evita duplicar fotoA en el registro)
     y = checkSalto(doc, y, 36);
