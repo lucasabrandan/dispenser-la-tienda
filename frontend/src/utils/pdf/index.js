@@ -897,8 +897,9 @@ export const generarPDF = async ({
 
     // ── FOOTER EN TODAS LAS PÁGINAS ───────────────────────────────────────────
     // Para ORDEN_SERVICIO ignoramos leyenda en footer para que muestre estrellas siempre
-    const esOrdenFinal  = tipoDetectado === 'ORDEN_SERVICIO';
-    const leyendaLimpia = esOrdenFinal
+    const esOrdenFinal      = tipoDetectado === 'ORDEN_SERVICIO';
+    const esTipoPresupuesto = tipoDetectado === 'PRESUPUESTO';
+    const leyendaLimpia = (esOrdenFinal || esTipoPresupuesto)
         ? null
         : (leyenda || '').replace(/[\r\n]+/g, ' ').trim().substring(0, 110) || null;
     const total         = doc.internal.getNumberOfPages();

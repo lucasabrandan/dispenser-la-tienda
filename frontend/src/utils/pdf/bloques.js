@@ -834,24 +834,31 @@ export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.green);
-    doc.text('Aprobanos el presupuesto', X_DER + COL_DER / 2, y + 12, { align: 'center' });
+    doc.text('Aprobar presupuesto', X_DER + COL_DER / 2, y + 10, { align: 'center' });
 
-    if (empresa.whatsapp) {
+    const contacto = empresa.whatsapp || empresa.telefono || '';
+    if (contacto) {
+        const etiqueta = empresa.whatsapp ? 'WhatsApp / Tel:' : 'Tel:';
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
-        doc.text('Por WhatsApp:', X_DER + COL_DER / 2, y + 19, { align: 'center' });
+        doc.text(etiqueta, X_DER + COL_DER / 2, y + 19, { align: 'center' });
         doc.setFontSize(T.sm);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text(empresa.whatsapp, X_DER + COL_DER / 2, y + 26, { align: 'center' });
+        doc.text(contacto, X_DER + COL_DER / 2, y + 26, { align: 'center' });
+    } else {
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Comunicate con nosotros', X_DER + COL_DER / 2, y + 20, { align: 'center' });
+        doc.text('para confirmar.', X_DER + COL_DER / 2, y + 25, { align: 'center' });
     }
 
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
-    const ref = `Ref: ${nroDoc}`;
-    doc.text(ref, X_DER + COL_DER / 2, y + cardH - 5, { align: 'center' });
+    doc.text(`Ref: ${nroDoc}`, X_DER + COL_DER / 2, y + cardH - 5, { align: 'center' });
 
     return y + cardH + 6;
 }
