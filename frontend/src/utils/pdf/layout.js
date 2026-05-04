@@ -205,7 +205,7 @@ export function dibujarFooter(doc, { pagina = null, totalPaginas = null, textoCe
         if (conEstrellas) {
             doc.setFontSize(9);
             doc.setTextColor(255, 180, 0);
-            doc.text('★ ★ ★ ★ ★', pageW / 2, pageH - 4, { align: 'center' });
+            doc.text('* * * * *', pageW / 2, pageH - 4, { align: 'center' });
         }
     }
 

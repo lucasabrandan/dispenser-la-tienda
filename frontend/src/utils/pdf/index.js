@@ -21,9 +21,8 @@ import {
     dibujarBloqueClienteEquipo,
     dibujarBloqueEquipoDetalle,
     dibujarBloqueDiagnosticoDetalle,
+    dibujarBloqueSolicitud,
     dibujarResumenServicio,
-    dibujarTablaDetalle,
-    dibujarSeccion2Col,
     dibujarChecklist,
     dibujarFirmas,
     dibujarGarantia,
@@ -31,6 +30,7 @@ import {
     dibujarQRGoogle,
     dibujarResumenEjecutivo,
     dibujarCondiciones,
+    dibujarCondicionesYCTA,
     dibujarRegistroFotografico,
 } from './bloques.js';
 import { cargarFoto, checkSalto, sanitizarTexto } from './helpers.js';
@@ -51,7 +51,7 @@ function getLabelTipo(tipo, esMulti) {
     const suf = esMulti ? ' — MÚLTIPLES EQUIPOS' : '';
     switch (tipo) {
         case 'PRESUPUESTO':       return `PRESUPUESTO DE SERVICIO TÉCNICO${suf}`;
-        case 'ORDEN_SERVICIO':    return `TRABAJO REALIZADO ✓${suf}`;
+        case 'ORDEN_SERVICIO':    return `TRABAJO REALIZADO${suf}`;
         case 'COMPROBANTE':       return 'COMPROBANTE DE VENTA';
         case 'INFORME_TECNICO':   return `INFORME TÉCNICO${suf}`;
         default:                  return tipo;
@@ -114,9 +114,9 @@ async function generarSingleTecnico(doc, {
     const trabajoResumen = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || '');
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: trabajoResumen || null, tituloDiag: 'TRABAJO REALIZADO', conBullet: true });
 
-    // • DATOS EQUIPO con foto ANTES a la derecha
+    // • DATOS EQUIPO — thumbnail solo si hay ambas fotos (evita duplicar fotoA en el registro)
     y = checkSalto(doc, y, 36);
-    y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoA, conBullet: true });
+    y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoD ? fotoA : null, conBullet: true });
 
     // • DIAGNÓSTICO DETALLE
     const diagDetalle = sanitizarTexto(item.observaciones || item.trabajo || '');
@@ -146,10 +146,15 @@ async function generarSingleTecnico(doc, {
     doc.text('• INFORMACIÓN PRECIOS', M, y);
     y += 5;
 
-    const filas     = construirFilasItem(item);
-    const tableData = filas.length > 0
-        ? filas.map(r => [r.concepto, String(r.cant), `$ ${r.unitario}`, `$ ${r.importe}`])
-        : [['Sin items registrados', '', '', '']];
+    const filas = construirFilasItem(item);
+    // Sin ítems → mostrar fila placeholder profesional
+    const filasConPlaceholder = filas.length > 0 ? filas : [{
+        concepto: 'Servicio de diagnostico tecnico', cant: 1,
+        unitario: 'A coordinar', importe: 'A coordinar', esServicio: true,
+    }];
+    const sinItems = filas.length === 0;
+
+    const tableData = filasConPlaceholder.map(r => [r.concepto, String(r.cant), r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`, r.importe.startsWith('A') ? r.importe : `$ ${r.importe}`]);
 
     autoTable(doc, {
         startY: y,
@@ -175,14 +180,15 @@ async function generarSingleTecnico(doc, {
         didParseCell: data => {
             if (data.section === 'body') {
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
-                if (filas[data.row.index]?.esServicio) data.cell.styles.textColor = C.navy;
+                if (filasConPlaceholder[data.row.index]?.esServicio) data.cell.styles.textColor = C.navy;
             }
         },
     });
 
     let tableEndY = doc.lastAutoTable.finalY + 3;
 
-    // Total — full width
+    // Total
+    const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${totalEquipo.toLocaleString('es-AR')}`;
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
@@ -191,22 +197,21 @@ async function generarSingleTecnico(doc, {
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
     doc.text('TOTAL DEL SERVICIO', M + 3, tableEndY + 6.5);
-    doc.setFontSize(T.md);
+    doc.setFontSize(sinItems ? T.xs : T.md);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 7, { align: 'right' });
+    doc.text(totalLabel, pageW - M - 2, tableEndY + 7, { align: 'right' });
     tableEndY += 15;
-
     y = tableEndY;
 
-    // Registro fotográfico — sección dedicada bajo precios
+    // Registro fotográfico
     if (fotoA || fotoD) {
         y = checkSalto(doc, y, 50);
         y = dibujarRegistroFotografico(doc, { y, fotoA, fotoD });
     }
 
-    // Checklist — solo para INFORME_TECNICO
+    // Checklist
     const checklist = item.checklist || [];
-    if (tipo === 'INFORME_TECNICO' && checklist.length > 0) {
+    if (checklist.length > 0) {
         y = checkSalto(doc, y, 40);
         y = dibujarChecklist(doc, { y, items: checklist, pageW });
     }
@@ -221,7 +226,7 @@ async function generarSingleTecnico(doc, {
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.green);
-        doc.text('⚙  PRÓXIMO MANTENIMIENTO SUGERIDO', M + 2, y + 5);
+        doc.text('PROXIMO MANTENIMIENTO SUGERIDO', M + 2, y + 5);
         doc.setFontSize(T.sm);
         doc.setTextColor(...C.dark);
         doc.text(proximoMantenimiento, pageW - M, y + 5, { align: 'right' });
@@ -232,15 +237,17 @@ async function generarSingleTecnico(doc, {
     y = checkSalto(doc, y, 18);
     y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
 
-    // Firmas
-    y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
-
-    // QR Google Review
-    const empresa   = getEmpresa();
+    // Firmas + QR Google juntos en la misma página si hay espacio
+    const empresa    = getEmpresa();
     const linkGoogle = googleReviewLink || empresa.googleReviewLink;
+    const bloqueH    = 36 + (linkGoogle ? 38 : 0); // firmas + qr
+    const pageH      = doc.internal.pageSize.getHeight();
+    if (y + bloqueH > pageH - 26) {
+        doc.addPage();
+        y = 18;
+    }
+    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
     if (linkGoogle) {
-        y = checkSalto(doc, y, 38);
         y = await dibujarQRGoogle(doc, { y, link: linkGoogle });
     }
 
@@ -262,67 +269,110 @@ async function generarSinglePresupuesto(doc, {
         cargarFoto(item.fotoAntes && item.fotoDespues ? item.fotoDespues : null),
     ]);
 
-    // Diagnóstico/solicitud → columna derecha del bloque cliente
-    const diagnostico = sanitizarTexto(item.trabajo || item.resumenTexto || item.descripcion || '');
-
-    // Bloque cliente con diagnóstico en columna derecha
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: diagnostico || null });
+    // Bloque cliente (sin diagnóstico en columna — va en sección propia debajo)
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: null });
 
     // Bloque equipo separado con foto ANTES a la derecha
     y = checkSalto(doc, y, 36);
     y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes });
 
-    // Trabajo propuesto (si existe, debajo del bloque equipo)
-    const trabajoTexto = sanitizarTexto(item.trabajo || item.trabajoRealizado || item.resumenTexto || '');
-    if (trabajoTexto) {
-        y = checkSalto(doc, y, 28);
-        y = dibujarSeccion2Col(doc, {
-            y, pageW,
-            tituloIzq: 'TRABAJO PROPUESTO',
-            textoIzq:  trabajoTexto,
-            tituloDer:  null,
-            textoDer:   null,
-        });
+    // Bloque PROBLEMA / SOLICITUD separado (como en referencia)
+    const diagnostico = sanitizarTexto(item.trabajo || item.resumenTexto || item.descripcion || '');
+    if (diagnostico) {
+        y = checkSalto(doc, y, 24);
+        y = dibujarBloqueSolicitud(doc, { texto: diagnostico, y, pageW });
     }
 
-    // Tabla full-width
+    // Tabla de precios
     const filas = construirFilasItem(item);
-    const totalBruto   = parseFloat(item.totalCalculado || item.costo || 0);
-    const pct          = parseFloat(descuentoPorcentaje || 0);
-    const descuento    = pct > 0 ? totalBruto * pct / 100 : 0;
-    const total        = totalBruto - descuento;
+    const totalBruto = parseFloat(item.totalCalculado || item.costo || 0);
+    const pct        = parseFloat(descuentoPorcentaje || 0);
+    const descuento  = pct > 0 ? totalBruto * pct / 100 : 0;
+    const total      = totalBruto - descuento;
+
+    const filasConPlaceholder = filas.length > 0 ? filas : [{
+        concepto: 'Servicio tecnico — Diagnostico y presupuesto', cant: 1,
+        unitario: 'A coordinar', importe: 'A coordinar', esServicio: true,
+    }];
+    const sinItems = filas.length === 0;
 
     y = checkSalto(doc, y, 40);
-    y = dibujarTablaDetalle(doc, {
-        rows:   filas,
-        y,
-        titulo: 'DETALLE DE CONCEPTOS',
-        total:  total.toLocaleString('es-AR'),
-        labelTotal: 'TOTAL ESTIMADO DEL SERVICIO',
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('DETALLE DE CONCEPTOS', M, y);
+    y += 5;
+
+    const tableDataP = filasConPlaceholder.map(r => [
+        r.concepto, String(r.cant),
+        r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`,
+        r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`,
+    ]);
+
+    autoTable(doc, {
+        startY: y,
+        head:  [['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']],
+        body:  tableDataP,
+        theme: 'grid',
+        headStyles: {
+            fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
+            fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+        },
+        bodyStyles: {
+            fontSize: T.xs, textColor: C.dark,
+            cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+            lineColor: C.grayBorder, lineWidth: 0.15,
+        },
+        columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { halign: 'center', cellWidth: 13 },
+            2: { halign: 'right',  cellWidth: 26 },
+            3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
+        },
+        margin: { left: M, right: M },
+        didParseCell: data => {
+            if (data.section === 'body') {
+                if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
+                if (filasConPlaceholder[data.row.index]?.esServicio) data.cell.styles.textColor = C.navy;
+            }
+        },
     });
 
-    // Validez del presupuesto (debajo de la tabla, no superpuesta)
+    let presupTableEndY = doc.lastAutoTable.finalY + 3;
+    const totalPresupLabel = sinItems ? 'A coordinar con el cliente' : total.toLocaleString('es-AR');
+    doc.setFillColor(...C.redLight);
+    doc.setDrawColor(...C.red);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(M, presupTableEndY, CONTENT_W, 10, 1.5, 1.5, 'FD');
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.red);
+    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 6.5);
+    doc.setFontSize(sinItems ? T.xs : T.md);
+    doc.setTextColor(...C.navy);
+    doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 2, presupTableEndY + 7, { align: 'right' });
+    presupTableEndY += 15;
+    y = presupTableEndY;
+
+    // Validez
     const validez = new Date();
     validez.setDate(validez.getDate() + 7);
     y += 3;
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
-    doc.text(
-        `Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`,
-        pageW - M, y, { align: 'right' },
-    );
+    doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
-    // Foto DESPUÉS (si hay ambas fotos subidas, mostrar la segunda como referencia)
+    // Foto del problema (solo si hay segunda foto real además de la de equipo)
     if (fotoDespues) {
         y = checkSalto(doc, y, 40);
-        const COL_W = (CONTENT_W - 6) / 2;
+        const COL_W  = (CONTENT_W - 6) / 2;
         const FOTO_H = Math.floor((COL_W * 3) / 4);
-        doc.setFontSize(T.xxs);
+        doc.setFontSize(T.label);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text('FOTO ADICIONAL DEL EQUIPO', M, y);
+        doc.text('EVIDENCIA FOTOGRÁFICA DEL PROBLEMA', M, y);
         y += 5;
         doc.setFillColor(220, 220, 225);
         doc.roundedRect(M + 1.5, y + 1.5, COL_W, FOTO_H, 2, 2, 'F');
@@ -333,37 +383,11 @@ async function generarSinglePresupuesto(doc, {
         y += FOTO_H + 8;
     }
 
-    // Condiciones
-    y = checkSalto(doc, y, 36);
-    y = dibujarCondiciones(doc, { y, pageW });
+    // Condiciones + CTA en el mismo bloque compacto
+    y = checkSalto(doc, y, 54);
+    y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
 
-    // QR WhatsApp aprobación — siempre se muestra (con QR si hay WA, sin él si no)
-    y = checkSalto(doc, y, 48);
-    if (empresa.whatsapp) {
-        y = await dibujarQRWhatsApp(doc, {
-            x: M, y,
-            telefono: empresa.whatsapp,
-            mensaje:  `Hola, quiero aprobar el presupuesto ${nroDoc}`,
-            nroDoc,
-        });
-    } else {
-        // Card de aprobación sin QR
-        doc.setFillColor(240, 253, 244);
-        doc.setDrawColor(...C.green);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(M - 2, y, CONTENT_W + 4, 20, 2, 2, 'FD');
-        doc.setFontSize(T.sm);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.dark);
-        doc.text('¿ESTÁ DE ACUERDO CON ESTE PRESUPUESTO?', M + 4, y + 8);
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text(`Respondanos para coordinar el servicio — Nro. presupuesto: ${nroDoc}`, M + 4, y + 14);
-        y += 25;
-    }
-
-    // Firmas
+    // Firmas (aceptación del presupuesto)
     y = checkSalto(doc, y, 36);
     y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
 
@@ -396,12 +420,12 @@ async function generarMultiTecnico(doc, {
         pageW,
     });
 
-    // Bloque cliente con observaciones generales en columna derecha
-    const obsCliente = sanitizarTexto(leyenda || ticketItems[0]?.trabajo || '');
+    // Bloque cliente con trabajo del primer ítem en columna derecha (no la leyenda general)
+    const obsCliente = sanitizarTexto(ticketItems[0]?.trabajo || '');
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: obsCliente || null, tituloDiag: 'TRABAJO REALIZADO', conBullet: true });
 
     // Observaciones generales (del primer item si existe)
-    const obsGral = sanitizarTexto(ticketItems[0]?.observaciones || leyenda || '');
+    const obsGral = sanitizarTexto(ticketItems[0]?.observaciones || '');
     if (obsGral) {
         y = checkSalto(doc, y, 28);
         doc.setFontSize(T.label);
@@ -432,7 +456,7 @@ async function generarMultiTecnico(doc, {
         y = await dibujarQRGoogle(doc, { y, link: linkGoogle });
     }
 
-    // ── Página 2: Detalle técnico por equipos ────────────────────────────────
+    // ── Página 2: Detalle técnico por equipos (1 fila por equipo, columnas trabajo/repuestos) ──
     doc.addPage();
     dibujarHeaderCompacto(doc, { tipoLabel: 'DETALLE TÉCNICO POR EQUIPOS', fecha, tecnico, nroDoc });
     y = HEADER_H.compact + 8;
@@ -443,73 +467,67 @@ async function generarMultiTecnico(doc, {
     doc.text('Registro completo de trabajos y repuestos utilizados por equipo', M, y);
     y += 6;
 
-    // Tabla grande con sub-headers por equipo
     const bodyRows = [];
-    const bodyMeta = []; // para saber qué filas son sub-headers
+    const bodyMeta = [];
 
     ticketItems.forEach((item, idx) => {
         const modelo = item.modeloEquipo || item.equipoModelo || 'Dispenser';
         const serial = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
             ? `S/N: ${item.equipoSerial}` : '';
-        const ubic   = item.ubicacionEquipo || item.equipoUbicacion || '';
-        const header = [`EQUIPO ${idx + 1}: ${modelo}${serial ? '  ·  ' + serial : ''}${ubic ? '  ·  ' + ubic : ''}`, '', '', ''];
-        bodyRows.push(header);
-        bodyMeta.push({ isHeader: true });
+        const ubic = item.ubicacionEquipo || item.equipoUbicacion || '';
 
-        const filas = construirFilasItem(item);
-        if (filas.length === 0) {
-            bodyRows.push(['Sin items registrados', '', '', '']);
-            bodyMeta.push({ isHeader: false });
-        } else {
-            filas.forEach(f => {
-                bodyRows.push([f.concepto, String(f.cant), `$ ${f.unitario}`, `$ ${f.importe}`]);
-                bodyMeta.push({ isHeader: false, esServicio: f.esServicio });
-            });
-        }
+        const equipoCell = [
+            `${idx + 1}. ${modelo}`,
+            serial ? serial : null,
+            ubic   ? ubic   : null,
+        ].filter(Boolean).join('\n');
 
-        // Subtotal del equipo
+        // Trabajo (mano de obra)
+        const mo = parseFloat(item.costoExtra || 0);
+        const trabajoCell = mo > 0
+            ? `· Mano de obra\n  $ ${mo.toLocaleString('es-AR')}`
+            : '—';
+
+        // Repuestos
+        const reps = item.repuestosUsados || [];
+        const repCell = reps.length > 0
+            ? reps.map(r => {
+                const sub = parseFloat(r.subtotal ?? r.precio * r.cantidad ?? 0);
+                return `· ${r.nombre} (x${r.cantidad})\n  $ ${sub.toLocaleString('es-AR')}`;
+              }).join('\n')
+            : '—';
+
         const sub = parseFloat(item.totalCalculado || item.costo || 0);
-        bodyRows.push(['', '', 'Subtotal equipo', `$ ${sub.toLocaleString('es-AR')}`]);
-        bodyMeta.push({ isHeader: false, isSubtotal: true });
+        const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : '$ 0';
+
+        bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
+        bodyMeta.push({ idx });
     });
 
     autoTable(doc, {
         startY: y,
-        head:  [['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']],
+        head:  [['EQUIPO', 'TRABAJO INCLUIDO', 'REPUESTOS INCLUIDOS', 'IMPORTE']],
         body:  bodyRows,
         theme: 'grid',
         headStyles: {
             fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
-            fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+            fontSize: T.xxs, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
         },
         bodyStyles: {
-            fontSize: T.xs, textColor: C.dark,
-            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+            fontSize: T.xs, textColor: C.dark, valign: 'top',
+            cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
         columnStyles: {
-            0: { cellWidth: 'auto' },
-            1: { halign: 'center', cellWidth: 13 },
-            2: { halign: 'right',  cellWidth: 28 },
-            3: { halign: 'right',  cellWidth: 30, fontStyle: 'bold' },
+            0: { cellWidth: 38, fontStyle: 'bold' },
+            1: { cellWidth: 44 },
+            2: { cellWidth: 'auto' },
+            3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy },
         },
         margin: { left: M, right: M },
         didParseCell: data => {
             if (data.section !== 'body') return;
-            const meta = bodyMeta[data.row.index];
-            if (meta?.isHeader) {
-                data.cell.styles.fillColor    = C.navyLight || [30, 65, 120];
-                data.cell.styles.textColor    = C.white;
-                data.cell.styles.fontStyle    = 'bold';
-                data.cell.styles.fontSize     = T.xs;
-            } else if (meta?.isSubtotal) {
-                data.cell.styles.fillColor    = C.grayBg;
-                data.cell.styles.fontStyle    = 'bold';
-                data.cell.styles.textColor    = C.red;
-            } else if (data.row.index % 2 === 0) {
-                data.cell.styles.fillColor = C.grayZebra;
-            }
-            if (meta?.esServicio) data.cell.styles.textColor = C.navy;
+            if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
         },
     });
 
@@ -566,27 +584,38 @@ async function generarMultiPresupuesto(doc, {
         ],
     });
 
-    // Tabla grande por equipo
+    // Tabla columnar por equipo (formato: EQUIPO | TRABAJO ESTIMADO | REPUESTOS ESTIMADOS | IMPORTE)
     const bodyRows = [];
-    const bodyMeta = [];
 
     ticketItems.forEach((item, idx) => {
         const modelo = item.modeloEquipo || item.equipoModelo || 'Dispenser';
         const serial = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
             ? `S/N: ${item.equipoSerial}` : '';
-        const ubic   = item.ubicacionEquipo || item.equipoUbicacion || '';
-        bodyRows.push([`EQUIPO ${idx + 1}: ${modelo}${serial ? '  ·  ' + serial : ''}${ubic ? '  ·  ' + ubic : ''}`, '', '', '']);
-        bodyMeta.push({ isHeader: true });
+        const ubic = item.ubicacionEquipo || item.equipoUbicacion || '';
 
-        const filas = construirFilasItem(item);
-        filas.forEach(f => {
-            bodyRows.push([f.concepto, String(f.cant), `$ ${f.unitario}`, `$ ${f.importe}`]);
-            bodyMeta.push({ isHeader: false, esServicio: f.esServicio });
-        });
+        const equipoCell = [
+            `${idx + 1}. ${modelo}`,
+            serial || null,
+            ubic   || null,
+        ].filter(Boolean).join('\n');
+
+        const mo = parseFloat(item.costoExtra || 0);
+        const trabajoCell = mo > 0
+            ? `· Mano de obra\n  $ ${mo.toLocaleString('es-AR')}`
+            : '—';
+
+        const reps = item.repuestosUsados || [];
+        const repCell = reps.length > 0
+            ? reps.map(r => {
+                const sub = parseFloat(r.subtotal ?? r.precio * r.cantidad ?? 0);
+                return `· ${r.nombre} (x${r.cantidad})\n  $ ${sub.toLocaleString('es-AR')}`;
+              }).join('\n')
+            : '—';
 
         const sub = parseFloat(item.totalCalculado || item.costo || 0);
-        bodyRows.push(['', '', 'Subtotal', `$ ${sub.toLocaleString('es-AR')}`]);
-        bodyMeta.push({ isHeader: false, isSubtotal: true });
+        const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
+
+        bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
     });
 
     y = checkSalto(doc, y, 40);
@@ -598,40 +627,28 @@ async function generarMultiPresupuesto(doc, {
 
     autoTable(doc, {
         startY: y,
-        head:  [['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']],
+        head:  [['EQUIPO', 'TRABAJO ESTIMADO', 'REPUESTOS ESTIMADOS', 'IMPORTE']],
         body:  bodyRows,
         theme: 'grid',
         headStyles: {
             fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
-            fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+            fontSize: T.xxs, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
         },
         bodyStyles: {
-            fontSize: T.xs, textColor: C.dark,
-            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+            fontSize: T.xs, textColor: C.dark, valign: 'top',
+            cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
         columnStyles: {
-            0: { cellWidth: 'auto' },
-            1: { halign: 'center', cellWidth: 13 },
-            2: { halign: 'right',  cellWidth: 28 },
-            3: { halign: 'right',  cellWidth: 30, fontStyle: 'bold' },
+            0: { cellWidth: 38, fontStyle: 'bold' },
+            1: { cellWidth: 44 },
+            2: { cellWidth: 'auto' },
+            3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy },
         },
         margin: { left: M, right: M },
         didParseCell: data => {
             if (data.section !== 'body') return;
-            const meta = bodyMeta[data.row.index];
-            if (meta?.isHeader) {
-                data.cell.styles.fillColor = [30, 65, 120];
-                data.cell.styles.textColor = C.white;
-                data.cell.styles.fontStyle = 'bold';
-                data.cell.styles.fontSize  = T.xs;
-            } else if (meta?.isSubtotal) {
-                data.cell.styles.fillColor = C.grayBg;
-                data.cell.styles.fontStyle = 'bold';
-                data.cell.styles.textColor = C.red;
-            } else if (data.row.index % 2 === 0) {
-                data.cell.styles.fillColor = C.grayZebra;
-            }
+            if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
         },
     });
 
@@ -678,6 +695,13 @@ async function generarMultiPresupuesto(doc, {
     // Firmas
     y = checkSalto(doc, y, 36);
     y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
+
+    // Página de fotos de equipos (solo si algún ítem tiene fotoAntes)
+    await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
+        tipoLabel: 'FOTOGRAFÍAS DE LOS EQUIPOS',
+        subtitulo: 'ESTADO ACTUAL DE CADA EQUIPO',
+        soloAntes: true,
+    });
 }
 
 // ── FLUJO COMPROBANTE (venta de productos) ────────────────────────────────────
@@ -872,8 +896,11 @@ export const generarPDF = async ({
     }
 
     // ── FOOTER EN TODAS LAS PÁGINAS ───────────────────────────────────────────
-    const leyendaLimpia = (leyenda || '').replace(/[\r\n]+/g, ' ').trim().substring(0, 110);
+    // Para ORDEN_SERVICIO ignoramos leyenda en footer para que muestre estrellas siempre
     const esOrdenFinal  = tipoDetectado === 'ORDEN_SERVICIO';
+    const leyendaLimpia = esOrdenFinal
+        ? null
+        : (leyenda || '').replace(/[\r\n]+/g, ' ').trim().substring(0, 110) || null;
     const total         = doc.internal.getNumberOfPages();
 
     for (let i = 1; i <= total; i++) {
@@ -881,8 +908,8 @@ export const generarPDF = async ({
         dibujarFooter(doc, {
             pagina:       i,
             totalPaginas: total,
-            textoCentral: leyendaLimpia || null,
-            conEstrellas: esOrdenFinal && i === 1,
+            textoCentral: leyendaLimpia,
+            conEstrellas: esOrdenFinal,
         });
     }
 

@@ -163,6 +163,39 @@ export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = nu
     return y + cardH + 4;
 }
 
+// ── BLOQUE PROBLEMA / SOLICITUD (presupuesto, sección separada) ───────────────
+export function dibujarBloqueSolicitud(doc, { texto, y, pageW }) {
+    if (!texto || !texto.trim()) return y;
+
+    const lines = doc.splitTextToSize(texto.trim(), CONTENT_W - 12);
+    const cardH = Math.max(20, lines.length * 4.5 + 16);
+
+    // Fondo con borde izquierdo dorado/gold
+    doc.setFillColor(...C.grayLight);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'FD');
+
+    // Barra izquierda gold
+    doc.setFillColor(...(C.gold || [212, 136, 0]));
+    doc.roundedRect(M - 2, y, 3, cardH, 2, 2, 'F');
+    doc.rect(M - 0.5, y, 1.5, cardH, 'F');
+
+    let dy = y + 7;
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...(C.gold || [212, 136, 0]));
+    doc.text('PROBLEMA / SOLICITUD INFORMADA', M + 6, dy);
+    dy += 5;
+
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.dark);
+    lines.slice(0, 8).forEach(l => { doc.text(l, M + 6, dy); dy += 4.5; });
+
+    return y + cardH + 4;
+}
+
 // ── BLOQUE DIAGNÓSTICO DETALLE (solo ORDEN_SERVICIO) ─────────────────────────
 export function dibujarBloqueDiagnosticoDetalle(doc, { texto, y, pageW }) {
     if (!texto || !texto.trim()) return y;
@@ -605,7 +638,7 @@ export async function dibujarQRGoogle(doc, { y, link }) {
 
         doc.setFontSize(9);
         doc.setTextColor(255, 180, 0);
-        doc.text('★ ★ ★ ★ ★', M + QR_W + 6, y + 21);
+        doc.text('* * * * *', M + QR_W + 6, y + 21);
 
         return y + QR_H + 8;
     } catch {
@@ -727,12 +760,12 @@ export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null 
     return y + FOTO_H + 10;
 }
 
-// ── CONDICIONES PRESUPUESTO ───────────────────────────────────────────────────
+// ── CONDICIONES PRESUPUESTO (standalone, para multi-equipo) ───────────────────
 export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
     const condDefault = [
-        '· Válido por 7 días corridos.',
+        '· Valido por 7 dias corridos.',
         '· El servicio se coordina una vez confirmado el presupuesto.',
-        '· Garantía: 90 días sobre mano de obra — repuestos según fabricante.',
+        '· Garantia: 90 dias sobre mano de obra - repuestos segun fabricante.',
     ].join('\n');
 
     const textoCond = texto || condDefault;
@@ -750,4 +783,75 @@ export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
     lines.forEach((l, i) => doc.text(l, M, y + i * 4.2));
 
     return y + lines.length * 4.2 + 4;
+}
+
+// ── CONDICIONES + CTA compacto (presupuesto single) ───────────────────────────
+// Agrupa condiciones y llamada a la acción en un solo bloque para evitar página vacía
+export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
+    const pageH = doc.internal.pageSize.getHeight();
+
+    // Card 2 columnas: izquierda condiciones, derecha CTA
+    const COL_IZQ = CONTENT_W * 0.55;
+    const COL_DER = CONTENT_W - COL_IZQ - 4;
+    const X_DER   = M + COL_IZQ + 4;
+
+    const conds = [
+        '· Valido por 7 dias corridos desde la fecha de emision.',
+        '· El servicio se coordina una vez aprobado.',
+        '· Garantia 90 dias mano de obra.',
+        '· Repuestos segun fabricante.',
+    ];
+
+    const cardH = Math.max(38, conds.length * 5 + 14);
+
+    // Fondo izquierdo
+    doc.setFillColor(...C.grayLight);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(M - 2, y, COL_IZQ + 4, cardH, 2, 2, 'FD');
+
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('CONDICIONES', M + 3, y + 6);
+
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    conds.forEach((c, i) => doc.text(c, M + 3, y + 13 + i * 5));
+
+    // Fondo derecho — CTA verde
+    doc.setFillColor(240, 253, 244);
+    doc.setDrawColor(...C.green);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(X_DER - 2, y, COL_DER + 4, cardH, 2, 2, 'FD');
+
+    // Barra top verde
+    doc.setFillColor(...C.green);
+    doc.roundedRect(X_DER - 2, y, COL_DER + 4, 3, 2, 2, 'F');
+    doc.rect(X_DER - 2, y + 1.5, COL_DER + 4, 1.5, 'F');
+
+    doc.setFontSize(T.xs);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.green);
+    doc.text('Aprobanos el presupuesto', X_DER + COL_DER / 2, y + 12, { align: 'center' });
+
+    if (empresa.whatsapp) {
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Por WhatsApp:', X_DER + COL_DER / 2, y + 19, { align: 'center' });
+        doc.setFontSize(T.sm);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text(empresa.whatsapp, X_DER + COL_DER / 2, y + 26, { align: 'center' });
+    }
+
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    const ref = `Ref: ${nroDoc}`;
+    doc.text(ref, X_DER + COL_DER / 2, y + cardH - 5, { align: 'center' });
+
+    return y + cardH + 6;
 }

@@ -6,9 +6,19 @@ const UPLOADS_BASE = '/api/uploads';
 
 // ── Texto ─────────────────────────────────────────────────────────────────────
 
-export function sanitizarTexto(texto, maxLen = 400) {
+// Elimina patrones internos del sistema que no deben verse en el PDF
+// Ej: "| MO: $60000" es formato interno de costoExtra, ya se muestra en tabla de precios
+function limpiarInterno(texto) {
     if (!texto) return '';
     return texto
+        .replace(/\|\s*MO:\s*\$[\d.,]+/gi, '')
+        .replace(/^\s*\|\s*/, '')
+        .trim();
+}
+
+export function sanitizarTexto(texto, maxLen = 400) {
+    if (!texto) return '';
+    return limpiarInterno(texto)
         .replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim()
         .substring(0, maxLen)
         .split(' ').map(w => w.length > 30 ? w.substring(0, 28) + '…' : w).join(' ');
@@ -55,35 +65,55 @@ export function buildMetaLinea(doc, modelo, serial, ubicacion, garantia, maxW, f
 
 // ── Fotos ─────────────────────────────────────────────────────────────────────
 
+// Convierte cualquier blob/File a JPEG via canvas (soporta WebP, HEIC, etc.)
+async function blobAJpeg(blob) {
+    return new Promise(resolve => {
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width  = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                URL.revokeObjectURL(url);
+                resolve(dataUrl);
+            } catch { URL.revokeObjectURL(url); resolve(null); }
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
+    });
+}
+
 export async function cargarFoto(src) {
     if (!src) return null;
-    let dataUrl = null;
+
+    if (typeof src === 'string' && src.startsWith('data:')) {
+        // Ya es data URL — igual convertir a JPEG por si es WebP/otro
+        const format = src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        return { data: src, format };
+    }
+
+    let blob = null;
     if (src instanceof File) {
-        dataUrl = await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror  = () => resolve(null);
-            reader.readAsDataURL(src);
-        });
-    } else if (typeof src === 'string' && src.startsWith('data:')) {
-        dataUrl = src;
+        blob = src;
     } else {
         try {
-            // URL relativa → proxy del dev server o mismo origen en prod (evita CORS con R2)
+            // URL relativa → proxy del backend (evita CORS con R2)
             const filename = src.startsWith('http') ? src.split('/').pop() : src;
             const res = await fetch(`${UPLOADS_BASE}/${filename}`);
             if (!res.ok) return null;
-            const blob = await res.blob();
-            dataUrl = await new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror  = () => resolve(null);
-                reader.readAsDataURL(blob);
-            });
+            blob = await res.blob();
         } catch { return null; }
     }
+
+    if (!blob) return null;
+
+    // Convertir siempre a JPEG via canvas (jsPDF no soporta WebP)
+    const dataUrl = await blobAJpeg(blob);
     if (!dataUrl) return null;
-    return { data: dataUrl, format: dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG' };
+    return { data: dataUrl, format: 'JPEG' };
 }
 
 // ── Drawing primitives ────────────────────────────────────────────────────────

@@ -60,14 +60,19 @@ export async function dibujarEvidenciaInline(doc, { x, y, w, fotoA, fotoD, titul
 }
 
 // ── PÁGINA(S) DE EVIDENCIA COMPLETA (multi-equipo) ───────────────────────────
-export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc) {
+// soloAntes: true → solo carga fotoAntes, útil para presupuesto (sin "después")
+export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
+    tipoLabel = 'EVIDENCIA FOTOGRÁFICA',
+    subtitulo = 'ANTES Y DESPUÉS',
+    soloAntes = false,
+} = {}) {
     const pageH = doc.internal.pageSize.getHeight();
 
     const fotosItems = await Promise.all(
         ticketItems.map(async it => ({
             item: it,
             fotoA: await cargarFoto(it.fotoAntes),
-            fotoD: await cargarFoto(it.fotoDespues),
+            fotoD: soloAntes ? null : await cargarFoto(it.fotoDespues),
         }))
     );
 
@@ -75,31 +80,27 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc) {
     if (conFotos.length === 0) return;
 
     doc.addPage();
-    dibujarHeaderCompacto(doc, {
-        tipoLabel: 'EVIDENCIA FOTOGRÁFICA',
-        fecha,
-        nroDoc,
-    });
+    dibujarHeaderCompacto(doc, { tipoLabel, fecha, nroDoc });
 
-    // Título "ANTES Y DESPUÉS"
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
-    doc.text('ANTES Y DESPUÉS', M, Y_INI - 2);
+    doc.text(subtitulo, M, Y_INI - 2);
 
-    // Grilla 2 columnas (antes | después)
+    // Grilla 2 columnas (antes | después) — o foto centrada si soloAntes
     const COL_W = (CONTENT_W - 6) / 2;
     const FOTO_H = Math.floor((COL_W * 3) / 4);
     const Y_LIM  = pageH - 26;
     let y = Y_INI + 2;
 
-    // Encabezados columnas
-    doc.setFontSize(T.xxs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.grayText);
-    doc.text('ESTADO INICIAL', M + COL_W / 2, y, { align: 'center' });
-    doc.text('ESTADO FINAL',   M + COL_W + 6 + COL_W / 2, y, { align: 'center' });
-    y += 5;
+    if (!soloAntes) {
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.grayText);
+        doc.text('ESTADO INICIAL', M + COL_W / 2, y, { align: 'center' });
+        doc.text('ESTADO FINAL',   M + COL_W + 6 + COL_W / 2, y, { align: 'center' });
+        y += 5;
+    }
 
     for (const { item, fotoA, fotoD } of conFotos) {
         const blockH = FOTO_H + 16;
@@ -140,8 +141,13 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc) {
             }
         };
 
-        dibujarFoto(fotoA, M,              y, COL_W, FOTO_H);
-        dibujarFoto(fotoD, M + COL_W + 6, y, COL_W, FOTO_H);
+        if (fotoA && fotoD) {
+            dibujarFoto(fotoA, M,              y, COL_W, FOTO_H);
+            dibujarFoto(fotoD, M + COL_W + 6, y, COL_W, FOTO_H);
+        } else {
+            const xCentro = M + (CONTENT_W - COL_W) / 2;
+            dibujarFoto(fotoA || fotoD, xCentro, y, COL_W, FOTO_H);
+        }
 
         y += FOTO_H + 8;
     }
