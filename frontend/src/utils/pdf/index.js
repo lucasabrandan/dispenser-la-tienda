@@ -100,7 +100,8 @@ function construirFilasItem(item) {
 
 async function generarSingleTecnico(doc, {
     item, cliente, sede, tipo, y, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, garantiaTexto, proximoMantenimiento, googleReviewLink, incluirFirmas = true,
+    firmaCliente, firmaTecnico, garantiaTexto, proximoMantenimiento, googleReviewLink,
+    incluirFirmas = true, descuentoPorcentaje = 0, leyenda = '',
 }) {
     const pageW = doc.internal.pageSize.getWidth();
 
@@ -117,8 +118,8 @@ async function generarSingleTecnico(doc, {
     y = checkSalto(doc, y, 36);
     y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoD ? fotoA : null, conBullet: true });
 
-    // • DIAGNÓSTICO DETALLE — solo si hay observaciones propias (no repetir trabajo)
-    const diagDetalle = sanitizarTexto(item.observaciones || '');
+    // • DIAGNÓSTICO DETALLE — trabajo realizado en el equipo
+    const diagDetalle = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || item.observaciones || '');
     if (diagDetalle) {
         y = checkSalto(doc, y, 24);
         y = dibujarBloqueDiagnosticoDetalle(doc, { texto: diagDetalle, y, pageW });
@@ -134,6 +135,11 @@ async function generarSingleTecnico(doc, {
     y += 5;
 
     const filas = construirFilasItem(item);
+    // Concepto MO más específico: usar el trabajo real en lugar del genérico
+    if (filas.length > 0 && filas[0].esServicio && item.trabajo?.trim()) {
+        const t = item.trabajo.trim();
+        filas[0].concepto = t.length > 55 ? t.substring(0, 52) + '...' : t;
+    }
     // Sin ítems → mostrar fila placeholder profesional
     const filasConPlaceholder = filas.length > 0 ? filas : [{
         concepto: 'Servicio de diagnostico tecnico', cant: 1,
@@ -174,8 +180,30 @@ async function generarSingleTecnico(doc, {
 
     let tableEndY = doc.lastAutoTable.finalY + 3;
 
-    // Total
-    const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${totalEquipo.toLocaleString('es-AR')}`;
+    // Desglose subtotal → descuento → total
+    const pct = parseFloat(descuentoPorcentaje || 0);
+    const descuentoMonto = (!sinItems && pct > 0) ? Math.round(totalEquipo * pct / 100) : 0;
+    const totalFinal = totalEquipo - descuentoMonto;
+    const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${totalFinal.toLocaleString('es-AR')}`;
+
+    if (pct > 0 && !sinItems) {
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Subtotal', M + 3, tableEndY + 4.5);
+        doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 4.5, { align: 'right' });
+        tableEndY += 6;
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.red);
+        doc.text(`Descuento ${pct}%`, M + 3, tableEndY + 4.5);
+        doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 4.5, { align: 'right' });
+        tableEndY += 6;
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M, tableEndY, pageW - M, tableEndY);
+        tableEndY += 2;
+    }
+
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
@@ -218,6 +246,27 @@ async function generarSingleTecnico(doc, {
         doc.setTextColor(...C.dark);
         doc.text(proximoMantenimiento, pageW - M, y + 5, { align: 'right' });
         y += 19;
+    }
+
+    // Condiciones del servicio (leyenda ingresada en el formulario)
+    const leyLimpia = (leyenda || '').trim();
+    if (leyLimpia) {
+        y = checkSalto(doc, y, 20);
+        const leyLines = doc.splitTextToSize(leyLimpia.replace(/[\r\n]+/g, ' '), CONTENT_W - 10);
+        const leyH = Math.min(leyLines.length, 4) * 4.2 + 11;
+        doc.setFillColor(...C.grayLight);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(M - 2, y, CONTENT_W + 4, leyH, 2, 2, 'FD');
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('CONDICIONES', M + 2, y + 6);
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        leyLines.slice(0, 4).forEach((l, i) => doc.text(l, M + 2, y + 11 + i * 4.2));
+        y += leyH + 4;
     }
 
     // Garantía
@@ -383,7 +432,8 @@ async function generarSinglePresupuesto(doc, {
 
 async function generarMultiTecnico(doc, {
     ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, garantiaTexto, googleReviewLink, leyenda, incluirFirmas = true,
+    firmaCliente, firmaTecnico, garantiaTexto, googleReviewLink, leyenda,
+    incluirFirmas = true, descuentoPorcentaje = 0,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -501,7 +551,29 @@ async function generarMultiTecnico(doc, {
 
     y = doc.lastAutoTable.finalY + 4;
 
-    // Total final
+    // Desglose subtotal → descuento → total
+    const pctM = parseFloat(descuentoPorcentaje || 0);
+    const descuentoM = pctM > 0 ? Math.round(subtotalTotal * pctM / 100) : 0;
+    const totalFinalM = subtotalTotal - descuentoM;
+
+    if (pctM > 0) {
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Subtotal', M + 4, y + 4.5);
+        doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.red);
+        doc.text(`Descuento ${pctM}%`, M + 4, y + 4.5);
+        doc.text(`- $ ${descuentoM.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M, y, pageW - M, y);
+        y += 2;
+    }
+
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.4);
@@ -512,7 +584,29 @@ async function generarMultiTecnico(doc, {
     doc.text('TOTAL FACTURADO', M + 4, y + 7);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 8, { align: 'right' });
+    doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M, y + 8, { align: 'right' });
+    y += 16;
+
+    // Condiciones del servicio (leyenda)
+    const leyLimpiaM = (leyenda || '').trim();
+    if (leyLimpiaM) {
+        y = checkSalto(doc, y, 20);
+        const leyLinesM = doc.splitTextToSize(leyLimpiaM.replace(/[\r\n]+/g, ' '), CONTENT_W - 10);
+        const leyHM = Math.min(leyLinesM.length, 4) * 4.2 + 11;
+        doc.setFillColor(...C.grayLight);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(M - 2, y, CONTENT_W + 4, leyHM, 2, 2, 'FD');
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('CONDICIONES', M + 2, y + 6);
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        leyLinesM.slice(0, 4).forEach((l, i) => doc.text(l, M + 2, y + 11 + i * 4.2));
+        y += leyHM + 4;
+    }
 
     // ── Página 3: Evidencia fotográfica ─────────────────────────────────────
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc);
