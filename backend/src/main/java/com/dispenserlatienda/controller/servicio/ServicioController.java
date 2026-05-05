@@ -32,7 +32,7 @@ public class ServicioController {
         this.servicioRepository = servicioRepository;
     }
 
-    // GET: Listar servicios con filtros opcionales (tipo, estado, busqueda, desde, hasta)
+    // GET: Listar servicios con filtros opcionales (tipo, estado, busqueda, desde, hasta, usuarioId, clienteId)
     @GetMapping
     public ResponseEntity<Page<ServicioDTO>> listar(
             @RequestParam(required = false) String tipo,
@@ -41,8 +41,9 @@ public class ServicioController {
             @RequestParam(required = false) String desde,
             @RequestParam(required = false) String hasta,
             @RequestParam(required = false) Long usuarioId,
+            @RequestParam(required = false) Long clienteId,
             Pageable pageable) {
-        return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, usuarioId, pageable));
+        return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, usuarioId, clienteId, pageable));
     }
 
     // GET: Stats resumen (totalMes, hoy, pendientes, ganancia MO) — accesible a todos los roles

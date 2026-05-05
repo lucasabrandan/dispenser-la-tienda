@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import EquipoItem from '../EquipoItem';
 import HistorialEquipoModal from '../equipo/HistorialEquipoModal';
 import { abrirMaps, abrirWhatsApp } from '../../utils/clienteUtils';
+import HistorialClienteModal from './HistorialClienteModal';
 
 // Avatar con iniciales del cliente
 function Avatar({ nombre }) {
@@ -45,6 +46,7 @@ export default function ClienteCard({
     const [verHistorial, setVerHistorial] = useState(false);
     const [historialExpandido, setHistorialExpandido] = useState(false);
     const [equipoHistorial, setEquipoHistorial] = useState(null);
+    const [modalHistorial, setModalHistorial] = useState(false);
 
     const sedesCli          = sedes.filter(s => s.clienteId === cliente.id);
     const eqCli             = equipos.filter(eq => sedesCli.map(s => s.id).includes(eq.sedeId));
@@ -123,6 +125,11 @@ export default function ClienteCard({
                                 💰 Venta
                             </button>
                         )}
+                        {/* Historial completo del cliente */}
+                        <button onClick={() => setModalHistorial(true)}
+                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-[#1C1917] dark:bg-[#2E2E2E] text-white rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
+                            📋 Hist.
+                        </button>
                         <button onClick={() => onEditCliente(cliente)}
                             className="w-10 flex items-center justify-center py-2.5 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] rounded-xl hover:bg-[#D48800] hover:text-white dark:hover:bg-[#F0A500] active:scale-95 transition-all">
                             ✏️
@@ -258,6 +265,14 @@ export default function ClienteCard({
                     equipo={equipoHistorial}
                     servicios={servicios}
                     onClose={() => setEquipoHistorial(null)}
+                />
+            )}
+
+            {/* Modal historial completo del cliente */}
+            {modalHistorial && (
+                <HistorialClienteModal
+                    cliente={cliente}
+                    onClose={() => setModalHistorial(false)}
                 />
             )}
         </div>

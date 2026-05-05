@@ -52,15 +52,15 @@ public class ServicioService {
 
     @Transactional(readOnly = true)
     public Page<ServicioDTO> listarTodos(Pageable pageable) {
-        return listarFiltrado(null, null, null, null, null, null, pageable);
+        return listarFiltrado(null, null, null, null, null, null, null, pageable);
     }
 
-    // Listado con filtros opcionales: tipo, estado, búsqueda, rango de fechas, usuarioId
+    // Listado con filtros opcionales: tipo, estado, búsqueda, rango de fechas, usuarioId, clienteId
     @Transactional(readOnly = true)
     public Page<ServicioDTO> listarFiltrado(String tipoStr, String estadoStr,
                                              String busqueda, String desde, String hasta,
-                                             Long usuarioId, Pageable pageable) {
-        return servicioRepository.findAll(buildSpec(tipoStr, estadoStr, busqueda, desde, hasta, usuarioId), pageable)
+                                             Long usuarioId, Long clienteId, Pageable pageable) {
+        return servicioRepository.findAll(buildSpec(tipoStr, estadoStr, busqueda, desde, hasta, usuarioId, clienteId), pageable)
                 .map(this::mapToDTO);
     }
 
@@ -72,9 +72,9 @@ public class ServicioService {
         LocalDate finMes    = inicioMes.plusMonths(1).minusDays(1);
 
         List<Servicio> realizados = servicioRepository.findAll(
-                buildSpec(tipoStr, "REALIZADO", null, null, null, null));
+                buildSpec(tipoStr, "REALIZADO", null, null, null, null, null));
         List<Servicio> pendientes = servicioRepository.findAll(
-                buildSpec(tipoStr, "PRESUPUESTO", null, null, null, null));
+                buildSpec(tipoStr, "PRESUPUESTO", null, null, null, null, null));
 
         List<Servicio> delMes = realizados.stream()
                 .filter(s -> s.getFechaServicio() != null
@@ -104,7 +104,7 @@ public class ServicioService {
 
     private Specification<Servicio> buildSpec(String tipoStr, String estadoStr,
                                                String busqueda, String desde, String hasta,
-                                               Long usuarioId) {
+                                               Long usuarioId, Long clienteId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (tipoStr != null && !tipoStr.isBlank())
@@ -131,6 +131,8 @@ public class ServicioService {
                 predicates.add(cb.lessThanOrEqualTo(root.get("fechaServicio"), LocalDate.parse(hasta)));
             if (usuarioId != null)
                 predicates.add(cb.equal(root.get("usuario").get("id"), usuarioId));
+            if (clienteId != null)
+                predicates.add(cb.equal(root.get("sede").get("cliente").get("id"), clienteId));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
