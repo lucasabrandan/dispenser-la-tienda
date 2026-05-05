@@ -312,12 +312,14 @@ export default function ServicioList({ onEditar }) {
 
                                     <div className="flex-1" />
 
-                                    <button
-                                        onClick={() => eliminarServicio(s.id)}
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[var(--danger-bg)] text-[var(--danger-tx)]"
-                                        title="Eliminar">
-                                        🗑️
-                                    </button>
+                                    {esAdmin && (
+                                        <button
+                                            onClick={() => eliminarServicio(s.id)}
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[var(--danger-bg)] text-[var(--danger-tx)]"
+                                            title="Eliminar">
+                                            🗑️
+                                        </button>
+                                    )}
 
                                     {esPendiente && (
                                         <button

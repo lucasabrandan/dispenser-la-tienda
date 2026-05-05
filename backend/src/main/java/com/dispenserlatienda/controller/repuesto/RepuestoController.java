@@ -3,6 +3,7 @@ package com.dispenserlatienda.controller.repuesto;
 import com.dispenserlatienda.domain.repuesto.Repuesto;
 import com.dispenserlatienda.repository.repuesto.RepuestoRepository;
 import com.dispenserlatienda.service.servicio.FileStorageService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -86,7 +87,7 @@ public class RepuestoController {
         }
     }
 
-    // PUT: Editar repuesto con foto ← AGREGADO consumes
+    // PUT: Editar repuesto con foto
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Repuesto> editar(
             @PathVariable Long id,
@@ -98,14 +99,11 @@ public class RepuestoController {
             @RequestParam(value = "porcentajeMarkup", required = false) BigDecimal porcentajeMarkup,
             @RequestParam(value = "precioLista", required = false) BigDecimal precioLista,
             @RequestParam(value = "precio", required = false) BigDecimal precio,
-            @RequestParam(value = "stock", required = false, defaultValue = "0") Integer stock,
+            @RequestParam(value = "stock", required = false) Integer stock,
             @RequestParam(value = "foto", required = false) MultipartFile foto
     ) {
         var repuestoOpt = repuestoRepository.findById(id);
-
-        if (repuestoOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (repuestoOpt.isEmpty()) return ResponseEntity.notFound().build();
 
         Repuesto repuesto = repuestoOpt.get();
 
@@ -118,11 +116,10 @@ public class RepuestoController {
             repuesto.setPorcentajeMarkup(porcentajeMarkup);
             repuesto.setPrecioLista(precioLista != null ? precioLista : precio);
             repuesto.setPrecio(precio != null ? precio : precioLista);
-            repuesto.setStock(stock < 0 ? 0 : stock);
+            // Preservar stock existente si no se envía explícitamente
+            if (stock != null) repuesto.setStock(stock < 0 ? 0 : stock);
 
-            // Actualizar foto si se proporciona
             if (foto != null && !foto.isEmpty()) {
-                // Eliminar foto anterior si existe
                 if (repuesto.getFotoUrl() != null) {
                     fileStorageService.eliminarArchivo(repuesto.getFotoUrl());
                 }
@@ -130,10 +127,11 @@ public class RepuestoController {
                 repuesto.setFotoUrl(nombreFoto);
             }
 
-            Repuesto actualizado = repuestoRepository.save(repuesto);
-            return ResponseEntity.ok(actualizado);
+            return ResponseEntity.ok(repuestoRepository.save(repuesto));
 
-        } catch (IOException e) {
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
