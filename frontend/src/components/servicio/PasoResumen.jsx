@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label, BackBtn, M, DSCard } from './ServicioUI';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 // ── Panel de rentabilidad discreto ───────────────────────────────────────────
 // Light: texto dorado "Ver rentabilidad" con chevron
@@ -113,7 +115,19 @@ export default function PasoResumen({ hook, onBack, onGuardar, onConfirmar, disp
         leyenda, setLeyenda,
         calcularGananciaRepuesto, calcularResumenGanancia,
         idEdicion, eliminarItem,
+        tecnicoSeleccionado, setTecnicoSeleccionado,
     } = hook;
+
+    const { esAdmin } = useAuth();
+    const [tecnicos, setTecnicos] = useState([]);
+
+    useEffect(() => {
+        if (esAdmin) {
+            api.get('/admin/usuarios')
+                .then(r => setTecnicos((r.data || []).filter(u => u.activo)))
+                .catch(() => {});
+        }
+    }, [esAdmin]);
 
     const resumen        = calcularResumenGanancia();
     const totalBruto     = ticketItems.reduce((a, b) => a + b.totalCalculado, 0);
@@ -209,6 +223,31 @@ export default function PasoResumen({ hook, onBack, onGuardar, onConfirmar, disp
 
             {/* ── Rentabilidad discreta ─────────────────────────────────── */}
             <RentabilidadPanel resumen={resumen} descuentoPorcentaje={descuentoPorcentaje} />
+
+            {/* ── Técnico (solo admin) ──────────────────────────────────── */}
+            {esAdmin && tecnicos.length > 0 && (
+                <DSCard>
+                    <Label>Técnico responsable</Label>
+                    <select
+                        value={tecnicoSeleccionado?.id || ''}
+                        onChange={e => {
+                            const t = tecnicos.find(u => u.id === Number(e.target.value));
+                            setTecnicoSeleccionado(t ? { id: t.id, nombre: t.nombre } : null);
+                        }}
+                        className={inputCls}
+                    >
+                        <option value=''>— Yo mismo (admin) —</option>
+                        {tecnicos.map(t => (
+                            <option key={t.id} value={t.id}>{t.nombre} · {t.rol === 'ADMIN' ? 'Admin' : 'Técnico'}</option>
+                        ))}
+                    </select>
+                    {tecnicoSeleccionado && (
+                        <p className="text-[10px] mt-1.5 font-bold text-[#D48800] dark:text-[#F0A500]">
+                            El servicio se registrará a nombre de {tecnicoSeleccionado.nombre}
+                        </p>
+                    )}
+                </DSCard>
+            )}
 
             {/* ── Observaciones ─────────────────────────────────────────── */}
             <DSCard>

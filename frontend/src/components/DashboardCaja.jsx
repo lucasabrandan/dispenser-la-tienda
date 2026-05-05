@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCajaData } from '../hooks/useCajaData';
 import { useMontos } from '../context/MontosContext';
+import { useAuth } from '../context/AuthContext';
+import CierreCajaModal from './finanzas/CierreCajaModal';
 
 // ── Helper: muestra monto o puntitos según estado global ────────────────────
 function M({ valor, prefix = '$', className = '' }) {
@@ -15,6 +17,8 @@ function M({ valor, prefix = '$', className = '' }) {
 
 export default function DashboardCaja({ setVistaActual }) {
     const { stats, cargando, recargar } = useCajaData();
+    const { esAdmin } = useAuth();
+    const [modalCierre, setModalCierre] = useState(false);
 
     const hoy = new Date().toLocaleDateString('es-AR', {
         weekday: 'long', day: 'numeric', month: 'long'
@@ -55,13 +59,23 @@ export default function DashboardCaja({ setVistaActual }) {
                             {hoy}
                         </p>
                     </div>
-                    <button
-                        onClick={recargar}
-                        disabled={cargando}
-                        className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]"
-                    >
-                        <span className={`text-base ${cargando ? 'animate-spin' : ''}`}>🔄</span>
-                    </button>
+                    <div className="flex gap-2">
+                        {esAdmin && (
+                            <button
+                                onClick={() => setModalCierre(true)}
+                                className="h-10 px-3 rounded-xl flex items-center gap-1.5 font-bold text-[11px] uppercase transition-all active:scale-90 bg-[#D13A28] dark:bg-[#E8422F] text-white"
+                            >
+                                🗄️ Cierre
+                            </button>
+                        )}
+                        <button
+                            onClick={recargar}
+                            disabled={cargando}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]"
+                        >
+                            <span className={`text-base ${cargando ? 'animate-spin' : ''}`}>🔄</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -251,6 +265,13 @@ export default function DashboardCaja({ setVistaActual }) {
                 </div>
 
             </div>
+
+            {modalCierre && (
+                <CierreCajaModal
+                    onClose={() => setModalCierre(false)}
+                    onArchivar={() => { setModalCierre(false); recargar(); }}
+                />
+            )}
         </div>
     );
 }

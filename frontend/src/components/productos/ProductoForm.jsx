@@ -2,10 +2,7 @@ import React from 'react';
 import { toast } from 'react-hot-toast';
 import { useProductoForm } from '../../hooks/useProductoForm';
 import { useMontos } from '../../context/MontosContext';
-
-// fetch nativo: Axios tiene Content-Type: application/json fijo en la instancia,
-// lo que rompe el multipart/form-data que requiere el endpoint de repuestos.
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import api from '../../services/api';
 
 const inputCls = (error) => `
     w-full p-3 mt-2 rounded-xl outline-none transition-all
@@ -45,23 +42,18 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
             fd.append('precioLista',        parseFloat(precioLista) || 0);
             if (formData.foto) fd.append('foto', formData.foto);
 
-            const url    = productoEdicion?.id ? `${BASE_URL}/repuestos/${productoEdicion.id}` : `${BASE_URL}/repuestos`;
-            const method = productoEdicion?.id ? 'PUT' : 'POST';
-            const res    = await fetch(url, { method, body: fd });
+            const url    = productoEdicion?.id ? `/repuestos/${productoEdicion.id}` : `/repuestos`;
+            const method = productoEdicion?.id ? 'put' : 'post';
+            const { data } = await api[method](url, fd);
 
-            if (!res.ok) {
-                const msg = res.status === 409 ? 'Ya existe un repuesto con ese SKU' : 'Error al guardar producto';
-                toast.error(msg, { id: loadingToast });
-                return;
-            }
-
-            const data = await res.json();
             toast.success(`Producto "${formData.nombre}" guardado`, { id: loadingToast });
             if (onProductoGuardado) onProductoGuardado(data);
             resetear();
             onClose();
         } catch (err) {
-            toast.error('Error al guardar producto', { id: loadingToast });
+            const status = err.response?.status;
+            const msg = status === 409 ? 'Ya existe un repuesto con ese SKU' : 'Error al guardar producto';
+            toast.error(msg, { id: loadingToast });
         } finally {
             setCargando(false);
         }

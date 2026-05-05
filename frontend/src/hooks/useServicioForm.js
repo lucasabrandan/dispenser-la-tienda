@@ -39,6 +39,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   });
 
   const [repuestoElegido, setRepuestoElegido] = useState(null);
+  const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState(null); // { id, nombre } — solo admin
   const LEYENDA_DEFAULT = 'Garantía: 90 días sobre mano de obra · Repuestos según fabricante';
   const [leyenda, setLeyenda] = useState(LEYENDA_DEFAULT);
   const [fechaServicio, setFechaServicio] = useState(new Date().toISOString().split('T')[0]);
@@ -496,6 +497,13 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       const { totalConDescuento } = calcularResumenGanancia();
       const nombreCliente = overrides.clienteNombre || clienteObj?.nombre || 'Particular';
 
+      // Técnico: usa el seleccionado por admin, o el usuario logueado
+      const usuarioLogueado = (() => { try { return JSON.parse(localStorage.getItem('auth_usuario')); } catch { return null; } })();
+      const tecnicoFinal = tecnicoSeleccionado || {
+        id:     usuarioLogueado?.id     || 1,
+        nombre: usuarioLogueado?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico',
+      };
+
       // Subir fotos nuevas (data URL) al backend antes de construir el DTO.
       // Las fotos ya guardadas (filename string sin 'data:') no se vuelven a subir.
       const esNueva = s => typeof s === 'string' && s.startsWith('data:');
@@ -507,7 +515,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
 
       const servicioData = {
         sedeId:             parseInt(sedeIdFinal),
-        usuarioId:          (() => { try { return JSON.parse(localStorage.getItem('auth_usuario'))?.id || 1; } catch { return 1; } })(),
+        usuarioId:          tecnicoFinal.id,
         fecha:              fechaServicio,
         servicioTipo:       tieneEquipo ? 'TECNICA' : 'VENTA',
         estado:             confirmarTrabajo ? 'REALIZADO' : (presupuestoOrigen ? 'REALIZADO' : 'PRESUPUESTO'),
@@ -523,7 +531,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes('FILTRO'));
           return {
             equipoSerial:     it.equipoSerial || 'MOSTRADOR',
-            tecnico:          localStorage.getItem('tecnico_nombre') || 'Técnico',
+            tecnico:          tecnicoFinal.nombre,
             costo:            parseFloat(it.totalCalculado) || parseFloat(it.costoExtra) || 0,
             costoExtra:       parseFloat(it.costoExtra) || 0,
             metodoPago:       'EFECTIVO',
@@ -593,6 +601,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     historialEquipo, setHistorialEquipo,
     itemActual, setItemActual,
     repuestoElegido, setRepuestoElegido,
+    tecnicoSeleccionado, setTecnicoSeleccionado,
     descuentoPorcentaje, setDescuentoPorcentaje,
     modalClienteAbierto, setModalClienteAbierto,
     nombreClientePrellenado, setNombreClientePrellenado,

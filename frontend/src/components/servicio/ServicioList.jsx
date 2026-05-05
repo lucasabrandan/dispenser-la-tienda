@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 import { useFiltros } from '../../hooks/useFiltros';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion   from '../ui/Paginacion';
@@ -61,14 +62,17 @@ function parseFechaSort(f) {
 }
 
 export default function ServicioList({ onEditar }) {
+    const { usuario, esAdmin } = useAuth();
     const [servicios, setServicios]       = useState([]);
     const [modalDetalle, setModalDetalle] = useState(null);
     const [tipoFiltro, setTipoFiltro]     = useState('TODOS');
 
-    useEffect(() => { cargarServicios(); }, []);
+    useEffect(() => { cargarServicios(); }, []); // eslint-disable-line
 
     const cargarServicios = () => {
-        api.get('/servicios?page=0&size=500&sort=fechaServicio,desc')
+        const params = new URLSearchParams({ page: 0, size: 500, sort: 'fechaServicio,desc' });
+        if (!esAdmin && usuario?.id) params.append('usuarioId', usuario.id);
+        api.get(`/servicios?${params}`)
             .then(res => {
                 const data = res.data.content || res.data || [];
                 setServicios(Array.isArray(data)

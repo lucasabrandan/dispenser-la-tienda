@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
@@ -40,6 +41,8 @@ function resolverFechas(periodoRapido, mesSelector, desde, hasta) {
  * Gestión de servicios técnicos con paginación y filtros server-side.
  */
 export function useServicioManager() {
+    const { usuario, esAdmin } = useAuth();
+
     // ── Lista ───────────────────────────────────────────────────────────────────
     const [servicios, setServicios]     = useState([]);
     const [cargando, setCargando]       = useState(true);
@@ -109,7 +112,9 @@ export function useServicioManager() {
             if (busquedaApi)         params.busqueda  = busquedaApi;
             if (fechas.desde)        params.desde     = fechas.desde;
             if (fechas.hasta)        params.hasta     = fechas.hasta;
-            if (usuarioId)           params.usuarioId = usuarioId;
+            // técnico: siempre filtra por su propio ID; admin: usa el selector
+            if (!esAdmin && usuario?.id) params.usuarioId = usuario.id;
+            else if (usuarioId)           params.usuarioId = usuarioId;
 
             const res = await api.get('/servicios', { params });
             const page = res.data;
@@ -121,7 +126,7 @@ export function useServicioManager() {
         } finally {
             setCargando(false);
         }
-    }, [pagina, estado, busquedaApi, periodoRapido, mesSelector, desde, hasta, usuarioId]);
+    }, [pagina, estado, busquedaApi, periodoRapido, mesSelector, desde, hasta, usuarioId, esAdmin, usuario?.id]);
 
     // ── Fetch stats (separado de la lista) ───────────────────────────────────────
     const cargarStats = useCallback(async () => {

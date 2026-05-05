@@ -8,8 +8,6 @@ import BarraAccionesProductos from './Barraaccionesproducto';
 import ModalPrecioMasivo from './Modalpreciomasivo';
 import { generarPDFListaPrecios } from '../../utils/generadorPDFListaPrecios';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
-
 export default function GestorProductos() {
     const [productos, setProductos]             = useState([]);
     const [modalAbierto, setModalAbierto]       = useState(false);
@@ -112,7 +110,7 @@ export default function GestorProductos() {
                     const base  = parseFloat(producto.costo) * (1 + g / 100);
                     const lista = base * (1 + m / 100);
                     fd.append('precioLista', lista);
-                    return fetch(`${BASE_URL}/repuestos/${producto.id}`, { method: 'PUT', body: fd });
+                    return api.put(`/repuestos/${producto.id}`, fd);
                 })
             );
             toast.success('✅ Precios actualizados', { id: t });

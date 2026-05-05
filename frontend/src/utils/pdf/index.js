@@ -192,7 +192,7 @@ async function generarSingleTecnico(doc, {
 
     // Registro fotográfico
     if (fotoA || fotoD) {
-        y = checkSalto(doc, y, 50);
+        y = checkSalto(doc, y, 90);
         y = dibujarRegistroFotografico(doc, { y, fotoA, fotoD });
     }
 
