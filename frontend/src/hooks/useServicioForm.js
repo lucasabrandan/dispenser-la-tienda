@@ -500,7 +500,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       // Técnico: usa el seleccionado por admin, o el usuario logueado
       const usuarioLogueado = (() => { try { return JSON.parse(localStorage.getItem('auth_usuario')); } catch { return null; } })();
       const tecnicoFinal = tecnicoSeleccionado || {
-        id:     usuarioLogueado?.id     || 1,
+        id:     usuarioLogueado?.id,
         nombre: usuarioLogueado?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico',
       };
 
