@@ -71,18 +71,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
             WebRequest request) {
-        logger.warn("Validación de argumentos fallida");
-
-        final Map<String, Object> errors = new HashMap<>();  // ✅ AGREGAR final
+        final Map<String, Object> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
 
+        logger.warn("Validación fallida — campos: {}", errors);
+
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                "Errores de validación en los datos enviados",
+                "Errores de validación: " + errors.keySet(),
                 "VALIDATION_ERROR"
         );
         errorResponse.setDetalles(errors);

@@ -2,6 +2,7 @@ package com.dispenserlatienda.dto.servicio;
 
 import com.dispenserlatienda.domain.servicio.ServicioTipo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -15,7 +16,7 @@ public class ServicioCreateDTO {
     private String clienteNombre;
     private String sedeNombre;
     private String observaciones;
-    @NotEmpty private List<ServicioItemCreateDTO> items;
+    @Valid @NotEmpty private List<ServicioItemCreateDTO> items;
     private String estado;
     private String fotoRemito;
     private java.math.BigDecimal descuentoPorcentaje;

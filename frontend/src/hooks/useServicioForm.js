@@ -499,10 +499,19 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
 
       // Técnico: usa el seleccionado por admin, o el usuario logueado
       const usuarioLogueado = (() => { try { return JSON.parse(localStorage.getItem('auth_usuario')); } catch { return null; } })();
-      const tecnicoFinal = tecnicoSeleccionado || {
+      const baseLogueado = {
         id:     usuarioLogueado?.id,
         nombre: usuarioLogueado?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico',
       };
+      // Garantizar que nombre nunca sea null/blank aunque el admin seleccionó un técnico sin nombre
+      const tecnicoFinal = tecnicoSeleccionado?.id
+        ? { id: tecnicoSeleccionado.id, nombre: tecnicoSeleccionado.nombre || baseLogueado.nombre }
+        : baseLogueado;
+
+      if (!tecnicoFinal.id) {
+        toast.error('No se pudo identificar el técnico. Cerrá sesión y volvé a entrar.', { id: loading });
+        return false;
+      }
 
       // Subir fotos nuevas (data URL) al backend antes de construir el DTO.
       // Las fotos ya guardadas (filename string sin 'data:') no se vuelven a subir.
@@ -569,7 +578,15 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       return true;
 
     } catch (err) {
-      toast.error(`❌ ${err.response?.data?.mensaje || err.message || 'Error de servidor'}`, { id: loading });
+      console.error('Error al guardar servicio:', err.response?.data || err.message);
+      const detalle = err.response?.data;
+      const camposFallidos = detalle?.detalles
+        ? Object.keys(detalle.detalles).filter(k => k !== 'path').join(', ')
+        : null;
+      const msg = camposFallidos
+        ? `Campos inválidos: ${camposFallidos}`
+        : (detalle?.mensaje || err.message || 'Error de servidor');
+      toast.error(`❌ ${msg}`, { id: loading });
       return false;
     }
   };
