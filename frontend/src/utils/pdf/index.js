@@ -269,19 +269,18 @@ async function generarSingleTecnico(doc, {
         y += leyH + 4;
     }
 
-    // Garantía
-    y = checkSalto(doc, y, 18);
-    y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
-
-    // Firmas + QR Google juntos en la misma página si hay espacio
+    // Garantía + firmas + QR: un solo checkSalto para todo el bloque final
     const empresa    = getEmpresa();
     const linkGoogle = googleReviewLink || empresa.googleReviewLink;
-    const bloqueH    = (incluirFirmas ? 36 : 0) + (linkGoogle ? 38 : 0);
+    const garantiaH  = 22;
+    const firmasH    = incluirFirmas ? 44 : 0;
+    const qrH        = linkGoogle    ? 44 : 0;
     const pageH      = doc.internal.pageSize.getHeight();
-    if (bloqueH > 0 && y + bloqueH > pageH - 26) {
+    if (y + garantiaH + firmasH + qrH > pageH - 25) {
         doc.addPage();
         y = 18;
     }
+    y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
     if (incluirFirmas) {
         y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
     }
@@ -457,20 +456,21 @@ async function generarMultiTecnico(doc, {
     // Bloque cliente sin diagnóstico — cada equipo tiene su propio trabajo
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: null });
 
-    // Garantía
-    y = checkSalto(doc, y, 18);
+    // Garantía + firmas + QR: un solo checkSalto para todo el bloque final de página 1
+    const linkGoogle = googleReviewLink || empresa.googleReviewLink;
+    const garantiaHM = 22;
+    const firmasHM   = incluirFirmas ? 44 : 0;
+    const qrHM       = linkGoogle    ? 44 : 0;
+    const pageHM     = doc.internal.pageSize.getHeight();
+    if (y + garantiaHM + firmasHM + qrHM > pageHM - 25) {
+        doc.addPage();
+        y = 18;
+    }
     y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
-
-    // Firmas
     if (incluirFirmas) {
-        y = checkSalto(doc, y, 36);
         y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
     }
-
-    // QR Google
-    const linkGoogle = googleReviewLink || empresa.googleReviewLink;
     if (linkGoogle) {
-        y = checkSalto(doc, y, 38);
         y = await dibujarQRGoogle(doc, { y, link: linkGoogle });
     }
 
@@ -489,15 +489,20 @@ async function generarMultiTecnico(doc, {
     const bodyMeta = [];
 
     ticketItems.forEach((item, idx) => {
-        const modelo = item.modeloEquipo || item.equipoModelo || 'Dispenser';
-        const serial = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
-            ? `S/N: ${item.equipoSerial}` : '';
-        const ubic = item.ubicacionEquipo || item.equipoUbicacion || '';
+        const modelo  = item.modeloEquipo  || item.equipoModelo  || 'Dispenser';
+        const marca   = item.marcaEquipo   || item.equipoMarca   || null;
+        const serial  = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
+            ? item.equipoSerial : null;
+        const ubic    = item.ubicacionEquipo || item.equipoUbicacion || null;
+        const piso    = item.equipoPiso    || null;
+        const sector  = item.equipoSector  || null;
 
+        const linPisoSec = [piso ? `Piso: ${piso}` : null, sector ? `Sec: ${sector}` : null].filter(Boolean).join(' · ');
         const equipoCell = [
-            `${idx + 1}. ${modelo}`,
-            serial ? serial : null,
-            ubic   ? ubic   : null,
+            `${idx + 1}. ${[marca, modelo].filter(Boolean).join(' ')}`,
+            serial ? `S/N: ${serial}` : null,
+            ubic   ? `Ubic: ${ubic}` : null,
+            linPisoSec || null,
         ].filter(Boolean).join('\n');
 
         // Trabajo (mano de obra)
@@ -539,8 +544,8 @@ async function generarMultiTecnico(doc, {
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
         columnStyles: {
-            0: { cellWidth: 38, fontStyle: 'bold' },
-            1: { cellWidth: 44 },
+            0: { cellWidth: 45, fontStyle: 'bold' },
+            1: { cellWidth: 37 },
             2: { cellWidth: 'auto' },
             3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy },
         },
@@ -648,15 +653,20 @@ async function generarMultiPresupuesto(doc, {
     const bodyRows = [];
 
     ticketItems.forEach((item, idx) => {
-        const modelo = item.modeloEquipo || item.equipoModelo || 'Dispenser';
-        const serial = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
-            ? `S/N: ${item.equipoSerial}` : '';
-        const ubic = item.ubicacionEquipo || item.equipoUbicacion || '';
+        const modelo  = item.modeloEquipo  || item.equipoModelo  || 'Dispenser';
+        const marca   = item.marcaEquipo   || item.equipoMarca   || null;
+        const serial  = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
+            ? item.equipoSerial : null;
+        const ubic    = item.ubicacionEquipo || item.equipoUbicacion || null;
+        const piso    = item.equipoPiso    || null;
+        const sector  = item.equipoSector  || null;
 
+        const linPisoSec = [piso ? `Piso: ${piso}` : null, sector ? `Sec: ${sector}` : null].filter(Boolean).join(' · ');
         const equipoCell = [
-            `${idx + 1}. ${modelo}`,
-            serial || null,
-            ubic   || null,
+            `${idx + 1}. ${[marca, modelo].filter(Boolean).join(' ')}`,
+            serial ? `S/N: ${serial}` : null,
+            ubic   ? `Ubic: ${ubic}` : null,
+            linPisoSec || null,
         ].filter(Boolean).join('\n');
 
         const mo   = parseFloat(item.costoExtra || 0);
@@ -702,8 +712,8 @@ async function generarMultiPresupuesto(doc, {
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
         columnStyles: {
-            0: { cellWidth: 38, fontStyle: 'bold' },
-            1: { cellWidth: 44 },
+            0: { cellWidth: 45, fontStyle: 'bold' },
+            1: { cellWidth: 37 },
             2: { cellWidth: 'auto' },
             3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy },
         },
@@ -739,13 +749,16 @@ async function generarMultiPresupuesto(doc, {
     doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
-    // Condiciones
-    y = checkSalto(doc, y, 36);
+    // Condiciones + QR WhatsApp: un solo checkSalto para evitar hoja extra
+    const condH  = 36;
+    const qrWaH  = empresa.whatsapp ? 54 : 0;
+    const pageHQ = doc.internal.pageSize.getHeight();
+    if (y + condH + qrWaH > pageHQ - 25) {
+        doc.addPage();
+        y = 18;
+    }
     y = dibujarCondiciones(doc, { y, pageW });
-
-    // QR WhatsApp
     if (empresa.whatsapp) {
-        y = checkSalto(doc, y, 48);
         y = await dibujarQRWhatsApp(doc, {
             x: M, y,
             telefono: empresa.whatsapp,
