@@ -3,6 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useFiltros } from '../hooks/useFiltros';
 import { useMontos } from '../context/MontosContext';
+import { useAuth } from '../context/AuthContext';
 import Paginacion from './ui/Paginacion';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import ModalFirmasPDF from './ui/ModalFirmasPDF';
@@ -205,6 +206,7 @@ const TIPO_TABS = [
 
 // ─── Componente principal ────────────────────────────────────────────────────
 export default function PresupuestosManager({ onEjecutar }) {
+    const { esAdmin, usuario } = useAuth();
     const [presupuestos, setPresupuestos]   = useState([]);
     const [cargando, setCargando]           = useState(true);
     const [modalDetalle, setModalDetalle]   = useState(null);
@@ -219,10 +221,12 @@ export default function PresupuestosManager({ onEjecutar }) {
 
     const cargar = async () => {
         setCargando(true);
+        // técnico solo ve sus propios presupuestos; admin ve todos
+        const filtroUsuario = (!esAdmin && usuario?.id) ? { usuarioId: usuario.id } : {};
         try {
             const [resPresu, resEjec] = await Promise.all([
-                api.get('/servicios', { params: { estado: 'PRESUPUESTO', page: 0, size: 200, sort: 'fechaServicio,desc' } }),
-                api.get('/servicios', { params: { page: 0, size: 500 } }),
+                api.get('/servicios', { params: { estado: 'PRESUPUESTO', page: 0, size: 200, sort: 'fechaServicio,desc', ...filtroUsuario } }),
+                api.get('/servicios', { params: { page: 0, size: 500, ...filtroUsuario } }),
             ]);
             const data = resPresu.data.content || resPresu.data || [];
             setPresupuestos(Array.isArray(data)

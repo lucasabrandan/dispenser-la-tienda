@@ -421,7 +421,8 @@ async function generarSinglePresupuesto(doc, {
     }
 
     // Condiciones + CTA en el mismo bloque compacto (sin firmas — el cliente no aceptó aún)
-    y = checkSalto(doc, y, 54);
+    // cardH=38 + 6 padding = 44mm reales, 54 era demasiado conservador y causaba hoja extra
+    y = checkSalto(doc, y, 44);
     y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
 
     return y;
