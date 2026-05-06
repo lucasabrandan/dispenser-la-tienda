@@ -16,7 +16,7 @@ public record ServicioItemCreateDTO(
         BigDecimal costoInterno,
         String descuento,
         @NotBlank String metodoPago,
-        @NotBlank String trabajoRealizado,
+        String trabajoRealizado,
         String garantiaHasta, // Recibimos String "yyyy-MM-dd" o null
         @NotNull TrabajoTipo trabajoTipo,
         String fotoAntes,
