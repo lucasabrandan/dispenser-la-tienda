@@ -118,11 +118,11 @@ async function generarSingleTecnico(doc, {
     y = checkSalto(doc, y, 36);
     y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoD ? fotoA : null, conBullet: true });
 
-    // • DIAGNÓSTICO DETALLE — trabajo realizado en el equipo
+    // Descripción del trabajo realizado
     const diagDetalle = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || item.observaciones || '');
     if (diagDetalle) {
         y = checkSalto(doc, y, 24);
-        y = dibujarBloqueDiagnosticoDetalle(doc, { texto: diagDetalle, y, pageW });
+        y = dibujarBloqueDiagnosticoDetalle(doc, { texto: diagDetalle, y, pageW, titulo: '• TRABAJO REALIZADO' });
     }
 
     const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
@@ -501,10 +501,12 @@ async function generarMultiTecnico(doc, {
         ].filter(Boolean).join('\n');
 
         // Trabajo (mano de obra)
-        const mo = parseFloat(item.costoExtra || 0);
-        const trabajoCell = mo > 0
-            ? `· Mano de obra\n  $ ${mo.toLocaleString('es-AR')}`
-            : '—';
+        const mo   = parseFloat(item.costoExtra || 0);
+        const desc = (item.trabajo || item.trabajoRealizado || '').trim();
+        const partesMO = [];
+        if (desc) partesMO.push(desc);
+        if (mo > 0) partesMO.push(`· Mano de obra\n  $ ${mo.toLocaleString('es-AR')}`);
+        const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
 
         // Repuestos
         const reps = item.repuestosUsados || [];
@@ -657,10 +659,12 @@ async function generarMultiPresupuesto(doc, {
             ubic   || null,
         ].filter(Boolean).join('\n');
 
-        const mo = parseFloat(item.costoExtra || 0);
-        const trabajoCell = mo > 0
-            ? `· Mano de obra\n  $ ${mo.toLocaleString('es-AR')}`
-            : '—';
+        const mo   = parseFloat(item.costoExtra || 0);
+        const desc = (item.trabajo || item.trabajoRealizado || '').trim();
+        const partesMO = [];
+        if (desc) partesMO.push(desc);
+        if (mo > 0) partesMO.push(`· Mano de obra\n  $ ${mo.toLocaleString('es-AR')}`);
+        const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
 
         const reps = item.repuestosUsados || [];
         const repCell = reps.length > 0

@@ -163,7 +163,7 @@ export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = nu
     return y + cardH + 4;
 }
 
-// ── BLOQUE PROBLEMA / SOLICITUD (presupuesto, sección separada) ───────────────
+// ── BLOQUE TRABAJO A REALIZAR / SOLICITUD (presupuesto, sección separada) ──────
 export function dibujarBloqueSolicitud(doc, { texto, y, pageW }) {
     if (!texto || !texto.trim()) return y;
 
@@ -185,7 +185,7 @@ export function dibujarBloqueSolicitud(doc, { texto, y, pageW }) {
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...(C.gold || [212, 136, 0]));
-    doc.text('PROBLEMA / SOLICITUD INFORMADA', M + 6, dy);
+    doc.text('TRABAJO A REALIZAR', M + 6, dy);
     dy += 5;
 
     doc.setFontSize(T.xxs);
@@ -196,8 +196,8 @@ export function dibujarBloqueSolicitud(doc, { texto, y, pageW }) {
     return y + cardH + 4;
 }
 
-// ── BLOQUE DIAGNÓSTICO DETALLE (solo ORDEN_SERVICIO) ─────────────────────────
-export function dibujarBloqueDiagnosticoDetalle(doc, { texto, y, pageW }) {
+// ── BLOQUE TRABAJO REALIZADO / A REALIZAR ────────────────────────────────────
+export function dibujarBloqueDiagnosticoDetalle(doc, { texto, y, pageW, titulo = '• TRABAJO REALIZADO' }) {
     if (!texto || !texto.trim()) return y;
 
     const lines  = doc.splitTextToSize(texto.trim(), CONTENT_W - 8);
@@ -217,7 +217,7 @@ export function dibujarBloqueDiagnosticoDetalle(doc, { texto, y, pageW }) {
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text('• DIAGNÓSTICO DETALLE', M + 4, dy);
+    doc.text(titulo, M + 4, dy);
     dy += 5;
 
     doc.setFontSize(T.xxs);

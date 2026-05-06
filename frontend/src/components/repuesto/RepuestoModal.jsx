@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-
-// fetch nativo para multipart: Axios 1.x no sobreescribe Content-Type: application/json
-// aunque se pase FormData, lo que rompe el endpoint que requiere multipart/form-data.
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import api from '../../services/api';
 
 // Comprime la foto a JPEG ≤ 800px para que no pese más de ~150KB.
 // Idéntica estrategia que PasoEquipos: una sola llamada a createImageBitmap
@@ -125,21 +122,16 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
             fd.append('stock',  parseInt(form.stock)    || 0);
             if (fotoFile) fd.append('foto', fotoFile);
 
-            const url    = form.id ? `${BASE_URL}/repuestos/${form.id}` : `${BASE_URL}/repuestos`;
-            const method = form.id ? 'PUT' : 'POST';
-            const res    = await fetch(url, { method, body: fd });
-
-            if (!res.ok) {
-                const msg = res.status === 409 ? 'Ya existe un repuesto con ese SKU' : 'Error al guardar';
-                toast.error(msg, { id: loading });
-                return;
-            }
+            const url    = form.id ? `/repuestos/${form.id}` : `/repuestos`;
+            const method = form.id ? 'put' : 'post';
+            await api[method](url, fd);
 
             toast.success('✅ Guardado', { id: loading });
             onGuardado();
             onClose();
-        } catch {
-            toast.error('Error al guardar', { id: loading });
+        } catch (err) {
+            const msg = err.response?.status === 409 ? 'Ya existe un repuesto con ese SKU' : 'Error al guardar';
+            toast.error(msg, { id: loading });
         } finally {
             setCargando(false);
         }
