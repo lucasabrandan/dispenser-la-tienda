@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import Paginacion from './ui/Paginacion';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import ModalFirmasPDF from './ui/ModalFirmasPDF';
+import ModalCotizacionVolumen from './presupuesto/ModalCotizacionVolumen';
+import ModalDespacharPresupuesto from './presupuesto/ModalDespacharPresupuesto';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -24,7 +26,7 @@ function IconBtn({ onClick, title, children, cls = '' }) {
 }
 
 // ─── Card de presupuesto ─────────────────────────────────────────────────────
-function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar, onArchivar, onEjecutar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
+function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar, onArchivar, onEjecutar, onDespachar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
     const [expandido, setExpandido] = useState(false);
     const total    = calcularTotal(s);
     const esTecnico = s.servicioTipo === 'TECNICA';
@@ -138,9 +140,13 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
 
                 <IconBtn onClick={() => onArchivar(s.id)} title="Archivar" cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
                 <IconBtn onClick={() => onRechazar(s.id)} title="Rechazar" cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
+                <button onClick={() => onDespachar(s)}
+                    className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                    📬 Despachar
+                </button>
                 {!ejecutado && (
                     <button onClick={() => onEjecutar(s)}
-                        className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                        className="h-9 px-3 rounded-xl font-bold text-[11px] shrink-0 active:scale-95 transition-all bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
                         🔧 Ejecutar
                     </button>
                 )}
@@ -213,9 +219,11 @@ export default function PresupuestosManager({ onEjecutar }) {
     const [ejecutadosIds, setEjecutadosIds] = useState(new Set());
     const [modalFirmas, setModalFirmas]     = useState(false);
     const [pendingPdf, setPendingPdf]       = useState(null);
-    const [modoSeleccion, setModoSeleccion] = useState(false);
-    const [seleccionados, setSeleccionados] = useState(new Set());
-    const [tipoFiltro, setTipoFiltro]       = useState('');
+    const [modoSeleccion, setModoSeleccion]     = useState(false);
+    const [seleccionados, setSeleccionados]     = useState(new Set());
+    const [tipoFiltro, setTipoFiltro]             = useState('');
+    const [modalCotizar, setModalCotizar]         = useState(false);
+    const [presupuestoDespachar, setPresupuestoDespachar] = useState(null);
 
     useEffect(() => { cargar(); }, []); // eslint-disable-line
 
@@ -333,11 +341,19 @@ export default function PresupuestosManager({ onEjecutar }) {
                     <h2 className="text-[22px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
                         Presupuestos
                     </h2>
-                    <button
-                        onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
-                        title="Selección múltiple"
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${modoSeleccion ? 'bg-[#D13A28] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
-                    >☑</button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setModalCotizar(true)}
+                            title="Cotización por volumen"
+                            className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-[11px] font-black uppercase transition-all active:scale-90 bg-[#D48800] dark:bg-[#F0A500] text-white">
+                            📋 Cotizar
+                        </button>
+                        <button
+                            onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
+                            title="Selección múltiple"
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${modoSeleccion ? 'bg-[#D13A28] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
+                        >☑</button>
+                    </div>
                 </div>
 
                 {/* Buscador */}
@@ -437,6 +453,7 @@ export default function PresupuestosManager({ onEjecutar }) {
                                 onRechazar={rechazar}
                                 onArchivar={archivar}
                                 onEjecutar={onEjecutar}
+                                onDespachar={setPresupuestoDespachar}
                                 ejecutado={ejecutadosIds.has(s.id)}
                                 modoSeleccion={modoSeleccion}
                                 seleccionado={seleccionados.has(s.id)}
@@ -455,6 +472,22 @@ export default function PresupuestosManager({ onEjecutar }) {
 
             {modalFirmas && (
                 <ModalFirmasPDF onConfirm={confirmarFirmasYGenerarPDF} onCancel={() => setModalFirmas(false)} />
+            )}
+
+            {modalCotizar && (
+                <ModalCotizacionVolumen onCerrar={() => setModalCotizar(false)} />
+            )}
+
+            {presupuestoDespachar && (
+                <ModalDespacharPresupuesto
+                    presupuesto={presupuestoDespachar}
+                    calcularTotal={calcularTotal}
+                    onCerrar={() => setPresupuestoDespachar(null)}
+                    onDespachado={() => {
+                        setPresupuestoDespachar(null);
+                        cargar();
+                    }}
+                />
             )}
         </div>
     );

@@ -18,8 +18,8 @@ export default function RepuestoManager() {
         busqueda, setBusqueda,
         seleccionados, modoSeleccion, setModoSeleccion,
         modalPrecio, setModalPrecio,
-        porcentajeMasivo, setPorcentajeMasivo,
-        tipoPorcentaje, setTipoPorcentaje,
+        gananciamasiva, setGananciaMasiva,
+        markupMasivo, setMarkupMasivo,
         todosSeleccionados,
         valorTotalInventario, itemsBajoStock,
         cargarProductos, eliminar,
@@ -133,10 +133,10 @@ export default function RepuestoManager() {
             {modalPrecio && (
                 <ModalPrecioMasivo
                     cantidadSeleccionados={seleccionados.size}
-                    porcentajeMasivo={porcentajeMasivo}
-                    tipoPorcentaje={tipoPorcentaje}
-                    onPorcentajeChange={setPorcentajeMasivo}
-                    onTipoChange={setTipoPorcentaje}
+                    ganancia={gananciamasiva}
+                    markup={markupMasivo}
+                    onGananciaChange={setGananciaMasiva}
+                    onMarkupChange={setMarkupMasivo}
                     onAplicar={aplicarPrecioMasivo}
                     onCerrar={() => setModalPrecio(false)}
                 />

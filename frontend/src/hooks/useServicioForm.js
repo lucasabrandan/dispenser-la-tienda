@@ -558,14 +558,22 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         })
       };
 
+      let savedId;
       if (idEdicion) {
         await api.put(`/servicios/${idEdicion}`, servicioData);
+        savedId = idEdicion;
       } else {
-        await api.post('/servicios', servicioData);
+        const res = await api.post('/servicios', servicioData);
+        savedId = res.data?.id;
       }
 
       toast.success(confirmarTrabajo ? '✅ ¡Confirmado!' : '💾 ¡Guardado!', { id: loading });
       localStorage.removeItem(DRAFT_KEY);
+
+      // Capturar antes del reset para devolverlos al caller
+      const resClienteId     = clienteId;
+      const resClienteNombre = nombreCliente;
+      const resTecnicoId     = tecnicoSeleccionado?.id || null;
 
       // Reset
       setTicketItems([]);
@@ -575,7 +583,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       setLeyenda(LEYENDA_DEFAULT);
       setFechaServicio(new Date().toISOString().split('T')[0]);
       setItemActual({ sedeId: '', sedeNombre: '', equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
-      return true;
+      return { ok: true, id: savedId, clienteId: resClienteId, clienteNombre: resClienteNombre, tecnicoId: resTecnicoId };
 
     } catch (err) {
       console.error('Error al guardar servicio:', err.response?.data || err.message);

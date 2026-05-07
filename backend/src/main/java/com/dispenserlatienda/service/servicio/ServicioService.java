@@ -3,7 +3,12 @@ import com.dispenserlatienda.domain.equipo.Equipo;
 import com.dispenserlatienda.domain.gasto.Gasto;
 import com.dispenserlatienda.domain.sede.Sede;
 import com.dispenserlatienda.dto.servicio.EstadisticasMensualDTO;
+import com.dispenserlatienda.dto.servicio.TecnicoRendimientoDTO;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.dispenserlatienda.domain.servicio.*;
 import com.dispenserlatienda.domain.usuario.Usuario;
@@ -135,6 +140,49 @@ public class ServicioService {
                 predicates.add(cb.equal(root.get("sede").get("cliente").get("id"), clienteId));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    // Rendimiento mensual del técnico — solo meses cerrados, sin info de clientes
+    @Transactional(readOnly = true)
+    public List<TecnicoRendimientoDTO> rendimientoTecnico(Long tecnicoId) {
+        YearMonth mesActual = YearMonth.now();
+
+        List<Servicio> realizados = servicioRepository.findAll(
+                buildSpec(null, "REALIZADO", null, null, null, tecnicoId, null));
+
+        Map<YearMonth, BigDecimal[]> porMes = new TreeMap<>();
+        Map<YearMonth, Integer>      countMes = new TreeMap<>();
+
+        for (Servicio s : realizados) {
+            if (s.getFechaServicio() == null) continue;
+            YearMonth ym = YearMonth.from(s.getFechaServicio());
+            if (!ym.isBefore(mesActual)) continue; // excluir mes en curso
+
+            BigDecimal facturado = s.getItems().stream()
+                    .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal ganancia = s.getItems().stream()
+                    .map(i -> i.getCostoExtra() != null ? i.getCostoExtra() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal descPct = s.getDescuentoPorcentaje();
+            if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100)));
+                facturado = facturado.multiply(factor).setScale(2, java.math.RoundingMode.HALF_UP);
+            }
+
+            porMes.merge(ym,   new BigDecimal[]{ facturado, ganancia }, (a, b) -> new BigDecimal[]{ a[0].add(b[0]), a[1].add(b[1]) });
+            countMes.merge(ym, 1, Integer::sum);
+        }
+
+        return porMes.entrySet().stream()
+                .sorted(Map.Entry.<YearMonth, BigDecimal[]>comparingByKey().reversed())
+                .map(e -> new TecnicoRendimientoDTO(
+                        e.getKey().toString(),
+                        countMes.getOrDefault(e.getKey(), 0),
+                        e.getValue()[0].setScale(2, java.math.RoundingMode.HALF_UP),
+                        e.getValue()[1].setScale(2, java.math.RoundingMode.HALF_UP)))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     private double sumarItems(List<Servicio> servicios) {

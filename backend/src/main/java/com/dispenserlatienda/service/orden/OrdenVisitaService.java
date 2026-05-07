@@ -10,11 +10,13 @@ import com.dispenserlatienda.dto.orden.OrdenVisitaCreateDTO;
 import com.dispenserlatienda.dto.orden.OrdenVisitaDTO;
 import com.dispenserlatienda.repository.orden.OrdenVisitaRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
+import com.dispenserlatienda.service.common.WhatsAppService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,11 +24,15 @@ import java.util.stream.Collectors;
 public class OrdenVisitaService {
 
     private final OrdenVisitaRepository repo;
-    private final UsuarioRepository usuarioRepo;
+    private final UsuarioRepository     usuarioRepo;
+    private final WhatsAppService       whatsApp;
 
-    public OrdenVisitaService(OrdenVisitaRepository repo, UsuarioRepository usuarioRepo) {
-        this.repo = repo;
+    public OrdenVisitaService(OrdenVisitaRepository repo,
+                              UsuarioRepository usuarioRepo,
+                              WhatsAppService whatsApp) {
+        this.repo        = repo;
         this.usuarioRepo = usuarioRepo;
+        this.whatsApp    = whatsApp;
     }
 
     // ── Admin: crear orden ─────────────────────────────────────────────────────
@@ -50,7 +56,9 @@ public class OrdenVisitaService {
         o.setFormaPago(dto.formaPago());
         o.setPresupuestoId(dto.presupuestoId());
 
-        return toDTO(repo.save(o));
+        OrdenVisitaDTO saved = toDTO(repo.save(o));
+        notificarTecnico(tecnico, saved);
+        return saved;
     }
 
     // ── Admin: editar orden ────────────────────────────────────────────────────
@@ -144,6 +152,44 @@ public class OrdenVisitaService {
         return usuarioRepo.findAll().stream()
             .filter(u -> u.getRol() == RolUsuario.TECNICO || u.getRol() == RolUsuario.ADMIN)
             .collect(Collectors.toList());
+    }
+
+    // ── Notificación WhatsApp ─────────────────────────────────────────────────
+    private void notificarTecnico(Usuario tecnico, OrdenVisitaDTO o) {
+        String numero = tecnico.getWhatsapp() != null && !tecnico.getWhatsapp().isBlank()
+                ? tecnico.getWhatsapp()
+                : tecnico.getTelefono();
+
+        if (numero == null || numero.isBlank()) return;
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String fecha = o.fechaProgramada() != null ? o.fechaProgramada().format(fmt) : "—";
+        String hora  = o.horaEstimada()    != null ? o.horaEstimada() : "";
+
+        String prioridad = switch (o.prioridad()) {
+            case "URGENTE" -> "🚨 URGENTE";
+            case "ALTA"    -> "⚠️ Alta";
+            default        -> "Normal";
+        };
+
+        String monto = o.montoEstimado() != null
+                ? "💰 $" + String.format("%,.0f", o.montoEstimado().doubleValue())
+                : "";
+
+        String mensaje = String.join("\n",
+            "🔧 *Nueva orden de trabajo*",
+            "",
+            "📋 " + o.titulo(),
+            "👤 " + o.clienteNombre(),
+            "📅 " + fecha + (hora.isBlank() ? "" : "  🕐 " + hora),
+            "⚡ Prioridad: " + prioridad,
+            monto.isBlank() ? "" : monto,
+            o.direccion() != null && !o.direccion().isBlank() ? "📍 " + o.direccion() : "",
+            "",
+            "Ingresá a la app para ver el detalle."
+        ).stripTrailing().replaceAll("\n{3,}", "\n\n");
+
+        whatsApp.enviar(numero, mensaje);
     }
 
     // ── Mapper ─────────────────────────────────────────────────────────────────

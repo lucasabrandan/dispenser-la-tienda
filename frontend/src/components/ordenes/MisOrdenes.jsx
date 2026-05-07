@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOrdenes } from '../../hooks/useOrdenes';
+import api from '../../services/api';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-[#C0BCB6] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
@@ -145,15 +146,106 @@ function OrdenCard({ orden, onAvanzar, onEjecutar }) {
     );
 }
 
+const MESES_ES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+function RendimientoTab({ tecnicoId }) {
+    const [datos,    setDatos]    = useState([]);
+    const [cargando, setCargando] = useState(true);
+
+    useEffect(() => {
+        if (!tecnicoId) return;
+        setCargando(true);
+        api.get(`/servicios/tecnico/${tecnicoId}/rendimiento`)
+            .then(r => setDatos(r.data || []))
+            .catch(() => setDatos([]))
+            .finally(() => setCargando(false));
+    }, [tecnicoId]);
+
+    if (cargando) return <p className="text-center text-[#A8A29E] py-12">Cargando...</p>;
+
+    if (datos.length === 0) return (
+        <p className="text-center text-[#A8A29E] py-12">Sin trabajos registrados aún</p>
+    );
+
+    // Totales acumulados
+    const totalFact = datos.reduce((s, d) => s + parseFloat(d.totalFacturado || 0), 0);
+    const totalGan  = datos.reduce((s, d) => s + parseFloat(d.totalGanancia  || 0), 0);
+
+    const fmt = (n) => Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+    const labelMes = (periodo) => {
+        const [y, m] = periodo.split('-');
+        return `${MESES_ES[parseInt(m)]} ${y}`;
+    };
+
+    return (
+        <div className="space-y-4">
+            {/* Acumulado total */}
+            <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424]"
+                style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-3">
+                    Total acumulado
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <p className="text-[10px] text-[#A8A29E] uppercase font-bold mb-0.5">Facturado</p>
+                        <p className="text-[22px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">
+                            ${fmt(totalFact)}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-[10px] text-[#A8A29E] uppercase font-bold mb-0.5">Ganancia</p>
+                        <p className="text-[22px] font-black text-[#D48800] dark:text-[#F0A500] leading-none">
+                            ${fmt(totalGan)}
+                        </p>
+                    </div>
+                </div>
+                <p className="text-[11px] text-[#A8A29E] mt-2">
+                    {datos.reduce((s, d) => s + d.cantidadServicios, 0)} servicios · {datos.length} {datos.length === 1 ? 'mes' : 'meses'}
+                </p>
+            </div>
+
+            {/* Desglose por mes */}
+            <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest px-1">Por mes</p>
+            {datos.map(d => (
+                <div key={d.periodo} className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424]"
+                    style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] capitalize">
+                            {labelMes(d.periodo)}
+                        </p>
+                        <span className="text-[10px] font-bold text-[#A8A29E] bg-[#D8D4CE] dark:bg-[#1C1C1C] px-2 py-0.5 rounded-md">
+                            {d.cantidadServicios} {d.cantidadServicios === 1 ? 'trabajo' : 'trabajos'}
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <p className="text-[9px] text-[#A8A29E] uppercase font-bold">Facturado</p>
+                            <p className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                ${fmt(d.totalFacturado)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-[9px] text-[#A8A29E] uppercase font-bold">Ganancia</p>
+                            <p className="text-[16px] font-black text-[#D48800] dark:text-[#F0A500]">
+                                ${fmt(d.totalGanancia)}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado } = useOrdenes({ tecnicoId });
     const [tab, setTab] = useState('activas');
 
-    const activas    = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
+    const activas     = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
     const completadas = ordenes.filter(o => o.estado === 'COMPLETADA');
     const lista = tab === 'activas' ? activas : completadas;
 
-    // Agrupar activas por fecha
+    // Agrupar activas/completadas por fecha
     const porFecha = lista.reduce((acc, o) => {
         const k = o.fechaProgramada;
         if (!acc[k]) acc[k] = [];
@@ -169,6 +261,12 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
     };
 
+    const TABS = [
+        { id: 'activas',      label: `Activas (${activas.length})` },
+        { id: 'historial',    label: `Completadas (${completadas.length})` },
+        { id: 'rendimiento',  label: '📊 Rendimiento' },
+    ];
+
     return (
         <div className="p-4 max-w-2xl mx-auto">
             {/* Header */}
@@ -178,10 +276,10 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-5">
-                {[{ id: 'activas', label: `Activas (${activas.length})` }, { id: 'historial', label: `Completadas (${completadas.length})` }].map(t => (
+            <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+                {TABS.map(t => (
                     <button key={t.id} onClick={() => setTab(t.id)}
-                        className={`px-4 py-2 rounded-xl font-bold text-[12px] transition-all active:scale-95 ${
+                        className={`shrink-0 px-4 py-2 rounded-xl font-bold text-[12px] transition-all active:scale-95 ${
                             tab === t.id
                                 ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
                                 : 'bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]'
@@ -191,7 +289,10 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 ))}
             </div>
 
-            {cargando ? (
+            {/* Contenido de cada tab */}
+            {tab === 'rendimiento' ? (
+                <RendimientoTab tecnicoId={tecnicoId} />
+            ) : cargando ? (
                 <p className="text-center text-[#A8A29E] py-12">Cargando...</p>
             ) : lista.length === 0 ? (
                 <p className="text-center text-[#A8A29E] py-12">

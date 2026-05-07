@@ -4,6 +4,8 @@ import com.dispenserlatienda.dto.servicio.EstadisticasMensualDTO;
 import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
 import com.dispenserlatienda.dto.servicio.ServicioDTO;
 import com.dispenserlatienda.dto.servicio.ServicioResumenDTO;
+import com.dispenserlatienda.dto.servicio.TecnicoRendimientoDTO;
+import java.util.List;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.service.servicio.ServicioService;
 import org.springframework.data.domain.Page;
@@ -104,5 +106,11 @@ public class ServicioController {
             @RequestParam String mes) {
         // Format esperado: mes=2026-03
         return ResponseEntity.ok(servicioService.calcularEstadisticasMensual(mes));
+    }
+
+    // GET: Rendimiento mensual del técnico (solo meses cerrados, sin info de clientes)
+    @GetMapping("/tecnico/{tecnicoId}/rendimiento")
+    public ResponseEntity<List<TecnicoRendimientoDTO>> rendimientoTecnico(@PathVariable Long tecnicoId) {
+        return ResponseEntity.ok(servicioService.rendimientoTecnico(tecnicoId));
     }
 }

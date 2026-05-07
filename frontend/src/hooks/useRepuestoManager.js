@@ -21,8 +21,8 @@ export function useRepuestoManager() {
     const [seleccionados, setSeleccionados] = useState(new Set());
     const [modoSeleccion, setModoSeleccion] = useState(false);
     const [modalPrecio, setModalPrecio]   = useState(false);
-    const [porcentajeMasivo, setPorcentajeMasivo] = useState('');
-    const [tipoPorcentaje, setTipoPorcentaje] = useState('ganancia');
+    const [gananciamasiva, setGananciaMasiva] = useState('');
+    const [markupMasivo, setMarkupMasivo]     = useState('');
 
     useEffect(() => { cargarProductos(); }, []);
 
@@ -120,8 +120,11 @@ export function useRepuestoManager() {
     };
 
     const aplicarPrecioMasivo = async () => {
-        const valor = parseFloat(porcentajeMasivo);
-        if (isNaN(valor) || valor < 0) { toast.error('Ingresá un porcentaje válido'); return; }
+        const gVal = gananciamasiva !== '' ? parseFloat(gananciamasiva) : null;
+        const mVal = markupMasivo   !== '' ? parseFloat(markupMasivo)   : null;
+        if (gVal !== null && (isNaN(gVal) || gVal < 0)) { toast.error('Ganancia inválida'); return; }
+        if (mVal !== null && (isNaN(mVal) || mVal < 0)) { toast.error('Markup inválido');   return; }
+        if (gVal === null && mVal === null) { toast.error('Ingresá al menos un valor'); return; }
         if (seleccionados.size === 0) return;
         const t = toast.loading('Actualizando precios...');
         try {
@@ -131,8 +134,8 @@ export function useRepuestoManager() {
                     fd.append('sku', producto.sku);
                     fd.append('nombre', producto.nombre);
                     fd.append('costo', producto.costo);
-                    const g = tipoPorcentaje === 'ganancia' ? valor : producto.porcentajeGanancia;
-                    const m = tipoPorcentaje === 'markup'   ? valor : producto.porcentajeMarkup;
+                    const g = gVal !== null ? gVal : (producto.porcentajeGanancia ?? 0);
+                    const m = mVal !== null ? mVal : (producto.porcentajeMarkup   ?? 0);
                     fd.append('porcentajeGanancia', g);
                     fd.append('porcentajeMarkup', m);
                     const base  = parseFloat(producto.costo) * (1 + g / 100);
@@ -143,7 +146,8 @@ export function useRepuestoManager() {
             );
             toast.success('✅ Precios actualizados', { id: t });
             setModalPrecio(false);
-            setPorcentajeMasivo('');
+            setGananciaMasiva('');
+            setMarkupMasivo('');
             cancelarSeleccion();
             await cargarProductos();
         } catch {
@@ -189,8 +193,8 @@ export function useRepuestoManager() {
         expandido, busqueda, setBusqueda,
         seleccionados, modoSeleccion, setModoSeleccion,
         modalPrecio, setModalPrecio,
-        porcentajeMasivo, setPorcentajeMasivo,
-        tipoPorcentaje, setTipoPorcentaje,
+        gananciamasiva, setGananciaMasiva,
+        markupMasivo, setMarkupMasivo,
         todosSeleccionados,
         valorTotalInventario, itemsBajoStock,
         // Acciones
