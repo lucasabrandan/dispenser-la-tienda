@@ -79,6 +79,20 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
 
     const tecnicoAsignado = tecnicos.find(t => String(t.id) === String(form.tecnicoId));
 
+    const abrirWhatsApp = () => {
+        const num = (tecnicoAsignado?.whatsapp || tecnicoAsignado?.telefono || '').replace(/\D/g, '');
+        if (!num) return;
+        const msg = encodeURIComponent(
+            `🔧 *Nuevo trabajo asignado*\n` +
+            `Cliente: ${presupuesto.clienteNombre || '-'}\n` +
+            (presupuesto.sedeDireccion ? `Dirección: ${presupuesto.sedeDireccion}\n` : '') +
+            `Fecha: ${form.fechaProgramada}${form.horaEstimada ? ` a las ${form.horaEstimada}` : ''}\n` +
+            `Prioridad: ${form.prioridad}\n` +
+            `Monto estimado: $${total.toLocaleString('es-AR')}`
+        );
+        window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+    };
+
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={!ordenCreada ? onCerrar : undefined} />
@@ -138,6 +152,12 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                 )}
                             </div>
 
+                            {(tecnicoAsignado?.whatsapp || tecnicoAsignado?.telefono) && (
+                                <button onClick={abrirWhatsApp}
+                                    className="w-full py-3.5 rounded-2xl font-black text-[11px] uppercase text-white bg-[#25D366] active:scale-95">
+                                    💬 Avisar por WhatsApp a {tecnicoAsignado.nombre}
+                                </button>
+                            )}
                             <button onClick={onCerrar}
                                 className="w-full py-3.5 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
                                 Listo

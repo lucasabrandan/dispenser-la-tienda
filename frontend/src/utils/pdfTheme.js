@@ -22,9 +22,10 @@ function getUsuario() {
 export function getEmpresa() {
     const u = getUsuario();
     return {
-        telefono:  u.telefono  || '',
-        whatsapp:  u.whatsapp  || '',
-        direccion: 'Buenos Aires, Argentina',
+        contacto:  u.whatsapp || u.telefono || '',
+        email:     'info@dispenserlatienda.com.ar',
+        web:       'dispenserlatienda.com.ar',
+        redes:     '@dispenserlatienda',
     };
 }
 
@@ -60,13 +61,14 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
     }
 
     // Datos de contacto de la empresa — debajo del logo
+    const emp1 = getEmpresa();
     doc.setFontSize(6.5);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...GRAY_TEXT);
-    doc.text(`Tel: ${getEmpresa().telefono}  ·  WA: ${getEmpresa().whatsapp}`, 14, 27);
-    if (getEmpresa().direccion) {
-        doc.text(getEmpresa().direccion, 14, 32);
-    }
+    const linea1 = [emp1.contacto ? `WA: ${emp1.contacto}` : null, emp1.email].filter(Boolean).join('  ·  ');
+    const linea2 = [emp1.web, emp1.redes].filter(Boolean).join('  ·  ');
+    if (linea1) doc.text(linea1, 14, 27);
+    if (linea2) doc.text(linea2, 14, 32);
 
     // Bloque derecho: fecha / nroDoc / técnico — alineados a la derecha
     doc.setFontSize(7.5);
@@ -116,10 +118,12 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
     }
 
     // Datos de contacto — 1 línea debajo del logo
+    const emp2 = getEmpresa();
     doc.setFontSize(6);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...GRAY_TEXT);
-    doc.text(`Tel: ${getEmpresa().telefono}  ·  WA: ${getEmpresa().whatsapp}`, 14, 20);
+    const contactoLine = [emp2.contacto ? `WA: ${emp2.contacto}` : null, emp2.email, emp2.web].filter(Boolean).join('  ·  ');
+    if (contactoLine) doc.text(contactoLine, 14, 20);
 
     // Bloque derecho: fecha / nroDoc / técnico
     doc.setFontSize(7);
@@ -184,7 +188,9 @@ export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoC
     doc.setFontSize(6.5);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(155, 150, 144);
-    doc.text(`Tel: ${getEmpresa().telefono}  ·  WA: ${getEmpresa().whatsapp}`, 14, pageH - 5);
+    const empF = getEmpresa();
+    const footerContact = [empF.contacto ? `WA: ${empF.contacto}` : null, empF.web].filter(Boolean).join('  ·  ');
+    if (footerContact) doc.text(footerContact, 14, pageH - 5);
 
     if (pagina && totalPaginas && totalPaginas > 1) {
         doc.setFontSize(7);

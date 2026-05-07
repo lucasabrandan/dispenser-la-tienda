@@ -8,6 +8,53 @@ import BarraAccionesProductos from './Barraaccionesproducto';
 import ModalPrecioMasivo from './Modalpreciomasivo';
 import { generarPDFListaPrecios } from '../../utils/generadorPDFListaPrecios';
 
+// ── Modal drag-and-drop para reordenar antes de exportar PDF ─────────────────
+function ModalOrdenPDF({ productos, onConfirmar, onCerrar }) {
+    const [orden, setOrden] = useState(productos);
+    const dragIdx = React.useRef(null);
+
+    const onDragStart = (i) => { dragIdx.current = i; };
+    const onDragOver  = (e, i) => {
+        e.preventDefault();
+        if (dragIdx.current === i) return;
+        const arr = [...orden];
+        const [item] = arr.splice(dragIdx.current, 1);
+        arr.splice(i, 0, item);
+        dragIdx.current = i;
+        setOrden(arr);
+    };
+
+    return (
+        <>
+            <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onCerrar} />
+            <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[1000] p-0 sm:p-4">
+                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-md shadow-2xl flex flex-col max-h-[85vh]">
+                    <div className="px-6 pt-5 pb-3 shrink-0">
+                        <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Ordenar productos</h3>
+                        <p className="text-[11px] text-[#A8A29E] mt-1">Arrastrá para cambiar el orden en el PDF</p>
+                    </div>
+                    <div className="overflow-y-auto px-6 pb-2 space-y-2 flex-1">
+                        {orden.map((p, i) => (
+                            <div key={p.id} draggable
+                                onDragStart={() => onDragStart(i)}
+                                onDragOver={(e) => onDragOver(e, i)}
+                                className="flex items-center gap-3 p-2.5 rounded-xl bg-[#D8D4CE] dark:bg-[#2E2E2E] cursor-grab active:cursor-grabbing select-none">
+                                <span className="text-[#A8A29E] text-[14px] font-black w-5 text-center">{i + 1}</span>
+                                <span className="text-[13px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1 truncate">{p.nombre}</span>
+                                <span className="text-[10px] text-[#A8A29E]">⠿⠿</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex gap-2 px-6 py-4 shrink-0">
+                        <button onClick={onCerrar} className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">Cancelar</button>
+                        <button onClick={() => onConfirmar(orden)} className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F]">📄 Generar PDF</button>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}
+
 export default function GestorProductos() {
     const [productos, setProductos]             = useState([]);
     const [modalAbierto, setModalAbierto]       = useState(false);
@@ -17,8 +64,9 @@ export default function GestorProductos() {
     const [seleccionados, setSeleccionados]     = useState(new Set());
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [modalPrecio, setModalPrecio]         = useState(false);
-    const [gananciamasiva, setGananciaMasiva] = useState('');
-    const [markupMasivo, setMarkupMasivo]     = useState('');
+    const [gananciamasiva, setGananciaMasiva]   = useState('');
+    const [markupMasivo, setMarkupMasivo]       = useState('');
+    const [modalOrden, setModalOrden]           = useState(null); // lista de productos a reordenar
 
     useEffect(() => { cargarProductos(); }, []);
 
@@ -81,14 +129,18 @@ export default function GestorProductos() {
 
     const exportarSeleccionados = () => {
         if (seleccionados.size === 0) return;
-        generarPDFListaPrecios(productos.filter(p => seleccionados.has(p.id)));
-        toast.success(`📥 PDF con ${seleccionados.size} producto(s)`);
+        setModalOrden(productos.filter(p => seleccionados.has(p.id)));
     };
 
     const exportarTodos = () => {
         if (productos.length === 0) { toast.error('No hay productos'); return; }
-        generarPDFListaPrecios(productos);
-        toast.success('📥 PDF generado');
+        setModalOrden([...productos]);
+    };
+
+    const confirmarExportPDF = (ordenados) => {
+        generarPDFListaPrecios(ordenados);
+        toast.success(`📥 PDF generado con ${ordenados.length} producto(s)`);
+        setModalOrden(null);
     };
 
     const aplicarPrecioMasivo = async () => {
@@ -215,6 +267,15 @@ export default function GestorProductos() {
                 onProductoGuardado={cargarProductos}
                 productoEdicion={productoEdicion}
             />
+
+            {/* MODAL ORDEN PDF */}
+            {modalOrden && (
+                <ModalOrdenPDF
+                    productos={modalOrden}
+                    onConfirmar={confirmarExportPDF}
+                    onCerrar={() => setModalOrden(null)}
+                />
+            )}
         </div>
     );
 }
