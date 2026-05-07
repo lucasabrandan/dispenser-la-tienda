@@ -158,7 +158,7 @@ export function buildSelectStyles(isDark) {
                     ? (isDark ? '#3A3A3A' : '#D8D4CE')
                     : (isDark ? '#2E2E2E' : '#C0BCB6'),
             color:       state.isSelected ? '#fff' : isDark ? '#F0EEE9' : '#1C1917',
-            padding:     '10px 14px',
+            padding:     '6px 12px',
             fontSize:    '13px',
             fontWeight:  '500',
         }),
@@ -169,6 +169,7 @@ export function buildSelectStyles(isDark) {
             border:       isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
             boxShadow:    '0 8px 24px rgba(0,0,0,0.2)',
         }),
+        menuList:    b => ({ ...b, maxHeight: '220px', overflowY: 'auto' }),
         singleValue: b => ({ ...b, color: isDark ? '#F0EEE9' : '#1C1917', fontWeight: '600', fontSize: '13px' }),
         placeholder: b => ({ ...b, color: '#A8A29E', fontSize: '13px' }),
         input:       b => ({ ...b, color: isDark ? '#F0EEE9' : '#1C1917' }),
