@@ -482,11 +482,8 @@ export default function PresupuestosManager({ onEjecutar }) {
                 <ModalDespacharPresupuesto
                     presupuesto={presupuestoDespachar}
                     calcularTotal={calcularTotal}
-                    onCerrar={() => setPresupuestoDespachar(null)}
-                    onDespachado={() => {
-                        setPresupuestoDespachar(null);
-                        cargar();
-                    }}
+                    onCerrar={() => { setPresupuestoDespachar(null); cargar(); }}
+                    onDespachado={() => { cargar(); }}
                 />
             )}
         </div>
