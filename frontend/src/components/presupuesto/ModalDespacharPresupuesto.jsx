@@ -81,7 +81,6 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
 
     const abrirWhatsApp = () => {
         const num = (tecnicoAsignado?.whatsapp || tecnicoAsignado?.telefono || '').replace(/\D/g, '');
-        if (!num) return;
         const msg = encodeURIComponent(
             `🔧 *Nuevo trabajo asignado*\n` +
             `Cliente: ${presupuesto.clienteNombre || '-'}\n` +
@@ -152,12 +151,10 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                 )}
                             </div>
 
-                            {(tecnicoAsignado?.whatsapp || tecnicoAsignado?.telefono) && (
-                                <button onClick={abrirWhatsApp}
-                                    className="w-full py-3.5 rounded-2xl font-black text-[11px] uppercase text-white bg-[#25D366] active:scale-95">
-                                    💬 Avisar por WhatsApp a {tecnicoAsignado.nombre}
-                                </button>
-                            )}
+                            <button onClick={abrirWhatsApp}
+                                className="w-full py-3.5 rounded-2xl font-black text-[11px] uppercase text-white bg-[#25D366] active:scale-95">
+                                💬 Avisar por WhatsApp a {tecnicoAsignado?.nombre || 'Técnico'}
+                            </button>
                             <button onClick={onCerrar}
                                 className="w-full py-3.5 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
                                 Listo
