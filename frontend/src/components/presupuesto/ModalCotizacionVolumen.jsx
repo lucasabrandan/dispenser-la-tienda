@@ -196,9 +196,14 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                         options={repuestos}
                                         value={productoOpt}
                                         onChange={onProductoChange}
-                                        placeholder="Buscar producto..."
+                                        placeholder="Buscar por nombre o SKU..."
                                         isClearable
                                         styles={buildSelectStyles(isDark)}
+                                        filterOption={(opt, input) => {
+                                            const q = input.toLowerCase();
+                                            return opt.label?.toLowerCase().includes(q) ||
+                                                   opt.data?.sku?.toLowerCase().includes(q);
+                                        }}
                                     />
                                     {productoOpt && (
                                         <p className="text-[11px] text-[#A8A29E] mt-1.5 ml-1">
