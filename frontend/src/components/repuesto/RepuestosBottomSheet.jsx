@@ -35,7 +35,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar }) {
             )}
 
             {/* Foto */}
-            <div className="w-full aspect-square bg-[#D8D4CE] dark:bg-[#1C1C1C] flex items-center justify-center overflow-hidden">
+            <div className="w-full aspect-square max-h-[120px] bg-[#D8D4CE] dark:bg-[#1C1C1C] flex items-center justify-center overflow-hidden">
                 {tieneFoto
                     ? <>
                         <FotoRepuesto repuesto={repuesto} />
@@ -203,7 +203,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                             {busqueda ? 'Sin resultados' : 'No hay repuestos cargados'}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-3 pb-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pb-2">
                             {repuestosFiltrados.map(r => (
                                 <CardRepuesto
                                     key={r.id}
