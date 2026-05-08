@@ -148,16 +148,19 @@ export function useVentaManager() {
     };
 
     const generarPDF = (venta) => {
+        const tecnico = localStorage.getItem('tecnico_nombre') || 'Mostrador';
         generarRemitoPDFPremium({
-            tipo:                venta.estado === 'PRESUPUESTO' ? 'PRESUPUESTO_VENTA' : 'COMPROBANTE',
-            cliente:             { nombre: venta.clienteNombre },
-            sede:                { nombreSede: venta.sedeNombre },
-            tecnico:             'Mostrador',
-            ticketItems:         venta.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
-            totalFinal:          calcularTotal(venta),
-            fechaServicio:       venta.fecha,
-            descuentoPorcentaje: venta.descuentoPorcentaje || 0,
-            leyenda:             venta.observaciones || '',
+            tipo:                    venta.estado === 'PRESUPUESTO' ? 'PRESUPUESTO_VENTA' : 'COMPROBANTE',
+            cliente:                 { nombre: venta.clienteNombre },
+            sede:                    { nombreSede: venta.sedeNombre },
+            tecnico,
+            servicioId:              venta.id,
+            nroDocumentoExistente:   venta.nroDocumento || null,
+            ticketItems:             venta.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
+            totalFinal:              calcularTotal(venta),
+            fechaServicio:           venta.fecha,
+            descuentoPorcentaje:     venta.descuentoPorcentaje || 0,
+            leyenda:                 venta.observaciones || '',
         });
     };
 

@@ -207,11 +207,12 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
         const clienteFinal = modoRapido
             ? { nombre: datosCliente.nombre?.trim() || 'Mostrador', telefono: datosCliente.telefono, email: datosCliente.email }
             : (clienteObj || { nombre: 'Mostrador' });
+        const tecnico = localStorage.getItem('tecnico_nombre') || 'Mostrador';
         generarRemitoPDFPremium({
             tipo:     'PRESUPUESTO_VENTA',
             cliente:  clienteFinal,
             sede:     { nombreSede: 'Mostrador' },
-            tecnico:  'Mostrador',
+            tecnico,
             ticketItems: [{
                 equipoSerial:    'MOSTRADOR',
                 repuestosUsados: productos,
