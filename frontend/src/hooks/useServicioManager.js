@@ -215,7 +215,9 @@ export function useServicioManager() {
             }));
             toast.dismiss(loading);
             await generarRemitoPDFPremium({
-                esPresupuesto:       servicio.estado === 'PRESUPUESTO',
+                esPresupuesto:        servicio.estado === 'PRESUPUESTO',
+                servicioId:           servicio.id,
+                nroDocumentoExistente: servicio.nroDocumento || localStorage.getItem(`pdf_nro_${servicio.id}`) || null,
                 cliente: {
                     nombre:       servicio.clienteNombre,
                     telefono:     servicio.clienteTelefono,

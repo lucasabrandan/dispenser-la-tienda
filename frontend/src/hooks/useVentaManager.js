@@ -149,13 +149,15 @@ export function useVentaManager() {
 
     const generarPDF = (venta) => {
         generarRemitoPDFPremium({
-            esPresupuesto: venta.estado === 'PRESUPUESTO',
-            cliente:       { nombre: venta.clienteNombre },
-            sede:          { nombreSede: venta.sedeNombre },
-            tecnico:       'Mostrador',
-            ticketItems:   venta.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
-            totalFinal:    calcularTotal(venta),
-            fechaServicio: venta.fecha,
+            tipo:                venta.estado === 'PRESUPUESTO' ? 'PRESUPUESTO_VENTA' : 'COMPROBANTE',
+            cliente:             { nombre: venta.clienteNombre },
+            sede:                { nombreSede: venta.sedeNombre },
+            tecnico:             'Mostrador',
+            ticketItems:         venta.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
+            totalFinal:          calcularTotal(venta),
+            fechaServicio:       venta.fecha,
+            descuentoPorcentaje: venta.descuentoPorcentaje || 0,
+            leyenda:             venta.observaciones || '',
         });
     };
 

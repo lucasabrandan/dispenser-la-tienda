@@ -287,9 +287,10 @@ export default function ServicioList({ onEditar }) {
                                                 ...it, totalCalculado: it.costo,
                                             }));
                                             generarRemitoPDFPremium({
-                                                esPresupuesto: esPendiente,
-                                                servicioId:   s.id,
+                                                esPresupuesto:        esPendiente,
+                                                servicioId:           s.id,
                                                 nroDocumentoExistente: s.nroDocumento || localStorage.getItem(`pdf_nro_${s.id}`) || null,
+                                                esTecnicoForzado:     s.servicioTipo === 'TECNICA',
                                                 cliente: {
                                                     nombre:          s.clienteNombre,
                                                     telefono:        s.clienteTelefono,

@@ -30,7 +30,12 @@ const INPUT = `w-full p-3 rounded-xl outline-none transition-all
 const LABEL = 'block text-[10px] font-black text-[#A8A29E] uppercase mb-1.5 tracking-widest';
 
 export default function ModalCotizacionVolumen({ onCerrar }) {
-    const isDark = document.documentElement.classList.contains('dark');
+    const [isDark, setIsDark] = React.useState(() => document.documentElement.classList.contains('dark'));
+    React.useEffect(() => {
+        const obs = new MutationObserver(() => setIsDark(document.documentElement.classList.contains('dark')));
+        obs.observe(document.documentElement, { attributeFilter: ['class'] });
+        return () => obs.disconnect();
+    }, []);
 
     const [clientes,   setClientes]   = useState([]);
     const [repuestos,  setRepuestos]  = useState([]);

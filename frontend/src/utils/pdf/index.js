@@ -51,6 +51,7 @@ function getLabelTipo(tipo, esMulti) {
     const suf = esMulti ? ' — MÚLTIPLES EQUIPOS' : '';
     switch (tipo) {
         case 'PRESUPUESTO':       return `PRESUPUESTO DE SERVICIO TÉCNICO${suf}`;
+        case 'PRESUPUESTO_VENTA': return 'PRESUPUESTO DE VENTA';
         case 'ORDEN_SERVICIO':    return `TRABAJO REALIZADO${suf}`;
         case 'COMPROBANTE':       return 'COMPROBANTE DE VENTA';
         case 'INFORME_TECNICO':   return `INFORME TÉCNICO${suf}`;
@@ -59,12 +60,12 @@ function getLabelTipo(tipo, esMulti) {
 }
 
 function getPrefijoNro(tipo) {
-    const MAP = { PRESUPUESTO: 'PP', ORDEN_SERVICIO: 'OS', COMPROBANTE: 'CV', INFORME_TECNICO: 'IT' };
+    const MAP = { PRESUPUESTO: 'PP', PRESUPUESTO_VENTA: 'PV', ORDEN_SERVICIO: 'OS', COMPROBANTE: 'CV', INFORME_TECNICO: 'IT' };
     return MAP[tipo] || 'DC';
 }
 
 function getEstadoBadge(tipo) {
-    const MAP = { ORDEN_SERVICIO: 'COMPLETADO', PRESUPUESTO: 'PRESUPUESTO', INFORME_TECNICO: 'INFORME' };
+    const MAP = { ORDEN_SERVICIO: 'COMPLETADO', PRESUPUESTO: 'PRESUPUESTO', PRESUPUESTO_VENTA: 'PRESUPUESTO', INFORME_TECNICO: 'INFORME' };
     return MAP[tipo] || null;
 }
 
@@ -776,6 +777,184 @@ async function generarMultiPresupuesto(doc, {
     });
 }
 
+// ── FLUJO PRESUPUESTO VENTA (cotización de productos) ────────────────────────
+
+async function generarPresupuestoVenta(doc, {
+    ticketItems, cliente, sede, y, descuentoPorcentaje, nroDoc,
+}) {
+    const pageW   = doc.internal.pageSize.getWidth();
+    const empresa = getEmpresa();
+    const pct     = parseFloat(descuentoPorcentaje || 0);
+
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW });
+
+    // Columnas: imagen | SKU | nombre+desc | cant | p.unit | p.desc | total línea
+    const FOTO_W = 20;
+    const FOTO_H = 20;
+    const filas  = [];
+    const fotos  = [];
+    const metas  = []; // precios para cálculos en didParseCell
+
+    for (const item of ticketItems) {
+        for (const r of (item.repuestosUsados || [])) {
+            const precioUnit   = Number(r.precio   || 0);
+            const cant         = Number(r.cantidad || 1);
+            const precioDesc   = pct > 0 ? precioUnit * (1 - pct / 100) : null;
+            const totalLinea   = precioDesc !== null ? cant * precioDesc : cant * precioUnit;
+            const desc         = (r.descripcion || '').trim();
+            const nombreDesc   = desc ? `${r.nombre}\n${desc}` : (r.nombre || '—');
+
+            filas.push([
+                '',
+                r.sku || '—',
+                nombreDesc,
+                String(cant),
+                `$ ${precioUnit.toLocaleString('es-AR')}`,
+                precioDesc !== null ? `$ ${precioDesc.toLocaleString('es-AR')}` : '—',
+                `$ ${totalLinea.toLocaleString('es-AR')}`,
+            ]);
+            fotos.push(await cargarFoto(r.fotoUrl || null));
+            metas.push({ tieneDesc: precioDesc !== null });
+        }
+        // Envío como línea separada (sin descuento, sin foto)
+        const envio = parseFloat(item.costoExtra || 0);
+        if (envio > 0) {
+            filas.push(['', '—', 'Envío', '1', `$ ${envio.toLocaleString('es-AR')}`, '—', `$ ${envio.toLocaleString('es-AR')}`]);
+            fotos.push(null);
+            metas.push({ tieneDesc: false });
+        }
+    }
+
+    if (filas.length > 0) {
+        y = checkSalto(doc, y, 40);
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('DETALLE DE PRODUCTOS', M, y);
+        y += 5;
+
+        autoTable(doc, {
+            startY: y,
+            head:  [['', 'SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', 'P. c/Desc.', 'Total']],
+            body:  filas,
+            theme: 'grid',
+            headStyles: {
+                fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
+                fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 2, right: 2 },
+            },
+            bodyStyles: {
+                fontSize: T.xs, textColor: C.dark, valign: 'middle',
+                cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+                minCellHeight: FOTO_H + 4,
+                lineColor: C.grayBorder, lineWidth: 0.1,
+            },
+            columnStyles: {
+                0: { cellWidth: FOTO_W + 4 },
+                1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
+                2: { cellWidth: 'auto' },
+                3: { halign: 'center', cellWidth: 12 },
+                4: { halign: 'right',  cellWidth: 22 },
+                5: { halign: 'right',  cellWidth: 22, textColor: C.green },
+                6: { halign: 'right',  cellWidth: 24, fontStyle: 'bold' },
+            },
+            margin: { left: M, right: M },
+            didParseCell: data => {
+                if (data.section !== 'body') return;
+                if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
+                // si no hay descuento, col 5 va en gris
+                if (data.column.index === 5 && !metas[data.row.index]?.tieneDesc) {
+                    data.cell.styles.textColor = C.grayText;
+                }
+                // descripción en la segunda línea del nombre (col 2) va en gris
+                if (data.column.index === 2) {
+                    data.cell.styles.fontSize = T.xs;
+                }
+            },
+            didDrawCell: data => {
+                if (data.section === 'body' && data.column.index === 0) {
+                    const foto = fotos[data.row.index];
+                    if (foto) {
+                        const ix = data.cell.x + (data.cell.width - FOTO_W) / 2;
+                        const iy = data.cell.y + (data.cell.height - FOTO_H) / 2;
+                        doc.addImage(foto.data, foto.format, ix, iy, FOTO_W, FOTO_H);
+                    }
+                }
+            },
+        });
+        y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // Subtotal bruto (productos + envío), descuento, total final
+    const subtotalBruto = ticketItems.reduce((a, it) => {
+        const prods = (it.repuestosUsados || []).reduce((s, r) => s + Number(r.precio || 0) * Number(r.cantidad || 1), 0);
+        return a + prods + parseFloat(it.costoExtra || 0);
+    }, 0);
+    const descuentoMonto = pct > 0 ? subtotalBruto * pct / 100 : 0;
+    const total          = subtotalBruto - descuentoMonto;
+
+    // Desglose subtotal → descuento → total
+    if (pct > 0) {
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Subtotal', M + 4, y + 4.5);
+        doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.red);
+        doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
+        doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M, y, pageW - M, y);
+        y += 2;
+    }
+
+    // Total estimado
+    doc.setFillColor(...C.redLight);
+    doc.setDrawColor(...C.red);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(M, y, CONTENT_W, 11, 2, 2, 'FD');
+    doc.setFontSize(T.xs);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.red);
+    doc.text('TOTAL ESTIMADO', M + 4, y + 7);
+    doc.setFontSize(T.xl);
+    doc.setTextColor(...C.navy);
+    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 8, { align: 'right' });
+    y += 16;
+
+    // Validez
+    const validez = new Date();
+    validez.setDate(validez.getDate() + 7);
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'italic');
+    doc.setTextColor(...C.grayText);
+    doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
+    y += 8;
+
+    // Condiciones + QR WhatsApp
+    const condH  = 36;
+    const qrWaH  = empresa.whatsapp ? 54 : 0;
+    const pageHQ = doc.internal.pageSize.getHeight();
+    if (y + condH + qrWaH > pageHQ - 25) {
+        doc.addPage();
+        y = 18;
+    }
+    y = dibujarCondiciones(doc, { y, pageW });
+    if (empresa.whatsapp) {
+        y = await dibujarQRWhatsApp(doc, {
+            x: M, y,
+            telefono: empresa.whatsapp,
+            mensaje:  `Hola, quiero aprobar el presupuesto ${nroDoc}`,
+            nroDoc,
+        });
+    }
+
+    return y;
+}
+
 // ── FLUJO COMPROBANTE (venta de productos) ────────────────────────────────────
 
 async function generarComprobante(doc, {
@@ -796,6 +975,12 @@ async function generarComprobante(doc, {
                 `$ ${Number(r.precio).toLocaleString('es-AR')}`,
                 `$ ${Number(r.subtotal ?? r.precio * r.cantidad).toLocaleString('es-AR')}`]);
             fotos.push(await cargarFoto(r.fotoUrl || null));
+        }
+        // Envío como línea separada
+        const envio = parseFloat(item.costoExtra || 0);
+        if (envio > 0) {
+            filas.push(['', 'Envío', '—', '1', `$ ${envio.toLocaleString('es-AR')}`, `$ ${envio.toLocaleString('es-AR')}`]);
+            fotos.push(null);
         }
     }
 
@@ -949,6 +1134,9 @@ export const generarPDF = async ({
 
     if (tipoDetectado === 'COMPROBANTE') {
         await generarComprobante(doc, { ...commonArgs, ticketItems, y });
+
+    } else if (tipoDetectado === 'PRESUPUESTO_VENTA') {
+        await generarPresupuestoVenta(doc, { ...commonArgs, ticketItems, y, nroDoc });
 
     } else if (tipoDetectado === 'PRESUPUESTO') {
         if (esMulti) {

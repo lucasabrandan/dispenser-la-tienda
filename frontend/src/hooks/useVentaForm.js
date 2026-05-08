@@ -180,6 +180,7 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
                 clienteNombre:     nombreFinal,
                 sedeNombre:        'Mostrador',
                 descuentoPorcentaje,
+                observaciones:     leyenda || '',
                 totalConDescuento: totalFinal,
                 items: [{
                     equipoSerial:     'MOSTRADOR',
@@ -203,23 +204,22 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
     };
 
     const dispararPDF = () => {
-        const nombreFinal = modoRapido
-            ? (datosCliente.nombre?.trim() || 'Mostrador')
-            : (clienteObj?.nombre || 'Mostrador');
+        const clienteFinal = modoRapido
+            ? { nombre: datosCliente.nombre?.trim() || 'Mostrador', telefono: datosCliente.telefono, email: datosCliente.email }
+            : (clienteObj || { nombre: 'Mostrador' });
         generarRemitoPDFPremium({
-            esPresupuesto: false,
-            cliente:  { nombre: nombreFinal },
+            tipo:     'PRESUPUESTO_VENTA',
+            cliente:  clienteFinal,
             sede:     { nombreSede: 'Mostrador' },
             tecnico:  'Mostrador',
             ticketItems: [{
                 equipoSerial:    'MOSTRADOR',
-                trabajo:         `VENTA: ${productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')}`,
                 repuestosUsados: productos,
                 costoExtra:      envioNum,
                 totalCalculado:  totalFinal,
-                resumenTexto:    `VENTA: ${productos.map(p => `${p.cantidad}x ${p.nombre}`).join(', ')}`
             }],
             descuentoPorcentaje,
+            leyenda,
             totalFinal,
             fechaServicio: fechaVenta
         });
