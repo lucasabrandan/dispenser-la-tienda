@@ -68,7 +68,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                     <button
                         onClick={agregarProducto}
                         disabled={!repuestoElegido}
-                        className="h-11 w-11 flex items-center justify-center rounded-xl text-2xl font-black text-white active:scale-95 transition-all disabled:opacity-40 bg-[#D13A28] dark:bg-[#E8422F]"
+                        className="h-12 w-12 flex items-center justify-center rounded-xl text-xl font-black text-white active:scale-90 transition-transform disabled:opacity-40 bg-[#D13A28] dark:bg-[#E8422F]"
                     >
                         +
                     </button>
@@ -77,32 +77,26 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
 
             {/* ── Lista de productos cargados ── */}
             {productos.length > 0 && (
-                <div>
-                    <Label>Productos en el pedido</Label>
-                    <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-[#EDEAE6] dark:bg-[#242424]">
-                        {productos.map((p, i) => (
-                            <div key={i} className="px-4 py-3 border-b border-black/[0.07] dark:border-white/[0.07] last:border-0 flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
+                    {productos.map((p, i) => (
+                        <div key={i} className={`py-2.5 ${i < productos.length - 1 ? 'border-b border-black/[0.07] dark:border-white/[0.07]' : ''}`}>
+                            <div className="flex justify-between items-center">
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-bold text-[13px] text-[#1C1917] dark:text-[#F0EEE9] truncate">
-                                        {p.nombre}
-                                    </div>
-                                    <div className="text-[10px] text-[#A8A29E]">${p.precio} c/u</div>
+                                    <p className="font-bold text-sm text-[#1C1917] dark:text-[#F0EEE9] truncate">{p.nombre}</p>
+                                    <p className="text-[10px] text-[#A8A29E]">${p.precio} c/u</p>
                                 </div>
                                 <input
                                     type="number" min="1" value={p.cantidad}
                                     onChange={e => actualizarCantidad(i, e.target.value)}
-                                    className="w-12 h-9 rounded-lg text-center font-black text-[#1C1917] dark:text-[#F0EEE9] bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10 shrink-0"
+                                    className="w-11 h-9 rounded-lg text-center font-black text-sm text-[#1C1917] dark:text-[#F0EEE9] mr-3 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
                                 />
-                                <div className="font-black text-[13px] w-20 text-right text-[#1C1917] dark:text-[#F0EEE9] shrink-0">
+                                <p className="font-black text-sm w-16 text-right text-[#1C1917] dark:text-[#F0EEE9]">
                                     ${p.subtotal.toLocaleString()}
-                                </div>
-                                <button onClick={() => quitarProducto(i)}
-                                    className="text-[#D13A28] dark:text-[#E8422F] text-lg shrink-0">
-                                    ✕
-                                </button>
+                                </p>
+                                <button onClick={() => quitarProducto(i)} className="ml-3 text-rose-500 text-lg">✕</button>
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    ))}
                 </div>
             )}
 

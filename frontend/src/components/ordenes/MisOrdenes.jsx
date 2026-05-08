@@ -62,8 +62,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar }) {
                     </div>
                 </div>
 
-                {/* Cliente */}
-                {orden.clienteNombre && (
+                {/* Cliente — solo visible mientras la orden está activa */}
+                {!esFinal && orden.clienteNombre && (
                     <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] font-bold">🏢 {orden.clienteNombre}</p>
                 )}
 
@@ -74,8 +74,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar }) {
                     </p>
                 )}
 
-                {/* Dirección con link a Maps */}
-                {orden.direccion && (
+                {/* Dirección con link a Maps — solo visible mientras la orden está activa */}
+                {!esFinal && orden.direccion && (
                     <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
                         target="_blank" rel="noreferrer"
                         className="text-[12px] text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 flex items-center gap-1 hover:underline">
