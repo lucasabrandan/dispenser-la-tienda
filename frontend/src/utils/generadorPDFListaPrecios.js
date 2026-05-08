@@ -129,7 +129,6 @@ export async function generarPDFListaPrecios(productos, descuentoEfectivo = 0) {
 
         // Descripción
         const descTxt = (producto.descripcion || '').trim();
-        console.log(`[PDF] ${producto.nombre} → descripcion: "${producto.descripcion}" | trim: "${descTxt}"`);
         if (descTxt) {
             const descY = y + 16 + nombreLines.slice(0, 2).length * 4.5;
             doc.setFontSize(7.5);
