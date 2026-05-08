@@ -2,16 +2,27 @@ import jsPDF from 'jspdf';
 import { construirUrlFoto } from './construirUrlFoto';
 import { DARK, RED, GOLD, GRAY_TEXT, WARM_BORDER, dibujarHeaderPDF, dibujarFooterPDF } from './pdfTheme';
 
-async function imagenABase64(url) {
+// Descarga la imagen y la reescala a maxPx usando canvas — evita PDFs de 200MB
+async function imagenComprimida(url, maxPx = 150) {
     try {
         const res = await fetch(url);
         if (!res.ok) return null;
         const blob = await res.blob();
-        return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror  = () => resolve(null);
-            reader.readAsDataURL(blob);
+        const blobUrl = URL.createObjectURL(blob);
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const ratio = Math.min(1, maxPx / Math.max(img.width || 1, img.height || 1));
+                const canvas = document.createElement('canvas');
+                canvas.width  = Math.round(img.width  * ratio);
+                canvas.height = Math.round(img.height * ratio);
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                const compressed = canvas.toDataURL('image/jpeg', 0.8);
+                URL.revokeObjectURL(blobUrl);
+                resolve(compressed);
+            };
+            img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(null); };
+            img.src = blobUrl;
         });
     } catch { return null; }
 }
@@ -74,7 +85,7 @@ export async function generarPDFListaPrecios(productos, descuentoEfectivo = 0) {
 
         if (producto.fotoUrl) {
             const urlFoto = construirUrlFoto(producto.fotoUrl);
-            const base64  = await imagenABase64(urlFoto);
+            const base64  = await imagenComprimida(urlFoto);
             if (base64) {
                 try {
                     doc.setFillColor(248, 248, 248);
@@ -117,12 +128,12 @@ export async function generarPDFListaPrecios(productos, descuentoEfectivo = 0) {
         doc.text(nombreLines.slice(0, 2), xText, y + 16);
 
         // Descripción (hasta 2 líneas, solo si hay espacio)
-        if (producto.descripcion) {
+        if (producto.descripcion?.trim()) {
             const descY = y + 16 + nombreLines.slice(0, 2).length * 4.5;
             doc.setFontSize(7.5);
-            doc.setFont(undefined, 'normal');
+            doc.setFont('helvetica', 'normal');
             doc.setTextColor(...GRAY_TEXT);
-            const descLines = doc.splitTextToSize(producto.descripcion, textW);
+            const descLines = doc.splitTextToSize(producto.descripcion.trim(), textW);
             doc.text(descLines.slice(0, 2), xText, descY);
         }
 

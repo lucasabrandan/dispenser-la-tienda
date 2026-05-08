@@ -108,7 +108,14 @@ export default function ProductoCard({
 
                 {/* Acordeón con detalle de márgenes */}
                 {estaExpandido && !modoSeleccion && (
-                    <div className="mt-3 pt-3 border-t border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="mt-3 pt-3 border-t border-black/[0.07] dark:border-white/[0.07] space-y-2">
+                        {/* Descripción si existe */}
+                        {producto.descripcion?.trim() && (
+                            <div className="bg-[#D8D4CE] dark:bg-[#1C1C1C] px-3 py-2.5 rounded-xl">
+                                <p className="text-[9px] font-black text-[#A8A29E] uppercase mb-1">Descripción</p>
+                                <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{producto.descripcion}</p>
+                            </div>
+                        )}
                         <div className="bg-[#D8D4CE] dark:bg-[#1C1C1C] p-3 rounded-xl">
                             <h4 className="font-black text-[10px] text-[#1C1917] dark:text-[#F0EEE9] mb-2 uppercase">Detalle de Márgenes</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">

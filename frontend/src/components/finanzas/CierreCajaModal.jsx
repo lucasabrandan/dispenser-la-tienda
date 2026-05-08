@@ -37,13 +37,21 @@ function resolverRango(periodo) {
 }
 
 export default function CierreCajaModal({ onClose, onArchivar }) {
-    const [periodo, setPeriodo]     = useState('mes');
-    const [desde, setDesde]         = useState(inicioMesISO());
-    const [hasta, setHasta]         = useState(hoyISO());
-    const [servicios, setServicios] = useState([]);
-    const [cargando, setCargando]   = useState(false);
-    const [cerrando, setCerrando]   = useState(false);
-    const [cerrado, setCerrado]     = useState(false);
+    const [periodo, setPeriodo]         = useState('mes');
+    const [desde, setDesde]             = useState(inicioMesISO());
+    const [hasta, setHasta]             = useState(hoyISO());
+    const [servicios, setServicios]     = useState([]);
+    const [cargando, setCargando]       = useState(false);
+    const [cerrando, setCerrando]       = useState(false);
+    const [cerrado, setCerrado]         = useState(false);
+    const [tecnicos, setTecnicos]       = useState([]);
+    const [tecnicoFiltro, setTecnicoFiltro] = useState('');
+
+    useEffect(() => {
+        api.get('/ordenes/tecnicos')
+            .then(r => setTecnicos(r.data || []))
+            .catch(() => {});
+    }, []);
 
     useEffect(() => {
         const rango = resolverRango(periodo);
@@ -52,14 +60,14 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
 
     useEffect(() => {
         if (desde && hasta) cargar();
-    }, [desde, hasta]); // eslint-disable-line
+    }, [desde, hasta, tecnicoFiltro]); // eslint-disable-line
 
     const cargar = async () => {
         setCargando(true);
         try {
-            const res = await api.get('/servicios', {
-                params: { estado: 'REALIZADO', desde, hasta, page: 0, size: 500, sort: 'fechaServicio,desc' }
-            });
+            const params = { estado: 'REALIZADO', desde, hasta, page: 0, size: 500, sort: 'fechaServicio,desc' };
+            if (tecnicoFiltro) params.usuarioId = tecnicoFiltro;
+            const res = await api.get('/servicios', { params });
             setServicios(res.data.content || res.data || []);
         } catch { toast.error('Error al cargar datos'); }
         finally { setCargando(false); }
@@ -152,9 +160,26 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                                 className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                         </div>
                     )}
+                    {/* Filtro técnico */}
+                    {tecnicos.length > 0 && (
+                        <select
+                            value={tecnicoFiltro}
+                            onChange={e => setTecnicoFiltro(e.target.value)}
+                            className="w-full h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
+                        >
+                            <option value="">Todos los técnicos</option>
+                            {tecnicos.map(t => (
+                                <option key={t.id} value={t.id}>{t.nombre}</option>
+                            ))}
+                        </select>
+                    )}
                     {!cargando && (
                         <p className="text-[10px] text-[#A8A29E]">
-                            {desde} → {hasta} · <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">{servicios.length} servicios realizados</span>
+                            {desde} → {hasta}
+                            {tecnicoFiltro && tecnicos.find(t => String(t.id) === String(tecnicoFiltro)) && (
+                                <> · <span className="font-bold text-[#D48800] dark:text-[#F0A500]">{tecnicos.find(t => String(t.id) === String(tecnicoFiltro)).nombre}</span></>
+                            )}
+                            {' · '}<span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">{servicios.length} servicios realizados</span>
                         </p>
                     )}
                 </div>
@@ -174,7 +199,11 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                         <>
                             {/* Total general */}
                             <div className="rounded-2xl p-4 bg-[#D13A28] dark:bg-[#E8422F]">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-white/70 mb-1">Total período</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-white/70 mb-1">
+                                    {tecnicoFiltro && tecnicos.find(t => String(t.id) === String(tecnicoFiltro))
+                                        ? `Total — ${tecnicos.find(t => String(t.id) === String(tecnicoFiltro)).nombre}`
+                                        : 'Total período'}
+                                </p>
                                 <M valor={totalGeneral} className="text-[28px] font-black text-white leading-none block" />
                                 <div className="flex gap-4 mt-1.5">
                                     <span className="text-[10px] text-white/70">{servicios.length} servicios</span>
