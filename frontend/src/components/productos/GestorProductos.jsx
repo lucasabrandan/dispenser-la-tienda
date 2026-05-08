@@ -88,6 +88,7 @@ export default function GestorProductos() {
     const [gananciamasiva, setGananciaMasiva]   = useState('');
     const [markupMasivo, setMarkupMasivo]       = useState('');
     const [modalOrden, setModalOrden]           = useState(null); // lista de productos a reordenar
+    const [ordenProducto, setOrdenProducto]     = useState('nombre_asc');
 
     useEffect(() => { cargarProductos(); }, []);
 
@@ -103,13 +104,25 @@ export default function GestorProductos() {
 
     // ── Filtrado ───────────────────────────────────────────────────────────────
     const productosFiltrados = useMemo(() => {
-        if (!busqueda.trim()) return productos;
-        const q = busqueda.toLowerCase().trim();
-        return productos.filter(p =>
-            p.nombre?.toLowerCase().includes(q) ||
-            p.sku?.toLowerCase().includes(q)
-        );
-    }, [productos, busqueda]);
+        let lista = !busqueda.trim()
+            ? [...productos]
+            : productos.filter(p => {
+                const q = busqueda.toLowerCase().trim();
+                return p.nombre?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q);
+            });
+
+        lista.sort((a, b) => {
+            switch (ordenProducto) {
+                case 'nombre_desc': return (b.nombre || '').localeCompare(a.nombre || '');
+                case 'precio_desc': return (parseFloat(b.precioLista) || 0) - (parseFloat(a.precioLista) || 0);
+                case 'precio_asc':  return (parseFloat(a.precioLista) || 0) - (parseFloat(b.precioLista) || 0);
+                case 'sku_asc':     return (a.sku || '').localeCompare(b.sku || '');
+                default:            return (a.nombre || '').localeCompare(b.nombre || ''); // nombre_asc
+            }
+        });
+
+        return lista;
+    }, [productos, busqueda, ordenProducto]);
 
     // ── Selección ──────────────────────────────────────────────────────────────
     const toggleSeleccion = (id) => {
@@ -231,6 +244,8 @@ export default function GestorProductos() {
                     todosSeleccionados={todosSeleccionados}
                     busqueda={busqueda}
                     productosFiltrados={productosFiltrados}
+                    ordenProducto={ordenProducto}
+                    onOrdenChange={setOrdenProducto}
                     onExportarTodos={exportarTodos}
                     onNuevo={() => { setProductoEdicion(null); setModalAbierto(true); }}
                     onActivarSeleccion={() => setModoSeleccion(true)}

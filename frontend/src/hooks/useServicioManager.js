@@ -67,6 +67,7 @@ export function useServicioManager() {
     const [desde, setDesde]                   = useState('');
     const [hasta, setHasta]                   = useState('');
     const [usuarioId, setUsuarioId]           = useState('');
+    const [ordenServicio, setOrdenServicio]   = useState('fechaServicio,desc');
 
     // ── Modales ──────────────────────────────────────────────────────────────────
     const [modalCrear, setModalCrear]             = useState(false);
@@ -106,7 +107,7 @@ export function useServicioManager() {
                 tipo: 'TECNICA',
                 page: pagina,
                 size: 20,
-                sort: 'fechaServicio,desc',
+                sort: ordenServicio,
             };
             if (estado !== 'TODOS')  params.estado    = estado;
             if (busquedaApi)         params.busqueda  = busquedaApi;
@@ -126,7 +127,7 @@ export function useServicioManager() {
         } finally {
             setCargando(false);
         }
-    }, [pagina, estado, busquedaApi, periodoRapido, mesSelector, desde, hasta, usuarioId, esAdmin, usuario?.id]);
+    }, [pagina, estado, busquedaApi, periodoRapido, mesSelector, desde, hasta, usuarioId, ordenServicio, esAdmin, usuario?.id]);
 
     // ── Fetch stats (separado de la lista) ───────────────────────────────────────
     const cargarStats = useCallback(async () => {
@@ -288,5 +289,6 @@ export function useServicioManager() {
         setFiltroTab,
         filtros,
         usuarioId, setUsuarioId,
+        ordenServicio, setOrdenServicio,
     };
 }

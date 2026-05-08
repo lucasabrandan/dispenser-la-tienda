@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function BarraAccionesProductos({
     totalProductos, modoSeleccion, seleccionados, todosSeleccionados,
-    busqueda, productosFiltrados,
+    busqueda, productosFiltrados, ordenProducto, onOrdenChange,
     onExportarTodos, onNuevo, onActivarSeleccion, onCancelarSeleccion,
     onSeleccionarTodos, onExportarSeleccionados, onAbrirModalPrecio,
     onEliminarSeleccionados, onBusquedaChange,
@@ -96,6 +96,22 @@ export default function BarraAccionesProductos({
                     {productosFiltrados.length} resultado{productosFiltrados.length !== 1 ? 's' : ''} para "{busqueda}"
                 </p>
             )}
+
+            {/* Ordenamiento */}
+            <div className="flex items-center gap-2 mt-3">
+                <span className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider shrink-0">Orden</span>
+                <select
+                    value={ordenProducto}
+                    onChange={e => onOrdenChange(e.target.value)}
+                    className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
+                >
+                    <option value="nombre_asc">Nombre A → Z</option>
+                    <option value="nombre_desc">Nombre Z → A</option>
+                    <option value="precio_desc">Precio mayor primero</option>
+                    <option value="precio_asc">Precio menor primero</option>
+                    <option value="sku_asc">SKU A → Z</option>
+                </select>
+            </div>
         </div>
     );
 }

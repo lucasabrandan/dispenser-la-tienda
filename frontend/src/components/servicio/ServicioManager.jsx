@@ -61,6 +61,7 @@ export default function ServicioManager({
         archivarServicio, accionMasiva, eliminarServicio,
         generarPDF, calcularTotal, abrirEditar, cerrarModal,
         filtros, usuarioId, setUsuarioId,
+        ordenServicio, setOrdenServicio,
     } = useServicioManager();
 
     const [servicioEjecutar, setServicioEjecutar]   = useState(null);
@@ -244,6 +245,21 @@ export default function ServicioManager({
                         {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                     </select>
                 )}
+
+                {/* Ordenamiento */}
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider shrink-0">Orden</span>
+                    <select
+                        value={ordenServicio}
+                        onChange={e => { setOrdenServicio(e.target.value); }}
+                        className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
+                    >
+                        <option value="fechaServicio,desc">Más reciente primero</option>
+                        <option value="fechaServicio,asc">Más antiguo primero</option>
+                        <option value="total,desc">Mayor monto primero</option>
+                        <option value="total,asc">Menor monto primero</option>
+                    </select>
+                </div>
 
                 {/* Barra selección masiva */}
                 {modoSeleccion && seleccionados.size > 0 && (
