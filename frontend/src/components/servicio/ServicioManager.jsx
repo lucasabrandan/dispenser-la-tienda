@@ -8,6 +8,7 @@ import ServicioForm from '../servicio/ServicioForm';
 import ServicioCard from '../servicio/ServicioCard';
 import Paginacion from '../ui/Paginacion';
 import ModalFirmasPDF from '../ui/ModalFirmasPDF';
+import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -62,7 +63,8 @@ export default function ServicioManager({
         filtros, usuarioId, setUsuarioId,
     } = useServicioManager();
 
-    const [servicioEjecutar, setServicioEjecutar] = useState(null);
+    const [servicioEjecutar, setServicioEjecutar]   = useState(null);
+    const [modalImportar, setModalImportar]         = useState(false);
     const [tecnicos, setTecnicos]               = useState([]);
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
@@ -117,7 +119,13 @@ export default function ServicioManager({
                         <button
                             onClick={() => exportarServiciosCSV(filtros.itemsFiltrados)}
                             className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black transition-all active:scale-90 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                            title="Exportar CSV"
                         >CSV</button>
+                        <button
+                            onClick={() => setModalImportar(true)}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] transition-all active:scale-90 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                            title="Importar servicios históricos"
+                        >📤</button>
                         <button
                             onClick={() => setModalCrear(true)}
                             className="hidden md:flex h-9 px-5 rounded-xl items-center font-bold text-xs text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]"
@@ -374,6 +382,13 @@ export default function ServicioManager({
 
             {modalFirmas && (
                 <ModalFirmasPDF onConfirm={confirmarFirmasYGenerarPDF} onCancel={() => setModalFirmas(false)} />
+            )}
+
+            {modalImportar && (
+                <ImportadorServiciosModal
+                    onCerrar={() => setModalImportar(false)}
+                    onImportado={() => { filtros.cargar?.(); }}
+                />
             )}
         </div>
     );

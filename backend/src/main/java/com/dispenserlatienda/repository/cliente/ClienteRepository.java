@@ -9,4 +9,5 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     Optional<Cliente> findByCuilDni(String cuilDni);
 
+    Optional<Cliente> findByNombreIgnoreCase(String nombre);
 }
