@@ -160,10 +160,9 @@ export function useServicioManager() {
     };
 
     const eliminarServicio = async (id) => {
-        if (!window.confirm('⚠️ ¿Eliminar permanentemente este registro?')) return;
         try {
             await api.delete(`/servicios/${id}`);
-            toast.success('🗑️ Registro eliminado');
+            toast.success('Registro eliminado');
             cargarServicios(); cargarStats();
         } catch { toast.error('Error al eliminar'); }
     };

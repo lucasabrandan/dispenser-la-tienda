@@ -58,13 +58,14 @@ export default function ServicioManager({
         confirmarFirmasYGenerarPDF,
         cargarServicios,
         confirmarServicio, rechazarServicio,
-        archivarServicio, accionMasiva,
+        archivarServicio, accionMasiva, eliminarServicio,
         generarPDF, calcularTotal, abrirEditar, cerrarModal,
         filtros, usuarioId, setUsuarioId,
     } = useServicioManager();
 
     const [servicioEjecutar, setServicioEjecutar]   = useState(null);
     const [modalImportar, setModalImportar]         = useState(false);
+    const [confirmEliminar, setConfirmEliminar]     = useState(null); // { ids: [], modo: 'uno'|'masivo' }
     const [tecnicos, setTecnicos]               = useState([]);
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
@@ -260,6 +261,12 @@ export default function ServicioManager({
                             className="h-9 px-4 rounded-xl font-bold text-xs bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                             🗄️ Archivar
                         </button>
+                        {esAdmin && (
+                            <button onClick={() => setConfirmEliminar({ ids: [...seleccionados], modo: 'masivo' })}
+                                className="h-9 px-4 rounded-xl font-bold text-xs bg-red-100 dark:bg-red-900/30 text-[#D13A28] dark:text-[#E8422F] border border-[#D13A28]/30 active:scale-95">
+                                🗑️ Eliminar
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -288,6 +295,7 @@ export default function ServicioManager({
                                 onCobrar={confirmarServicio}
                                 onRechazar={rechazarServicio}
                                 onArchivar={archivarServicio}
+                                onEliminar={esAdmin ? (id) => setConfirmEliminar({ ids: [id], modo: 'uno' }) : null}
                                 onGenerarPDF={generarPDF}
                                 onDetalle={setModalDetalle}
                                 calcularTotal={calcularTotal}
@@ -389,6 +397,45 @@ export default function ServicioManager({
                     onCerrar={() => setModalImportar(false)}
                     onImportado={() => { filtros.cargar?.(); }}
                 />
+            )}
+
+            {/* Modal confirmación eliminación — solo admin */}
+            {confirmEliminar && (
+                <>
+                    <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
+                    <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
+                        <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
+                            <div className="text-center mb-5">
+                                <p className="text-[36px] mb-2">⚠️</p>
+                                <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">
+                                    Eliminar {confirmEliminar.ids.length > 1 ? `${confirmEliminar.ids.length} servicios` : 'servicio'}
+                                </h3>
+                            </div>
+                            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-[#D13A28]/20 mb-4 space-y-1.5">
+                                <p className="text-[11px] font-black text-[#D13A28] uppercase tracking-wide">Esta acción no se puede deshacer</p>
+                                <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] leading-snug">
+                                    Se eliminarán permanentemente el servicio, todos sus ítems, repuestos usados y registros asociados. No aparecerá más en el historial ni en estadísticas.
+                                </p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => setConfirmEliminar(null)}
+                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    Cancelar
+                                </button>
+                                <button onClick={async () => {
+                                    const ids = confirmEliminar.ids;
+                                    setConfirmEliminar(null);
+                                    setSeleccionados(new Set());
+                                    setModoSeleccion(false);
+                                    await Promise.all(ids.map(id => eliminarServicio(id)));
+                                }}
+                                    className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                    Sí, eliminar definitivamente
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );

@@ -33,7 +33,7 @@ function IconBtn({ onClick, title, children, cls = '' }) {
 export default function ServicioCard({
     servicio, modoSeleccion, seleccionado,
     onToggleSelect, onEditar, onEjecutar, onCobrar,
-    onRechazar, onArchivar, onGenerarPDF, onDetalle, calcularTotal,
+    onRechazar, onArchivar, onEliminar, onGenerarPDF, onDetalle, calcularTotal,
 }) {
     const [expandido, setExpandido] = useState(false);
 
@@ -174,7 +174,11 @@ export default function ServicioCard({
 
                 <div className="flex-1" />
 
-                {/* Derecha: archivar · rechazar · ejecutar · cobrar */}
+                {/* Derecha: eliminar (admin) · archivar · rechazar · ejecutar · cobrar */}
+                {onEliminar && (
+                    <IconBtn onClick={() => onEliminar(servicio.id)} title="Eliminar definitivamente"
+                        cls="bg-red-100 dark:bg-red-900/30 text-[#D13A28] dark:text-[#E8422F]">🗑️</IconBtn>
+                )}
                 {!esArch && (
                     <IconBtn onClick={() => onArchivar(servicio.id)} title="Archivar"
                         cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
