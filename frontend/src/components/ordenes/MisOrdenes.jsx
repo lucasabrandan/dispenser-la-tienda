@@ -67,8 +67,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar }) {
                     <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] font-bold">🏢 {orden.clienteNombre}</p>
                 )}
 
-                {/* Monto estimado + forma de pago */}
-                {orden.montoEstimado && (
+                {/* Monto estimado + forma de pago — solo visible mientras la orden está activa */}
+                {!esFinal && orden.montoEstimado && (
                     <p className="text-[12px] font-black text-[#D48800] dark:text-[#F0A500] mt-0.5">
                         💰 ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}
                     </p>
@@ -84,8 +84,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar }) {
                     </a>
                 )}
 
-                {/* Descripción expandible */}
-                {orden.descripcion && (
+                {/* Instrucciones — solo visibles mientras la orden está activa */}
+                {!esFinal && orden.descripcion && (
                     <>
                         <button onClick={() => setExpandido(v => !v)}
                             className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
