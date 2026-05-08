@@ -127,13 +127,15 @@ export async function generarPDFListaPrecios(productos, descuentoEfectivo = 0) {
         const nombreLines = doc.splitTextToSize(producto.nombre || '', textW);
         doc.text(nombreLines.slice(0, 2), xText, y + 16);
 
-        // Descripción (hasta 2 líneas, solo si hay espacio)
-        if (producto.descripcion?.trim()) {
+        // Descripción
+        const descTxt = (producto.descripcion || '').trim();
+        console.log(`[PDF] ${producto.nombre} → descripcion: "${producto.descripcion}" | trim: "${descTxt}"`);
+        if (descTxt) {
             const descY = y + 16 + nombreLines.slice(0, 2).length * 4.5;
             doc.setFontSize(7.5);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(...GRAY_TEXT);
-            const descLines = doc.splitTextToSize(producto.descripcion.trim(), textW);
+            const descLines = doc.splitTextToSize(descTxt, textW);
             doc.text(descLines.slice(0, 2), xText, descY);
         }
 
