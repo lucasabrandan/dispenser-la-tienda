@@ -65,8 +65,8 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
     doc.setFontSize(6.5);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...GRAY_TEXT);
-    const linea1 = [emp1.contacto ? `WA: ${emp1.contacto}` : null, emp1.email].filter(Boolean).join('  ·  ');
-    const linea2 = [emp1.web, emp1.redes].filter(Boolean).join('  ·  ');
+    const linea1 = [emp1.contacto ? `WA: ${emp1.contacto}` : null, emp1.email ? `Email: ${emp1.email}` : null].filter(Boolean).join('  ·  ');
+    const linea2 = [emp1.web ? `Web: ${emp1.web}` : null, emp1.redes ? `IG: ${emp1.redes}` : null].filter(Boolean).join('  ·  ');
     if (linea1) doc.text(linea1, 14, 27);
     if (linea2) doc.text(linea2, 14, 32);
 
@@ -122,7 +122,11 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
     doc.setFontSize(6);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...GRAY_TEXT);
-    const contactoLine = [emp2.contacto ? `WA: ${emp2.contacto}` : null, emp2.email, emp2.web].filter(Boolean).join('  ·  ');
+    const contactoLine = [
+        emp2.contacto ? `WA: ${emp2.contacto}` : null,
+        emp2.email    ? `Email: ${emp2.email}`  : null,
+        emp2.web      ? `Web: ${emp2.web}`      : null,
+    ].filter(Boolean).join('  ·  ');
     if (contactoLine) doc.text(contactoLine, 14, 20);
 
     // Bloque derecho: fecha / nroDoc / técnico

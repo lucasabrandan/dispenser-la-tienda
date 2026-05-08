@@ -23,22 +23,21 @@ export async function generarPDFCotizacion({
     const margin = 14;
     const fecha  = new Date().toLocaleDateString('es-AR');
 
-    dibujarHeaderPDF(doc, 'COTIZACIÓN DE PRECIOS', fecha, `Válida por ${validezDias} día${validezDias !== '1' ? 's' : ''}`);
+    dibujarHeaderPDF(doc, 'COTIZACION DE PRECIOS', fecha, `Valida por ${validezDias} dia${validezDias !== '1' ? 's' : ''}`);
 
-    // Cargar foto del producto (si hay)
     const foto = await cargarFoto(fotoUrl);
 
     let y = 52;
 
     // ── Bloque "Para:" ────────────────────────────────────────────────────────
+    const paraH = clienteTelefono ? 16 : 12;
     doc.setFillColor(...GRAY_LIGHT);
     doc.setDrawColor(...WARM_BORDER);
     doc.setLineWidth(0.3);
-    doc.roundedRect(margin, y, pageW - margin * 2, clienteTelefono ? 16 : 12, 3, 3, 'FD');
+    doc.roundedRect(margin, y, pageW - margin * 2, paraH, 3, 3, 'FD');
 
-    // Acento dorado izq
     doc.setFillColor(...GOLD);
-    doc.rect(margin, y, 3, clienteTelefono ? 16 : 12, 'F');
+    doc.rect(margin, y, 3, paraH, 'F');
 
     doc.setFontSize(6.5);
     doc.setFont(undefined, 'bold');
@@ -48,7 +47,7 @@ export async function generarPDFCotizacion({
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
-    doc.text(clienteNombre || '—', margin + 7, y + 11);
+    doc.text(clienteNombre || '-', margin + 7, y + 11);
 
     if (clienteTelefono) {
         doc.setFontSize(7.5);
@@ -57,64 +56,62 @@ export async function generarPDFCotizacion({
         doc.text(`Tel: ${clienteTelefono}`, margin + 7, y + 14.5);
     }
 
-    y += (clienteTelefono ? 16 : 12) + 8;
+    y += paraH + 8;
 
     // ── Bloque producto ───────────────────────────────────────────────────────
-    const FOTO_SZ = 32; // mm cuadrado
+    const FOTO_SZ = 32;
     const fotoX   = pageW - margin - FOTO_SZ;
-    const textW   = foto ? fotoX - margin - 4 : pageW - margin * 2;
+    const textW   = foto ? fotoX - margin - 5 : pageW - margin * 2;
     const yProd   = y;
 
     doc.setFontSize(7);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...RED);
     doc.text('PRODUCTO', margin, y);
-    y += 4;
+    y += 5;
 
-    // Nombre del producto (puede ser largo — wrapeamos al ancho disponible)
+    // Nombre
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
-    const nameLines = doc.splitTextToSize(productoNombre || '—', textW);
+    const nameLines = doc.splitTextToSize(productoNombre || '-', textW);
     doc.text(nameLines.slice(0, 2), margin, y);
     y += nameLines.slice(0, 2).length * 5.5;
 
+    // SKU
     if (productoCodigo) {
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...GRAY_TEXT);
         doc.text(`SKU: ${productoCodigo}`, margin, y);
-        y += 4.5;
+        y += 5;
     }
 
+    // Descripcion
     if (productoDescripcion) {
-        doc.setFontSize(8);
+        doc.setFontSize(9);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...GRAY_TEXT);
         const lines = doc.splitTextToSize(productoDescripcion, textW);
         doc.text(lines.slice(0, 3), margin, y);
-        y += lines.slice(0, 3).length * 4;
+        y += lines.slice(0, 3).length * 4.5;
     }
 
-    // Foto del producto — columna derecha
+    // Foto — columna derecha con borde recto (jsPDF no clipea imagenes a redondeado)
     if (foto) {
         try {
-            doc.setFillColor(...GRAY_LIGHT);
-            doc.setDrawColor(...WARM_BORDER);
-            doc.setLineWidth(0.3);
-            doc.roundedRect(fotoX, yProd, FOTO_SZ, FOTO_SZ, 3, 3, 'FD');
             doc.addImage(foto.data, foto.format, fotoX, yProd, FOTO_SZ, FOTO_SZ);
             doc.setDrawColor(...WARM_BORDER);
             doc.setLineWidth(0.3);
-            doc.roundedRect(fotoX, yProd, FOTO_SZ, FOTO_SZ, 3, 3, 'S');
+            doc.rect(fotoX, yProd, FOTO_SZ, FOTO_SZ, 'S');
         } catch {}
     }
 
-    // Avanzar y hasta debajo de la foto si corresponde
+    // Avanzar y hasta debajo de la foto si hace falta
     const yMinTras = yProd + (foto ? FOTO_SZ : 0);
     if (y < yMinTras) y = yMinTras;
 
-    y += 6;
+    y += 8;
 
     // ── Tabla de precios escalonados ──────────────────────────────────────────
     const colCant  = margin;
@@ -123,7 +120,6 @@ export async function generarPDFCotizacion({
     const rowH     = 12;
     const headerH  = 9;
 
-    // Cabecera tabla
     doc.setFillColor(...RED);
     doc.roundedRect(margin, y, pageW - margin * 2, headerH, 2, 2, 'F');
 
@@ -135,11 +131,10 @@ export async function generarPDFCotizacion({
     doc.text('SUBTOTAL', colSub, y + 6, { align: 'right' });
     y += headerH;
 
-    // Filas
     filas.forEach((fila, idx) => {
-        const cant  = Number(fila.cantidad)      || 0;
-        const unit  = Number(fila.precioUnitario) || 0;
-        const sub   = cant * unit;
+        const cant = Number(fila.cantidad)       || 0;
+        const unit = Number(fila.precioUnitario) || 0;
+        const sub  = cant * unit;
 
         const bg = idx % 2 === 0 ? [255, 255, 255] : [250, 248, 245];
         doc.setFillColor(...bg);
@@ -147,7 +142,6 @@ export async function generarPDFCotizacion({
         doc.setLineWidth(0.2);
         doc.rect(margin, y, pageW - margin * 2, rowH, 'FD');
 
-        // Cantidad — en badge dorado si es > 1
         doc.setFontSize(10);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...DARK);
@@ -160,7 +154,6 @@ export async function generarPDFCotizacion({
             doc.text('unid.', colCant + 4 + doc.getTextWidth(cant.toLocaleString('es-AR')) + 2, y + 7.5);
         }
 
-        // Precio unitario
         doc.setFontSize(10);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...DARK);
@@ -171,7 +164,6 @@ export async function generarPDFCotizacion({
         doc.setTextColor(...GRAY_TEXT);
         doc.text('c/u', colUnit + doc.getTextWidth(`$${unit.toLocaleString('es-AR')}`) + 2, y + 7.5);
 
-        // Subtotal — en rojo si es la línea de mayor volumen (max subtotal)
         const maxSub = Math.max(...filas.map(f => Number(f.cantidad) * Number(f.precioUnitario)));
         const esMax  = sub === maxSub && filas.length > 1;
         doc.setFontSize(11);
@@ -182,30 +174,30 @@ export async function generarPDFCotizacion({
         y += rowH;
     });
 
-    // Borde inferior tabla
     doc.setDrawColor(...WARM_BORDER);
     doc.setLineWidth(0.3);
     doc.line(margin, y, pageW - margin, y);
 
     y += 10;
 
-    // ── Nota de ahorro (si hay ≥2 filas con cantidades distintas) ─────────────
+    // ── Nota de ahorro ────────────────────────────────────────────────────────
     if (filas.length >= 2) {
-        const f1    = filas[0];
-        const fMax  = [...filas].sort((a, b) => Number(b.cantidad) - Number(a.cantidad))[0];
-        const p1    = Number(f1.precioUnitario) || 0;
-        const pMax  = Number(fMax.precioUnitario) || 0;
+        const f1   = filas[0];
+        const fMax = [...filas].sort((a, b) => Number(b.cantidad) - Number(a.cantidad))[0];
+        const p1   = Number(f1.precioUnitario)   || 0;
+        const pMax = Number(fMax.precioUnitario)  || 0;
         if (p1 > pMax && pMax > 0) {
             const ahorro = Math.round(((p1 - pMax) / p1) * 100);
             doc.setFillColor(255, 248, 230);
             doc.setDrawColor(212, 136, 0);
             doc.setLineWidth(0.5);
             doc.roundedRect(margin, y, pageW - margin * 2, 10, 2, 2, 'FD');
-            doc.setFontSize(8);
+            doc.setFontSize(8.5);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...GOLD);
+            // Sin ★ — no soportado por la fuente Helvetica de jsPDF
             doc.text(
-                `★  Comprando ${Number(fMax.cantidad).toLocaleString('es-AR')} unidades ahorrás un ${ahorro}% por unidad`,
+                `Comprando ${Number(fMax.cantidad).toLocaleString('es-AR')} unidades ahorras un ${ahorro}% por unidad`,
                 pageW / 2, y + 6.5, { align: 'center' }
             );
             y += 16;
@@ -214,16 +206,28 @@ export async function generarPDFCotizacion({
 
     // ── Notas adicionales ─────────────────────────────────────────────────────
     if (notas) {
-        doc.setFontSize(7.5);
-        doc.setFont(undefined, 'italic');
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...DARK);
+        doc.setFillColor(...GRAY_LIGHT);
+        doc.setDrawColor(...WARM_BORDER);
+        doc.setLineWidth(0.3);
+        const notasLines = doc.splitTextToSize(notas, pageW - margin * 2 - 16);
+        const notasH = notasLines.length * 5 + 10;
+        doc.roundedRect(margin, y, pageW - margin * 2, notasH, 2, 2, 'FD');
+        doc.setFontSize(6.5);
+        doc.setFont(undefined, 'bold');
         doc.setTextColor(...GRAY_TEXT);
-        const notasLines = doc.splitTextToSize(`Nota: ${notas}`, pageW - margin * 2);
-        doc.text(notasLines, margin, y);
-        y += notasLines.length * 4 + 4;
+        doc.text('CONDICIONES / NOTAS', margin + 6, y + 5);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...DARK);
+        doc.text(notasLines, margin + 6, y + 10);
+        y += notasH + 6;
     }
 
     // ── Footer ────────────────────────────────────────────────────────────────
-    dibujarFooterPDF(doc, null, null, 'Precios en pesos argentinos · IVA no incluido salvo indicación');
+    dibujarFooterPDF(doc, null, null, 'Precios en pesos argentinos - IVA no incluido salvo indicacion');
 
     const nombre = (clienteNombre || 'cliente').toLowerCase().replace(/\s+/g, '-');
     doc.save(`cotizacion-${nombre}.pdf`);
