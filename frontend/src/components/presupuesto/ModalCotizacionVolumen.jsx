@@ -41,7 +41,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
     const [clienteTelefono,  setClienteTelefono]  = useState('');
     const [clienteOpt,       setClienteOpt]       = useState(null);
     const [productoOpt,      setProductoOpt]      = useState(null);
-    const [filas,            setFilas]            = useState([{ cantidad: '', precioUnitario: '' }]);
+    const [filas,            setFilas]            = useState([{ cantidad: '', precioUnitario: '', descuentoPct: '' }]);
     const [validezDias,      setValidezDias]      = useState('7');
     const [notas,            setNotas]            = useState('');
 
@@ -86,19 +86,41 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
     const onProductoChange = (opt) => {
         setProductoOpt(opt);
         if (opt) {
-            // Pre-llenar primera fila con precio lista
             setFilas(prev => prev.map((f, i) => i === 0
-                ? { ...f, precioUnitario: Math.round(opt.precio).toString() }
+                ? { ...f, precioUnitario: Math.round(opt.precio).toString(), descuentoPct: '0' }
                 : f
             ));
         }
     };
 
-    const actualizarFila = (idx, campo, valor) => {
-        setFilas(prev => prev.map((f, i) => i === idx ? { ...f, [campo]: valor } : f));
+    const precioLista = productoOpt ? Math.round(productoOpt.precio) : 0;
+
+    // Cuando cambia el % → recalcula precio
+    const actualizarDescuento = (idx, pct) => {
+        const p = Math.max(0, Math.min(100, Number(pct) || 0));
+        const precio = precioLista > 0 ? Math.round(precioLista * (1 - p / 100)) : '';
+        setFilas(prev => prev.map((f, i) => i === idx
+            ? { ...f, descuentoPct: pct, precioUnitario: precio.toString() }
+            : f
+        ));
     };
 
-    const agregarFila = () => setFilas(prev => [...prev, { cantidad: '', precioUnitario: '' }]);
+    // Cuando cambia el precio manualmente → recalcula %
+    const actualizarPrecio = (idx, precio) => {
+        const pct = precioLista > 0 && precio !== ''
+            ? Math.round((1 - Number(precio) / precioLista) * 1000) / 10
+            : '';
+        setFilas(prev => prev.map((f, i) => i === idx
+            ? { ...f, precioUnitario: precio, descuentoPct: pct.toString() }
+            : f
+        ));
+    };
+
+    const actualizarCantidad = (idx, val) => {
+        setFilas(prev => prev.map((f, i) => i === idx ? { ...f, cantidad: val } : f));
+    };
+
+    const agregarFila = () => setFilas(prev => [...prev, { cantidad: '', precioUnitario: '', descuentoPct: '' }]);
 
     const quitarFila = (idx) => setFilas(prev => prev.filter((_, i) => i !== idx));
 
@@ -227,7 +249,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                     {/* Encabezado */}
                                     <div className="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1.5 px-1">
                                         <span className="text-[9px] font-black text-[#A8A29E] uppercase">Cantidad</span>
-                                        <span className="text-[9px] font-black text-[#A8A29E] uppercase">Precio unit.</span>
+                                        <span className="text-[9px] font-black text-[#A8A29E] uppercase">Descuento · Precio</span>
                                         <span className="w-7" />
                                     </div>
 
@@ -235,29 +257,52 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                         {filas.map((fila, idx) => {
                                             const sub = Number(fila.cantidad) * Number(fila.precioUnitario);
                                             return (
-                                                <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                                                <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-start">
                                                     <input
                                                         type="number" min="1"
                                                         placeholder="Ej: 300"
                                                         value={fila.cantidad}
-                                                        onChange={e => actualizarFila(idx, 'cantidad', e.target.value)}
+                                                        onChange={e => actualizarCantidad(idx, e.target.value)}
                                                         className={INPUT + ' text-center'}
                                                     />
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] font-black text-sm pointer-events-none">$</span>
-                                                        <input
-                                                            type="number" min="0"
-                                                            placeholder="Precio"
-                                                            value={fila.precioUnitario}
-                                                            onChange={e => actualizarFila(idx, 'precioUnitario', e.target.value)}
-                                                            className={INPUT + ' pl-6'}
-                                                        />
+
+                                                    {/* Columna descuento + precio */}
+                                                    <div className="flex flex-col gap-1">
+                                                        {/* % descuento — prominente */}
+                                                        <div className="relative">
+                                                            <input
+                                                                type="number" min="0" max="100"
+                                                                placeholder="0"
+                                                                value={fila.descuentoPct}
+                                                                onChange={e => actualizarDescuento(idx, e.target.value)}
+                                                                className={INPUT + ' pr-8 text-center font-black'}
+                                                            />
+                                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] font-black text-sm pointer-events-none">%</span>
+                                                        </div>
+                                                        {/* $ precio — chico, secundario */}
+                                                        <div className="relative">
+                                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A8A29E] text-[11px] pointer-events-none font-bold">$</span>
+                                                            <input
+                                                                type="number" min="0"
+                                                                placeholder="Precio"
+                                                                value={fila.precioUnitario}
+                                                                onChange={e => actualizarPrecio(idx, e.target.value)}
+                                                                className="w-full pl-6 pr-2 py-1.5 rounded-lg text-[11px] font-bold outline-none
+                                                                    bg-[#D8D4CE] dark:bg-[#1C1C1C]
+                                                                    text-[#A8A29E] dark:text-[#9E9A94]
+                                                                    border border-black/[0.05] dark:border-white/[0.05]
+                                                                    focus:ring-1 focus:ring-[#D13A28]/20 focus:border-[#D13A28]/40
+                                                                    placeholder:text-[#C0BCB6] dark:placeholder:text-[#3E3E3E]"
+                                                            />
+                                                        </div>
                                                     </div>
+
                                                     <button onClick={() => quitarFila(idx)}
                                                         disabled={filas.length === 1}
-                                                        className="w-8 h-10 rounded-xl flex items-center justify-center text-[#A8A29E] hover:text-[#D13A28] transition-all disabled:opacity-30 text-sm">
+                                                        className="w-8 h-10 rounded-xl flex items-center justify-center text-[#A8A29E] hover:text-[#D13A28] transition-all disabled:opacity-30 text-sm mt-0.5">
                                                         ✕
                                                     </button>
+
                                                     {/* Subtotal inline */}
                                                     {fila.cantidad && fila.precioUnitario && (
                                                         <div className="col-span-3 text-right text-[11px] text-[#A8A29E] -mt-1 pr-10">
