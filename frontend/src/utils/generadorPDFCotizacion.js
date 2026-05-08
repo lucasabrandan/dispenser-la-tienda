@@ -114,8 +114,10 @@ export async function generarPDFCotizacion({
     y += 8;
 
     // ── Tabla de precios escalonados ──────────────────────────────────────────
+    // Columnas: CANTIDAD | DESCUENTO | PRECIO UNIT. | SUBTOTAL
     const colCant  = margin;
-    const colUnit  = margin + 55;
+    const colDesc  = margin + 48;
+    const colUnit  = margin + 88;
     const colSub   = pageW - margin;
     const rowH     = 12;
     const headerH  = 9;
@@ -126,15 +128,19 @@ export async function generarPDFCotizacion({
     doc.setFontSize(7.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text('CANTIDAD', colCant + 4, y + 6);
-    doc.text('PRECIO UNITARIO', colUnit, y + 6);
-    doc.text('SUBTOTAL', colSub, y + 6, { align: 'right' });
+    doc.text('CANTIDAD',      colCant + 4,  y + 6);
+    doc.text('DESCUENTO',     colDesc,      y + 6);
+    doc.text('PRECIO UNIT.',  colUnit,      y + 6);
+    doc.text('SUBTOTAL',      colSub,       y + 6, { align: 'right' });
     y += headerH;
 
     filas.forEach((fila, idx) => {
         const cant = Number(fila.cantidad)       || 0;
         const unit = Number(fila.precioUnitario) || 0;
         const sub  = cant * unit;
+        const pct  = fila.descuentoPct !== '' && fila.descuentoPct !== undefined
+            ? Number(fila.descuentoPct)
+            : null;
 
         const bg = idx % 2 === 0 ? [255, 255, 255] : [250, 248, 245];
         doc.setFillColor(...bg);
@@ -142,11 +148,11 @@ export async function generarPDFCotizacion({
         doc.setLineWidth(0.2);
         doc.rect(margin, y, pageW - margin * 2, rowH, 'FD');
 
+        // Cantidad
         doc.setFontSize(10);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...DARK);
         doc.text(cant.toLocaleString('es-AR'), colCant + 4, y + 7.5);
-
         if (cant > 1) {
             doc.setFontSize(7);
             doc.setFont(undefined, 'normal');
@@ -154,16 +160,36 @@ export async function generarPDFCotizacion({
             doc.text('unid.', colCant + 4 + doc.getTextWidth(cant.toLocaleString('es-AR')) + 2, y + 7.5);
         }
 
+        // Descuento — badge dorado si > 0, guión si 0 o sin dato
+        if (pct !== null && pct > 0) {
+            const badgeTxt = `-${pct}%`;
+            const badgeW   = doc.getStringUnitWidth(badgeTxt) * 9 / doc.internal.scaleFactor + 6;
+            doc.setFillColor(255, 248, 225);
+            doc.setDrawColor(...GOLD);
+            doc.setLineWidth(0.4);
+            doc.roundedRect(colDesc, y + 3, badgeW, 6, 1.5, 1.5, 'FD');
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...GOLD);
+            doc.text(badgeTxt, colDesc + badgeW / 2, y + 7.5, { align: 'center' });
+        } else {
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...GRAY_TEXT);
+            doc.text('—', colDesc, y + 7.5);
+        }
+
+        // Precio unitario
         doc.setFontSize(10);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...DARK);
         doc.text(`$${unit.toLocaleString('es-AR')}`, colUnit, y + 7.5);
-
         doc.setFontSize(7);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...GRAY_TEXT);
         doc.text('c/u', colUnit + doc.getTextWidth(`$${unit.toLocaleString('es-AR')}`) + 2, y + 7.5);
 
+        // Subtotal — dorado en la fila de mayor volumen
         const maxSub = Math.max(...filas.map(f => Number(f.cantidad) * Number(f.precioUnitario)));
         const esMax  = sub === maxSub && filas.length > 1;
         doc.setFontSize(11);
