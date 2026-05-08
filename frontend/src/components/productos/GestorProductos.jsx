@@ -10,7 +10,8 @@ import { generarPDFListaPrecios } from '../../utils/generadorPDFListaPrecios';
 
 // ── Modal drag-and-drop para reordenar antes de exportar PDF ─────────────────
 function ModalOrdenPDF({ productos, onConfirmar, onCerrar }) {
-    const [orden, setOrden] = useState(productos);
+    const [orden, setOrden]           = useState(productos);
+    const [descEfectivo, setDescEfectivo] = useState('10');
     const dragIdx = React.useRef(null);
 
     const onDragStart = (i) => { dragIdx.current = i; };
@@ -30,9 +31,29 @@ function ModalOrdenPDF({ productos, onConfirmar, onCerrar }) {
             <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[1000] p-0 sm:p-4">
                 <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-md shadow-2xl flex flex-col max-h-[85vh]">
                     <div className="px-6 pt-5 pb-3 shrink-0">
-                        <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Ordenar productos</h3>
-                        <p className="text-[11px] text-[#A8A29E] mt-1">Arrastrá para cambiar el orden en el PDF</p>
+                        <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Exportar lista de precios</h3>
+                        <p className="text-[11px] text-[#A8A29E] mt-1">Arrastrá para cambiar el orden</p>
                     </div>
+
+                    {/* Descuento efectivo */}
+                    <div className="px-6 pb-3 shrink-0">
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                            <div className="flex-1">
+                                <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Descuento pago en efectivo</p>
+                                <p className="text-[10px] text-[#A8A29E] mt-0.5">Aparece junto al precio lista en el PDF</p>
+                            </div>
+                            <div className="relative w-20">
+                                <input
+                                    type="number" min="0" max="50"
+                                    value={descEfectivo}
+                                    onChange={e => setDescEfectivo(e.target.value)}
+                                    className="w-full pr-7 pl-3 py-2 rounded-xl text-[13px] font-black text-center outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.07]"
+                                />
+                                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A8A29E] font-black text-sm pointer-events-none">%</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="overflow-y-auto px-6 pb-2 space-y-2 flex-1">
                         {orden.map((p, i) => (
                             <div key={p.id} draggable
@@ -47,7 +68,7 @@ function ModalOrdenPDF({ productos, onConfirmar, onCerrar }) {
                     </div>
                     <div className="flex gap-2 px-6 py-4 shrink-0">
                         <button onClick={onCerrar} className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">Cancelar</button>
-                        <button onClick={() => onConfirmar(orden)} className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F]">📄 Generar PDF</button>
+                        <button onClick={() => onConfirmar(orden, Number(descEfectivo) || 0)} className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F]">📄 Generar PDF</button>
                     </div>
                 </div>
             </div>
@@ -137,8 +158,8 @@ export default function GestorProductos() {
         setModalOrden([...productos]);
     };
 
-    const confirmarExportPDF = (ordenados) => {
-        generarPDFListaPrecios(ordenados);
+    const confirmarExportPDF = (ordenados, descEfectivo = 0) => {
+        generarPDFListaPrecios(ordenados, descEfectivo);
         toast.success(`📥 PDF generado con ${ordenados.length} producto(s)`);
         setModalOrden(null);
     };
