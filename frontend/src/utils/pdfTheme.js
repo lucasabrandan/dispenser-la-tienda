@@ -63,7 +63,7 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
     // Datos de contacto de la empresa — debajo del logo
     const emp1 = getEmpresa();
     doc.setFontSize(6.5);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(...GRAY_TEXT);
     const linea1 = [emp1.contacto ? `WA: ${emp1.contacto}` : null, emp1.email ? `Email: ${emp1.email}` : null].filter(Boolean).join('  ·  ');
     const linea2 = [emp1.web ? `Web: ${emp1.web}` : null, emp1.redes ? `IG: ${emp1.redes}` : null].filter(Boolean).join('  ·  ');
@@ -72,20 +72,20 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
 
     // Bloque derecho: fecha / nroDoc / técnico — alineados a la derecha
     doc.setFontSize(7.5);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(155, 150, 144);
     doc.text(`Fecha: ${fecha}`, pageW - 14, 12, { align: 'right' });
 
     if (nroDoc) {
         doc.setFontSize(9.5);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(...RED);
         doc.text(nroDoc, pageW - 14, 20, { align: 'right' });
     }
 
     if (subtitulo) {
         doc.setFontSize(7.5);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(155, 150, 144);
         doc.text(subtitulo, pageW - 14, 27, { align: 'right' });
     }
@@ -97,7 +97,7 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
 
     // Título del documento
     doc.setFontSize(10);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...DARK);
     doc.text(tipoLabel, 14, 44);
 }
@@ -120,7 +120,7 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
     // Datos de contacto — 1 línea debajo del logo
     const emp2 = getEmpresa();
     doc.setFontSize(6);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(...GRAY_TEXT);
     const contactoLine = [
         emp2.contacto ? `WA: ${emp2.contacto}` : null,
@@ -131,20 +131,20 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
 
     // Bloque derecho: fecha / nroDoc / técnico
     doc.setFontSize(7);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(155, 150, 144);
     doc.text(`Fecha: ${fecha}`, pageW - 14, 10, { align: 'right' });
 
     if (nroDoc) {
         doc.setFontSize(8.5);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(...RED);
         doc.text(nroDoc, pageW - 14, 17, { align: 'right' });
     }
 
     if (subtitulo) {
         doc.setFontSize(7);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(155, 150, 144);
         doc.text(subtitulo, pageW - 14, 23, { align: 'right' });
     }
@@ -156,7 +156,7 @@ export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null
 
     // Título — izquierda, tamaño mínimo funcional
     doc.setFontSize(8.5);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...DARK);
     doc.text(tipoLabel, 14, 34);
 }
@@ -183,14 +183,14 @@ export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoC
     // Fila 1: leyenda / garantía — centrada
     if (textoCentral) {
         doc.setFontSize(7);
-        doc.setFont(undefined, 'italic');
+        doc.setFont('helvetica', 'italic');
         doc.setTextColor(155, 150, 144);
         doc.text(textoCentral, pageW / 2, pageH - 11, { align: 'center' });
     }
 
     // Fila 2: contacto izquierda + paginación derecha
     doc.setFontSize(6.5);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(155, 150, 144);
     const empF = getEmpresa();
     const footerContact = [empF.contacto ? `WA: ${empF.contacto}` : null, empF.web].filter(Boolean).join('  ·  ');
@@ -205,14 +205,14 @@ export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoC
 // ── Helpers ───────────────────────────────────────────────────────────────────
 export function pdfLabel(doc, txt, x, y) {
     doc.setFontSize(6.5);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...GRAY_TEXT);
     doc.text(txt.toUpperCase(), x, y);
 }
 
 export function pdfValue(doc, txt, x, y, color = DARK) {
     doc.setFontSize(9.5);
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(...color);
     doc.text(txt, x, y);
 }

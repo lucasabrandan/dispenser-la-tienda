@@ -40,18 +40,18 @@ export async function generarPDFCotizacion({
     doc.rect(margin, y, 3, paraH, 'F');
 
     doc.setFontSize(6.5);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...GRAY_TEXT);
     doc.text('PARA:', margin + 7, y + 5);
 
     doc.setFontSize(11);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...DARK);
     doc.text(clienteNombre || '-', margin + 7, y + 11);
 
     if (clienteTelefono) {
         doc.setFontSize(7.5);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(...GRAY_TEXT);
         doc.text(`Tel: ${clienteTelefono}`, margin + 7, y + 14.5);
     }
@@ -65,14 +65,14 @@ export async function generarPDFCotizacion({
     const yProd   = y;
 
     doc.setFontSize(7);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...RED);
     doc.text('PRODUCTO', margin, y);
     y += 5;
 
     // Nombre
     doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(...DARK);
     const nameLines = doc.splitTextToSize(productoNombre || '-', textW);
     doc.text(nameLines.slice(0, 2), margin, y);
@@ -81,16 +81,16 @@ export async function generarPDFCotizacion({
     // SKU
     if (productoCodigo) {
         doc.setFontSize(8);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(...GRAY_TEXT);
         doc.text(`SKU: ${productoCodigo}`, margin, y);
         y += 5;
     }
 
     // Descripcion
-    if (productoDescripcion) {
+    if (productoDescripcion?.trim()) {
         doc.setFontSize(9);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(...GRAY_TEXT);
         const lines = doc.splitTextToSize(productoDescripcion, textW);
         doc.text(lines.slice(0, 3), margin, y);
@@ -126,7 +126,7 @@ export async function generarPDFCotizacion({
     doc.roundedRect(margin, y, pageW - margin * 2, headerH, 2, 2, 'F');
 
     doc.setFontSize(7.5);
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
     doc.text('CANTIDAD',      colCant + 4,  y + 6);
     doc.text('DESCUENTO',     colDesc,      y + 6);
@@ -150,12 +150,12 @@ export async function generarPDFCotizacion({
 
         // Cantidad
         doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(...DARK);
         doc.text(cant.toLocaleString('es-AR'), colCant + 4, y + 7.5);
         if (cant > 1) {
             doc.setFontSize(7);
-            doc.setFont(undefined, 'normal');
+            doc.setFont('helvetica', 'normal');
             doc.setTextColor(...GRAY_TEXT);
             doc.text('unid.', colCant + 4 + doc.getTextWidth(cant.toLocaleString('es-AR')) + 2, y + 7.5);
         }
@@ -169,23 +169,23 @@ export async function generarPDFCotizacion({
             doc.setLineWidth(0.4);
             doc.roundedRect(colDesc, y + 3, badgeW, 6, 1.5, 1.5, 'FD');
             doc.setFontSize(9);
-            doc.setFont(undefined, 'bold');
+            doc.setFont('helvetica', 'bold');
             doc.setTextColor(...GOLD);
             doc.text(badgeTxt, colDesc + badgeW / 2, y + 7.5, { align: 'center' });
         } else {
             doc.setFontSize(9);
-            doc.setFont(undefined, 'normal');
+            doc.setFont('helvetica', 'normal');
             doc.setTextColor(...GRAY_TEXT);
             doc.text('—', colDesc, y + 7.5);
         }
 
         // Precio unitario
         doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(...DARK);
         doc.text(`$${unit.toLocaleString('es-AR')}`, colUnit, y + 7.5);
         doc.setFontSize(7);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(...GRAY_TEXT);
         doc.text('c/u', colUnit + doc.getTextWidth(`$${unit.toLocaleString('es-AR')}`) + 2, y + 7.5);
 
@@ -193,7 +193,7 @@ export async function generarPDFCotizacion({
         const maxSub = Math.max(...filas.map(f => Number(f.cantidad) * Number(f.precioUnitario)));
         const esMax  = sub === maxSub && filas.length > 1;
         doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(...(esMax ? GOLD : DARK));
         doc.text(`$${sub.toLocaleString('es-AR')}`, colSub, y + 8, { align: 'right' });
 
@@ -219,7 +219,7 @@ export async function generarPDFCotizacion({
             doc.setLineWidth(0.5);
             doc.roundedRect(margin, y, pageW - margin * 2, 10, 2, 2, 'FD');
             doc.setFontSize(8.5);
-            doc.setFont(undefined, 'bold');
+            doc.setFont('helvetica', 'bold');
             doc.setTextColor(...GOLD);
             // Sin ★ — no soportado por la fuente Helvetica de jsPDF
             doc.text(
@@ -233,7 +233,7 @@ export async function generarPDFCotizacion({
     // ── Notas adicionales ─────────────────────────────────────────────────────
     if (notas) {
         doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(...DARK);
         doc.setFillColor(...GRAY_LIGHT);
         doc.setDrawColor(...WARM_BORDER);
@@ -242,11 +242,11 @@ export async function generarPDFCotizacion({
         const notasH = notasLines.length * 5 + 10;
         doc.roundedRect(margin, y, pageW - margin * 2, notasH, 2, 2, 'FD');
         doc.setFontSize(6.5);
-        doc.setFont(undefined, 'bold');
+        doc.setFont('helvetica', 'bold');
         doc.setTextColor(...GRAY_TEXT);
         doc.text('CONDICIONES / NOTAS', margin + 6, y + 5);
         doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(...DARK);
         doc.text(notasLines, margin + 6, y + 10);
         y += notasH + 6;
