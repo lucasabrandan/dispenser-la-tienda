@@ -182,26 +182,44 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                                 </div>
                             </InfoCard>
 
-                            {/* Sede */}
-                            <div>
-                                <Label>Sede / Domicilio (opcional)</Label>
-                                <CreatableSelect
-                                    styles={selectStyles}
-                                    menuPosition="fixed"
-                                    menuPlacement="auto"
-                                    options={sedesCliente.map(s => ({ value: s.id.toString(), label: s.nombreSede }))}
-                                    value={sedesCliente.find(s => s.id === itemActual.sedeId)
-                                        ? { label: sedesCliente.find(s => s.id === itemActual.sedeId).nombreSede }
-                                        : null}
-                                    onChange={s => {
-                                        if (s?.__isNew__) { setNombreSedePrellenado(s.label); setModalSedeAbierto(true); }
-                                        else setItemActual({ ...itemActual, sedeId: parseInt(s?.value), sedeNombre: s?.label });
-                                    }}
-                                    onCreateOption={val => { setNombreSedePrellenado(val); setModalSedeAbierto(true); }}
-                                    placeholder="Elegí o creá..."
-                                    isClearable
-                                />
-                            </div>
+                            {/* Sede — comportamiento según cantidad */}
+                            {sedesCliente.length === 1 ? (
+                                <div>
+                                    <Label>Sede / Domicilio</Label>
+                                    <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
+                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1 truncate">{sedesCliente[0].nombreSede}</span>
+                                        <span className="text-[10px] font-black text-[#1F9D55]">✓ Auto</span>
+                                    </div>
+                                </div>
+                            ) : sedesCliente.length === 0 ? (
+                                <div>
+                                    <Label>Sede / Domicilio (opcional)</Label>
+                                    <button type="button" onClick={() => setModalSedeAbierto(true)}
+                                        className="w-full px-3.5 py-2.5 rounded-xl text-[12px] font-bold text-[#A8A29E] border border-dashed border-[#A8A29E]/40 bg-transparent active:scale-95 transition-all">
+                                        + Crear sede para este cliente
+                                    </button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <Label>Sede / Domicilio</Label>
+                                    <CreatableSelect
+                                        styles={selectStyles}
+                                        menuPosition="fixed"
+                                        menuPlacement="auto"
+                                        options={sedesCliente.map(s => ({ value: s.id.toString(), label: s.nombreSede }))}
+                                        value={sedesCliente.find(s => s.id === itemActual.sedeId)
+                                            ? { label: sedesCliente.find(s => s.id === itemActual.sedeId).nombreSede }
+                                            : null}
+                                        onChange={s => {
+                                            if (s?.__isNew__) { setNombreSedePrellenado(s.label); setModalSedeAbierto(true); }
+                                            else setItemActual({ ...itemActual, sedeId: parseInt(s?.value), sedeNombre: s?.label });
+                                        }}
+                                        onCreateOption={val => { setNombreSedePrellenado(val); setModalSedeAbierto(true); }}
+                                        placeholder="Elegí o creá..."
+                                        isClearable
+                                    />
+                                </div>
+                            )}
                         </>
                     )}
                 </div>

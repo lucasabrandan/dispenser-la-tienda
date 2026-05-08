@@ -105,6 +105,14 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const [nombreRepuesto, setNombreRepuesto]   = useState('');
     const [sheetRepuestos, setSheetRepuestos]   = useState(false);
     const [mostrarFotos,   setMostrarFotos]     = useState(false);
+    const [formVisible,    setFormVisible]      = useState(true);
+
+    // Si editarItem carga datos en itemActual, mostrar el form automáticamente
+    React.useEffect(() => {
+        if (itemActual.equipoSerial || itemActual.costoExtra > 0 || itemActual.repuestosUsados?.length > 0) {
+            setFormVisible(true);
+        }
+    }, [itemActual]);
 
     // Equipos del inventario del cliente
     const equiposInventario = (() => {
@@ -195,7 +203,13 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                 </div>
             )}
 
-            {/* Formulario equipo actual */}
+            {/* Formulario equipo actual — colapsable cuando ya hay equipos en el ticket */}
+            {!formVisible && ticketItems.length > 0 ? (
+                <button type="button" onClick={() => setFormVisible(true)}
+                    className="w-full py-3.5 rounded-2xl font-black text-[12px] uppercase border-2 border-dashed border-[#D13A28]/40 dark:border-[#E8422F]/40 text-[#D13A28] dark:text-[#E8422F] bg-transparent active:scale-[0.98] transition-all">
+                    + Agregar otro equipo
+                </button>
+            ) : (
             <div className="rounded-2xl p-4 bg-[#D8D4CE] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black bg-[#D13A28] dark:bg-[#E8422F]">
@@ -378,12 +392,13 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                     </div>
 
                     {/* Botón agregar */}
-                    <button onClick={() => { agregarAlTicket(); setMostrarFotos(false); }}
+                    <button onClick={() => { agregarAlTicket(); setMostrarFotos(false); setFormVisible(false); }}
                         className="w-full py-3.5 rounded-xl font-black text-sm text-white active:scale-[0.98] transition-all bg-[#D13A28] dark:bg-[#E8422F]">
                         + Agregar equipo al ticket
                     </button>
                 </div>
             </div>
+            )}
 
             {ticketItems.length > 0 && (
                 <NextBtn onClick={onNext}>
