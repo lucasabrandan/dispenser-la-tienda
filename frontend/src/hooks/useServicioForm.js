@@ -201,6 +201,30 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     }
   };
 
+  // Si el cliente no tiene sedes, crea "Principal" con su dirección y la agrega al db local
+  const crearSedePrincipalSiNoTiene = async (clienteIdStr) => {
+    if (!clienteIdStr) return null;
+    const sedesActuales = db.sedes?.filter(s => s.cliente?.id?.toString() === clienteIdStr) || [];
+    if (sedesActuales.length > 0) return sedesActuales[0];
+    const clienteObj = db.clientes?.find(c => c.id?.toString() === clienteIdStr);
+    if (!clienteObj) return null;
+    try {
+      const { data: nuevaSede } = await api.post('/sedes', {
+        clienteId:  parseInt(clienteIdStr),
+        nombreSede: 'Principal',
+        calle:      clienteObj.calle     || null,
+        numero:     clienteObj.numero    || null,
+        piso:       clienteObj.piso      || null,
+        depto:      clienteObj.depto     || null,
+        localidad:  clienteObj.localidad || null,
+        provincia:  clienteObj.provincia || null,
+        direccion:  clienteObj.direccion || null,
+      });
+      setDb(prev => ({ ...prev, sedes: [...(prev.sedes || []), nuevaSede] }));
+      return nuevaSede;
+    } catch { return null; }
+  };
+
   const calcularGananciaRepuesto = (repuesto, cantidad) => {
     const precioVenta = parseFloat(repuesto.precio) || 0;
     const costo       = parseFloat(repuesto.costo)  || 0;
@@ -341,17 +365,23 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     if (itemActual.esNuevoEquipo && tieneSerial) {
       const yaExiste = db.equipos?.some(e => e.numeroSerie === tieneSerial);
       if (!yaExiste) {
-        // Resolver sedeId: prioridad → elegida por usuario → única sede del cliente → Mostrador
-        const sedeMostrador = db.sedes?.find(s =>
-          s.nombreSede?.toLowerCase().includes('mostrador') ||
-          s.nombreSede?.toLowerCase().includes('particular')
-        );
-        const sedesCliente   = clienteId ? db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId) : [];
-        const sedeIdEquipo   = itemActual.sedeId
-          || (sedesCliente.length === 1 ? sedesCliente[0].id : null)
-          || sedeMostrador?.id
-          || db.sedes?.[0]?.id;
-
+        // Resolver sedeId: elegida > única sede > auto-crear Principal con dirección del cliente > Mostrador
+        let sedeIdEquipo = itemActual.sedeId || null;
+        if (!sedeIdEquipo) {
+          const sedesCliente = clienteId ? db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId) : [];
+          if (sedesCliente.length === 1) {
+            sedeIdEquipo = sedesCliente[0].id;
+          } else if (sedesCliente.length === 0 && clienteId) {
+            const sedePrincipal = await crearSedePrincipalSiNoTiene(clienteId);
+            sedeIdEquipo = sedePrincipal?.id || null;
+          } else {
+            const sedeMostrador = db.sedes?.find(s =>
+              s.nombreSede?.toLowerCase().includes('mostrador') ||
+              s.nombreSede?.toLowerCase().includes('particular')
+            );
+            sedeIdEquipo = sedeMostrador?.id || db.sedes?.[0]?.id || null;
+          }
+        }
         try {
           const res = await api.post('/equipos', {
             numeroSerie: tieneSerial,
@@ -370,7 +400,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     // para que futuros PDFs recuperen la info correctamente desde el historial
     if (!itemActual.esNuevoEquipo && tieneSerial) {
       const equipoDB = db.equipos?.find(e => e.numeroSerie === tieneSerial);
-      if (equipoDB?.id && equipoDB.sedeId) {
+      if (equipoDB?.id) {
         const modeloOk  = itemActual.modeloEquipo?.trim();
         const ubicOk    = itemActual.ubicacionEquipo?.trim();
         const diferente = (modeloOk && modeloOk !== equipoDB.modelo) ||
@@ -475,17 +505,24 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         sedeIdFinal  = overrides.sedeId || sedeMostrador?.id || db.sedes?.[0]?.id;
         nombreSedeF  = overrides.sedeNombre || sedeMostrador?.nombreSede || 'Mostrador';
       } else {
-        // Cliente registrado → sede elegida > única sede del cliente > Mostrador
+        // Cliente registrado → sede elegida > única sede > auto-crear Principal > Mostrador
         const sedesCliente = db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId) || [];
         const sedeElegida  = itemActual.sedeId || ticketItems[0]?.sedeId;
-        const sedePorDefecto = sedesCliente.length === 1 ? sedesCliente[0] : null;
 
-        sedeIdFinal = sedeElegida
-          || sedePorDefecto?.id
-          || sedeMostrador?.id
-          || db.sedes?.[0]?.id;
+        if (sedeElegida) {
+          sedeIdFinal = sedeElegida;
+        } else if (sedesCliente.length === 1) {
+          sedeIdFinal = sedesCliente[0].id;
+        } else if (sedesCliente.length === 0) {
+          // Sin sedes: crear "Principal" con la dirección del cliente automáticamente
+          const sedePrincipal = await crearSedePrincipalSiNoTiene(clienteId);
+          sedeIdFinal = sedePrincipal?.id || sedeMostrador?.id || db.sedes?.[0]?.id;
+        } else {
+          sedeIdFinal = sedeMostrador?.id || db.sedes?.[0]?.id;
+        }
 
-        nombreSedeF = db.sedes?.find(s => s.id === sedeIdFinal)?.nombreSede || 'Mostrador';
+        nombreSedeF = db.sedes?.find(s => s.id === sedeIdFinal)?.nombreSede
+          || (sedeIdFinal ? 'Principal' : 'Mostrador');
       }
 
       if (!sedeIdFinal) {
