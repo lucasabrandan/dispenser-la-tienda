@@ -228,11 +228,22 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                         }}
                                     />
                                     {productoOpt && (
-                                        <p className="text-[11px] text-[#A8A29E] mt-1.5 ml-1">
-                                            Precio lista: <span className="font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                        <div className="mt-2 px-3 py-2.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider">Precio lista</span>
+                                                {productoOpt.sku && <span className="text-[9px] font-black text-[#D13A28] dark:text-[#E8422F]">{productoOpt.sku}</span>}
+                                            </div>
+                                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                                                 ${Math.round(productoOpt.precio).toLocaleString('es-AR')}
-                                            </span>
-                                        </p>
+                                            </p>
+                                            {productoOpt.descripcion ? (
+                                                <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] mt-1 leading-snug">
+                                                    {productoOpt.descripcion}
+                                                </p>
+                                            ) : (
+                                                <p className="text-[10px] text-[#A8A29E] mt-1 italic">Sin descripción cargada</p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
 
