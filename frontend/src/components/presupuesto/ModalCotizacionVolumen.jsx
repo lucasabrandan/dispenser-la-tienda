@@ -60,6 +60,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                 label: r.nombre,
                 sku: r.sku || '',
                 descripcion: r.descripcion || '',
+                fotoUrl: r.fotoUrl || '',
                 precio: calcPrecioLista(r),
             })));
         }).catch(() => toast.error('Error al cargar datos'))
@@ -101,24 +102,29 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
 
     const quitarFila = (idx) => setFilas(prev => prev.filter((_, i) => i !== idx));
 
-    const generarPDF = () => {
+    const generarPDF = async () => {
         if (!clienteNombre.trim()) { toast.error('Ingresá el nombre del cliente'); return; }
         if (!productoOpt)          { toast.error('Seleccioná un producto');        return; }
         const filasValidas = filas.filter(f => f.cantidad !== '' && f.precioUnitario !== '');
         if (filasValidas.length === 0) { toast.error('Agregá al menos una fila con cantidad y precio'); return; }
 
-        generarPDFCotizacion({
-            clienteNombre,
-            clienteTelefono,
-            productoNombre:      productoOpt.label,
-            productoCodigo:      productoOpt.sku,
-            productoDescripcion: productoOpt.descripcion,
-            filas:               filasValidas,
-            validezDias,
-            notas,
-        });
-        toast.success('PDF generado');
-        onCerrar();
+        try {
+            await generarPDFCotizacion({
+                clienteNombre,
+                clienteTelefono,
+                productoNombre:      productoOpt.label,
+                productoCodigo:      productoOpt.sku,
+                productoDescripcion: productoOpt.descripcion,
+                fotoUrl:             productoOpt.fotoUrl,
+                filas:               filasValidas,
+                validezDias,
+                notas,
+            });
+            toast.success('PDF generado');
+            onCerrar();
+        } catch {
+            toast.error('Error al generar PDF');
+        }
     };
 
     return (

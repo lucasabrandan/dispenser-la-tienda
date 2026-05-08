@@ -1,26 +1,18 @@
 import jsPDF from 'jspdf';
 import { DARK, RED, GOLD, GRAY_TEXT, GRAY_LIGHT, WARM_BORDER, dibujarHeaderPDF, dibujarFooterPDF } from './pdfTheme';
+import { cargarFoto } from './pdf/helpers';
 
 /**
  * generarPDFCotizacion
  * Cotización de precios escalonados por volumen para un producto específico.
- *
- * @param {object} opts
- * @param {string}   opts.clienteNombre
- * @param {string}   opts.clienteTelefono
- * @param {string}   opts.productoNombre
- * @param {string}   opts.productoCodigo
- * @param {string}   opts.productoDescripcion
- * @param {Array}    opts.filas  — [{cantidad, precioUnitario}]
- * @param {string}   opts.validezDias
- * @param {string}   opts.notas
  */
-export function generarPDFCotizacion({
+export async function generarPDFCotizacion({
     clienteNombre    = '',
     clienteTelefono  = '',
     productoNombre   = '',
     productoCodigo   = '',
     productoDescripcion = '',
+    fotoUrl          = '',
     filas            = [],
     validezDias      = '7',
     notas            = '',
@@ -32,6 +24,9 @@ export function generarPDFCotizacion({
     const fecha  = new Date().toLocaleDateString('es-AR');
 
     dibujarHeaderPDF(doc, 'COTIZACIÓN DE PRECIOS', fecha, `Válida por ${validezDias} día${validezDias !== '1' ? 's' : ''}`);
+
+    // Cargar foto del producto (si hay)
+    const foto = await cargarFoto(fotoUrl);
 
     let y = 52;
 
@@ -65,33 +60,59 @@ export function generarPDFCotizacion({
     y += (clienteTelefono ? 16 : 12) + 8;
 
     // ── Bloque producto ───────────────────────────────────────────────────────
+    const FOTO_SZ = 32; // mm cuadrado
+    const fotoX   = pageW - margin - FOTO_SZ;
+    const textW   = foto ? fotoX - margin - 4 : pageW - margin * 2;
+    const yProd   = y;
+
     doc.setFontSize(7);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...RED);
     doc.text('PRODUCTO', margin, y);
     y += 4;
 
-    doc.setFontSize(13);
+    // Nombre del producto (puede ser largo — wrapeamos al ancho disponible)
+    doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...DARK);
-    doc.text(productoNombre || '—', margin, y);
+    const nameLines = doc.splitTextToSize(productoNombre || '—', textW);
+    doc.text(nameLines.slice(0, 2), margin, y);
+    y += nameLines.slice(0, 2).length * 5.5;
 
     if (productoCodigo) {
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...GRAY_TEXT);
-        doc.text(`SKU: ${productoCodigo}`, pageW - margin, y, { align: 'right' });
+        doc.text(`SKU: ${productoCodigo}`, margin, y);
+        y += 4.5;
     }
-    y += 5;
 
     if (productoDescripcion) {
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...GRAY_TEXT);
-        const lines = doc.splitTextToSize(productoDescripcion, pageW - margin * 2);
-        doc.text(lines.slice(0, 2), margin, y);
-        y += lines.slice(0, 2).length * 4;
+        const lines = doc.splitTextToSize(productoDescripcion, textW);
+        doc.text(lines.slice(0, 3), margin, y);
+        y += lines.slice(0, 3).length * 4;
     }
+
+    // Foto del producto — columna derecha
+    if (foto) {
+        try {
+            doc.setFillColor(...GRAY_LIGHT);
+            doc.setDrawColor(...WARM_BORDER);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(fotoX, yProd, FOTO_SZ, FOTO_SZ, 3, 3, 'FD');
+            doc.addImage(foto.data, foto.format, fotoX, yProd, FOTO_SZ, FOTO_SZ);
+            doc.setDrawColor(...WARM_BORDER);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(fotoX, yProd, FOTO_SZ, FOTO_SZ, 3, 3, 'S');
+        } catch {}
+    }
+
+    // Avanzar y hasta debajo de la foto si corresponde
+    const yMinTras = yProd + (foto ? FOTO_SZ : 0);
+    if (y < yMinTras) y = yMinTras;
 
     y += 6;
 
