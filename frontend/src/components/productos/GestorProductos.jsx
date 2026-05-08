@@ -176,9 +176,11 @@ export default function GestorProductos() {
             await Promise.all(
                 productos.filter(p => seleccionados.has(p.id)).map(producto => {
                     const fd = new FormData();
-                    fd.append('sku', producto.sku);
-                    fd.append('nombre', producto.nombre);
-                    fd.append('costo', producto.costo);
+                    fd.append('sku',         producto.sku);
+                    fd.append('nombre',      producto.nombre);
+                    fd.append('descripcion', producto.descripcion || '');
+                    fd.append('costo',       producto.costo);
+                    fd.append('stock',       producto.stock ?? 0);
                     const g = gVal !== null ? gVal : (producto.porcentajeGanancia ?? 0);
                     const m = mVal !== null ? mVal : (producto.porcentajeMarkup   ?? 0);
                     fd.append('porcentajeGanancia', g);

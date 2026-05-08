@@ -110,7 +110,7 @@ public class RepuestoController {
         try {
             repuesto.setSku(sku);
             repuesto.setNombre(nombre);
-            repuesto.setDescripcion(descripcion);
+            if (descripcion != null) repuesto.setDescripcion(descripcion);
             repuesto.setCosto(costo);
             repuesto.setPorcentajeGanancia(porcentajeGanancia);
             repuesto.setPorcentajeMarkup(porcentajeMarkup);
