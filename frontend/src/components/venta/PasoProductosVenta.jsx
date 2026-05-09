@@ -80,12 +80,26 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                     value={p.cantidad}
                                     onFocus={e => e.target.select()}
                                     onChange={e => {
-                                        const val = Math.max(1, parseInt(e.target.value) || 1);
-                                        const nuevos = productos.map((x, j) => j === i
+                                        const raw = e.target.value;
+                                        // Permitir vacío mientras escribe
+                                        if (raw === '') {
+                                            setProductos(productos.map((x, j) => j === i ? { ...x, cantidad: '' } : x));
+                                            return;
+                                        }
+                                        const val = Math.max(1, parseInt(raw) || 1);
+                                        setProductos(productos.map((x, j) => j === i
                                             ? { ...x, cantidad: val, subtotal: val * x.precio }
                                             : x
-                                        );
-                                        setProductos(nuevos);
+                                        ));
+                                    }}
+                                    onBlur={e => {
+                                        // Al salir del campo, asegurar valor válido
+                                        if (p.cantidad === '' || Number(p.cantidad) < 1) {
+                                            setProductos(productos.map((x, j) => j === i
+                                                ? { ...x, cantidad: 1, subtotal: x.precio }
+                                                : x
+                                            ));
+                                        }
                                     }}
                                     className="font-black text-[13px] w-14 text-center text-[#1C1917] dark:text-[#F0EEE9] bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />

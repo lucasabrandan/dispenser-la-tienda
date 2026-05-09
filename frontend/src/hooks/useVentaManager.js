@@ -152,18 +152,28 @@ export function useVentaManager() {
 
         // Enriquecer repuestosUsados con fotoUrl/descripcion actuales del catálogo
         // (ventas antiguas no los tenían persistidos en el JSON)
-        let catalogoMap = {};
+        let catalogoById  = {};
+        let catalogoBySku = {};
+        let catalogoByNombre = {};
         try {
             const res = await api.get('/repuestos?page=0&size=500');
             const lista = res.data.content || res.data;
-            lista.forEach(r => { catalogoMap[r.id] = r; });
+            lista.forEach(r => {
+                if (r.id)     catalogoById[r.id]         = r;
+                if (r.sku)    catalogoBySku[r.sku]        = r;
+                if (r.nombre) catalogoByNombre[r.nombre]  = r;
+            });
         } catch { /* si falla, se usa lo que hay */ }
 
         const enrichItems = (venta.items || []).map(it => ({
             ...it,
             totalCalculado: it.costo,
             repuestosUsados: (it.repuestosUsados || []).map(r => {
-                const cat = catalogoMap[r.id];
+                // Buscar en catálogo por id, sku o nombre (fallback para ventas viejas)
+                const cat = catalogoById[r.id]
+                    || (r.sku    && catalogoBySku[r.sku])
+                    || (r.nombre && catalogoByNombre[r.nombre])
+                    || null;
                 return {
                     ...r,
                     fotoUrl:     r.fotoUrl     || cat?.fotoUrl     || null,

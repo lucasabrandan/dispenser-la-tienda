@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record RepuestoUsadoDTO(
+        Long id,
         String nombre,
         String sku,
         String descripcion,
