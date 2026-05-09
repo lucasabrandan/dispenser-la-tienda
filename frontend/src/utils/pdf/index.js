@@ -300,7 +300,7 @@ async function generarSingleTecnico(doc, {
 
 async function generarSinglePresupuesto(doc, {
     item, cliente, sede, y, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, descuentoPorcentaje,
+    firmaCliente, firmaTecnico, descuentoPorcentaje, incluirFirmas = true,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -387,6 +387,26 @@ async function generarSinglePresupuesto(doc, {
 
     let presupTableEndY = doc.lastAutoTable.finalY + 3;
     const totalPresupLabel = sinItems ? 'A coordinar con el cliente' : total.toLocaleString('es-AR');
+
+    // Desglose subtotal → descuento → total
+    if (pct > 0 && !sinItems) {
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Subtotal', M + 3, presupTableEndY + 4.5);
+        doc.text(`$ ${totalBruto.toLocaleString('es-AR')}`, pageW - M - 2, presupTableEndY + 4.5, { align: 'right' });
+        presupTableEndY += 6;
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.red);
+        doc.text(`Descuento ${pct}%`, M + 3, presupTableEndY + 4.5);
+        doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 2, presupTableEndY + 4.5, { align: 'right' });
+        presupTableEndY += 6;
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M, presupTableEndY, pageW - M, presupTableEndY);
+        presupTableEndY += 2;
+    }
+
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
@@ -430,10 +450,13 @@ async function generarSinglePresupuesto(doc, {
         y += FOTO_H + 8;
     }
 
-    // Condiciones + CTA en el mismo bloque compacto (sin firmas — el cliente no aceptó aún)
-    // cardH=38 + 6 padding = 44mm reales, 54 era demasiado conservador y causaba hoja extra
-    y = checkSalto(doc, y, 44);
+    // Condiciones + CTA + firmas de aceptación (si se marcó incluirFirmas)
+    const firmasHSP = incluirFirmas ? 50 : 0;
+    y = checkSalto(doc, y, 44 + firmasHSP);
     y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
+    if (incluirFirmas) {
+        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
+    }
 
     return y;
 }
@@ -754,6 +777,25 @@ async function generarMultiPresupuesto(doc, {
 
     y = doc.lastAutoTable.finalY + 4;
 
+    // Desglose subtotal → descuento → total
+    if (pct > 0) {
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Subtotal', M + 4, y + 4.5);
+        doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.red);
+        doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
+        doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M, y, pageW - M, y);
+        y += 2;
+    }
+
     // Total final — caja más alta para que el número grande no se corte
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
@@ -833,7 +875,7 @@ async function generarMultiPresupuesto(doc, {
 // ── FLUJO PRESUPUESTO VENTA (cotización de productos) ────────────────────────
 
 async function generarPresupuestoVenta(doc, {
-    ticketItems, cliente, sede, y, fecha, descuentoPorcentaje, nroDoc,
+    ticketItems, cliente, sede, y, fecha, descuentoPorcentaje, nroDoc, leyenda = '',
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -1000,6 +1042,27 @@ async function generarPresupuestoVenta(doc, {
     doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 8;
 
+    // Leyenda / observaciones del presupuesto
+    const leyLimpiaV = (leyenda || '').trim();
+    if (leyLimpiaV) {
+        y = checkSalto(doc, y, 20);
+        const leyLinesV = doc.splitTextToSize(leyLimpiaV.replace(/[\r\n]+/g, ' '), CONTENT_W - 10);
+        const leyHV = Math.min(leyLinesV.length, 4) * 4.2 + 11;
+        doc.setFillColor(...C.grayLight);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(M - 2, y, CONTENT_W + 4, leyHV, 2, 2, 'FD');
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('CONDICIONES', M + 2, y + 6);
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        leyLinesV.slice(0, 4).forEach((l, i) => doc.text(l, M + 2, y + 11 + i * 4.2));
+        y += leyHV + 4;
+    }
+
     // Condiciones + QR WhatsApp
     const condH  = 44;
     const qrWaH  = empresa.whatsapp ? 54 : 0;
@@ -1097,6 +1160,25 @@ async function generarComprobante(doc, {
     const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
     const total     = subtotalTotal - descuento;
 
+    // Desglose subtotal → descuento → total
+    if (pct > 0) {
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text('Subtotal', M + 4, y + 4.5);
+        doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.red);
+        doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
+        doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+        y += 6;
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M, y, pageW - M, y);
+        y += 2;
+    }
+
     // Total
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
@@ -1110,6 +1192,27 @@ async function generarComprobante(doc, {
     doc.setTextColor(...C.navy);
     doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
     y += 18;
+
+    // Leyenda / observaciones del comprobante
+    const leyLimpiaC = (leyenda || '').trim();
+    if (leyLimpiaC) {
+        y = checkSalto(doc, y, 20);
+        const leyLinesC = doc.splitTextToSize(leyLimpiaC.replace(/[\r\n]+/g, ' '), CONTENT_W - 10);
+        const leyHC = Math.min(leyLinesC.length, 4) * 4.2 + 11;
+        doc.setFillColor(...C.grayLight);
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(M - 2, y, CONTENT_W + 4, leyHC, 2, 2, 'FD');
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('CONDICIONES', M + 2, y + 6);
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        leyLinesC.slice(0, 4).forEach((l, i) => doc.text(l, M + 2, y + 11 + i * 4.2));
+        y += leyHC + 4;
+    }
 
     return y;
 }
