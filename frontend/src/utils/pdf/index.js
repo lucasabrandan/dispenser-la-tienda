@@ -690,7 +690,7 @@ async function generarMultiPresupuesto(doc, {
             // Sin columna trabajo — ya se mostró arriba
             bodyRows.push([equipoCell, repCell, importeCell]);
         } else {
-            const mo   = parseFloat(item.costoExtra || 0);
+            const mo   = parseFloat(item.costoExtra) || 0;
             const desc = (item.trabajo || item.trabajoRealizado || '').trim();
             const partes = [];
             if (desc) partes.push(desc);
@@ -768,16 +768,18 @@ async function generarMultiPresupuesto(doc, {
     doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
-    // Condiciones + QR WhatsApp
-    const condH  = 36;
-    const qrWaH  = empresa.whatsapp ? 54 : 0;
-    const pageHQ = doc.internal.pageSize.getHeight();
-    if (y + condH + qrWaH > pageHQ - 25) {
+    // Condiciones + firmas de aceptación + QR: van juntos en página dedicada
+    const condH   = 44;
+    const firmasH = 50;
+    const qrWaH   = empresa.whatsapp ? 54 : 0;
+    const pageHQ  = doc.internal.pageSize.getHeight();
+    if (y + condH + firmasH + qrWaH > pageHQ - 25) {
         doc.addPage();
         dibujarHeaderCompacto(doc, { tipoLabel: tipoLabelTabla, fecha, nroDoc });
         y = HEADER_H.compact + 8;
     }
-    y = dibujarCondiciones(doc, { y, pageW });
+    y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
+    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
     if (empresa.whatsapp) {
         y = await dibujarQRWhatsApp(doc, {
             x: M, y,
