@@ -788,13 +788,6 @@ export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
 // ── CONDICIONES + CTA compacto (presupuesto single) ───────────────────────────
 // Agrupa condiciones y llamada a la acción en un solo bloque para evitar página vacía
 export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
-    const pageH = doc.internal.pageSize.getHeight();
-
-    // Card 2 columnas: izquierda condiciones, derecha CTA
-    const COL_IZQ = CONTENT_W * 0.55;
-    const COL_DER = CONTENT_W - COL_IZQ - 4;
-    const X_DER   = M + COL_IZQ + 4;
-
     const conds = [
         '· Valido por 7 dias corridos desde la fecha de emision.',
         '· El servicio se coordina una vez aprobado.',
@@ -802,13 +795,13 @@ export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
         '· Repuestos segun fabricante.',
     ];
 
-    const cardH = Math.max(38, conds.length * 5 + 14);
+    const cardH = conds.length * 5 + 14;
 
-    // Fondo izquierdo
+    // Caja condiciones — ancho completo
     doc.setFillColor(...C.grayLight);
     doc.setDrawColor(...C.grayBorder);
     doc.setLineWidth(0.2);
-    doc.roundedRect(M - 2, y, COL_IZQ + 4, cardH, 2, 2, 'FD');
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'FD');
 
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
@@ -820,45 +813,18 @@ export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
     doc.setTextColor(...C.grayText);
     conds.forEach((c, i) => doc.text(c, M + 3, y + 13 + i * 5));
 
-    // Fondo derecho — CTA verde
-    doc.setFillColor(240, 253, 244);
-    doc.setDrawColor(...C.green);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(X_DER - 2, y, COL_DER + 4, cardH, 2, 2, 'FD');
-
-    // Barra top verde
-    doc.setFillColor(...C.green);
-    doc.roundedRect(X_DER - 2, y, COL_DER + 4, 3, 2, 2, 'F');
-    doc.rect(X_DER - 2, y + 1.5, COL_DER + 4, 1.5, 'F');
-
-    doc.setFontSize(T.xs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.green);
-    doc.text('Aprobar presupuesto', X_DER + COL_DER / 2, y + 10, { align: 'center' });
-
+    // Línea de referencia y contacto debajo de la caja
+    const yRef = y + cardH + 5;
     const contacto = empresa.whatsapp || empresa.telefono || '';
-    if (contacto) {
-        const etiqueta = empresa.whatsapp ? 'WhatsApp / Tel:' : 'Tel:';
+    const partes = [];
+    if (nroDoc) partes.push(`Ref: ${nroDoc}`);
+    if (contacto) partes.push(`Contacto: ${contacto}`);
+    if (partes.length > 0) {
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
-        doc.text(etiqueta, X_DER + COL_DER / 2, y + 19, { align: 'center' });
-        doc.setFontSize(T.sm);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text(contacto, X_DER + COL_DER / 2, y + 26, { align: 'center' });
-    } else {
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Comunicate con nosotros', X_DER + COL_DER / 2, y + 20, { align: 'center' });
-        doc.text('para confirmar.', X_DER + COL_DER / 2, y + 25, { align: 'center' });
+        doc.text(partes.join('   ·   '), M + CONTENT_W / 2, yRef, { align: 'center' });
     }
 
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(...C.grayText);
-    doc.text(`Ref: ${nroDoc}`, X_DER + COL_DER / 2, y + cardH - 5, { align: 'center' });
-
-    return y + cardH + 6;
+    return yRef + 6;
 }
