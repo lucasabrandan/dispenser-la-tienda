@@ -146,11 +146,36 @@ async function generarSingleTecnico(doc, {
     }];
     const sinItems = filas.length === 0;
 
-    const tableData = filasConPlaceholder.map(r => [r.concepto, String(r.cant), r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`, r.importe.startsWith('A') ? r.importe : `$ ${r.importe}`]);
+    // Cargar fotos de los repuestos (MO no tiene imagen)
+    const FOTO_ST_W = 18;
+    const FOTO_ST_H = 18;
+    const fotosST = [];
+    let repIdx = 0;
+    for (const f of filasConPlaceholder) {
+        if (f.esServicio) {
+            fotosST.push(null);
+        } else {
+            const rep = (item.repuestosUsados || [])[repIdx++];
+            fotosST.push(await cargarFoto(rep?.fotoUrl || null));
+        }
+    }
+    const hayFotosST = fotosST.some(f => f !== null);
+
+    const tableData = filasConPlaceholder.map(r => {
+        const fila = [r.concepto, String(r.cant),
+            r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`,
+            r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`,
+        ];
+        if (hayFotosST) fila.unshift('');
+        return fila;
+    });
 
     autoTable(doc, {
         startY: y,
-        head:  [['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']],
+        head:  [hayFotosST
+            ? ['Img', 'CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']
+            : ['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']
+        ],
         body:  tableData,
         theme: 'grid',
         headStyles: {
@@ -161,13 +186,21 @@ async function generarSingleTecnico(doc, {
             fontSize: T.xs, textColor: C.dark,
             cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
+            ...(hayFotosST ? { minCellHeight: FOTO_ST_H + 4, valign: 'middle' } : {}),
         },
-        columnStyles: {
+        columnStyles: hayFotosST ? {
+            0: { cellWidth: FOTO_ST_W + 4 },
+            1: { cellWidth: 'auto' },
+            2: { halign: 'center', cellWidth: 13 },
+            3: { halign: 'right',  cellWidth: 26 },
+            4: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
+        } : {
             0: { cellWidth: 'auto' },
             1: { halign: 'center', cellWidth: 13 },
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
         },
+        rowPageBreak: 'avoid',
         margin: { left: M, right: M, top: HEADER_H.compact + 8 },
         didDrawPage: (data) => {
             if (data.pageNumber > 1) {
@@ -177,9 +210,22 @@ async function generarSingleTecnico(doc, {
         didParseCell: data => {
             if (data.section === 'body') {
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
-                if (filasConPlaceholder[data.row.index]?.esServicio) data.cell.styles.textColor = C.navy;
+                const col = hayFotosST ? 1 : 0;
+                if (data.column.index >= col && filasConPlaceholder[data.row.index]?.esServicio) {
+                    data.cell.styles.textColor = C.navy;
+                }
             }
         },
+        didDrawCell: hayFotosST ? (data => {
+            if (data.section === 'body' && data.column.index === 0) {
+                const foto = fotosST[data.row.index];
+                if (foto) {
+                    const ix = data.cell.x + (data.cell.width  - FOTO_ST_W) / 2;
+                    const iy = data.cell.y + (data.cell.height - FOTO_ST_H) / 2;
+                    doc.addImage(foto.data, foto.format, ix, iy, FOTO_ST_W, FOTO_ST_H);
+                }
+            }
+        }) : undefined,
     });
 
     let tableEndY = doc.lastAutoTable.finalY + 3;
