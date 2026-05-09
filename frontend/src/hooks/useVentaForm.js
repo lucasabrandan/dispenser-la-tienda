@@ -10,7 +10,7 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
     const [productos, setProductos] = useState([]);
     const [repuestoElegido, setRepuestoElegido] = useState(null);
     const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(0);
-    const [costoEnvio, setCostoEnvio] = useState(0);
+    const [costoEnvio, setCostoEnvio] = useState('');
     const [fechaVenta, setFechaVenta] = useState(new Date().toISOString().split('T')[0]);
     const [leyenda, setLeyenda] = useState('');
     const [modalClienteAbierto, setModalClienteAbierto] = useState(false);
@@ -141,7 +141,7 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
         setProductos([]);
         setClienteId(null);
         setDescuentoPorcentaje(0);
-        setCostoEnvio(0);
+        setCostoEnvio('');
         setLeyenda('');
         setModoRapido(false);
         setRegistrarCliente(false);

@@ -107,7 +107,8 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                     <span className="text-xl">🚚</span>
                     <input
                         type="number" min="0" value={costoEnvio}
-                        onChange={e => setCostoEnvio(Math.max(0, parseFloat(e.target.value) || 0))}
+                        onChange={e => setCostoEnvio(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0))}
+                        onFocus={e => e.target.select()}
                         placeholder="0"
                         className="flex-1 h-11 rounded-xl px-4 font-black text-xl text-[#1C1917] dark:text-[#F0EEE9] bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10 outline-none focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
                     />

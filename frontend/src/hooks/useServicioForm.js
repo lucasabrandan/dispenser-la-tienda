@@ -34,7 +34,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
 
   const [itemActual, setItemActual] = useState({
     sedeId: '', sedeNombre: '', equipoSerial: '',
-    trabajo: '', costoExtra: 0, repuestosUsados: [],
+    trabajo: '', costoExtra: '', repuestosUsados: [],
     fotoAntes: null, fotoDespues: null,
   });
 
@@ -441,7 +441,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     setTicketItems(prev => [...prev, nuevoRenglon]);
     setItemActual(prev => ({
       ...prev,
-      equipoSerial: '', trabajo: '', costoExtra: 0,
+      equipoSerial: '', trabajo: '', costoExtra: '',
       repuestosUsados: [], modeloEquipo: '', ubicacionEquipo: '',
       fotoAntes: null, fotoDespues: null, esNuevoEquipo: false,
     }));
@@ -619,7 +619,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       setDescuentoPorcentaje(0);
       setLeyenda(LEYENDA_DEFAULT);
       setFechaServicio(new Date().toISOString().split('T')[0]);
-      setItemActual({ sedeId: '', sedeNombre: '', equipoSerial: '', trabajo: '', costoExtra: 0, repuestosUsados: [] });
+      setItemActual({ sedeId: '', sedeNombre: '', equipoSerial: '', trabajo: '', costoExtra: '', repuestosUsados: [] });
       return { ok: true, id: savedId, clienteId: resClienteId, clienteNombre: resClienteNombre, tecnicoId: resTecnicoId };
 
     } catch (err) {

@@ -170,6 +170,7 @@ export default function ItemEquipoForm({
                                     </div>
                                     <input disabled={estaBloqueado} type="number" min="1" value={r.cantidad}
                                         onChange={e => actualizarCantidad(i, e.target.value)}
+                                        onFocus={e => e.target.select()}
                                         className="w-11 h-9 rounded-lg text-center font-black text-sm text-[#1C1917] dark:text-[#F0EEE9] mr-3 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07]"
                                     />
                                     <p className="font-black text-sm w-16 text-right text-[#1C1917] dark:text-[#F0EEE9]">
@@ -207,8 +208,10 @@ export default function ItemEquipoForm({
                 </label>
                 <input disabled={estaBloqueado} type="number" min="0"
                     value={itemActual.costoExtra}
-                    onChange={e => setItemActual({ ...itemActual, costoExtra: Math.max(0, parseFloat(e.target.value) || 0) })}
-                    className="w-full bg-transparent border-none text-white text-4xl font-black outline-none mt-1"
+                    onChange={e => setItemActual({ ...itemActual, costoExtra: e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0) })}
+                    onFocus={e => e.target.select()}
+                    placeholder="0"
+                    className="w-full bg-transparent border-none text-white text-4xl font-black outline-none mt-1 placeholder-[#666]"
                 />
             </div>
 

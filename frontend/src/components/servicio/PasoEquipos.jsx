@@ -386,8 +386,10 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         <input
                             type="number" min="0"
                             value={itemActual.costoExtra}
-                            onChange={e => setItemActual({ ...itemActual, costoExtra: Math.max(0, parseFloat(e.target.value) || 0) })}
-                            className="w-full bg-transparent border-none text-white text-4xl font-black outline-none mt-1"
+                            onChange={e => setItemActual({ ...itemActual, costoExtra: e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0) })}
+                            onFocus={e => e.target.select()}
+                            placeholder="0"
+                            className="w-full bg-transparent border-none text-white text-4xl font-black outline-none mt-1 placeholder-[#666]"
                         />
                     </div>
 
