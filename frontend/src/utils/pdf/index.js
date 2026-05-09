@@ -28,8 +28,6 @@ import {
     dibujarGarantia,
     dibujarQRWhatsApp,
     dibujarQRGoogle,
-    dibujarResumenEjecutivo,
-    dibujarCondiciones,
     dibujarCondicionesYCTA,
     dibujarRegistroFotografico,
 } from './bloques.js';
@@ -909,10 +907,15 @@ async function generarPresupuestoVenta(doc, {
                 2: { cellWidth: 'auto' },
                 3: { halign: 'center', cellWidth: 12 },
                 4: { halign: 'right',  cellWidth: 22 },
-                5: { halign: 'right',  cellWidth: 22, textColor: C.green },
+                5: { halign: 'right',  cellWidth: 22, textColor: C.navy },
                 6: { halign: 'right',  cellWidth: 24, fontStyle: 'bold' },
             },
-            margin: { left: M, right: M },
+            margin: { left: M, right: M, top: HEADER_H.compact + 8 },
+            didDrawPage: (data) => {
+                if (data.pageNumber > 1) {
+                    dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('PRESUPUESTO_VENTA', false), fecha, nroDoc });
+                }
+            },
             didParseCell: data => {
                 if (data.section !== 'body') return;
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
@@ -990,7 +993,7 @@ async function generarPresupuestoVenta(doc, {
     y += 8;
 
     // Condiciones + QR WhatsApp
-    const condH  = 36;
+    const condH  = 44;
     const qrWaH  = empresa.whatsapp ? 54 : 0;
     const pageHQ = doc.internal.pageSize.getHeight();
     if (y + condH + qrWaH > pageHQ - 25) {
@@ -998,7 +1001,7 @@ async function generarPresupuestoVenta(doc, {
         dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('PRESUPUESTO_VENTA', false), fecha, nroDoc });
         y = HEADER_H.compact + 8;
     }
-    y = dibujarCondiciones(doc, { y, pageW });
+    y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
     if (empresa.whatsapp) {
         y = await dibujarQRWhatsApp(doc, {
             x: M, y,
