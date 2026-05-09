@@ -19,6 +19,8 @@ function FotoRepuesto({ repuesto }) {
 function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
     const tieneFoto = repuesto.fotoUrl || repuesto.imagen;
     const seleccionado = cantidad > 0;
+    const [inputVal, setInputVal] = React.useState(String(cantidad || ''));
+    React.useEffect(() => { setInputVal(String(cantidad || '')); }, [cantidad]);
 
     return (
         <div className={`relative rounded-2xl overflow-hidden border transition-all active:scale-[0.97] ${
@@ -70,18 +72,20 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
                         <input
                             type="number"
                             min="1"
-                            value={cantidad}
+                            value={inputVal}
                             onFocus={e => e.target.select()}
                             onChange={e => {
-                                const raw = e.target.value;
-                                if (raw === '') { onCambiar(''); return; }
-                                const val = Math.max(1, parseInt(raw) || 1);
+                                setInputVal(e.target.value);
+                                if (e.target.value === '') return;
+                                const val = Math.max(1, parseInt(e.target.value) || 1);
                                 onCambiar(val);
                             }}
-                            onBlur={e => {
-                                if (e.target.value === '' || Number(e.target.value) < 1) onCambiar(1);
+                            onBlur={() => {
+                                const val = Math.max(1, parseInt(inputVal) || 1);
+                                onCambiar(val);
+                                setInputVal(String(val));
                             }}
-                            className="font-black text-[14px] w-10 text-center text-[#1C1917] dark:text-[#F0EEE9] bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="font-black text-[14px] w-14 text-center text-[#1C1917] dark:text-[#F0EEE9] bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button
                             type="button"
