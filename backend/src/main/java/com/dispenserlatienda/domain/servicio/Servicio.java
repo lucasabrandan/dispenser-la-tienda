@@ -3,6 +3,8 @@ package com.dispenserlatienda.domain.servicio;
 import com.dispenserlatienda.domain.sede.Sede;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Formula;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -72,6 +74,9 @@ public class Servicio {
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
+    @Formula("(SELECT COALESCE(SUM(si.costo), 0) FROM servicio_items si WHERE si.servicio_id = id)")
+    private BigDecimal total;
+
     @OneToMany(mappedBy = "servicio", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ServicioItem> items = new ArrayList<>();
 
@@ -136,6 +141,8 @@ public class Servicio {
 
     public LocalDateTime getFechaModificacion() { return fechaModificacion; }
     public void setFechaModificacion(LocalDateTime fechaModificacion) { this.fechaModificacion = fechaModificacion; }
+
+    public BigDecimal getTotal() { return total; }
 
     public Long getPresupuestoOrigenId() { return presupuestoOrigenId; }
     public void setPresupuestoOrigenId(Long presupuestoOrigenId) { this.presupuestoOrigenId = presupuestoOrigenId; }

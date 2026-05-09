@@ -35,7 +35,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar }) {
             )}
 
             {/* Foto */}
-            <div className="w-full aspect-square max-h-[120px] bg-[#D8D4CE] dark:bg-[#1C1C1C] flex items-center justify-center overflow-hidden">
+            <div className="w-full aspect-square bg-[#D8D4CE] dark:bg-[#1C1C1C] flex items-center justify-center overflow-hidden">
                 {tieneFoto
                     ? <>
                         <FotoRepuesto repuesto={repuesto} />

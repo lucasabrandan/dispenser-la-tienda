@@ -248,7 +248,7 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
         modoRapido, registrarCliente, setRegistrarCliente,
         datosCliente, handleDatosChange,
         activarRapido, activarNormal,
-        agregarProducto, actualizarCantidad, quitarProducto,
+        agregarProducto, actualizarCantidad, quitarProducto, setProductos,
         modalRepuesto, setModalRepuesto, nombreRepuesto, repuestoCreado, abrirModalRepuesto,
         guardarVenta, dispararPDF, onClienteNuevo,
     };
