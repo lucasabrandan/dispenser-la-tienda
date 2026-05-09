@@ -178,6 +178,7 @@ export function useVentaManager() {
                     ...r,
                     fotoUrl:     r.fotoUrl     || cat?.fotoUrl     || null,
                     descripcion: r.descripcion || cat?.descripcion || null,
+                    sku:         r.sku         || cat?.sku         || null,
                 };
             }),
         }));
