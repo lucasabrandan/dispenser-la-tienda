@@ -147,8 +147,31 @@ export function useVentaManager() {
         } catch { toast.error('Error al eliminar'); }
     };
 
-    const generarPDF = (venta) => {
+    const generarPDF = async (venta) => {
         const tecnico = localStorage.getItem('tecnico_nombre') || 'Mostrador';
+
+        // Enriquecer repuestosUsados con fotoUrl/descripcion actuales del catálogo
+        // (ventas antiguas no los tenían persistidos en el JSON)
+        let catalogoMap = {};
+        try {
+            const res = await api.get('/repuestos?page=0&size=500');
+            const lista = res.data.content || res.data;
+            lista.forEach(r => { catalogoMap[r.id] = r; });
+        } catch { /* si falla, se usa lo que hay */ }
+
+        const enrichItems = (venta.items || []).map(it => ({
+            ...it,
+            totalCalculado: it.costo,
+            repuestosUsados: (it.repuestosUsados || []).map(r => {
+                const cat = catalogoMap[r.id];
+                return {
+                    ...r,
+                    fotoUrl:     r.fotoUrl     || cat?.fotoUrl     || null,
+                    descripcion: r.descripcion || cat?.descripcion || null,
+                };
+            }),
+        }));
+
         generarRemitoPDFPremium({
             tipo:                    venta.estado === 'PRESUPUESTO' ? 'PRESUPUESTO_VENTA' : 'COMPROBANTE',
             cliente:                 { nombre: venta.clienteNombre },
@@ -156,7 +179,7 @@ export function useVentaManager() {
             tecnico,
             servicioId:              venta.id,
             nroDocumentoExistente:   venta.nroDocumento || null,
-            ticketItems:             venta.items?.map(it => ({ ...it, totalCalculado: it.costo })) || [],
+            ticketItems:             enrichItems,
             totalFinal:              calcularTotal(venta),
             fechaServicio:           venta.fecha,
             descuentoPorcentaje:     venta.descuentoPorcentaje || 0,

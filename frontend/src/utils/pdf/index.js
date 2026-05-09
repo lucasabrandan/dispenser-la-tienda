@@ -971,7 +971,10 @@ async function generarComprobante(doc, {
 
     for (const item of ticketItems) {
         for (const r of (item.repuestosUsados || [])) {
-            filas.push(['', r.nombre, r.sku || '—', String(r.cantidad),
+            const nombreConDesc = r.descripcion
+                ? `${r.nombre}\n${r.descripcion}`
+                : r.nombre;
+            filas.push(['', nombreConDesc, r.sku || '—', String(r.cantidad),
                 `$ ${Number(r.precio).toLocaleString('es-AR')}`,
                 `$ ${Number(r.subtotal ?? r.precio * r.cantidad).toLocaleString('es-AR')}`]);
             fotos.push(await cargarFoto(r.fotoUrl || null));
@@ -992,9 +995,9 @@ async function generarComprobante(doc, {
             body:  filas,
             theme: 'grid',
             headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: 'bold', fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
-            bodyStyles: { fontSize: T.xs, textColor: C.dark, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 }, minCellHeight: PROD_H + 4, valign: 'middle', lineColor: C.grayBorder, lineWidth: 0.1 },
+            bodyStyles: { fontSize: T.xs, textColor: C.dark, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 }, minCellHeight: PROD_H + 4, valign: 'middle', lineColor: C.grayBorder, lineWidth: 0.1, overflow: 'linebreak' },
             columnStyles: {
-                0: { cellWidth: PROD_W + 4 }, 1: { cellWidth: 'auto' },
+                0: { cellWidth: PROD_W + 4 }, 1: { cellWidth: 'auto', overflow: 'linebreak' },
                 2: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
                 3: { halign: 'center', cellWidth: 14 }, 4: { halign: 'right', cellWidth: 24 },
                 5: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
@@ -1035,30 +1038,6 @@ async function generarComprobante(doc, {
     doc.setTextColor(...C.navy);
     doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 8, { align: 'right' });
     y += 16;
-
-    // Formas de pago
-    y = checkSalto(doc, y, 20);
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text('FORMAS DE PAGO', M, y);
-    y += 5;
-    ['Efectivo', 'Transferencia', 'Cuenta corriente'].forEach((m, i) => {
-        const bW = 48;
-        const bX = M + i * (bW + 3);
-        doc.setFillColor(...C.grayBg);
-        doc.setDrawColor(...C.navy);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(bX, y - 4, bW, 7, 1.5, 1.5, 'FD');
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.navy);
-        doc.text(m, bX + bW / 2, y, { align: 'center' });
-    });
-    y += 12;
-
-    y = checkSalto(doc, y, 36);
-    y = dibujarFirmas(doc, { y, firmaCliente: null, firmaTecnico: null, esPresupuesto: false });
 
     return y;
 }

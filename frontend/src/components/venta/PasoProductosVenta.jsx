@@ -74,7 +74,21 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                     }}
                                     className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90"
                                 >−</button>
-                                <span className="font-black text-[13px] w-5 text-center text-[#1C1917] dark:text-[#F0EEE9]">{p.cantidad}</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={p.cantidad}
+                                    onFocus={e => e.target.select()}
+                                    onChange={e => {
+                                        const val = Math.max(1, parseInt(e.target.value) || 1);
+                                        const nuevos = productos.map((x, j) => j === i
+                                            ? { ...x, cantidad: val, subtotal: val * x.precio }
+                                            : x
+                                        );
+                                        setProductos(nuevos);
+                                    }}
+                                    className="font-black text-[13px] w-14 text-center text-[#1C1917] dark:text-[#F0EEE9] bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
                                 <button
                                     type="button"
                                     onClick={() => {
