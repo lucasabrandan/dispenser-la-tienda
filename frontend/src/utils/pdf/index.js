@@ -835,7 +835,7 @@ async function generarPresupuestoVenta(doc, {
 
         autoTable(doc, {
             startY: y,
-            head:  [['', 'SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', 'P. c/Desc.', 'Total']],
+            head:  [['Imagen', 'SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', 'P. c/Desc.', 'Total']],
             body:  filas,
             theme: 'grid',
             headStyles: {
@@ -991,7 +991,7 @@ async function generarComprobante(doc, {
         y = checkSalto(doc, y, 40);
         autoTable(doc, {
             startY: y,
-            head:  [['', 'Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']],
+            head:  [['Imagen', 'Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']],
             body:  filas,
             theme: 'grid',
             headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: 'bold', fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },

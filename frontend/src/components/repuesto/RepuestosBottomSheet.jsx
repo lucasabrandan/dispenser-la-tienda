@@ -16,7 +16,7 @@ function FotoRepuesto({ repuesto }) {
     return null;
 }
 
-function CardRepuesto({ repuesto, cantidad, onSumar, onRestar }) {
+function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
     const tieneFoto = repuesto.fotoUrl || repuesto.imagen;
     const seleccionado = cantidad > 0;
 
@@ -67,7 +67,22 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar }) {
                             onClick={onRestar}
                             className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90 transition-all"
                         >−</button>
-                        <span className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]">{cantidad}</span>
+                        <input
+                            type="number"
+                            min="1"
+                            value={cantidad}
+                            onFocus={e => e.target.select()}
+                            onChange={e => {
+                                const raw = e.target.value;
+                                if (raw === '') { onCambiar(''); return; }
+                                const val = Math.max(1, parseInt(raw) || 1);
+                                onCambiar(val);
+                            }}
+                            onBlur={e => {
+                                if (e.target.value === '' || Number(e.target.value) < 1) onCambiar(1);
+                            }}
+                            className="font-black text-[14px] w-10 text-center text-[#1C1917] dark:text-[#F0EEE9] bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
                         <button
                             type="button"
                             onClick={onSumar}
@@ -123,6 +138,10 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
         if ((nueva[r.id] || 0) <= 1) delete nueva[r.id];
         else nueva[r.id] -= 1;
         return nueva;
+    });
+    const cambiar = (r, val) => setCantidades(prev => {
+        if (val === '' || val < 1) return prev;
+        return { ...prev, [r.id]: val };
     });
 
     const totalSeleccionados = Object.values(cantidades).filter(c => c > 0).length;
@@ -213,6 +232,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                                     cantidad={cantidades[r.id] || 0}
                                     onSumar={() => sumar(r)}
                                     onRestar={() => restar(r)}
+                                    onCambiar={val => cambiar(r, val)}
                                 />
                             ))}
                         </div>
