@@ -11,12 +11,24 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     const RIGHT_W = CONTENT_W - LEFT_W - 4;
     const RIGHT_X = M + LEFT_W + 4;
 
-    // Altura dinámica según diagnóstico
-    let cardH = 38;
+    // Pre-calcular datos para altura dinámica (sin espacio vacío excesivo)
+    const condFiscal = cliente?.condicionFiscal || cliente?.condicionIva || null;
+    const datosCliente = [
+        cliente?.telefono   ? `Tel: ${cliente.telefono}`            : null,
+        sede?.direccion     ? `Dir: ${sede.direccion}`              : (sede?.nombreSede ? `Sede: ${sede.nombreSede}` : null),
+        cliente?.cuilDni    ? `CUIT/DNI: ${cliente.cuilDni}`        : null,
+        condFiscal          ? `Cond. fiscal: ${condFiscal}`         : null,
+        cliente?.email      ? `Email: ${cliente.email}`             : null,
+    ].filter(Boolean).slice(0, 4);
+
+    const textH = 6 + 5 + 5 + datosCliente.length * 4.2 + 4; // padding top + label + nombre + líneas + padding bottom
+    let cardH;
     if (tieneDiag) {
         doc.setFontSize(T.xxs);
         const diagLines = doc.splitTextToSize(diagnostico.trim(), RIGHT_W - 4);
-        cardH = Math.max(38, diagLines.length * 4.2 + 16);
+        cardH = Math.max(textH, diagLines.length * 4.2 + 16);
+    } else {
+        cardH = Math.max(textH, 22);
     }
 
     // Fondo card
@@ -50,15 +62,6 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     doc.text(nombreLines[0], M + 2, cy);
     cy += 5;
 
-    const condFiscal = cliente?.condicionFiscal || cliente?.condicionIva || null;
-    const datosCliente = [
-        cliente?.telefono   ? `Tel: ${cliente.telefono}`            : null,
-        sede?.direccion     ? `Dir: ${sede.direccion}`              : (sede?.nombreSede ? `Sede: ${sede.nombreSede}` : null),
-        cliente?.cuilDni    ? `CUIT/DNI: ${cliente.cuilDni}`        : null,
-        condFiscal          ? `Cond. fiscal: ${condFiscal}`         : null,
-        cliente?.email      ? `Email: ${cliente.email}`             : null,
-    ].filter(Boolean).slice(0, 4);
-
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
@@ -80,7 +83,7 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
         diagLines.slice(0, 8).forEach(l => { doc.text(l, RIGHT_X, dy); dy += 4.2; });
     }
 
-    return y + cardH + 4;
+    return y + cardH + 3;
 }
 
 // ── BLOQUE DATOS DEL EQUIPO (separado, con foto ANTES a la derecha) ───────────
@@ -109,7 +112,7 @@ export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = nu
         sector  ? { l: 'SECTOR',    v: sector  } : null,
     ].filter(Boolean);
 
-    const cardH = Math.max(FOTO_H + 8, campos.length * 5.5 + 14);
+    const cardH = Math.max(FOTO_H + 6, campos.length * 5.5 + 10);
 
     // Fondo card
     doc.setFillColor(...C.white);
@@ -160,7 +163,7 @@ export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = nu
         ey += 5.5;
     });
 
-    return y + cardH + 4;
+    return y + cardH + 3;
 }
 
 // ── BLOQUE TRABAJO A REALIZAR / SOLICITUD (presupuesto, sección separada) ──────
@@ -168,7 +171,7 @@ export function dibujarBloqueSolicitud(doc, { texto, y, pageW }) {
     if (!texto || !texto.trim()) return y;
 
     const lines = doc.splitTextToSize(texto.trim(), CONTENT_W - 12);
-    const cardH = Math.max(20, lines.length * 4.5 + 16);
+    const cardH = Math.max(14, lines.length * 4.5 + 11);
 
     // Fondo con borde izquierdo dorado/gold
     doc.setFillColor(...C.grayLight);
@@ -193,7 +196,7 @@ export function dibujarBloqueSolicitud(doc, { texto, y, pageW }) {
     doc.setTextColor(...C.dark);
     lines.slice(0, 8).forEach(l => { doc.text(l, M + 6, dy); dy += 4.5; });
 
-    return y + cardH + 4;
+    return y + cardH + 3;
 }
 
 // ── BLOQUE TRABAJO REALIZADO / A REALIZAR ────────────────────────────────────
