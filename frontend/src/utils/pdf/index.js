@@ -421,14 +421,14 @@ async function generarSinglePresupuesto(doc, {
     presupTableEndY += 18;
     y = presupTableEndY;
 
-    // Validez
-    const validez = new Date();
-    validez.setDate(validez.getDate() + 7);
+    // Validez — calculada desde la fecha del documento, no desde hoy
+    const [dSP, mSP, aSP] = fecha.split('/').map(Number);
+    const validezSP = new Date(aSP, mSP - 1, dSP + 7);
     y += 3;
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
+    doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
     // Foto del problema (solo si hay segunda foto real además de la de equipo)
@@ -810,13 +810,13 @@ async function generarMultiPresupuesto(doc, {
     doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 2, y + 10, { align: 'right' });
     y += 18;
 
-    // Validez
-    const validez = new Date();
-    validez.setDate(validez.getDate() + 7);
+    // Validez — calculada desde la fecha del documento, no desde hoy
+    const [dMP, mMP, aMP] = fecha.split('/').map(Number);
+    const validezMP = new Date(aMP, mMP - 1, dMP + 7);
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
+    doc.text(`Válido hasta: ${validezMP.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
     // Condiciones + firmas de aceptación + QR: van juntos en página dedicada
@@ -1033,13 +1033,13 @@ async function generarPresupuestoVenta(doc, {
     doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
     y += 18;
 
-    // Validez
-    const validez = new Date();
-    validez.setDate(validez.getDate() + 7);
+    // Validez — calculada desde la fecha del documento, no desde hoy
+    const [dPV, mPV, aPV] = fecha.split('/').map(Number);
+    const validezPV = new Date(aPV, mPV - 1, dPV + 7);
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
+    doc.text(`Válido hasta: ${validezPV.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 8;
 
     // Leyenda / observaciones del presupuesto
