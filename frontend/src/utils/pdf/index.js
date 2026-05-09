@@ -646,22 +646,28 @@ async function generarMultiPresupuesto(doc, {
     y = dibujarResumenServicio(doc, {
         y,
         stats: [
-            { valor: ticketItems.length,                        etiqueta: 'Equipos',         colorValor: C.navy },
-            { valor: `$ ${total.toLocaleString('es-AR')}`,     etiqueta: 'Total estimado',  colorValor: C.red  },
+            { valor: ticketItems.length,                    etiqueta: 'Equipos',        colorValor: C.navy },
+            { valor: `$ ${total.toLocaleString('es-AR')}`, etiqueta: 'Total estimado', colorValor: C.red  },
         ],
     });
 
-    // Tabla columnar por equipo (formato: EQUIPO | TRABAJO ESTIMADO | REPUESTOS ESTIMADOS | IMPORTE)
-    const bodyRows = [];
+    // Detectar si todos los equipos tienen el mismo trabajo → mostrar una sola vez arriba de la tabla
+    const trabajos = ticketItems.map(it => (it.trabajo || it.trabajoRealizado || '').trim()).filter(Boolean);
+    const trabajoComun = trabajos.length > 0 && trabajos.every(t => t === trabajos[0]) ? trabajos[0] : null;
+    if (trabajoComun) {
+        y = dibujarBloqueSolicitud(doc, { texto: trabajoComun, y, pageW });
+    }
 
+    // Construir filas de la tabla
+    const bodyRows = [];
     ticketItems.forEach((item, idx) => {
-        const modelo  = item.modeloEquipo  || item.equipoModelo  || 'Dispenser';
-        const marca   = item.marcaEquipo   || item.equipoMarca   || null;
-        const serial  = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
+        const modelo = item.modeloEquipo  || item.equipoModelo  || 'Dispenser';
+        const marca  = item.marcaEquipo   || item.equipoMarca   || null;
+        const serial = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial)
             ? item.equipoSerial : null;
-        const ubic    = item.ubicacionEquipo || item.equipoUbicacion || null;
-        const piso    = item.equipoPiso    || null;
-        const sector  = item.equipoSector  || null;
+        const ubic   = item.ubicacionEquipo || item.equipoUbicacion || null;
+        const piso   = item.equipoPiso    || null;
+        const sector = item.equipoSector  || null;
 
         const linPisoSec = [piso ? `Piso: ${piso}` : null, sector ? `Sec: ${sector}` : null].filter(Boolean).join(' · ');
         const equipoCell = [
@@ -671,55 +677,66 @@ async function generarMultiPresupuesto(doc, {
             linPisoSec || null,
         ].filter(Boolean).join('\n');
 
-        const mo   = parseFloat(item.costoExtra || 0);
-        const desc = (item.trabajo || item.trabajoRealizado || '').trim();
-        const partesMO = [];
-        if (desc) partesMO.push(desc);
-        if (mo > 0) partesMO.push(`· Mano de obra\n  $ ${mo.toLocaleString('es-AR')}`);
-        const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
-
+        // Repuestos: una línea por ítem sin precio inline (el total va en IMPORTE)
         const reps = item.repuestosUsados || [];
         const repCell = reps.length > 0
-            ? reps.map(r => {
-                const sub = parseFloat(r.subtotal ?? r.precio * r.cantidad ?? 0);
-                return `· ${r.nombre} (x${r.cantidad})\n  $ ${sub.toLocaleString('es-AR')}`;
-              }).join('\n')
+            ? reps.map(r => `· ${r.nombre} (x${r.cantidad})`).join('\n')
             : '—';
 
         const sub = parseFloat(item.totalCalculado || item.costo || 0);
         const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
 
-        bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
+        if (trabajoComun) {
+            // Sin columna trabajo — ya se mostró arriba
+            bodyRows.push([equipoCell, repCell, importeCell]);
+        } else {
+            const mo   = parseFloat(item.costoExtra || 0);
+            const desc = (item.trabajo || item.trabajoRealizado || '').trim();
+            const partes = [];
+            if (desc) partes.push(desc);
+            if (mo > 0) partes.push(`MO: $${mo.toLocaleString('es-AR')}`);
+            bodyRows.push([equipoCell, partes.join('\n') || '—', repCell, importeCell]);
+        }
     });
 
+    const tipoLabelTabla = 'PRESUPUESTO — MÚLTIPLES EQUIPOS';
+
     y = checkSalto(doc, y, 40);
-    doc.setFontSize(T.label);
+    doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
     doc.text('DETALLE DE EQUIPOS Y CONCEPTOS', M, y);
     y += 5;
 
+    const headCols  = trabajoComun
+        ? [['EQUIPO', 'REPUESTOS ESTIMADOS', 'IMPORTE']]
+        : [['EQUIPO', 'TRABAJO ESTIMADO', 'REPUESTOS ESTIMADOS', 'IMPORTE']];
+    const colStyles = trabajoComun
+        ? { 0: { cellWidth: 55, fontStyle: 'bold' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy } }
+        : { 0: { cellWidth: 45, fontStyle: 'bold' }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy } };
+
     autoTable(doc, {
         startY: y,
-        head:  [['EQUIPO', 'TRABAJO ESTIMADO', 'REPUESTOS ESTIMADOS', 'IMPORTE']],
+        head:  headCols,
         body:  bodyRows,
         theme: 'grid',
         headStyles: {
             fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
-            fontSize: T.xxs, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+            fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
         },
         bodyStyles: {
             fontSize: T.xs, textColor: C.dark, valign: 'top',
-            cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+            cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
-        columnStyles: {
-            0: { cellWidth: 45, fontStyle: 'bold' },
-            1: { cellWidth: 37 },
-            2: { cellWidth: 'auto' },
-            3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy },
+        columnStyles: colStyles,
+        // Dejar espacio para el header compacto en páginas siguientes
+        margin: { left: M, right: M, top: HEADER_H.compact + 8 },
+        didDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+                dibujarHeaderCompacto(doc, { tipoLabel: tipoLabelTabla, fecha, nroDoc });
+            }
         },
-        margin: { left: M, right: M },
         didParseCell: data => {
             if (data.section !== 'body') return;
             if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
@@ -728,19 +745,19 @@ async function generarMultiPresupuesto(doc, {
 
     y = doc.lastAutoTable.finalY + 4;
 
-    // Total final
+    // Total final — caja más alta para que el número grande no se corte
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, y, CONTENT_W, 11, 2, 2, 'FD');
+    doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 7);
+    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 5.5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 8, { align: 'right' });
-    y += 16;
+    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 2, y + 10, { align: 'right' });
+    y += 18;
 
     // Validez
     const validez = new Date();
@@ -751,13 +768,14 @@ async function generarMultiPresupuesto(doc, {
     doc.text(`Válido hasta: ${validez.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
-    // Condiciones + QR WhatsApp: un solo checkSalto para evitar hoja extra
+    // Condiciones + QR WhatsApp
     const condH  = 36;
     const qrWaH  = empresa.whatsapp ? 54 : 0;
     const pageHQ = doc.internal.pageSize.getHeight();
     if (y + condH + qrWaH > pageHQ - 25) {
         doc.addPage();
-        y = 18;
+        dibujarHeaderCompacto(doc, { tipoLabel: tipoLabelTabla, fecha, nroDoc });
+        y = HEADER_H.compact + 8;
     }
     y = dibujarCondiciones(doc, { y, pageW });
     if (empresa.whatsapp) {
@@ -769,7 +787,7 @@ async function generarMultiPresupuesto(doc, {
         });
     }
 
-    // Página de fotos de equipos (solo si algún ítem tiene fotoAntes)
+    // Página de fotos (solo si hay alguna)
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
         tipoLabel: 'FOTOGRAFÍAS DE LOS EQUIPOS',
         subtitulo: 'ESTADO ACTUAL DE CADA EQUIPO',

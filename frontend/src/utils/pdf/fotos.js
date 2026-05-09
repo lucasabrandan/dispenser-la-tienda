@@ -144,11 +144,13 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
         if (fotoA && fotoD) {
             dibujarFoto(fotoA, M,              y, COL_W, FOTO_H);
             dibujarFoto(fotoD, M + COL_W + 6, y, COL_W, FOTO_H);
+            y += FOTO_H + 8;
         } else {
-            const xCentro = M + (CONTENT_W - COL_W) / 2;
-            dibujarFoto(fotoA || fotoD, xCentro, y, COL_W, FOTO_H);
+            // Foto sola: 65% del ancho disponible, centrada
+            const sW = Math.floor(CONTENT_W * 0.65);
+            const sH = Math.floor(sW * 3 / 4);
+            dibujarFoto(fotoA || fotoD, M + (CONTENT_W - sW) / 2, y, sW, sH);
+            y += sH + 8;
         }
-
-        y += FOTO_H + 8;
     }
 }

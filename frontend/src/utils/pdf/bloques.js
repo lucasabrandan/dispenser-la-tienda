@@ -238,10 +238,10 @@ export function dibujarResumenServicio(doc, { y, stats = [] }) {
 
     const n     = stats.length;
     const BOX_W = (CONTENT_W - (n - 1) * 3) / n;
-    const BOX_H = 16;
+    const BOX_H = 18;
     let x = M;
 
-    doc.setFontSize(T.label);
+    doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
     doc.text('RESUMEN DEL SERVICIO', M, y);
@@ -262,22 +262,22 @@ export function dibujarResumenServicio(doc, { y, stats = [] }) {
         doc.rect(x + 1.5, y, 1.5, BOX_H, 'F');
 
         // Valor (grande, bold)
-        doc.setFontSize(T.sm);
+        doc.setFontSize(T.md);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...color);
-        doc.text(String(valor), x + 7, y + 6.5);
+        doc.text(String(valor), x + 7, y + 8);
 
-        // Etiqueta (pequeña, gris)
-        doc.setFontSize(T.label);
+        // Etiqueta legible
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
         const etLines = doc.splitTextToSize(etiqueta, BOX_W - 9);
-        doc.text(etLines[0], x + 7, y + 12.5);
+        doc.text(etLines[0], x + 7, y + 14);
 
         x += BOX_W + 3;
     });
 
-    return y + BOX_H + 5;
+    return y + BOX_H + 4;
 }
 
 // ── TABLA DETALLE TRABAJOS Y REPUESTOS ────────────────────────────────────────
