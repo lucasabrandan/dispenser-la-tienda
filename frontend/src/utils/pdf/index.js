@@ -186,7 +186,7 @@ async function generarSingleTecnico(doc, {
             fontSize: T.xs, textColor: C.dark,
             cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
-            ...(hayFotosST ? { minCellHeight: FOTO_ST_H + 4, valign: 'middle' } : {}),
+            ...(hayFotosST ? { valign: 'middle' } : {}),
         },
         columnStyles: hayFotosST ? {
             0: { cellWidth: FOTO_ST_W + 4 },
@@ -213,6 +213,10 @@ async function generarSingleTecnico(doc, {
                 const col = hayFotosST ? 1 : 0;
                 if (data.column.index >= col && filasConPlaceholder[data.row.index]?.esServicio) {
                     data.cell.styles.textColor = C.navy;
+                }
+                // Altura mínima solo para filas con foto (MO no tiene imagen)
+                if (hayFotosST && fotosST[data.row.index] !== null) {
+                    data.cell.styles.minCellHeight = FOTO_ST_H + 4;
                 }
             }
         },
@@ -391,15 +395,37 @@ async function generarSinglePresupuesto(doc, {
     doc.text('DETALLE DE CONCEPTOS', M, y);
     y += 5;
 
-    const tableDataP = filasConPlaceholder.map(r => [
-        r.concepto, String(r.cant),
-        r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`,
-        r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`,
-    ]);
+    // Cargar fotos de los repuestos (MO no tiene imagen)
+    const FOTO_SP_W = 18;
+    const FOTO_SP_H = 18;
+    const fotosSP = [];
+    let repIdxSP = 0;
+    for (const f of filasConPlaceholder) {
+        if (f.esServicio) {
+            fotosSP.push(null);
+        } else {
+            const rep = (item.repuestosUsados || [])[repIdxSP++];
+            fotosSP.push(await cargarFoto(rep?.fotoUrl || null));
+        }
+    }
+    const hayFotosSP = fotosSP.some(f => f !== null);
+
+    const tableDataP = filasConPlaceholder.map(r => {
+        const fila = [
+            r.concepto, String(r.cant),
+            r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`,
+            r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`,
+        ];
+        if (hayFotosSP) fila.unshift('');
+        return fila;
+    });
 
     autoTable(doc, {
         startY: y,
-        head:  [['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']],
+        head:  [hayFotosSP
+            ? ['Img', 'CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']
+            : ['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']
+        ],
         body:  tableDataP,
         theme: 'grid',
         headStyles: {
@@ -410,13 +436,21 @@ async function generarSinglePresupuesto(doc, {
             fontSize: T.xs, textColor: C.dark,
             cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
+            ...(hayFotosSP ? { valign: 'middle' } : {}),
         },
-        columnStyles: {
+        columnStyles: hayFotosSP ? {
+            0: { cellWidth: FOTO_SP_W + 4 },
+            1: { cellWidth: 'auto' },
+            2: { halign: 'center', cellWidth: 13 },
+            3: { halign: 'right',  cellWidth: 26 },
+            4: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
+        } : {
             0: { cellWidth: 'auto' },
             1: { halign: 'center', cellWidth: 13 },
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
         },
+        rowPageBreak: 'avoid',
         margin: { left: M, right: M, top: HEADER_H.compact + 8 },
         didDrawPage: (data) => {
             if (data.pageNumber > 1) {
@@ -426,9 +460,26 @@ async function generarSinglePresupuesto(doc, {
         didParseCell: data => {
             if (data.section === 'body') {
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
-                if (filasConPlaceholder[data.row.index]?.esServicio) data.cell.styles.textColor = C.navy;
+                const col = hayFotosSP ? 1 : 0;
+                if (data.column.index >= col && filasConPlaceholder[data.row.index]?.esServicio) {
+                    data.cell.styles.textColor = C.navy;
+                }
+                // Altura mínima solo para filas con foto (MO no tiene imagen)
+                if (hayFotosSP && fotosSP[data.row.index] !== null) {
+                    data.cell.styles.minCellHeight = FOTO_SP_H + 4;
+                }
             }
         },
+        didDrawCell: hayFotosSP ? (data => {
+            if (data.section === 'body' && data.column.index === 0) {
+                const foto = fotosSP[data.row.index];
+                if (foto) {
+                    const ix = data.cell.x + (data.cell.width  - FOTO_SP_W) / 2;
+                    const iy = data.cell.y + (data.cell.height - FOTO_SP_H) / 2;
+                    doc.addImage(foto.data, foto.format, ix, iy, FOTO_SP_W, FOTO_SP_H);
+                }
+            }
+        }) : undefined,
     });
 
     let presupTableEndY = doc.lastAutoTable.finalY + 3;

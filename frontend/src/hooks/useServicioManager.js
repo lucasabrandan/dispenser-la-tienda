@@ -229,7 +229,7 @@ export function useServicioManager() {
                     nombreSede: servicio.sedeNombre,
                     direccion:  servicio.sedeDireccion,
                 },
-                tecnico:             localStorage.getItem('tecnico_nombre') || 'Técnico',
+                tecnico:             itemsConFotos[0]?.tecnico || localStorage.getItem('tecnico_nombre') || 'Técnico',
                 ticketItems:         itemsConFotos,
                 fechaServicio:       servicio.fecha,
                 descuentoPorcentaje: servicio.descuentoPorcentaje || 0,

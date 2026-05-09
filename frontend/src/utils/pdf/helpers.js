@@ -93,19 +93,22 @@ async function blobAJpeg(blob) {
 export async function cargarFoto(src) {
     if (!src) return null;
 
-    if (typeof src === 'string' && src.startsWith('data:')) {
-        // Ya es data URL — igual convertir a JPEG por si es WebP/otro
-        const format = src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        return { data: src, format };
-    }
-
     let blob = null;
-    if (src instanceof File) {
+
+    if (typeof src === 'string' && src.startsWith('data:')) {
+        // Data URL → convertir a blob para pasar por canvas (asegura JPEG válido para jsPDF)
+        try {
+            const res = await fetch(src);
+            blob = await res.blob();
+        } catch { return null; }
+    } else if (src instanceof File) {
         blob = src;
     } else {
         try {
-            // URL relativa → proxy del backend (evita CORS con R2)
-            const filename = src.startsWith('http') ? src.split('/').pop() : src;
+            // Filename o URL → proxy del backend (evita CORS con R2)
+            const filename = typeof src === 'string' && src.startsWith('http')
+                ? src.split('/').pop()
+                : src;
             const res = await fetch(`${UPLOADS_BASE}/${filename}`);
             if (!res.ok) return null;
             blob = await res.blob();
@@ -114,7 +117,7 @@ export async function cargarFoto(src) {
 
     if (!blob) return null;
 
-    // Convertir siempre a JPEG via canvas (jsPDF no soporta WebP)
+    // Convertir siempre a JPEG via canvas (jsPDF no soporta WebP/HEIC/etc.)
     const dataUrl = await blobAJpeg(blob);
     if (!dataUrl) return null;
     return { data: dataUrl, format: 'JPEG' };

@@ -218,6 +218,42 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
             {/* ── Rentabilidad ──────────────────────────────────────────── */}
             <RentabilidadPanel resumen={resumen} />
 
+            {/* Técnico responsable (siempre visible para admin) */}
+            {esAdmin && tecnicos.length > 0 && (
+                <DSCard>
+                    <div className="flex items-center justify-between mb-1">
+                        <Label>Técnico responsable</Label>
+                        {!tecnicoSeleccionado && (
+                            <span className="text-[9px] font-black uppercase tracking-wider text-[#D48800] dark:text-[#F0A500]">
+                                Requerido
+                            </span>
+                        )}
+                    </div>
+                    <select
+                        value={tecnicoSeleccionado?.id || ''}
+                        onChange={e => {
+                            const t = tecnicos.find(u => u.id === Number(e.target.value));
+                            setTecnicoSeleccionado(t ? { id: t.id, nombre: t.nombre } : null);
+                        }}
+                        className={`${inputCls} ${!tecnicoSeleccionado ? 'border-[#D48800]/50 dark:border-[#F0A500]/50' : ''}`}
+                    >
+                        <option value=''>— Seleccionar técnico —</option>
+                        {tecnicos.map(t => (
+                            <option key={t.id} value={t.id}>{t.nombre} · {t.rol === 'ADMIN' ? 'Admin' : 'Técnico'}</option>
+                        ))}
+                    </select>
+                    {tecnicoSeleccionado ? (
+                        <p className="text-[10px] mt-1.5 font-bold text-[#D48800] dark:text-[#F0A500]">
+                            Asignado a {tecnicoSeleccionado.nombre}
+                        </p>
+                    ) : (
+                        <p className="text-[10px] mt-1.5 text-[#A8A29E]">
+                            Si no se asigna, el servicio quedará a tu nombre.
+                        </p>
+                    )}
+                </DSCard>
+            )}
+
             {/* ── Más opciones ──────────────────────────────────────────── */}
             <button onClick={() => setMasOpciones(v => !v)}
                 className="flex items-center gap-2 py-1.5 text-[11px] font-black text-[#A8A29E] uppercase tracking-widest transition-all active:scale-[0.98]">
@@ -227,31 +263,6 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
             {masOpciones && (
                 <div className="flex flex-col gap-4">
-                    {/* Técnico responsable (solo admin) */}
-                    {esAdmin && tecnicos.length > 0 && (
-                        <DSCard>
-                            <Label>Técnico responsable</Label>
-                            <select
-                                value={tecnicoSeleccionado?.id || ''}
-                                onChange={e => {
-                                    const t = tecnicos.find(u => u.id === Number(e.target.value));
-                                    setTecnicoSeleccionado(t ? { id: t.id, nombre: t.nombre } : null);
-                                }}
-                                className={inputCls}
-                            >
-                                <option value=''>— Yo mismo (admin) —</option>
-                                {tecnicos.map(t => (
-                                    <option key={t.id} value={t.id}>{t.nombre} · {t.rol === 'ADMIN' ? 'Admin' : 'Técnico'}</option>
-                                ))}
-                            </select>
-                            {tecnicoSeleccionado && (
-                                <p className="text-[10px] mt-1.5 font-bold text-[#D48800] dark:text-[#F0A500]">
-                                    El servicio se registrará a nombre de {tecnicoSeleccionado.nombre}
-                                </p>
-                            )}
-                        </DSCard>
-                    )}
-
                     {/* Observaciones */}
                     <DSCard>
                         <Label>Observaciones (opcional)</Label>
