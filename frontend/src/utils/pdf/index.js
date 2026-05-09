@@ -432,7 +432,7 @@ async function generarSinglePresupuesto(doc, {
 // ── FLUJO MULTI TÉCNICO (varias páginas) ──────────────────────────────────────
 
 async function generarMultiTecnico(doc, {
-    ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico,
+    ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico, y: yInicial,
     firmaCliente, firmaTecnico, garantiaTexto, googleReviewLink, leyenda,
     incluirFirmas = true, descuentoPorcentaje = 0,
 }) {
@@ -444,7 +444,7 @@ async function generarMultiTecnico(doc, {
         (a, it) => a + (parseFloat(it.totalCalculado) || parseFloat(it.costo) || 0), 0,
     );
 
-    let y = HEADER_H.normal + 8;
+    let y = yInicial ?? (HEADER_H.compact + 8);
 
     // Resumen: solo equipos + total
     y = dibujarResumenServicio(doc, {
@@ -466,7 +466,8 @@ async function generarMultiTecnico(doc, {
     const pageHM     = doc.internal.pageSize.getHeight();
     if (y + garantiaHM + firmasHM + qrHM > pageHM - 25) {
         doc.addPage();
-        y = 18;
+        dibujarHeaderCompacto(doc, { tipoLabel: 'SERVICIO TÉCNICO — MÚLTIPLES EQUIPOS', fecha, nroDoc });
+        y = HEADER_H.compact + 8;
     }
     y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
     if (incluirFirmas) {
@@ -508,19 +509,19 @@ async function generarMultiTecnico(doc, {
         ].filter(Boolean).join('\n');
 
         // Trabajo (mano de obra)
-        const mo   = parseFloat(item.costoExtra || 0);
+        const mo   = parseFloat(item.costoExtra) || 0;
         const desc = (item.trabajo || item.trabajoRealizado || '').trim();
         const partesMO = [];
         if (desc) partesMO.push(desc);
-        if (mo > 0) partesMO.push(`· Mano de obra\n  $ ${mo.toLocaleString('es-AR')}`);
+        if (mo > 0) partesMO.push(`MO: $${mo.toLocaleString('es-AR')}`);
         const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
 
-        // Repuestos
+        // Repuestos: una línea por ítem
         const reps = item.repuestosUsados || [];
         const repCell = reps.length > 0
             ? reps.map(r => {
                 const sub = parseFloat(r.subtotal ?? r.precio * r.cantidad ?? 0);
-                return `· ${r.nombre} (x${r.cantidad})\n  $ ${sub.toLocaleString('es-AR')}`;
+                return `· ${r.nombre} (x${r.cantidad}) — $${sub.toLocaleString('es-AR')}`;
               }).join('\n')
             : '—';
 
@@ -551,7 +552,12 @@ async function generarMultiTecnico(doc, {
             2: { cellWidth: 'auto' },
             3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy },
         },
-        margin: { left: M, right: M },
+        margin: { left: M, right: M, top: HEADER_H.compact + 8 },
+        didDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+                dibujarHeaderCompacto(doc, { tipoLabel: 'DETALLE TÉCNICO POR EQUIPOS', fecha, nroDoc });
+            }
+        },
         didParseCell: data => {
             if (data.section !== 'body') return;
             if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
@@ -1167,7 +1173,7 @@ export const generarPDF = async ({
     } else {
         // ORDEN_SERVICIO / INFORME_TECNICO
         if (esMulti) {
-            await generarMultiTecnico(doc, { ...commonArgs, ticketItems, tipo: tipoDetectado });
+            await generarMultiTecnico(doc, { ...commonArgs, ticketItems, tipo: tipoDetectado, y });
         } else {
             await generarSingleTecnico(doc, {
                 ...commonArgs,
