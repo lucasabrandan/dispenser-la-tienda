@@ -24,7 +24,7 @@ export default function VentaForm({ onSaved, clienteInicialId = null }) {
         : TITULOS[1].subtitulo;
 
     return (
-        <div className="font-sans transition-colors bg-[#EDEAE6] dark:bg-[#141414]" style={{ minHeight: '100%' }}>
+        <div className="font-sans transition-colors bg-[#EDEAE6] dark:bg-[#141414] min-h-full">
 
             <StepHeader
                 paso={paso}

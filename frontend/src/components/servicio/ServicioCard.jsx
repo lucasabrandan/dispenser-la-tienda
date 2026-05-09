@@ -56,8 +56,8 @@ export default function ServicioCard({
 
     return (
         <div
-            className={`rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
-            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${BORDER[servicio.estado] || '#A8A29E'}` }}
+            className={`rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
+            style={{ borderLeft: `3px solid ${BORDER[servicio.estado] || '#A8A29E'}` }}
         >
             <div className="p-4">
                 {/* Fila 1: checkbox + badge + id + monto + fecha */}
@@ -130,8 +130,7 @@ export default function ServicioCard({
 
                 {/* Detalle expandido por equipo */}
                 {expandido && items.map((it, i) => (
-                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]"
-                        style={{ border: '0.5px solid rgba(0,0,0,0.05)' }}>
+                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] border border-black/[0.05]">
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
                                 <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
@@ -160,8 +159,7 @@ export default function ServicioCard({
             </div>
 
             {/* Barra de acciones */}
-            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
-                style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-t border-black/[0.06]">
                 {/* Izquierda: ver · pdf · editar */}
                 <IconBtn onClick={() => onDetalle(servicio)} title="Ver detalle"
                     cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
@@ -177,7 +175,7 @@ export default function ServicioCard({
                 {/* Derecha: eliminar (admin) · archivar · rechazar · ejecutar · cobrar */}
                 {onEliminar && (
                     <IconBtn onClick={() => onEliminar(servicio.id)} title="Eliminar definitivamente"
-                        cls="bg-red-100 dark:bg-red-900/30 text-[#D13A28] dark:text-[#E8422F]">🗑️</IconBtn>
+                        cls="bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]">🗑️</IconBtn>
                 )}
                 {!esArch && (
                     <IconBtn onClick={() => onArchivar(servicio.id)} title="Archivar"

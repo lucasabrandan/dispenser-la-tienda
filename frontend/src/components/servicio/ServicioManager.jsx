@@ -106,8 +106,7 @@ export default function ServicioManager({
         <div className="min-h-screen pb-28 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
 
             {/* Header sticky con buscador */}
-            <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-[#C8C4BE] dark:bg-[#141414]"
-                style={{ borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+            <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-[#C8C4BE] dark:bg-[#141414] border-b border-black/[0.06]">
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="text-[22px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
                         Servicio Técnico
@@ -279,7 +278,7 @@ export default function ServicioManager({
                         </button>
                         {esAdmin && (
                             <button onClick={() => setConfirmEliminar({ ids: [...seleccionados], modo: 'masivo' })}
-                                className="h-9 px-4 rounded-xl font-bold text-xs bg-red-100 dark:bg-red-900/30 text-[#D13A28] dark:text-[#E8422F] border border-[#D13A28]/30 active:scale-95">
+                                className="h-9 px-4 rounded-xl font-bold text-xs bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F] border border-[#D13A28]/30 active:scale-95">
                                 🗑️ Eliminar
                             </button>
                         )}
@@ -332,10 +331,9 @@ export default function ServicioManager({
 
             {/* Modal crear/editar */}
             {modalCrear && (
-                <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center" style={{ background: 'rgba(0,0,0,0.55)' }}>
+                <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/55">
                     <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-[#EDEAE6] dark:bg-[#141414]">
-                        <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
-                            style={{ borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+                        <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
                             <div>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                                     {servicioEjecutar ? '🔧 Ejecutar Trabajo' : servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
