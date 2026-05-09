@@ -129,7 +129,7 @@ async function generarSingleTecnico(doc, {
     const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
 
     // • INFORMACIÓN PRECIOS
-    doc.setFontSize(T.label);
+    doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
     doc.text('• INFORMACIÓN PRECIOS', M, y);
@@ -170,7 +170,12 @@ async function generarSingleTecnico(doc, {
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
         },
-        margin: { left: M, right: M },
+        margin: { left: M, right: M, top: HEADER_H.compact + 8 },
+        didDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+                dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo(tipo, false), fecha, nroDoc });
+            }
+        },
         didParseCell: data => {
             if (data.section === 'body') {
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
@@ -208,15 +213,15 @@ async function generarSingleTecnico(doc, {
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, tableEndY, CONTENT_W, 10, 1.5, 1.5, 'FD');
+    doc.roundedRect(M, tableEndY, CONTENT_W, 13, 1.5, 1.5, 'FD');
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL DEL SERVICIO', M + 3, tableEndY + 6.5);
+    doc.text('TOTAL DEL SERVICIO', M + 3, tableEndY + 5.5);
     doc.setFontSize(sinItems ? T.xs : T.md);
     doc.setTextColor(...C.navy);
-    doc.text(totalLabel, pageW - M - 2, tableEndY + 7, { align: 'right' });
-    tableEndY += 15;
+    doc.text(totalLabel, pageW - M - 2, tableEndY + 10, { align: 'right' });
+    tableEndY += 18;
     y = tableEndY;
 
     // Registro fotográfico
@@ -235,14 +240,14 @@ async function generarSingleTecnico(doc, {
     // Próximo mantenimiento
     if (proximoMantenimiento) {
         y = checkSalto(doc, y, 20);
-        doc.setFillColor(...C.greenLight);
-        doc.setDrawColor(...C.green);
+        doc.setFillColor(...C.grayBg);
+        doc.setDrawColor(...C.navy);
         doc.setLineWidth(0.3);
         doc.roundedRect(M - 2, y, CONTENT_W + 4, 14, 2, 2, 'FD');
-        doc.setFontSize(T.label);
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.green);
-        doc.text('PROXIMO MANTENIMIENTO SUGERIDO', M + 2, y + 5);
+        doc.setTextColor(...C.navy);
+        doc.text('PRÓXIMO MANTENIMIENTO SUGERIDO', M + 2, y + 5);
         doc.setFontSize(T.sm);
         doc.setTextColor(...C.dark);
         doc.text(proximoMantenimiento, pageW - M, y + 5, { align: 'right' });
@@ -279,7 +284,8 @@ async function generarSingleTecnico(doc, {
     const pageH      = doc.internal.pageSize.getHeight();
     if (y + garantiaH + firmasH + qrH > pageH - 25) {
         doc.addPage();
-        y = 18;
+        dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo(tipo, false), fecha, nroDoc });
+        y = HEADER_H.compact + 8;
     }
     y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
     if (incluirFirmas) {
@@ -335,7 +341,7 @@ async function generarSinglePresupuesto(doc, {
     const sinItems = filas.length === 0;
 
     y = checkSalto(doc, y, 40);
-    doc.setFontSize(T.label);
+    doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
     doc.text('DETALLE DE CONCEPTOS', M, y);
@@ -381,15 +387,15 @@ async function generarSinglePresupuesto(doc, {
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, presupTableEndY, CONTENT_W, 10, 1.5, 1.5, 'FD');
+    doc.roundedRect(M, presupTableEndY, CONTENT_W, 13, 1.5, 1.5, 'FD');
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 6.5);
+    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 5.5);
     doc.setFontSize(sinItems ? T.xs : T.md);
     doc.setTextColor(...C.navy);
-    doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 2, presupTableEndY + 7, { align: 'right' });
-    presupTableEndY += 15;
+    doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 2, presupTableEndY + 10, { align: 'right' });
+    presupTableEndY += 18;
     y = presupTableEndY;
 
     // Validez
@@ -489,7 +495,6 @@ async function generarMultiTecnico(doc, {
     y += 6;
 
     const bodyRows = [];
-    const bodyMeta = [];
 
     ticketItems.forEach((item, idx) => {
         const modelo  = item.modeloEquipo  || item.equipoModelo  || 'Dispenser';
@@ -526,10 +531,9 @@ async function generarMultiTecnico(doc, {
             : '—';
 
         const sub = parseFloat(item.totalCalculado || item.costo || 0);
-        const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : '$ 0';
+        const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
 
         bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
-        bodyMeta.push({ idx });
     });
 
     autoTable(doc, {
@@ -592,15 +596,15 @@ async function generarMultiTecnico(doc, {
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.4);
-    doc.roundedRect(M, y, CONTENT_W, 11, 2, 2, 'FD');
+    doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL FACTURADO', M + 4, y + 7);
+    doc.text('TOTAL FACTURADO', M + 4, y + 5.5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M, y + 8, { align: 'right' });
-    y += 16;
+    doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
+    y += 18;
 
     // Condiciones del servicio (leyenda)
     const leyLimpiaM = (leyenda || '').trim();
