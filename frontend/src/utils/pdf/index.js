@@ -625,7 +625,7 @@ async function generarMultiTecnico(doc, {
 
 async function generarMultiPresupuesto(doc, {
     ticketItems, cliente, sede, fecha, nroDoc, tecnico, y: yInicial,
-    firmaCliente, firmaTecnico, descuentoPorcentaje, leyenda,
+    firmaCliente, firmaTecnico, incluirFirmas = true, descuentoPorcentaje, leyenda,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -779,7 +779,9 @@ async function generarMultiPresupuesto(doc, {
         y = HEADER_H.compact + 8;
     }
     y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
-    y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
+    if (incluirFirmas) {
+        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
+    }
     if (empresa.whatsapp) {
         y = await dibujarQRWhatsApp(doc, {
             x: M, y,
