@@ -624,13 +624,13 @@ async function generarMultiTecnico(doc, {
 // ── FLUJO MULTI PRESUPUESTO ───────────────────────────────────────────────────
 
 async function generarMultiPresupuesto(doc, {
-    ticketItems, cliente, sede, fecha, nroDoc, tecnico,
+    ticketItems, cliente, sede, fecha, nroDoc, tecnico, y: yInicial,
     firmaCliente, firmaTecnico, descuentoPorcentaje, leyenda,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
 
-    let y = HEADER_H.normal + 8;
+    let y = yInicial ?? (HEADER_H.compact + 8);
 
     const subtotalTotal = ticketItems.reduce(
         (a, it) => a + (parseFloat(it.totalCalculado) || parseFloat(it.costo) || 0), 0,
@@ -1111,15 +1111,15 @@ export const generarPDF = async ({
     }
 
     // ── HEADER PRIMERA PÁGINA ─────────────────────────────────────────────────
-    dibujarHeader(doc, {
-        tipoLabel,
-        fecha,
-        tecnico: tecnico || null,
-        nroDoc,
-        estado:  getEstadoBadge(tipoDetectado),
-    });
+    // Multi-equipo usa header compacto en todas las páginas para consistencia visual
+    const esMultiDoc = esMulti && (tipoDetectado === 'PRESUPUESTO' || tipoDetectado === 'ORDEN_SERVICIO' || tipoDetectado === 'INFORME_TECNICO');
+    if (esMultiDoc) {
+        dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico: tecnico || null, nroDoc });
+    } else {
+        dibujarHeader(doc, { tipoLabel, fecha, tecnico: tecnico || null, nroDoc, estado: getEstadoBadge(tipoDetectado) });
+    }
 
-    let y = HEADER_H.normal + 8;
+    let y = esMultiDoc ? HEADER_H.compact + 8 : HEADER_H.normal + 8;
 
     // ── DISPATCH POR TIPO ─────────────────────────────────────────────────────
     const commonArgs = {
@@ -1139,7 +1139,7 @@ export const generarPDF = async ({
 
     } else if (tipoDetectado === 'PRESUPUESTO') {
         if (esMulti) {
-            await generarMultiPresupuesto(doc, { ...commonArgs, ticketItems });
+            await generarMultiPresupuesto(doc, { ...commonArgs, ticketItems, y });
         } else {
             await generarSinglePresupuesto(doc, { ...commonArgs, item: ticketItems[0], y });
         }
