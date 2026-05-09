@@ -109,12 +109,12 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                     </div>
                     <div className="flex gap-2">
                         <button onClick={dispararPDF}
-                            className="w-11 h-11 rounded-xl text-lg flex items-center justify-center active:scale-90 bg-[#2E2E2E]">
-                            📄
+                            className="h-11 px-3 rounded-xl font-bold text-[11px] text-white flex items-center gap-1.5 active:scale-90 bg-[#2E2E2E]">
+                            📄 PDF
                         </button>
                         <button onClick={() => guardarVenta(false, mostrador.sedeId)}
                             className="h-11 px-4 rounded-xl font-black text-[11px] text-white active:scale-95 bg-[#2E2E2E]">
-                            Guardar
+                            Pendiente
                         </button>
                         <button onClick={() => guardarVenta(true, mostrador.sedeId)}
                             className="h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">

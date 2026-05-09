@@ -67,7 +67,9 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
             {/* ── ALERTA PENDIENTES ─────────────────────────────────────── */}
             {stats.pendientesCount > 0 && (
-                <div className="bg-[var(--warning-bg)] border border-[rgba(212,136,0,0.25)] rounded-2xl p-4 mb-4 flex items-center gap-3 cursor-pointer transition-all hover:opacity-90">
+                <div
+                    onClick={() => filtros.setEstado('PRESUPUESTO')}
+                    className="bg-[var(--warning-bg)] border border-[rgba(212,136,0,0.25)] rounded-2xl p-4 mb-4 flex items-center gap-3 cursor-pointer transition-all hover:opacity-90">
                     <span className="text-xl">⚠️</span>
                     <div>
                         <p className="text-sm font-black text-[var(--warning-tx)]">
@@ -113,7 +115,9 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                                     {ventaEditar ? 'Editar Venta' : 'Nueva Venta'}
                                 </h3>
                                 <p className="text-[11px] text-[#A8A29E] mt-0.5">
-                                    {ventaEditar ? `Presupuesto #${ventaEditar.id}` : 'Seleccioná cliente y productos'}
+                                    {ventaEditar
+                                        ? `${ventaEditar.estado === 'REALIZADO' ? 'Venta' : 'Presupuesto'} #${ventaEditar.id}`
+                                        : 'Seleccioná cliente y productos'}
                                 </p>
                             </div>
                             <button

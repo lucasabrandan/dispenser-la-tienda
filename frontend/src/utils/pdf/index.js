@@ -886,10 +886,11 @@ async function generarPresupuestoVenta(doc, {
         doc.text('DETALLE DE PRODUCTOS', M, y);
         y += 5;
 
+        const conDescuento = pct > 0;
         autoTable(doc, {
             startY: y,
-            head:  [['Imagen', 'SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', 'P. c/Desc.', 'Total']],
-            body:  filas,
+            head:  [['Imagen', 'SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', ...(conDescuento ? ['P. c/Desc.'] : []), 'Total']],
+            body:  filas.map(f => conDescuento ? f : f.filter((_, i) => i !== 5)),
             theme: 'grid',
             headStyles: {
                 fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
@@ -901,7 +902,7 @@ async function generarPresupuestoVenta(doc, {
                 minCellHeight: FOTO_H + 4,
                 lineColor: C.grayBorder, lineWidth: 0.1,
             },
-            columnStyles: {
+            columnStyles: conDescuento ? {
                 0: { cellWidth: FOTO_W + 4 },
                 1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
                 2: { cellWidth: 'auto' },
@@ -909,6 +910,13 @@ async function generarPresupuestoVenta(doc, {
                 4: { halign: 'right',  cellWidth: 22 },
                 5: { halign: 'right',  cellWidth: 22, textColor: C.navy },
                 6: { halign: 'right',  cellWidth: 24, fontStyle: 'bold' },
+            } : {
+                0: { cellWidth: FOTO_W + 4 },
+                1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
+                2: { cellWidth: 'auto' },
+                3: { halign: 'center', cellWidth: 12 },
+                4: { halign: 'right',  cellWidth: 28 },
+                5: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
             },
             margin: { left: M, right: M, top: HEADER_H.compact + 8 },
             didDrawPage: (data) => {
@@ -919,8 +927,8 @@ async function generarPresupuestoVenta(doc, {
             didParseCell: data => {
                 if (data.section !== 'body') return;
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
-                // si no hay descuento, col 5 va en gris
-                if (data.column.index === 5 && !metas[data.row.index]?.tieneDesc) {
+                // col descuento (solo existe cuando conDescuento): override a gris si la fila no tiene desc
+                if (conDescuento && data.column.index === 5 && !metas[data.row.index]?.tieneDesc) {
                     data.cell.styles.textColor = C.grayText;
                 }
                 // descripción en la segunda línea del nombre (col 2) va en gris

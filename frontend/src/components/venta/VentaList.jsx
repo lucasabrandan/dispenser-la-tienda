@@ -84,14 +84,16 @@ export default function VentaList({
                                 </div>
 
                                 {/* DETALLE PRODUCTOS */}
-                                {v.items?.length > 0 && (
-                                    <div className="mt-2 pt-2 border-t border-black/[0.05] dark:border-white/[0.05]">
-                                        <p className="text-[10px] text-[#A8A29E] truncate">
-                                            {v.items.slice(0, 2).map(it => it.trabajoRealizado || it.equipoSerial).join(', ')}
-                                            {v.items.length > 2 && ` +${v.items.length - 2} más`}
-                                        </p>
-                                    </div>
-                                )}
+                                {v.items?.length > 0 && (() => {
+                                    const prods = v.items.flatMap(it => it.repuestosUsados || []).map(r => r.nombre);
+                                    if (prods.length === 0) return null;
+                                    const preview = prods.slice(0, 3).join(', ') + (prods.length > 3 ? ` +${prods.length - 3} más` : '');
+                                    return (
+                                        <div className="mt-2 pt-2 border-t border-black/[0.05] dark:border-white/[0.05]">
+                                            <p className="text-[10px] text-[#A8A29E] truncate">{preview}</p>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             {/* BARRA ACCIONES */}
