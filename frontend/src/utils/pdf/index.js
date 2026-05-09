@@ -690,12 +690,8 @@ async function generarMultiPresupuesto(doc, {
             // Sin columna trabajo — ya se mostró arriba
             bodyRows.push([equipoCell, repCell, importeCell]);
         } else {
-            const mo   = parseFloat(item.costoExtra) || 0;
             const desc = (item.trabajo || item.trabajoRealizado || '').trim();
-            const partes = [];
-            if (desc) partes.push(desc);
-            if (mo > 0) partes.push(`MO: $${mo.toLocaleString('es-AR')}`);
-            bodyRows.push([equipoCell, partes.join('\n') || '—', repCell, importeCell]);
+            bodyRows.push([equipoCell, desc || '—', repCell, importeCell]);
         }
     });
 
@@ -789,6 +785,28 @@ async function generarMultiPresupuesto(doc, {
             mensaje:  `Hola, quiero aprobar el presupuesto ${nroDoc}`,
             nroDoc,
         });
+    }
+
+    // Bloque de contacto/cierre cuando no hay firmas ni QR (evita página casi vacía)
+    if (!incluirFirmas && !empresa.whatsapp) {
+        y += 6;
+        const contactParts = [
+            empresa.telefono ? `Tel: ${empresa.telefono}` : null,
+            empresa.web      ? empresa.web                : null,
+            empresa.email    ? `Email: ${empresa.email}`  : null,
+        ].filter(Boolean).join('   ·   ');
+        doc.setFillColor(...C.navy);
+        doc.roundedRect(M - 2, y, CONTENT_W + 4, 16, 2, 2, 'F');
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.white);
+        doc.text('Para confirmar este presupuesto contactese con nosotros', M + 4, y + 6.5);
+        if (contactParts) {
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'normal');
+            doc.text(contactParts, M + 4, y + 12);
+        }
+        y += 22;
     }
 
     // Página de fotos (solo si hay alguna)
