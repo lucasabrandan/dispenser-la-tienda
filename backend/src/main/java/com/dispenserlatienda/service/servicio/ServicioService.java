@@ -24,7 +24,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,7 +68,21 @@ public class ServicioService {
     public Page<ServicioDTO> listarFiltrado(String tipoStr, String estadoStr,
                                              String busqueda, String desde, String hasta,
                                              Long usuarioId, Long clienteId, Pageable pageable) {
-        return servicioRepository.findAll(buildSpec(tipoStr, estadoStr, busqueda, desde, hasta, usuarioId, clienteId), pageable)
+        // @Formula fields no están en el metamodel de JPA — Spring Data falla al resolver "total"
+        // JpaSort.unsafe() bypasses esa validación y pasa la expresión directo a la query
+        Pageable safePageable = pageable;
+        if (pageable.getSort().stream().anyMatch(o -> o.getProperty().equals("total"))) {
+            Sort newSort = Sort.unsorted();
+            for (Sort.Order order : pageable.getSort()) {
+                if (order.getProperty().equals("total")) {
+                    newSort = newSort.and(JpaSort.unsafe(order.getDirection(), "total"));
+                } else {
+                    newSort = newSort.and(Sort.by(order));
+                }
+            }
+            safePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
+        }
+        return servicioRepository.findAll(buildSpec(tipoStr, estadoStr, busqueda, desde, hasta, usuarioId, clienteId), safePageable)
                 .map(this::mapToDTO);
     }
 
