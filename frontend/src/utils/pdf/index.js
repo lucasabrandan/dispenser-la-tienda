@@ -264,7 +264,7 @@ async function generarSingleTecnico(doc, {
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
         doc.roundedRect(M - 2, y, CONTENT_W + 4, leyH, 2, 2, 'FD');
-        doc.setFontSize(T.label);
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
         doc.text('CONDICIONES', M + 2, y + 6);
@@ -373,7 +373,12 @@ async function generarSinglePresupuesto(doc, {
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
         },
-        margin: { left: M, right: M },
+        margin: { left: M, right: M, top: HEADER_H.compact + 8 },
+        didDrawPage: (data) => {
+            if (data.pageNumber > 1) {
+                dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('PRESUPUESTO', false), fecha, nroDoc });
+            }
+        },
         didParseCell: data => {
             if (data.section === 'body') {
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
@@ -413,7 +418,7 @@ async function generarSinglePresupuesto(doc, {
         y = checkSalto(doc, y, 40);
         const COL_W  = (CONTENT_W - 6) / 2;
         const FOTO_H = Math.floor((COL_W * 3) / 4);
-        doc.setFontSize(T.label);
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
         doc.text('EVIDENCIA FOTOGRÁFICA DEL PROBLEMA', M, y);
@@ -616,7 +621,7 @@ async function generarMultiTecnico(doc, {
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
         doc.roundedRect(M - 2, y, CONTENT_W + 4, leyHM, 2, 2, 'FD');
-        doc.setFontSize(T.label);
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
         doc.text('CONDICIONES', M + 2, y + 6);
@@ -830,7 +835,7 @@ async function generarMultiPresupuesto(doc, {
 // ── FLUJO PRESUPUESTO VENTA (cotización de productos) ────────────────────────
 
 async function generarPresupuestoVenta(doc, {
-    ticketItems, cliente, sede, y, descuentoPorcentaje, nroDoc,
+    ticketItems, cliente, sede, y, fecha, descuentoPorcentaje, nroDoc,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -877,7 +882,7 @@ async function generarPresupuestoVenta(doc, {
 
     if (filas.length > 0) {
         y = checkSalto(doc, y, 40);
-        doc.setFontSize(T.label);
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
         doc.text('DETALLE DE PRODUCTOS', M, y);
@@ -965,15 +970,15 @@ async function generarPresupuestoVenta(doc, {
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, y, CONTENT_W, 11, 2, 2, 'FD');
+    doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL ESTIMADO', M + 4, y + 7);
+    doc.text('TOTAL ESTIMADO', M + 4, y + 5.5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 8, { align: 'right' });
-    y += 16;
+    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
+    y += 18;
 
     // Validez
     const validez = new Date();
@@ -990,7 +995,8 @@ async function generarPresupuestoVenta(doc, {
     const pageHQ = doc.internal.pageSize.getHeight();
     if (y + condH + qrWaH > pageHQ - 25) {
         doc.addPage();
-        y = 18;
+        dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('PRESUPUESTO_VENTA', false), fecha, nroDoc });
+        y = HEADER_H.compact + 8;
     }
     y = dibujarCondiciones(doc, { y, pageW });
     if (empresa.whatsapp) {
@@ -1008,7 +1014,7 @@ async function generarPresupuestoVenta(doc, {
 // ── FLUJO COMPROBANTE (venta de productos) ────────────────────────────────────
 
 async function generarComprobante(doc, {
-    ticketItems, cliente, sede, y, descuentoPorcentaje, leyenda,
+    ticketItems, cliente, sede, y, fecha, nroDoc, descuentoPorcentaje, leyenda,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
 
@@ -1052,7 +1058,12 @@ async function generarComprobante(doc, {
                 3: { halign: 'center', cellWidth: 14 }, 4: { halign: 'right', cellWidth: 24 },
                 5: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
             },
-            margin: { left: M, right: M },
+            margin: { left: M, right: M, top: HEADER_H.compact + 8 },
+            didDrawPage: (data) => {
+                if (data.pageNumber > 1) {
+                    dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('COMPROBANTE', false), fecha, nroDoc });
+                }
+            },
             didParseCell: data => { if (data.section === 'body' && data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra; },
             didDrawCell: data => {
                 if (data.section === 'body' && data.column.index === 0) {
@@ -1079,15 +1090,15 @@ async function generarComprobante(doc, {
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, y, CONTENT_W, 11, 2, 2, 'FD');
+    doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL', M + 4, y + 7);
+    doc.text('TOTAL', M + 4, y + 5.5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 8, { align: 'right' });
-    y += 16;
+    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
+    y += 18;
 
     return y;
 }
