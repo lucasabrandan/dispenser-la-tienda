@@ -113,7 +113,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                         className="flex-1 h-11 rounded-xl px-4 font-black text-xl text-[#1C1917] dark:text-[#F0EEE9] bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10 outline-none focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
                     />
                     {envioNum > 0 && (
-                        <button type="button" onClick={() => setCostoEnvio(0)} className="text-[#A8A29E] hover:text-[#D13A28] text-lg">
+                        <button type="button" onClick={() => setCostoEnvio('')} className="text-[#A8A29E] hover:text-[#D13A28] text-lg">
                             ✕
                         </button>
                     )}
