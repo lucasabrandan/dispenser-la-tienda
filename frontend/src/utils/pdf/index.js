@@ -265,7 +265,7 @@ async function generarSingleTecnico(doc, {
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text('CONDICIONES', M + 2, y + 6);
+        doc.text('OBSERVACIONES', M + 2, y + 6);
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
@@ -645,7 +645,7 @@ async function generarMultiTecnico(doc, {
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text('CONDICIONES', M + 2, y + 6);
+        doc.text('OBSERVACIONES', M + 2, y + 6);
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
@@ -944,6 +944,7 @@ async function generarPresupuestoVenta(doc, {
                 minCellHeight: FOTO_H + 4,
                 lineColor: C.grayBorder, lineWidth: 0.1,
             },
+            rowPageBreak: 'avoid',
             columnStyles: conDescuento ? {
                 0: { cellWidth: FOTO_W + 4 },
                 1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
@@ -1055,7 +1056,7 @@ async function generarPresupuestoVenta(doc, {
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text('CONDICIONES', M + 2, y + 6);
+        doc.text('OBSERVACIONES', M + 2, y + 6);
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
@@ -1126,6 +1127,7 @@ async function generarComprobante(doc, {
             theme: 'grid',
             headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: 'bold', fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
             bodyStyles: { fontSize: T.xs, textColor: C.dark, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 }, minCellHeight: PROD_H + 4, valign: 'middle', lineColor: C.grayBorder, lineWidth: 0.1, overflow: 'linebreak' },
+            rowPageBreak: 'avoid',
             columnStyles: {
                 0: { cellWidth: PROD_W + 4 }, 1: { cellWidth: 'auto', overflow: 'linebreak' },
                 2: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
@@ -1206,7 +1208,7 @@ async function generarComprobante(doc, {
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text('CONDICIONES', M + 2, y + 6);
+        doc.text('OBSERVACIONES', M + 2, y + 6);
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
@@ -1317,7 +1319,9 @@ export const generarPDF = async ({
     // Para ORDEN_SERVICIO ignoramos leyenda en footer para que muestre estrellas siempre
     const esOrdenFinal      = tipoDetectado === 'ORDEN_SERVICIO';
     const esTipoPresupuesto = tipoDetectado === 'PRESUPUESTO';
-    const leyendaLimpia = (esOrdenFinal || esTipoPresupuesto)
+    // Venta y comprobante muestran la leyenda como bloque OBSERVACIONES en el cuerpo — no en el footer
+    const esVentaTipo       = tipoDetectado === 'PRESUPUESTO_VENTA' || tipoDetectado === 'COMPROBANTE';
+    const leyendaLimpia = (esOrdenFinal || esTipoPresupuesto || esVentaTipo)
         ? null
         : (leyenda || '').replace(/[\r\n]+/g, ' ').trim().substring(0, 110) || null;
     const total         = doc.internal.getNumberOfPages();
