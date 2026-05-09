@@ -20,6 +20,7 @@ import { dibujarHeader, dibujarHeaderCompacto, dibujarFooter } from './layout.js
 import {
     dibujarBloqueClienteEquipo,
     dibujarBloqueEquipoDetalle,
+    dibujarBloqueEquipoYTrabajo,
     dibujarBloqueDiagnosticoDetalle,
     dibujarBloqueSolicitud,
     dibujarResumenServicio,
@@ -113,16 +114,16 @@ async function generarSingleTecnico(doc, {
     // • DATOS CLIENTE (sin columna derecha — el trabajo va en DIAGNÓSTICO DETALLE abajo)
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: null });
 
-    // • DATOS EQUIPO — thumbnail solo si hay ambas fotos (evita duplicar fotoA en el registro)
-    y = checkSalto(doc, y, 36);
-    y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes: fotoD ? fotoA : null, conBullet: true });
-
-    // Descripción del trabajo realizado
+    // Bloque equipo + trabajo: unificado si no hay foto, separado si hay foto
+    // Thumbnail solo si hay ambas fotos (evita duplicar fotoA en el registro)
     const diagDetalle = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || item.observaciones || '');
-    if (diagDetalle) {
-        y = checkSalto(doc, y, 24);
-        y = dibujarBloqueDiagnosticoDetalle(doc, { texto: diagDetalle, y, pageW, titulo: '• TRABAJO REALIZADO' });
-    }
+    y = checkSalto(doc, y, 36);
+    y = dibujarBloqueEquipoYTrabajo(doc, {
+        item, trabajo: diagDetalle, y, pageW,
+        fotoAntes: fotoD ? fotoA : null,
+        tituloTrabajo: '• TRABAJO REALIZADO',
+        barraColor: C.navy,
+    });
 
     const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
 
@@ -364,16 +365,10 @@ async function generarSinglePresupuesto(doc, {
     // Bloque cliente (sin diagnóstico en columna — va en sección propia debajo)
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: null });
 
-    // Bloque equipo separado con foto ANTES a la derecha
-    y = checkSalto(doc, y, 36);
-    y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes });
-
-    // Bloque PROBLEMA / SOLICITUD separado (como en referencia)
+    // Bloque equipo + trabajo: unificado si no hay foto, separado si hay foto
     const diagnostico = sanitizarTexto(item.trabajo || item.resumenTexto || item.descripcion || '');
-    if (diagnostico) {
-        y = checkSalto(doc, y, 24);
-        y = dibujarBloqueSolicitud(doc, { texto: diagnostico, y, pageW });
-    }
+    y = checkSalto(doc, y, 36);
+    y = dibujarBloqueEquipoYTrabajo(doc, { item, trabajo: diagnostico, y, pageW, fotoAntes });
 
     // Tabla de precios
     const filas = construirFilasItem(item);

@@ -166,6 +166,107 @@ export function dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes = nu
     return y + cardH + 3;
 }
 
+// ── BLOQUE EQUIPO + TRABAJO UNIFICADO (sin foto: un único card dividido) ────────
+// Cuando no hay foto, combina Datos del Equipo y Trabajo en un solo rectángulo
+// para evitar espacio vacío y doble borde/padding entre dos bloques separados.
+export function dibujarBloqueEquipoYTrabajo(doc, { item, trabajo, y, pageW, fotoAntes = null, tituloTrabajo = 'TRABAJO A REALIZAR', barraColor = C.gold || [212, 136, 0] }) {
+    if (!item) return y;
+
+    // Con foto → bloques separados (foto necesita espacio lateral del equipo)
+    if (fotoAntes) {
+        y = dibujarBloqueEquipoDetalle(doc, { item, y, pageW, fotoAntes });
+        if (trabajo?.trim()) y = dibujarBloqueSolicitud(doc, { texto: trabajo, y, pageW });
+        return y;
+    }
+
+    const serial = item.equipoSerial && !['MOSTRADOR', 'SIN-SN'].includes(item.equipoSerial) ? item.equipoSerial : null;
+    const modelo = item.modeloEquipo || item.equipoModelo || null;
+    const marca  = item.marcaEquipo  || item.equipoMarca  || null;
+    const ubic   = item.ubicacionEquipo || item.equipoUbicacion || null;
+    const piso   = item.equipoPiso   || null;
+    const sector = item.equipoSector || null;
+
+    const campos = [
+        (modelo || marca) ? { l: 'EQUIPO',     v: [marca, modelo].filter(Boolean).join(' · ') } : null,
+        serial            ? { l: 'N° SERIE',   v: serial } : null,
+        ubic              ? { l: 'UBICACIÓN',  v: ubic   } : null,
+        piso              ? { l: 'PISO',       v: piso   } : null,
+        sector            ? { l: 'SECTOR',     v: sector  } : null,
+    ].filter(Boolean);
+
+    const tieneEquipo = campos.length > 0;
+    const tieneTrabajo = !!(trabajo?.trim());
+
+    // Alturas de cada sección
+    const equipoH  = tieneEquipo  ? campos.length * 5.5 + 14 : 0;
+    const trabajoH = tieneTrabajo ? Math.max(0, doc.splitTextToSize(trabajo.trim(), CONTENT_W - 12).slice(0, 6).length * 4.5 + 14) : 0;
+    const sepH     = (tieneEquipo && tieneTrabajo) ? 6 : 0; // separador entre secciones
+    const cardH    = Math.max(16, equipoH + sepH + trabajoH);
+
+    // Card único
+    doc.setFillColor(...C.white);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'FD');
+
+    // Barra navy para sección equipo
+    if (tieneEquipo) {
+        doc.setFillColor(...C.navy);
+        doc.roundedRect(M - 2, y, 3, tieneEquipo ? equipoH : cardH, 2, 2, 'F');
+        doc.rect(M - 0.5, y, 1.5, tieneEquipo ? equipoH : cardH, 'F');
+    }
+
+    let ey = y + 7;
+    if (tieneEquipo) {
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('DATOS DEL EQUIPO', M + 4, ey);
+        ey += 5;
+        campos.forEach(({ l, v }) => {
+            doc.setFontSize(T.label);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.grayText);
+            doc.text(l, M + 4, ey);
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.dark);
+            const vLines = doc.splitTextToSize(String(v), CONTENT_W - 26);
+            doc.text(vLines[0], M + 28, ey);
+            ey += 5.5;
+        });
+    }
+
+    if (tieneEquipo && tieneTrabajo) {
+        // Línea divisora entre secciones
+        const lineY = y + equipoH;
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M + 2, lineY, M + CONTENT_W - 2, lineY);
+        ey = lineY + 6;
+        // Barra gold para sección trabajo
+        doc.setFillColor(...barraColor);
+        const restH = cardH - equipoH;
+        doc.roundedRect(M - 2, lineY, 3, restH, 2, 2, 'F');
+        doc.rect(M - 0.5, lineY, 1.5, restH, 'F');
+    }
+
+    if (tieneTrabajo) {
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...barraColor);
+        doc.text(tituloTrabajo, M + 6, ey);
+        ey += 5;
+        const lines = doc.splitTextToSize(trabajo.trim(), CONTENT_W - 12);
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.dark);
+        lines.slice(0, 6).forEach(l => { doc.text(l, M + 6, ey); ey += 4.5; });
+    }
+
+    return y + cardH + 3;
+}
+
 // ── BLOQUE TRABAJO A REALIZAR / SOLICITUD (presupuesto, sección separada) ──────
 export function dibujarBloqueSolicitud(doc, { texto, y, pageW }) {
     if (!texto || !texto.trim()) return y;
