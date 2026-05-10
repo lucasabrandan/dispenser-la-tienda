@@ -164,10 +164,9 @@ public class OrdenVisitaService {
                     servicioRepository.save(s);
                 }
             });
-        } else if (o.getMontoEstimado() != null
-                && o.getMontoEstimado().compareTo(BigDecimal.ZERO) > 0
-                && o.getTecnico() != null) {
-            // Caso 2: orden sin presupuesto con monto → crear servicio mínimo para rendimientos
+        } else if (o.getTecnico() != null) {
+            // Caso 2: orden sin presupuesto → crear servicio mínimo para impactar rendimientos
+            // (incluso si monto es 0, registra el trabajo para métricas del técnico)
             Sede sedeMostrador = sedeRepository.findAll().stream()
                 .filter(s -> s.getNombreSede() != null
                           && s.getNombreSede().toLowerCase().contains("mostrador"))
@@ -192,7 +191,7 @@ public class OrdenVisitaService {
 
             ServicioItem item = new ServicioItem();
             item.setTecnico(o.getTecnico().getNombre());
-            item.setCosto(o.getMontoEstimado());
+            item.setCosto(o.getMontoEstimado() != null ? o.getMontoEstimado() : BigDecimal.ZERO);
             item.setCostoExtra(BigDecimal.ZERO);
             item.setMetodoPago(o.getFormaPago() != null && o.getFormaPago().equals("TRANSFERENCIA")
                 ? MetodoPago.TRANSFERENCIA : MetodoPago.EFECTIVO);
