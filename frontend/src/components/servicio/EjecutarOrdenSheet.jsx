@@ -35,8 +35,10 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
             if (user.firma) setFirmaTecnico(user.firma);
             else setEditandoFirma(true);
         } catch {}
-        // Cargar lista de repuestos disponibles
-        api.get('/repuestos').then(r => setRepuestosDisponibles(r.data || [])).catch(() => {});
+        // Cargar lista de repuestos disponibles — endpoint devuelve Page<Repuesto>
+        api.get('/repuestos', { params: { size: 1000 } })
+            .then(r => setRepuestosDisponibles(r.data?.content || r.data || []))
+            .catch(() => {});
     }, []);
 
     // Total original de la orden

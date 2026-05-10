@@ -106,6 +106,8 @@ export default function CerrarTicketSheet({
             const result = await onGuardar();
             if (result?.ok) {
                 setSavedResult(result);
+                // Pre-llenar técnico si ya fue asignado en PasoResumen
+                if (result.tecnicoId) setDispTecnico(String(result.tecnicoId));
                 setPaso('presupuesto_ok');
             }
         } finally {
@@ -293,12 +295,19 @@ export default function CerrarTicketSheet({
                                 {/* Técnico */}
                                 <div>
                                     <label className={labelCls}>Técnico *</label>
-                                    <select value={dispTecnico} onChange={e => setDispTecnico(e.target.value)} className={inputCls}>
-                                        <option value="">Seleccionar técnico...</option>
-                                        {tecnicos.map(t => (
-                                            <option key={t.id} value={t.id}>{t.nombre}</option>
-                                        ))}
-                                    </select>
+                                    {savedResult?.tecnicoId ? (
+                                        // Técnico pre-asignado desde PasoResumen — solo lectura
+                                        <div className={`${inputCls} opacity-70`}>
+                                            {tecnicos.find(t => String(t.id) === String(dispTecnico))?.nombre || `Técnico #${dispTecnico}`}
+                                        </div>
+                                    ) : (
+                                        <select value={dispTecnico} onChange={e => setDispTecnico(e.target.value)} className={inputCls}>
+                                            <option value="">Seleccionar técnico...</option>
+                                            {tecnicos.map(t => (
+                                                <option key={t.id} value={t.id}>{t.nombre}</option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
 
                                 {/* Fecha + Hora */}
