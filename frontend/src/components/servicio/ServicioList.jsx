@@ -266,7 +266,7 @@ export default function ServicioList({ onEditar }) {
                                     className="flex items-center gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
                                     style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}
                                 >
-                                    {esPendiente && (
+                                    {esAdmin && esPendiente && (
                                         <button
                                             onClick={() => onEditar?.(s)}
                                             className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]"

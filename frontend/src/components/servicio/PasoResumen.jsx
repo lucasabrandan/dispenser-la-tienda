@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Label, BackBtn, M, DSCard } from './ServicioUI';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 
 const QUICK_PCTS = [0, 5, 10, 15, 20];
@@ -298,7 +299,13 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                             title="Vista previa PDF (sin firmas)">
                             📄
                         </button>
-                        <button onClick={onCerrarTicket}
+                        <button onClick={() => {
+                            if (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) {
+                                toast.error('Seleccioná un técnico responsable antes de continuar');
+                                return;
+                            }
+                            onCerrarTicket();
+                        }}
                             className="h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
                             {modoEjecucion ? 'Cerrar trabajo →' : 'Cerrar ticket →'}
                         </button>

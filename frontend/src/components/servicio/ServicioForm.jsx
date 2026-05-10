@@ -88,7 +88,7 @@ export default function ServicioForm({
     };
 
     // Genera PDF con firmas (llamado desde CerrarTicketSheet al cobrar)
-    const dispararPDFConFirmas = async ({ firmaTecnico, firmaCliente }) => {
+    const dispararPDFConFirmas = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {
         const sedeObj = db.sedes?.find(s => s.id === itemActual.sedeId);
         const { totalConDescuento } = calcularResumenGanancia();
         try {
@@ -106,6 +106,7 @@ export default function ServicioForm({
                 leyenda,
                 firmaTecnico,
                 firmaCliente,
+                incluirFirmas,
             });
         } catch (e) {
             console.error('Error generando PDF con firmas:', e);
@@ -118,10 +119,10 @@ export default function ServicioForm({
         : {};
 
     // Cobrar ahora: guarda como REALIZADO, genera PDF con firmas
-    const handleCobrar = async ({ firmaTecnico, firmaCliente }) => {
+    const handleCobrar = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {
         const result = await finalizar(true, buildOverrides());
         if (result?.ok) {
-            await dispararPDFConFirmas({ firmaTecnico, firmaCliente });
+            await dispararPDFConFirmas({ firmaTecnico, firmaCliente, incluirFirmas });
             if (onSaved) onSaved();
         }
     };
