@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
+import { toast } from 'react-hot-toast';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
 
@@ -27,22 +28,10 @@ const SIGUIENTE_ESTADO = {
 
 function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
     const [expandido, setExpandido] = useState(false);
-    const [nota, setNota]           = useState('');
-    const [confirmando, setConfirmando] = useState(false);
 
     const pr  = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
     const sig = SIGUIENTE_ESTADO[orden.estado];
     const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
-
-    const handleAvanzar = () => {
-        if (orden.estado === 'EN_SITIO' && !confirmando) {
-            setConfirmando(true);
-            return;
-        }
-        onAvanzar(orden.id, sig.estado, nota);
-        setConfirmando(false);
-        setNota('');
-    };
 
     return (
         <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
@@ -102,20 +91,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                     </>
                 )}
 
-                {/* Nota del técnico al completar */}
-                {confirmando && (
-                    <div className="mt-3">
-                        <p className="text-[11px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">
-                            Nota (opcional)
-                        </p>
-                        <textarea value={nota} onChange={e => setNota(e.target.value)}
-                            rows={2} placeholder="Ej: Cambié filtros, cliente firmó remito..."
-                            className="w-full px-3 py-2 rounded-xl text-[12px] bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none resize-none" />
-                    </div>
-                )}
-
                 {/* Nota guardada */}
-                {orden.notasTecnico && !confirmando && (
+                {orden.notasTecnico && (
                     <p className="mt-2 text-[11px] text-[#16A34A] dark:text-[#4ADE80]">
                         📝 {orden.notasTecnico}
                     </p>
@@ -128,7 +105,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                     style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
 
                     {/* EN_SITIO sin presupuesto: forzar Registrar trabajo */}
-                    {orden.estado === 'EN_SITIO' && !orden.presupuestoId && !confirmando ? (
+                    {orden.estado === 'EN_SITIO' && !orden.presupuestoId ? (
                         <>
                             <button onClick={() => onRegistrarTrabajo(orden)}
                                 className="w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
@@ -138,7 +115,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                                 Registra el trabajo y repuestos antes de cerrar
                             </p>
                         </>
-                    ) : orden.estado === 'EN_SITIO' && orden.presupuestoId && !confirmando ? (
+                    ) : orden.estado === 'EN_SITIO' && orden.presupuestoId ? (
                         <>
                             <button onClick={() => onEjecutar(orden)}
                                 className="w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
@@ -149,24 +126,11 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                             </p>
                         </>
                     ) : (
-                        <div className="flex gap-2">
-                            {confirmando && (
-                                <button onClick={() => setConfirmando(false)}
-                                    className="flex-1 py-2.5 rounded-xl font-bold text-[12px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
-                                    Cancelar
-                                </button>
-                            )}
-                            {!confirmando && onEjecutar && orden.estado !== 'EN_SITIO' && orden.presupuestoId && (
-                                <button onClick={() => onEjecutar(orden)}
-                                    className="py-2.5 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all whitespace-nowrap">
-                                    🔧 Ejecutar
-                                </button>
-                            )}
-                            <button onClick={handleAvanzar}
-                                className={`flex-1 py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all ${sig.color}`}>
-                                {confirmando ? '✓ Confirmar' : sig.label}
-                            </button>
-                        </div>
+                        /* PENDIENTE → EN_CAMINO → EN_SITIO: avance lineal */
+                        <button onClick={() => onAvanzar(orden.id, sig.estado)}
+                            className={`w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all ${sig.color}`}>
+                            {sig.label}
+                        </button>
                     )}
                 </div>
             )}
@@ -314,18 +278,12 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [ordenRegistrando, setOrdenRegistrando] = useState(null);
 
     const handleEjecutar = async (orden) => {
-        if (orden.presupuestoId) {
-            // Orden con presupuesto vinculado: abrir EjecutarOrdenSheet directamente
-            try {
-                const res = await api.get(`/servicios/${orden.presupuestoId}`);
-                setServicioEjecutando(res.data);
-                setOrdenEjecutandoId(orden.id);
-            } catch {
-                // Si falla, caer al flujo normal
-                onEjecutarOrden(orden);
-            }
-        } else {
-            onEjecutarOrden(orden);
+        try {
+            const res = await api.get(`/servicios/${orden.presupuestoId}`);
+            setServicioEjecutando(res.data);
+            setOrdenEjecutandoId(orden.id);
+        } catch {
+            toast.error('No se pudo cargar el servicio. Intentá de nuevo.');
         }
     };
 
@@ -338,6 +296,8 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         }
         setServicioEjecutando(null);
         setOrdenEjecutandoId(null);
+        // Recargar activas y también resetear historial para que se recargue al entrar al tab
+        setHistorial([]);
         if (recargar) recargar();
     };
 
