@@ -162,29 +162,31 @@ export default function ServicioList({ onEditar }) {
                     ))}
                 </div>
 
-                {/* ── MÉTRICAS ─────────────────────────────────────────── */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
-                         style={{ borderLeft: '3px solid #D48800' }}>
-                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#D48800] dark:text-[#F0A500]">
-                            Ventas insumos
-                        </p>
-                        <M
-                            valor={totalVentas}
-                            className="text-[20px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
-                        />
+                {/* ── MÉTRICAS — solo admin ────────────────────────────── */}
+                {esAdmin && (
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                             style={{ borderLeft: '3px solid #D48800' }}>
+                            <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#D48800] dark:text-[#F0A500]">
+                                Ventas insumos
+                            </p>
+                            <M
+                                valor={totalVentas}
+                                className="text-[20px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
+                            />
+                        </div>
+                        <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                             style={{ borderLeft: '3px solid #D13A28' }}>
+                            <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#D13A28] dark:text-[#E8422F]">
+                                Técnica / MO
+                            </p>
+                            <M
+                                valor={totalTecnica}
+                                className="text-[20px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
+                            />
+                        </div>
                     </div>
-                    <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
-                         style={{ borderLeft: '3px solid #D13A28' }}>
-                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#D13A28] dark:text-[#E8422F]">
-                            Técnica / MO
-                        </p>
-                        <M
-                            valor={totalTecnica}
-                            className="text-[20px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
-                        />
-                    </div>
-                </div>
+                )}
 
                 {/* ── FILTROS ───────────────────────────────────────────── */}
                 <FiltrosPanel hook={filtros} estados={ESTADOS_HISTORIAL} conBusqueda conRango placeholderBusqueda="Cliente, S/N, ubicación, sede..." />
@@ -222,10 +224,12 @@ export default function ServicioList({ onEditar }) {
                                             </span>
                                         </div>
                                         <div className="text-right">
-                                            <M
-                                                valor={costo}
-                                                className="text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
-                                            />
+                                            {esAdmin && (
+                                                <M
+                                                    valor={costo}
+                                                    className="text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
+                                                />
+                                            )}
                                             <p className="text-[10px] text-[#A8A29E] mt-0.5">{s.fecha}</p>
                                         </div>
                                     </div>
@@ -373,10 +377,12 @@ export default function ServicioList({ onEditar }) {
                                         <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">
                                             {it.equipoSerial}
                                         </span>
-                                        <M
-                                            valor={Number(it.costo)}
-                                            className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]"
-                                        />
+                                        {esAdmin && (
+                                            <M
+                                                valor={Number(it.costo)}
+                                                className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]"
+                                            />
+                                        )}
                                     </div>
                                     <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] leading-snug mb-2">
                                         {it.trabajoRealizado}

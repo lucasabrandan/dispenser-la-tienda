@@ -160,14 +160,18 @@ public class ServicioService {
     }
 
     // Rendimiento mensual del técnico — solo meses cerrados, sin info de clientes
+    // Fórmula: facturado − 30% impuestos − repuestos = gananciaNet → ÷2 = parte técnico
     @Transactional(readOnly = true)
     public List<TecnicoRendimientoDTO> rendimientoTecnico(Long tecnicoId) {
+        final BigDecimal PCT_IMPUESTOS = BigDecimal.valueOf(30);
+        final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
         YearMonth mesActual = YearMonth.now();
 
         List<Servicio> realizados = servicioRepository.findAll(
                 buildSpec(null, "REALIZADO", null, null, null, tecnicoId, null));
 
-        Map<YearMonth, BigDecimal[]> porMes = new TreeMap<>();
+        // [0]=facturado [1]=repuestos
+        Map<YearMonth, BigDecimal[]> porMes  = new TreeMap<>();
         Map<YearMonth, Integer>      countMes = new TreeMap<>();
 
         for (Servicio s : realizados) {
@@ -175,30 +179,59 @@ public class ServicioService {
             YearMonth ym = YearMonth.from(s.getFechaServicio());
             if (!ym.isBefore(mesActual)) continue; // excluir mes en curso
 
+            // Total facturado (con descuento)
             BigDecimal facturado = s.getItems().stream()
                     .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal ganancia = s.getItems().stream()
-                    .map(i -> i.getCostoExtra() != null ? i.getCostoExtra() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
             BigDecimal descPct = s.getDescuentoPorcentaje();
             if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100)));
-                facturado = facturado.multiply(factor).setScale(2, java.math.RoundingMode.HALF_UP);
+                BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, RM));
+                facturado = facturado.multiply(factor).setScale(2, RM);
             }
 
-            porMes.merge(ym,   new BigDecimal[]{ facturado, ganancia }, (a, b) -> new BigDecimal[]{ a[0].add(b[0]), a[1].add(b[1]) });
+            // Costo de repuestos (suma de subtotales del JSON)
+            BigDecimal repuestos = BigDecimal.ZERO;
+            for (ServicioItem item : s.getItems()) {
+                String json = item.getRepuestosUsados();
+                if (json == null || json.isBlank()) continue;
+                try {
+                    List<java.util.Map<String, Object>> lista = objectMapper.readValue(
+                            json, new TypeReference<>() {});
+                    for (java.util.Map<String, Object> r : lista) {
+                        Object sub = r.get("subtotal");
+                        Object precio = r.get("precio");
+                        Object cant   = r.get("cantidad");
+                        BigDecimal val = BigDecimal.ZERO;
+                        if (sub != null) {
+                            val = new BigDecimal(sub.toString());
+                        } else if (precio != null && cant != null) {
+                            val = new BigDecimal(precio.toString())
+                                    .multiply(new BigDecimal(cant.toString()));
+                        }
+                        repuestos = repuestos.add(val);
+                    }
+                } catch (JsonProcessingException ignored) {}
+            }
+
+            porMes.merge(ym, new BigDecimal[]{ facturado, repuestos },
+                    (a, b) -> new BigDecimal[]{ a[0].add(b[0]), a[1].add(b[1]) });
             countMes.merge(ym, 1, Integer::sum);
         }
 
         return porMes.entrySet().stream()
                 .sorted(Map.Entry.<YearMonth, BigDecimal[]>comparingByKey().reversed())
-                .map(e -> new TecnicoRendimientoDTO(
-                        e.getKey().toString(),
-                        countMes.getOrDefault(e.getKey(), 0),
-                        e.getValue()[0].setScale(2, java.math.RoundingMode.HALF_UP),
-                        e.getValue()[1].setScale(2, java.math.RoundingMode.HALF_UP)))
+                .map(e -> {
+                    BigDecimal fact   = e.getValue()[0].setScale(2, RM);
+                    BigDecimal reps   = e.getValue()[1].setScale(2, RM);
+                    BigDecimal imp    = fact.multiply(PCT_IMPUESTOS)
+                                           .divide(BigDecimal.valueOf(100), 2, RM);
+                    BigDecimal ganNet = fact.subtract(imp).subtract(reps).max(BigDecimal.ZERO);
+                    BigDecimal tecni  = ganNet.divide(BigDecimal.valueOf(2), 2, RM);
+                    return new TecnicoRendimientoDTO(
+                            e.getKey().toString(),
+                            countMes.getOrDefault(e.getKey(), 0),
+                            fact, imp, reps, ganNet, tecni);
+                })
                 .collect(java.util.stream.Collectors.toList());
     }
 

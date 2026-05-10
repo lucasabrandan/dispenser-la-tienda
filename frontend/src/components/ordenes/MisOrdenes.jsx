@@ -168,69 +168,93 @@ function RendimientoTab({ tecnicoId }) {
         <p className="text-center text-[#A8A29E] py-12">Sin trabajos registrados aún</p>
     );
 
-    // Totales acumulados
-    const totalFact = datos.reduce((s, d) => s + parseFloat(d.totalFacturado || 0), 0);
-    const totalGan  = datos.reduce((s, d) => s + parseFloat(d.totalGanancia  || 0), 0);
-
     const fmt = (n) => Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
     const labelMes = (periodo) => {
         const [y, m] = periodo.split('-');
         return `${MESES_ES[parseInt(m)]} ${y}`;
     };
 
+    // Totales acumulados
+    const totalFact   = datos.reduce((s, d) => s + parseFloat(d.totalFacturado || 0), 0);
+    const totalTecni  = datos.reduce((s, d) => s + parseFloat(d.totalTecnico   || 0), 0);
+    const totalTrabajos = datos.reduce((s, d) => s + d.cantidadServicios, 0);
+
     return (
         <div className="space-y-4">
-            {/* Acumulado total */}
-            <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424]"
+            {/* Acumulado — destacar la parte del técnico */}
+            <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
                 style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-3">
-                    Total acumulado
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                    <div>
-                        <p className="text-[10px] text-[#A8A29E] uppercase font-bold mb-0.5">Facturado</p>
-                        <p className="text-[22px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">
-                            ${fmt(totalFact)}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-[10px] text-[#A8A29E] uppercase font-bold mb-0.5">Ganancia</p>
-                        <p className="text-[22px] font-black text-[#D48800] dark:text-[#F0A500] leading-none">
-                            ${fmt(totalGan)}
-                        </p>
+                <div className="p-4 pb-3">
+                    <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-3">
+                        Total acumulado · {totalTrabajos} {totalTrabajos === 1 ? 'trabajo' : 'trabajos'} · {datos.length} {datos.length === 1 ? 'mes' : 'meses'}
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <p className="text-[9px] text-[#A8A29E] uppercase font-bold mb-0.5">Facturado</p>
+                            <p className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">
+                                ${fmt(totalFact)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-[9px] text-[#A8A29E] uppercase font-bold mb-0.5">Tu parte</p>
+                            <p className="text-[18px] font-black text-[#D48800] dark:text-[#F0A500] leading-none">
+                                ${fmt(totalTecni)}
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <p className="text-[11px] text-[#A8A29E] mt-2">
-                    {datos.reduce((s, d) => s + d.cantidadServicios, 0)} servicios · {datos.length} {datos.length === 1 ? 'mes' : 'meses'}
-                </p>
+                <div className="px-4 py-2 bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-t border-[#D48800]/20">
+                    <p className="text-[10px] text-[#D48800] dark:text-[#F0A500] font-bold">
+                        Facturado − 30% imp. − repuestos = ganancia ÷ 2
+                    </p>
+                </div>
             </div>
 
             {/* Desglose por mes */}
             <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest px-1">Por mes</p>
             {datos.map(d => (
-                <div key={d.periodo} className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424]"
+                <div key={d.periodo} className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
                     style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                    <div className="flex items-center justify-between mb-2">
-                        <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] capitalize">
+                    {/* Header mes */}
+                    <div className="flex items-center justify-between px-4 pt-4 pb-2">
+                        <p className="text-[14px] font-black text-[#1C1917] dark:text-[#F0EEE9] capitalize">
                             {labelMes(d.periodo)}
                         </p>
                         <span className="text-[10px] font-bold text-[#A8A29E] bg-[#D8D4CE] dark:bg-[#1C1C1C] px-2 py-0.5 rounded-md">
                             {d.cantidadServicios} {d.cantidadServicios === 1 ? 'trabajo' : 'trabajos'}
                         </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <p className="text-[9px] text-[#A8A29E] uppercase font-bold">Facturado</p>
-                            <p className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
-                                ${fmt(d.totalFacturado)}
-                            </p>
+
+                    {/* Desglose */}
+                    <div className="px-4 pb-3 space-y-1.5">
+                        <div className="flex justify-between text-[11px]">
+                            <span className="text-[#57534E] dark:text-[#9E9A94]">Facturado</span>
+                            <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${fmt(d.totalFacturado)}</span>
                         </div>
-                        <div>
-                            <p className="text-[9px] text-[#A8A29E] uppercase font-bold">Ganancia</p>
-                            <p className="text-[16px] font-black text-[#D48800] dark:text-[#F0A500]">
-                                ${fmt(d.totalGanancia)}
-                            </p>
+                        <div className="flex justify-between text-[11px]">
+                            <span className="text-[#A8A29E]">− Impuestos (30%)</span>
+                            <span className="text-[#D13A28] dark:text-[#E8422F]">−${fmt(d.totalImpuestos)}</span>
                         </div>
+                        {parseFloat(d.totalRepuestos || 0) > 0 && (
+                            <div className="flex justify-between text-[11px]">
+                                <span className="text-[#A8A29E]">− Repuestos</span>
+                                <span className="text-[#D13A28] dark:text-[#E8422F]">−${fmt(d.totalRepuestos)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between text-[11px] pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
+                            <span className="text-[#57534E] dark:text-[#9E9A94]">Ganancia neta</span>
+                            <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${fmt(d.gananciaNet)}</span>
+                        </div>
+                    </div>
+
+                    {/* Tu parte — destacada */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-t border-[#D48800]/20">
+                        <p className="text-[11px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-wide">
+                            Tu parte (50%)
+                        </p>
+                        <p className="text-[18px] font-black text-[#D48800] dark:text-[#F0A500]">
+                            ${fmt(d.totalTecnico)}
+                        </p>
                     </div>
                 </div>
             ))}

@@ -161,11 +161,11 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                     {it.repuestosUsados?.length > 0 && (
                                         <div className="mt-1.5 space-y-0.5">
                                             {it.repuestosUsados.map((r, ri) => {
-                                                const g = calcularGananciaRepuesto(r, r.cantidad);
+                                                const g = esAdmin ? calcularGananciaRepuesto(r, r.cantidad) : null;
                                                 return (
                                                     <div key={ri} className="flex justify-between text-[10px]">
                                                         <span className="text-[#A8A29E]">{r.cantidad}x {r.nombre}</span>
-                                                        {g.ganancia > 0 && <span className="text-[#1E8A4A]">+${Math.round(g.ganancia)}</span>}
+                                                        {esAdmin && g?.ganancia > 0 && <span className="text-[#1E8A4A]">+${Math.round(g.ganancia)}</span>}
                                                     </div>
                                                 );
                                             })}
@@ -216,8 +216,8 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                 </div>
             </div>
 
-            {/* ── Rentabilidad ──────────────────────────────────────────── */}
-            <RentabilidadPanel resumen={resumen} />
+            {/* ── Rentabilidad — solo admin ─────────────────────────────── */}
+            {esAdmin && <RentabilidadPanel resumen={resumen} />}
 
             {/* Técnico responsable — OBLIGATORIO para admin */}
             {esAdmin && tecnicos.length > 0 && (
