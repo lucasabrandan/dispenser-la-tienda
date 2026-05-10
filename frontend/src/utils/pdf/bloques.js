@@ -932,3 +932,44 @@ export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
 
     return yRef + 6;
 }
+
+// Condiciones comerciales para presupuesto/comprobante de venta (SIN términos de servicio técnico)
+export function dibujarCondicionesVenta(doc, { y, pageW, empresa, nroDoc }) {
+    const conds = [
+        '· Valido por 7 dias corridos desde la fecha de emision.',
+        '· Precios sujetos a disponibilidad de stock.',
+        '· El pedido se prepara una vez confirmado el pago.',
+        '· Forma de pago a coordinar al confirmar.',
+    ];
+
+    const cardH = conds.length * 5 + 14;
+
+    doc.setFillColor(...C.grayLight);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'FD');
+
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('CONDICIONES', M + 3, y + 6);
+
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    conds.forEach((c, i) => doc.text(c, M + 3, y + 13 + i * 5));
+
+    const yRef = y + cardH + 5;
+    const contacto = empresa.whatsapp || empresa.telefono || '';
+    const partes = [];
+    if (nroDoc) partes.push(`Ref: ${nroDoc}`);
+    if (contacto) partes.push(`Contacto: ${contacto}`);
+    if (partes.length > 0) {
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text(partes.join('   ·   '), M + CONTENT_W / 2, yRef, { align: 'center' });
+    }
+
+    return yRef + 6;
+}

@@ -30,6 +30,7 @@ import {
     dibujarQRWhatsApp,
     dibujarQRGoogle,
     dibujarCondicionesYCTA,
+    dibujarCondicionesVenta,
     dibujarRegistroFotografico,
 } from './bloques.js';
 import { cargarFoto, checkSalto, sanitizarTexto } from './helpers.js';
@@ -1021,10 +1022,68 @@ async function generarPresupuestoVenta(doc, {
         y += 5;
 
         const conDescuento = pct > 0;
+        // Solo incluir columna imagen si al menos un repuesto tiene foto (ENVÍO nunca tiene foto)
+        const hayFotosPV = fotos.some(f => f !== null);
+
+        // Construye head y body según si hay fotos y si hay descuento
+        const headBase   = ['SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', ...(conDescuento ? ['P. c/Desc.'] : []), 'Total'];
+        const headFinal  = hayFotosPV ? ['Imagen', ...headBase] : headBase;
+        // filas[i][0] es '' (placeholder imagen), índice 5 es P.c/Desc (solo cuando conDescuento)
+        const bodyFinal = filas.map(f => {
+            const sinImg  = f.slice(1); // [sku, nombre, cant, pUnit, pDesc, total]
+            const sinDesc = conDescuento ? sinImg : sinImg.filter((_, i) => i !== 4);
+            return hayFotosPV ? [f[0], ...sinDesc] : sinDesc;
+        });
+
+        // columnStyles dinámico
+        let colStyles;
+        if (hayFotosPV && conDescuento) {
+            colStyles = {
+                0: { cellWidth: FOTO_W + 4 },
+                1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
+                2: { cellWidth: 'auto' },
+                3: { halign: 'center', cellWidth: 12 },
+                4: { halign: 'right',  cellWidth: 22 },
+                5: { halign: 'right',  cellWidth: 22, textColor: C.navy },
+                6: { halign: 'right',  cellWidth: 24, fontStyle: 'bold' },
+            };
+        } else if (hayFotosPV) {
+            colStyles = {
+                0: { cellWidth: FOTO_W + 4 },
+                1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
+                2: { cellWidth: 'auto' },
+                3: { halign: 'center', cellWidth: 12 },
+                4: { halign: 'right',  cellWidth: 28 },
+                5: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
+            };
+        } else if (conDescuento) {
+            colStyles = {
+                0: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
+                1: { cellWidth: 'auto' },
+                2: { halign: 'center', cellWidth: 12 },
+                3: { halign: 'right',  cellWidth: 22 },
+                4: { halign: 'right',  cellWidth: 22, textColor: C.navy },
+                5: { halign: 'right',  cellWidth: 24, fontStyle: 'bold' },
+            };
+        } else {
+            colStyles = {
+                0: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
+                1: { cellWidth: 'auto' },
+                2: { halign: 'center', cellWidth: 12 },
+                3: { halign: 'right',  cellWidth: 28 },
+                4: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
+            };
+        }
+
+        // Índice de columna imagen en la tabla final (depende de si hay fotos)
+        const imgColIdx = hayFotosPV ? 0 : -1;
+        // Índice de columna descuento en tabla final (para zebra override)
+        const descColIdx = hayFotosPV ? (conDescuento ? 5 : -1) : (conDescuento ? 4 : -1);
+
         autoTable(doc, {
             startY: y,
-            head:  [['Imagen', 'SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', ...(conDescuento ? ['P. c/Desc.'] : []), 'Total']],
-            body:  filas.map(f => conDescuento ? f : f.filter((_, i) => i !== 5)),
+            head:  [headFinal],
+            body:  bodyFinal,
             theme: 'grid',
             headStyles: {
                 fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
@@ -1033,26 +1092,10 @@ async function generarPresupuestoVenta(doc, {
             bodyStyles: {
                 fontSize: T.xs, textColor: C.dark, valign: 'middle',
                 cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
-                minCellHeight: FOTO_H + 4,
                 lineColor: C.grayBorder, lineWidth: 0.1,
             },
             rowPageBreak: 'avoid',
-            columnStyles: conDescuento ? {
-                0: { cellWidth: FOTO_W + 4 },
-                1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
-                2: { cellWidth: 'auto' },
-                3: { halign: 'center', cellWidth: 12 },
-                4: { halign: 'right',  cellWidth: 22 },
-                5: { halign: 'right',  cellWidth: 22, textColor: C.navy },
-                6: { halign: 'right',  cellWidth: 24, fontStyle: 'bold' },
-            } : {
-                0: { cellWidth: FOTO_W + 4 },
-                1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
-                2: { cellWidth: 'auto' },
-                3: { halign: 'center', cellWidth: 12 },
-                4: { halign: 'right',  cellWidth: 28 },
-                5: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
-            },
+            columnStyles: colStyles,
             margin: { left: M, right: M, top: HEADER_H.compact + 8 },
             didDrawPage: (data) => {
                 if (data.pageNumber > 1) {
@@ -1062,17 +1105,17 @@ async function generarPresupuestoVenta(doc, {
             didParseCell: data => {
                 if (data.section !== 'body') return;
                 if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
-                // col descuento (solo existe cuando conDescuento): override a gris si la fila no tiene desc
-                if (conDescuento && data.column.index === 5 && !metas[data.row.index]?.tieneDesc) {
-                    data.cell.styles.textColor = C.grayText;
+                // minCellHeight solo en filas con foto (no en ENVÍO ni repuestos sin imagen)
+                if (hayFotosPV && fotos[data.row.index] !== null) {
+                    data.cell.styles.minCellHeight = FOTO_H + 4;
                 }
-                // descripción en la segunda línea del nombre (col 2) va en gris
-                if (data.column.index === 2) {
-                    data.cell.styles.fontSize = T.xs;
+                // col descuento en gris si la fila no tiene descuento aplicado
+                if (descColIdx >= 0 && data.column.index === descColIdx && !metas[data.row.index]?.tieneDesc) {
+                    data.cell.styles.textColor = C.grayText;
                 }
             },
             didDrawCell: data => {
-                if (data.section === 'body' && data.column.index === 0) {
+                if (data.section === 'body' && data.column.index === imgColIdx && imgColIdx >= 0) {
                     const foto = fotos[data.row.index];
                     if (foto) {
                         const ix = data.cell.x + (data.cell.width - FOTO_W) / 2;
@@ -1165,7 +1208,7 @@ async function generarPresupuestoVenta(doc, {
         dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('PRESUPUESTO_VENTA', false), fecha, nroDoc });
         y = HEADER_H.compact + 8;
     }
-    y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
+    y = dibujarCondicionesVenta(doc, { y, pageW, empresa, nroDoc });
     if (empresa.whatsapp) {
         y = await dibujarQRWhatsApp(doc, {
             x: M, y,

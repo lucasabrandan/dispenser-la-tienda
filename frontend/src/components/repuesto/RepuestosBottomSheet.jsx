@@ -116,6 +116,8 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
         seleccionados.forEach(r => { init[r.id] = r.cantidad || 1; });
         return init;
     });
+    // orden de inserción para preservar el orden del PDF (Object.entries ordena keys numéricos)
+    const [orden, setOrden] = useState(() => seleccionados.map(r => r.id));
 
     // Resetear cantidades cuando se abre con nuevos seleccionados
     React.useEffect(() => {
@@ -123,6 +125,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
             const init = {};
             seleccionados.forEach(r => { init[r.id] = r.cantidad || 1; });
             setCantidades(init);
+            setOrden(seleccionados.map(r => r.id));
             setBusqueda('');
         }
     }, [isOpen]);
@@ -136,13 +139,18 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
         );
     }, [repuestos, busqueda]);
 
-    const sumar = (r) => setCantidades(prev => ({ ...prev, [r.id]: (prev[r.id] || 0) + 1 }));
-    const restar = (r) => setCantidades(prev => {
-        const nueva = { ...prev };
-        if ((nueva[r.id] || 0) <= 1) delete nueva[r.id];
-        else nueva[r.id] -= 1;
-        return nueva;
-    });
+    const sumar = (r) => {
+        setCantidades(prev => ({ ...prev, [r.id]: (prev[r.id] || 0) + 1 }));
+        setOrden(prev => prev.includes(r.id) ? prev : [...prev, r.id]);
+    };
+    const restar = (r) => {
+        if ((cantidades[r.id] || 0) <= 1) {
+            setCantidades(prev => { const n = { ...prev }; delete n[r.id]; return n; });
+            setOrden(prev => prev.filter(id => id !== r.id));
+        } else {
+            setCantidades(prev => ({ ...prev, [r.id]: prev[r.id] - 1 }));
+        }
+    };
     const cambiar = (r, val) => setCantidades(prev => {
         if (val === '' || val < 1) return prev;
         return { ...prev, [r.id]: val };
@@ -151,11 +159,13 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
     const totalSeleccionados = Object.values(cantidades).filter(c => c > 0).length;
 
     const confirmar = () => {
-        const resultado = Object.entries(cantidades)
-            .filter(([, c]) => c > 0)
-            .map(([id, cantidad]) => {
-                const r = repuestos.find(x => x.id === Number(id));
+        // Usar `orden` para preservar el orden de inserción (Object.entries ordena keys numéricos)
+        const resultado = orden
+            .filter(id => (cantidades[id] || 0) > 0)
+            .map(id => {
+                const r = repuestos.find(x => x.id === id);
                 if (!r) return null;
+                const cantidad = cantidades[id];
                 return {
                     id: r.id,
                     nombre: r.nombre,
