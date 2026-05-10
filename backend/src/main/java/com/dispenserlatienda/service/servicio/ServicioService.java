@@ -177,7 +177,7 @@ public class ServicioService {
         for (Servicio s : realizados) {
             if (s.getFechaServicio() == null) continue;
             YearMonth ym = YearMonth.from(s.getFechaServicio());
-            if (!ym.isBefore(mesActual)) continue; // excluir mes en curso
+            // incluir mes actual (el técnico necesita ver su rendimiento en tiempo real)
 
             // Total facturado (con descuento)
             BigDecimal facturado = s.getItems().stream()

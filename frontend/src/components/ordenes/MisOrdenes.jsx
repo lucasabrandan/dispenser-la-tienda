@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -261,14 +261,19 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [historial,        setHistorial]        = useState([]);
     const [cargandoHistorial, setCargandoHistorial] = useState(false);
 
-    useEffect(() => {
-        if (tab !== 'historial' || !tecnicoId) return;
+    const cargarHistorial = useCallback(() => {
+        if (!tecnicoId) return;
         setCargandoHistorial(true);
         api.get(`/ordenes/historial/${tecnicoId}`)
             .then(r => setHistorial((r.data || []).filter(o => o.estado === 'COMPLETADA')))
             .catch(() => setHistorial([]))
             .finally(() => setCargandoHistorial(false));
-    }, [tab, tecnicoId]);
+    }, [tecnicoId]);
+
+    useEffect(() => {
+        if (tab !== 'historial') return;
+        cargarHistorial();
+    }, [tab, cargarHistorial]);
 
     // Estado para abrir EjecutarOrdenSheet directamente (órdenes con presupuesto vinculado)
     const [servicioEjecutando, setServicioEjecutando] = useState(null);
@@ -292,13 +297,19 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         if (ordenEjecutandoId) {
             try {
                 await api.patch(`/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' });
-            } catch { /* la orden se puede completar manualmente si falla */ }
+            } catch {
+                toast.error('No se pudo marcar la orden como completada. Avisá al admin.');
+            }
         }
         setServicioEjecutando(null);
         setOrdenEjecutandoId(null);
-        // Recargar activas y también resetear historial para que se recargue al entrar al tab
-        setHistorial([]);
         if (recargar) recargar();
+        // Si ya estamos en el tab historial, recargarlo directamente
+        if (tab === 'historial') {
+            cargarHistorial();
+        } else {
+            setHistorial([]);  // forzar recarga la próxima vez que se entre al tab
+        }
     };
 
     const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
