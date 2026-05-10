@@ -14,11 +14,14 @@ import com.dispenserlatienda.domain.servicio.*;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.servicio.*;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
+import com.dispenserlatienda.dto.orden.OrdenVisitaCreateDTO;
 import com.dispenserlatienda.repository.equipo.EquipoRepository;
 import com.dispenserlatienda.repository.gasto.GastoRepository;
+import com.dispenserlatienda.repository.orden.OrdenVisitaRepository;
 import com.dispenserlatienda.repository.sede.SedeRepository;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
+import com.dispenserlatienda.service.orden.OrdenVisitaService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,16 +49,22 @@ public class ServicioService {
     private final EquipoRepository equipoRepository;
     private final GastoRepository gastoRepository;
     private final ObjectMapper objectMapper;
+    private final OrdenVisitaRepository ordenVisitaRepository;
+    private final OrdenVisitaService ordenVisitaService;
 
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
                            UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
-                           GastoRepository gastoRepository, ObjectMapper objectMapper) {
+                           GastoRepository gastoRepository, ObjectMapper objectMapper,
+                           OrdenVisitaRepository ordenVisitaRepository,
+                           OrdenVisitaService ordenVisitaService) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
         this.equipoRepository = equipoRepository;
         this.gastoRepository = gastoRepository;
         this.objectMapper = objectMapper;
+        this.ordenVisitaRepository = ordenVisitaRepository;
+        this.ordenVisitaService = ordenVisitaService;
     }
 
     @Transactional(readOnly = true)
@@ -359,7 +368,47 @@ public class ServicioService {
 
         servicio.setServicioTipo(tipoDetectado);
 
-        return mapToDTO(servicioRepository.save(servicio));
+        Servicio saved = servicioRepository.save(servicio);
+
+        // Auto-despacho: si es presupuesto con técnico asignado y no existe orden vinculada aún
+        if (saved.getEstado() == EstadoServicio.PRESUPUESTO
+                && saved.getUsuario() != null
+                && !ordenVisitaRepository.existsByPresupuestoId(saved.getId())) {
+
+            BigDecimal monto = saved.getItems().stream()
+                    .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            String titulo = (saved.getNroDocumento() != null && !saved.getNroDocumento().isBlank())
+                    ? "Visita — " + saved.getNroDocumento()
+                    : "Visita — " + saved.getClienteNombre();
+
+            var sede    = saved.getSede();
+            var cliente = sede != null ? sede.getCliente() : null;
+
+            OrdenVisitaCreateDTO ordenDTO = new OrdenVisitaCreateDTO(
+                    saved.getUsuario().getId(),
+                    titulo,
+                    null,
+                    sede != null ? sede.getDireccion() : null,
+                    cliente != null ? cliente.getId() : null,
+                    saved.getClienteNombre(),
+                    cliente != null ? cliente.getTelefono() : null,
+                    "NORMAL",
+                    LocalDate.now(),
+                    null,
+                    monto,
+                    null,
+                    saved.getId()
+            );
+            try {
+                ordenVisitaService.crear(ordenDTO);
+            } catch (Exception ignored) {
+                // El presupuesto se guardó; el auto-despacho es best-effort
+            }
+        }
+
+        return mapToDTO(saved);
     }
 
     @Transactional

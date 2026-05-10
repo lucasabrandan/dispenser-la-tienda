@@ -74,10 +74,12 @@ export default function ServicioList({ onEditar }) {
         if (!esAdmin && usuario?.id) params.append('usuarioId', usuario.id);
         api.get(`/servicios?${params}`)
             .then(res => {
-                const data = res.data.content || res.data || [];
-                setServicios(Array.isArray(data)
-                    ? data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha))
-                    : []);
+                let data = res.data.content || res.data || [];
+                if (!Array.isArray(data)) data = [];
+                // El técnico solo ve historial (REALIZADO/RECHAZADO); los presupuestos
+                // llegan por MisOrdenes (auto-despachados al asignar técnico)
+                if (!esAdmin) data = data.filter(s => s.estado !== 'PRESUPUESTO');
+                setServicios(data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha)));
             })
             .catch(() => toast.error('Error al conectar con el historial'));
     };

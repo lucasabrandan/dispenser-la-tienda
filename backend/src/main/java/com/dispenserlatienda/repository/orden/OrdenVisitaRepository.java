@@ -25,4 +25,6 @@ public interface OrdenVisitaRepository extends JpaRepository<OrdenVisita, Long> 
 
     @Query("SELECT COUNT(o) FROM OrdenVisita o WHERE o.estado IN ('PENDIENTE', 'EN_CAMINO', 'EN_SITIO')")
     long countTodasActivas();
+
+    boolean existsByPresupuestoId(Long presupuestoId);
 }
