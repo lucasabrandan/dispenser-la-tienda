@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
+import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-[#C0BCB6] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
@@ -24,7 +25,7 @@ const SIGUIENTE_ESTADO = {
     EN_SITIO:   { estado: 'COMPLETADA', label: '✓ Completar', color: 'bg-[#16A34A]' },
 };
 
-function OrdenCard({ orden, onAvanzar, onEjecutar }) {
+function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
     const [expandido, setExpandido] = useState(false);
     const [nota, setNota]           = useState('');
     const [confirmando, setConfirmando] = useState(false);
@@ -126,12 +127,22 @@ function OrdenCard({ orden, onAvanzar, onEjecutar }) {
                 <div className="flex flex-col gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
                     style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
 
-                    {/* EN_SITIO con presupuesto: forzar Ejecutar antes de Completar */}
-                    {orden.estado === 'EN_SITIO' && orden.presupuestoId && !confirmando ? (
+                    {/* EN_SITIO sin presupuesto: forzar Registrar trabajo */}
+                    {orden.estado === 'EN_SITIO' && !orden.presupuestoId && !confirmando ? (
+                        <>
+                            <button onClick={() => onRegistrarTrabajo(orden)}
+                                className="w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                                Registrar trabajo
+                            </button>
+                            <p className="text-[10px] text-center text-[#A8A29E] font-bold">
+                                Registra el trabajo y repuestos antes de cerrar
+                            </p>
+                        </>
+                    ) : orden.estado === 'EN_SITIO' && orden.presupuestoId && !confirmando ? (
                         <>
                             <button onClick={() => onEjecutar(orden)}
                                 className="w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
-                                🔧 Ejecutar trabajo
+                                Ejecutar trabajo
                             </button>
                             <p className="text-[10px] text-center text-[#A8A29E] font-bold">
                                 Completá el trabajo para registrar repuestos y generar PDF
@@ -286,6 +297,9 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [servicioEjecutando, setServicioEjecutando] = useState(null);
     const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);
 
+    // Estado para abrir ModalRegistrarTrabajo (órdenes sin presupuesto)
+    const [ordenRegistrando, setOrdenRegistrando] = useState(null);
+
     const handleEjecutar = async (orden) => {
         if (orden.presupuestoId) {
             // Orden con presupuesto vinculado: abrir EjecutarOrdenSheet directamente
@@ -380,13 +394,23 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         </p>
                         <div className="space-y-3">
                             {items.map(o => (
-                                <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} />
+                                <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} />
                             ))}
                         </div>
                     </div>
                 ))
             )}
         </div>
+
+        {/* Modal para registrar trabajo en órdenes sin presupuesto */}
+        {ordenRegistrando && (
+            <ModalRegistrarTrabajo
+                orden={ordenRegistrando}
+                tecnicoId={tecnicoId}
+                onGuardado={() => { setOrdenRegistrando(null); if (recargar) recargar(); }}
+                onCerrar={() => setOrdenRegistrando(null)}
+            />
+        )}
 
         {/* Overlay EjecutarOrdenSheet para órdenes con presupuesto vinculado */}
         {servicioEjecutando && (
