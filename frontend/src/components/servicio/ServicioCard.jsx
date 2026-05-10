@@ -165,7 +165,7 @@ export default function ServicioCard({
                     cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
                 <IconBtn onClick={() => onGenerarPDF(servicio)} title="Generar PDF"
                     cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
-                {esPpto && (
+                {esPpto && onEditar && (
                     <IconBtn onClick={() => onEditar(servicio)} title="Editar presupuesto"
                         cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✏️</IconBtn>
                 )}

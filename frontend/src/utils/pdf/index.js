@@ -115,13 +115,13 @@ async function generarSingleTecnico(doc, {
     // • DATOS CLIENTE (sin columna derecha — el trabajo va en DIAGNÓSTICO DETALLE abajo)
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: null });
 
-    // Bloque equipo + trabajo: unificado si no hay foto, separado si hay foto
-    // Thumbnail solo si hay ambas fotos (evita duplicar fotoA en el registro)
+    // Bloque equipo + trabajo: unificado si no hay foto, separado si hay foto.
+    // Thumbnail de fotoA solo cuando también hay fotoD (con 1 foto sola, se muestra en registro)
     const diagDetalle = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || item.observaciones || '');
     y = checkSalto(doc, y, 36);
     y = dibujarBloqueEquipoYTrabajo(doc, {
         item, trabajo: diagDetalle, y, pageW,
-        fotoAntes: fotoD ? fotoA : null,
+        fotoAntes: (fotoA && fotoD) ? fotoA : null,
         tituloTrabajo: '• TRABAJO REALIZADO',
         barraColor: C.navy,
     });
@@ -276,7 +276,12 @@ async function generarSingleTecnico(doc, {
 
     // Registro fotográfico
     if (fotoA || fotoD) {
-        y = checkSalto(doc, y, 90);
+        const pageH = doc.internal.pageSize.getHeight();
+        if (y + 90 > pageH - 25) {
+            doc.addPage();
+            dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo(tipo, false), fecha, nroDoc });
+            y = HEADER_H.compact + 8;
+        }
         y = dibujarRegistroFotografico(doc, { y, fotoA, fotoD });
     }
 

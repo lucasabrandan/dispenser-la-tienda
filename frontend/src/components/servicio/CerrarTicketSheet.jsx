@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import FirmaPad from '../ui/FirmaPad';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { useAuth } from '../../context/AuthContext';
 
 /**
  * CerrarTicketSheet
@@ -19,8 +18,6 @@ export default function CerrarTicketSheet({
     onGuardar,    // async () → { ok, id, clienteId, clienteNombre, tecnicoId } | null
     onCerrar,
 }) {
-    const { esAdmin } = useAuth();
-
     // 'menu' | 'cobrar' | 'presupuesto_ok'
     const [paso, setPaso] = useState(modoEjecucion ? 'cobrar' : 'menu');
 
@@ -54,7 +51,7 @@ export default function CerrarTicketSheet({
             const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
             localStorage.setItem('auth_usuario', JSON.stringify({ ...user, firma: firmaTecnico }));
             setEditandoTecnico(false);
-            if (user.id && esAdmin) {
+            if (user.id) {
                 api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
             }
         } finally {

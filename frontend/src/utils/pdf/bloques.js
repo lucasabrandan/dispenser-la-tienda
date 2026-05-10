@@ -197,11 +197,11 @@ export function dibujarBloqueEquipoYTrabajo(doc, { item, trabajo, y, pageW, foto
     const tieneEquipo = campos.length > 0;
     const tieneTrabajo = !!(trabajo?.trim());
 
-    // Alturas de cada sección
-    const equipoH  = tieneEquipo  ? campos.length * 5.5 + 14 : 0;
-    const trabajoH = tieneTrabajo ? Math.max(0, doc.splitTextToSize(trabajo.trim(), CONTENT_W - 12).slice(0, 6).length * 4.5 + 14) : 0;
-    const sepH     = (tieneEquipo && tieneTrabajo) ? 6 : 0; // separador entre secciones
-    const cardH    = Math.max(16, equipoH + sepH + trabajoH);
+    // Alturas compactas: top5 + título4 + N*campo + bottom3
+    const equipoH  = tieneEquipo  ? campos.length * 4.5 + 12 : 0;
+    const trabajoH = tieneTrabajo ? Math.max(0, doc.splitTextToSize(trabajo.trim(), CONTENT_W - 12).slice(0, 6).length * 4 + 11) : 0;
+    const sepH     = (tieneEquipo && tieneTrabajo) ? 4 : 0;
+    const cardH    = Math.max(14, equipoH + sepH + trabajoH);
 
     // Card único
     doc.setFillColor(...C.white);
@@ -216,13 +216,13 @@ export function dibujarBloqueEquipoYTrabajo(doc, { item, trabajo, y, pageW, foto
         doc.rect(M - 0.5, y, 1.5, tieneEquipo ? equipoH : cardH, 'F');
     }
 
-    let ey = y + 7;
+    let ey = y + 5;
     if (tieneEquipo) {
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
         doc.text('DATOS DEL EQUIPO', M + 4, ey);
-        ey += 5;
+        ey += 4;
         campos.forEach(({ l, v }) => {
             doc.setFontSize(T.label);
             doc.setFont(undefined, 'bold');
@@ -233,7 +233,7 @@ export function dibujarBloqueEquipoYTrabajo(doc, { item, trabajo, y, pageW, foto
             doc.setTextColor(...C.dark);
             const vLines = doc.splitTextToSize(String(v), CONTENT_W - 26);
             doc.text(vLines[0], M + 28, ey);
-            ey += 5.5;
+            ey += 4.5;
         });
     }
 
@@ -243,7 +243,7 @@ export function dibujarBloqueEquipoYTrabajo(doc, { item, trabajo, y, pageW, foto
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.15);
         doc.line(M + 2, lineY, M + CONTENT_W - 2, lineY);
-        ey = lineY + 6;
+        ey = lineY + 4;
         // Barra gold para sección trabajo
         doc.setFillColor(...barraColor);
         const restH = cardH - equipoH;
@@ -256,12 +256,12 @@ export function dibujarBloqueEquipoYTrabajo(doc, { item, trabajo, y, pageW, foto
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...barraColor);
         doc.text(tituloTrabajo, M + 6, ey);
-        ey += 5;
+        ey += 4;
         const lines = doc.splitTextToSize(trabajo.trim(), CONTENT_W - 12);
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.dark);
-        lines.slice(0, 6).forEach(l => { doc.text(l, M + 6, ey); ey += 4.5; });
+        lines.slice(0, 6).forEach(l => { doc.text(l, M + 6, ey); ey += 4; });
     }
 
     return y + cardH + 3;

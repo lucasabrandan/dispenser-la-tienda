@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { useServicioForm } from '../../hooks/useServicioForm';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
+import { useAuth } from '../../context/AuthContext';
 import CrearClienteModal from '../cliente/CrearClienteModal';
 import CrearSedeModal    from '../CrearSedeModal';
 import { StepHeader, buildSelectStyles } from './ServicioUI';
@@ -53,6 +54,9 @@ export default function ServicioForm({
         prevBorrador.current = borradorDisponible;
     }, [borradorDisponible, ticketItems.length]);
 
+    const { usuario } = useAuth();
+    const tecnicoNombre = usuario?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico';
+
     const isDark      = document.documentElement.classList.contains('dark');
     const selectStyles = buildSelectStyles(isDark);
     const clienteObj  = db.clientes?.find(c => c.id?.toString() === clienteId);
@@ -68,7 +72,7 @@ export default function ServicioForm({
                 nroDocumentoExistente:   idEdicion ? (localStorage.getItem(`pdf_nro_${idEdicion}`) || null) : null,
                 cliente:                 clienteObj || { nombre: nombreLibre || 'Particular' },
                 sede:                    sedeObj || { nombreSede: 'Mostrador' },
-                tecnico:                 localStorage.getItem('tecnico_nombre') || 'Técnico',
+                tecnico:                 tecnicoNombre,
                 ticketItems,
                 descuentoPorcentaje,
                 totalFinal:              totalConDescuento,
@@ -94,7 +98,7 @@ export default function ServicioForm({
                 nroDocumentoExistente:   idEdicion ? (localStorage.getItem(`pdf_nro_${idEdicion}`) || null) : null,
                 cliente:                 clienteObj || { nombre: nombreLibre || 'Particular' },
                 sede:                    sedeObj || { nombreSede: 'Mostrador' },
-                tecnico:                 localStorage.getItem('tecnico_nombre') || 'Técnico',
+                tecnico:                 tecnicoNombre,
                 ticketItems,
                 descuentoPorcentaje,
                 totalFinal:              totalConDescuento,

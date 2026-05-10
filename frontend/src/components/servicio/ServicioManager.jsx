@@ -9,6 +9,7 @@ import ServicioCard from '../servicio/ServicioCard';
 import Paginacion from '../ui/Paginacion';
 import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
+import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -64,7 +65,8 @@ export default function ServicioManager({
         ordenServicio, setOrdenServicio,
     } = useServicioManager();
 
-    const [servicioEjecutar, setServicioEjecutar]   = useState(null);
+    const [servicioEjecutar, setServicioEjecutar]           = useState(null);
+    const [servicioEjecutarSimple, setServicioEjecutarSimple] = useState(null); // para técnicos
     const [modalImportar, setModalImportar]         = useState(false);
     const [confirmEliminar, setConfirmEliminar]     = useState(null); // { ids: [], modo: 'uno'|'masivo' }
     const [tecnicos, setTecnicos]               = useState([]);
@@ -94,8 +96,12 @@ export default function ServicioManager({
         setModoSeleccion(false);
     };
 
-    const abrirEjecutar       = (s) => { setServicioEjecutar(s); setModalCrear(true); };
-    const cerrarModalCompleto = ()  => { cerrarModal(); setServicioEjecutar(null); };
+    // Admin: abre ServicioForm completo; técnico: abre EjecutarOrdenSheet simplificado
+    const abrirEjecutar = (s) => {
+        if (esAdmin) { setServicioEjecutar(s); setModalCrear(true); }
+        else          setServicioEjecutarSimple(s);
+    };
+    const cerrarModalCompleto = () => { cerrarModal(); setServicioEjecutar(null); };
 
     useEffect(() => { if (esAdmin) getUsuarios().then(r => setTecnicos(r.data)).catch(() => {}); }, [esAdmin]);
     useEffect(() => { if (clienteInicial)    setModalCrear(true); }, [clienteInicial]);
@@ -127,10 +133,12 @@ export default function ServicioManager({
                             className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] transition-all active:scale-90 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
                             title="Importar servicios históricos"
                         >📤</button>
-                        <button
-                            onClick={() => setModalCrear(true)}
-                            className="hidden md:flex h-9 px-5 rounded-xl items-center font-bold text-xs text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]"
-                        >+ Nuevo</button>
+                        {esAdmin && (
+                            <button
+                                onClick={() => setModalCrear(true)}
+                                className="hidden md:flex h-9 px-5 rounded-xl items-center font-bold text-xs text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]"
+                            >+ Nuevo</button>
+                        )}
                     </div>
                 </div>
 
@@ -305,7 +313,7 @@ export default function ServicioManager({
                                 modoSeleccion={modoSeleccion}
                                 seleccionado={seleccionados.has(s.id)}
                                 onToggleSelect={toggleSeleccion}
-                                onEditar={abrirEditar}
+                                onEditar={esAdmin ? abrirEditar : null}
                                 onEjecutar={abrirEjecutar}
                                 onCobrar={confirmarServicio}
                                 onRechazar={rechazarServicio}
@@ -322,12 +330,14 @@ export default function ServicioManager({
                 <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
             </div>
 
-            {/* FAB Nuevo — solo mobile */}
-            <button
-                onClick={() => setModalCrear(true)}
-                className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-90 transition-all z-20"
-                aria-label="Nuevo servicio"
-            >+</button>
+            {/* FAB Nuevo — solo mobile, solo admin */}
+            {esAdmin && (
+                <button
+                    onClick={() => setModalCrear(true)}
+                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-90 transition-all z-20"
+                    aria-label="Nuevo servicio"
+                >+</button>
+            )}
 
             {/* Modal crear/editar */}
             {modalCrear && (
@@ -404,6 +414,18 @@ export default function ServicioManager({
 
             {modalFirmas && (
                 <ModalFirmasPDF onConfirm={confirmarFirmasYGenerarPDF} onCancel={() => setModalFirmas(false)} />
+            )}
+
+            {/* Sheet simplificado para técnicos */}
+            {servicioEjecutarSimple && (
+                <EjecutarOrdenSheet
+                    servicio={servicioEjecutarSimple}
+                    onConfirmado={() => {
+                        setServicioEjecutarSimple(null);
+                        cargarServicios();
+                    }}
+                    onCerrar={() => setServicioEjecutarSimple(null)}
+                />
             )}
 
             {modalImportar && (

@@ -269,6 +269,7 @@ export default function PresupuestosManager({ onEjecutar }) {
         setPendingPdf(null);
         if (!s) return;
         await generarRemitoPDFPremium({
+            tipo:         s.servicioTipo === 'VENTA' ? 'PRESUPUESTO_VENTA' : undefined,
             esPresupuesto: true,
             servicioId: s.id,
             nroDocumentoExistente: s.nroDocumento || localStorage.getItem(`pdf_nro_${s.id}`) || null,

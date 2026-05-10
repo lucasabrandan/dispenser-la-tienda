@@ -93,15 +93,29 @@ async function blobAJpeg(blob) {
 export async function cargarFoto(src) {
     if (!src) return null;
 
+    // Data URL → cargar directo en canvas sin pasar por fetch/blob.
+    // fetch('data:...') puede fallar en móviles (Chrome Android) sin lanzar excepción
+    // pero devolviendo un blob sin tipo MIME, lo que rompe el render en canvas.
+    if (typeof src === 'string' && src.startsWith('data:')) {
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = img.naturalWidth  || 1;
+                    canvas.height = img.naturalHeight || 1;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    resolve({ data: canvas.toDataURL('image/jpeg', 0.85), format: 'JPEG' });
+                } catch { resolve(null); }
+            };
+            img.onerror = () => resolve(null);
+            img.src = src;
+        });
+    }
+
     let blob = null;
 
-    if (typeof src === 'string' && src.startsWith('data:')) {
-        // Data URL → convertir a blob para pasar por canvas (asegura JPEG válido para jsPDF)
-        try {
-            const res = await fetch(src);
-            blob = await res.blob();
-        } catch { return null; }
-    } else if (src instanceof File) {
+    if (src instanceof File) {
         blob = src;
     } else {
         try {

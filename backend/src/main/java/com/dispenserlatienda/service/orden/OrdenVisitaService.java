@@ -3,17 +3,26 @@ package com.dispenserlatienda.service.orden;
 import com.dispenserlatienda.domain.orden.EstadoOrden;
 import com.dispenserlatienda.domain.orden.OrdenVisita;
 import com.dispenserlatienda.domain.orden.PrioridadOrden;
+import com.dispenserlatienda.domain.sede.Sede;
+import com.dispenserlatienda.domain.servicio.EstadoServicio;
+import com.dispenserlatienda.domain.servicio.MetodoPago;
+import com.dispenserlatienda.domain.servicio.Servicio;
+import com.dispenserlatienda.domain.servicio.ServicioItem;
+import com.dispenserlatienda.domain.servicio.ServicioTipo;
 import com.dispenserlatienda.domain.usuario.RolUsuario;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.orden.OrdenAvanceDTO;
 import com.dispenserlatienda.dto.orden.OrdenVisitaCreateDTO;
 import com.dispenserlatienda.dto.orden.OrdenVisitaDTO;
 import com.dispenserlatienda.repository.orden.OrdenVisitaRepository;
+import com.dispenserlatienda.repository.sede.SedeRepository;
+import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.service.common.WhatsAppService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -26,13 +35,19 @@ public class OrdenVisitaService {
     private final OrdenVisitaRepository repo;
     private final UsuarioRepository     usuarioRepo;
     private final WhatsAppService       whatsApp;
+    private final ServicioRepository    servicioRepository;
+    private final SedeRepository        sedeRepository;
 
     public OrdenVisitaService(OrdenVisitaRepository repo,
                               UsuarioRepository usuarioRepo,
-                              WhatsAppService whatsApp) {
-        this.repo        = repo;
-        this.usuarioRepo = usuarioRepo;
-        this.whatsApp    = whatsApp;
+                              WhatsAppService whatsApp,
+                              ServicioRepository servicioRepository,
+                              SedeRepository sedeRepository) {
+        this.repo              = repo;
+        this.usuarioRepo       = usuarioRepo;
+        this.whatsApp          = whatsApp;
+        this.servicioRepository = servicioRepository;
+        this.sedeRepository    = sedeRepository;
     }
 
     // ── Admin: crear orden ─────────────────────────────────────────────────────
@@ -133,9 +148,59 @@ public class OrdenVisitaService {
         }
         if (nuevoEstado == EstadoOrden.COMPLETADA) {
             o.setFechaCompletada(LocalDateTime.now());
+            sincronizarConServicios(o);
         }
 
         return toDTO(repo.save(o));
+    }
+
+    // ── Cascade al completar una orden ────────────────────────────────────────
+    private void sincronizarConServicios(OrdenVisita o) {
+        if (o.getPresupuestoId() != null) {
+            // Caso 1: orden vinculada a presupuesto → marcar servicio como REALIZADO
+            servicioRepository.findById(o.getPresupuestoId()).ifPresent(s -> {
+                if (s.getEstado() != EstadoServicio.REALIZADO) {
+                    s.setEstado(EstadoServicio.REALIZADO);
+                    servicioRepository.save(s);
+                }
+            });
+        } else if (o.getMontoEstimado() != null
+                && o.getMontoEstimado().compareTo(BigDecimal.ZERO) > 0
+                && o.getTecnico() != null) {
+            // Caso 2: orden sin presupuesto con monto → crear servicio mínimo para rendimientos
+            Sede sedeMostrador = sedeRepository.findAll().stream()
+                .filter(s -> s.getNombreSede() != null
+                          && s.getNombreSede().toLowerCase().contains("mostrador"))
+                .findFirst()
+                .orElseGet(() -> sedeRepository.findAll().stream().findFirst().orElse(null));
+
+            if (sedeMostrador == null) return; // no hay sedes, no se puede registrar
+
+            Servicio servicio = new Servicio(
+                sedeMostrador,
+                o.getTecnico(),
+                o.getFechaProgramada() != null ? o.getFechaProgramada() : LocalDate.now(),
+                ServicioTipo.TECNICA
+            );
+            servicio.setEstado(EstadoServicio.REALIZADO);
+            servicio.setClienteNombre(o.getClienteNombre() != null ? o.getClienteNombre() : "Particular");
+            servicio.setSedeNombre(sedeMostrador.getNombreSede());
+            servicio.setOrdenId(o.getId());
+            servicio.setObservaciones(o.getDescripcion());
+            servicio.setDescuentoPorcentaje(BigDecimal.ZERO);
+            servicio.setCreadoEn(LocalDateTime.now());
+
+            ServicioItem item = new ServicioItem();
+            item.setTecnico(o.getTecnico().getNombre());
+            item.setCosto(o.getMontoEstimado());
+            item.setCostoExtra(BigDecimal.ZERO);
+            item.setMetodoPago(o.getFormaPago() != null && o.getFormaPago().equals("TRANSFERENCIA")
+                ? MetodoPago.TRANSFERENCIA : MetodoPago.EFECTIVO);
+            item.setTrabajoRealizado(o.getTitulo());
+            servicio.addItem(item);
+
+            servicioRepository.save(servicio);
+        }
     }
 
     // ── Resumen para badge sidebar ─────────────────────────────────────────────
