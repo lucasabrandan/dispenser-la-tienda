@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -45,5 +47,17 @@ public class AuthController {
             usuario.getWhatsapp(),
             usuario.getFirma()
         ));
+    }
+
+    // PATCH /api/auth/mi-firma — cualquier usuario autenticado puede guardar su propia firma
+    @PatchMapping("/mi-firma")
+    public ResponseEntity<Void> guardarMiFirma(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody java.util.Map<String, String> payload) {
+        usuarioRepository.findByUsername(userDetails.getUsername()).ifPresent(u -> {
+            u.setFirma(payload.get("firma"));
+            usuarioRepository.save(u);
+        });
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import FirmaPad from './FirmaPad';
 import api from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
-
 // Si el técnico tiene firma guardada, se usa automáticamente sin mostrarse.
 // Solo se pide la firma del cliente (siempre nueva).
 // onConfirm({ firmaTecnico, firmaCliente, incluirFirmas })
 export default function ModalFirmasPDF({ onConfirm, onCancel }) {
-    const { esAdmin } = useAuth();
     const [firmaTecnico, setFirmaTecnico]         = useState(null);
     const [firmaCliente, setFirmaCliente]         = useState(null);
     const [editandoTecnico, setEditandoTecnico]   = useState(false);
@@ -32,9 +29,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
             setGuardado(true);
             setEditandoTecnico(false);
             setTimeout(() => setGuardado(false), 2000);
-            if (user.id && esAdmin) {
-                api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
-            }
+            api.patch('/auth/mi-firma', { firma: firmaTecnico }).catch(() => {});
         } catch (e) {
             console.error('Error guardando firma', e);
         } finally {
@@ -46,11 +41,9 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
         if (incluirFirmas) {
             try {
                 const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
-                if (user.id && firmaTecnico && firmaTecnico !== user.firma) {
+                if (firmaTecnico && firmaTecnico !== user.firma) {
                     localStorage.setItem('auth_usuario', JSON.stringify({ ...user, firma: firmaTecnico }));
-                    if (esAdmin) {
-                        api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
-                    }
+                    api.patch('/auth/mi-firma', { firma: firmaTecnico }).catch(() => {});
                 }
             } catch {}
         }
