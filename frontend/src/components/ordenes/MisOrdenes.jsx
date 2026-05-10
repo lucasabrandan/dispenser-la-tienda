@@ -123,24 +123,40 @@ function OrdenCard({ orden, onAvanzar, onEjecutar }) {
 
             {/* Barra acciones */}
             {!esFinal && sig && (
-                <div className="flex gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                <div className="flex flex-col gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
                     style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                    {confirmando && (
-                        <button onClick={() => setConfirmando(false)}
-                            className="flex-1 py-2.5 rounded-xl font-bold text-[12px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
-                            Cancelar
-                        </button>
+
+                    {/* EN_SITIO con presupuesto: forzar Ejecutar antes de Completar */}
+                    {orden.estado === 'EN_SITIO' && orden.presupuestoId && !confirmando ? (
+                        <>
+                            <button onClick={() => onEjecutar(orden)}
+                                className="w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                                🔧 Ejecutar trabajo
+                            </button>
+                            <p className="text-[10px] text-center text-[#A8A29E] font-bold">
+                                Completá el trabajo para registrar repuestos y generar PDF
+                            </p>
+                        </>
+                    ) : (
+                        <div className="flex gap-2">
+                            {confirmando && (
+                                <button onClick={() => setConfirmando(false)}
+                                    className="flex-1 py-2.5 rounded-xl font-bold text-[12px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                                    Cancelar
+                                </button>
+                            )}
+                            {!confirmando && onEjecutar && orden.estado !== 'EN_SITIO' && (
+                                <button onClick={() => onEjecutar(orden)}
+                                    className="py-2.5 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all whitespace-nowrap">
+                                    🔧 Ejecutar
+                                </button>
+                            )}
+                            <button onClick={handleAvanzar}
+                                className={`flex-1 py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all ${sig.color}`}>
+                                {confirmando ? '✓ Confirmar' : sig.label}
+                            </button>
+                        </div>
                     )}
-                    {!confirmando && onEjecutar && (
-                        <button onClick={() => onEjecutar(orden)}
-                            className="py-2.5 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all whitespace-nowrap">
-                            🔧 Ejecutar
-                        </button>
-                    )}
-                    <button onClick={handleAvanzar}
-                        className={`flex-1 py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all ${sig.color}`}>
-                        {confirmando ? '✓ Confirmar' : sig.label}
-                    </button>
                 </div>
             )}
         </div>
