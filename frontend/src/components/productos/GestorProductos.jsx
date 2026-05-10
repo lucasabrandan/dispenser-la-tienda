@@ -163,12 +163,12 @@ export default function GestorProductos() {
 
     const exportarSeleccionados = () => {
         if (seleccionados.size === 0) return;
-        setModalOrden(productos.filter(p => seleccionados.has(p.id)));
+        setModalOrden(productosFiltrados.filter(p => seleccionados.has(p.id)));
     };
 
     const exportarTodos = () => {
-        if (productos.length === 0) { toast.error('No hay productos'); return; }
-        setModalOrden([...productos]);
+        if (productosFiltrados.length === 0) { toast.error('No hay productos'); return; }
+        setModalOrden([...productosFiltrados]);
     };
 
     const confirmarExportPDF = (ordenados, descEfectivo = 0) => {
