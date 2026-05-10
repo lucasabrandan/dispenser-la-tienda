@@ -219,14 +219,18 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
             {/* ── Rentabilidad ──────────────────────────────────────────── */}
             <RentabilidadPanel resumen={resumen} />
 
-            {/* Técnico responsable (siempre visible para admin) */}
+            {/* Técnico responsable — OBLIGATORIO para admin */}
             {esAdmin && tecnicos.length > 0 && (
-                <DSCard>
-                    <div className="flex items-center justify-between mb-1">
+                <div className={`rounded-2xl p-4 border-2 transition-colors ${!tecnicoSeleccionado ? 'border-[#D13A28] bg-[#D13A28]/5 dark:bg-[#D13A28]/10' : 'border-transparent bg-[#D8D4CE] dark:bg-[#242424]'}`}>
+                    <div className="flex items-center justify-between mb-2">
                         <Label>Técnico responsable</Label>
-                        {!tecnicoSeleccionado && (
-                            <span className="text-[9px] font-black uppercase tracking-wider text-[#D48800] dark:text-[#F0A500]">
-                                Requerido
+                        {!tecnicoSeleccionado ? (
+                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white bg-[#D13A28]">
+                                ⚠ Obligatorio
+                            </span>
+                        ) : (
+                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white bg-[#1F9D55]">
+                                ✓ Asignado
                             </span>
                         )}
                     </div>
@@ -236,23 +240,20 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                             const t = tecnicos.find(u => u.id === Number(e.target.value));
                             setTecnicoSeleccionado(t ? { id: t.id, nombre: t.nombre } : null);
                         }}
-                        className={`${inputCls} ${!tecnicoSeleccionado ? 'border-[#D48800]/50 dark:border-[#F0A500]/50' : ''}`}
+                        className={`${inputCls} ${!tecnicoSeleccionado ? 'border-[#D13A28]/60 focus:border-[#D13A28] focus:ring-[#D13A28]/20' : ''}`}
                     >
                         <option value=''>— Seleccionar técnico —</option>
                         {tecnicos.map(t => (
                             <option key={t.id} value={t.id}>{t.nombre} · {t.rol === 'ADMIN' ? 'Admin' : 'Técnico'}</option>
                         ))}
                     </select>
-                    {tecnicoSeleccionado ? (
-                        <p className="text-[10px] mt-1.5 font-bold text-[#D48800] dark:text-[#F0A500]">
-                            Asignado a {tecnicoSeleccionado.nombre}
-                        </p>
-                    ) : (
-                        <p className="text-[10px] mt-1.5 text-[#A8A29E]">
-                            Si no se asigna, el servicio quedará a tu nombre.
-                        </p>
-                    )}
-                </DSCard>
+                    <p className={`text-[10px] mt-1.5 font-semibold ${!tecnicoSeleccionado ? 'text-[#D13A28] dark:text-[#E8422F]' : 'text-[#1F9D55]'}`}>
+                        {tecnicoSeleccionado
+                            ? `El PDF se generará a nombre de ${tecnicoSeleccionado.nombre}`
+                            : 'Debés asignar un técnico antes de generar el presupuesto'
+                        }
+                    </p>
+                </div>
             )}
 
             {/* ── Más opciones ──────────────────────────────────────────── */}
@@ -301,7 +302,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         </button>
                         <button onClick={() => {
                             if (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) {
-                                toast.error('Seleccioná un técnico responsable antes de continuar');
+                                toast.error('⚠ Asigná un técnico antes de continuar', { duration: 3500 });
                                 return;
                             }
                             onCerrarTicket();

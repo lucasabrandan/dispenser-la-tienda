@@ -25,6 +25,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
     const [firmaTecnico, setFirmaTecnico] = useState(null);
     const [editandoFirma, setEditandoFirma] = useState(false);
     const [firmaCliente, setFirmaCliente] = useState(null);
+    const [incluirFirmas, setIncluirFirmas] = useState(true);
     const [procesando, setProcesando] = useState(false);
 
     useEffect(() => {
@@ -157,8 +158,9 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                 descuentoPorcentaje: descPct,
                 leyenda:             observaciones,
                 esTecnicoForzado:    true,
-                firmaTecnico:        firmaTecnico || null,
-                firmaCliente:        firmaCliente || null,
+                firmaTecnico:        incluirFirmas ? (firmaTecnico || null) : null,
+                firmaCliente:        incluirFirmas ? (firmaCliente || null) : null,
+                incluirFirmas,
             });
 
             if (onConfirmado) onConfirmado();
@@ -344,8 +346,19 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                             ← Volver
                         </button>
 
+                        {/* Toggle firmas */}
+                        <button
+                            onClick={() => setIncluirFirmas(v => !v)}
+                            className="flex items-center gap-2 text-[11px] text-[#A8A29E] font-bold active:scale-95 transition-all"
+                        >
+                            <span className={`w-8 h-4 rounded-full flex items-center transition-colors ${incluirFirmas ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#C0BCB6] dark:bg-[#2E2E2E]'}`}>
+                                <span className={`w-3 h-3 rounded-full bg-white shadow transition-transform mx-0.5 ${incluirFirmas ? 'translate-x-4' : 'translate-x-0'}`} />
+                            </span>
+                            Incluir firmas en el PDF
+                        </button>
+
                         {/* Firma técnico */}
-                        {!editandoFirma ? (
+                        {incluirFirmas && (!editandoFirma ? (
                             <div className="flex items-center gap-2 px-3 py-3 rounded-xl bg-[#EDEAE6] dark:bg-[#242424]">
                                 <span className="text-[12px] font-bold text-[#16A34A]">✓ Firma del técnico guardada</span>
                                 <button onClick={() => setEditandoFirma(true)}
@@ -362,15 +375,13 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                                     <span className="text-[10px] text-[#A8A29E]">Se recordará para próximas veces</span>
                                 </div>
                             </div>
-                        )}
+                        ))}
 
                         {/* Firma cliente */}
-                        <FirmaPad label="Firma del cliente" value={firmaCliente} onChange={setFirmaCliente}
-                            height={!editandoFirma ? 180 : 130} />
-
-                        <p className="text-center text-[10px] text-[#A8A29E]">
-                            Las firmas son opcionales — podés confirmar sin ellas
-                        </p>
+                        {incluirFirmas && (
+                            <FirmaPad label="Firma del cliente" value={firmaCliente} onChange={setFirmaCliente}
+                                height={!editandoFirma ? 180 : 130} />
+                        )}
 
                         <button onClick={confirmar} disabled={procesando}
                             className="w-full py-4 rounded-2xl font-black text-[13px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-[0.98] disabled:opacity-50 transition-all">

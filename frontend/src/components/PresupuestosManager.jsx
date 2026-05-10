@@ -263,7 +263,7 @@ export default function PresupuestosManager({ onEjecutar }) {
 
     const generarPDF = useCallback((s) => { setPendingPdf(s); setModalFirmas(true); }, []);
 
-    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente }) => {
+    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {
         setModalFirmas(false);
         const s = pendingPdf;
         setPendingPdf(null);
@@ -288,6 +288,7 @@ export default function PresupuestosManager({ onEjecutar }) {
             leyenda: s.observaciones || '',
             firmaTecnico,
             firmaCliente,
+            incluirFirmas,
         });
     };
 

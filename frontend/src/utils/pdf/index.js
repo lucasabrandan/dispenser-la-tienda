@@ -369,10 +369,10 @@ async function generarSinglePresupuesto(doc, {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
 
-    // Cargar foto ANTES (para bloque equipo) y foto DESPUÉS (evidencia adicional si hay ambas)
+    // Cargar fotos: ambas independientemente para no perder fotos del cliente
     const [fotoAntes, fotoDespues] = await Promise.all([
         cargarFoto(item.fotoAntes || item.fotoEquipo || null),
-        cargarFoto(item.fotoAntes && item.fotoDespues ? item.fotoDespues : null),
+        cargarFoto(item.fotoDespues || null),
     ]);
 
     // Bloque cliente | equipo en columnas (si hay equipo real); si no, cliente full-width
@@ -550,12 +550,13 @@ async function generarSinglePresupuesto(doc, {
     doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
-    // Registro fotográfico: fotoAntes (siempre si existe) + fotoDespues (si hay ambas)
+    // Registro fotográfico: mostrar si existe alguna foto
     if (tieneEquipoReal && (fotoAntes || fotoDespues)) {
         y = checkSalto(doc, y, 50);
         y = dibujarRegistroFotografico(doc, { y, fotoA: fotoAntes, fotoD: fotoDespues });
-    } else if (!tieneEquipoReal && fotoDespues) {
-        // Caso sin equipo real: mostrar evidencia del problema igual que antes
+    } else if (!tieneEquipoReal && (fotoAntes || fotoDespues)) {
+        // Sin equipo real: mostrar evidencia del problema (fotoAntes o fotoDespues, la que exista)
+        const fotoEv = fotoAntes || fotoDespues;
         y = checkSalto(doc, y, 40);
         const COL_W  = (CONTENT_W - 6) / 2;
         const FOTO_H = Math.floor((COL_W * 3) / 4);
@@ -566,7 +567,7 @@ async function generarSinglePresupuesto(doc, {
         y += 5;
         doc.setFillColor(220, 220, 225);
         doc.roundedRect(M + 1.5, y + 1.5, COL_W, FOTO_H, 2, 2, 'F');
-        try { doc.addImage(fotoDespues.data, fotoDespues.format, M, y, COL_W, FOTO_H); } catch {}
+        try { doc.addImage(fotoEv.data, fotoEv.format, M, y, COL_W, FOTO_H); } catch {}
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
         doc.roundedRect(M, y, COL_W, FOTO_H, 2, 2, 'S');
@@ -1024,7 +1025,7 @@ async function generarPresupuestoVenta(doc, {
 
             filas.push([
                 '',
-                r.sku || '—',
+                r.sku || '',
                 nombreDesc,
                 String(cant),
                 `$ ${precioUnit.toLocaleString('es-AR')}`,
@@ -1037,7 +1038,7 @@ async function generarPresupuestoVenta(doc, {
         // Envío como línea separada (sin descuento, sin foto)
         const envio = parseFloat(item.costoExtra || 0);
         if (envio > 0) {
-            filas.push(['', '—', 'Envío', '1', `$ ${envio.toLocaleString('es-AR')}`, '—', `$ ${envio.toLocaleString('es-AR')}`]);
+            filas.push(['', '', 'Envío', '1', `$ ${envio.toLocaleString('es-AR')}`, '—', `$ ${envio.toLocaleString('es-AR')}`]);
             fotos.push(null);
             metas.push({ tieneDesc: false, isEnvio: true });
         }

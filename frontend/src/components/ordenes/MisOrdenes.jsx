@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
+import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-[#C0BCB6] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
@@ -238,8 +239,40 @@ function RendimientoTab({ tecnicoId }) {
 }
 
 export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
-    const { ordenes, cargando, avanzarEstado } = useOrdenes({ tecnicoId });
+    const { ordenes, cargando, avanzarEstado, recargar } = useOrdenes({ tecnicoId });
     const [tab, setTab] = useState('activas');
+
+    // Estado para abrir EjecutarOrdenSheet directamente (órdenes con presupuesto vinculado)
+    const [servicioEjecutando, setServicioEjecutando] = useState(null);
+    const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);
+
+    const handleEjecutar = async (orden) => {
+        if (orden.presupuestoId) {
+            // Orden con presupuesto vinculado: abrir EjecutarOrdenSheet directamente
+            try {
+                const res = await api.get(`/servicios/${orden.presupuestoId}`);
+                setServicioEjecutando(res.data);
+                setOrdenEjecutandoId(orden.id);
+            } catch {
+                // Si falla, caer al flujo normal
+                onEjecutarOrden(orden);
+            }
+        } else {
+            onEjecutarOrden(orden);
+        }
+    };
+
+    const handleConfirmado = async () => {
+        // Avanzar la orden a COMPLETADA para impactar rendimientos
+        if (ordenEjecutandoId) {
+            try {
+                await api.patch(`/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' });
+            } catch { /* la orden se puede completar manualmente si falla */ }
+        }
+        setServicioEjecutando(null);
+        setOrdenEjecutandoId(null);
+        if (recargar) recargar();
+    };
 
     const activas     = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
     const completadas = ordenes.filter(o => o.estado === 'COMPLETADA');
@@ -268,6 +301,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     ];
 
     return (
+        <>
         <div className="p-4 max-w-2xl mx-auto">
             {/* Header */}
             <div className="mb-5">
@@ -306,12 +340,22 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         </p>
                         <div className="space-y-3">
                             {items.map(o => (
-                                <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={onEjecutarOrden} />
+                                <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} />
                             ))}
                         </div>
                     </div>
                 ))
             )}
         </div>
+
+        {/* Overlay EjecutarOrdenSheet para órdenes con presupuesto vinculado */}
+        {servicioEjecutando && (
+            <EjecutarOrdenSheet
+                servicio={servicioEjecutando}
+                onConfirmado={handleConfirmado}
+                onCerrar={() => { setServicioEjecutando(null); setOrdenEjecutandoId(null); }}
+            />
+        )}
+        </>
     );
 }

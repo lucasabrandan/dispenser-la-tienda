@@ -214,7 +214,10 @@ export function useServicioManager() {
                 trabajo:         it.trabajo         || it.trabajoRealizado || '',
             }));
             toast.dismiss(loading);
+            // Para ventas presupuesto → tipo explícito para usar condiciones comerciales
+            const esVenta = servicio.servicioTipo === 'VENTA';
             await generarRemitoPDFPremium({
+                tipo:                 esVenta && servicio.estado === 'PRESUPUESTO' ? 'PRESUPUESTO_VENTA' : undefined,
                 esPresupuesto:        servicio.estado === 'PRESUPUESTO',
                 servicioId:           servicio.id,
                 nroDocumentoExistente: servicio.nroDocumento || localStorage.getItem(`pdf_nro_${servicio.id}`) || null,
@@ -229,7 +232,7 @@ export function useServicioManager() {
                     nombreSede: servicio.sedeNombre,
                     direccion:  servicio.sedeDireccion,
                 },
-                tecnico:             itemsConFotos[0]?.tecnico || localStorage.getItem('tecnico_nombre') || 'Técnico',
+                tecnico:             itemsConFotos[0]?.tecnico || servicio.usuarioNombre || localStorage.getItem('tecnico_nombre') || 'Técnico',
                 ticketItems:         itemsConFotos,
                 fechaServicio:       servicio.fecha,
                 descuentoPorcentaje: servicio.descuentoPorcentaje || 0,

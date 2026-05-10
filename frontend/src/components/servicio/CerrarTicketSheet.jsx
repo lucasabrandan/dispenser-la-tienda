@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FirmaPad from '../ui/FirmaPad';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * CerrarTicketSheet
@@ -18,8 +19,10 @@ export default function CerrarTicketSheet({
     onGuardar,    // async () → { ok, id, clienteId, clienteNombre, tecnicoId } | null
     onCerrar,
 }) {
+    const { esAdmin } = useAuth();
     // 'menu' | 'cobrar' | 'presupuesto_ok'
-    const [paso, setPaso] = useState(modoEjecucion ? 'cobrar' : 'menu');
+    // Técnicos no pueden crear presupuestos — van directo a cobrar
+    const [paso, setPaso] = useState((modoEjecucion || !esAdmin) ? 'cobrar' : 'menu');
 
     // Firmas
     const [firmaTecnico,   setFirmaTecnico]   = useState(null);
@@ -149,14 +152,16 @@ export default function CerrarTicketSheet({
                             <p className="text-[11px] opacity-80">Firma del cliente, PDF y cierre del ticket</p>
                         </button>
 
-                        {/* Guardar presupuesto */}
-                        <button onClick={handleGuardar} disabled={procesando}
-                            className="w-full p-4 rounded-2xl text-left transition-all active:scale-[0.98] bg-[#EDEAE6] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07] disabled:opacity-50">
-                            <p className="text-[15px] font-black leading-none mb-1 text-[#1C1917] dark:text-[#F0EEE9]">
-                                {procesando ? 'Guardando…' : '📋 Guardar presupuesto'}
-                            </p>
-                            <p className="text-[11px] text-[#A8A29E]">Quedará pendiente para confirmar después</p>
-                        </button>
+                        {/* Guardar presupuesto — solo admin */}
+                        {esAdmin && (
+                            <button onClick={handleGuardar} disabled={procesando}
+                                className="w-full p-4 rounded-2xl text-left transition-all active:scale-[0.98] bg-[#EDEAE6] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07] disabled:opacity-50">
+                                <p className="text-[15px] font-black leading-none mb-1 text-[#1C1917] dark:text-[#F0EEE9]">
+                                    {procesando ? 'Guardando…' : '📋 Guardar presupuesto'}
+                                </p>
+                                <p className="text-[11px] text-[#A8A29E]">Quedará pendiente para confirmar después</p>
+                            </button>
+                        )}
 
                         <button onClick={onCerrar}
                             className="w-full py-3 text-[11px] font-bold text-[#A8A29E] uppercase tracking-wide active:scale-95">

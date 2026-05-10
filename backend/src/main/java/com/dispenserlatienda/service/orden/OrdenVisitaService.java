@@ -157,12 +157,14 @@ public class OrdenVisitaService {
     // ── Cascade al completar una orden ────────────────────────────────────────
     private void sincronizarConServicios(OrdenVisita o) {
         if (o.getPresupuestoId() != null) {
-            // Caso 1: orden vinculada a presupuesto → marcar servicio como REALIZADO
+            // Caso 1: orden vinculada a presupuesto → marcar REALIZADO y asignar técnico para rendimientos
             servicioRepository.findById(o.getPresupuestoId()).ifPresent(s -> {
-                if (s.getEstado() != EstadoServicio.REALIZADO) {
-                    s.setEstado(EstadoServicio.REALIZADO);
-                    servicioRepository.save(s);
+                s.setEstado(EstadoServicio.REALIZADO);
+                // Actualizar usuario al técnico que ejecutó la orden (impacta rendimientos correctamente)
+                if (o.getTecnico() != null) {
+                    s.setUsuario(o.getTecnico());
                 }
+                servicioRepository.save(s);
             });
         } else if (o.getTecnico() != null) {
             // Caso 2: orden sin presupuesto → crear servicio mínimo para impactar rendimientos
