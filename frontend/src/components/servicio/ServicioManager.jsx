@@ -10,6 +10,7 @@ import Paginacion from '../ui/Paginacion';
 import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
+import ModalDespachoRapido from '../ordenes/ModalDespachoRapido';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -67,6 +68,7 @@ export default function ServicioManager({
 
     const [servicioEjecutar, setServicioEjecutar]           = useState(null);
     const [servicioEjecutarSimple, setServicioEjecutarSimple] = useState(null); // para técnicos
+    const [modalDespacho, setModalDespacho]                 = useState(null); // presupuesto a despachar
     const [modalImportar, setModalImportar]         = useState(false);
     const [confirmEliminar, setConfirmEliminar]     = useState(null); // { ids: [], modo: 'uno'|'masivo' }
     const [tecnicos, setTecnicos]               = useState([]);
@@ -321,6 +323,7 @@ export default function ServicioManager({
                                 onEliminar={esAdmin ? (id) => setConfirmEliminar({ ids: [id], modo: 'uno' }) : null}
                                 onGenerarPDF={generarPDF}
                                 onDetalle={setModalDetalle}
+                                onDespachar={esAdmin ? setModalDespacho : null}
                                 calcularTotal={calcularTotal}
                             />
                         ))}
@@ -432,6 +435,21 @@ export default function ServicioManager({
                 <ImportadorServiciosModal
                     onCerrar={() => setModalImportar(false)}
                     onImportado={() => { filtros.cargar?.(); }}
+                />
+            )}
+
+            {/* Modal despacho rápido desde ServicioManager (Opción A) */}
+            {modalDespacho && (
+                <ModalDespachoRapido
+                    presupuesto={{
+                        id:            modalDespacho.id,
+                        clienteId:     modalDespacho.clienteId,
+                        clienteNombre: modalDespacho.clienteNombre,
+                        tecnicoId:     modalDespacho.usuarioId,
+                        nroDocumento:  modalDespacho.nroDocumento,
+                    }}
+                    onCreada={() => { setModalDespacho(null); cargarServicios(); }}
+                    onCerrar={() => setModalDespacho(null)}
                 />
             )}
 

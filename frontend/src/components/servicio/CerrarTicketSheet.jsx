@@ -4,6 +4,15 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
+const PRIORIDADES = [
+    { value: 'BAJA',    label: 'Baja'    },
+    { value: 'NORMAL',  label: 'Normal'  },
+    { value: 'ALTA',    label: 'Alta'    },
+    { value: 'URGENTE', label: 'Urgente' },
+];
+const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D48800]/40 placeholder:text-[#A8A29E]';
+const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
+
 /**
  * CerrarTicketSheet
  * Bottom sheet que reemplaza los botones Guardar/Confirmar.
@@ -36,6 +45,13 @@ export default function CerrarTicketSheet({
     const [creandoOrden,  setCreandoOrden]  = useState(false);
     const [ordenCreada,   setOrdenCreada]   = useState(false);
 
+    // Formulario de despacho rápido
+    const [tecnicos,      setTecnicos]      = useState([]);
+    const [dispTecnico,   setDispTecnico]   = useState('');
+    const [dispFecha,     setDispFecha]     = useState('');
+    const [dispHora,      setDispHora]      = useState('');
+    const [dispPrioridad, setDispPrioridad] = useState('NORMAL');
+
     const [procesando, setProcesando] = useState(false);
 
     useEffect(() => {
@@ -44,7 +60,14 @@ export default function CerrarTicketSheet({
             if (user.firma) setFirmaTecnico(user.firma);
             else            setEditandoTecnico(true);
         } catch {}
-    }, []);
+        // Cargar técnicos y pre-completar fecha para el despacho
+        if (esAdmin) {
+            api.get('/admin/usuarios')
+                .then(r => setTecnicos((r.data || []).filter(u => u.activo)))
+                .catch(() => {});
+            setDispFecha(new Date().toISOString().split('T')[0]);
+        }
+    }, [esAdmin]);
 
     const tecnicoFirmaGuardada = !!firmaTecnico && !editandoTecnico;
 
@@ -92,16 +115,20 @@ export default function CerrarTicketSheet({
 
     const handleCrearOrden = async () => {
         if (!savedResult) return;
+        if (!dispTecnico) { toast.error('Seleccioná un técnico'); return; }
+        if (!dispFecha)   { toast.error('Ingresá una fecha');      return; }
         setCreandoOrden(true);
         try {
             await api.post('/ordenes', {
-                titulo:          `Visita - ${savedResult.clienteNombre || 'Cliente'}`,
+                titulo:          `Visita — ${savedResult.clienteNombre || 'Cliente'}`,
                 clienteId:       savedResult.clienteId ? parseInt(savedResult.clienteId) : null,
                 clienteNombre:   savedResult.clienteNombre || '',
                 presupuestoId:   savedResult.id,
-                prioridad:       'NORMAL',
+                tecnicoId:       Number(dispTecnico),
+                fechaProgramada: dispFecha,
+                horaEstimada:    dispHora || null,
+                prioridad:       dispPrioridad,
                 descripcion:     '',
-                tecnicoId:       savedResult.tecnicoId || null,
             });
             setOrdenCreada(true);
             toast.success('Orden de visita creada');
@@ -247,40 +274,70 @@ export default function CerrarTicketSheet({
                 {/* ── PASO PRESUPUESTO GUARDADO ──────────────────────────── */}
                 {paso === 'presupuesto_ok' && (
                     <div className="p-6 space-y-4">
-                        <div className="text-center py-2">
-                            <p className="text-[32px] mb-1">✅</p>
-                            <p className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Presupuesto guardado</p>
-                            {savedResult?.id && (
-                                <p className="text-[11px] text-[#A8A29E] mt-0.5">#{savedResult.id}</p>
-                            )}
+                        <div className="flex items-center gap-3">
+                            <span className="text-[24px]">✅</span>
+                            <div>
+                                <p className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">Presupuesto guardado</p>
+                                {savedResult?.id && (
+                                    <p className="text-[11px] text-[#A8A29E] mt-0.5">#{savedResult.id}</p>
+                                )}
+                            </div>
                         </div>
 
                         {!ordenCreada ? (
                             <>
-                                <div className="p-4 rounded-2xl bg-[#D8D4CE] dark:bg-[#1C1C1C] border border-black/[0.06] dark:border-white/[0.06]">
-                                    <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] mb-1">
-                                        ¿Crear orden de visita?
-                                    </p>
-                                    <p className="text-[11px] text-[#A8A29E]">
-                                        Aparece en Despacho para asignar fecha y técnico
-                                    </p>
+                                <p className="text-[12px] font-black text-[#A8A29E] uppercase tracking-widest">
+                                    ¿Despachar ahora? (opcional)
+                                </p>
+
+                                {/* Técnico */}
+                                <div>
+                                    <label className={labelCls}>Técnico *</label>
+                                    <select value={dispTecnico} onChange={e => setDispTecnico(e.target.value)} className={inputCls}>
+                                        <option value="">Seleccionar técnico...</option>
+                                        {tecnicos.map(t => (
+                                            <option key={t.id} value={t.id}>{t.nombre}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Fecha + Hora */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className={labelCls}>Fecha *</label>
+                                        <input type="date" value={dispFecha} onChange={e => setDispFecha(e.target.value)} className={inputCls} />
+                                    </div>
+                                    <div>
+                                        <label className={labelCls}>Hora est.</label>
+                                        <input type="time" value={dispHora} onChange={e => setDispHora(e.target.value)} className={inputCls} />
+                                    </div>
+                                </div>
+
+                                {/* Prioridad */}
+                                <div>
+                                    <label className={labelCls}>Prioridad</label>
+                                    <select value={dispPrioridad} onChange={e => setDispPrioridad(e.target.value)} className={inputCls}>
+                                        {PRIORIDADES.map(p => (
+                                            <option key={p.value} value={p.value}>{p.label}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="flex gap-2">
                                     <button onClick={onCerrar}
                                         className="flex-1 py-3 rounded-2xl text-[11px] font-black uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
-                                        No, listo
+                                        Ahora no
                                     </button>
-                                    <button onClick={handleCrearOrden} disabled={creandoOrden}
-                                        className="flex-[2] py-3 rounded-2xl text-[11px] font-black uppercase text-white active:scale-95 bg-[#D48800] dark:bg-[#F0A500] disabled:opacity-50">
-                                        {creandoOrden ? 'Creando…' : '+ Crear orden'}
+                                    <button onClick={handleCrearOrden} disabled={creandoOrden || !dispTecnico || !dispFecha}
+                                        className="flex-[2] py-3 rounded-2xl text-[11px] font-black uppercase text-white active:scale-95 bg-[#D48800] dark:bg-[#F0A500] disabled:opacity-40">
+                                        {creandoOrden ? 'Creando…' : '🚀 Despachar'}
                                     </button>
                                 </div>
                             </>
                         ) : (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
-                                    <span className="text-[12px] font-bold text-[#1E8A4A]">✓ Orden de visita creada</span>
+                                    <span className="text-[12px] font-bold text-[#1E8A4A]">✓ Orden de visita creada y asignada</span>
                                 </div>
                                 <button onClick={onCerrar}
                                     className="w-full py-3 rounded-2xl text-[11px] font-black uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">

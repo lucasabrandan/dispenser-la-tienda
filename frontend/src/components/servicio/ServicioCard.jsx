@@ -33,7 +33,7 @@ function IconBtn({ onClick, title, children, cls = '' }) {
 export default function ServicioCard({
     servicio, modoSeleccion, seleccionado,
     onToggleSelect, onEditar, onEjecutar, onCobrar,
-    onRechazar, onArchivar, onEliminar, onGenerarPDF, onDetalle, calcularTotal,
+    onRechazar, onArchivar, onEliminar, onGenerarPDF, onDetalle, onDespachar, calcularTotal,
 }) {
     const [expandido, setExpandido] = useState(false);
 
@@ -185,6 +185,10 @@ export default function ServicioCard({
                     <>
                         <IconBtn onClick={() => onRechazar(servicio.id)} title="Rechazar"
                             cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
+                        {onDespachar && (
+                            <IconBtn onClick={() => onDespachar(servicio)} title="Despachar a técnico"
+                                cls="bg-[#D48800]/15 dark:bg-[#F0A500]/15 text-[#D48800] dark:text-[#F0A500]">🚀</IconBtn>
+                        )}
                         <button
                             onClick={() => onEjecutar(servicio)}
                             className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]"
