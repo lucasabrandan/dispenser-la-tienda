@@ -1287,7 +1287,7 @@ async function generarComprobante(doc, {
             const nombreConDesc = r.descripcion
                 ? `${r.nombre}\n${r.descripcion}`
                 : r.nombre;
-            filas.push(['', nombreConDesc, r.sku || '—', String(r.cantidad),
+            filas.push(['', nombreConDesc, r.sku || '', String(r.cantidad),
                 `$ ${Number(r.precio).toLocaleString('es-AR')}`,
                 `$ ${Number(r.subtotal ?? r.precio * r.cantidad).toLocaleString('es-AR')}`]);
             fotos.push(await cargarFoto(r.fotoUrl || null));
@@ -1295,27 +1295,44 @@ async function generarComprobante(doc, {
         // Envío como línea separada
         const envio = parseFloat(item.costoExtra || 0);
         if (envio > 0) {
-            filas.push(['', 'Envío', '—', '1', `$ ${envio.toLocaleString('es-AR')}`, `$ ${envio.toLocaleString('es-AR')}`]);
+            filas.push(['', 'Envío', '', '1', `$ ${envio.toLocaleString('es-AR')}`, `$ ${envio.toLocaleString('es-AR')}`]);
             fotos.push(null);
         }
     }
 
     if (filas.length > 0) {
+        // Mostrar columna imagen solo si hay al menos un producto con foto
+        const hayFotosComp = fotos.some(f => f !== null);
+        const headFinal = hayFotosComp
+            ? [['Imagen', 'Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']]
+            : [['Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']];
+        const bodyFinal = filas.map(f => hayFotosComp ? f : f.slice(1));
+        const colStylesFinal = hayFotosComp ? {
+            0: { cellWidth: PROD_W + 4 }, 1: { cellWidth: 'auto', overflow: 'linebreak' },
+            2: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
+            3: { halign: 'center', cellWidth: 14 }, 4: { halign: 'right', cellWidth: 24 },
+            5: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
+        } : {
+            0: { cellWidth: 'auto', overflow: 'linebreak' },
+            1: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
+            2: { halign: 'center', cellWidth: 14 }, 3: { halign: 'right', cellWidth: 24 },
+            4: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
+        };
+
         y = checkSalto(doc, y, 40);
         autoTable(doc, {
             startY: y,
-            head:  [['Imagen', 'Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']],
-            body:  filas,
+            head:  headFinal,
+            body:  bodyFinal,
             theme: 'grid',
             headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: 'bold', fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
-            bodyStyles: { fontSize: T.xs, textColor: C.dark, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 }, minCellHeight: PROD_H + 4, valign: 'middle', lineColor: C.grayBorder, lineWidth: 0.1, overflow: 'linebreak' },
-            rowPageBreak: 'avoid',
-            columnStyles: {
-                0: { cellWidth: PROD_W + 4 }, 1: { cellWidth: 'auto', overflow: 'linebreak' },
-                2: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
-                3: { halign: 'center', cellWidth: 14 }, 4: { halign: 'right', cellWidth: 24 },
-                5: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
+            bodyStyles: {
+                fontSize: T.xs, textColor: C.dark, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+                valign: 'middle', lineColor: C.grayBorder, lineWidth: 0.1, overflow: 'linebreak',
+                ...(hayFotosComp ? { minCellHeight: PROD_H + 4 } : {}),
             },
+            rowPageBreak: 'avoid',
+            columnStyles: colStylesFinal,
             margin: { left: M, right: M, top: HEADER_H.compact + 8 },
             didDrawPage: (data) => {
                 if (data.pageNumber > 1) {
@@ -1323,7 +1340,7 @@ async function generarComprobante(doc, {
                 }
             },
             didParseCell: data => { if (data.section === 'body' && data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra; },
-            didDrawCell: data => {
+            didDrawCell: hayFotosComp ? (data => {
                 if (data.section === 'body' && data.column.index === 0) {
                     const foto = fotos[data.row.index];
                     if (foto) {
@@ -1332,7 +1349,7 @@ async function generarComprobante(doc, {
                         doc.addImage(foto.data, foto.format, ix, iy, PROD_W, PROD_H);
                     }
                 }
-            },
+            }) : undefined,
         });
         y = doc.lastAutoTable.finalY + 8;
     }
@@ -1522,5 +1539,13 @@ export const generarPDF = async ({
     const nombreBase = tipoLabel.split(' ')[0];
     const nombreCliente = (cliente.nombre || 'Cliente').replace(/\s+/g, '-');
     const fechaStr = fecha.replace(/\//g, '-');
-    doc.save(`${nombreBase}_${nombreCliente}_${fechaStr}.pdf`);
+    const fileName = `${nombreBase}_${nombreCliente}_${fechaStr}.pdf`;
+
+    // iOS Safari bloquea descargas automáticas después de await — abrir en nueva pestaña
+    const isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent);
+    if (isIOS) {
+        window.open(doc.output('datauristring'), '_blank');
+    } else {
+        doc.save(fileName);
+    }
 };
