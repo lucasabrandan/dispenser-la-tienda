@@ -55,7 +55,9 @@ export default function ServicioForm({
     }, [borradorDisponible, ticketItems.length]);
 
     const { usuario } = useAuth();
-    const tecnicoNombre = usuario?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico';
+    const { tecnicoSeleccionado } = hook;
+    // Usar el técnico asignado si lo seleccionó el admin, si no el usuario logueado
+    const tecnicoNombre = tecnicoSeleccionado?.nombre || usuario?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico';
 
     const isDark      = document.documentElement.classList.contains('dark');
     const selectStyles = buildSelectStyles(isDark);
