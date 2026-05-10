@@ -63,8 +63,6 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                 id: rep.id,
                 nombre: rep.nombre,
                 precio: parseFloat(rep.precio) || 0,
-                costo: parseFloat(rep.costo) || 0,
-                porcentajeGanancia: rep.porcentajeGanancia || 0,
                 cantidad: 1,
             }];
         });
