@@ -164,10 +164,17 @@ async function generarSingleTecnico(doc, {
     const hayFotosST = fotosST.some(f => f !== null);
 
     const tableData = filasConPlaceholder.map(r => {
-        const fila = [r.concepto, String(r.cant),
-            r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`,
-            r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`,
-        ];
+        const cantStr    = String(r.cant);
+        const unitStr    = r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`;
+        const importeStr = r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`;
+        // MO sin imagen: concepto ocupa columna imagen+concepto (colSpan 2) para no dejar celda vacía
+        if (hayFotosST && r.esServicio) {
+            return [
+                { content: r.concepto, colSpan: 2, styles: { textColor: C.navy, fontStyle: 'bold', fontSize: T.xs } },
+                cantStr, unitStr, importeStr,
+            ];
+        }
+        const fila = [r.concepto, cantStr, unitStr, importeStr];
         if (hayFotosST) fila.unshift('');
         return fila;
     });
@@ -420,11 +427,17 @@ async function generarSinglePresupuesto(doc, {
     const hayFotosSP = fotosSP.some(f => f !== null);
 
     const tableDataP = filasConPlaceholder.map(r => {
-        const fila = [
-            r.concepto, String(r.cant),
-            r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`,
-            r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`,
-        ];
+        const cantStr    = String(r.cant);
+        const unitStr    = r.unitario.startsWith('A') ? r.unitario : `$ ${r.unitario}`;
+        const importeStr = r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`;
+        // MO sin imagen: concepto ocupa columna imagen+concepto (colSpan 2) para no dejar celda vacía
+        if (hayFotosSP && r.esServicio) {
+            return [
+                { content: r.concepto, colSpan: 2, styles: { textColor: C.navy, fontStyle: 'bold', fontSize: T.xs } },
+                cantStr, unitStr, importeStr,
+            ];
+        }
+        const fila = [r.concepto, cantStr, unitStr, importeStr];
         if (hayFotosSP) fila.unshift('');
         return fila;
     });
@@ -1026,7 +1039,7 @@ async function generarPresupuestoVenta(doc, {
         if (envio > 0) {
             filas.push(['', '—', 'Envío', '1', `$ ${envio.toLocaleString('es-AR')}`, '—', `$ ${envio.toLocaleString('es-AR')}`]);
             fotos.push(null);
-            metas.push({ tieneDesc: false });
+            metas.push({ tieneDesc: false, isEnvio: true });
         }
     }
 
@@ -1046,10 +1059,22 @@ async function generarPresupuestoVenta(doc, {
         const headBase   = ['SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', ...(conDescuento ? ['P. c/Desc.'] : []), 'Total'];
         const headFinal  = hayFotosPV ? ['Imagen', ...headBase] : headBase;
         // filas[i][0] es '' (placeholder imagen), índice 5 es P.c/Desc (solo cuando conDescuento)
-        const bodyFinal = filas.map(f => {
+        const bodyFinal = filas.map((f, i) => {
             const sinImg  = f.slice(1); // [sku, nombre, cant, pUnit, pDesc, total]
-            const sinDesc = conDescuento ? sinImg : sinImg.filter((_, i) => i !== 4);
-            return hayFotosPV ? [f[0], ...sinDesc] : sinDesc;
+            const sinDesc = conDescuento ? sinImg : sinImg.filter((_, j) => j !== 4);
+            if (!hayFotosPV) return sinDesc;
+            // Envío: sin imagen ni SKU — concepto ocupa imagen+SKU+nombre (colSpan 3)
+            if (metas[i]?.isEnvio) {
+                const [, , nombre, cant, pUnit, pDesc, total] = f;
+                const cols = [
+                    { content: nombre, colSpan: 3 },
+                    cant, pUnit,
+                    ...(conDescuento ? [pDesc] : []),
+                    total,
+                ];
+                return cols;
+            }
+            return [f[0], ...sinDesc];
         });
 
         // columnStyles dinámico
