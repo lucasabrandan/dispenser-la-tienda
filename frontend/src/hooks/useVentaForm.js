@@ -171,9 +171,10 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
                 }
             }
 
+            const authUsuario = (() => { try { return JSON.parse(localStorage.getItem('auth_usuario')); } catch { return null; } })();
             await api.post('/servicios', {
                 sedeId:            parseInt(mostradorSid || 1),
-                usuarioId:         1,
+                usuarioId:         authUsuario?.id || 1,
                 fecha:             fechaVenta,
                 servicioTipo:      'VENTA',
                 estado:            confirmar ? 'REALIZADO' : 'PRESUPUESTO',

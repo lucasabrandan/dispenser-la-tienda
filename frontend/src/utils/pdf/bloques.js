@@ -2,12 +2,31 @@ import autoTable from 'jspdf-autotable';
 import { C, M, T, CONTENT_W } from './theme.js';
 import { checkSalto } from './helpers.js';
 
-// ── BLOQUE CLIENTE (con columna opcional de diagnóstico) ─────────────────────
+// ── BLOQUE CLIENTE (con columna opcional de diagnóstico o equipo) ─────────────
 // diagnostico: texto libre para mostrar en columna derecha (presupuesto)
-// Si no se pasa diagnostico, el bloque ocupa full-width
+// item: equipo a mostrar en columna derecha cuando no hay diagnostico (single presupuesto)
+// Si no se pasa ninguno, el bloque ocupa full-width
 export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null, diagnostico = null, tituloDiag = 'DIAGNÓSTICO / SOLICITUD', conBullet = false }) {
     const tieneDiag = !!(diagnostico && diagnostico.trim());
-    const LEFT_W  = tieneDiag ? CONTENT_W * 0.54 : CONTENT_W;
+
+    // Equipo en columna derecha cuando item tiene datos reales y no hay diagnostico
+    const serialItem = item?.equipoSerial && !['MOSTRADOR', 'SIN-SN'].includes(item.equipoSerial) ? item.equipoSerial : null;
+    const modeloItem = item?.modeloEquipo || item?.equipoModelo || null;
+    const marcaItem  = item?.marcaEquipo  || item?.equipoMarca  || null;
+    const ubicItem   = item?.ubicacionEquipo || item?.equipoUbicacion || null;
+    const pisoItem   = item?.equipoPiso   || null;
+    const sectorItem = item?.equipoSector || null;
+    const camposEquipo = [
+        (modeloItem || marcaItem) ? { l: 'EQUIPO',    v: [marcaItem, modeloItem].filter(Boolean).join(' · ') } : null,
+        serialItem               ? { l: 'N° SERIE',  v: serialItem } : null,
+        ubicItem                 ? { l: 'UBICACIÓN', v: ubicItem   } : null,
+        pisoItem                 ? { l: 'PISO',      v: pisoItem   } : null,
+        sectorItem               ? { l: 'SECTOR',    v: sectorItem  } : null,
+    ].filter(Boolean);
+    const tieneEquipoDer = !tieneDiag && camposEquipo.length > 0;
+    const tieneDer = tieneDiag || tieneEquipoDer;
+
+    const LEFT_W  = tieneDer ? CONTENT_W * 0.54 : CONTENT_W;
     const RIGHT_W = CONTENT_W - LEFT_W - 4;
     const RIGHT_X = M + LEFT_W + 4;
 
@@ -27,6 +46,9 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
         doc.setFontSize(T.xxs);
         const diagLines = doc.splitTextToSize(diagnostico.trim(), RIGHT_W - 4);
         cardH = Math.max(textH, diagLines.length * 4.2 + 16);
+    } else if (tieneEquipoDer) {
+        const equipoH = camposEquipo.length * 4.2 + 11;
+        cardH = Math.max(textH, equipoH);
     } else {
         cardH = Math.max(textH, 22);
     }
@@ -38,8 +60,8 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     doc.setLineWidth(0.2);
     doc.roundedRect(M - 2, y, CONTENT_W + 4, cardH, 2, 2, 'S');
 
-    // Divisor vertical (solo si hay diagnóstico)
-    if (tieneDiag) {
+    // Divisor vertical (si hay columna derecha)
+    if (tieneDer) {
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
         doc.line(RIGHT_X - 2, y + 3, RIGHT_X - 2, y + cardH - 3);
@@ -67,7 +89,7 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     doc.setTextColor(...C.grayText);
     datosCliente.forEach(l => { doc.text(l, M + 2, cy); cy += 4.2; });
 
-    // ── Columna derecha: DIAGNÓSTICO (opcional) ──
+    // ── Columna derecha: DIAGNÓSTICO o DATOS DEL EQUIPO ──
     if (tieneDiag) {
         let dy = y + 6;
         doc.setFontSize(T.label);
@@ -81,6 +103,26 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
         doc.setTextColor(...C.dark);
         const diagLines = doc.splitTextToSize(diagnostico.trim(), RIGHT_W - 4);
         diagLines.slice(0, 8).forEach(l => { doc.text(l, RIGHT_X, dy); dy += 4.2; });
+    } else if (tieneEquipoDer) {
+        let dy = y + 6;
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('DATOS DEL EQUIPO', RIGHT_X, dy);
+        dy += 5;
+
+        camposEquipo.forEach(({ l, v }) => {
+            doc.setFontSize(T.label);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.grayText);
+            doc.text(l, RIGHT_X, dy);
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.dark);
+            const vLines = doc.splitTextToSize(String(v), RIGHT_W - 22);
+            doc.text(vLines[0], RIGHT_X + 20, dy);
+            dy += 4.2;
+        });
     }
 
     return y + cardH + 3;

@@ -368,13 +368,21 @@ async function generarSinglePresupuesto(doc, {
         cargarFoto(item.fotoAntes && item.fotoDespues ? item.fotoDespues : null),
     ]);
 
-    // Bloque cliente (sin diagnóstico en columna — va en sección propia debajo)
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: null });
+    // Bloque cliente | equipo en columnas (si hay equipo real); si no, cliente full-width
+    const tieneEquipoReal = item.equipoSerial && !['MOSTRADOR', 'SIN-SN'].includes(item.equipoSerial);
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: tieneEquipoReal ? item : null, y, pageW, diagnostico: null });
 
-    // Bloque equipo + trabajo: unificado si no hay foto, separado si hay foto
+    // Trabajo / solicitud en bloque propio debajo (si tiene equipo real, ya no va en dibujarBloqueEquipoYTrabajo)
     const diagnostico = sanitizarTexto(item.trabajo || item.resumenTexto || item.descripcion || '');
-    y = checkSalto(doc, y, 36);
-    y = dibujarBloqueEquipoYTrabajo(doc, { item, trabajo: diagnostico, y, pageW, fotoAntes });
+    if (tieneEquipoReal) {
+        if (diagnostico) {
+            y = checkSalto(doc, y, 20);
+            y = dibujarBloqueSolicitud(doc, { texto: diagnostico, y, pageW });
+        }
+    } else {
+        y = checkSalto(doc, y, 36);
+        y = dibujarBloqueEquipoYTrabajo(doc, { item, trabajo: diagnostico, y, pageW, fotoAntes });
+    }
 
     // Tabla de precios
     const filas = construirFilasItem(item);
@@ -529,8 +537,12 @@ async function generarSinglePresupuesto(doc, {
     doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
-    // Foto del problema (solo si hay segunda foto real además de la de equipo)
-    if (fotoDespues) {
+    // Registro fotográfico: fotoAntes (siempre si existe) + fotoDespues (si hay ambas)
+    if (tieneEquipoReal && (fotoAntes || fotoDespues)) {
+        y = checkSalto(doc, y, 50);
+        y = dibujarRegistroFotografico(doc, { y, fotoA: fotoAntes, fotoD: fotoDespues });
+    } else if (!tieneEquipoReal && fotoDespues) {
+        // Caso sin equipo real: mostrar evidencia del problema igual que antes
         y = checkSalto(doc, y, 40);
         const COL_W  = (CONTENT_W - 6) / 2;
         const FOTO_H = Math.floor((COL_W * 3) / 4);
