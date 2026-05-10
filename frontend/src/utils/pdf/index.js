@@ -1005,7 +1005,14 @@ async function generarPresupuestoVenta(doc, {
     const empresa = getEmpresa();
     const pct     = parseFloat(descuentoPorcentaje || 0);
 
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW });
+    // Condiciones en columna derecha del bloque cliente (evita página separada)
+    const condsVenta = [
+        '· Valido por 7 dias corridos desde la fecha de emision.',
+        '· Precios sujetos a disponibilidad de stock.',
+        '· El pedido se prepara una vez confirmado el pago.',
+        '· Forma de pago a coordinar al confirmar.',
+    ].join('\n');
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: condsVenta, tituloDiag: 'CONDICIONES' });
 
     // Columnas: imagen | SKU | nombre+desc | cant | p.unit | p.desc | total línea
     const FOTO_W = 20;
@@ -1242,17 +1249,14 @@ async function generarPresupuestoVenta(doc, {
         y += leyHV + 4;
     }
 
-    // Condiciones + QR WhatsApp
-    const condH  = 44;
-    const qrWaH  = empresa.whatsapp ? 54 : 0;
-    const pageHQ = doc.internal.pageSize.getHeight();
-    if (y + condH + qrWaH > pageHQ - 25) {
-        doc.addPage();
-        dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('PRESUPUESTO_VENTA', false), fecha, nroDoc });
-        y = HEADER_H.compact + 8;
-    }
-    y = dibujarCondicionesVenta(doc, { y, pageW, empresa, nroDoc });
+    // QR WhatsApp (condiciones ya están en el header junto al cliente)
     if (empresa.whatsapp) {
+        const pageHQ = doc.internal.pageSize.getHeight();
+        if (y + 54 > pageHQ - 25) {
+            doc.addPage();
+            dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('PRESUPUESTO_VENTA', false), fecha, nroDoc });
+            y = HEADER_H.compact + 8;
+        }
         y = await dibujarQRWhatsApp(doc, {
             x: M, y,
             telefono: empresa.whatsapp,
