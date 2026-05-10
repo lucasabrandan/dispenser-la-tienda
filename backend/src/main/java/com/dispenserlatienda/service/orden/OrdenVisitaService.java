@@ -168,7 +168,9 @@ public class OrdenVisitaService {
             });
         } else if (o.getTecnico() != null) {
             // Caso 2: orden sin presupuesto → crear servicio mínimo para impactar rendimientos
-            // (incluso si monto es 0, registra el trabajo para métricas del técnico)
+            // Si ya existe un servicio asociado (creado por ModalRegistrarTrabajo), no duplicar
+            if (servicioRepository.existsByOrdenId(o.getId())) return;
+
             Sede sedeMostrador = sedeRepository.findAll().stream()
                 .filter(s -> s.getNombreSede() != null
                           && s.getNombreSede().toLowerCase().contains("mostrador"))

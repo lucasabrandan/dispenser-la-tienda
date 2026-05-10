@@ -15,4 +15,6 @@ public interface ServicioRepository extends JpaRepository<Servicio, Long>, JpaSp
     List<Servicio> findBySedeId(Long sedeId);
 
     boolean existsByUsuarioId(Long usuarioId);
+
+    boolean existsByOrdenId(Long ordenId);
 }

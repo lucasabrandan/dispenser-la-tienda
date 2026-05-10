@@ -99,7 +99,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                 tecnico:          it.tecnico || usuario?.nombre || 'Técnico',
                 costo:            Number(it.costo || 0),
                 costoExtra:       Number(it.costoExtra || 0),
-                metodoPago:       'EFECTIVO',
+                metodoPago:       it.metodoPago || 'EFECTIVO',
                 trabajoRealizado: it.trabajoRealizado || '',
                 trabajoTipo:      it.trabajoTipo || 'REPARACION',
                 garantiaHasta:    it.garantiaHasta || null,
@@ -126,42 +126,48 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
 
             toast.success('Trabajo confirmado', { id: loading });
 
-            // Generar PDF de orden de servicio
-            const ticketItems = itemsActualizados.map(it => ({
-                ...it,
-                totalCalculado:  it.costo,
-                modeloEquipo:    it.modeloEquipo || null,
-                ubicacionEquipo: it.ubicacionEquipo || null,
-                trabajo:         it.trabajoRealizado,
-            }));
+            // Generar PDF — si falla (popup blocker, etc.) el trabajo ya está guardado
+            try {
+                const ticketItems = itemsActualizados.map(it => ({
+                    ...it,
+                    totalCalculado:  it.costo,
+                    modeloEquipo:    it.modeloEquipo || null,
+                    ubicacionEquipo: it.ubicacionEquipo || null,
+                    trabajo:         it.trabajoRealizado,
+                }));
 
-            await generarRemitoPDFPremium({
-                esPresupuesto:          false,
-                servicioId:             servicio.id,
-                nroDocumentoExistente:  servicio.nroDocumento
-                    || localStorage.getItem(`pdf_nro_${servicio.id}`)
-                    || null,
-                cliente: {
-                    nombre:       servicio.clienteNombre,
-                    telefono:     servicio.clienteTelefono,
-                    email:        servicio.clienteEmail,
-                    cuilDni:      servicio.clienteDni,
-                    condicionIva: servicio.clienteCondicionIva,
-                },
-                sede: {
-                    nombreSede: servicio.sedeNombre,
-                    direccion:  servicio.sedeDireccion,
-                },
-                tecnico:             usuario?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico',
-                ticketItems,
-                fechaServicio:       servicio.fecha,
-                descuentoPorcentaje: descPct,
-                leyenda:             observaciones,
-                esTecnicoForzado:    true,
-                firmaTecnico:        incluirFirmas ? (firmaTecnico || null) : null,
-                firmaCliente:        incluirFirmas ? (firmaCliente || null) : null,
-                incluirFirmas,
-            });
+                await generarRemitoPDFPremium({
+                    esPresupuesto:          false,
+                    servicioId:             servicio.id,
+                    nroDocumentoExistente:  servicio.nroDocumento
+                        || localStorage.getItem(`pdf_nro_${servicio.id}`)
+                        || null,
+                    cliente: {
+                        nombre:       servicio.clienteNombre,
+                        telefono:     servicio.clienteTelefono,
+                        email:        servicio.clienteEmail,
+                        cuilDni:      servicio.clienteDni,
+                        condicionIva: servicio.clienteCondicionIva,
+                    },
+                    sede: {
+                        nombreSede: servicio.sedeNombre,
+                        direccion:  servicio.sedeDireccion,
+                    },
+                    tecnico:             usuario?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico',
+                    ticketItems,
+                    fechaServicio:       servicio.fecha,
+                    descuentoPorcentaje: descPct,
+                    leyenda:             observaciones,
+                    esTecnicoForzado:    true,
+                    firmaTecnico:        incluirFirmas ? (firmaTecnico || null) : null,
+                    firmaCliente:        incluirFirmas ? (firmaCliente || null) : null,
+                    incluirFirmas,
+                });
+            } catch (pdfErr) {
+                // PDF no bloqueante: el trabajo ya está guardado aunque el PDF falle
+                console.warn('PDF no generado:', pdfErr);
+                toast('Trabajo guardado. PDF no disponible (bloqueado por el navegador)', { icon: '⚠️' });
+            }
 
             if (onConfirmado) onConfirmado();
         } catch (e) {

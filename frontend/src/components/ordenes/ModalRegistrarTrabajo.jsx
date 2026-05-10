@@ -29,20 +29,19 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
 
     useEffect(() => {
         api.get('/repuestos').then(r => setRepuestosDisp(r.data || [])).catch(() => {});
-        // Cargar sedes del cliente si hay clienteId
-        if (orden.clienteId) {
-            api.get(`/sedes?clienteId=${orden.clienteId}`)
-                .then(r => {
-                    const lista = r.data || [];
-                    setSedes(lista);
-                    // Auto-seleccionar si hay una sola sede
-                    if (lista.length === 1) {
-                        setSedeId(String(lista[0].id));
-                        setSedeNombre(lista[0].nombre || lista[0].descripcion || '');
-                    }
-                })
-                .catch(() => {});
-        }
+        // Cargar sedes del cliente si hay clienteId; si no, cargar todas las sedes disponibles
+        const url = orden.clienteId ? `/sedes?clienteId=${orden.clienteId}` : '/sedes';
+        api.get(url)
+            .then(r => {
+                const lista = r.data?.content || r.data || [];
+                setSedes(lista);
+                // Auto-seleccionar si hay una sola sede
+                if (lista.length === 1) {
+                    setSedeId(String(lista[0].id));
+                    setSedeNombre(lista[0].nombre || lista[0].descripcion || '');
+                }
+            })
+            .catch(() => {});
     }, [orden.clienteId]);
 
     const agregarRepuesto = (e) => {
@@ -78,7 +77,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
 
             const sedeSel = sedes.find(s => String(s.id) === String(sedeId));
 
-            // Crear el servicio REALIZADO directamente
+            // Crear el servicio REALIZADO directamente (ordenId para evitar duplicado en sincronizarConServicios)
             await api.post('/servicios', {
                 clienteNombre: orden.clienteNombre || '',
                 sedeId:        Number(sedeId),
@@ -87,6 +86,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                 servicioTipo:  'REPARACION',
                 estado:        'REALIZADO',
                 fecha:         new Date().toISOString().split('T')[0],
+                ordenId:       orden.id,
                 items: [{
                     equipoSerial:     serial.trim() || 'S/N',
                     tecnico:          String(tecnicoId),
@@ -98,10 +98,10 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                 }],
             });
 
-            // Marcar la orden como completada con nota
+            // Marcar la orden como completada con nota del técnico
             await api.patch(`/ordenes/${orden.id}/estado`, {
-                estado: 'COMPLETADA',
-                nota:   descripcion,
+                estado:       'COMPLETADA',
+                notasTecnico: descripcion,
             });
 
             toast.success('Trabajo registrado');
@@ -157,7 +157,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                         <div>
                             <label className={labelCls}>Sede *</label>
                             <p className="text-[11px] text-[#D13A28] font-bold">
-                                Sin sedes registradas para este cliente
+                                Sin sedes disponibles en el sistema
                             </p>
                         </div>
                     )}

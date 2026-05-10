@@ -156,7 +156,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                                     Cancelar
                                 </button>
                             )}
-                            {!confirmando && onEjecutar && orden.estado !== 'EN_SITIO' && (
+                            {!confirmando && onEjecutar && orden.estado !== 'EN_SITIO' && orden.presupuestoId && (
                                 <button onClick={() => onEjecutar(orden)}
                                     className="py-2.5 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all whitespace-nowrap">
                                     🔧 Ejecutar
@@ -293,6 +293,19 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado, recargar } = useOrdenes({ tecnicoId });
     const [tab, setTab] = useState('activas');
 
+    // Historial (completadas) — se carga del endpoint dedicado, no del array activas
+    const [historial,        setHistorial]        = useState([]);
+    const [cargandoHistorial, setCargandoHistorial] = useState(false);
+
+    useEffect(() => {
+        if (tab !== 'historial' || !tecnicoId) return;
+        setCargandoHistorial(true);
+        api.get(`/ordenes/historial/${tecnicoId}`)
+            .then(r => setHistorial((r.data || []).filter(o => o.estado === 'COMPLETADA')))
+            .catch(() => setHistorial([]))
+            .finally(() => setCargandoHistorial(false));
+    }, [tab, tecnicoId]);
+
     // Estado para abrir EjecutarOrdenSheet directamente (órdenes con presupuesto vinculado)
     const [servicioEjecutando, setServicioEjecutando] = useState(null);
     const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);
@@ -328,9 +341,8 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         if (recargar) recargar();
     };
 
-    const activas     = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
-    const completadas = ordenes.filter(o => o.estado === 'COMPLETADA');
-    const lista = tab === 'activas' ? activas : completadas;
+    const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
+    const lista   = tab === 'activas' ? activas : historial;
 
     // Agrupar activas/completadas por fecha
     const porFecha = lista.reduce((acc, o) => {
@@ -350,7 +362,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
 
     const TABS = [
         { id: 'activas',      label: `Activas (${activas.length})` },
-        { id: 'historial',    label: `Completadas (${completadas.length})` },
+        { id: 'historial',    label: `Completadas (${historial.length})` },
         { id: 'rendimiento',  label: '📊 Rendimiento' },
     ];
 
@@ -380,7 +392,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
             {/* Contenido de cada tab */}
             {tab === 'rendimiento' ? (
                 <RendimientoTab tecnicoId={tecnicoId} />
-            ) : cargando ? (
+            ) : (tab === 'activas' ? cargando : cargandoHistorial) ? (
                 <p className="text-center text-[#A8A29E] py-12">Cargando...</p>
             ) : lista.length === 0 ? (
                 <p className="text-center text-[#A8A29E] py-12">

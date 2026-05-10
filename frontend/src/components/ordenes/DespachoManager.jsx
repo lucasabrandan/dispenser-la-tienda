@@ -103,7 +103,7 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                 )}
                 <div className="flex-1" />
                 {!esFinal && (
-                    <button onClick={() => onAvanzar(orden.id, 'CANCELADA')}
+                    <button onClick={() => window.confirm('¿Cancelar esta orden?') && onAvanzar(orden.id, 'CANCELADA')}
                         className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                         Cancelar
                     </button>
