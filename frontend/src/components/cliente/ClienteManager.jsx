@@ -87,27 +87,35 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
     return (
         <div className="w-full max-w-7xl mx-auto px-4 pb-20 bg-[#C8C4BE] dark:bg-[#141414] min-h-screen transition-colors">
 
-            {/* BUSCADOR sticky */}
-            <div className="sticky top-0 z-30 py-5 bg-[#C8C4BE]/90 dark:bg-[#141414]/90 backdrop-blur-xl -mx-4 px-4 border-b border-black/[0.07] dark:border-white/[0.07] mb-6">
-                <div className="relative max-w-3xl mx-auto">
-                    <input
-                        placeholder="Buscar por cliente, ciudad o S/N..."
-                        value={busqueda}
-                        onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
-                        className="
-                            w-full py-3.5 pl-11 pr-5
-                            bg-[#EDEAE6] dark:bg-[#242424]
-                            rounded-2xl border border-black/[0.07] dark:border-white/[0.07]
-                            outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F]
-                            focus:ring-2 focus:ring-[#D13A28]/20
-                            font-bold text-[13px] text-[#1C1917] dark:text-[#F0EEE9]
-                            placeholder-[#A8A29E] transition-all
-                        "
-                    />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A8A29E]">🔍</span>
+            {/* BUSCADOR sticky — incluye botón "+ Nuevo" para que siempre sea visible */}
+            <div className="sticky top-0 z-30 py-4 bg-[#C8C4BE]/90 dark:bg-[#141414]/90 backdrop-blur-xl -mx-4 px-4 border-b border-black/[0.07] dark:border-white/[0.07] mb-6">
+                <div className="flex gap-2 max-w-3xl mx-auto">
+                    <div className="relative flex-1">
+                        <input
+                            placeholder="Buscar por cliente, ciudad o S/N..."
+                            value={busqueda}
+                            onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
+                            className="
+                                w-full py-3.5 pl-11 pr-5
+                                bg-[#EDEAE6] dark:bg-[#242424]
+                                rounded-2xl border border-black/[0.07] dark:border-white/[0.07]
+                                outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F]
+                                focus:ring-2 focus:ring-[#D13A28]/20
+                                font-bold text-[13px] text-[#1C1917] dark:text-[#F0EEE9]
+                                placeholder-[#A8A29E] transition-all
+                            "
+                        />
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A8A29E]">🔍</span>
+                    </div>
+                    <button
+                        onClick={() => setModalOpen('nuevo')}
+                        className="shrink-0 bg-[#D13A28] dark:bg-[#E8422F] text-white h-[50px] px-5 rounded-2xl font-black text-xs uppercase shadow-lg active:scale-95 transition-all"
+                    >
+                        + Nuevo
+                    </button>
                 </div>
                 {/* Chips filtro rápido */}
-                <div className="flex gap-2 overflow-x-auto mt-3 pb-0.5 no-scrollbar">
+                <div className="flex gap-2 overflow-x-auto mt-3 pb-0.5 no-scrollbar max-w-3xl mx-auto">
                     {CHIPS.map(chip => (
                         <button
                             key={chip.id ?? 'todos'}
@@ -122,27 +130,19 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                         </button>
                     ))}
                 </div>
-                <p className="text-center text-[10px] font-black text-[#A8A29E] uppercase mt-2.5">
+                <p className="text-center text-[10px] font-black text-[#A8A29E] uppercase mt-2 max-w-3xl mx-auto">
                     {filtrados.length} cliente{filtrados.length !== 1 ? 's' : ''} · pág {paginaActual}/{totalPaginas}
                 </p>
             </div>
 
             {/* HEADER */}
-            <div className="flex justify-between items-end mb-6">
-                <div>
-                    <h2 className="text-4xl font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tighter leading-none">
-                        Directorio
-                    </h2>
-                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-[0.3em] mt-1">
-                        Gestión de Flota
-                    </p>
-                </div>
-                <button
-                    onClick={() => setModalOpen('nuevo')}
-                    className="bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-90 text-white h-14 px-8 rounded-2xl font-black text-xs uppercase shadow-lg active:scale-95 transition-all"
-                >
-                    + Nuevo
-                </button>
+            <div className="mb-6">
+                <h2 className="text-4xl font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tighter leading-none">
+                    Directorio
+                </h2>
+                <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-[0.3em] mt-1">
+                    Gestión de Flota
+                </p>
             </div>
 
             <Paginacion pagina={paginaActual} totalPaginas={totalPaginas}

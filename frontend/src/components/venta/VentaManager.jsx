@@ -109,6 +109,10 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
             {modalCrear && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end md:items-center justify-center p-0 md:p-4">
                     <div className="bg-[#EDEAE6] dark:bg-[#141414] w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+                        {/* Drag handle — indica scroll en mobile */}
+                        <div className="md:hidden flex justify-center pt-3 pb-1">
+                            <div className="w-10 h-1 rounded-full bg-[#C0BCB6] dark:bg-[#3E3E3E]" />
+                        </div>
                         <div className="sticky top-0 bg-[#D8D4CE] dark:bg-[#1C1C1C] px-5 py-4 border-b border-black/[0.08] dark:border-white/[0.07] flex justify-between items-center z-10 md:rounded-t-3xl">
                             <div>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">

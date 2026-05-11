@@ -227,6 +227,10 @@ export default function DespachoManager() {
             {(modalCrear || ordenEditar) && (
                 <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
                     <div className="w-full max-w-lg bg-[#EDEAE6] dark:bg-[#242424] rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
+                        {/* Drag handle — indica scroll en mobile */}
+                        <div className="md:hidden flex justify-center -mt-2 mb-4">
+                            <div className="w-10 h-1 rounded-full bg-[#C0BCB6] dark:bg-[#3E3E3E]" />
+                        </div>
                         <h2 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] mb-5">
                             {ordenEditar ? 'Editar orden' : 'Nueva orden'}
                         </h2>

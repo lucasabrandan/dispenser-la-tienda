@@ -348,6 +348,10 @@ export default function ServicioManager({
             {modalCrear && (
                 <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/55">
                     <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-[#EDEAE6] dark:bg-[#141414]">
+                        {/* Drag handle — indica scroll en mobile */}
+                        <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-[#EDEAE6] dark:bg-[#141414]">
+                            <div className="w-10 h-1 rounded-full bg-[#C0BCB6] dark:bg-[#3E3E3E]" />
+                        </div>
                         <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
                             <div>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
