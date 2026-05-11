@@ -69,18 +69,32 @@ export function buildMetaLinea(doc, modelo, serial, ubicacion, garantia, maxW, f
 
 // ── Fotos ─────────────────────────────────────────────────────────────────────
 
+// Resolución máxima para fotos en PDF (reduce tamaño y memoria significativamente)
+const PDF_MAX_W = 1200;
+const PDF_MAX_H = 900;
+
+function resolverDimensiones(nw, nh) {
+    let w = nw || PDF_MAX_W;
+    let h = nh || PDF_MAX_H;
+    if (w > PDF_MAX_W) { h = Math.round(h * PDF_MAX_W / w); w = PDF_MAX_W; }
+    if (h > PDF_MAX_H) { w = Math.round(w * PDF_MAX_H / h); h = PDF_MAX_H; }
+    return { w, h };
+}
+
 // Convierte cualquier blob/File a JPEG via canvas (soporta WebP, HEIC, etc.)
+// Limita la resolución a PDF_MAX_W × PDF_MAX_H para no saturar memoria
 async function blobAJpeg(blob) {
     return new Promise(resolve => {
         const url = URL.createObjectURL(blob);
         const img = new Image();
         img.onload = () => {
             try {
+                const { w, h } = resolverDimensiones(img.naturalWidth, img.naturalHeight);
                 const canvas = document.createElement('canvas');
-                canvas.width  = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                canvas.getContext('2d').drawImage(img, 0, 0);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                canvas.width  = w;
+                canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
                 URL.revokeObjectURL(url);
                 resolve(dataUrl);
             } catch { URL.revokeObjectURL(url); resolve(null); }
@@ -101,11 +115,12 @@ export async function cargarFoto(src) {
             const img = new Image();
             img.onload = () => {
                 try {
+                    const { w, h } = resolverDimensiones(img.naturalWidth, img.naturalHeight);
                     const canvas = document.createElement('canvas');
-                    canvas.width  = img.naturalWidth  || 1;
-                    canvas.height = img.naturalHeight || 1;
-                    canvas.getContext('2d').drawImage(img, 0, 0);
-                    resolve({ data: canvas.toDataURL('image/jpeg', 0.85), format: 'JPEG' });
+                    canvas.width  = w;
+                    canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    resolve({ data: canvas.toDataURL('image/jpeg', 0.82), format: 'JPEG' });
                 } catch { resolve(null); }
             };
             img.onerror = () => resolve(null);

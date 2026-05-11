@@ -59,6 +59,23 @@ export async function dibujarEvidenciaInline(doc, { x, y, w, fotoA, fotoD, titul
     return y;
 }
 
+// Carga fotos en lotes para no saturar memoria ni el servidor con 50+ equipos
+async function cargarFotosEnLotes(ticketItems, soloAntes, tamLote = 5) {
+    const resultado = [];
+    for (let i = 0; i < ticketItems.length; i += tamLote) {
+        const lote = ticketItems.slice(i, i + tamLote);
+        const res = await Promise.all(
+            lote.map(async it => ({
+                item: it,
+                fotoA: await cargarFoto(it.fotoAntes),
+                fotoD: soloAntes ? null : await cargarFoto(it.fotoDespues),
+            }))
+        );
+        resultado.push(...res);
+    }
+    return resultado;
+}
+
 // ── PÁGINA(S) DE EVIDENCIA COMPLETA (multi-equipo) ───────────────────────────
 // soloAntes: true → solo carga fotoAntes, útil para presupuesto (sin "después")
 export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
@@ -68,13 +85,8 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
 } = {}) {
     const pageH = doc.internal.pageSize.getHeight();
 
-    const fotosItems = await Promise.all(
-        ticketItems.map(async it => ({
-            item: it,
-            fotoA: await cargarFoto(it.fotoAntes),
-            fotoD: soloAntes ? null : await cargarFoto(it.fotoDespues),
-        }))
-    );
+    // Lotes de 5 para no saturar memoria con 50+ equipos
+    const fotosItems = await cargarFotosEnLotes(ticketItems, soloAntes, 5);
 
     const conFotos = fotosItems.filter(x => x.fotoA || x.fotoD);
     if (conFotos.length === 0) return;
