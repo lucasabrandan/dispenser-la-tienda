@@ -112,19 +112,26 @@ async function generarSingleTecnico(doc, {
         cargarFoto(item.fotoDespues),
     ]);
 
-    // • DATOS CLIENTE (sin columna derecha — el trabajo va en DIAGNÓSTICO DETALLE abajo)
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, y, pageW, diagnostico: null });
+    // Bloque cliente | equipo en columna derecha (si tiene serial real); si no, full-width
+    const tieneEquipoReal = item.equipoSerial && !['MOSTRADOR', 'SIN-SN'].includes(item.equipoSerial);
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: tieneEquipoReal ? item : null, y, pageW, diagnostico: null });
 
-    // Bloque equipo + trabajo: unificado si no hay foto, separado si hay foto.
-    // Thumbnail de fotoA solo cuando también hay fotoD (con 1 foto sola, se muestra en registro)
+    // Trabajo realizado: bloque propio si el equipo ya está en columna derecha; combinado si no
     const diagDetalle = sanitizarTexto(item.trabajo || item.resumenTexto || item.trabajoRealizado || item.observaciones || '');
-    y = checkSalto(doc, y, 36);
-    y = dibujarBloqueEquipoYTrabajo(doc, {
-        item, trabajo: diagDetalle, y, pageW,
-        fotoAntes: (fotoA && fotoD) ? fotoA : null,
-        tituloTrabajo: '• TRABAJO REALIZADO',
-        barraColor: C.navy,
-    });
+    if (tieneEquipoReal) {
+        if (diagDetalle) {
+            y = checkSalto(doc, y, 20);
+            y = dibujarBloqueDiagnosticoDetalle(doc, { texto: diagDetalle, y, pageW, titulo: '• TRABAJO REALIZADO' });
+        }
+    } else {
+        y = checkSalto(doc, y, 36);
+        y = dibujarBloqueEquipoYTrabajo(doc, {
+            item, trabajo: diagDetalle, y, pageW,
+            fotoAntes: (fotoA && fotoD) ? fotoA : null,
+            tituloTrabajo: '• TRABAJO REALIZADO',
+            barraColor: C.navy,
+        });
+    }
 
     const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
 
