@@ -149,7 +149,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                 irA={irA} next={() => irA(paginaActual + 1)} prev={() => irA(paginaActual - 1)} />
 
             {/* LISTA / GRID */}
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-5 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-5 xl:grid-cols-3">
                 {clientesPagina.map(cliente => (
                     <ClienteCard
                         key={cliente.id} cliente={cliente} sedes={sedes} equipos={equipos} servicios={servicios}
