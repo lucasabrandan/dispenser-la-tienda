@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { useMontos } from '../../context/MontosContext';
 import { exportarGastosCSV } from '../../utils/exportarCSV';
+import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnicos';
 
-// Estilo base para inputs del formulario
 const inputCls = `
     px-4 py-3 rounded-xl outline-none transition-all
     bg-[#C0BCB6] dark:bg-[#2E2E2E]
@@ -14,276 +15,319 @@ const inputCls = `
     placeholder:text-[#A8A29E]
 `;
 
-export default function DashboardFinanzas() {
-    const [stats, setStats] = useState({
-        facturacion: 0, costoRepuestos: 0,
-        gastosVarios: 0, gananciaReal: 0, transacciones: []
-    });
-    const [gastos, setGastos]       = useState([]);
-    const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
-    const [cargando, setCargando]   = useState(false);
-    const [formGasto, setFormGasto] = useState({
-        descripcion: '', monto: '',
-        fecha: new Date().toISOString().split('T')[0], categoria: ''
-    });
+// ── Tab Balance ────────────────────────────────────────────────────────────────
+function TabBalance({ filtroMes, setFiltroMes }) {
+    const { ocultar } = useMontos();
+    const [stats,    setStats]    = useState({ facturacion: 0, costoRepuestos: 0, gastosVarios: 0, gananciaReal: 0, transacciones: [] });
+    const [cargando, setCargando] = useState(false);
 
-    useEffect(() => { cargarDatos(); }, [filtroMes]);
-
-    const cargarDatos = async () => {
+    const cargar = () => {
         setCargando(true);
-        try {
-            const resStats = await api.get(`/servicios/stats/mensual?mes=${filtroMes}`);
-            setStats({
-                facturacion:    resStats.data.facturacion    || 0,
-                costoRepuestos: resStats.data.costoRepuestos || 0,
-                gastosVarios:   resStats.data.gastosVarios   || 0,
-                gananciaReal:   resStats.data.gananciaReal   || 0,
-                transacciones:  resStats.data.transacciones  || []
-            });
-            const resGastos = await api.get(`/gastos/mes?mes=${filtroMes}`);
-            setGastos(resGastos.data || []);
-        } catch {
-            toast.error('Error al cargar datos financieros');
-            setStats({ facturacion: 0, costoRepuestos: 0, gastosVarios: 0, gananciaReal: 0, transacciones: [] });
-            setGastos([]);
-        } finally {
-            setCargando(false);
-        }
+        api.get(`/servicios/stats/mensual?mes=${filtroMes}`)
+            .then(r => setStats({ facturacion: 0, costoRepuestos: 0, gastosVarios: 0, gananciaReal: 0, transacciones: [], ...r.data }))
+            .catch(() => toast.error('Error al cargar balance'))
+            .finally(() => setCargando(false));
     };
 
-    const handleAgregarGasto = async (e) => {
-        e.preventDefault();
-        if (!formGasto.descripcion.trim() || !formGasto.monto || !formGasto.categoria.trim())
-            return toast.error('Completa todos los campos');
-        try {
-            await api.post('/gastos', {
-                descripcion: formGasto.descripcion,
-                monto:       parseFloat(formGasto.monto),
-                fecha:       formGasto.fecha,
-                categoria:   formGasto.categoria
-            });
-            toast.success('Gasto agregado');
-            setFormGasto({ descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' });
-            cargarDatos();
-        } catch {
-            toast.error('Error al agregar gasto');
-        }
-    };
+    useEffect(() => { cargar(); }, [filtroMes]); // eslint-disable-line
 
-    const handleEliminarGasto = async (id) => {
-        if (!window.confirm('¿Eliminar este gasto?')) return;
-        try {
-            await api.delete(`/gastos/${id}`);
-            toast.success('Gasto eliminado');
-            cargarDatos();
-        } catch {
-            toast.error('Error al eliminar gasto');
-        }
-    };
-
-    const fmt = (n) => (typeof n === 'number' ? n : parseFloat(n || 0)).toLocaleString('es-AR');
+    const fmt = v => ocultar ? '••••' : `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
+    const imp = stats.facturacion * 0.30;
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 pb-20 bg-[#C8C4BE] dark:bg-[#141414] min-h-screen transition-colors space-y-5 pt-5">
-
-            {/* Header con selector de mes */}
-            <div className="flex justify-between items-center bg-[#EDEAE6] dark:bg-[#242424] p-5 rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07]">
-                <div>
-                    <h2 className="text-3xl font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tighter leading-none">Balance Real</h2>
-                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase mt-1">Resumen financiero del mes</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <input type="month" value={filtroMes}
-                        onChange={e => setFiltroMes(e.target.value)}
-                        className={`${inputCls} text-[13px]`}
-                    />
-                    <button onClick={cargarDatos} disabled={cargando}
-                        className="px-4 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 disabled:opacity-50">
-                        {cargando ? 'Cargando...' : 'Actualizar'}
-                    </button>
-                    {gastos.length > 0 && (
-                        <button
-                            onClick={() => exportarGastosCSV(gastos, filtroMes)}
-                            title="Exportar gastos a CSV"
-                            className="px-4 py-3 rounded-xl font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
-                        >
-                            CSV
-                        </button>
-                    )}
-                </div>
+        <div className="space-y-5">
+            {/* Controles mes */}
+            <div className="flex gap-3 items-center justify-end flex-wrap">
+                <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)} className={`${inputCls} text-[13px]`} />
+                <button onClick={cargar} disabled={cargando}
+                    className="px-4 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase active:scale-95 transition-all disabled:opacity-50">
+                    {cargando ? 'Cargando...' : 'Actualizar'}
+                </button>
             </div>
 
-            {/* Stats */}
+            {/* Cards resumen */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard label="Facturación"     value={stats.facturacion}     sub="Total bruto"              variante="gold"    />
-                <StatCard label="Costos Directos" value={stats.costoRepuestos}  sub="Inversión repuestos"      variante="red"     />
-                <StatCard label="Ganancia Real"   value={stats.gananciaReal}    sub="Lo que queda en mano"     variante="redBold" />
-                <StatCard label="Gastos/Inv."     value={stats.gastosVarios}    sub="Gastos operacionales"     variante="muted"   />
+                <StatCard label="Facturación"    value={stats.facturacion}    sub="Total bruto"      variante="gold"    ocultar={ocultar} />
+                <StatCard label="Impuestos 30%"  value={imp}                  sub="Estimado fiscal"  variante="red"     ocultar={ocultar} />
+                <StatCard label="Repuestos"       value={stats.costoRepuestos} sub="Inversión directa" variante="muted"  ocultar={ocultar} />
+                <StatCard label="Ganancia real"  value={stats.gananciaReal}   sub="Lo que queda"     variante="redBold" ocultar={ocultar} />
             </div>
 
-            {/* Formulario agregar gasto */}
-            <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07] p-6">
-                <h3 className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase mb-4">Agregar Gasto</h3>
-                <form onSubmit={handleAgregarGasto} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <input type="text" placeholder="Descripción (ej: Alquiler)" value={formGasto.descripcion}
-                        onChange={e => setFormGasto({ ...formGasto, descripcion: e.target.value })}
-                        className={inputCls} />
-                    <input type="number" placeholder="Monto" step="0.01" value={formGasto.monto}
-                        onChange={e => setFormGasto({ ...formGasto, monto: e.target.value })}
-                        className={inputCls} />
-                    <input type="date" value={formGasto.fecha}
-                        onChange={e => setFormGasto({ ...formGasto, fecha: e.target.value })}
-                        className={inputCls} />
-                    <input type="text" placeholder="Categoría (ej: Alquiler)" value={formGasto.categoria}
-                        onChange={e => setFormGasto({ ...formGasto, categoria: e.target.value })}
-                        className={inputCls} />
-                    <button type="submit"
-                        className="px-6 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 md:col-span-4">
-                        Guardar Gasto
-                    </button>
-                </form>
+            {/* Desglose waterfall */}
+            <div className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] p-5" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-4">Desglose del mes</p>
+                {[
+                    { label: 'Facturación bruta',           valor: stats.facturacion,    color: 'text-[#D48800] dark:text-[#F0A500]' },
+                    { label: '− Impuestos (30%)',            valor: imp,                  color: 'text-[#D13A28] dark:text-[#E8422F]' },
+                    { label: '− Repuestos / costos directos', valor: stats.costoRepuestos, color: 'text-[#D13A28] dark:text-[#E8422F]' },
+                    { label: '− Gastos operacionales',       valor: stats.gastosVarios,   color: 'text-[#D13A28] dark:text-[#E8422F]' },
+                ].map(({ label, valor, color }) => (
+                    <div key={label} className="flex justify-between items-center py-2 border-b border-black/[0.05] dark:border-white/[0.05]">
+                        <p className="text-[12px] font-bold text-[#A8A29E]">{label}</p>
+                        <p className={`text-[13px] font-black ${color}`}>{fmt(valor)}</p>
+                    </div>
+                ))}
+                <div className="flex justify-between items-center pt-3 mt-1">
+                    <p className="text-[14px] font-black text-[#1C1917] dark:text-[#F0EEE9]">= Ganancia real</p>
+                    <p className="text-[22px] font-black text-[#D48800] dark:text-[#F0A500]">{fmt(stats.gananciaReal)}</p>
+                </div>
             </div>
 
-            {/* Tabla de gastos */}
-            {gastos.length > 0 ? (
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07] overflow-hidden">
-                    <div className="px-6 py-4 border-b border-black/[0.07] dark:border-white/[0.07]">
-                        <h3 className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Gastos del Mes</h3>
+            {/* Operaciones del mes */}
+            {stats.transacciones.length > 0 && (
+                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div className="px-5 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Operaciones del mes</p>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[10px] uppercase font-black text-[#A8A29E]">
-                                <tr>
-                                    <th className="px-6 py-3 text-left">Descripción</th>
-                                    <th className="px-6 py-3 text-center">Categoría</th>
-                                    <th className="px-6 py-3 text-center">Fecha</th>
-                                    <th className="px-6 py-3 text-right">Monto</th>
-                                    <th className="px-6 py-3 text-center">—</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
-                                {gastos.map((gasto, idx) => (
-                                    <tr key={`gasto-${gasto.id}-${idx}`} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                                        <td className="px-6 py-4">
-                                            <p className="font-black text-[#1C1917] dark:text-[#F0EEE9] text-sm">{gasto.descripcion}</p>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] px-3 py-1 rounded-full text-[9px] font-black uppercase">
-                                                {gasto.categoria}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center font-bold text-[#A8A29E] text-sm">{gasto.fecha}</td>
-                                        <td className="px-6 py-4 text-right font-black text-[#D13A28] dark:text-[#E8422F]">
-                                            ${fmt(gasto.monto)}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <button onClick={() => handleEliminarGasto(gasto.id)}
-                                                className="px-3 py-1 rounded-lg bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F] hover:bg-[#D13A28] hover:text-white dark:hover:bg-[#E8422F] font-black text-[10px] uppercase transition-all active:scale-95">
-                                                Eliminar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                <tr className="bg-[#D48800]/5 dark:bg-[#F0A500]/5">
-                                    <td colSpan="3" className="px-6 py-4 font-black text-[#1C1917] dark:text-[#F0EEE9] text-right text-[11px] uppercase">Total gastos:</td>
-                                    <td className="px-6 py-4 text-right font-black text-[#D48800] dark:text-[#F0A500] text-lg">
-                                        ${fmt(gastos.reduce((sum, g) => sum + parseFloat(g.monto || 0), 0))}
-                                    </td>
-                                    <td />
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            ) : (
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07] p-8 text-center">
-                    <p className="text-[#A8A29E] font-bold text-sm uppercase">No hay gastos registrados para este mes</p>
-                </div>
-            )}
-
-            {/* Tabla de operaciones */}
-            {stats.transacciones.length > 0 ? (
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07] overflow-hidden">
-                    <div className="px-6 py-4 border-b border-black/[0.07] dark:border-white/[0.07]">
-                        <h3 className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Desglose de Operaciones</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[10px] uppercase font-black text-[#A8A29E]">
-                                <tr>
-                                    <th className="px-6 py-3 text-left">Concepto</th>
-                                    <th className="px-6 py-3 text-center">Costo</th>
-                                    <th className="px-6 py-3 text-center">Venta</th>
-                                    <th className="px-6 py-3 text-center">Margen</th>
-                                    <th className="px-6 py-3 text-right">Neto</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-black/[0.04] dark:divide-white/[0.04]">
-                                {stats.transacciones.map((t, idx) => {
-                                    const costo  = parseFloat(t.costo  || 0);
-                                    const venta  = parseFloat(t.venta  || 0);
-                                    const limpia = venta - costo;
-                                    const margen = venta > 0 ? ((limpia / venta) * 100).toFixed(0) : 0;
-                                    return (
-                                        <tr key={`tx-${t.id}-${idx}`} className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                                            <td className="px-6 py-4">
-                                                <p className="font-black text-[#1C1917] dark:text-[#F0EEE9] text-[12px] uppercase">{t.concepto}</p>
-                                                <p className="text-[9px] font-bold text-[#A8A29E] uppercase">{t.fecha} · {t.tipo}</p>
-                                            </td>
-                                            <td className="px-6 py-4 text-center font-bold text-[#D13A28] dark:text-[#E8422F] text-sm">${fmt(costo)}</td>
-                                            <td className="px-6 py-4 text-center font-bold text-[#D48800] dark:text-[#F0A500] text-sm">${fmt(venta)}</td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className="bg-[#D48800]/10 dark:bg-[#F0A500]/10 text-[#D48800] dark:text-[#F0A500] px-2.5 py-1 rounded-full text-[9px] font-black">
-                                                    {margen}%
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right font-black text-[#1C1917] dark:text-[#F0EEE9] text-sm">${fmt(limpia)}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            ) : (
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07] p-8 text-center">
-                    <p className="text-[#A8A29E] font-bold text-sm uppercase">No hay transacciones de servicios para este mes</p>
+                    {stats.transacciones.map((t, idx) => {
+                        const costo  = parseFloat(t.costo || 0);
+                        const venta  = parseFloat(t.venta || 0);
+                        const margen = venta > 0 ? Math.round((venta - costo) / venta * 100) : 0;
+                        return (
+                            <div key={`tx-${t.id}-${idx}`} className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{t.concepto}</p>
+                                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase">{t.fecha} · {t.tipo}</p>
+                                </div>
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500] shrink-0">{margen}%</span>
+                                <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0">{fmt(venta - costo)}</p>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
     );
 }
 
-// Tarjeta de estadística con variantes del sistema de color
-function StatCard({ label, value, sub, variante }) {
-    const num = parseFloat(value || 0);
+// ── Tab Técnicos ───────────────────────────────────────────────────────────────
+function TabTecnicos() {
+    const { ocultar } = useMontos();
+    const [datos,    setDatos]    = useState([]);
+    const [cargando, setCargando] = useState(false);
 
-    const estilos = {
-        gold: {
-            wrap: 'bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-[#D48800]/20 dark:border-[#F0A500]/20',
-            val:  'text-[#D48800] dark:text-[#F0A500]',
-        },
-        red: {
-            wrap: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 border-[#D13A28]/20 dark:border-[#E8422F]/20',
-            val:  'text-[#D13A28] dark:text-[#E8422F]',
-        },
-        redBold: {
-            wrap: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 border-[#D13A28]/30 dark:border-[#E8422F]/30 ring-2 ring-[#D13A28]/20 dark:ring-[#E8422F]/20',
-            val:  'text-[#D13A28] dark:text-[#E8422F]',
-        },
-        muted: {
-            wrap: 'bg-[#EDEAE6] dark:bg-[#242424] border-black/[0.07] dark:border-white/[0.07]',
-            val:  'text-[#1C1917] dark:text-[#F0EEE9]',
-        },
+    const cargar = () => {
+        setCargando(true);
+        api.get('/servicios/rendimiento/mes-actual')
+            .then(r => setDatos(r.data || []))
+            .catch(() => setDatos([]))
+            .finally(() => setCargando(false));
     };
 
-    const { wrap, val } = estilos[variante];
+    useEffect(() => { cargar(); }, []); // eslint-disable-line
 
+    const fmt     = v => ocultar ? '••••' : `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
+    const periodo  = datos[0]?.periodo || new Date().toISOString().slice(0, 7);
+    const totFact  = datos.reduce((s, d) => s + Number(d.totalFacturado || 0), 0);
+    const totParte = datos.reduce((s, d) => s + Number(d.parteTecnico   || 0), 0);
+    const totTrab  = datos.reduce((s, d) => s + (d.cantidadTrabajos || 0), 0);
+
+    if (cargando) return <p className="text-center text-[#A8A29E] py-12">Cargando...</p>;
+
+    return (
+        <div className="space-y-5">
+            {/* Resumen */}
+            <div className="grid grid-cols-3 gap-3">
+                {[
+                    { label: 'Trabajos',         valor: totTrab,        gold: false },
+                    { label: 'Facturado',         valor: fmt(totFact),   gold: false },
+                    { label: 'A pagar técnicos',  valor: fmt(totParte),  gold: true  },
+                ].map(({ label, valor, gold }) => (
+                    <div key={label} className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] p-3 text-center" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">{label}</p>
+                        <p className={`text-[16px] font-black ${gold ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>{valor}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* Tabla por técnico */}
+            {datos.length === 0 ? (
+                <p className="text-center text-[#A8A29E] py-12">Sin trabajos este mes</p>
+            ) : (
+                <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div className="grid grid-cols-[1fr_60px_90px_90px] px-4 py-2 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                        {['Técnico','Trabajos','Facturado','Su parte'].map(h => (
+                            <p key={h} className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider text-center first:text-left">{h}</p>
+                        ))}
+                    </div>
+                    {datos.map((d, i) => (
+                        <div key={d.tecnicoId} className={`grid grid-cols-[1fr_60px_90px_90px] px-4 py-3 items-center ${i < datos.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
+                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{d.tecnicoNombre}</p>
+                            <p className="text-[12px] font-bold text-[#A8A29E] text-center">{d.cantidadTrabajos}</p>
+                            <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] text-right">{fmt(d.totalFacturado)}</p>
+                            <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500] text-right">{fmt(d.parteTecnico)}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Acciones */}
+            <div className="flex gap-3 justify-end">
+                <button onClick={cargar}
+                    className="h-9 px-4 rounded-2xl font-black text-[11px] uppercase bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                    Recargar
+                </button>
+                {datos.length > 0 && (
+                    <button onClick={() => generarPDFRendimientoTecnicos({ datos, periodo })}
+                        className="h-9 px-4 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
+                        Exportar PDF
+                    </button>
+                )}
+            </div>
+            <p className="text-[10px] text-[#A8A29E] text-center">
+                Ganancia neta = Facturado − 30% impuestos − repuestos · Su parte = 50%
+            </p>
+        </div>
+    );
+}
+
+// ── Tab Gastos ─────────────────────────────────────────────────────────────────
+function TabGastos({ filtroMes }) {
+    const [gastos,   setGastos]   = useState([]);
+    const [cargando, setCargando] = useState(false);
+    const [form, setForm] = useState({ descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' });
+
+    const cargar = () => {
+        setCargando(true);
+        api.get(`/gastos/mes?mes=${filtroMes}`)
+            .then(r => setGastos(r.data || []))
+            .catch(() => toast.error('Error al cargar gastos'))
+            .finally(() => setCargando(false));
+    };
+
+    useEffect(() => { cargar(); }, [filtroMes]); // eslint-disable-line
+
+    const fmt = n => parseFloat(n || 0).toLocaleString('es-AR');
+
+    const handleAgregar = async (e) => {
+        e.preventDefault();
+        if (!form.descripcion.trim() || !form.monto || !form.categoria.trim())
+            return toast.error('Completa todos los campos');
+        try {
+            await api.post('/gastos', { ...form, monto: parseFloat(form.monto) });
+            toast.success('Gasto agregado');
+            setForm({ descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' });
+            cargar();
+        } catch { toast.error('Error al agregar gasto'); }
+    };
+
+    const handleEliminar = async (id) => {
+        if (!window.confirm('¿Eliminar este gasto?')) return;
+        try {
+            await api.delete(`/gastos/${id}`);
+            toast.success('Gasto eliminado');
+            cargar();
+        } catch { toast.error('Error al eliminar gasto'); }
+    };
+
+    return (
+        <div className="space-y-5">
+            {/* Formulario */}
+            <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl p-5" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <p className="text-[11px] font-black text-[#A8A29E] uppercase tracking-wider mb-4">Agregar gasto</p>
+                <form onSubmit={handleAgregar} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input type="text"   placeholder="Descripción"  value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className={inputCls} />
+                    <input type="number" placeholder="Monto" step="0.01" value={form.monto}  onChange={e => setForm({ ...form, monto: e.target.value })}       className={inputCls} />
+                    <input type="date"                               value={form.fecha}       onChange={e => setForm({ ...form, fecha: e.target.value })}        className={inputCls} />
+                    <input type="text"   placeholder="Categoría"    value={form.categoria}   onChange={e => setForm({ ...form, categoria: e.target.value })}    className={inputCls} />
+                    <button type="submit" disabled={cargando}
+                        className="px-6 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase active:scale-95 transition-all md:col-span-4 disabled:opacity-50">
+                        Guardar gasto
+                    </button>
+                </form>
+            </div>
+
+            {/* Lista */}
+            {gastos.length === 0 ? (
+                <p className="text-center text-[#A8A29E] py-8 font-bold text-sm uppercase">No hay gastos este mes</p>
+            ) : (
+                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div className="flex items-center justify-between px-5 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Gastos del mes</p>
+                        <button onClick={() => exportarGastosCSV(gastos, filtroMes)}
+                            className="text-[10px] font-black text-[#A8A29E] uppercase hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors">
+                            Exportar CSV
+                        </button>
+                    </div>
+                    {gastos.map((g, i) => (
+                        <div key={`g-${g.id}-${i}`} className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{g.descripcion}</p>
+                                <p className="text-[10px] font-bold text-[#A8A29E] uppercase">{g.fecha} · {g.categoria}</p>
+                            </div>
+                            <p className="text-[13px] font-black text-[#D13A28] dark:text-[#E8422F] shrink-0">${fmt(g.monto)}</p>
+                            <button onClick={() => handleEliminar(g.id)}
+                                className="text-[10px] font-black text-[#A8A29E] hover:text-[#D13A28] dark:hover:text-[#E8422F] transition-colors shrink-0 uppercase">
+                                Eliminar
+                            </button>
+                        </div>
+                    ))}
+                    <div className="flex justify-between items-center px-5 py-3 bg-[#D8D4CE]/50 dark:bg-[#1C1C1C]/50">
+                        <p className="text-[11px] font-black text-[#A8A29E] uppercase">Total</p>
+                        <p className="text-[15px] font-black text-[#D48800] dark:text-[#F0A500]">
+                            ${fmt(gastos.reduce((s, g) => s + parseFloat(g.monto || 0), 0))}
+                        </p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── StatCard ───────────────────────────────────────────────────────────────────
+function StatCard({ label, value, sub, variante, ocultar }) {
+    const num = parseFloat(value || 0);
+    const estilos = {
+        gold:    { wrap: 'bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-[#D48800]/20 dark:border-[#F0A500]/20', val: 'text-[#D48800] dark:text-[#F0A500]' },
+        red:     { wrap: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 border-[#D13A28]/20 dark:border-[#E8422F]/20', val: 'text-[#D13A28] dark:text-[#E8422F]' },
+        redBold: { wrap: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 border-[#D13A28]/30 ring-2 ring-[#D13A28]/20 dark:ring-[#E8422F]/20', val: 'text-[#D13A28] dark:text-[#E8422F]' },
+        muted:   { wrap: 'bg-[#EDEAE6] dark:bg-[#242424] border-black/[0.07] dark:border-white/[0.07]', val: 'text-[#1C1917] dark:text-[#F0EEE9]' },
+    };
+    const { wrap, val } = estilos[variante] || estilos.muted;
     return (
         <div className={`p-5 rounded-[1.5rem] border ${wrap}`}>
             <p className="text-[9px] font-black uppercase text-[#A8A29E] tracking-widest mb-3">{label}</p>
-            <p className={`text-2xl font-black ${val}`}>${num.toLocaleString('es-AR')}</p>
+            <p className={`text-2xl font-black ${val}`}>{ocultar ? '••••' : `$${num.toLocaleString('es-AR')}`}</p>
             <p className="text-[9px] font-bold text-[#A8A29E] uppercase mt-1">{sub}</p>
+        </div>
+    );
+}
+
+// ── Principal ──────────────────────────────────────────────────────────────────
+const TABS = [
+    { id: 'balance',  label: 'Balance'  },
+    { id: 'tecnicos', label: 'Técnicos' },
+    { id: 'gastos',   label: 'Gastos'   },
+];
+
+export default function DashboardFinanzas() {
+    const [tab,       setTab]       = useState('balance');
+    const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
+
+    return (
+        <div className="p-4 max-w-4xl mx-auto pb-20">
+            {/* Header */}
+            <div className="mb-4">
+                <h1 className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</h1>
+                <p className="text-[11px] text-[#A8A29E]">{filtroMes}</p>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 mb-5 bg-[#D8D4CE] dark:bg-[#1C1C1C] p-1 rounded-2xl">
+                {TABS.map(t => (
+                    <button key={t.id} onClick={() => setTab(t.id)}
+                        className={`flex-1 py-2 rounded-xl font-black text-[12px] uppercase tracking-wide transition-all active:scale-95
+                            ${tab === t.id
+                                ? 'bg-[#EDEAE6] dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9]'
+                                : 'text-[#A8A29E]'}`}>
+                        {t.label}
+                    </button>
+                ))}
+            </div>
+
+            {tab === 'balance'  && <TabBalance  filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
+            {tab === 'tecnicos' && <TabTecnicos />}
+            {tab === 'gastos'   && <TabGastos   filtroMes={filtroMes} />}
         </div>
     );
 }

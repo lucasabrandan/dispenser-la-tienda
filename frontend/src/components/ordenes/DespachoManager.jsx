@@ -3,7 +3,6 @@ import { useOrdenes } from '../../hooks/useOrdenes';
 import OrdenForm from './OrdenForm';
 import api from '../../services/api';
 import { useMontos } from '../../context/MontosContext';
-import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnicos';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-[#C0BCB6] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
@@ -120,101 +119,6 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
     );
 }
 
-// ── Tab rendimiento del mes actual ────────────────────────────────────────────
-function RendimientoMes() {
-    const { ocultar } = useMontos();
-    const [datos,    setDatos]    = useState([]);
-    const [cargando, setCargando] = useState(false);
-
-    const cargar = () => {
-        setCargando(true);
-        api.get('/servicios/rendimiento/mes-actual')
-            .then(r => setDatos(r.data || []))
-            .catch(() => setDatos([]))
-            .finally(() => setCargando(false));
-    };
-
-    useEffect(() => { cargar(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const fmt = v => ocultar ? '••••' : `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
-
-    const periodo = datos[0]?.periodo || new Date().toISOString().slice(0, 7);
-    const meses   = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                     'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    const [y, m]  = periodo.split('-');
-    const labelMes = `${meses[parseInt(m, 10) - 1]} ${y}`;
-
-    const totFact  = datos.reduce((s, d) => s + Number(d.totalFacturado || 0), 0);
-    const totParte = datos.reduce((s, d) => s + Number(d.parteTecnico   || 0), 0);
-    const totTrab  = datos.reduce((s, d) => s + (d.cantidadTrabajos || 0), 0);
-
-    if (cargando) return <p className="text-center text-[#A8A29E] py-12">Cargando...</p>;
-
-    return (
-        <div>
-            {/* Resumen rápido */}
-            <div className="grid grid-cols-3 gap-3 mb-5">
-                {[
-                    { label: 'Trabajos', valor: totTrab, mono: false },
-                    { label: 'Facturado', valor: fmt(totFact), mono: true },
-                    { label: 'A pagar técnicos', valor: fmt(totParte), mono: true, gold: true },
-                ].map(({ label, valor, gold }) => (
-                    <div key={label} className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] p-3 text-center"
-                        style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">{label}</p>
-                        <p className={`text-[16px] font-black ${gold ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
-                            {valor}
-                        </p>
-                    </div>
-                ))}
-            </div>
-
-            {/* Tabla por técnico */}
-            {datos.length === 0 ? (
-                <p className="text-center text-[#A8A29E] py-12">Sin trabajos este mes</p>
-            ) : (
-                <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
-                    style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                    {/* Cabecera tabla */}
-                    <div className="grid grid-cols-[1fr_60px_90px_90px] px-4 py-2 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
-                        {['Técnico','Trabajos','Facturado','Su parte'].map(h => (
-                            <p key={h} className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider text-center first:text-left">{h}</p>
-                        ))}
-                    </div>
-                    {/* Filas */}
-                    {datos.map((d, i) => (
-                        <div key={d.tecnicoId}
-                            className={`grid grid-cols-[1fr_60px_90px_90px] px-4 py-3 items-center ${i < datos.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
-                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{d.tecnicoNombre}</p>
-                            <p className="text-[12px] font-bold text-[#A8A29E] text-center">{d.cantidadTrabajos}</p>
-                            <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] text-right">{fmt(d.totalFacturado)}</p>
-                            <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500] text-right">{fmt(d.parteTecnico)}</p>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Acciones */}
-            <div className="flex gap-3 mt-5 justify-end">
-                <button onClick={cargar}
-                    className="h-9 px-4 rounded-2xl font-black text-[11px] uppercase bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
-                    Recargar
-                </button>
-                {datos.length > 0 && (
-                    <button onClick={() => generarPDFRendimientoTecnicos({ datos, periodo })}
-                        className="h-9 px-4 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
-                        Exportar PDF
-                    </button>
-                )}
-            </div>
-
-            <p className="text-[10px] text-[#A8A29E] text-center mt-3">
-                Ganancia neta = Facturado − 30% impuestos − repuestos · Su parte = 50%
-            </p>
-        </div>
-    );
-}
-
 export default function DespachoManager() {
     const {
         ordenes, tecnicos, cargando,
@@ -224,7 +128,6 @@ export default function DespachoManager() {
         crear, actualizar, eliminar, avanzarEstado,
     } = useOrdenes();
 
-    const [tab, setTab] = useState('ordenes');
     const [filtrTecnico, setFiltrTecnico] = useState('');
 
     const ordenesFiltradas = filtrTecnico
@@ -251,32 +154,14 @@ export default function DespachoManager() {
                     <h1 className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Despacho</h1>
                     <p className="text-[11px] text-[#A8A29E]">{totalActivas} activas · {totalHoy} hoy</p>
                 </div>
-                {tab === 'ordenes' && (
-                    <button onClick={() => setModalCrear(true)}
-                        className="h-10 px-4 rounded-2xl font-black text-[13px] text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
-                        + Nueva orden
-                    </button>
-                )}
+                <button onClick={() => setModalCrear(true)}
+                    className="h-10 px-4 rounded-2xl font-black text-[13px] text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
+                    + Nueva orden
+                </button>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 mb-5 bg-[#D8D4CE] dark:bg-[#1C1C1C] p-1 rounded-2xl">
-                {[{ id: 'ordenes', label: 'Órdenes' }, { id: 'rendimiento', label: 'Rendimiento del mes' }].map(t => (
-                    <button key={t.id} onClick={() => setTab(t.id)}
-                        className={`flex-1 py-2 rounded-xl font-black text-[12px] uppercase tracking-wide transition-all active:scale-95
-                            ${tab === t.id
-                                ? 'bg-[#EDEAE6] dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9]'
-                                : 'text-[#A8A29E]'}`}>
-                        {t.label}
-                    </button>
-                ))}
-            </div>
-
-            {/* Tab rendimiento */}
-            {tab === 'rendimiento' && <RendimientoMes />}
-
-            {/* Tab órdenes */}
-            {tab === 'ordenes' && <>
+            {/* Órdenes */}
+            {<>
             {/* Filtros */}
             <div className="flex gap-3 mb-5 flex-wrap">
                 <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
