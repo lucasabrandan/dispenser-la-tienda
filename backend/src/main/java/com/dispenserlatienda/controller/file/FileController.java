@@ -65,7 +65,6 @@ public class FileController {
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header("Cache-Control", "public, max-age=86400")
-                    .header("Access-Control-Allow-Origin", "*")
                     .body(r2Bytes);
 
         } catch (Exception e) {

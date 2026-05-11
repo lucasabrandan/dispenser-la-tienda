@@ -6,7 +6,9 @@ import com.dispenserlatienda.dto.servicio.EstadisticasMensualDTO;
 import com.dispenserlatienda.dto.servicio.TecnicoRendimientoDTO;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -232,6 +234,72 @@ public class ServicioService {
                             fact, imp, reps, ganNet, tecni);
                 })
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    // Rendimiento del mes actual — todos los técnicos — para vista admin
+    @Transactional(readOnly = true)
+    public List<TecnicoResumenMesDTO> rendimientoMesActual() {
+        final BigDecimal PCT_IMPUESTOS = BigDecimal.valueOf(30);
+        final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
+        YearMonth mes = YearMonth.now();
+        String desde = mes.atDay(1).toString();
+        String hasta  = mes.atEndOfMonth().toString();
+
+        List<Servicio> realizados = servicioRepository.findAll(
+                buildSpec(null, "REALIZADO", null, desde, hasta, null, null));
+
+        // Agrupar por usuario
+        Map<Long, List<Servicio>> porTecnico = new LinkedHashMap<>();
+        Map<Long, String>         nombres    = new LinkedHashMap<>();
+        for (Servicio s : realizados) {
+            if (s.getUsuario() == null) continue;
+            Long uid = s.getUsuario().getId();
+            porTecnico.computeIfAbsent(uid, k -> new ArrayList<>()).add(s);
+            nombres.putIfAbsent(uid, s.getUsuario().getNombre());
+        }
+
+        return porTecnico.entrySet().stream().map(e -> {
+            Long uid = e.getKey();
+            List<Servicio> servicios = e.getValue();
+            BigDecimal facturado = BigDecimal.ZERO;
+            BigDecimal repuestos = BigDecimal.ZERO;
+
+            for (Servicio s : servicios) {
+                BigDecimal f = s.getItems().stream()
+                        .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal descPct = s.getDescuentoPorcentaje();
+                if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, RM));
+                    f = f.multiply(factor).setScale(2, RM);
+                }
+                facturado = facturado.add(f);
+
+                for (ServicioItem item : s.getItems()) {
+                    String json = item.getRepuestosUsados();
+                    if (json == null || json.isBlank()) continue;
+                    try {
+                        List<java.util.Map<String, Object>> lista = objectMapper.readValue(json, new TypeReference<>() {});
+                        for (java.util.Map<String, Object> r : lista) {
+                            Object sub = r.get("subtotal"), precio = r.get("precio"), cant = r.get("cantidad");
+                            BigDecimal val = BigDecimal.ZERO;
+                            if (sub != null) val = new BigDecimal(sub.toString());
+                            else if (precio != null && cant != null)
+                                val = new BigDecimal(precio.toString()).multiply(new BigDecimal(cant.toString()));
+                            repuestos = repuestos.add(val);
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            BigDecimal imp    = facturado.multiply(PCT_IMPUESTOS).divide(BigDecimal.valueOf(100), 2, RM);
+            BigDecimal ganNet = facturado.subtract(imp).subtract(repuestos).max(BigDecimal.ZERO);
+            BigDecimal parte  = ganNet.divide(BigDecimal.valueOf(2), 2, RM);
+            return new TecnicoResumenMesDTO(uid, nombres.get(uid), mes.toString(),
+                    servicios.size(), facturado, imp, repuestos, ganNet, parte);
+        })
+        .sorted(Comparator.comparing(TecnicoResumenMesDTO::totalFacturado).reversed())
+        .collect(java.util.stream.Collectors.toList());
     }
 
     private double sumarItems(List<Servicio> servicios) {

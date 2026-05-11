@@ -109,7 +109,7 @@ public class ImportacionService {
         // Cliente: buscar o crear
         Cliente cliente = clienteRepo.findByNombreIgnoreCase(clienteNombre)
             .orElseGet(() -> clienteRepo.save(
-                new Cliente(ClienteTipo.PERSONA, clienteNombre, null, null, null, "Importado CSV", CondicionIva.CONSUMIDOR_FINAL)
+                new Cliente(ClienteTipo.PARTICULAR, clienteNombre, null, null, null, "Importado CSV", CondicionIva.CONSUMIDOR_FINAL)
             ));
 
         // Sede: primera activa del cliente, o crear "Principal"

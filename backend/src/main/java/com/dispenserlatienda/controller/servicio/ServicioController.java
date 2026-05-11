@@ -5,6 +5,7 @@ import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
 import com.dispenserlatienda.dto.servicio.ServicioDTO;
 import com.dispenserlatienda.dto.servicio.ServicioResumenDTO;
 import com.dispenserlatienda.dto.servicio.TecnicoRendimientoDTO;
+import com.dispenserlatienda.dto.servicio.TecnicoResumenMesDTO;
 import java.util.List;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.service.servicio.ServicioService;
@@ -112,5 +113,11 @@ public class ServicioController {
     @GetMapping("/tecnico/{tecnicoId}/rendimiento")
     public ResponseEntity<List<TecnicoRendimientoDTO>> rendimientoTecnico(@PathVariable Long tecnicoId) {
         return ResponseEntity.ok(servicioService.rendimientoTecnico(tecnicoId));
+    }
+
+    // GET: Rendimiento del mes actual — todos los técnicos — vista admin
+    @GetMapping("/rendimiento/mes-actual")
+    public ResponseEntity<List<TecnicoResumenMesDTO>> rendimientoMesActual() {
+        return ResponseEntity.ok(servicioService.rendimientoMesActual());
     }
 }
