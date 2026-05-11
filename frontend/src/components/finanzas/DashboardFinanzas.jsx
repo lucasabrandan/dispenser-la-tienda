@@ -178,21 +178,23 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
             {datosFiltrados.length === 0 ? (
                 <p className="text-center text-[#A8A29E] py-12">Sin trabajos para este período</p>
             ) : (
-                <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                    <div className="grid grid-cols-[1fr_60px_90px_90px_90px] px-4 py-2 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
-                        {['Técnico','Trabajos','Facturado','Repuestos','Su parte'].map(h => (
-                            <p key={h} className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider text-center first:text-left">{h}</p>
+                <div className="rounded-2xl overflow-x-auto bg-[#EDEAE6] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div className="min-w-[480px]">
+                        <div className="grid grid-cols-[minmax(120px,1fr)_60px_90px_90px_90px] px-4 py-2 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                            {['Técnico','Trab.','Facturado','Repuestos','Su parte'].map(h => (
+                                <p key={h} className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider text-center first:text-left">{h}</p>
+                            ))}
+                        </div>
+                        {datosFiltrados.map((d, i) => (
+                            <div key={d.tecnicoId} className={`grid grid-cols-[minmax(120px,1fr)_60px_90px_90px_90px] px-4 py-3 items-center ${i < datosFiltrados.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
+                                <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate pr-2">{d.tecnicoNombre}</p>
+                                <p className="text-[12px] font-bold text-[#A8A29E] text-center">{d.cantidadTrabajos}</p>
+                                <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] text-right">{fmt(d.totalFacturado)}</p>
+                                <p className="text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] text-right">{fmt(d.totalRepuestos)}</p>
+                                <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500] text-right">{fmt(d.parteTecnico)}</p>
+                            </div>
                         ))}
                     </div>
-                    {datosFiltrados.map((d, i) => (
-                        <div key={d.tecnicoId} className={`grid grid-cols-[1fr_60px_90px_90px_90px] px-4 py-3 items-center ${i < datosFiltrados.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
-                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{d.tecnicoNombre}</p>
-                            <p className="text-[12px] font-bold text-[#A8A29E] text-center">{d.cantidadTrabajos}</p>
-                            <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] text-right">{fmt(d.totalFacturado)}</p>
-                            <p className="text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] text-right">{fmt(d.totalRepuestos)}</p>
-                            <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500] text-right">{fmt(d.parteTecnico)}</p>
-                        </div>
-                    ))}
                 </div>
             )}
 

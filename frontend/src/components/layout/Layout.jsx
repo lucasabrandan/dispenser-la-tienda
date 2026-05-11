@@ -23,6 +23,7 @@ const NOMBRES_SECCION = {
 
 export default function Layout({ children, vistaActual, setVistaActual }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [sidebarColapsado, setSidebarColapsado] = useState(false);
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
 
@@ -30,7 +31,8 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
         <div className="min-h-screen flex flex-col md:flex-row transition-colors duration-300 antialiased bg-[#C8C4BE] dark:bg-[#141414]">
 
             {/* SIDEBAR DESKTOP */}
-            <Sidebar vistaActual={vistaActual} setVistaActual={setVistaActual} />
+            <Sidebar vistaActual={vistaActual} setVistaActual={setVistaActual}
+                colapsado={sidebarColapsado} setColapsado={setSidebarColapsado} />
 
             <div className="flex-1 flex flex-col min-w-0">
 
