@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRepuestoManager } from '../../hooks/useRepuestoManager';
 import RepuestoCard from './RepuestoCard';
 import RepuestoModal from './RepuestoModal';
+import StockQuickSheet from './StockQuickSheet';
 import ModalPrecioMasivo from '../productos/Modalpreciomasivo';
 import Paginacion from '../ui/Paginacion';
 
@@ -11,6 +12,8 @@ import Paginacion from '../ui/Paginacion';
  * Toda la lógica está en useRepuestoManager.
  */
 export default function RepuestoManager() {
+    const [stockSheetOpen, setStockSheetOpen] = useState(false);
+
     const {
         productosFiltrados, productosPagina,
         pagina, totalPaginas, irA, next, prev,
@@ -63,6 +66,12 @@ export default function RepuestoManager() {
                         className="w-full py-3.5 pl-11 pr-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
+                {/* Botón discreto de stock — gestión rápida sin abrir modal */}
+                <button
+                    onClick={() => setStockSheetOpen(true)}
+                    title="Ajustar stock"
+                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 w-11 rounded-xl flex justify-center items-center text-lg transition-all active:scale-95"
+                >📦</button>
                 <button
                     onClick={abrirNuevo}
                     className="bg-blue-600 hover:bg-blue-700 text-white w-14 rounded-xl flex justify-center items-center text-2xl font-bold shadow-md shadow-blue-500/30 transition-all active:scale-95"
@@ -148,6 +157,14 @@ export default function RepuestoManager() {
                 onClose={cerrarModal}
                 onGuardado={cargarProductos}
                 repuestoEdicion={productoEdicion}
+            />
+
+            {/* SHEET AJUSTE RÁPIDO DE STOCK */}
+            <StockQuickSheet
+                isOpen={stockSheetOpen}
+                onClose={() => setStockSheetOpen(false)}
+                repuestos={productos}
+                onActualizado={cargarProductos}
             />
 
             {/* PDF flotante */}

@@ -337,6 +337,101 @@ function TabGastos({ filtroMes }) {
     );
 }
 
+// ── Tab Inventario ─────────────────────────────────────────────────────────────
+function TabInventario() {
+    const { ocultar } = useMontos();
+    const [repuestos, setRepuestos] = useState([]);
+    const [cargando,  setCargando]  = useState(false);
+
+    const cargar = () => {
+        setCargando(true);
+        api.get('/repuestos?page=0&size=500')
+            .then(r => setRepuestos(r.data?.content || r.data || []))
+            .catch(() => toast.error('Error al cargar inventario'))
+            .finally(() => setCargando(false));
+    };
+
+    useEffect(() => { cargar(); }, []); // eslint-disable-line
+
+    const enStock     = repuestos.filter(r => Number(r.stock) > 0);
+    const totalCosto  = enStock.reduce((s, r) => s + Number(r.costo  || 0) * Number(r.stock), 0);
+    const totalVenta  = enStock.reduce((s, r) => s + Number(r.precio || 0) * Number(r.stock), 0);
+    const ganPotencial = totalVenta - totalCosto;
+
+    const fmt = v => ocultar ? '••••' : `$${Math.round(v).toLocaleString('es-AR')}`;
+
+    if (cargando) return <p className="text-center text-[#A8A29E] py-12">Cargando...</p>;
+
+    return (
+        <div className="space-y-5">
+            {/* Resumen financiero del stock */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <StatCard label="Mercadería al costo"  value={totalCosto}    sub="Capital inmovilizado" variante="muted"   ocultar={ocultar} />
+                <StatCard label="A precio de venta"    value={totalVenta}    sub="Si vendés todo"       variante="gold"    ocultar={ocultar} />
+                <StatCard label="Ganancia potencial"   value={ganPotencial}  sub="Diferencia neta"      variante="redBold" ocultar={ocultar} />
+            </div>
+
+            {enStock.length === 0 ? (
+                <div className="text-center py-12 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <p className="text-[#A8A29E] font-bold text-sm">Sin stock registrado</p>
+                    <p className="text-[11px] text-[#A8A29E] mt-1">Usá el botón 📦 en la sección Repuestos para cargar stock</p>
+                </div>
+            ) : (
+                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    {/* Cabecera */}
+                    <div className="flex items-center justify-between px-5 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">
+                            Detalle por producto ({enStock.length})
+                        </p>
+                        <button onClick={cargar}
+                            className="text-[10px] font-black text-[#A8A29E] uppercase hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors">
+                            Actualizar
+                        </button>
+                    </div>
+
+                    {/* Filas — ordenadas por valor al costo desc */}
+                    {[...enStock]
+                        .sort((a, b) => (Number(b.costo || 0) * Number(b.stock)) - (Number(a.costo || 0) * Number(a.stock)))
+                        .map((r, i, arr) => {
+                            const valorCosto = Number(r.costo  || 0) * Number(r.stock);
+                            const valorVenta = Number(r.precio || 0) * Number(r.stock);
+                            const ganancia   = valorVenta - valorCosto;
+                            return (
+                                <div key={r.id}
+                                    className={`px-5 py-3 flex items-center gap-3 ${i < arr.length - 1 ? 'border-b border-black/[0.05] dark:border-white/[0.05]' : ''}`}>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{r.nombre}</p>
+                                        <p className="text-[10px] text-[#A8A29E]">
+                                            {r.stock} unid.
+                                            {r.costo  ? ` · costo ${ocultar ? '••••' : `$${Number(r.costo).toLocaleString('es-AR')}`}` : ''}
+                                            {r.precio ? ` · venta ${ocultar ? '••••' : `$${Number(r.precio).toLocaleString('es-AR')}`}` : ''}
+                                        </p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500]">{fmt(ganancia)}</p>
+                                        <p className="text-[10px] text-[#A8A29E]">{fmt(valorCosto)} invertido</p>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    }
+
+                    {/* Totales */}
+                    <div className="flex justify-between items-center px-5 py-3 bg-[#D8D4CE]/50 dark:bg-[#1C1C1C]/50">
+                        <p className="text-[11px] font-black text-[#A8A29E] uppercase">Totales</p>
+                        <div className="text-right">
+                            <p className="text-[15px] font-black text-[#D48800] dark:text-[#F0A500]">
+                                {fmt(ganPotencial)} <span className="text-[10px] text-[#A8A29E] font-bold">ganancia</span>
+                            </p>
+                            <p className="text-[11px] text-[#A8A29E]">{fmt(totalCosto)} invertido · {fmt(totalVenta)} en ventas</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ── StatCard ───────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, variante, ocultar }) {
     const num = parseFloat(value || 0);
@@ -358,9 +453,10 @@ function StatCard({ label, value, sub, variante, ocultar }) {
 
 // ── Principal ──────────────────────────────────────────────────────────────────
 const TABS = [
-    { id: 'balance',  label: 'Balance'  },
-    { id: 'tecnicos', label: 'Técnicos' },
-    { id: 'gastos',   label: 'Gastos'   },
+    { id: 'balance',    label: 'Balance'    },
+    { id: 'tecnicos',   label: 'Técnicos'   },
+    { id: 'gastos',     label: 'Gastos'     },
+    { id: 'inventario', label: 'Inventario' },
 ];
 
 export default function DashboardFinanzas() {
@@ -388,9 +484,10 @@ export default function DashboardFinanzas() {
                 ))}
             </div>
 
-            {tab === 'balance'  && <TabBalance  filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
-            {tab === 'tecnicos' && <TabTecnicos filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
-            {tab === 'gastos'   && <TabGastos   filtroMes={filtroMes} />}
+            {tab === 'balance'    && <TabBalance    filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
+            {tab === 'tecnicos'   && <TabTecnicos   filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
+            {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} />}
+            {tab === 'inventario' && <TabInventario />}
         </div>
     );
 }
