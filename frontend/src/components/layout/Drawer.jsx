@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import { useBadges } from '../../hooks/useBadges';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IDs deben coincidir EXACTAMENTE con App.js, Sidebar y BottomNav
@@ -30,25 +30,8 @@ const MENU_ADMIN_ITEMS = [
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
     const { usuario, logout, esAdmin } = useAuth();
-    const [pendientes, setPendientes]       = useState(0);
-    const [ordenesActivas, setOrdenesActivas] = useState(0);
+    const { pendientes, ordenesActivas } = useBadges();
     const menuOperaciones = esAdmin ? MENU_OPERACIONES_ADMIN : MENU_OPERACIONES_TECNICO;
-
-    useEffect(() => {
-        const fetch = async () => {
-            try {
-                const [svc, ord] = await Promise.all([
-                    api.get('/servicios/resumen', { params: { tipo: 'TECNICA' } }),
-                    api.get('/ordenes/count-activas', { params: usuario?.id && !esAdmin ? { tecnicoId: usuario.id } : {} }),
-                ]);
-                setPendientes(svc.data.pendientesCount || 0);
-                setOrdenesActivas(ord.data.count || 0);
-            } catch { /* silenciar */ }
-        };
-        fetch();
-        const interval = setInterval(fetch, 60_000);
-        return () => clearInterval(interval);
-    }, [usuario, esAdmin]);
 
     const handleClick = (id) => {
         setVistaActual(id);

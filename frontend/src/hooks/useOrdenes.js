@@ -2,12 +2,26 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 
+// Rango por defecto: lunes de esta semana hasta domingo
+function rangoSemanaActual() {
+    const hoy = new Date();
+    const dia = hoy.getDay(); // 0=dom, 1=lun...
+    const diffLunes = (dia === 0 ? -6 : 1 - dia);
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() + diffLunes);
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
+    const fmt = (d) => d.toISOString().split('T')[0];
+    return { desde: fmt(lunes), hasta: fmt(domingo) };
+}
+
 export function useOrdenes({ tecnicoId = null } = {}) {
     const [ordenes, setOrdenes]       = useState([]);
     const [tecnicos, setTecnicos]     = useState([]);
     const [cargando, setCargando]     = useState(true);
-    const [desde, setDesde]           = useState('');
-    const [hasta, setHasta]           = useState('');
+    const { desde: desdeDefault, hasta: hastaDefault } = rangoSemanaActual();
+    const [desde, setDesde]           = useState(tecnicoId ? '' : desdeDefault);
+    const [hasta, setHasta]           = useState(tecnicoId ? '' : hastaDefault);
     const [modalCrear, setModalCrear] = useState(false);
     const [ordenEditar, setOrdenEditar] = useState(null);
 

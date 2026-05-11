@@ -101,11 +101,12 @@ function TabBalance({ filtroMes, setFiltroMes }) {
 }
 
 // ── Tab Técnicos ───────────────────────────────────────────────────────────────
-function TabTecnicos() {
+function TabTecnicos({ filtroMes, setFiltroMes }) {
     const { ocultar } = useMontos();
     const [datos,      setDatos]      = useState([]);
     const [cargando,   setCargando]   = useState(false);
-    const [mes,        setMes]        = useState(new Date().toISOString().slice(0, 7));
+    const mes = filtroMes;
+    const setMes = setFiltroMes;
     const [filtroTec,  setFiltroTec]  = useState('');
 
     const cargar = (mesVal = mes) => {
@@ -116,7 +117,7 @@ function TabTecnicos() {
             .finally(() => setCargando(false));
     };
 
-    useEffect(() => { cargar(); }, []); // eslint-disable-line
+    useEffect(() => { cargar(); }, [mes]); // eslint-disable-line
 
     const fmt = v => ocultar ? '••••' : `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
 
@@ -386,7 +387,7 @@ export default function DashboardFinanzas() {
             </div>
 
             {tab === 'balance'  && <TabBalance  filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
-            {tab === 'tecnicos' && <TabTecnicos />}
+            {tab === 'tecnicos' && <TabTecnicos filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
             {tab === 'gastos'   && <TabGastos   filtroMes={filtroMes} />}
         </div>
     );

@@ -31,7 +31,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
     useEffect(() => {
         if (clienteInicial) setModalCrear(true);
-    }, [clienteInicial]);
+    }, [clienteInicial, setModalCrear]);
 
     return (
         <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] p-4 pb-28 font-sans transition-colors">

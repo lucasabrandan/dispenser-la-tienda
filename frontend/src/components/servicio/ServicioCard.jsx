@@ -190,7 +190,7 @@ export default function ServicioCard({
                             className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]"
                         >🔧 Ejecutar</button>
                         <button
-                            onClick={() => onCobrar(servicio.id)}
+                            onClick={() => onEjecutar(servicio)}
                             className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]"
                         >✓ Cobrar</button>
                     </>

@@ -70,7 +70,7 @@ export default function BottomNav({ vistaActual, setVistaActual }) {
             </div>
 
             {/* Safe area para iPhone con home indicator */}
-            <div className="h-safe-area-inset-bottom" />
+            <div style={{ height: 'env(safe-area-inset-bottom)' }} />
         </nav>
     );
 }

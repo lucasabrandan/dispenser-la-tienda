@@ -89,7 +89,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
                   fotoDespues:       null,
                 }))
               );
-            } catch { /* si falla el fetch del presupuesto, continuar sin pre-llenado */ }
+            } catch { toast.error('No se pudo cargar el presupuesto vinculado. Completá los datos manualmente.'); }
           }
         } else if (presupuestoOrigen) {
           // Pre-llenar desde presupuesto: el técnico confirma/modifica lo realmente hecho

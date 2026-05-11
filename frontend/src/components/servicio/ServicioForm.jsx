@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useServicioForm } from '../../hooks/useServicioForm';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../hooks/useTheme';
 import CrearClienteModal from '../cliente/CrearClienteModal';
 import CrearSedeModal    from '../CrearSedeModal';
 import { StepHeader, buildSelectStyles } from './ServicioUI';
@@ -55,11 +56,11 @@ export default function ServicioForm({
     }, [borradorDisponible, ticketItems.length]);
 
     const { usuario } = useAuth();
+    const { isDark } = useTheme();
     const { tecnicoSeleccionado } = hook;
     // Usar el técnico asignado si lo seleccionó el admin, si no el usuario logueado
     const tecnicoNombre = tecnicoSeleccionado?.nombre || usuario?.nombre || localStorage.getItem('tecnico_nombre') || 'Técnico';
 
-    const isDark      = document.documentElement.classList.contains('dark');
     const selectStyles = buildSelectStyles(isDark);
     const clienteObj  = db.clientes?.find(c => c.id?.toString() === clienteId);
 

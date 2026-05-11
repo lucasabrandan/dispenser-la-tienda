@@ -6,6 +6,21 @@ import BottomNav from './BottomNav';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 
+const NOMBRES_SECCION = {
+    'caja':             'Caja',
+    'venta':            'Ventas',
+    'servicio-tecnico': 'Servicio Técnico',
+    'historial':        'Historial',
+    'presupuestos':     'Presupuestos',
+    'clientes':         'Clientes',
+    'productos':        'Productos',
+    'despacho':         'Despacho',
+    'radar':            'Radar',
+    'finanzas':         'Finanzas',
+    'usuarios':         'Usuarios',
+    'mis-ordenes':      'Mis Órdenes',
+};
+
 export default function Layout({ children, vistaActual, setVistaActual }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const { isDark, toggleTheme } = useTheme();
@@ -33,17 +48,12 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                         </svg>
                     </button>
 
-                    {/* Logo + Brand */}
+                    {/* Sección actual */}
                     <div className="flex items-center gap-2">
-                        <img src={logo} alt="Dispenser La Tienda" className="h-9 w-auto" />
-                        <div className="leading-none">
-                            <span className="block font-black text-[11px] tracking-widest uppercase text-[#1C1917] dark:text-[#F0EEE9]">
-                                Dispenser
-                            </span>
-                            <span className="text-[8px] font-bold uppercase tracking-wide text-[#E8422F]">
-                                Logística
-                            </span>
-                        </div>
+                        <img src={logo} alt="Dispenser La Tienda" className="h-8 w-auto" />
+                        <span className="font-black text-[13px] tracking-tight uppercase text-[#1C1917] dark:text-[#F0EEE9] leading-none">
+                            {NOMBRES_SECCION[vistaActual] || 'Dispenser'}
+                        </span>
                     </div>
 
                     {/* Iconos derecha */}

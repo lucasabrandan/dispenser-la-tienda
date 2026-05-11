@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import api from '../../services/api';
 import { buildSelectStyles } from '../servicio/ServicioUI';
+import { useTheme } from '../../hooks/useTheme';
 
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
@@ -30,7 +31,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
     const [form, setForm]             = useState(EMPTY);
     const [presupuestos, setPresupuestos] = useState([]);
     const [clientes, setClientes]     = useState([]);
-    const isDark = document.documentElement.classList.contains('dark');
+    const { isDark } = useTheme();
 
     useEffect(() => {
         api.get('/servicios', { params: { estado: 'PRESUPUESTO', size: 500 } })
