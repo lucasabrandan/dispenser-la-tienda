@@ -8,6 +8,7 @@ export default function LoginPage() {
     const { login } = useAuth();
     const [form, setForm] = useState({ username: '', password: '' });
     const [cargando, setCargando] = useState(false);
+    const [verClave, setVerClave] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -64,15 +65,25 @@ export default function LoginPage() {
                             <label className="block text-[11px] font-black text-[#A8A29E] uppercase tracking-widest mb-1.5">
                                 Contraseña
                             </label>
-                            <input
-                                type="password"
-                                autoComplete="current-password"
-                                value={form.password}
-                                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-xl text-sm font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
-                                placeholder="••••••••"
-                                disabled={cargando}
-                            />
+                            <div className="relative">
+                                <input
+                                    type={verClave ? 'text' : 'password'}
+                                    autoComplete="current-password"
+                                    value={form.password}
+                                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                                    className="w-full px-4 py-3 pr-11 rounded-xl text-sm font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
+                                    placeholder="••••••••"
+                                    disabled={cargando}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setVerClave(v => !v)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors text-sm"
+                                    tabIndex={-1}
+                                >
+                                    {verClave ? '🙈' : '👁️'}
+                                </button>
+                            </div>
                         </div>
 
                         <button

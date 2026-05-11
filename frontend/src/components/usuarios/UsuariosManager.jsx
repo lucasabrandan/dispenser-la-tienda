@@ -38,6 +38,11 @@ export default function UsuariosManager() {
     const [modalPass, setModalPass]   = useState(null); // null | usuario
     const [nuevaClave, setNuevaClave] = useState('');
 
+    // Visibilidad de claves
+    const [verClave, setVerClave]           = useState(false);
+    const [verClaveConfirm, setVerClaveConfirm] = useState(false);
+    const [verNuevaClave, setVerNuevaClave] = useState(false);
+
     const cargar = async () => {
         setCargando(true);
         try {
@@ -49,7 +54,7 @@ export default function UsuariosManager() {
 
     useEffect(() => { cargar(); }, []);
 
-    const abrirCrear = () => { setForm(FORM_VACIO); setModal('crear'); };
+    const abrirCrear = () => { setForm(FORM_VACIO); setModal('crear'); setVerClave(false); setVerClaveConfirm(false); };
     const abrirEditar = (u) => {
         setForm({ nombre: u.nombre, username: u.username, password: '', rol: u.rol, telefono: u.telefono || '', whatsapp: u.whatsapp || '' });
         setModal(u);
@@ -181,7 +186,7 @@ export default function UsuariosManager() {
                                 <button
                                     onClick={guardarGoogleLink}
                                     className={`h-10 px-4 rounded-xl font-bold text-xs text-white transition-all active:scale-95 ${
-                                        googleGuardado ? 'bg-green-600' : 'bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-90'
+                                        googleGuardado ? 'bg-[#16a34a]' : 'bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-90'
                                     }`}
                                 >
                                     {googleGuardado ? '✓' : 'Guardar'}
@@ -293,27 +298,39 @@ export default function UsuariosManager() {
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Contraseña</label>
-                                        <input
-                                            type="password"
-                                            className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
-                                            value={form.password}
-                                            onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                                            placeholder="Mínimo 6 caracteres"
-                                        />
+                                        <div className="relative mt-1">
+                                            <input
+                                                type={verClave ? 'text' : 'password'}
+                                                className="w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                                value={form.password}
+                                                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                                                placeholder="Mínimo 6 caracteres"
+                                            />
+                                            <button type="button" onClick={() => setVerClave(v => !v)} tabIndex={-1}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs">
+                                                {verClave ? '🙈' : '👁️'}
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Confirmar contraseña</label>
-                                        <input
-                                            type="password"
-                                            className={`mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none border ${
-                                                form.passwordConfirm && form.password !== form.passwordConfirm
-                                                    ? 'border-[#D13A28] dark:border-[#E8422F]'
-                                                    : 'border-black/[0.08] dark:border-white/[0.08]'
-                                            }`}
-                                            value={form.passwordConfirm}
-                                            onChange={e => setForm(f => ({ ...f, passwordConfirm: e.target.value }))}
-                                            placeholder="Repetir contraseña"
-                                        />
+                                        <div className="relative mt-1">
+                                            <input
+                                                type={verClaveConfirm ? 'text' : 'password'}
+                                                className={`w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none border ${
+                                                    form.passwordConfirm && form.password !== form.passwordConfirm
+                                                        ? 'border-[#D13A28] dark:border-[#E8422F]'
+                                                        : 'border-black/[0.08] dark:border-white/[0.08]'
+                                                }`}
+                                                value={form.passwordConfirm}
+                                                onChange={e => setForm(f => ({ ...f, passwordConfirm: e.target.value }))}
+                                                placeholder="Repetir contraseña"
+                                            />
+                                            <button type="button" onClick={() => setVerClaveConfirm(v => !v)} tabIndex={-1}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs">
+                                                {verClaveConfirm ? '🙈' : '👁️'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -398,13 +415,19 @@ export default function UsuariosManager() {
                         </h3>
                         <div>
                             <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Nueva contraseña</label>
-                            <input
-                                type="password"
-                                className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
-                                value={nuevaClave}
-                                onChange={e => setNuevaClave(e.target.value)}
-                                placeholder="Mínimo 6 caracteres"
-                            />
+                            <div className="relative mt-1">
+                                <input
+                                    type={verNuevaClave ? 'text' : 'password'}
+                                    className="w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    value={nuevaClave}
+                                    onChange={e => setNuevaClave(e.target.value)}
+                                    placeholder="Mínimo 6 caracteres"
+                                />
+                                <button type="button" onClick={() => setVerNuevaClave(v => !v)} tabIndex={-1}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs">
+                                    {verNuevaClave ? '🙈' : '👁️'}
+                                </button>
+                            </div>
                         </div>
                         <div className="flex gap-3">
                             <button
