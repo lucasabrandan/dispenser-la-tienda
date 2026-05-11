@@ -106,8 +106,30 @@ export default function CerrarTicketSheet({
             const result = await onGuardar();
             if (result?.ok) {
                 setSavedResult(result);
-                // Pre-llenar técnico si ya fue asignado en PasoResumen
-                if (result.tecnicoId) setDispTecnico(String(result.tecnicoId));
+                // Auto-despacho: técnico + fecha ya asignados en PasoResumen → crear orden directo
+                if (result.tecnicoId && result.fechaVisita) {
+                    setCreandoOrden(true);
+                    try {
+                        await api.post('/ordenes', {
+                            titulo:          `Visita — ${result.clienteNombre || 'Cliente'}`,
+                            clienteId:       result.clienteId ? parseInt(result.clienteId) : null,
+                            clienteNombre:   result.clienteNombre || '',
+                            presupuestoId:   result.id,
+                            tecnicoId:       Number(result.tecnicoId),
+                            fechaProgramada: result.fechaVisita,
+                            prioridad:       'NORMAL',
+                        });
+                        setOrdenCreada(true);
+                        toast.success('Presupuesto guardado y orden creada automáticamente');
+                    } catch {
+                        toast.error('Presupuesto guardado, pero error al crear la orden');
+                    } finally {
+                        setCreandoOrden(false);
+                    }
+                } else if (result.tecnicoId) {
+                    // Técnico asignado pero sin fecha: pre-llenar y mostrar form
+                    setDispTecnico(String(result.tecnicoId));
+                }
                 setPaso('presupuesto_ok');
             }
         } finally {

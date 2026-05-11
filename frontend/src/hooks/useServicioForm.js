@@ -40,6 +40,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
 
   const [repuestoElegido, setRepuestoElegido] = useState(null);
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState(null); // { id, nombre } — solo admin
+  const [fechaVisita, setFechaVisita] = useState(''); // fecha estimada de visita para auto-despacho
   const LEYENDA_DEFAULT = 'Garantía: 90 días sobre mano de obra · Repuestos según fabricante';
   const [leyenda, setLeyenda] = useState(LEYENDA_DEFAULT);
   const [fechaServicio, setFechaServicio] = useState(new Date().toISOString().split('T')[0]);
@@ -611,6 +612,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       const resClienteId     = clienteId;
       const resClienteNombre = nombreCliente;
       const resTecnicoId     = tecnicoSeleccionado?.id || null;
+      const resFechaVisita   = fechaVisita || null;
 
       // Reset
       setTicketItems([]);
@@ -619,8 +621,9 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       setDescuentoPorcentaje(0);
       setLeyenda(LEYENDA_DEFAULT);
       setFechaServicio(new Date().toISOString().split('T')[0]);
+      setFechaVisita('');
       setItemActual({ sedeId: '', sedeNombre: '', equipoSerial: '', trabajo: '', costoExtra: '', repuestosUsados: [] });
-      return { ok: true, id: savedId, clienteId: resClienteId, clienteNombre: resClienteNombre, tecnicoId: resTecnicoId };
+      return { ok: true, id: savedId, clienteId: resClienteId, clienteNombre: resClienteNombre, tecnicoId: resTecnicoId, fechaVisita: resFechaVisita };
 
     } catch (err) {
       console.error('Error al guardar servicio:', err.response?.data || err.message);
@@ -664,6 +667,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     itemActual, setItemActual,
     repuestoElegido, setRepuestoElegido,
     tecnicoSeleccionado, setTecnicoSeleccionado,
+    fechaVisita, setFechaVisita,
     descuentoPorcentaje, setDescuentoPorcentaje,
     modalClienteAbierto, setModalClienteAbierto,
     nombreClientePrellenado, setNombreClientePrellenado,
