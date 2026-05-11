@@ -150,6 +150,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                             styles={selectStyles}
                             menuPosition="fixed"
                             menuPlacement="auto"
+                            menuPortalTarget={document.body}
                             options={db.clientes?.map(c => ({ value: c.id.toString(), label: c.nombre }))}
                             value={clienteObj ? { value: clienteObj.id.toString(), label: clienteObj.nombre } : null}
                             onChange={s => {
@@ -206,6 +207,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                                         styles={selectStyles}
                                         menuPosition="fixed"
                                         menuPlacement="auto"
+                                        menuPortalTarget={document.body}
                                         options={sedesCliente.map(s => ({ value: s.id.toString(), label: s.nombreSede }))}
                                         value={sedesCliente.find(s => s.id === itemActual.sedeId)
                                             ? { label: sedesCliente.find(s => s.id === itemActual.sedeId).nombreSede }

@@ -229,6 +229,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             styles={selectStyles}
                             menuPosition="fixed"
                             menuPlacement="auto"
+                            menuPortalTarget={document.body}
                             options={opcionesSerial}
                             value={itemActual.equipoSerial ? { label: itemActual.equipoSerial, value: itemActual.equipoSerial } : null}
                             onChange={s => {

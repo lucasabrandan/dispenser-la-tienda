@@ -183,6 +183,9 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                     <Label>Buscar cliente</Label>
                     <CreatableSelect
                         styles={selectStyles}
+                        menuPosition="fixed"
+                        menuPlacement="auto"
+                        menuPortalTarget={document.body}
                         options={clientes.map(c => ({ value: c.id.toString(), label: c.nombre }))}
                         value={clienteObj ? { value: clienteObj.id.toString(), label: clienteObj.nombre } : null}
                         onChange={s => {

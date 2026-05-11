@@ -142,6 +142,9 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                     placeholder="Buscar cliente..."
                     noOptionsMessage={() => 'Sin resultados'}
                     styles={buildSelectStyles(isDark)}
+                    menuPosition="fixed"
+                    menuPlacement="auto"
+                    menuPortalTarget={document.body}
                     formatOptionLabel={(opt) => (
                         <div>
                             <span className="font-bold text-[13px]">{opt.label}</span>
