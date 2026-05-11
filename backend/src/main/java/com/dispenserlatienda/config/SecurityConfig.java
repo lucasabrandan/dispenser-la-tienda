@@ -44,6 +44,9 @@ public class SecurityConfig {
                 // Solo ADMIN: gestión de usuarios
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                // Solo ADMIN: radar de mantenimiento
+                .requestMatchers("/api/radar/**").hasRole("ADMIN")
+
                 // Solo ADMIN: finanzas sensibles
                 .requestMatchers("/api/gastos/**").hasRole("ADMIN")
                 .requestMatchers("/api/ventas/stats/**").hasRole("ADMIN")

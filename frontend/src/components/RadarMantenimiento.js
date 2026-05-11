@@ -6,81 +6,13 @@ export default function RadarMantenimiento() {
     const [alertas, setAlertas]   = useState([]);
     const [cargando, setCargando] = useState(true);
 
-    useEffect(() => { generarRadar(); }, []);
+    useEffect(() => { cargarAlertas(); }, []);
 
-    const generarRadar = async () => {
+    const cargarAlertas = async () => {
+        setCargando(true);
         try {
-            const [resClientes, resServicios] = await Promise.all([
-                api.get('/clientes?page=0&size=500'),
-                api.get('/servicios?page=0&size=500'),
-            ]);
-
-            const clientes  = resClientes.data.content  || resClientes.data  || [];
-            const servicios = resServicios.data.content || resServicios.data || [];
-
-            // Diccionario teléfonos por nombre de cliente
-            const telefonosDict = {};
-            clientes.forEach(c => { telefonosDict[c.nombre] = c.telefono; });
-
-            // Agrupar historial por equipo (solo servicios REALIZADOS)
-            const historialPorEquipo = {};
-            servicios.forEach(srv => {
-                if (srv.estado !== 'REALIZADO') return;
-                srv.items?.forEach(it => {
-                    const serial = it.equipoSerial;
-                    if (!serial || serial === 'MOSTRADOR') return;
-                    if (!historialPorEquipo[serial]) historialPorEquipo[serial] = [];
-                    historialPorEquipo[serial].push({
-                        fechaObj: new Date(srv.fecha.includes('T') ? srv.fecha : srv.fecha + 'T12:00:00'),
-                        fechaStr: srv.fecha.split('T')[0],
-                        cliente:  srv.clienteNombre,
-                        sede:     srv.sedeNombre,
-                        trabajo:  it.trabajoRealizado,
-                        esFiltro: it.trabajoRealizado?.toUpperCase().includes('FILTRO') || it.trabajoTipo === 'CAMBIO_FILTRO',
-                    });
-                });
-            });
-
-            const hoy = new Date();
-            const alertasGeneradas = [];
-
-            Object.keys(historialPorEquipo).forEach(serial => {
-                const historial      = historialPorEquipo[serial].sort((a, b) => b.fechaObj - a.fechaObj);
-                const ultimoServicio = historial[0];
-                const ultimoFiltro   = historial.find(h => h.esFiltro);
-
-                const mesesDesde = (ref) =>
-                    (hoy.getFullYear() - ref.getFullYear()) * 12 + (hoy.getMonth() - ref.getMonth());
-
-                const mesesDesdeUltimo = mesesDesde(ultimoServicio.fechaObj);
-                const mesesDesdeFiltro = ultimoFiltro ? mesesDesde(ultimoFiltro.fechaObj) : mesesDesdeUltimo;
-
-                let tipoAlerta = null;
-                let mensajeBase = '';
-
-                if (mesesDesdeFiltro >= 11) {
-                    tipoAlerta  = 'FILTRO';
-                    mensajeBase = `¡Hola! Pasó un año del último cambio de filtro de tu dispenser. ¿Coordinamos una visita para dejar el agua impecable de nuevo?`;
-                } else if (mesesDesdeUltimo >= 5 && mesesDesdeUltimo < 11) {
-                    tipoAlerta  = 'SANITIZACIÓN';
-                    mensajeBase = `¡Hola! Ya pasaron 6 meses de la última revisión de tu dispenser. ¿Te parece si coordinamos una visita de sanitización de rutina?`;
-                }
-
-                if (tipoAlerta) {
-                    alertasGeneradas.push({
-                        serial,
-                        cliente:     ultimoServicio.cliente,
-                        sede:        ultimoServicio.sede,
-                        fechaUltimo: tipoAlerta === 'FILTRO' && ultimoFiltro ? ultimoFiltro.fechaStr : ultimoServicio.fechaStr,
-                        telefono:    telefonosDict[ultimoServicio.cliente],
-                        tipoAlerta,
-                        mensajeBase,
-                        meses: tipoAlerta === 'FILTRO' ? mesesDesdeFiltro : mesesDesdeUltimo,
-                    });
-                }
-            });
-
-            setAlertas(alertasGeneradas.sort((a, b) => b.meses - a.meses));
+            const res = await api.get('/radar/alertas');
+            setAlertas(res.data || []);
         } catch {
             toast.error('Error al generar el Radar');
         } finally {
@@ -89,9 +21,12 @@ export default function RadarMantenimiento() {
     };
 
     const enviarWA = (alerta) => {
-        if (!alerta.telefono) return toast.error('Este cliente no tiene teléfono guardado');
-        const tel = alerta.telefono.replace(/\D/g, '');
-        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(alerta.mensajeBase)}`, '_blank');
+        if (!alerta.clienteTelefono) return toast.error('Este cliente no tiene teléfono guardado');
+        const tel = alerta.clienteTelefono.replace(/\D/g, '');
+        const msg = alerta.tipoAlerta === 'FILTRO'
+            ? `¡Hola! Pasó un año del último cambio de filtro de tu dispenser. ¿Coordinamos una visita para dejar el agua impecable de nuevo?`
+            : `¡Hola! Ya pasaron varios meses de la última revisión de tu dispenser. ¿Te parece si coordinamos una visita de sanitización de rutina?`;
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
     if (cargando) return (
@@ -116,10 +51,35 @@ export default function RadarMantenimiento() {
                             Dispensers que necesitan atención
                         </p>
                     </div>
-                    <div className="bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-2xl w-14 h-14 rounded-2xl flex items-center justify-center">
-                        {alertas.length}
+                    <div className="flex items-center gap-3">
+                        <div className="bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-2xl w-14 h-14 rounded-2xl flex items-center justify-center">
+                            {alertas.length}
+                        </div>
+                        <button onClick={cargarAlertas}
+                            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-lg transition-all active:scale-90"
+                            title="Actualizar">
+                            🔄
+                        </button>
                     </div>
                 </div>
+
+                {/* Resumen por tipo */}
+                {alertas.length > 0 && (
+                    <div className="flex gap-3 mt-4">
+                        <div className="flex-1 bg-[#D13A28]/20 rounded-xl px-3 py-2 text-center">
+                            <p className="text-[#E8422F] font-black text-lg leading-none">
+                                {alertas.filter(a => a.tipoAlerta === 'FILTRO').length}
+                            </p>
+                            <p className="text-[#A8A29E] text-[9px] font-black uppercase mt-0.5">Filtros</p>
+                        </div>
+                        <div className="flex-1 bg-[#D48800]/20 rounded-xl px-3 py-2 text-center">
+                            <p className="text-[#F0A500] font-black text-lg leading-none">
+                                {alertas.filter(a => a.tipoAlerta === 'SANITIZACION').length}
+                            </p>
+                            <p className="text-[#A8A29E] text-[9px] font-black uppercase mt-0.5">Sanitizaciones</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Sin alertas */}
@@ -132,6 +92,9 @@ export default function RadarMantenimiento() {
                 <div className="flex flex-col gap-3">
                     {alertas.map((a, i) => {
                         const esFiltro = a.tipoAlerta === 'FILTRO';
+                        const fechaRef = esFiltro && a.fechaUltimoFiltro
+                            ? a.fechaUltimoFiltro
+                            : a.fechaUltimoServicio;
                         return (
                             <div key={i} className={`
                                 bg-[#EDEAE6] dark:bg-[#242424] rounded-[1.5rem]
@@ -139,13 +102,11 @@ export default function RadarMantenimiento() {
                                 border-l-4 overflow-hidden
                                 ${esFiltro
                                     ? 'border-l-[#D13A28] dark:border-l-[#E8422F]'
-                                    : 'border-l-[#D48800] dark:border-l-[#F0A500]'
-                                }
+                                    : 'border-l-[#D48800] dark:border-l-[#F0A500]'}
                             `}>
                                 <div className="p-5">
                                     <div className="flex justify-between items-start gap-3 mb-4">
                                         <div className="flex-1 min-w-0">
-                                            {/* Badge tipo */}
                                             <span className={`inline-block px-2.5 py-1 rounded-lg text-[9px] font-black uppercase mb-2 ${
                                                 esFiltro
                                                     ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]'
@@ -154,15 +115,19 @@ export default function RadarMantenimiento() {
                                                 {a.tipoAlerta} · {a.meses} meses
                                             </span>
                                             <h3 className="font-black text-[16px] text-[#1C1917] dark:text-[#F0EEE9] uppercase leading-none">
-                                                {a.cliente}
+                                                {a.clienteNombre}
                                             </h3>
                                             <p className="text-[10px] font-bold text-[#A8A29E] uppercase mt-1">
-                                                📍 {a.sede} · S/N: <span className="text-[#1C1917] dark:text-[#F0EEE9]">{a.serial}</span>
+                                                📍 {a.sedeNombre} · S/N: <span className="text-[#1C1917] dark:text-[#F0EEE9]">{a.serial}</span>
                                             </p>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className="text-[9px] font-black text-[#A8A29E] uppercase">Último service</p>
-                                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] mt-0.5">{a.fechaUltimo}</p>
+                                            <p className="text-[9px] font-black text-[#A8A29E] uppercase">
+                                                {esFiltro ? 'Último filtro' : 'Último service'}
+                                            </p>
+                                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] mt-0.5">
+                                                {fechaRef}
+                                            </p>
                                         </div>
                                     </div>
 
