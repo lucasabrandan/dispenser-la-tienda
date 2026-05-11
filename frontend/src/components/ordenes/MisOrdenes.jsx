@@ -218,8 +218,7 @@ function RendimientoTab({ tecnicoId }) {
     if (datos.length === 0) return (
         <div className="text-center py-12 space-y-3">
             <p className="text-[#A8A29E]">Sin trabajos registrados aún</p>
-            <p className="text-[10px] text-[#C0BCB6] dark:text-[#2E2E2E]">ID técnico: {tecnicoId}</p>
-            <button onClick={() => setTick(t => t + 1)}
+                <button onClick={() => setTick(t => t + 1)}
                 className="text-[11px] font-bold text-[#D13A28] dark:text-[#E8422F] px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">
                 Recargar
             </button>

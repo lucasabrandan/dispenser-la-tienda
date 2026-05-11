@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import OrdenForm from './OrdenForm';
+import { toast } from 'react-hot-toast';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-[#C0BCB6] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
@@ -19,6 +20,7 @@ const ESTADO_COLOR = {
 
 function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
     const [expanded, setExpanded] = useState(false);
+    const [confirmCancelar, setConfirmCancelar] = useState(false);
     const pr = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
     const es = ESTADO_COLOR[orden.estado] || ESTADO_COLOR.PENDIENTE;
     const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
@@ -102,11 +104,23 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                         className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]">✏️</button>
                 )}
                 <div className="flex-1" />
-                {!esFinal && (
-                    <button onClick={() => window.confirm('¿Cancelar esta orden?') && onAvanzar(orden.id, 'CANCELADA')}
+                {!esFinal && !confirmCancelar && (
+                    <button onClick={() => setConfirmCancelar(true)}
                         className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                         Cancelar
                     </button>
+                )}
+                {confirmCancelar && (
+                    <>
+                        <button onClick={() => setConfirmCancelar(false)}
+                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            No
+                        </button>
+                        <button onClick={() => { setConfirmCancelar(false); onAvanzar(orden.id, 'CANCELADA'); }}
+                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#D13A28] dark:bg-[#E8422F] text-white active:scale-95">
+                            Confirmar cancelar
+                        </button>
+                    </>
                 )}
                 <button onClick={() => onEliminar(orden.id)}
                     className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#1C1917] dark:bg-[#2E2E2E] text-white active:scale-95">

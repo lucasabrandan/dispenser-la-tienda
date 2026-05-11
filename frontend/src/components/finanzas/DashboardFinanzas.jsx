@@ -216,6 +216,7 @@ function TabGastos({ filtroMes }) {
     const [gastos,   setGastos]   = useState([]);
     const [cargando, setCargando] = useState(false);
     const [form, setForm] = useState({ descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' });
+    const [confirmEliminarGasto, setConfirmEliminarGasto] = useState(null);
 
     const cargar = () => {
         setCargando(true);
@@ -241,8 +242,11 @@ function TabGastos({ filtroMes }) {
         } catch { toast.error('Error al agregar gasto'); }
     };
 
-    const handleEliminar = async (id) => {
-        if (!window.confirm('¿Eliminar este gasto?')) return;
+    const handleEliminar = (id) => setConfirmEliminarGasto(id);
+
+    const confirmarEliminarGasto = async () => {
+        const id = confirmEliminarGasto;
+        setConfirmEliminarGasto(null);
         try {
             await api.delete(`/gastos/${id}`);
             toast.success('Gasto eliminado');
@@ -299,6 +303,32 @@ function TabGastos({ filtroMes }) {
                         </p>
                     </div>
                 </div>
+            )}
+
+            {/* Modal confirmación eliminar gasto */}
+            {confirmEliminarGasto && (
+                <>
+                    <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
+                    <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
+                        <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
+                            <div className="text-center mb-4">
+                                <p className="text-[32px] mb-2">🗑️</p>
+                                <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Eliminar gasto</h3>
+                                <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] mt-2">Esta acción no se puede deshacer.</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => setConfirmEliminarGasto(null)}
+                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    Cancelar
+                                </button>
+                                <button onClick={confirmarEliminarGasto}
+                                    className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                    Sí, eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );

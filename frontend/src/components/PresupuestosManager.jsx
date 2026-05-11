@@ -38,7 +38,7 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
         : '';
 
     return (
-        <div className={`rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''} ${ejecutado ? 'border-l-[3px] border-l-[#D48800]' : 'border-l-[3px] border-l-[#D48800]'}`}
+        <div className={`rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${ejecutado ? '#16A34A' : '#D48800'}` }}>
             <div className="p-4">
                 {/* Fila 1: checkbox + tipo + ejecutado + id + monto + fecha */}

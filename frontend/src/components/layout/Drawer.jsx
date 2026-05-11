@@ -153,7 +153,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 {/* Footer */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07] bg-[#D8D4CE] dark:bg-[#1C1C1C]">
                     <p className="text-[9px] text-[#A8A29E] text-center uppercase tracking-widest font-black">
-                        Logística Dispenser v3.0
+                        Logística Dispenser v1.0
                     </p>
                 </div>
             </div>

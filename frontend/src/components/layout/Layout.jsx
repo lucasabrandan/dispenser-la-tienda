@@ -82,11 +82,6 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                             <span className="text-[18px]">{isDark ? '☀️' : '🌙'}</span>
                         </button>
 
-                        <button
-                            className="w-9 h-9 flex items-center justify-center rounded-xl text-[#9E9A94]"
-                        >
-                            <span className="text-[18px]">🔔</span>
-                        </button>
                     </div>
                 </header>
 

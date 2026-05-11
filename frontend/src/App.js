@@ -25,7 +25,7 @@ import MisOrdenes         from './components/ordenes/MisOrdenes';
 
 function AppInterna() {
     const { autenticado, esAdmin, usuario } = useAuth();
-    const [seccionActual, setSeccionActual] = useState(esAdmin ? 'caja' : 'servicio-tecnico');
+    const [seccionActual, setSeccionActual] = useState(esAdmin ? 'caja' : 'mis-ordenes');
     const [clientePreload, setClientePreload] = useState(null);
     const [presupuestoOrigen, setPresupuestoOrigen] = useState(null);
     const [ordenOrigen, setOrdenOrigen] = useState(null);
@@ -95,9 +95,7 @@ function AppInterna() {
     return (
         <MontosProvider>
             <Layout vistaActual={seccionActual} setVistaActual={setSeccionActual}>
-                <div className="max-w-5xl mx-auto">
-                    {renderSeccion()}
-                </div>
+                {renderSeccion()}
             </Layout>
         </MontosProvider>
     );

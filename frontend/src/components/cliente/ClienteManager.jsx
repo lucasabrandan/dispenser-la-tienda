@@ -31,6 +31,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
     const [selectedEquipo, setSelectedEquipo]   = useState(null);
     const [expandedId, setExpandedId]           = useState(null);
     const [filtroChip, setFiltroChip]           = useState(null);
+    const [confirmEliminarCliente, setConfirmEliminarCliente] = useState(null); // id del cliente a eliminar
     const [form, setForm] = useState({
         id: null, nombre: '', calle: '', numero: '', piso: '', depto: '',
         localidad: '', provincia: 'Buenos Aires', telefono: '', cuilDni: '',
@@ -71,8 +72,11 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
         }
     };
 
-    const handleEliminarCliente = async (id) => {
-        if (!window.confirm('¿Eliminar cliente y todo su historial?')) return;
+    const handleEliminarCliente = (id) => setConfirmEliminarCliente(id);
+
+    const confirmarEliminarCliente = async () => {
+        const id = confirmEliminarCliente;
+        setConfirmEliminarCliente(null);
         try {
             await api.delete(`/clientes/${id}`);
             toast.success('Eliminado');
@@ -193,6 +197,34 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     equipoParaEditar={selectedEquipo}
                     onRefresh={() => { cargarDatos(); setSelectedEquipo(null); }}
                     onClose={() => { setModalOpen(null); setSelectedEquipo(null); }} />
+            )}
+
+            {/* Modal confirmación eliminar cliente */}
+            {confirmEliminarCliente && (
+                <>
+                    <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
+                    <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
+                        <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
+                            <div className="text-center mb-5">
+                                <p className="text-[36px] mb-2">⚠️</p>
+                                <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Eliminar cliente</h3>
+                            </div>
+                            <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] text-center mb-5 leading-snug">
+                                Se eliminará el cliente y todo su historial. Esta acción no se puede deshacer.
+                            </p>
+                            <div className="flex gap-2">
+                                <button onClick={() => setConfirmEliminarCliente(null)}
+                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    Cancelar
+                                </button>
+                                <button onClick={confirmarEliminarCliente}
+                                    className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                    Sí, eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );
