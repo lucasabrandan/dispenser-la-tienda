@@ -10,6 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import FirmaPad from '../ui/FirmaPad';
+import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
@@ -22,7 +23,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
     const [observaciones, setObservaciones] = useState(servicio.observaciones || '');
     const [repuestosAgregados, setRepuestosAgregados] = useState([]);
     const [repuestosDisponibles, setRepuestosDisponibles] = useState([]);
-    const [busqueda, setBusqueda] = useState('');
+    const [sheetRepuestosOpen, setSheetRepuestosOpen] = useState(false);
     const [firmaTecnico, setFirmaTecnico] = useState(null);
     const [editandoFirma, setEditandoFirma] = useState(false);
     const [firmaCliente, setFirmaCliente] = useState(null);
@@ -45,47 +46,17 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
     // Total original de la orden
     const totalOriginal = servicio.items?.reduce((s, it) => s + Number(it.costo || 0), 0) || 0;
     // Total de repuestos nuevos que agregó el técnico
-    const totalRepuestosNuevos = repuestosAgregados.reduce((s, r) => s + r.precio * r.cantidad, 0);
+    const totalRepuestosNuevos = repuestosAgregados.reduce((s, r) => s + (parseFloat(r.precio) || 0) * (r.cantidad || 1), 0);
     const descPct = servicio.descuentoPorcentaje || 0;
     const totalFinal = Math.round((totalOriginal + totalRepuestosNuevos) * (1 - descPct / 100));
-
-    // Filtro de búsqueda (mínimo 2 caracteres)
-    const repuestosFiltrados = busqueda.length >= 2
-        ? repuestosDisponibles.filter(r => r.nombre?.toLowerCase().includes(busqueda.toLowerCase())).slice(0, 6)
-        : [];
-
-    const agregarRepuesto = (rep) => {
-        setRepuestosAgregados(prev => {
-            const idx = prev.findIndex(r => r.id === rep.id);
-            if (idx >= 0) {
-                const copia = [...prev];
-                copia[idx] = { ...copia[idx], cantidad: copia[idx].cantidad + 1 };
-                return copia;
-            }
-            return [...prev, {
-                id: rep.id,
-                nombre: rep.nombre,
-                precio: parseFloat(rep.precio) || 0,
-                cantidad: 1,
-            }];
-        });
-        setBusqueda('');
-    };
-
-    const cambiarCantidad = (id, delta) => {
-        setRepuestosAgregados(prev => prev
-            .map(r => r.id === id ? { ...r, cantidad: Math.max(1, r.cantidad + delta) } : r)
-        );
-    };
-
-    const quitarRepuesto = (id) => setRepuestosAgregados(prev => prev.filter(r => r.id !== id));
 
     const guardarFirma = async () => {
         if (!firmaTecnico) return;
         try {
             const user = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
             localStorage.setItem('auth_usuario', JSON.stringify({ ...user, firma: firmaTecnico }));
-            if (user.id) api.put(`/admin/usuarios/${user.id}/firma`, { firma: firmaTecnico }).catch(() => {});
+            // Usar el endpoint propio del usuario (no el de admin, que podría causar 401→reload)
+            api.patch('/auth/mi-firma', { firma: firmaTecnico }).catch(() => {});
             setEditandoFirma(false);
         } catch {}
     };
@@ -270,76 +241,55 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                             ))}
                         </section>
 
-                        {/* Repuestos adicionales */}
+                        {/* Repuestos adicionales — usa el mismo selector visual que VentaManager */}
                         <section className="space-y-2">
                             <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">
-                                Agregar repuestos
+                                Repuestos adicionales
                             </p>
-                            <div className="relative">
-                                <input
-                                    value={busqueda}
-                                    onChange={e => setBusqueda(e.target.value)}
-                                    placeholder="Buscar repuesto..."
-                                    className="w-full h-10 px-3 rounded-xl text-[13px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] outline-none"
-                                />
-                                {busqueda && (
-                                    <button onClick={() => setBusqueda('')}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
-                                )}
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSheetRepuestosOpen(true)}
+                                className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-[13px] border border-dashed border-[#C0BCB6] dark:border-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] bg-[#EDEAE6] dark:bg-[#1C1C1C] active:scale-[0.98] transition-all"
+                            >
+                                <span>
+                                    {repuestosAgregados.length > 0
+                                        ? `${repuestosAgregados.length} repuesto${repuestosAgregados.length > 1 ? 's' : ''} seleccionado${repuestosAgregados.length > 1 ? 's' : ''}`
+                                        : '+ Agregar repuestos'}
+                                </span>
+                                <span className="text-[#A8A29E]">▼</span>
+                            </button>
 
-                            {/* Resultados búsqueda */}
-                            {repuestosFiltrados.length > 0 && (
-                                <div className="rounded-xl overflow-hidden border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#242424]">
-                                    {repuestosFiltrados.map(r => (
-                                        <button key={r.id} onClick={() => agregarRepuesto(r)}
-                                            className="w-full flex items-center justify-between px-3 py-2.5 text-left border-b border-black/[0.05] last:border-0 active:bg-[#D8D4CE] dark:active:bg-[#2E2E2E]">
-                                            <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">{r.nombre}</span>
-                                            <span className="text-[11px] font-black text-[#D13A28] dark:text-[#E8422F] shrink-0">
-                                                ${(parseFloat(r.precio) || 0).toLocaleString('es-AR')}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {busqueda.length >= 2 && repuestosFiltrados.length === 0 && (
-                                <p className="text-[11px] text-[#A8A29E] text-center py-2">Sin resultados</p>
-                            )}
-
-                            {/* Lista de repuestos agregados */}
+                            {/* Lista de repuestos seleccionados con miniatura */}
                             {repuestosAgregados.length > 0 && (
-                                <div className="space-y-1.5">
-                                    {repuestosAgregados.map(r => (
-                                        <div key={r.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.06]">
-                                            <span className="flex-1 text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] min-w-0 truncate">
-                                                {r.nombre}
-                                            </span>
-                                            {/* Cantidad */}
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                <button onClick={() => cambiarCantidad(r.id, -1)}
-                                                    className="w-6 h-6 rounded-lg bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] font-black text-sm flex items-center justify-center active:scale-90">
-                                                    −
-                                                </button>
-                                                <span className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] w-5 text-center">
-                                                    {r.cantidad}
-                                                </span>
-                                                <button onClick={() => cambiarCantidad(r.id, +1)}
-                                                    className="w-6 h-6 rounded-lg bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] font-black text-sm flex items-center justify-center active:scale-90">
-                                                    +
-                                                </button>
+                                <div className="rounded-xl overflow-hidden bg-[#D8D4CE] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
+                                    {repuestosAgregados.map((r, i) => (
+                                        <div key={r.id ?? i}
+                                            className={`px-3 py-2.5 flex items-center gap-3 ${i < repuestosAgregados.length - 1 ? 'border-b border-black/[0.07] dark:border-white/[0.07]' : ''}`}>
+                                            {r.fotoUrl && (
+                                                <img src={r.fotoUrl} alt={r.nombre}
+                                                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#C0BCB6] dark:bg-[#242424]"
+                                                    onError={e => { e.target.style.display = 'none'; }} />
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-[13px] text-[#1C1917] dark:text-[#F0EEE9] truncate">{r.nombre}</p>
+                                                <p className="text-[10px] text-[#A8A29E]">${Number(r.precio).toLocaleString('es-AR')} c/u</p>
                                             </div>
-                                            <span className="text-[11px] text-[#A8A29E] shrink-0 w-16 text-right">
-                                                ${(r.precio * r.cantidad).toLocaleString('es-AR')}
+                                            <span className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0">×{r.cantidad}</span>
+                                            <span className="text-[11px] font-black text-[#D13A28] dark:text-[#E8422F] shrink-0 w-16 text-right">
+                                                ${((parseFloat(r.precio) || 0) * (r.cantidad || 1)).toLocaleString('es-AR')}
                                             </span>
-                                            <button onClick={() => quitarRepuesto(r.id)}
-                                                className="w-6 h-6 rounded-lg flex items-center justify-center text-[#A8A29E] active:text-[#D13A28] font-bold text-sm shrink-0">
-                                                ✕
-                                            </button>
                                         </div>
                                     ))}
                                 </div>
                             )}
+
+                            <RepuestosBottomSheet
+                                isOpen={sheetRepuestosOpen}
+                                onClose={() => setSheetRepuestosOpen(false)}
+                                repuestos={repuestosDisponibles}
+                                seleccionados={repuestosAgregados}
+                                onChange={nuevos => setRepuestosAgregados(nuevos)}
+                            />
                         </section>
 
                         {/* Observaciones */}
@@ -458,10 +408,10 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                             </div>
                         ))}
 
-                        {/* Firma cliente */}
+                        {/* Firma cliente — height fijo para evitar que el canvas se limpie al guardar la firma técnico */}
                         {incluirFirmas && (
                             <FirmaPad label="Firma del cliente" value={firmaCliente} onChange={setFirmaCliente}
-                                height={!editandoFirma ? 180 : 130} />
+                                height={160} />
                         )}
 
                         <button onClick={confirmar} disabled={procesando}

@@ -874,7 +874,8 @@ export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null 
     y += 5;
 
     const COL_W  = (CONTENT_W - 6) / 2;
-    const FOTO_H = Math.round(COL_W * 3 / 4);
+    // Ratio reducido para que el registro fotográfico quede en la misma página
+    const FOTO_H = Math.round(COL_W * 0.5);
 
     const dibujarCaja = (foto, x, label) => {
         doc.setFillColor(220, 220, 225);

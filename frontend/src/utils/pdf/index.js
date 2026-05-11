@@ -281,10 +281,10 @@ async function generarSingleTecnico(doc, {
     tableEndY += 18;
     y = tableEndY;
 
-    // Registro fotográfico
+    // Registro fotográfico — umbral reducido acorde al nuevo tamaño de foto
     if (fotoA || fotoD) {
         const pageH = doc.internal.pageSize.getHeight();
-        if (y + 90 > pageH - 25) {
+        if (y + 65 > pageH - 25) {
             doc.addPage();
             dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo(tipo, false), fecha, nroDoc });
             y = HEADER_H.compact + 8;
@@ -337,14 +337,11 @@ async function generarSingleTecnico(doc, {
         y += leyH + 4;
     }
 
-    // Garantía + firmas + QR: un solo checkSalto para todo el bloque final
-    const empresa    = getEmpresa();
-    const linkGoogle = googleReviewLink || empresa.googleReviewLink;
+    // Garantía + firmas: QR de reseña se gestiona vía WhatsApp (no va en PDF)
     const garantiaH  = 22;
     const firmasH    = incluirFirmas ? 44 : 0;
-    const qrH        = linkGoogle    ? 44 : 0;
     const pageH      = doc.internal.pageSize.getHeight();
-    if (y + garantiaH + firmasH + qrH > pageH - 25) {
+    if (y + garantiaH + firmasH > pageH - 25) {
         doc.addPage();
         dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo(tipo, false), fecha, nroDoc });
         y = HEADER_H.compact + 8;
@@ -352,9 +349,6 @@ async function generarSingleTecnico(doc, {
     y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
     if (incluirFirmas) {
         y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
-    }
-    if (linkGoogle) {
-        y = await dibujarQRGoogle(doc, { y, link: linkGoogle });
     }
 
     return y;
@@ -550,9 +544,9 @@ async function generarSinglePresupuesto(doc, {
     doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
     y += 6;
 
-    // Registro fotográfico: mostrar si existe alguna foto
+    // Registro fotográfico: mostrar si existe alguna foto — umbral reducido por foto más compacta
     if (tieneEquipoReal && (fotoAntes || fotoDespues)) {
-        y = checkSalto(doc, y, 50);
+        y = checkSalto(doc, y, 35);
         y = dibujarRegistroFotografico(doc, { y, fotoA: fotoAntes, fotoD: fotoDespues });
     } else if (!tieneEquipoReal && (fotoAntes || fotoDespues)) {
         // Sin equipo real: mostrar evidencia del problema (fotoAntes o fotoDespues, la que exista)
@@ -614,13 +608,11 @@ async function generarMultiTecnico(doc, {
     // Bloque cliente sin diagnóstico — cada equipo tiene su propio trabajo
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: null });
 
-    // Garantía + firmas + QR: un solo checkSalto para todo el bloque final de página 1
-    const linkGoogle = googleReviewLink || empresa.googleReviewLink;
+    // Garantía + firmas: QR de reseña se gestiona vía WhatsApp (no va en PDF)
     const garantiaHM = 22;
     const firmasHM   = incluirFirmas ? 44 : 0;
-    const qrHM       = linkGoogle    ? 44 : 0;
     const pageHM     = doc.internal.pageSize.getHeight();
-    if (y + garantiaHM + firmasHM + qrHM > pageHM - 25) {
+    if (y + garantiaHM + firmasHM > pageHM - 25) {
         doc.addPage();
         dibujarHeaderCompacto(doc, { tipoLabel: 'SERVICIO TÉCNICO — MÚLTIPLES EQUIPOS', fecha, nroDoc });
         y = HEADER_H.compact + 8;
@@ -628,9 +620,6 @@ async function generarMultiTecnico(doc, {
     y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
     if (incluirFirmas) {
         y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
-    }
-    if (linkGoogle) {
-        y = await dibujarQRGoogle(doc, { y, link: linkGoogle });
     }
 
     // ── Página 2: Detalle técnico por equipos (1 fila por equipo, columnas trabajo/repuestos) ──
