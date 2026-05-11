@@ -1,0 +1,6 @@
+fecha,cliente,equipo_modelo,equipo_serial,descripcion,monto,tecnico
+15/01/2023,Juan García,Dispenser fría,,Cambio de filtro,8500,Lucas
+20/03/2023,María López,Dispenser calor,SER-001,Limpieza general,5000,Lucas
+10/06/2023,Empresa Ejemplo S.A.,Dispenser,,Cambio de filtro y revisión,12000,Lucas
+05/09/2023,Roberto Fernández,Dispenser fría,ABC-123,"Cambio filtro, revisión compresor",15000,Lucas
+22/11/2023,Ana Martínez,,,"Servicio técnico general",7500,Lucas
