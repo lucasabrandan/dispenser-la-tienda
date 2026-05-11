@@ -49,6 +49,15 @@ public class AuthController {
         ));
     }
 
+    // GET /api/auth/mi-firma — devuelve la firma guardada del usuario logueado
+    @GetMapping("/mi-firma")
+    public ResponseEntity<java.util.Map<String, String>> getMiFirma(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return usuarioRepository.findByUsername(userDetails.getUsername())
+            .map(u -> ResponseEntity.ok(java.util.Map.of("firma", u.getFirma() != null ? u.getFirma() : "")))
+            .orElse(ResponseEntity.notFound().build());
+    }
+
     // PATCH /api/auth/mi-firma — cualquier usuario autenticado puede guardar su propia firma
     @PatchMapping("/mi-firma")
     public ResponseEntity<Void> guardarMiFirma(
