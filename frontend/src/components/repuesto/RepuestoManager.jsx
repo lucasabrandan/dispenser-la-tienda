@@ -15,7 +15,7 @@ export default function RepuestoManager() {
     const [stockSheetOpen, setStockSheetOpen] = useState(false);
 
     const {
-        productosFiltrados, productosPagina,
+        productos, productosFiltrados, productosPagina,
         pagina, totalPaginas, irA, next, prev,
         modalAbierto, productoEdicion,
         busqueda, setBusqueda,
