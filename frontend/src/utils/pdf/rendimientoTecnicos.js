@@ -4,7 +4,7 @@
 import jsPDF    from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { C, M, CONTENT_W, T } from './theme.js';
-import { dibujarHeader, dibujarFooter } from './layout.js';
+import { dibujarHeaderCompacto, dibujarFooter } from './layout.js';
 
 function fmt(v) {
     return `$ ${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
@@ -25,16 +25,11 @@ export function generarPDFRendimientoTecnicos({ datos, periodo }) {
     const pageW = 210;
 
     // Header corporativo compacto
-    const hy = dibujarHeader(doc, { compact: true });
-    let y = hy + 6;
+    const hoy = new Date().toLocaleDateString('es-AR');
+    dibujarHeaderCompacto(doc, { tipoLabel: 'Rendimiento de Técnicos', fecha: hoy });
+    let y = 30;
 
-    // Título
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(T.xl);
-    doc.setTextColor(...C.navy);
-    doc.text('RENDIMIENTO DE TÉCNICOS', M, y);
-    y += 6;
-
+    // Período
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(T.sm);
     doc.setTextColor(...C.grayText);
@@ -92,7 +87,7 @@ export function generarPDFRendimientoTecnicos({ datos, periodo }) {
     doc.setTextColor(...C.grayText);
     doc.text('* Ganancia neta = Facturado − 30% impuestos − repuestos. Su parte = 50% de la ganancia neta.', M, y);
 
-    dibujarFooter(doc, doc.getNumberOfPages());
+    dibujarFooter(doc, { pagina: 1, totalPaginas: doc.getNumberOfPages() });
 
     const nombreArchivo = `rendimiento-tecnicos-${periodo || 'mes'}.pdf`;
     doc.save(nombreArchivo);
