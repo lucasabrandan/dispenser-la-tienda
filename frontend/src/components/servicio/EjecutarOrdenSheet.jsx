@@ -17,7 +17,8 @@ import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar }) {
     const { usuario } = useAuth();
 
-    const [paso, setPaso] = useState('detalle'); // 'detalle' | 'firmas'
+    const [paso, setPaso] = useState('detalle'); // 'detalle' | 'firmas' | 'resumen'
+    const [resumenGanancias, setResumenGanancias] = useState(null);
     const [observaciones, setObservaciones] = useState(servicio.observaciones || '');
     const [repuestosAgregados, setRepuestosAgregados] = useState([]);
     const [repuestosDisponibles, setRepuestosDisponibles] = useState([]);
@@ -126,6 +127,17 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
 
             toast.success('Trabajo confirmado', { id: loading });
 
+            // Calcular resumen de ganancias para mostrar al técnico
+            const totalRepuestosOriginales = (servicio.items || []).reduce((s, it) => {
+                const reps = it.repuestosUsados || [];
+                return s + reps.reduce((a, r) => a + (Number(r.precio || 0) * Number(r.cantidad || 1)), 0);
+            }, 0);
+            const totalRepuestosTodos = totalRepuestosOriginales + totalRepuestosNuevos;
+            const impuestos  = Math.round(totalFinal * 0.30);
+            const gananciaNet = Math.max(0, totalFinal - impuestos - totalRepuestosTodos);
+            const parteTecnico = Math.round(gananciaNet / 2);
+            setResumenGanancias({ totalFinal, impuestos, totalRepuestos: totalRepuestosTodos, gananciaNet, parteTecnico });
+
             // Generar PDF — si falla (popup blocker, etc.) el trabajo ya está guardado
             try {
                 const ticketItems = itemsActualizados.map(it => ({
@@ -169,7 +181,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                 toast('Trabajo guardado. PDF no disponible (bloqueado por el navegador)', { icon: '⚠️' });
             }
 
-            if (onConfirmado) onConfirmado();
+            setPaso('resumen');
         } catch (e) {
             console.error('Error confirmando trabajo:', e);
             toast.error('Error al confirmar', { id: loading });
@@ -342,6 +354,64 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                             Firmas y confirmar →
                         </button>
                     </>
+                )}
+
+                {/* ── PASO 3: RESUMEN GANANCIAS ────────────────────────────── */}
+                {paso === 'resumen' && resumenGanancias && (
+                    <div className="space-y-4">
+                        <div className="text-center py-2">
+                            <p className="text-[36px] mb-1">✅</p>
+                            <p className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Trabajo confirmado</p>
+                            <p className="text-[11px] text-[#A8A29E] mt-0.5">Tu resumen de este trabajo</p>
+                        </div>
+
+                        {/* Desglose */}
+                        <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
+                            style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                            <div className="px-4 py-3 space-y-2.5">
+                                <div className="flex justify-between text-[13px]">
+                                    <span className="text-[#57534E] dark:text-[#9E9A94]">Total cobrado</span>
+                                    <span className="font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                        ${resumenGanancias.totalFinal.toLocaleString('es-AR')}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-[13px]">
+                                    <span className="text-[#A8A29E]">− Impuestos (30%)</span>
+                                    <span className="font-bold text-[#D13A28] dark:text-[#E8422F]">
+                                        −${resumenGanancias.impuestos.toLocaleString('es-AR')}
+                                    </span>
+                                </div>
+                                {resumenGanancias.totalRepuestos > 0 && (
+                                    <div className="flex justify-between text-[13px]">
+                                        <span className="text-[#A8A29E]">− Repuestos</span>
+                                        <span className="font-bold text-[#D13A28] dark:text-[#E8422F]">
+                                            −${resumenGanancias.totalRepuestos.toLocaleString('es-AR')}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between text-[13px] pt-2 border-t border-black/[0.07] dark:border-white/[0.07]">
+                                    <span className="text-[#57534E] dark:text-[#9E9A94]">Ganancia neta</span>
+                                    <span className="font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                        ${resumenGanancias.gananciaNet.toLocaleString('es-AR')}
+                                    </span>
+                                </div>
+                            </div>
+                            {/* Tu parte destacada */}
+                            <div className="flex items-center justify-between px-4 py-3 bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-t border-[#D48800]/20">
+                                <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-wide">
+                                    Tu parte (50%)
+                                </p>
+                                <p className="text-[24px] font-black text-[#D48800] dark:text-[#F0A500]">
+                                    ${resumenGanancias.parteTecnico.toLocaleString('es-AR')}
+                                </p>
+                            </div>
+                        </div>
+
+                        <button onClick={() => { if (onConfirmado) onConfirmado(); }}
+                            className="w-full py-4 rounded-2xl font-black text-[13px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-[0.98] transition-all">
+                            Listo
+                        </button>
+                    </div>
                 )}
 
                 {/* ── PASO 2: FIRMAS ───────────────────────────────────────── */}
