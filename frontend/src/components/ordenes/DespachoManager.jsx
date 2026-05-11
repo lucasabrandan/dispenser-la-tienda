@@ -175,13 +175,13 @@ export default function DespachoManager() {
             {/* Órdenes */}
             {<>
             {/* Filtros */}
-            <div className="flex gap-3 mb-5 flex-wrap">
+            <div className="grid grid-cols-2 gap-2 mb-5 md:flex md:gap-3">
                 <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
-                    className="px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
+                    className="w-full px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                 <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
-                    className="px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
+                    className="w-full px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                 <select value={filtrTecnico} onChange={e => setFiltrTecnico(e.target.value)}
-                    className="px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none">
+                    className="col-span-2 w-full px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none">
                     <option value="">Todos los técnicos</option>
                     {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                 </select>

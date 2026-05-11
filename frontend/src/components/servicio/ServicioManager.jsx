@@ -217,56 +217,61 @@ export default function ServicioManager({
                     ))}
                 </div>
 
-                {/* Período */}
-                <div className="flex gap-2 overflow-x-auto -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
-                    {PERIODOS.map(p => (
-                        <button key={p.id}
-                            onClick={() => { filtros.aplicarRapido(p.id); setMostrarRango(false); }}
-                            className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id && !mostrarRango ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
-                            {p.label}
-                        </button>
-                    ))}
-                    <button
-                        onClick={() => setMostrarRango(v => !v)}
-                        className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${mostrarRango ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
-                        Rango
-                    </button>
-                </div>
+                {/* Toggle filtros avanzados */}
+                <button
+                    onClick={() => setMostrarRango(v => !v)}
+                    className={`w-full h-8 rounded-xl font-bold text-[11px] uppercase flex items-center justify-center gap-1.5 transition-all active:scale-95 ${mostrarRango ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                    {mostrarRango ? '▲' : '▼'} Filtros avanzados
+                </button>
 
                 {mostrarRango && (
-                    <div className="flex gap-2">
-                        <input type="date" value={filtros.desde}
-                            onChange={e => filtros.aplicarRango(e.target.value, filtros.hasta)}
-                            className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                        <input type="date" value={filtros.hasta}
-                            onChange={e => filtros.aplicarRango(filtros.desde, e.target.value)}
-                            className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                    </div>
-                )}
+                    <>
+                        {/* Período */}
+                        <div className="flex gap-2 overflow-x-auto -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+                            {PERIODOS.map(p => (
+                                <button key={p.id}
+                                    onClick={() => filtros.aplicarRapido(p.id)}
+                                    className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
 
-                {/* Filtro técnico — admin */}
-                {esAdmin && tecnicos.length > 0 && (
-                    <select value={usuarioId} onChange={e => setUsuarioId(e.target.value)}
-                        className="w-full h-10 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
-                        <option value="">Todos los técnicos</option>
-                        {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-                    </select>
-                )}
+                        {/* Rango personalizado */}
+                        <div className="flex gap-2">
+                            <input type="date" value={filtros.desde}
+                                onChange={e => filtros.aplicarRango(e.target.value, filtros.hasta)}
+                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                            <input type="date" value={filtros.hasta}
+                                onChange={e => filtros.aplicarRango(filtros.desde, e.target.value)}
+                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                        </div>
 
-                {/* Ordenamiento */}
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider shrink-0">Orden</span>
-                    <select
-                        value={ordenServicio}
-                        onChange={e => { setOrdenServicio(e.target.value); }}
-                        className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
-                    >
-                        <option value="fechaServicio,desc">Más reciente primero</option>
-                        <option value="fechaServicio,asc">Más antiguo primero</option>
-                        <option value="total,desc">Mayor monto primero</option>
-                        <option value="total,asc">Menor monto primero</option>
-                    </select>
-                </div>
+                        {/* Filtro técnico — admin */}
+                        {esAdmin && tecnicos.length > 0 && (
+                            <select value={usuarioId} onChange={e => setUsuarioId(e.target.value)}
+                                className="w-full h-10 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
+                                <option value="">Todos los técnicos</option>
+                                {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                            </select>
+                        )}
+
+                        {/* Ordenamiento */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider shrink-0">Orden</span>
+                            <select
+                                value={ordenServicio}
+                                onChange={e => setOrdenServicio(e.target.value)}
+                                className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
+                            >
+                                <option value="fechaServicio,desc">Más reciente primero</option>
+                                <option value="fechaServicio,asc">Más antiguo primero</option>
+                                <option value="total,desc">Mayor monto primero</option>
+                                <option value="total,asc">Menor monto primero</option>
+                            </select>
+                        </div>
+                    </>
+                )}
 
                 {/* Barra selección masiva */}
                 {modoSeleccion && seleccionados.size > 0 && (
