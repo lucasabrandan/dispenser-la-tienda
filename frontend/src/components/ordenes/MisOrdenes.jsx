@@ -344,7 +344,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         if (ordenEjecutandoId) {
             try {
                 await api.patch(`/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' });
-                toast.success('Orden completada. Tu rendimiento fue actualizado.');
+                toast.success('¡Trabajo completado! Revisá tu rendimiento.');
             } catch (e) {
                 const det = e?.response?.data?.mensaje || e?.message || '';
                 toast.error(`No se pudo completar la orden${det ? ': ' + det : ''}. Avisá al admin.`);
@@ -353,12 +353,9 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         setServicioEjecutando(null);
         setOrdenEjecutandoId(null);
         if (recargar) recargar();
-        // Si ya estamos en el tab historial, recargarlo directamente
-        if (tab === 'historial') {
-            cargarHistorial();
-        } else {
-            setHistorial([]);  // forzar recarga la próxima vez que se entre al tab
-        }
+        setHistorial([]);
+        // Ir directo al tab rendimiento para que el técnico vea sus ganancias
+        setTab('rendimiento');
     };
 
     const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
