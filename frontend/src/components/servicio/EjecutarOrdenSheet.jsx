@@ -91,6 +91,10 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
     };
 
     const confirmar = async () => {
+        if (!usuario?.id) {
+            toast.error('No se pudo identificar tu usuario. Cerrá sesión y volvé a entrar.');
+            return;
+        }
         setProcesando(true);
         const loading = toast.loading('Confirmando trabajo...');
         try {
@@ -184,7 +188,8 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
             setPaso('resumen');
         } catch (e) {
             console.error('Error confirmando trabajo:', e);
-            toast.error('Error al confirmar', { id: loading });
+            const detalle = e?.response?.data?.mensaje || e?.response?.data?.message || e?.message || '';
+            toast.error(`Error al confirmar${detalle ? ': ' + detalle : ''}`, { id: loading });
         } finally {
             setProcesando(false);
         }

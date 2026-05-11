@@ -199,21 +199,30 @@ function MesCard({ d, fmt, labelMes }) {
 
 function RendimientoTab({ tecnicoId }) {
     const [datos,    setDatos]    = useState([]);
-    const [cargando, setCargando] = useState(true);
+    const [cargando, setCargando] = useState(false);
+    const [tick,     setTick]     = useState(0); // para forzar recarga
 
-    useEffect(() => {
+    const cargar = () => {
         if (!tecnicoId) return;
         setCargando(true);
         api.get(`/servicios/tecnico/${tecnicoId}/rendimiento`)
             .then(r => setDatos(r.data || []))
             .catch(() => setDatos([]))
             .finally(() => setCargando(false));
-    }, [tecnicoId]);
+    };
+
+    useEffect(() => { cargar(); }, [tecnicoId, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (cargando) return <p className="text-center text-[#A8A29E] py-12">Cargando...</p>;
 
     if (datos.length === 0) return (
-        <p className="text-center text-[#A8A29E] py-12">Sin trabajos registrados aún</p>
+        <div className="text-center py-12 space-y-3">
+            <p className="text-[#A8A29E]">Sin trabajos registrados aún</p>
+            <button onClick={() => setTick(t => t + 1)}
+                className="text-[11px] font-bold text-[#D13A28] dark:text-[#E8422F] px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">
+                Recargar
+            </button>
+        </div>
     );
 
     const fmt = (n) => Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
@@ -232,6 +241,13 @@ function RendimientoTab({ tecnicoId }) {
 
     return (
         <div className="space-y-4">
+            {/* Botón recargar */}
+            <div className="flex justify-end">
+                <button onClick={() => setTick(t => t + 1)}
+                    className="text-[11px] font-bold text-[#A8A29E] px-3 py-1.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] active:scale-95 transition-all">
+                    ↻ Recargar
+                </button>
+            </div>
             {/* ── Acumulado total — protagonista ── */}
             <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
                 style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
@@ -323,12 +339,14 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     };
 
     const handleConfirmado = async () => {
-        // Avanzar la orden a COMPLETADA para impactar rendimientos
+        // Avanzar la orden a COMPLETADA — esto también marca el servicio como REALIZADO (sincronizarConServicios)
         if (ordenEjecutandoId) {
             try {
                 await api.patch(`/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' });
-            } catch {
-                toast.error('No se pudo marcar la orden como completada. Avisá al admin.');
+                toast.success('Orden completada. Tu rendimiento fue actualizado.');
+            } catch (e) {
+                const det = e?.response?.data?.mensaje || e?.message || '';
+                toast.error(`No se pudo completar la orden${det ? ': ' + det : ''}. Avisá al admin.`);
             }
         }
         setServicioEjecutando(null);
