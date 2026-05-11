@@ -117,7 +117,9 @@ public class ServicioController {
 
     // GET: Rendimiento del mes actual — todos los técnicos — vista admin
     @GetMapping("/rendimiento/mes-actual")
-    public ResponseEntity<List<TecnicoResumenMesDTO>> rendimientoMesActual() {
-        return ResponseEntity.ok(servicioService.rendimientoMesActual());
+    public ResponseEntity<List<TecnicoResumenMesDTO>> rendimientoMesActual(
+            @RequestParam(required = false) String mes,
+            @RequestParam(required = false) Long tecnicoId) {
+        return ResponseEntity.ok(servicioService.rendimientoMesActual(mes, tecnicoId));
     }
 }

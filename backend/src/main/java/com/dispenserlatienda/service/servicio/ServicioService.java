@@ -238,15 +238,15 @@ public class ServicioService {
 
     // Rendimiento del mes actual — todos los técnicos — para vista admin
     @Transactional(readOnly = true)
-    public List<TecnicoResumenMesDTO> rendimientoMesActual() {
+    public List<TecnicoResumenMesDTO> rendimientoMesActual(String mesParam, Long tecnicoId) {
         final BigDecimal PCT_IMPUESTOS = BigDecimal.valueOf(30);
         final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
-        YearMonth mes = YearMonth.now();
+        YearMonth mes = (mesParam != null && !mesParam.isBlank()) ? YearMonth.parse(mesParam) : YearMonth.now();
         String desde = mes.atDay(1).toString();
         String hasta  = mes.atEndOfMonth().toString();
 
         List<Servicio> realizados = servicioRepository.findAll(
-                buildSpec(null, "REALIZADO", null, desde, hasta, null, null));
+                buildSpec(null, "REALIZADO", null, desde, hasta, tecnicoId, null));
 
         // Agrupar por usuario
         Map<Long, List<Servicio>> porTecnico = new LinkedHashMap<>();

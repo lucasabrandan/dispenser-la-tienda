@@ -103,12 +103,14 @@ function TabBalance({ filtroMes, setFiltroMes }) {
 // ── Tab Técnicos ───────────────────────────────────────────────────────────────
 function TabTecnicos() {
     const { ocultar } = useMontos();
-    const [datos,    setDatos]    = useState([]);
-    const [cargando, setCargando] = useState(false);
+    const [datos,      setDatos]      = useState([]);
+    const [cargando,   setCargando]   = useState(false);
+    const [mes,        setMes]        = useState(new Date().toISOString().slice(0, 7));
+    const [filtroTec,  setFiltroTec]  = useState('');
 
-    const cargar = () => {
+    const cargar = (mesVal = mes) => {
         setCargando(true);
-        api.get('/servicios/rendimiento/mes-actual')
+        api.get(`/servicios/rendimiento/mes-actual?mes=${mesVal}`)
             .then(r => setDatos(r.data || []))
             .catch(() => setDatos([]))
             .finally(() => setCargando(false));
@@ -116,16 +118,47 @@ function TabTecnicos() {
 
     useEffect(() => { cargar(); }, []); // eslint-disable-line
 
-    const fmt     = v => ocultar ? '••••' : `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
-    const periodo  = datos[0]?.periodo || new Date().toISOString().slice(0, 7);
-    const totFact  = datos.reduce((s, d) => s + Number(d.totalFacturado || 0), 0);
-    const totParte = datos.reduce((s, d) => s + Number(d.parteTecnico   || 0), 0);
-    const totTrab  = datos.reduce((s, d) => s + (d.cantidadTrabajos || 0), 0);
+    const fmt = v => ocultar ? '••••' : `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
+
+    // Técnicos únicos para el selector
+    const tecnicoOpciones = datos.map(d => ({ id: d.tecnicoId, nombre: d.tecnicoNombre }));
+
+    // Filtro client-side por técnico
+    const datosFiltrados = filtroTec
+        ? datos.filter(d => String(d.tecnicoId) === filtroTec)
+        : datos;
+
+    const periodo  = mes;
+    const totFact  = datosFiltrados.reduce((s, d) => s + Number(d.totalFacturado || 0), 0);
+    const totParte = datosFiltrados.reduce((s, d) => s + Number(d.parteTecnico   || 0), 0);
+    const totTrab  = datosFiltrados.reduce((s, d) => s + (d.cantidadTrabajos || 0), 0);
+
+    const handleMes = e => {
+        setMes(e.target.value);
+        cargar(e.target.value);
+    };
 
     if (cargando) return <p className="text-center text-[#A8A29E] py-12">Cargando...</p>;
 
     return (
         <div className="space-y-5">
+            {/* Filtros */}
+            <div className="flex gap-3 flex-wrap items-center">
+                <input type="month" value={mes} onChange={handleMes}
+                    className={`${inputCls} text-[13px]`} />
+                <select value={filtroTec} onChange={e => setFiltroTec(e.target.value)}
+                    className={`${inputCls} text-[13px]`}>
+                    <option value="">Todos los técnicos</option>
+                    {tecnicoOpciones.map(t => (
+                        <option key={t.id} value={t.id}>{t.nombre}</option>
+                    ))}
+                </select>
+                <button onClick={() => cargar()}
+                    className="h-[46px] px-4 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase active:scale-95 transition-all">
+                    Recargar
+                </button>
+            </div>
+
             {/* Resumen */}
             <div className="grid grid-cols-3 gap-3">
                 {[
@@ -141,39 +174,36 @@ function TabTecnicos() {
             </div>
 
             {/* Tabla por técnico */}
-            {datos.length === 0 ? (
-                <p className="text-center text-[#A8A29E] py-12">Sin trabajos este mes</p>
+            {datosFiltrados.length === 0 ? (
+                <p className="text-center text-[#A8A29E] py-12">Sin trabajos para este período</p>
             ) : (
                 <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                    <div className="grid grid-cols-[1fr_60px_90px_90px] px-4 py-2 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
-                        {['Técnico','Trabajos','Facturado','Su parte'].map(h => (
+                    <div className="grid grid-cols-[1fr_60px_90px_90px_90px] px-4 py-2 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                        {['Técnico','Trabajos','Facturado','Repuestos','Su parte'].map(h => (
                             <p key={h} className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider text-center first:text-left">{h}</p>
                         ))}
                     </div>
-                    {datos.map((d, i) => (
-                        <div key={d.tecnicoId} className={`grid grid-cols-[1fr_60px_90px_90px] px-4 py-3 items-center ${i < datos.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
+                    {datosFiltrados.map((d, i) => (
+                        <div key={d.tecnicoId} className={`grid grid-cols-[1fr_60px_90px_90px_90px] px-4 py-3 items-center ${i < datosFiltrados.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
                             <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{d.tecnicoNombre}</p>
                             <p className="text-[12px] font-bold text-[#A8A29E] text-center">{d.cantidadTrabajos}</p>
                             <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] text-right">{fmt(d.totalFacturado)}</p>
+                            <p className="text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] text-right">{fmt(d.totalRepuestos)}</p>
                             <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500] text-right">{fmt(d.parteTecnico)}</p>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* Acciones */}
-            <div className="flex gap-3 justify-end">
-                <button onClick={cargar}
-                    className="h-9 px-4 rounded-2xl font-black text-[11px] uppercase bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
-                    Recargar
-                </button>
-                {datos.length > 0 && (
-                    <button onClick={() => generarPDFRendimientoTecnicos({ datos, periodo })}
+            {/* Exportar PDF */}
+            {datosFiltrados.length > 0 && (
+                <div className="flex justify-end">
+                    <button onClick={() => generarPDFRendimientoTecnicos({ datos: datosFiltrados, periodo })}
                         className="h-9 px-4 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
                         Exportar PDF
                     </button>
-                )}
-            </div>
+                </div>
+            )}
             <p className="text-[10px] text-[#A8A29E] text-center">
                 Ganancia neta = Facturado − 30% impuestos − repuestos · Su parte = 50%
             </p>
