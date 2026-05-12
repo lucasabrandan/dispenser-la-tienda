@@ -16,11 +16,12 @@ export default function ProductoCard({
     const P = (val) => montosVisibles ? `${val.toFixed(1)}%`        : OCULTO;
 
     const costo          = parseFloat(producto.costo) || 0;
-    const porcGanancia   = parseFloat(producto.porcentajeGanancia) || 25;
-    const porcMarkup     = parseFloat(producto.porcentajeMarkup) || 15;
+    const porcGanancia   = parseFloat(producto.porcentajeGanancia) || 0;
+    const porcMarkup     = parseFloat(producto.porcentajeMarkup) || 0;
     const gananciaUnidad = (costo * porcGanancia) / 100;
     const precioBase     = costo + gananciaUnidad;
-    const precioLista    = precioBase * (1 + porcMarkup / 100);
+    // Usar el precio guardado en DB; recalcular solo si no existe
+    const precioLista    = parseFloat(producto.precioLista) || precioBase * (1 + porcMarkup / 100);
 
     const detalles = [
         { label: 'Costo',        value: M(costo),          color: 'text-[#1C1917] dark:text-[#F0EEE9]' },

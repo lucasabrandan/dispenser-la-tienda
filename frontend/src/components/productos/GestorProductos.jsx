@@ -188,19 +188,20 @@ export default function GestorProductos() {
         try {
             await Promise.all(
                 productos.filter(p => seleccionados.has(p.id)).map(producto => {
-                    const fd = new FormData();
-                    fd.append('sku',         producto.sku);
-                    fd.append('nombre',      producto.nombre);
-                    fd.append('descripcion', producto.descripcion || '');
-                    fd.append('costo',       producto.costo);
-                    fd.append('stock',       producto.stock ?? 0);
-                    const g = gVal !== null ? gVal : (producto.porcentajeGanancia ?? 0);
-                    const m = mVal !== null ? mVal : (producto.porcentajeMarkup   ?? 0);
-                    fd.append('porcentajeGanancia', g);
-                    fd.append('porcentajeMarkup', m);
-                    const base  = parseFloat(producto.costo) * (1 + g / 100);
+                    const costoNum = parseFloat(producto.costo) || 0;
+                    const g = gVal !== null ? gVal : (parseFloat(producto.porcentajeGanancia) || 0);
+                    const m = mVal !== null ? mVal : (parseFloat(producto.porcentajeMarkup)   || 0);
+                    const base  = costoNum * (1 + g / 100);
                     const lista = base * (1 + m / 100);
-                    fd.append('precioLista', lista);
+                    const fd = new FormData();
+                    fd.append('sku',               producto.sku);
+                    fd.append('nombre',            producto.nombre);
+                    fd.append('descripcion',       producto.descripcion || '');
+                    fd.append('costo',             costoNum);
+                    fd.append('stock',             producto.stock ?? 0);
+                    fd.append('porcentajeGanancia', g);
+                    fd.append('porcentajeMarkup',   m);
+                    fd.append('precioLista',        isNaN(lista) ? 0 : lista);
                     return api.put(`/repuestos/${producto.id}`, fd);
                 })
             );
