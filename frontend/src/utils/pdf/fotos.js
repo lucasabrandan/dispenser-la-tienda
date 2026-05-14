@@ -121,16 +121,21 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
 
     const Y_LIM = pageH - 18;
 
-    // Estimar si las fotos caben en la página actual (solo para pocos equipos, no compacto)
+    // ── Intentar dibujar inline si cabe ────────────────────────────────────
     let y;
-    const espacioNecesario = compacto
-        ? 999 // siempre nueva página para grid compacto
+    // ¿Pocas fotos con 1 sola foto por equipo? → layout lado a lado (compacto inline)
+    const soloUnaFoto = conFotos.every(({ fotoA, fotoD }) => !(fotoA && fotoD));
+    const puedenLadoALado = !compacto && soloUnaFoto && conFotos.length <= 4;
+    const INLINE_FOTO_H = 50; // altura reducida para inline
+    const espacioInline = puedenLadoALado
+        ? 12 + INLINE_FOTO_H + 10 // 1 fila lado a lado
+        : compacto ? 999
         : conFotos.reduce((h, { fotoA, fotoD }) => {
             const maxH = Math.max(fotoA ? FOTO_V_H : 0, fotoD ? FOTO_V_H : 0);
             return h + maxH + 10 + (fotoA && fotoD ? 3 : 0);
-        }, 12); // 12 = título + subtítulo
+        }, 12);
 
-    if (yActual && yActual + espacioNecesario < Y_LIM) {
+    if (yActual && yActual + espacioInline < Y_LIM) {
         // Cabe en la página actual — dibujar inline
         y = yActual;
         doc.setFontSize(T.xxs);
@@ -142,7 +147,30 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
         doc.text(subtitulo, M, y);
-        y += 4;
+        y += 5;
+
+        if (puedenLadoALado) {
+            // Dibujar fotos lado a lado en una fila
+            const colW = (CONTENT_W - (conFotos.length - 1) * 4) / conFotos.length;
+            conFotos.forEach(({ item, fotoA, fotoD }, idx) => {
+                const foto = fotoA || fotoD;
+                const x = M + idx * (colW + 4);
+                // Label equipo
+                const parts = [
+                    item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? `S/N: ${item.equipoSerial}` : null,
+                    item.modeloEquipo || item.equipoModelo || null,
+                ].filter(Boolean);
+                doc.setFontSize(T.label);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(...C.navy);
+                const lbl = doc.splitTextToSize(parts.join(' · ') || 'Equipo', colW);
+                doc.text(lbl[0], x + colW / 2, y, { align: 'center' });
+                // Foto
+                dibujarFoto(foto, x + (colW - Math.min(colW, INLINE_FOTO_H * 0.75)) / 2, y + 4, Math.min(colW, INLINE_FOTO_H * 0.75), INLINE_FOTO_H);
+            });
+            y += INLINE_FOTO_H + 10;
+            return; // terminó inline, no seguir con el flujo normal
+        }
     } else {
         // Nueva página con header mini
         doc.addPage();
