@@ -105,6 +105,7 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     subtitulo = 'ANTES Y DESPUÉS',
     soloAntes = false,
     esPresupuesto = false,
+    yActual = null, // si se pasa, intenta dibujar inline sin nueva página
 } = {}) {
     const pageH = doc.internal.pageSize.getHeight();
 
@@ -118,16 +119,40 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     // Modo compacto: >4 equipos con fotos → grid de 4 columnas
     const compacto = conFotos.length > 4;
 
-    doc.addPage();
-    dibujarHeaderMini(doc, { tipoLabel, nroDoc });
-
-    doc.setFontSize(T.xxs);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(...C.grayText);
-    doc.text(subtitulo, M, Y_INI_FOTOS + 1);
-
     const Y_LIM = pageH - 18;
-    let y = Y_INI_FOTOS + 5;
+
+    // Estimar si las fotos caben en la página actual (solo para pocos equipos, no compacto)
+    let y;
+    const espacioNecesario = compacto
+        ? 999 // siempre nueva página para grid compacto
+        : conFotos.reduce((h, { fotoA, fotoD }) => {
+            const maxH = Math.max(fotoA ? FOTO_V_H : 0, fotoD ? FOTO_V_H : 0);
+            return h + maxH + 10 + (fotoA && fotoD ? 3 : 0);
+        }, 12); // 12 = título + subtítulo
+
+    if (yActual && yActual + espacioNecesario < Y_LIM) {
+        // Cabe en la página actual — dibujar inline
+        y = yActual;
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text(tipoLabel.toUpperCase(), M, y);
+        y += 4;
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text(subtitulo, M, y);
+        y += 4;
+    } else {
+        // Nueva página con header mini
+        doc.addPage();
+        dibujarHeaderMini(doc, { tipoLabel, nroDoc });
+        doc.setFontSize(T.xxs);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text(subtitulo, M, Y_INI_FOTOS + 1);
+        y = Y_INI_FOTOS + 5;
+    }
 
     // Dibuja una foto respetando proporción real dentro de su caja fija
     const dibujarFoto = (foto, x, fy, bw, bh) => {

@@ -944,11 +944,12 @@ async function generarMultiPresupuesto(doc, {
     y = checkSalto(doc, y, 20);
     y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
 
-    // Página de fotos (solo si hay alguna)
+    // Fotos — inline si caben, nueva página si no
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
         tipoLabel: 'FOTOGRAFÍAS DE LOS EQUIPOS',
         subtitulo: 'IMÁGENES PROPORCIONADAS POR EL CLIENTE',
         esPresupuesto: true,
+        yActual: y,
     });
 }
 
