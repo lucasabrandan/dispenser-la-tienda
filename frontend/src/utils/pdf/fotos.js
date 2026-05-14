@@ -151,12 +151,15 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     };
 
     if (compacto) {
-        // ── GRID 4 COLUMNAS ──────────────────────────────────────────────────
+        // ── GRID 4 COLUMNAS — cada equipo en card con fondo ─────────────────
+        const CARD_PAD = 2.5; // padding interno de la card
         for (let i = 0; i < conFotos.length; i += GRID_COLS) {
             const fila = conFotos.slice(i, i + GRID_COLS);
-            // Calcular altura del bloque: label(4) + foto(s) + gap
             const tieneDos = fila.some(({ fotoA, fotoD }) => fotoA && fotoD);
-            const blockH = 5 + GRID_FOTO_H * (tieneDos ? 2 : 1) + (tieneDos ? 10 : 0) + 4;
+            // Altura interna: label(8) + fotos + labels antes/después
+            const innerH = 8 + GRID_FOTO_H * (tieneDos ? 2 : 1) + (tieneDos ? 8 : 0);
+            const cardH  = innerH + CARD_PAD * 2;
+            const blockH = cardH + 3; // gap entre filas
 
             if (y + blockH > Y_LIM) {
                 doc.addPage();
@@ -166,9 +169,16 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
 
             fila.forEach(({ item, fotoA, fotoD }, col) => {
                 const x = M + col * (GRID_COL_W + GRID_GAP);
-                let fy = y;
 
-                // Etiqueta equipo (truncada para caber en columna)
+                // Card de fondo para agrupar visualmente
+                doc.setFillColor(...C.grayBg);
+                doc.setDrawColor(...C.grayBorder);
+                doc.setLineWidth(0.15);
+                doc.roundedRect(x - CARD_PAD, y, GRID_COL_W + CARD_PAD * 2, cardH, 1.5, 1.5, 'FD');
+
+                let fy = y + CARD_PAD;
+
+                // Etiqueta equipo
                 const parts = [
                     item.modeloEquipo || item.equipoModelo || null,
                     item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? item.equipoSerial : null,
@@ -180,15 +190,15 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(...C.navy);
                 const labelLines = doc.splitTextToSize(eqLabel, GRID_COL_W);
-                doc.text(labelLines[0], x, fy);
+                doc.text(labelLines[0], x, fy + 3);
                 if (ubicLabel) {
                     doc.setFontSize(4.5);
                     doc.setFont(undefined, 'normal');
                     doc.setTextColor(...C.grayText);
                     const ubicLines = doc.splitTextToSize(ubicLabel, GRID_COL_W);
-                    doc.text(ubicLines[0], x, fy + 3);
+                    doc.text(ubicLines[0], x, fy + 6);
                 }
-                fy += 5;
+                fy += 8;
 
                 // Fotos apiladas con etiqueta antes/después
                 if (fotoA) {
