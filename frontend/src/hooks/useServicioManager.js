@@ -189,8 +189,12 @@ export function useServicioManager() {
         } catch { toast.error('Error en la operación masiva', { id: loading }); }
     };
 
-    // Abre el modal de firmas; la generación real ocurre en confirmarFirmasYGenerarPDF
+    // Presupuestos → PDF directo sin firmas; trabajo confirmado → modal de firmas
     const generarPDF = (servicio) => {
+        if (servicio.estado === 'PRESUPUESTO') {
+            generarPDFDirecto(servicio, { firmaTecnico: null, firmaCliente: null, incluirFirmas: false });
+            return;
+        }
         setPendingPdfServicio(servicio);
         setModalFirmas(true);
     };
@@ -200,6 +204,10 @@ export function useServicioManager() {
         const servicio = pendingPdfServicio;
         setPendingPdfServicio(null);
         if (!servicio) return;
+        await generarPDFDirecto(servicio, { firmaTecnico, firmaCliente, incluirFirmas });
+    };
+
+    const generarPDFDirecto = async (servicio, { firmaTecnico, firmaCliente, incluirFirmas = true }) => {
 
         const loading = toast.loading('Preparando PDF...');
         try {
