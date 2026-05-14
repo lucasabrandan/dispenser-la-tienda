@@ -1185,9 +1185,23 @@ async function generarPresupuestoVenta(doc, {
         y += leyHV + 4;
     }
 
-    // Condiciones compactas (sin QR ni firmas en presupuesto de venta)
-    y = checkSalto(doc, y, 14);
-    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
+    // Referencia y contacto (las condiciones comerciales ya están en el bloque cliente)
+    y = checkSalto(doc, y, 10);
+    const contactoPV = empresa.whatsapp || empresa.telefono || '';
+    const partesPV = [];
+    if (nroDoc) partesPV.push(`Ref: ${nroDoc}`);
+    if (contactoPV) partesPV.push(`Contacto: ${contactoPV}`);
+    if (partesPV.length > 0) {
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M, y, pageW - M, y);
+        y += 4;
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text(partesPV.join('   ·   '), M, y);
+        y += 5;
+    }
 
     return y;
 }
