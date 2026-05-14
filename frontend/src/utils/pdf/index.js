@@ -19,19 +19,12 @@ import {
 import { dibujarHeader, dibujarHeaderCompacto, dibujarFooter } from './layout.js';
 import {
     dibujarBloqueClienteEquipo,
-    dibujarBloqueEquipoDetalle,
     dibujarBloqueEquipoYTrabajo,
     dibujarBloqueDiagnosticoDetalle,
     dibujarBloqueSolicitud,
-    dibujarResumenServicio,
     dibujarChecklist,
     dibujarFirmas,
-    dibujarGarantia,
-    dibujarQRWhatsApp,
-    dibujarQRGoogle,
-    dibujarCondicionesYCTA,
     dibujarCondicionesCompactas,
-    dibujarCondicionesVenta,
     dibujarRegistroFotografico,
 } from './bloques.js';
 import { cargarFoto, checkSalto, sanitizarTexto, fitEnCaja } from './helpers.js';
@@ -596,7 +589,6 @@ async function generarMultiTecnico(doc, {
     incluirFirmas = true, descuentoPorcentaje = 0,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
-    const empresa = getEmpresa();
 
     // ── Página 1: Resumen ejecutivo ──────────────────────────────────────────
     const subtotalTotal = ticketItems.reduce(
