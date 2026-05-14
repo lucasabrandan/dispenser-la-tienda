@@ -96,12 +96,19 @@ async function blobAJpeg(blob) {
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
                 URL.revokeObjectURL(url);
-                resolve(dataUrl);
+                resolve({ dataUrl, w, h });
             } catch { URL.revokeObjectURL(url); resolve(null); }
         };
         img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
         img.src = url;
     });
+}
+
+// Ajusta dimensiones de imagen para caber en una caja máxima manteniendo proporción
+export function fitEnCaja(imgW, imgH, maxW, maxH) {
+    if (!imgW || !imgH) return { w: maxW, h: maxH };
+    const ratio = Math.min(maxW / imgW, maxH / imgH);
+    return { w: imgW * ratio, h: imgH * ratio };
 }
 
 export async function cargarFoto(src) {
@@ -120,7 +127,7 @@ export async function cargarFoto(src) {
                     canvas.width  = w;
                     canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve({ data: canvas.toDataURL('image/jpeg', 0.82), format: 'JPEG' });
+                    resolve({ data: canvas.toDataURL('image/jpeg', 0.82), format: 'JPEG', w, h });
                 } catch { resolve(null); }
             };
             img.onerror = () => resolve(null);
@@ -147,9 +154,9 @@ export async function cargarFoto(src) {
     if (!blob) return null;
 
     // Convertir siempre a JPEG via canvas (jsPDF no soporta WebP/HEIC/etc.)
-    const dataUrl = await blobAJpeg(blob);
-    if (!dataUrl) return null;
-    return { data: dataUrl, format: 'JPEG' };
+    const result = await blobAJpeg(blob);
+    if (!result) return null;
+    return { data: result.dataUrl, format: 'JPEG', w: result.w, h: result.h };
 }
 
 // ── Drawing primitives ────────────────────────────────────────────────────────

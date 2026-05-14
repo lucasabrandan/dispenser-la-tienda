@@ -1,13 +1,30 @@
 import { C, M, T, CONTENT_W } from './theme.js';
-import { cargarFoto } from './helpers.js';
-import { dibujarHeaderCompacto } from './layout.js';
+import { cargarFoto, fitEnCaja } from './helpers.js';
+import { dibujarHeaderMini } from './layout.js';
 
-const Y_INI = 42;
+// Header mini: 15mm, margen inferior: 20mm → 262mm útiles
+// 3 bloques de ~85mm (portrait) o ~77mm (landscape) por hoja
+const Y_INI_FOTOS = 17;
+
+// Tamaños fijos por orientación — consistentes siempre
+const FOTO_V_W = 56;   // portrait: ancho
+const FOTO_V_H = 74;   // portrait: alto
+const FOTO_H_W = 88;   // landscape: ancho
+const FOTO_H_H = 66;   // landscape: alto
+
+// Detecta si una foto es horizontal
+function esHorizontal(foto) {
+    return foto && foto.w && foto.h && foto.w > foto.h;
+}
+
+// Devuelve las dimensiones de caja según orientación de la foto
+function boxDims(foto) {
+    return esHorizontal(foto)
+        ? { bw: FOTO_H_W, bh: FOTO_H_H }
+        : { bw: FOTO_V_W, bh: FOTO_V_H };
+}
 
 // ── EVIDENCIA INLINE (columna derecha, 1 equipo) ──────────────────────────────
-// x, y: esquina superior izquierda del área disponible
-// w: ancho del área
-// Devuelve la Y final
 export async function dibujarEvidenciaInline(doc, { x, y, w, fotoA, fotoD, titulo = 'EVIDENCIA DEL SERVICIO' }) {
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
@@ -15,51 +32,47 @@ export async function dibujarEvidenciaInline(doc, { x, y, w, fotoA, fotoD, titul
     doc.text(titulo, x, y);
     y += 6;
 
-    const PH    = Math.floor((w * 3) / 4);   // altura proporcional 4:3
+    const inlineW = Math.min(w, FOTO_V_W);
+    const inlineH = FOTO_V_H;
     const fotos = [
         { data: fotoA, label: 'ESTADO INICIAL' },
         { data: fotoD, label: 'ESTADO FINAL'   },
     ].filter(f => !!f.data);
 
     if (fotos.length === 0) {
-        // Placeholder si no hay fotos
         doc.setFillColor(...C.grayBg);
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
-        doc.roundedRect(x, y, w, PH, 2, 2, 'FD');
+        doc.roundedRect(x, y, inlineW, inlineH, 2, 2, 'FD');
         doc.setFontSize(T.xxs);
         doc.setTextColor(...C.grayText);
-        doc.text('Sin evidencia fotográfica', x + w / 2, y + PH / 2, { align: 'center' });
-        return y + PH + 6;
+        doc.text('Sin evidencia fotográfica', x + inlineW / 2, y + inlineH / 2, { align: 'center' });
+        return y + inlineH + 6;
     }
 
     fotos.forEach(({ data, label }) => {
-        // Etiqueta
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.grayText);
-        doc.text(label, x + w / 2, y, { align: 'center' });
+        doc.text(label, x + inlineW / 2, y, { align: 'center' });
         y += 3;
 
-        // Sombra
-        doc.setFillColor(220, 220, 225);
-        doc.roundedRect(x + 1.5, y + 1.5, w, PH, 2, 2, 'F');
+        const { w: fW, h: fH } = fitEnCaja(data?.w, data?.h, inlineW, inlineH);
+        const offX = (inlineW - fW) / 2;
 
-        // Foto
-        try {
-            doc.addImage(data.data, data.format, x, y, w, PH);
-        } catch {}
+        doc.setFillColor(220, 220, 225);
+        doc.roundedRect(x + offX + 1.5, y + 1.5, fW, fH, 2, 2, 'F');
+        try { doc.addImage(data.data, data.format, x + offX, y, fW, fH); } catch {}
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
-        doc.roundedRect(x, y, w, PH, 2, 2, 'S');
-
-        y += PH + 6;
+        doc.roundedRect(x + offX, y, fW, fH, 2, 2, 'S');
+        y += fH + 6;
     });
 
     return y;
 }
 
-// Carga fotos en lotes para no saturar memoria ni el servidor con 50+ equipos
+// Carga fotos en lotes para no saturar memoria
 async function cargarFotosEnLotes(ticketItems, soloAntes, tamLote = 5) {
     const resultado = [];
     for (let i = 0; i < ticketItems.length; i += tamLote) {
@@ -77,49 +90,64 @@ async function cargarFotosEnLotes(ticketItems, soloAntes, tamLote = 5) {
 }
 
 // ── PÁGINA(S) DE EVIDENCIA COMPLETA (multi-equipo) ───────────────────────────
-// soloAntes: true → solo carga fotoAntes, útil para presupuesto (sin "después")
 export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     tipoLabel = 'EVIDENCIA FOTOGRÁFICA',
     subtitulo = 'ANTES Y DESPUÉS',
     soloAntes = false,
+    esPresupuesto = false,
 } = {}) {
     const pageH = doc.internal.pageSize.getHeight();
 
-    // Lotes de 5 para no saturar memoria con 50+ equipos
-    const fotosItems = await cargarFotosEnLotes(ticketItems, soloAntes, 5);
+    // Presupuesto: cargar AMBAS fotos (son fotos del cliente, no antes/después)
+    const cargaSoloAntes = soloAntes && !esPresupuesto;
+    const fotosItems = await cargarFotosEnLotes(ticketItems, cargaSoloAntes, 5);
 
     const conFotos = fotosItems.filter(x => x.fotoA || x.fotoD);
     if (conFotos.length === 0) return;
 
     doc.addPage();
-    dibujarHeaderCompacto(doc, { tipoLabel, fecha, nroDoc });
+    dibujarHeaderMini(doc, { tipoLabel, nroDoc });
 
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
-    doc.text(subtitulo, M, Y_INI - 2);
+    doc.text(subtitulo, M, Y_INI_FOTOS + 1);
 
-    // Grilla 2 columnas (antes | después) — o foto centrada si soloAntes
-    const COL_W = (CONTENT_W - 6) / 2;
-    const FOTO_H = Math.floor((COL_W * 3) / 4);
-    const Y_LIM  = pageH - 26;
-    let y = Y_INI + 2;
+    const Y_LIM = pageH - 20;
+    let y = Y_INI_FOTOS + 5;
 
-    if (!soloAntes) {
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.grayText);
-        doc.text('ESTADO INICIAL', M + COL_W / 2, y, { align: 'center' });
-        doc.text('ESTADO FINAL',   M + COL_W + 6 + COL_W / 2, y, { align: 'center' });
-        y += 5;
-    }
+    // Dibuja una foto respetando proporción real dentro de su caja fija
+    const dibujarFoto = (foto, x, fy, bw, bh) => {
+        const { w: fW, h: fH } = fitEnCaja(foto?.w, foto?.h, bw, bh);
+        const offX = (bw - fW) / 2;
+        const offY = (bh - fH) / 2;
+        doc.setFillColor(220, 220, 225);
+        doc.roundedRect(x + 1.5, fy + 1.5, bw, bh, 1.5, 1.5, 'F');
+        if (foto) {
+            try { doc.addImage(foto.data, foto.format, x + offX, fy + offY, fW, fH); } catch {}
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.roundedRect(x + offX, fy + offY, fW, fH, 1.5, 1.5, 'S');
+        } else {
+            doc.setFillColor(...C.grayBg);
+            doc.roundedRect(x, fy, bw, bh, 1.5, 1.5, 'F');
+            doc.setFontSize(T.label);
+            doc.setTextColor(...C.grayText);
+            doc.text('Sin foto', x + bw / 2, fy + bh / 2, { align: 'center' });
+        }
+    };
 
     for (const { item, fotoA, fotoD } of conFotos) {
-        const blockH = FOTO_H + 16;
+        // Determinar tamaño de caja según orientación de cada foto
+        const boxA = boxDims(fotoA);
+        const boxD = boxDims(fotoD);
+        const maxH = Math.max(boxA.bh, boxD.bh);
+        const blockH = maxH + 11; // label 5mm + foto + gap 6mm
+
         if (y + blockH > Y_LIM) {
             doc.addPage();
-            dibujarHeaderCompacto(doc, { tipoLabel: 'EVIDENCIA FOTOGRÁFICA', fecha, nroDoc });
-            y = Y_INI + 2;
+            dibujarHeaderMini(doc, { tipoLabel, nroDoc });
+            y = Y_INI_FOTOS + 2;
         }
 
         // Etiqueta equipo
@@ -135,34 +163,19 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
         doc.text(eqLabel, M, y);
         y += 5;
 
-        // Foto antes
-        const dibujarFoto = (foto, x, fy, w, h) => {
-            doc.setFillColor(220, 220, 225);
-            doc.roundedRect(x + 1.5, fy + 1.5, w, h, 1.5, 1.5, 'F');
-            if (foto) {
-                try { doc.addImage(foto.data, foto.format, x, fy, w, h); } catch {}
-                doc.setDrawColor(...C.grayBorder);
-                doc.setLineWidth(0.15);
-                doc.roundedRect(x, fy, w, h, 1.5, 1.5, 'S');
-            } else {
-                doc.setFillColor(...C.grayBg);
-                doc.roundedRect(x, fy, w, h, 1.5, 1.5, 'F');
-                doc.setFontSize(T.label);
-                doc.setTextColor(...C.grayText);
-                doc.text('Sin foto', x + w / 2, fy + h / 2, { align: 'center' });
-            }
-        };
-
         if (fotoA && fotoD) {
-            dibujarFoto(fotoA, M,              y, COL_W, FOTO_H);
-            dibujarFoto(fotoD, M + COL_W + 6, y, COL_W, FOTO_H);
-            y += FOTO_H + 8;
+            // 2 fotos lado a lado, centradas
+            const totalW = boxA.bw + 6 + boxD.bw;
+            const xBase  = M + (CONTENT_W - totalW) / 2;
+            dibujarFoto(fotoA, xBase, y, boxA.bw, boxA.bh);
+            dibujarFoto(fotoD, xBase + boxA.bw + 6, y, boxD.bw, boxD.bh);
         } else {
-            // Foto sola: 65% del ancho disponible, centrada
-            const sW = Math.floor(CONTENT_W * 0.65);
-            const sH = Math.floor(sW * 3 / 4);
-            dibujarFoto(fotoA || fotoD, M + (CONTENT_W - sW) / 2, y, sW, sH);
-            y += sH + 8;
+            // 1 foto centrada, mismo tamaño según su orientación
+            const foto = fotoA || fotoD;
+            const box  = boxDims(foto);
+            const xCentro = M + (CONTENT_W - box.bw) / 2;
+            dibujarFoto(foto, xCentro, y, box.bw, box.bh);
         }
+        y += maxH + 6;
     }
 }

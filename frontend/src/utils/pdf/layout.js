@@ -170,6 +170,27 @@ export function dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico = null, n
     doc.text(tipoLabel.toUpperCase(), M, HEADER_H.compact + 3);
 }
 
+// ── HEADER MINI (página de fotos — solo título + nroDoc + línea) ──────────────
+export function dibujarHeaderMini(doc, { tipoLabel, nroDoc = null }) {
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(T.sm);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.red);
+    doc.text(tipoLabel.toUpperCase(), M, 9);
+
+    if (nroDoc) {
+        doc.setFontSize(T.xs);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.grayText);
+        doc.text(nroDoc, pageW - M, 9, { align: 'right' });
+    }
+
+    doc.setDrawColor(...C.red);
+    doc.setLineWidth(0.4);
+    doc.line(M, 13, pageW - M, 13);
+}
+
 // ── FOOTER ────────────────────────────────────────────────────────────────────
 export function dibujarFooter(doc, { pagina = null, totalPaginas = null, textoCentral = null, conEstrellas = false }) {
     const pageW   = doc.internal.pageSize.getWidth();

@@ -1,6 +1,6 @@
 import autoTable from 'jspdf-autotable';
 import { C, M, T, CONTENT_W } from './theme.js';
-import { checkSalto } from './helpers.js';
+import { checkSalto, fitEnCaja } from './helpers.js';
 
 // ── BLOQUE CLIENTE (con columna opcional de diagnóstico o equipo) ─────────────
 // diagnostico: texto libre para mostrar en columna derecha (presupuesto)
@@ -864,47 +864,60 @@ export function dibujarResumenEjecutivo(doc, { y, cliente, fecha, cantEquipos, c
 
 // ── REGISTRO FOTOGRÁFICO (sección dedicada, 2 fotos lado a lado) ─────────────
 // fotoA / fotoD: objetos { data, format } o null
-export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null }) {
+export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null, esPresupuesto = false }) {
     if (!fotoA && !fotoD) return y;
+
+    // Tamaños fijos por orientación — detecta automáticamente
+    const FOTO_V_W = 56, FOTO_V_H = 74;  // portrait
+    const FOTO_H_W = 88, FOTO_H_H = 66;  // landscape
+
+    const esHz = (foto) => foto && foto.w && foto.h && foto.w > foto.h;
+    const dims = (foto) => esHz(foto) ? { bw: FOTO_H_W, bh: FOTO_H_H } : { bw: FOTO_V_W, bh: FOTO_V_H };
 
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text('REGISTRO FOTOGRÁFICO', M, y);
+    doc.text(esPresupuesto ? 'FOTOGRAFÍAS DEL EQUIPO' : 'REGISTRO FOTOGRÁFICO', M, y);
     y += 5;
 
-    const COL_W  = (CONTENT_W - 6) / 2;
-    // Ratio reducido para que el registro fotográfico quede en la misma página
-    const FOTO_H = Math.round(COL_W * 0.5);
-
-    const dibujarCaja = (foto, x, label) => {
+    const dibujarCaja = (foto, x, bw, bh, label) => {
+        const { w: fW, h: fH } = fitEnCaja(foto?.w, foto?.h, bw, bh);
+        const offX = (bw - fW) / 2;
+        const offY = (bh - fH) / 2;
         doc.setFillColor(220, 220, 225);
-        doc.roundedRect(x + 1, y + 1, COL_W, FOTO_H, 2, 2, 'F');
+        doc.roundedRect(x + 1, y + 1, bw, bh, 2, 2, 'F');
         if (foto) {
-            try { doc.addImage(foto.data, foto.format, x, y, COL_W, FOTO_H); } catch {}
+            try { doc.addImage(foto.data, foto.format, x + offX, y + offY, fW, fH); } catch {}
         } else {
             doc.setFillColor(...C.grayBg);
-            doc.roundedRect(x, y, COL_W, FOTO_H, 2, 2, 'F');
+            doc.roundedRect(x, y, bw, bh, 2, 2, 'F');
         }
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
-        doc.roundedRect(x, y, COL_W, FOTO_H, 2, 2, 'S');
+        doc.roundedRect(x, y, bw, bh, 2, 2, 'S');
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.grayText);
-        doc.text(label, x + COL_W / 2, y + FOTO_H + 4.5, { align: 'center' });
+        doc.text(label, x + bw / 2, y + bh + 4.5, { align: 'center' });
     };
 
     if (fotoA && fotoD) {
-        dibujarCaja(fotoA, M,              'ESTADO INICIAL');
-        dibujarCaja(fotoD, M + COL_W + 6, 'ESTADO FINAL');
+        const lA = esPresupuesto ? 'FOTO 1' : 'ESTADO INICIAL';
+        const lD = esPresupuesto ? 'FOTO 2' : 'ESTADO FINAL';
+        const bA = dims(fotoA);
+        const bD = dims(fotoD);
+        const totalW = bA.bw + 6 + bD.bw;
+        const xBase  = M + (CONTENT_W - totalW) / 2;
+        dibujarCaja(fotoA, xBase,              bA.bw, bA.bh, lA);
+        dibujarCaja(fotoD, xBase + bA.bw + 6, bD.bw, bD.bh, lD);
+        return y + Math.max(bA.bh, bD.bh) + 10;
     } else {
-        // Una sola foto centrada
-        const xCentro = M + (CONTENT_W - COL_W) / 2;
-        dibujarCaja(fotoA || fotoD, xCentro, fotoA ? 'ESTADO INICIAL' : 'ESTADO FINAL');
+        const foto = fotoA || fotoD;
+        const b = dims(foto);
+        const xCentro = M + (CONTENT_W - b.bw) / 2;
+        dibujarCaja(foto, xCentro, b.bw, b.bh, esPresupuesto ? 'FOTO DEL EQUIPO' : (fotoA ? 'ESTADO INICIAL' : 'ESTADO FINAL'));
+        return y + b.bh + 10;
     }
-
-    return y + FOTO_H + 10;
 }
 
 // ── CONDICIONES PRESUPUESTO (standalone, para multi-equipo) ───────────────────

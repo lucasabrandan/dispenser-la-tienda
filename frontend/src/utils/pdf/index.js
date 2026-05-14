@@ -33,7 +33,7 @@ import {
     dibujarCondicionesVenta,
     dibujarRegistroFotografico,
 } from './bloques.js';
-import { cargarFoto, checkSalto, sanitizarTexto } from './helpers.js';
+import { cargarFoto, checkSalto, sanitizarTexto, fitEnCaja } from './helpers.js';
 import { dibujarPaginaEvidencia } from './fotos.js';
 
 // ── Helpers de detección / labels ─────────────────────────────────────────────
@@ -554,25 +554,30 @@ async function generarSinglePresupuesto(doc, {
     // Registro fotográfico: mostrar si existe alguna foto — umbral reducido por foto más compacta
     if (tieneEquipoReal && (fotoAntes || fotoDespues)) {
         y = checkSalto(doc, y, 35);
-        y = dibujarRegistroFotografico(doc, { y, fotoA: fotoAntes, fotoD: fotoDespues });
+        y = dibujarRegistroFotografico(doc, { y, fotoA: fotoAntes, fotoD: fotoDespues, esPresupuesto: true });
     } else if (!tieneEquipoReal && (fotoAntes || fotoDespues)) {
-        // Sin equipo real: mostrar evidencia del problema (fotoAntes o fotoDespues, la que exista)
+        // Sin equipo real: mostrar evidencia del problema — tamaño según orientación
         const fotoEv = fotoAntes || fotoDespues;
-        y = checkSalto(doc, y, 40);
-        const COL_W  = (CONTENT_W - 6) / 2;
-        const FOTO_H = Math.floor((COL_W * 3) / 4);
+        const esHz = fotoEv.w && fotoEv.h && fotoEv.w > fotoEv.h;
+        const bw = esHz ? 88 : 56;
+        const bh = esHz ? 66 : 74;
+        y = checkSalto(doc, y, bh + 13);
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text('EVIDENCIA FOTOGRÁFICA DEL PROBLEMA', M, y);
+        doc.text('FOTOGRAFÍA DEL EQUIPO', M, y);
         y += 5;
+        const { w: fW, h: fH } = fitEnCaja(fotoEv.w, fotoEv.h, bw, bh);
+        const offX = (bw - fW) / 2;
+        const offY = (bh - fH) / 2;
+        const xCentro = M + (CONTENT_W - bw) / 2;
         doc.setFillColor(220, 220, 225);
-        doc.roundedRect(M + 1.5, y + 1.5, COL_W, FOTO_H, 2, 2, 'F');
-        try { doc.addImage(fotoEv.data, fotoEv.format, M, y, COL_W, FOTO_H); } catch {}
+        doc.roundedRect(xCentro + 1.5, y + 1.5, bw, bh, 2, 2, 'F');
+        try { doc.addImage(fotoEv.data, fotoEv.format, xCentro + offX, y + offY, fW, fH); } catch {}
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
-        doc.roundedRect(M, y, COL_W, FOTO_H, 2, 2, 'S');
-        y += FOTO_H + 8;
+        doc.roundedRect(xCentro, y, bw, bh, 2, 2, 'S');
+        y += bh + 8;
     }
 
     // Condiciones + CTA + firmas de aceptación (si se marcó incluirFirmas)
@@ -987,8 +992,8 @@ async function generarMultiPresupuesto(doc, {
     // Página de fotos (solo si hay alguna)
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
         tipoLabel: 'FOTOGRAFÍAS DE LOS EQUIPOS',
-        subtitulo: 'ESTADO ACTUAL DE CADA EQUIPO',
-        soloAntes: true,
+        subtitulo: 'IMÁGENES PROPORCIONADAS POR EL CLIENTE',
+        esPresupuesto: true,
     });
 }
 
