@@ -5,13 +5,19 @@ import { dibujarHeaderMini } from './layout.js';
 // Header mini: 15mm, margen inferior: 20mm → 262mm útiles
 const Y_INI_FOTOS = 17;
 
-// Tamaños normales (≤4 equipos): 3 por página
+// Tamaños normales (≤4 equipos): 3 por página, 1 equipo por fila
 const FOTO_V_W = 56, FOTO_V_H = 74;  // portrait
 const FOTO_H_W = 88, FOTO_H_H = 66;  // landscape
 
-// Tamaños compactos (>4 equipos): 4 por página
+// Tamaños compactos (>4 equipos): grid 4 columnas
 const FOTO_V_W_C = 42, FOTO_V_H_C = 56;  // portrait compacto
 const FOTO_H_W_C = 74, FOTO_H_H_C = 56;  // landscape compacto
+
+// Grid: 4 columnas, fotos apiladas verticalmente
+const GRID_COLS = 4;
+const GRID_GAP  = 3;  // mm entre columnas
+const GRID_COL_W = (CONTENT_W - (GRID_COLS - 1) * GRID_GAP) / GRID_COLS; // ~43mm
+const GRID_FOTO_H = 30; // altura de cada foto en grid
 
 function esHorizontal(foto) {
     return foto && foto.w && foto.h && foto.w > foto.h;
@@ -109,9 +115,8 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     const conFotos = fotosItems.filter(x => x.fotoA || x.fotoD);
     if (conFotos.length === 0) return;
 
-    // Modo compacto: >4 equipos con fotos → fotos más chicas, 4 por página
+    // Modo compacto: >4 equipos con fotos → grid de 4 columnas
     const compacto = conFotos.length > 4;
-    const GAP = compacto ? 4 : 6;
 
     doc.addPage();
     dibujarHeaderMini(doc, { tipoLabel, nroDoc });
@@ -121,7 +126,7 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     doc.setTextColor(...C.grayText);
     doc.text(subtitulo, M, Y_INI_FOTOS + 1);
 
-    const Y_LIM = pageH - 20;
+    const Y_LIM = pageH - 18;
     let y = Y_INI_FOTOS + 5;
 
     // Dibuja una foto respetando proporción real dentro de su caja fija
@@ -145,42 +150,97 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
         }
     };
 
-    for (const { item, fotoA, fotoD } of conFotos) {
-        const boxA = boxDims(fotoA, compacto);
-        const boxD = boxDims(fotoD, compacto);
-        const maxH = Math.max(boxA.bh, boxD.bh);
-        const blockH = maxH + 4 + GAP; // label 4mm + foto + gap
+    if (compacto) {
+        // ── GRID 4 COLUMNAS ──────────────────────────────────────────────────
+        for (let i = 0; i < conFotos.length; i += GRID_COLS) {
+            const fila = conFotos.slice(i, i + GRID_COLS);
+            // Calcular altura del bloque: label(4) + foto(s) + gap
+            const tieneDos = fila.some(({ fotoA, fotoD }) => fotoA && fotoD);
+            const blockH = 5 + GRID_FOTO_H * (tieneDos ? 2 : 1) + (tieneDos ? 2 : 0) + 4;
 
-        if (y + blockH > Y_LIM) {
-            doc.addPage();
-            dibujarHeaderMini(doc, { tipoLabel, nroDoc });
-            y = Y_INI_FOTOS + 2;
+            if (y + blockH > Y_LIM) {
+                doc.addPage();
+                dibujarHeaderMini(doc, { tipoLabel, nroDoc });
+                y = Y_INI_FOTOS + 2;
+            }
+
+            fila.forEach(({ item, fotoA, fotoD }, col) => {
+                const x = M + col * (GRID_COL_W + GRID_GAP);
+                let fy = y;
+
+                // Etiqueta equipo (truncada para caber en columna)
+                const parts = [
+                    item.modeloEquipo || item.equipoModelo || null,
+                    item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? item.equipoSerial : null,
+                ].filter(Boolean);
+                const eqLabel = parts.join(' · ') || 'Equipo';
+                const ubicLabel = item.ubicacionEquipo || item.equipoUbicacion || '';
+
+                doc.setFontSize(5);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(...C.navy);
+                const labelLines = doc.splitTextToSize(eqLabel, GRID_COL_W);
+                doc.text(labelLines[0], x, fy);
+                if (ubicLabel) {
+                    doc.setFontSize(4.5);
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(...C.grayText);
+                    const ubicLines = doc.splitTextToSize(ubicLabel, GRID_COL_W);
+                    doc.text(ubicLines[0], x, fy + 3);
+                }
+                fy += 5;
+
+                // Fotos apiladas
+                if (fotoA) {
+                    dibujarFoto(fotoA, x, fy, GRID_COL_W, GRID_FOTO_H);
+                    fy += GRID_FOTO_H + 2;
+                }
+                if (fotoD) {
+                    dibujarFoto(fotoD, x, fy, GRID_COL_W, GRID_FOTO_H);
+                }
+            });
+
+            y += blockH;
         }
+    } else {
+        // ── MODO NORMAL: 1 equipo por fila (≤4 equipos) ─────────────────────
+        const GAP = 6;
+        for (const { item, fotoA, fotoD } of conFotos) {
+            const boxA = boxDims(fotoA, false);
+            const boxD = boxDims(fotoD, false);
+            const maxH = Math.max(boxA.bh, boxD.bh);
+            const blockH = maxH + 4 + GAP;
 
-        // Etiqueta equipo
-        const eqLabel = [
-            item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? `S/N: ${item.equipoSerial}` : null,
-            item.modeloEquipo || item.equipoModelo || null,
-            item.ubicacionEquipo || item.equipoUbicacion || null,
-        ].filter(Boolean).join('  ·  ') || 'Equipo';
+            if (y + blockH > Y_LIM) {
+                doc.addPage();
+                dibujarHeaderMini(doc, { tipoLabel, nroDoc });
+                y = Y_INI_FOTOS + 2;
+            }
 
-        doc.setFontSize(compacto ? T.label : T.xxs);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text(eqLabel, M, y);
-        y += 4;
+            const eqLabel = [
+                item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? `S/N: ${item.equipoSerial}` : null,
+                item.modeloEquipo || item.equipoModelo || null,
+                item.ubicacionEquipo || item.equipoUbicacion || null,
+            ].filter(Boolean).join('  ·  ') || 'Equipo';
 
-        if (fotoA && fotoD) {
-            const totalW = boxA.bw + 6 + boxD.bw;
-            const xBase  = M + (CONTENT_W - totalW) / 2;
-            dibujarFoto(fotoA, xBase, y, boxA.bw, boxA.bh);
-            dibujarFoto(fotoD, xBase + boxA.bw + 6, y, boxD.bw, boxD.bh);
-        } else {
-            const foto = fotoA || fotoD;
-            const box  = boxDims(foto, compacto);
-            const xCentro = M + (CONTENT_W - box.bw) / 2;
-            dibujarFoto(foto, xCentro, y, box.bw, box.bh);
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.navy);
+            doc.text(eqLabel, M, y);
+            y += 4;
+
+            if (fotoA && fotoD) {
+                const totalW = boxA.bw + 6 + boxD.bw;
+                const xBase  = M + (CONTENT_W - totalW) / 2;
+                dibujarFoto(fotoA, xBase, y, boxA.bw, boxA.bh);
+                dibujarFoto(fotoD, xBase + boxA.bw + 6, y, boxD.bw, boxD.bh);
+            } else {
+                const foto = fotoA || fotoD;
+                const box  = boxDims(foto, false);
+                const xCentro = M + (CONTENT_W - box.bw) / 2;
+                dibujarFoto(foto, xCentro, y, box.bw, box.bh);
+            }
+            y += maxH + GAP;
         }
-        y += maxH + GAP;
     }
 }

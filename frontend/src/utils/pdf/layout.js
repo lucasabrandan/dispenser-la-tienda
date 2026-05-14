@@ -24,7 +24,7 @@ export function dibujarHeader(doc, { tipoLabel, fecha, tecnico = null, nroDoc = 
 
     const lineas = [
         [empresa.telefono, empresa.whatsapp].filter(Boolean).map((v, i) => i === 0 ? `Tel: ${v}` : `WA: ${v}`).join('  ·  '),
-        empresa.web,
+        [empresa.web, empresa.email].filter(Boolean).join('  ·  '),
     ].filter(Boolean);
     lineas.forEach((l, i) => {
         doc.setFontSize(T.label);
@@ -138,6 +138,7 @@ export function dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico = null, n
         empresa.telefono ? `Tel: ${empresa.telefono}` : null,
         empresa.whatsapp ? `WA: ${empresa.whatsapp}`  : null,
         empresa.web,
+        empresa.email,
     ].filter(Boolean).join('  ·  ');
     doc.text(contactLine, M + 25, 17);
 
@@ -199,36 +200,32 @@ export function dibujarFooter(doc, { pagina = null, totalPaginas = null, textoCe
 
     doc.setDrawColor(...C.grayBorder);
     doc.setLineWidth(0.25);
-    doc.line(M, pageH - 16, pageW - M, pageH - 16);
+    doc.line(M, pageH - 14, pageW - M, pageH - 14);
 
-    // Contacto izquierda
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(...C.grayText);
-    const l1 = [
-        empresa.telefono ? `Tel: ${empresa.telefono}` : null,
-        empresa.whatsapp ? `WA: ${empresa.whatsapp}`  : null,
-    ].filter(Boolean).join('  ·  ');
-    doc.text(l1,         M, pageH - 10);
-    doc.text(empresa.web, M, pageH - 4);
-
-    // Centro
+    // Fila 1: "Gracias por confiar en nosotros ★★★★★" o texto central
     if (textoCentral) {
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
-        doc.text(textoCentral, pageW / 2, pageH - 7, { align: 'center' });
+        doc.text(textoCentral, pageW / 2, pageH - 9, { align: 'center' });
     } else {
         doc.setFontSize(T.xs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.dark);
-        doc.text('Gracias por confiar en nosotros', pageW / 2, pageH - 10, { align: 'center' });
-        if (conEstrellas) {
-            doc.setFontSize(9);
-            doc.setTextColor(255, 180, 0);
-            doc.text('* * * * *', pageW / 2, pageH - 4, { align: 'center' });
-        }
+        const gracias = conEstrellas ? 'Gracias por confiar en nosotros  ★ ★ ★ ★ ★' : 'Gracias por confiar en nosotros';
+        doc.text(gracias, pageW / 2, pageH - 9, { align: 'center' });
     }
+
+    // Fila 2: contacto izquierda + paginación derecha
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    const contacto = [
+        empresa.web,
+        empresa.email,
+        empresa.instagram ? `IG: ${empresa.instagram}` : null,
+    ].filter(Boolean).join('  ·  ');
+    doc.text(contacto, M, pageH - 4);
 
     // Paginación derecha
     if (pagina && totalPaginas) {

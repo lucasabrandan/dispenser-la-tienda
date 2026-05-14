@@ -132,7 +132,12 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                     </div>
                 )}
                 <div className={`flex items-center ${colapsado ? 'flex-col gap-1' : 'justify-between'}`}>
-                    {!colapsado && <span className="text-[9px] text-[#A8A29E] font-black uppercase tracking-widest">v1.0</span>}
+                    {!colapsado && (
+                        <div>
+                            <span className="text-[9px] text-[#A8A29E] font-black uppercase tracking-widest block">v1.0</span>
+                            <span className="text-[8px] text-[#A8A29E] block">dispenserlatienda.com.ar</span>
+                        </div>
+                    )}
                     <div className={`flex items-center ${colapsado ? 'flex-col gap-1' : 'gap-1'}`}>
                         <button onClick={toggleMontos} title={montosVisibles ? 'Ocultar montos' : 'Mostrar montos'}
                             className={`${iconBtn} ${montosVisibles ? 'text-[#57534E] dark:text-[#A8A29E]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>

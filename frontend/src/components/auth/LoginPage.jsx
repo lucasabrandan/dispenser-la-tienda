@@ -37,6 +37,9 @@ export default function LoginPage() {
                     <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-[0.25em]">
                         Sistema de Logística
                     </p>
+                    <p className="text-[9px] text-[#A8A29E] mt-1">
+                        www.dispenserlatienda.com.ar
+                    </p>
                 </div>
 
                 {/* Card */}

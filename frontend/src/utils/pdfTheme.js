@@ -26,6 +26,7 @@ export function getEmpresa() {
         email:     'info@dispenserlatienda.com.ar',
         web:       'dispenserlatienda.com.ar',
         redes:     '@dispenserlatienda',
+        tiktok:    '@dispenserlatienda',
     };
 }
 
@@ -193,7 +194,7 @@ export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoC
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(155, 150, 144);
     const empF = getEmpresa();
-    const footerContact = [empF.contacto ? `WA: ${empF.contacto}` : null, empF.web].filter(Boolean).join('  ·  ');
+    const footerContact = [empF.web, empF.email, empF.redes ? `IG: ${empF.redes}` : null].filter(Boolean).join('  ·  ');
     if (footerContact) doc.text(footerContact, 14, pageH - 5);
 
     if (pagina && totalPaginas && totalPaginas > 1) {

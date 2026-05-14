@@ -48,15 +48,17 @@ export function getEmpresa() {
             eslogan:          'SERVICIO TÉCNICO ESPECIALIZADO',
             telefono:         u.telefono         || '',
             whatsapp:         u.whatsapp         || '',
-            web:              'www.dispenserlatienda.com',
+            web:              'www.dispenserlatienda.com.ar',
+            email:            'info@dispenserlatienda.com.ar',
             instagram:        '@dispenserlatienda',
+            tiktok:           '@dispenserlatienda',
             googleReviewLink: localStorage.getItem('empresa_google_review') || '',
             condicionesPDF:   localStorage.getItem('empresa_condiciones_pdf') || '',
         };
     } catch {
         return {
             nombre: 'DISPENSER LA TIENDA', eslogan: 'SERVICIO TÉCNICO ESPECIALIZADO',
-            telefono: '', whatsapp: '', web: '', instagram: '', googleReviewLink: '', condicionesPDF: '',
+            telefono: '', whatsapp: '', web: 'www.dispenserlatienda.com.ar', email: 'info@dispenserlatienda.com.ar', instagram: '@dispenserlatienda', tiktok: '@dispenserlatienda', googleReviewLink: '', condicionesPDF: '',
         };
     }
 }
