@@ -190,8 +190,10 @@ export function useServicioManager() {
     };
 
     // Presupuestos → PDF directo sin firmas; trabajo confirmado → modal de firmas
+    const esPresupuesto = (s) => (s.estado || '').toUpperCase() === 'PRESUPUESTO';
+
     const generarPDF = (servicio) => {
-        if (servicio.estado === 'PRESUPUESTO') {
+        if (esPresupuesto(servicio)) {
             generarPDFDirecto(servicio, { firmaTecnico: null, firmaCliente: null, incluirFirmas: false });
             return;
         }
@@ -208,6 +210,9 @@ export function useServicioManager() {
     };
 
     const generarPDFDirecto = async (servicio, { firmaTecnico, firmaCliente, incluirFirmas = true }) => {
+        // Forzar sin firmas si es presupuesto (por seguridad, aunque el caller ya lo haga)
+        const esPpto = esPresupuesto(servicio);
+        if (esPpto) incluirFirmas = false;
 
         const loading = toast.loading('Preparando PDF...');
         try {
@@ -225,8 +230,8 @@ export function useServicioManager() {
             // Para ventas presupuesto → tipo explícito para usar condiciones comerciales
             const esVenta = servicio.servicioTipo === 'VENTA';
             await generarRemitoPDFPremium({
-                tipo:                 esVenta && servicio.estado === 'PRESUPUESTO' ? 'PRESUPUESTO_VENTA' : undefined,
-                esPresupuesto:        servicio.estado === 'PRESUPUESTO',
+                tipo:                 esVenta && esPpto ? 'PRESUPUESTO_VENTA' : undefined,
+                esPresupuesto:        esPpto,
                 servicioId:           servicio.id,
                 nroDocumentoExistente: servicio.nroDocumento || localStorage.getItem(`pdf_nro_${servicio.id}`) || null,
                 cliente: {
