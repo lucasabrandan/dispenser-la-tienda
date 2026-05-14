@@ -30,6 +30,7 @@ import {
     dibujarQRWhatsApp,
     dibujarQRGoogle,
     dibujarCondicionesYCTA,
+    dibujarCondicionesCompactas,
     dibujarCondicionesVenta,
     dibujarRegistroFotografico,
 } from './bloques.js';
@@ -527,29 +528,29 @@ async function generarSinglePresupuesto(doc, {
         presupTableEndY += 2;
     }
 
+    // Validez — calculada desde la fecha del documento
+    const [dSP, mSP, aSP] = fecha.split('/').map(Number);
+    const validezSP = new Date(aSP, mSP - 1, dSP + 7);
+
+    // Caja total + validez integrada (ahorra 6mm)
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, presupTableEndY, CONTENT_W, 13, 1.5, 1.5, 'FD');
+    doc.roundedRect(M, presupTableEndY, CONTENT_W, 16, 1.5, 1.5, 'FD');
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 5.5);
+    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 5);
     doc.setFontSize(sinItems ? T.xs : T.md);
     doc.setTextColor(...C.navy);
-    doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 2, presupTableEndY + 10, { align: 'right' });
-    presupTableEndY += 18;
-    y = presupTableEndY;
-
-    // Validez — calculada desde la fecha del documento, no desde hoy
-    const [dSP, mSP, aSP] = fecha.split('/').map(Number);
-    const validezSP = new Date(aSP, mSP - 1, dSP + 7);
-    y += 3;
-    doc.setFontSize(T.xxs);
+    doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 2, presupTableEndY + 9.5, { align: 'right' });
+    // Validez dentro de la caja
+    doc.setFontSize(T.label);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
-    y += 6;
+    doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 3, presupTableEndY + 13);
+    presupTableEndY += 20;
+    y = presupTableEndY;
 
     // Registro fotográfico: mostrar si existe alguna foto — umbral reducido por foto más compacta
     if (tieneEquipoReal && (fotoAntes || fotoDespues)) {
@@ -580,13 +581,9 @@ async function generarSinglePresupuesto(doc, {
         y += bh + 8;
     }
 
-    // Condiciones + CTA + firmas de aceptación (si se marcó incluirFirmas)
-    const firmasHSP = incluirFirmas ? 50 : 0;
-    y = checkSalto(doc, y, 44 + firmasHSP);
-    y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
-    if (incluirFirmas) {
-        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
-    }
+    // Condiciones compactas
+    y = checkSalto(doc, y, 20);
+    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
 
     return y;
 }
@@ -921,43 +918,37 @@ async function generarMultiPresupuesto(doc, {
         y += 2;
     }
 
-    // Total final — caja más alta para que el número grande no se corte
+    // Validez — calculada desde la fecha del documento
+    const [dMP, mMP, aMP] = fecha.split('/').map(Number);
+    const validezMP = new Date(aMP, mMP - 1, dMP + 7);
+
+    // Total final + validez integrada
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
+    doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 5.5);
+    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 2, y + 10, { align: 'right' });
-    y += 18;
-
-    // Validez — calculada desde la fecha del documento, no desde hoy
-    const [dMP, mMP, aMP] = fecha.split('/').map(Number);
-    const validezMP = new Date(aMP, mMP - 1, dMP + 7);
-    doc.setFontSize(T.xxs);
+    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 2, y + 9.5, { align: 'right' });
+    doc.setFontSize(T.label);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validezMP.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
-    y += 6;
+    doc.text(`Válido hasta: ${validezMP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 4, y + 13);
+    y += 20;
 
-    // Condiciones + firmas de aceptación + QR: van juntos en página dedicada
-    const condH   = 44;
-    const firmasH = 50;
-    const qrWaH   = empresa.whatsapp ? 54 : 0;
-    const pageHQ  = doc.internal.pageSize.getHeight();
-    if (y + condH + firmasH + qrWaH > pageHQ - 25) {
+    // Condiciones compactas + QR WhatsApp
+    const qrWaH = empresa.whatsapp ? 54 : 0;
+    const pageHQ = doc.internal.pageSize.getHeight();
+    if (y + 20 + qrWaH > pageHQ - 25) {
         doc.addPage();
         dibujarHeaderCompacto(doc, { tipoLabel: tipoLabelTabla, fecha, nroDoc });
         y = HEADER_H.compact + 8;
     }
-    y = dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc });
-    if (incluirFirmas) {
-        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: true });
-    }
+    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
     if (empresa.whatsapp) {
         y = await dibujarQRWhatsApp(doc, {
             x: M, y,
@@ -965,28 +956,6 @@ async function generarMultiPresupuesto(doc, {
             mensaje:  `Hola, quiero aprobar el presupuesto ${nroDoc}`,
             nroDoc,
         });
-    }
-
-    // Bloque de contacto/cierre cuando no hay firmas ni QR (evita página casi vacía)
-    if (!incluirFirmas && !empresa.whatsapp) {
-        y += 6;
-        const contactParts = [
-            empresa.telefono ? `Tel: ${empresa.telefono}` : null,
-            empresa.web      ? empresa.web                : null,
-            empresa.email    ? `Email: ${empresa.email}`  : null,
-        ].filter(Boolean).join('   ·   ');
-        doc.setFillColor(...C.navy);
-        doc.roundedRect(M - 2, y, CONTENT_W + 4, 16, 2, 2, 'F');
-        doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.white);
-        doc.text('Para confirmar este presupuesto contactese con nosotros', M + 4, y + 6.5);
-        if (contactParts) {
-            doc.setFontSize(T.xxs);
-            doc.setFont(undefined, 'normal');
-            doc.text(contactParts, M + 4, y + 12);
-        }
-        y += 22;
     }
 
     // Página de fotos (solo si hay alguna)
@@ -1469,14 +1438,16 @@ export const generarPDF = async ({
 
     // ── HEADER PRIMERA PÁGINA ─────────────────────────────────────────────────
     // Multi-equipo usa header compacto en todas las páginas para consistencia visual
+    // Presupuestos (single y multi) usan header compacto para ganar espacio
     const esMultiDoc = esMulti && (tipoDetectado === 'PRESUPUESTO' || tipoDetectado === 'ORDEN_SERVICIO' || tipoDetectado === 'INFORME_TECNICO');
-    if (esMultiDoc) {
+    const usaHeaderCompacto = esMultiDoc || tipoDetectado === 'PRESUPUESTO';
+    if (usaHeaderCompacto) {
         dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico: tecnico || null, nroDoc });
     } else {
         dibujarHeader(doc, { tipoLabel, fecha, tecnico: tecnico || null, nroDoc, estado: getEstadoBadge(tipoDetectado) });
     }
 
-    let y = esMultiDoc ? HEADER_H.compact + 8 : HEADER_H.normal + 8;
+    let y = usaHeaderCompacto ? HEADER_H.compact + 8 : HEADER_H.normal + 8;
 
     // ── DISPATCH POR TIPO ─────────────────────────────────────────────────────
     const commonArgs = {

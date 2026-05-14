@@ -6,7 +6,6 @@ import { useMontos } from '../context/MontosContext';
 import { useAuth } from '../context/AuthContext';
 import Paginacion from './ui/Paginacion';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
-import ModalFirmasPDF from './ui/ModalFirmasPDF';
 import ModalCotizacionVolumen from './presupuesto/ModalCotizacionVolumen';
 import ModalDespacharPresupuesto from './presupuesto/ModalDespacharPresupuesto';
 
@@ -217,8 +216,6 @@ export default function PresupuestosManager({ onEjecutar }) {
     const [cargando, setCargando]           = useState(true);
     const [modalDetalle, setModalDetalle]   = useState(null);
     const [ejecutadosIds, setEjecutadosIds] = useState(new Set());
-    const [modalFirmas, setModalFirmas]     = useState(false);
-    const [pendingPdf, setPendingPdf]       = useState(null);
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
     const [tipoFiltro, setTipoFiltro]             = useState('');
@@ -261,13 +258,8 @@ export default function PresupuestosManager({ onEjecutar }) {
 
     const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
 
-    const generarPDF = useCallback((s) => { setPendingPdf(s); setModalFirmas(true); }, []);
-
-    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {
-        setModalFirmas(false);
-        const s = pendingPdf;
-        setPendingPdf(null);
-        if (!s) return;
+    // Presupuesto: genera PDF directo sin pedir firmas (las firmas son para trabajo terminado)
+    const generarPDF = useCallback(async (s) => {
         await generarRemitoPDFPremium({
             tipo:         s.servicioTipo === 'VENTA' ? 'PRESUPUESTO_VENTA' : undefined,
             esPresupuesto: true,
@@ -286,11 +278,9 @@ export default function PresupuestosManager({ onEjecutar }) {
             })) || [],
             fechaServicio: s.fecha,
             leyenda: s.observaciones || '',
-            firmaTecnico,
-            firmaCliente,
-            incluirFirmas,
+            incluirFirmas: false,
         });
-    };
+    }, []);
 
     const toggleSeleccion = (id) => {
         setSeleccionados(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
@@ -472,9 +462,7 @@ export default function PresupuestosManager({ onEjecutar }) {
                 <ModalDetalle s={modalDetalle} calcularTotal={calcularTotal} onClose={() => setModalDetalle(null)} />
             )}
 
-            {modalFirmas && (
-                <ModalFirmasPDF onConfirm={confirmarFirmasYGenerarPDF} onCancel={() => setModalFirmas(false)} />
-            )}
+            {/* Firmas solo para órdenes de servicio, no presupuestos */}
 
             {modalCotizar && (
                 <ModalCotizacionVolumen onCerrar={() => setModalCotizar(false)} />

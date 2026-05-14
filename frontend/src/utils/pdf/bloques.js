@@ -989,6 +989,36 @@ export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
     return yRef + 6;
 }
 
+// ── CONDICIONES COMPACTAS (presupuesto single — todo en 1 línea + contacto) ──
+export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc }) {
+    // Línea divisora sutil
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.15);
+    doc.line(M, y, pageW - M, y);
+    y += 4;
+
+    // Condiciones en texto corrido compacto
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    doc.text('Garantía 90 días mano de obra  ·  Repuestos según fabricante  ·  El servicio se coordina una vez aprobado', M, y);
+    y += 5;
+
+    // Referencia y contacto
+    const contacto = empresa.whatsapp || empresa.telefono || '';
+    const partes = [];
+    if (nroDoc) partes.push(`Ref: ${nroDoc}`);
+    if (contacto) partes.push(`Contacto: ${contacto}`);
+    if (partes.length > 0) {
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text(partes.join('   ·   '), M, y);
+    }
+
+    return y + 5;
+}
+
 // Condiciones comerciales para presupuesto/comprobante de venta (SIN términos de servicio técnico)
 export function dibujarCondicionesVenta(doc, { y, pageW, empresa, nroDoc }) {
     const conds = [
