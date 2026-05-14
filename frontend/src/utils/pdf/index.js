@@ -1144,30 +1144,29 @@ async function generarPresupuestoVenta(doc, {
         y += 2;
     }
 
-    // Total estimado
+    // Validez — calculada desde la fecha del documento
+    const [dPV, mPV, aPV] = fecha.split('/').map(Number);
+    const validezPV = new Date(aPV, mPV - 1, dPV + 7);
+
+    // Total estimado + validez integrada
     doc.setFillColor(...C.redLight);
     doc.setDrawColor(...C.red);
     doc.setLineWidth(0.3);
-    doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
+    doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.red);
-    doc.text('TOTAL ESTIMADO', M + 4, y + 5.5);
+    doc.text('TOTAL ESTIMADO', M + 4, y + 5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
-    y += 18;
-
-    // Validez — calculada desde la fecha del documento, no desde hoy
-    const [dPV, mPV, aPV] = fecha.split('/').map(Number);
-    const validezPV = new Date(aPV, mPV - 1, dPV + 7);
-    doc.setFontSize(T.xxs);
+    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 9.5, { align: 'right' });
+    doc.setFontSize(T.label);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validezPV.toLocaleDateString('es-AR')}  (7 días corridos)`, pageW - M, y, { align: 'right' });
-    y += 8;
+    doc.text(`Válido hasta: ${validezPV.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 4, y + 13);
+    y += 20;
 
-    // Leyenda / observaciones del presupuesto
+    // Leyenda / observaciones
     const leyLimpiaV = (leyenda || '').trim();
     if (leyLimpiaV) {
         y = checkSalto(doc, y, 20);
@@ -1188,21 +1187,9 @@ async function generarPresupuestoVenta(doc, {
         y += leyHV + 4;
     }
 
-    // QR WhatsApp (condiciones ya están en el header junto al cliente)
-    if (empresa.whatsapp) {
-        const pageHQ = doc.internal.pageSize.getHeight();
-        if (y + 54 > pageHQ - 25) {
-            doc.addPage();
-            dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo('PRESUPUESTO_VENTA', false), fecha, nroDoc });
-            y = HEADER_H.compact + 8;
-        }
-        y = await dibujarQRWhatsApp(doc, {
-            x: M, y,
-            telefono: empresa.whatsapp,
-            mensaje:  `Hola, quiero aprobar el presupuesto ${nroDoc}`,
-            nroDoc,
-        });
-    }
+    // Condiciones compactas (sin QR ni firmas en presupuesto de venta)
+    y = checkSalto(doc, y, 14);
+    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
 
     return y;
 }
@@ -1409,7 +1396,8 @@ export const generarPDF = async ({
     // Multi-equipo usa header compacto en todas las páginas para consistencia visual
     // Header compacto para todos los tipos principales (ahorra 20mm)
     const esMultiDoc = esMulti && (tipoDetectado === 'PRESUPUESTO' || tipoDetectado === 'ORDEN_SERVICIO' || tipoDetectado === 'INFORME_TECNICO');
-    const usaHeaderCompacto = esMultiDoc || tipoDetectado === 'PRESUPUESTO' || tipoDetectado === 'ORDEN_SERVICIO' || tipoDetectado === 'INFORME_TECNICO';
+    // Header compacto para todos los tipos (ahorra 20mm vs header normal)
+    const usaHeaderCompacto = true;
     if (usaHeaderCompacto) {
         dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico: tecnico || null, nroDoc });
     } else {
