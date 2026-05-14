@@ -835,21 +835,30 @@ async function generarMultiPresupuesto(doc, {
             linPisoSec || null,
         ].filter(Boolean).join('\n');
 
-        // Repuestos: una línea por ítem sin precio inline (el total va en IMPORTE)
+        // Trabajo (mano de obra con precio)
+        const mo   = parseFloat(item.costoExtra) || 0;
+        const desc = (item.trabajo || item.trabajoRealizado || '').trim();
+        const partesMO = [];
+        if (desc) partesMO.push(desc);
+        if (mo > 0) partesMO.push(`MO: $${mo.toLocaleString('es-AR')}`);
+        const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
+
+        // Repuestos con precio
         const reps = item.repuestosUsados || [];
         const repCell = reps.length > 0
-            ? reps.map(r => `· ${r.nombre} (x${r.cantidad})`).join('\n')
+            ? reps.map(r => {
+                const sub = parseFloat(r.subtotal ?? r.precio * r.cantidad ?? 0);
+                return `· ${r.nombre} (x${r.cantidad}) — $${sub.toLocaleString('es-AR')}`;
+              }).join('\n')
             : '—';
 
         const sub = parseFloat(item.totalCalculado || item.costo || 0);
         const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
 
         if (trabajoComun) {
-            // Sin columna trabajo — ya se mostró arriba
             bodyRows.push([equipoCell, repCell, importeCell]);
         } else {
-            const desc = (item.trabajo || item.trabajoRealizado || '').trim();
-            bodyRows.push([equipoCell, desc || '—', repCell, importeCell]);
+            bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
         }
     });
 
