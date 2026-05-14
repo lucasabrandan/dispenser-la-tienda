@@ -7,6 +7,7 @@ import api from '../../services/api';
 export default function ModalFirmasPDF({ onConfirm, onCancel }) {
     const [firmaTecnico, setFirmaTecnico]         = useState(null);
     const [firmaCliente, setFirmaCliente]         = useState(null);
+    const [aclaracionCliente, setAclaracionCliente] = useState('');
     const [editandoTecnico, setEditandoTecnico]   = useState(false);
     const [guardando, setGuardando]               = useState(false);
     const [guardado,  setGuardado]                = useState(false);
@@ -50,6 +51,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
         onConfirm({
             firmaTecnico: incluirFirmas ? firmaTecnico : null,
             firmaCliente: incluirFirmas ? firmaCliente : null,
+            aclaracionCliente: incluirFirmas ? aclaracionCliente.trim() : '',
             incluirFirmas,
         });
     };
@@ -134,6 +136,13 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                                 value={firmaCliente}
                                 onChange={setFirmaCliente}
                                 height={firmaGuardada ? 160 : 120}
+                            />
+                            <input
+                                type="text"
+                                value={aclaracionCliente}
+                                onChange={e => setAclaracionCliente(e.target.value)}
+                                placeholder="Aclaración (nombre de quien firma)"
+                                className="w-full mt-1 px-3 py-2 rounded-xl text-[12px] bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-[#C0BCB6] dark:border-[#2E2E2E] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#D13A28]"
                             />
                         </>
                     )}

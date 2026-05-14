@@ -205,15 +205,15 @@ export function useServicioManager() {
         setModalFirmas(true);
     };
 
-    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {
+    const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente, aclaracionCliente = '', incluirFirmas = true }) => {
         setModalFirmas(false);
         const servicio = pendingPdfServicio;
         setPendingPdfServicio(null);
         if (!servicio) return;
-        await generarPDFDirecto(servicio, { firmaTecnico, firmaCliente, incluirFirmas });
+        await generarPDFDirecto(servicio, { firmaTecnico, firmaCliente, aclaracionCliente, incluirFirmas });
     };
 
-    const generarPDFDirecto = async (servicio, { firmaTecnico, firmaCliente, incluirFirmas = true }) => {
+    const generarPDFDirecto = async (servicio, { firmaTecnico, firmaCliente, aclaracionCliente = '', incluirFirmas = true }) => {
         // Forzar sin firmas si es presupuesto (por seguridad, aunque el caller ya lo haga)
         const esPpto = esPresupuesto(servicio);
         if (esPpto) incluirFirmas = false;
@@ -257,6 +257,7 @@ export function useServicioManager() {
                 esTecnicoForzado:    servicio.servicioTipo === 'TECNICA',
                 firmaTecnico:        firmaTecnico  || null,
                 firmaCliente:        firmaCliente  || null,
+                aclaracionCliente:   aclaracionCliente || '',
                 incluirFirmas:       incluirFirmas,
             });
         } catch (e) {

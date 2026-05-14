@@ -95,7 +95,7 @@ function construirFilasItem(item) {
 
 async function generarSingleTecnico(doc, {
     item, cliente, sede, tipo, y, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, garantiaTexto, proximoMantenimiento, googleReviewLink,
+    firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, proximoMantenimiento, googleReviewLink,
     incluirFirmas = true, descuentoPorcentaje = 0, leyenda = '',
 }) {
     const pageW = doc.internal.pageSize.getWidth();
@@ -193,12 +193,12 @@ async function generarSingleTecnico(doc, {
         },
         columnStyles: hayFotosST ? {
             0: { cellWidth: FOTO_ST_W + 4 },
-            1: { cellWidth: 'auto' },
+            1: { cellWidth: 'auto', overflow: 'linebreak' },
             2: { halign: 'center', cellWidth: 13 },
             3: { halign: 'right',  cellWidth: 26 },
             4: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
         } : {
-            0: { cellWidth: 'auto' },
+            0: { cellWidth: 'auto', overflow: 'linebreak' },
             1: { halign: 'center', cellWidth: 13 },
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
@@ -261,13 +261,13 @@ async function generarSingleTecnico(doc, {
         tableEndY += 2;
     }
 
-    doc.setFillColor(...C.redLight);
-    doc.setDrawColor(...C.red);
+    doc.setFillColor(...C.grayBg);
+    doc.setDrawColor(...C.navy);
     doc.setLineWidth(0.3);
     doc.roundedRect(M, tableEndY, CONTENT_W, 13, 1.5, 1.5, 'FD');
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.navy);
     doc.text('TOTAL DEL SERVICIO', M + 3, tableEndY + 5.5);
     doc.setFontSize(sinItems ? T.xs : T.md);
     doc.setTextColor(...C.navy);
@@ -311,8 +311,12 @@ async function generarSingleTecnico(doc, {
     }
 
     // Condiciones del servicio (leyenda ingresada en el formulario)
+    // Evitar duplicar si la leyenda es igual al texto de garantía
+    const textoGar = garantiaTexto || '90 días sobre mano de obra  ·  Repuestos según fabricante';
     const leyLimpia = (leyenda || '').trim();
-    if (leyLimpia) {
+    const esGarantiaDefault = leyLimpia.toLowerCase().replace(/[·\-–—]/g, '').replace(/\s+/g, ' ')
+        .includes('90 d') && leyLimpia.toLowerCase().includes('mano de obra');
+    if (leyLimpia && !esGarantiaDefault) {
         y = checkSalto(doc, y, 20);
         const leyLines = doc.splitTextToSize(leyLimpia.replace(/[\r\n]+/g, ' '), CONTENT_W - 10);
         const leyH = Math.min(leyLines.length, 4) * 4.2 + 11;
@@ -331,25 +335,35 @@ async function generarSingleTecnico(doc, {
         y += leyH + 4;
     }
 
-    // Garantía compacta (1 línea) + firmas
+    // Garantía compacta (1 línea) + firmas — intentar en misma página, si no cabe omitir garantía antes de crear página
     const firmasH = incluirFirmas ? 44 : 0;
-    y = checkSalto(doc, y, 14 + firmasH);
-    // Garantía inline
-    doc.setDrawColor(...C.grayBorder);
-    doc.setLineWidth(0.15);
-    doc.line(M, y, pageW - M, y);
-    y += 4;
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text('GARANTÍA:', M, y);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(...C.grayText);
-    const textoGar = garantiaTexto || '90 días sobre mano de obra  ·  Repuestos según fabricante';
-    doc.text(textoGar, M + 20, y);
-    y += 6;
-    if (incluirFirmas) {
-        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
+    const pageHS = doc.internal.pageSize.getHeight();
+    const cabeGarYFirmas = y + 14 + firmasH < pageHS - 18;
+    const cabeSoloFirmas = y + firmasH < pageHS - 18;
+
+    if (!cabeGarYFirmas && cabeSoloFirmas) {
+        // Firmas caben pero garantía+firmas no → poner solo firmas sin garantía separada
+        if (incluirFirmas) {
+            y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, aclaracionCliente, esPresupuesto: false });
+        }
+    } else {
+        y = checkSalto(doc, y, 14 + firmasH);
+        // Garantía inline
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(0.15);
+        doc.line(M, y, pageW - M, y);
+        y += 4;
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text('GARANTÍA:', M, y);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...C.grayText);
+        doc.text(textoGar, M + 20, y);
+        y += 6;
+        if (incluirFirmas) {
+            y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, aclaracionCliente, esPresupuesto: false });
+        }
     }
 
     return y;
@@ -457,12 +471,12 @@ async function generarSinglePresupuesto(doc, {
         },
         columnStyles: hayFotosSP ? {
             0: { cellWidth: FOTO_SP_W + 4 },
-            1: { cellWidth: 'auto' },
+            1: { cellWidth: 'auto', overflow: 'linebreak' },
             2: { halign: 'center', cellWidth: 13 },
             3: { halign: 'right',  cellWidth: 26 },
             4: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
         } : {
-            0: { cellWidth: 'auto' },
+            0: { cellWidth: 'auto', overflow: 'linebreak' },
             1: { halign: 'center', cellWidth: 13 },
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
@@ -589,7 +603,7 @@ async function generarSinglePresupuesto(doc, {
 
 async function generarMultiTecnico(doc, {
     ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico, y: yInicial,
-    firmaCliente, firmaTecnico, garantiaTexto, googleReviewLink, leyenda,
+    firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, googleReviewLink, leyenda,
     incluirFirmas = true, descuentoPorcentaje = 0,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
@@ -621,7 +635,7 @@ async function generarMultiTecnico(doc, {
     doc.text(garantiaTexto || '90 días sobre mano de obra  ·  Repuestos según fabricante', M + 20, y);
     y += 6;
     if (incluirFirmas) {
-        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
+        y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, aclaracionCliente, esPresupuesto: false });
     }
 
     // ── Detalle técnico por equipos (continúa en misma página, autoTable pagina solo) ──
@@ -730,22 +744,24 @@ async function generarMultiTecnico(doc, {
         y += 2;
     }
 
-    doc.setFillColor(...C.redLight);
-    doc.setDrawColor(...C.red);
+    doc.setFillColor(...C.grayBg);
+    doc.setDrawColor(...C.navy);
     doc.setLineWidth(0.4);
     doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.navy);
     doc.text('TOTAL FACTURADO', M + 4, y + 5.5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
     doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
     y += 18;
 
-    // Condiciones del servicio (leyenda) — solo si caben en la misma página, evitar página casi vacía
+    // Condiciones del servicio (leyenda) — solo si caben y no duplican la garantía
     const leyLimpiaM = (leyenda || '').trim();
-    if (leyLimpiaM) {
+    const esGarantiaDefaultM = leyLimpiaM.toLowerCase().replace(/[·\-–—]/g, '').replace(/\s+/g, ' ')
+        .includes('90 d') && leyLimpiaM.toLowerCase().includes('mano de obra');
+    if (leyLimpiaM && !esGarantiaDefaultM) {
         const leyLinesM = doc.splitTextToSize(leyLimpiaM.replace(/[\r\n]+/g, ' '), CONTENT_W - 10);
         const leyHM = Math.min(leyLinesM.length, 4) * 4.2 + 11;
         const pageHM = doc.internal.pageSize.getHeight();
@@ -1322,13 +1338,13 @@ async function generarComprobante(doc, {
     }
 
     // Total
-    doc.setFillColor(...C.redLight);
-    doc.setDrawColor(...C.red);
+    doc.setFillColor(...C.grayBg);
+    doc.setDrawColor(...C.navy);
     doc.setLineWidth(0.3);
     doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.navy);
     doc.text('TOTAL', M + 4, y + 5.5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
@@ -1381,6 +1397,7 @@ export const generarPDF = async ({
     estadoFinal        = null,
     googleReviewLink   = null,
     incluirFirmas      = true,
+    aclaracionCliente  = '',
 }) => {
     if (!cliente || ticketItems.length === 0) {
         return toast.error('Datos insuficientes para generar el PDF.');
@@ -1426,7 +1443,7 @@ export const generarPDF = async ({
         cliente, sede, tecnico, fecha, nroDoc,
         firmaCliente:  incluirFirmas ? firmaCliente  : null,
         firmaTecnico:  incluirFirmas ? firmaTecnico  : null,
-        incluirFirmas,
+        incluirFirmas, aclaracionCliente,
         descuentoPorcentaje, garantiaTexto,
         proximoMantenimiento, googleReviewLink, leyenda,
     };

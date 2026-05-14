@@ -644,7 +644,7 @@ export function dibujarChecklist(doc, { y, items, pageW, titulo = 'CHECKLIST TÉ
 // ── FIRMAS ────────────────────────────────────────────────────────────────────
 // firmaCliente: data URL de la firma del cliente (puede ser null)
 // firmaTecnico: data URL de la firma del técnico (puede ser null)
-export function dibujarFirmas(doc, { y, firmaCliente = null, firmaTecnico = null, esPresupuesto = false }) {
+export function dibujarFirmas(doc, { y, firmaCliente = null, firmaTecnico = null, aclaracionCliente = '', esPresupuesto = false }) {
     y = checkSalto(doc, y, 36);
 
     doc.setFontSize(T.label);
@@ -657,7 +657,7 @@ export function dibujarFirmas(doc, { y, firmaCliente = null, firmaTecnico = null
     const FIRMA_H = 22;
     const xDer    = M + FIRMA_W + 6;
 
-    const dibujarCaja = (firma, x, label) => {
+    const dibujarCaja = (firma, x, label, aclaracion = '') => {
         doc.setFillColor(...C.white);
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
@@ -672,17 +672,26 @@ export function dibujarFirmas(doc, { y, firmaCliente = null, firmaTecnico = null
             doc.line(x + 4, y + FIRMA_H - 4, x + FIRMA_W - 4, y + FIRMA_H - 4);
         }
 
+        // Aclaración (nombre) debajo de la firma
+        let labelY = y + FIRMA_H + 2;
+        if (aclaracion) {
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.dark);
+            doc.text(aclaracion, x + FIRMA_W / 2, labelY + 2, { align: 'center' });
+            labelY += 4;
+        }
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
-        doc.text(label, x + FIRMA_W / 2, y + FIRMA_H + 4, { align: 'center' });
+        doc.text(label, x + FIRMA_W / 2, labelY + 2, { align: 'center' });
     };
 
     const lblCliente = esPresupuesto ? 'Aceptación del presupuesto' : 'Firma del cliente';
-    dibujarCaja(firmaCliente, M,    lblCliente);
+    dibujarCaja(firmaCliente, M,    lblCliente, aclaracionCliente);
     dibujarCaja(firmaTecnico, xDer, 'Técnico responsable / Sello');
 
-    return y + FIRMA_H + 10;
+    return y + FIRMA_H + (aclaracionCliente ? 14 : 10);
 }
 
 // ── GARANTÍA ─────────────────────────────────────────────────────────────────
