@@ -15,6 +15,7 @@ export const C = {
     green:      [31,  157, 85 ],
     greenLight: [240, 253, 244],
     gold:       [180, 120, 0  ],
+    goldLight:  [255, 248, 230],
 };
 
 export const LOGO_URL = logoUrl;

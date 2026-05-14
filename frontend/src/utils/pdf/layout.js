@@ -216,7 +216,7 @@ export function dibujarFooter(doc, { pagina = null, totalPaginas = null, textoCe
         doc.text(gracias, pageW / 2, pageH - 9, { align: 'center' });
     }
 
-    // Fila 2: contacto izquierda + paginación derecha
+    // Fila 2: redes centradas + paginación derecha
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
@@ -224,8 +224,11 @@ export function dibujarFooter(doc, { pagina = null, totalPaginas = null, textoCe
         empresa.web,
         empresa.email,
         empresa.instagram ? `IG: ${empresa.instagram}` : null,
+        empresa.tiktok ? `TikTok: ${empresa.tiktok}` : null,
     ].filter(Boolean).join('  ·  ');
-    doc.text(contacto, M, pageH - 4);
+    // Centrar redes; si hay paginación, compensar levemente
+    const centroX = pagina && totalPaginas ? (M + pageW - M) / 2 : pageW / 2;
+    doc.text(contacto, centroX, pageH - 4, { align: 'center' });
 
     // Paginación derecha
     if (pagina && totalPaginas) {

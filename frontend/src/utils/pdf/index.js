@@ -526,13 +526,13 @@ async function generarSinglePresupuesto(doc, {
     const validezSP = new Date(aSP, mSP - 1, dSP + 7);
 
     // Caja total + validez integrada (ahorra 6mm)
-    doc.setFillColor(...C.redLight);
-    doc.setDrawColor(...C.red);
+    doc.setFillColor(...C.goldLight);
+    doc.setDrawColor(...C.gold);
     doc.setLineWidth(0.3);
     doc.roundedRect(M, presupTableEndY, CONTENT_W, 16, 1.5, 1.5, 'FD');
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.gold);
     doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 5);
     doc.setFontSize(sinItems ? T.xs : T.md);
     doc.setTextColor(...C.navy);
@@ -904,13 +904,13 @@ async function generarMultiPresupuesto(doc, {
     const validezMP = new Date(aMP, mMP - 1, dMP + 7);
 
     // Total final + validez integrada
-    doc.setFillColor(...C.redLight);
-    doc.setDrawColor(...C.red);
+    doc.setFillColor(...C.goldLight);
+    doc.setDrawColor(...C.gold);
     doc.setLineWidth(0.3);
     doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.gold);
     doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
@@ -1147,13 +1147,13 @@ async function generarPresupuestoVenta(doc, {
     const validezPV = new Date(aPV, mPV - 1, dPV + 7);
 
     // Total estimado + validez integrada
-    doc.setFillColor(...C.redLight);
-    doc.setDrawColor(...C.red);
+    doc.setFillColor(...C.goldLight);
+    doc.setDrawColor(...C.gold);
     doc.setLineWidth(0.3);
     doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
     doc.setFontSize(T.xs);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.gold);
     doc.text('TOTAL ESTIMADO', M + 4, y + 5);
     doc.setFontSize(T.xl);
     doc.setTextColor(...C.navy);
