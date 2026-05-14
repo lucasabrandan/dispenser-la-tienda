@@ -797,17 +797,9 @@ async function generarMultiPresupuesto(doc, {
     const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
     const total     = subtotalTotal - descuento;
 
-    // Bloque cliente sin diagnóstico — en multi cada equipo tiene su propio trabajo
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: null });
-
-    // Resumen: solo equipos + total
-    y = dibujarResumenServicio(doc, {
-        y,
-        stats: [
-            { valor: ticketItems.length,                    etiqueta: 'Equipos',        colorValor: C.navy },
-            { valor: `$ ${total.toLocaleString('es-AR')}`, etiqueta: 'Total estimado', colorValor: C.red  },
-        ],
-    });
+    // Bloque cliente — con resumen inline en columna derecha (ahorra 22mm del bloque resumen)
+    const resumenTexto = `${ticketItems.length} equipos\nTotal estimado: $ ${total.toLocaleString('es-AR')}`;
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: resumenTexto, tituloDiag: 'RESUMEN' });
 
     // Detectar si todos los equipos tienen el mismo trabajo → mostrar una sola vez arriba de la tabla
     const trabajos = ticketItems.map(it => (it.trabajo || it.trabajoRealizado || '').trim()).filter(Boolean);

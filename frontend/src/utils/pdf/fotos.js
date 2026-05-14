@@ -3,22 +3,26 @@ import { cargarFoto, fitEnCaja } from './helpers.js';
 import { dibujarHeaderMini } from './layout.js';
 
 // Header mini: 15mm, margen inferior: 20mm → 262mm útiles
-// 3 bloques de ~85mm (portrait) o ~77mm (landscape) por hoja
 const Y_INI_FOTOS = 17;
 
-// Tamaños fijos por orientación — consistentes siempre
-const FOTO_V_W = 56;   // portrait: ancho
-const FOTO_V_H = 74;   // portrait: alto
-const FOTO_H_W = 88;   // landscape: ancho
-const FOTO_H_H = 66;   // landscape: alto
+// Tamaños normales (≤4 equipos): 3 por página
+const FOTO_V_W = 56, FOTO_V_H = 74;  // portrait
+const FOTO_H_W = 88, FOTO_H_H = 66;  // landscape
 
-// Detecta si una foto es horizontal
+// Tamaños compactos (>4 equipos): 4 por página
+const FOTO_V_W_C = 42, FOTO_V_H_C = 56;  // portrait compacto
+const FOTO_H_W_C = 74, FOTO_H_H_C = 56;  // landscape compacto
+
 function esHorizontal(foto) {
     return foto && foto.w && foto.h && foto.w > foto.h;
 }
 
-// Devuelve las dimensiones de caja según orientación de la foto
-function boxDims(foto) {
+function boxDims(foto, compacto) {
+    if (compacto) {
+        return esHorizontal(foto)
+            ? { bw: FOTO_H_W_C, bh: FOTO_H_H_C }
+            : { bw: FOTO_V_W_C, bh: FOTO_V_H_C };
+    }
     return esHorizontal(foto)
         ? { bw: FOTO_H_W, bh: FOTO_H_H }
         : { bw: FOTO_V_W, bh: FOTO_V_H };
@@ -105,6 +109,10 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     const conFotos = fotosItems.filter(x => x.fotoA || x.fotoD);
     if (conFotos.length === 0) return;
 
+    // Modo compacto: >4 equipos con fotos → fotos más chicas, 4 por página
+    const compacto = conFotos.length > 4;
+    const GAP = compacto ? 4 : 6;
+
     doc.addPage();
     dibujarHeaderMini(doc, { tipoLabel, nroDoc });
 
@@ -122,7 +130,7 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
         const offX = (bw - fW) / 2;
         const offY = (bh - fH) / 2;
         doc.setFillColor(220, 220, 225);
-        doc.roundedRect(x + 1.5, fy + 1.5, bw, bh, 1.5, 1.5, 'F');
+        doc.roundedRect(x + 1, fy + 1, bw, bh, 1.5, 1.5, 'F');
         if (foto) {
             try { doc.addImage(foto.data, foto.format, x + offX, fy + offY, fW, fH); } catch {}
             doc.setDrawColor(...C.grayBorder);
@@ -138,11 +146,10 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     };
 
     for (const { item, fotoA, fotoD } of conFotos) {
-        // Determinar tamaño de caja según orientación de cada foto
-        const boxA = boxDims(fotoA);
-        const boxD = boxDims(fotoD);
+        const boxA = boxDims(fotoA, compacto);
+        const boxD = boxDims(fotoD, compacto);
         const maxH = Math.max(boxA.bh, boxD.bh);
-        const blockH = maxH + 11; // label 5mm + foto + gap 6mm
+        const blockH = maxH + 4 + GAP; // label 4mm + foto + gap
 
         if (y + blockH > Y_LIM) {
             doc.addPage();
@@ -157,25 +164,23 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
             item.ubicacionEquipo || item.equipoUbicacion || null,
         ].filter(Boolean).join('  ·  ') || 'Equipo';
 
-        doc.setFontSize(T.xxs);
+        doc.setFontSize(compacto ? T.label : T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
         doc.text(eqLabel, M, y);
-        y += 5;
+        y += 4;
 
         if (fotoA && fotoD) {
-            // 2 fotos lado a lado, centradas
             const totalW = boxA.bw + 6 + boxD.bw;
             const xBase  = M + (CONTENT_W - totalW) / 2;
             dibujarFoto(fotoA, xBase, y, boxA.bw, boxA.bh);
             dibujarFoto(fotoD, xBase + boxA.bw + 6, y, boxD.bw, boxD.bh);
         } else {
-            // 1 foto centrada, mismo tamaño según su orientación
             const foto = fotoA || fotoD;
-            const box  = boxDims(foto);
+            const box  = boxDims(foto, compacto);
             const xCentro = M + (CONTENT_W - box.bw) / 2;
             dibujarFoto(foto, xCentro, y, box.bw, box.bh);
         }
-        y += maxH + 6;
+        y += maxH + GAP;
     }
 }
