@@ -138,6 +138,22 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           );
           setItemActual(prev => ({ ...prev, sedeId: servicioParaEditar.sedeId }));
           if (servicioParaEditar.observaciones) setLeyenda(servicioParaEditar.observaciones);
+          // Recuperar técnico y fecha del servicio original
+          if (servicioParaEditar.usuarioId) {
+            setTecnicoSeleccionado({ id: servicioParaEditar.usuarioId, nombre: servicioParaEditar.usuarioNombre || '' });
+          }
+          if (servicioParaEditar.fecha) {
+            // fecha puede venir como "dd/MM/yyyy" o "yyyy-MM-dd"
+            const f = servicioParaEditar.fecha;
+            let fechaISO = f;
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+              const [d, m, a] = f.split('/');
+              fechaISO = `${a}-${m}-${d}`;
+            }
+            setFechaServicio(fechaISO);
+            // Pre-llenar fecha de visita para que no la pida de nuevo
+            if (servicioParaEditar.usuarioId) setFechaVisita(fechaISO);
+          }
           // clienteId viene del backend ahora
           if (servicioParaEditar.clienteId) {
             setClienteId(servicioParaEditar.clienteId.toString());
