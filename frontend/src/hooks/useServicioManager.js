@@ -189,11 +189,15 @@ export function useServicioManager() {
         } catch { toast.error('Error en la operación masiva', { id: loading }); }
     };
 
-    // Presupuestos → PDF directo sin firmas; trabajo confirmado → modal de firmas
+    // Presupuestos y archivados → PDF directo sin firmas; trabajo confirmado → modal de firmas
     const esPresupuesto = (s) => (s.estado || '').toUpperCase() === 'PRESUPUESTO';
+    const sinFirmaDirecto = (s) => {
+        const est = (s.estado || '').toUpperCase();
+        return est === 'PRESUPUESTO' || est === 'ARCHIVADO' || est === 'RECHAZADO';
+    };
 
     const generarPDF = (servicio) => {
-        if (esPresupuesto(servicio)) {
+        if (sinFirmaDirecto(servicio)) {
             generarPDFDirecto(servicio, { firmaTecnico: null, firmaCliente: null, incluirFirmas: false });
             return;
         }
