@@ -932,23 +932,9 @@ async function generarMultiPresupuesto(doc, {
     doc.text(`Válido hasta: ${validezMP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 4, y + 13);
     y += 20;
 
-    // Condiciones compactas + QR WhatsApp
-    const qrWaH = empresa.whatsapp ? 54 : 0;
-    const pageHQ = doc.internal.pageSize.getHeight();
-    if (y + 20 + qrWaH > pageHQ - 25) {
-        doc.addPage();
-        dibujarHeaderCompacto(doc, { tipoLabel: tipoLabelTabla, fecha, nroDoc });
-        y = HEADER_H.compact + 8;
-    }
+    // Condiciones compactas (presupuesto no lleva QR ni firmas)
+    y = checkSalto(doc, y, 20);
     y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
-    if (empresa.whatsapp) {
-        y = await dibujarQRWhatsApp(doc, {
-            x: M, y,
-            telefono: empresa.whatsapp,
-            mensaje:  `Hola, quiero aprobar el presupuesto ${nroDoc}`,
-            nroDoc,
-        });
-    }
 
     // Página de fotos (solo si hay alguna)
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
