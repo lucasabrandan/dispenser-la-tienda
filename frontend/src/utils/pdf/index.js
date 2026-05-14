@@ -136,13 +136,6 @@ async function generarSingleTecnico(doc, {
 
     const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
 
-    // • INFORMACIÓN PRECIOS
-    doc.setFontSize(T.xxs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text('• INFORMACIÓN PRECIOS', M, y);
-    y += 5;
-
     const filas = construirFilasItem(item);
     // Concepto MO más específico: usar el trabajo real en lugar del genérico
     if (filas.length > 0 && filas[0].esServicio && item.trabajo?.trim()) {
@@ -345,16 +338,23 @@ async function generarSingleTecnico(doc, {
         y += leyH + 4;
     }
 
-    // Garantía + firmas: QR de reseña se gestiona vía WhatsApp (no va en PDF)
-    const garantiaH  = 22;
-    const firmasH    = incluirFirmas ? 44 : 0;
-    const pageH      = doc.internal.pageSize.getHeight();
-    if (y + garantiaH + firmasH > pageH - 25) {
-        doc.addPage();
-        dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo(tipo, false), fecha, nroDoc });
-        y = HEADER_H.compact + 8;
-    }
-    y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
+    // Garantía compacta (1 línea) + firmas
+    const firmasH = incluirFirmas ? 44 : 0;
+    y = checkSalto(doc, y, 14 + firmasH);
+    // Garantía inline
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.15);
+    doc.line(M, y, pageW - M, y);
+    y += 4;
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('GARANTÍA:', M, y);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    const textoGar = garantiaTexto || '90 días sobre mano de obra  ·  Repuestos según fabricante';
+    doc.text(textoGar, M + 20, y);
+    y += 6;
     if (incluirFirmas) {
         y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
     }
@@ -605,42 +605,33 @@ async function generarMultiTecnico(doc, {
 
     let y = yInicial ?? (HEADER_H.compact + 8);
 
-    // Resumen: solo equipos + total
-    y = dibujarResumenServicio(doc, {
-        y,
-        stats: [
-            { valor: ticketItems.length,                              etiqueta: 'Equipos atendidos', colorValor: C.navy },
-            { valor: `$ ${subtotalTotal.toLocaleString('es-AR')}`,   etiqueta: 'Total del servicio', colorValor: C.red  },
-        ],
-    });
+    // Bloque cliente con resumen inline (ahorra 22mm del bloque resumen separado)
+    const resumenTexto = `${ticketItems.length} equipos atendidos\nTotal: $ ${subtotalTotal.toLocaleString('es-AR')}`;
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: resumenTexto, tituloDiag: 'RESUMEN' });
 
-    // Bloque cliente sin diagnóstico — cada equipo tiene su propio trabajo
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: null });
-
-    // Garantía + firmas: QR de reseña se gestiona vía WhatsApp (no va en PDF)
-    const garantiaHM = 22;
-    const firmasHM   = incluirFirmas ? 44 : 0;
-    const pageHM     = doc.internal.pageSize.getHeight();
-    if (y + garantiaHM + firmasHM > pageHM - 25) {
-        doc.addPage();
-        dibujarHeaderCompacto(doc, { tipoLabel: 'SERVICIO TÉCNICO — MÚLTIPLES EQUIPOS', fecha, nroDoc });
-        y = HEADER_H.compact + 8;
-    }
-    y = dibujarGarantia(doc, { y, texto: garantiaTexto, pageW });
+    // Garantía compacta + firmas
+    const firmasHM = incluirFirmas ? 44 : 0;
+    y = checkSalto(doc, y, 14 + firmasHM);
+    doc.setDrawColor(...C.grayBorder);
+    doc.setLineWidth(0.15);
+    doc.line(M, y, pageW - M, y);
+    y += 4;
+    doc.setFontSize(T.label);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('GARANTÍA:', M, y);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...C.grayText);
+    doc.text(garantiaTexto || '90 días sobre mano de obra  ·  Repuestos según fabricante', M + 20, y);
+    y += 6;
     if (incluirFirmas) {
         y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
     }
 
-    // ── Página 2: Detalle técnico por equipos (1 fila por equipo, columnas trabajo/repuestos) ──
+    // ── Página 2: Detalle técnico por equipos ──
     doc.addPage();
     dibujarHeaderCompacto(doc, { tipoLabel: 'DETALLE TÉCNICO POR EQUIPOS', fecha, tecnico, nroDoc });
-    y = HEADER_H.compact + 8;
-
-    doc.setFontSize(T.xxs);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(...C.grayText);
-    doc.text('Registro completo de trabajos y repuestos utilizados por equipo', M, y);
-    y += 6;
+    y = HEADER_H.compact + 5;
 
     const bodyRows = [];
 
@@ -691,15 +682,15 @@ async function generarMultiTecnico(doc, {
         theme: 'grid',
         headStyles: {
             fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
-            fontSize: T.xxs, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+            fontSize: T.xxs, cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
         },
         bodyStyles: {
             fontSize: T.xs, textColor: C.dark, valign: 'top',
-            cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
         columnStyles: {
-            0: { cellWidth: 45, fontStyle: 'bold' },
+            0: { cellWidth: 42, fontStyle: 'bold' },
             1: { cellWidth: 37 },
             2: { cellWidth: 'auto' },
             3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy },
@@ -1416,9 +1407,9 @@ export const generarPDF = async ({
 
     // ── HEADER PRIMERA PÁGINA ─────────────────────────────────────────────────
     // Multi-equipo usa header compacto en todas las páginas para consistencia visual
-    // Presupuestos (single y multi) usan header compacto para ganar espacio
+    // Header compacto para todos los tipos principales (ahorra 20mm)
     const esMultiDoc = esMulti && (tipoDetectado === 'PRESUPUESTO' || tipoDetectado === 'ORDEN_SERVICIO' || tipoDetectado === 'INFORME_TECNICO');
-    const usaHeaderCompacto = esMultiDoc || tipoDetectado === 'PRESUPUESTO';
+    const usaHeaderCompacto = esMultiDoc || tipoDetectado === 'PRESUPUESTO' || tipoDetectado === 'ORDEN_SERVICIO' || tipoDetectado === 'INFORME_TECNICO';
     if (usaHeaderCompacto) {
         dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico: tecnico || null, nroDoc });
     } else {
