@@ -624,10 +624,12 @@ async function generarMultiTecnico(doc, {
         y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, esPresupuesto: false });
     }
 
-    // ── Página 2: Detalle técnico por equipos ──
-    doc.addPage();
-    dibujarHeaderCompacto(doc, { tipoLabel: 'DETALLE TÉCNICO POR EQUIPOS', fecha, tecnico, nroDoc });
-    y = HEADER_H.compact + 5;
+    // ── Detalle técnico por equipos (continúa en misma página, autoTable pagina solo) ──
+    doc.setFontSize(T.xxs);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...C.navy);
+    doc.text('DETALLE TÉCNICO POR EQUIPOS', M, y);
+    y += 5;
 
     const bodyRows = [];
 

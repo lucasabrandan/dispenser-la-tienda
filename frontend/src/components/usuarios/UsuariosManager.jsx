@@ -21,12 +21,22 @@ export default function UsuariosManager() {
     // Configuración de empresa (solo en localStorage, solo ADMIN)
     const [googleLink, setGoogleLink] = useState(() => localStorage.getItem('empresa_google_review') || '');
     const [googleGuardado, setGoogleGuardado] = useState(false);
+    const CONDICIONES_DEFAULT = 'Garantía 90 días mano de obra  ·  Repuestos según fabricante  ·  El servicio se coordina una vez aprobado';
+    const [condicionesPDF, setCondicionesPDF] = useState(() => localStorage.getItem('empresa_condiciones_pdf') || CONDICIONES_DEFAULT);
+    const [condGuardado, setCondGuardado] = useState(false);
 
     const guardarGoogleLink = () => {
         localStorage.setItem('empresa_google_review', googleLink.trim());
         setGoogleGuardado(true);
         toast.success('Link de Google guardado');
         setTimeout(() => setGoogleGuardado(false), 2000);
+    };
+
+    const guardarCondiciones = () => {
+        localStorage.setItem('empresa_condiciones_pdf', condicionesPDF.trim() || CONDICIONES_DEFAULT);
+        setCondGuardado(true);
+        toast.success('Condiciones guardadas');
+        setTimeout(() => setCondGuardado(false), 2000);
     };
 
     // Modal crear/editar
@@ -194,6 +204,30 @@ export default function UsuariosManager() {
                             </div>
                             <p className="text-[10px] text-[#A8A29E] mt-1">
                                 Aparece como QR en órdenes de servicio e informes técnicos.
+                            </p>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">
+                                Condiciones del presupuesto (texto que aparece al pie del PDF)
+                            </label>
+                            <div className="mt-1 flex gap-2">
+                                <textarea
+                                    className="flex-1 h-16 px-3 py-2 rounded-xl text-[12px] bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none resize-none"
+                                    value={condicionesPDF}
+                                    onChange={e => setCondicionesPDF(e.target.value)}
+                                    placeholder="Garantía 90 días mano de obra · Repuestos según fabricante..."
+                                />
+                                <button
+                                    onClick={guardarCondiciones}
+                                    className={`h-10 px-4 rounded-xl font-bold text-xs text-white transition-all active:scale-95 self-start ${
+                                        condGuardado ? 'bg-[#16a34a]' : 'bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-90'
+                                    }`}
+                                >
+                                    {condGuardado ? '✓' : 'Guardar'}
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-[#A8A29E] mt-1">
+                                Se muestra en presupuestos y órdenes de servicio.
                             </p>
                         </div>
                     </div>

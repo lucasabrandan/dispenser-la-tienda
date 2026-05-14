@@ -997,12 +997,15 @@ export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc }) 
     doc.line(M, y, pageW - M, y);
     y += 4;
 
-    // Condiciones en texto corrido compacto
+    // Condiciones configurables desde Usuarios > Config empresa
+    const textoCond = empresa.condicionesPDF || 'Garantía 90 días mano de obra  ·  Repuestos según fabricante  ·  El servicio se coordina una vez aprobado';
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
-    doc.text('Garantía 90 días mano de obra  ·  Repuestos según fabricante  ·  El servicio se coordina una vez aprobado', M, y);
-    y += 5;
+    // Si el texto es largo, splitear en líneas
+    const lineas = doc.splitTextToSize(textoCond, CONTENT_W);
+    lineas.slice(0, 3).forEach((l, i) => doc.text(l, M, y + i * 3.5));
+    y += Math.min(lineas.length, 3) * 3.5 + 1;
 
     // Referencia y contacto
     const contacto = empresa.whatsapp || empresa.telefono || '';

@@ -51,11 +51,12 @@ export function getEmpresa() {
             web:              'www.dispenserlatienda.com',
             instagram:        '@dispenserlatienda',
             googleReviewLink: localStorage.getItem('empresa_google_review') || '',
+            condicionesPDF:   localStorage.getItem('empresa_condiciones_pdf') || '',
         };
     } catch {
         return {
             nombre: 'DISPENSER LA TIENDA', eslogan: 'SERVICIO TÉCNICO ESPECIALIZADO',
-            telefono: '', whatsapp: '', web: '', instagram: '', googleReviewLink: '',
+            telefono: '', whatsapp: '', web: '', instagram: '', googleReviewLink: '', condicionesPDF: '',
         };
     }
 }
