@@ -156,7 +156,7 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
             const fila = conFotos.slice(i, i + GRID_COLS);
             // Calcular altura del bloque: label(4) + foto(s) + gap
             const tieneDos = fila.some(({ fotoA, fotoD }) => fotoA && fotoD);
-            const blockH = 5 + GRID_FOTO_H * (tieneDos ? 2 : 1) + (tieneDos ? 2 : 0) + 4;
+            const blockH = 5 + GRID_FOTO_H * (tieneDos ? 2 : 1) + (tieneDos ? 10 : 0) + 4;
 
             if (y + blockH > Y_LIM) {
                 doc.addPage();
@@ -190,12 +190,14 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
                 }
                 fy += 5;
 
-                // Fotos apiladas
+                // Fotos apiladas con etiqueta antes/después
                 if (fotoA) {
+                    if (fotoD) { doc.setFontSize(4); doc.setFont(undefined, 'bold'); doc.setTextColor(...C.grayText); doc.text('ANTES', x + GRID_COL_W / 2, fy, { align: 'center' }); fy += 3; }
                     dibujarFoto(fotoA, x, fy, GRID_COL_W, GRID_FOTO_H);
                     fy += GRID_FOTO_H + 2;
                 }
                 if (fotoD) {
+                    doc.setFontSize(4); doc.setFont(undefined, 'bold'); doc.setTextColor(...C.grayText); doc.text('DESPUÉS', x + GRID_COL_W / 2, fy, { align: 'center' }); fy += 3;
                     dibujarFoto(fotoD, x, fy, GRID_COL_W, GRID_FOTO_H);
                 }
             });
@@ -209,7 +211,8 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
             const boxA = boxDims(fotoA, false);
             const boxD = boxDims(fotoD, false);
             const maxH = Math.max(boxA.bh, boxD.bh);
-            const blockH = maxH + 4 + GAP;
+            const tieneAmbas = fotoA && fotoD;
+            const blockH = maxH + 4 + (tieneAmbas ? 3 : 0) + GAP;
 
             if (y + blockH > Y_LIM) {
                 doc.addPage();
@@ -232,6 +235,13 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
             if (fotoA && fotoD) {
                 const totalW = boxA.bw + 6 + boxD.bw;
                 const xBase  = M + (CONTENT_W - totalW) / 2;
+                // Labels ANTES / DESPUÉS centrados sobre cada foto
+                doc.setFontSize(T.label);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(...C.grayText);
+                doc.text('ANTES', xBase + boxA.bw / 2, y, { align: 'center' });
+                doc.text('DESPUÉS', xBase + boxA.bw + 6 + boxD.bw / 2, y, { align: 'center' });
+                y += 3;
                 dibujarFoto(fotoA, xBase, y, boxA.bw, boxA.bh);
                 dibujarFoto(fotoD, xBase + boxA.bw + 6, y, boxD.bw, boxD.bh);
             } else {

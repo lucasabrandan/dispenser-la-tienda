@@ -212,8 +212,7 @@ export function dibujarFooter(doc, { pagina = null, totalPaginas = null, textoCe
         doc.setFontSize(T.xs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.dark);
-        const gracias = conEstrellas ? 'Gracias por confiar en nosotros  ★ ★ ★ ★ ★' : 'Gracias por confiar en nosotros';
-        doc.text(gracias, pageW / 2, pageH - 9, { align: 'center' });
+        doc.text('Gracias por confiar en nosotros', pageW / 2, pageH - 9, { align: 'center' });
     }
 
     // Fila 2: redes centradas + paginación derecha

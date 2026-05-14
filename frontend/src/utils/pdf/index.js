@@ -743,28 +743,31 @@ async function generarMultiTecnico(doc, {
     doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
     y += 18;
 
-    // Condiciones del servicio (leyenda)
+    // Condiciones del servicio (leyenda) — solo si caben en la misma página, evitar página casi vacía
     const leyLimpiaM = (leyenda || '').trim();
     if (leyLimpiaM) {
-        y = checkSalto(doc, y, 20);
         const leyLinesM = doc.splitTextToSize(leyLimpiaM.replace(/[\r\n]+/g, ' '), CONTENT_W - 10);
         const leyHM = Math.min(leyLinesM.length, 4) * 4.2 + 11;
-        doc.setFillColor(...C.grayLight);
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(M - 2, y, CONTENT_W + 4, leyHM, 2, 2, 'FD');
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text('OBSERVACIONES', M + 2, y + 6);
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        leyLinesM.slice(0, 4).forEach((l, i) => doc.text(l, M + 2, y + 11 + i * 4.2));
-        y += leyHM + 4;
+        const pageHM = doc.internal.pageSize.getHeight();
+        // Solo dibujar si cabe antes del footer (pageH - 18); si no cabe, omitir (ya está la garantía en el resumen)
+        if (y + leyHM < pageHM - 18) {
+            doc.setFillColor(...C.grayLight);
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(M - 2, y, CONTENT_W + 4, leyHM, 2, 2, 'FD');
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.navy);
+            doc.text('OBSERVACIONES', M + 2, y + 6);
+            doc.setFontSize(T.xxs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.grayText);
+            leyLinesM.slice(0, 4).forEach((l, i) => doc.text(l, M + 2, y + 11 + i * 4.2));
+            y += leyHM + 4;
+        }
     }
 
-    // ── Página 3: Evidencia fotográfica ─────────────────────────────────────
+    // ── Página de evidencia fotográfica ──────────────────────────────────────
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc);
 }
 
