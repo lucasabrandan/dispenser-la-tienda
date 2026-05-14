@@ -165,8 +165,21 @@ export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
                 doc.setTextColor(...C.navy);
                 const lbl = doc.splitTextToSize(parts.join(' · ') || 'Equipo', colW);
                 doc.text(lbl[0], x + colW / 2, y, { align: 'center' });
-                // Foto
-                dibujarFoto(foto, x + (colW - Math.min(colW, INLINE_FOTO_H * 0.75)) / 2, y + 4, Math.min(colW, INLINE_FOTO_H * 0.75), INLINE_FOTO_H);
+                // Foto inline
+                const fotoW = Math.min(colW, INLINE_FOTO_H * 0.75);
+                const fx = x + (colW - fotoW) / 2;
+                const fy = y + 4;
+                doc.setFillColor(220, 220, 225);
+                doc.roundedRect(fx + 1, fy + 1, fotoW, INLINE_FOTO_H, 1.5, 1.5, 'F');
+                if (foto) {
+                    const { w: fW, h: fH } = fitEnCaja(foto.w, foto.h, fotoW, INLINE_FOTO_H);
+                    const offX = (fotoW - fW) / 2;
+                    const offY = (INLINE_FOTO_H - fH) / 2;
+                    try { doc.addImage(foto.data, foto.format, fx + offX, fy + offY, fW, fH); } catch {}
+                    doc.setDrawColor(...C.grayBorder);
+                    doc.setLineWidth(0.15);
+                    doc.roundedRect(fx + offX, fy + offY, fW, fH, 1.5, 1.5, 'S');
+                }
             });
             y += INLINE_FOTO_H + 10;
             return; // terminó inline, no seguir con el flujo normal
