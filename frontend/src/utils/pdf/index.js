@@ -545,16 +545,21 @@ async function generarSinglePresupuesto(doc, {
     presupTableEndY += 20;
     y = presupTableEndY;
 
-    // Registro fotográfico: mostrar si existe alguna foto — umbral reducido por foto más compacta
+    // Registro fotográfico + condiciones: intentar que todo quede en la misma página
+    const pageHSP = doc.internal.pageSize.getHeight();
+    const espacioRestante = pageHSP - 25 - y; // 25mm margen inferior
+    const necesitaCondiciones = 14; // condiciones compactas
+
     if (tieneEquipoReal && (fotoAntes || fotoDespues)) {
-        y = checkSalto(doc, y, 35);
-        y = dibujarRegistroFotografico(doc, { y, fotoA: fotoAntes, fotoD: fotoDespues, esPresupuesto: true });
+        // Usar fotos compactas si no hay espacio suficiente para normales + condiciones
+        const compacto = espacioRestante < (84 + necesitaCondiciones);
+        y = dibujarRegistroFotografico(doc, { y, fotoA: fotoAntes, fotoD: fotoDespues, esPresupuesto: true, compacto });
     } else if (!tieneEquipoReal && (fotoAntes || fotoDespues)) {
-        // Sin equipo real: mostrar evidencia del problema — tamaño según orientación
         const fotoEv = fotoAntes || fotoDespues;
         const esHz = fotoEv.w && fotoEv.h && fotoEv.w > fotoEv.h;
-        const bw = esHz ? 88 : 56;
-        const bh = esHz ? 66 : 74;
+        const compacto = espacioRestante < (84 + necesitaCondiciones);
+        const bw = esHz ? (compacto ? 74 : 88) : (compacto ? 42 : 56);
+        const bh = esHz ? (compacto ? 56 : 66) : (compacto ? 56 : 74);
         y = checkSalto(doc, y, bh + 13);
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
@@ -574,8 +579,7 @@ async function generarSinglePresupuesto(doc, {
         y += bh + 8;
     }
 
-    // Condiciones compactas
-    y = checkSalto(doc, y, 20);
+    // Condiciones compactas — siempre en la misma página que el contenido
     y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
 
     return y;

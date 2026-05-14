@@ -864,15 +864,15 @@ export function dibujarResumenEjecutivo(doc, { y, cliente, fecha, cantEquipos, c
 
 // ── REGISTRO FOTOGRÁFICO (sección dedicada, 2 fotos lado a lado) ─────────────
 // fotoA / fotoD: objetos { data, format } o null
-export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null, esPresupuesto = false }) {
+export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null, esPresupuesto = false, compacto = false }) {
     if (!fotoA && !fotoD) return y;
 
-    // Tamaños fijos por orientación — detecta automáticamente
-    const FOTO_V_W = 56, FOTO_V_H = 74;  // portrait
-    const FOTO_H_W = 88, FOTO_H_H = 66;  // landscape
-
+    // Tamaños normales y compactos por orientación
     const esHz = (foto) => foto && foto.w && foto.h && foto.w > foto.h;
-    const dims = (foto) => esHz(foto) ? { bw: FOTO_H_W, bh: FOTO_H_H } : { bw: FOTO_V_W, bh: FOTO_V_H };
+    const dims = (foto) => {
+        if (compacto) return esHz(foto) ? { bw: 74, bh: 56 } : { bw: 42, bh: 56 };
+        return esHz(foto) ? { bw: 88, bh: 66 } : { bw: 56, bh: 74 };
+    };
 
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
