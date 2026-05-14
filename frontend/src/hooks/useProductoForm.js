@@ -19,7 +19,8 @@ const INITIAL_STATE = {
   fotoUrl: '',
   costo: 0,
   porcentajeGanancia: 25,
-  porcentajeMarkup: 15
+  porcentajeMarkup: 15,
+  stock: 0,
 };
 
 export function useProductoForm(productoEdicion = null) {

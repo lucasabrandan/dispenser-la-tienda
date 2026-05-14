@@ -40,6 +40,7 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
             fd.append('porcentajeGanancia', parseFloat(formData.porcentajeGanancia) || 0);
             fd.append('porcentajeMarkup',   parseFloat(formData.porcentajeMarkup) || 0);
             fd.append('precioLista',        parseFloat(precioLista) || 0);
+            fd.append('stock',              parseInt(formData.stock) || 0);
             if (formData.foto) fd.append('foto', formData.foto);
 
             const url    = productoEdicion?.id ? `/repuestos/${productoEdicion.id}` : `/repuestos`;
@@ -171,6 +172,13 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
                                     <span className="font-black text-[#D48800] dark:text-[#F0A500]">{M(precioLista)}</span>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Stock */}
+                        <div>
+                            <label className="text-[10px] font-black text-[#A8A29E] uppercase">Stock actual (unidades)</label>
+                            <input type="number" name="stock" value={formData.stock || 0} onChange={handleChange}
+                                min="0" step="1" placeholder="0" className={inputCls(false)} />
                         </div>
 
                         {/* Botones */}
