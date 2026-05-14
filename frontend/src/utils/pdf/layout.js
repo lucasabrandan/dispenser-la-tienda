@@ -111,7 +111,7 @@ export function dibujarHeader(doc, { tipoLabel, fecha, tecnico = null, nroDoc = 
     // Título documento
     doc.setFontSize(T.lg);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.navy);
     doc.text(tipoLabel.toUpperCase(), M, HEADER_H.normal + 5);
 }
 
@@ -150,7 +150,7 @@ export function dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico = null, n
     if (nroDoc) {
         doc.setFontSize(T.sm);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.red);
+        doc.setTextColor(...C.navy);
         doc.text(nroDoc, pageW - M, 13, { align: 'right' });
     }
 
@@ -167,7 +167,7 @@ export function dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico = null, n
 
     doc.setFontSize(T.sm);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.navy);
     doc.text(tipoLabel.toUpperCase(), M, HEADER_H.compact + 3);
 }
 
@@ -177,7 +177,7 @@ export function dibujarHeaderMini(doc, { tipoLabel, nroDoc = null }) {
 
     doc.setFontSize(T.sm);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.red);
+    doc.setTextColor(...C.navy);
     doc.text(tipoLabel.toUpperCase(), M, 9);
 
     if (nroDoc) {
