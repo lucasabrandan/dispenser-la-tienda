@@ -119,7 +119,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     {CHIPS.map(chip => (
                         <button
                             key={chip.id ?? 'todos'}
-                            onClick={() => { setFiltroChip(chip.id); setPagina(1); }}
+                            onClick={() => { setFiltroChip(chip.id); setPagina(1); setExpandedId(null); }}
                             className={`shrink-0 px-3 py-1.5 rounded-xl font-black text-[9px] uppercase transition-all active:scale-95 ${
                                 filtroChip === chip.id
                                     ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'

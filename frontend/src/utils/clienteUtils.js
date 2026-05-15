@@ -16,10 +16,19 @@ export const abrirMaps = (c) => {
 export const filtrarClientesPorBusqueda = (clientes, sedes, equipos, busqueda) => {
     return clientes.filter(c => {
         const term = busqueda.toLowerCase();
-        const matchCliente = c.nombre?.toLowerCase().includes(term) || c.localidad?.toLowerCase().includes(term);
-        const sedesId = sedes.filter(s => s.clienteId === c.id).map(s => s.id);
+        // Cliente: nombre, localidad, teléfono, dirección
+        const matchCliente = c.nombre?.toLowerCase().includes(term)
+            || c.localidad?.toLowerCase().includes(term)
+            || c.telefono?.toLowerCase().includes(term)
+            || c.calle?.toLowerCase().includes(term);
+        // Sedes del cliente
+        const sedesCli = sedes.filter(s => s.clienteId === c.id);
+        const matchSede = sedesCli.some(s => s.nombreSede?.toLowerCase().includes(term)
+            || s.direccion?.toLowerCase().includes(term));
+        // Equipos del cliente
+        const sedesId = sedesCli.map(s => s.id);
         const matchEquipo = equipos.some(eq => sedesId.includes(eq.sedeId) && eq.numeroSerie?.toLowerCase().includes(term));
-        return matchCliente || matchEquipo;
+        return matchCliente || matchSede || matchEquipo;
     });
 };
 
