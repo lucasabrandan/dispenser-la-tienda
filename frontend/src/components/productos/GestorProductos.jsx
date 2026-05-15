@@ -7,6 +7,7 @@ import ProductoCard from './Productocard';
 import BarraAccionesProductos from './Barraaccionesproducto';
 import ModalPrecioMasivo from './Modalpreciomasivo';
 import { generarPDFListaPrecios } from '../../utils/generadorPDFListaPrecios';
+import RepuestoManager from '../repuesto/RepuestoManager';
 
 // ── Modal drag-and-drop para reordenar antes de exportar PDF ─────────────────
 function ModalOrdenPDF({ productos, onConfirmar, onCerrar }) {
@@ -77,6 +78,7 @@ function ModalOrdenPDF({ productos, onConfirmar, onCerrar }) {
 }
 
 export default function GestorProductos() {
+    const [tab, setTab] = useState('productos'); // 'productos' | 'equipos'
     const [productos, setProductos]             = useState([]);
     const [modalAbierto, setModalAbierto]       = useState(false);
     const [productoEdicion, setProductoEdicion] = useState(null);
@@ -238,6 +240,24 @@ export default function GestorProductos() {
         <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] p-3 md:p-6 pb-24 transition-colors">
             <div className="max-w-6xl mx-auto">
 
+                {/* TABS */}
+                <div className="flex gap-2 mb-5">
+                    {['productos', 'equipos'].map(t => (
+                        <button key={t} onClick={() => setTab(t)}
+                            className={`py-2.5 px-5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                                tab === t
+                                    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md shadow-[#D13A28]/30'
+                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                            }`}>
+                            {t === 'productos' ? '🛒 Productos' : '⚙️ Equipos'}
+                        </button>
+                    ))}
+                </div>
+
+                {tab === 'equipos' ? (
+                    <RepuestoManager />
+                ) : (<>
+
                 <BarraAccionesProductos
                     totalProductos={productos.length}
                     modoSeleccion={modoSeleccion}
@@ -284,6 +304,7 @@ export default function GestorProductos() {
                         ))
                     )}
                 </div>
+            </>)}
             </div>
 
             {/* MODAL PRECIO MASIVO */}
