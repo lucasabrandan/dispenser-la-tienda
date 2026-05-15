@@ -101,43 +101,46 @@ export default function ClienteCard({
             {isExpanded && (
                 <div className="border-t border-black/[0.07] dark:border-white/[0.07]">
 
-                    {/* Acciones rápidas */}
-                    <div className="flex gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
-                        <button onClick={() => abrirWhatsApp(cliente.telefono, cliente.nombre)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] text-white rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
-                            💬 WA
-                        </button>
-                        <button onClick={() => abrirMaps(cliente)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#1C1917] dark:bg-[#2E2E2E] text-white rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
-                            📍 Mapa
-                        </button>
-                        {/* Acceso rápido a nuevo servicio */}
-                        {onNuevoServicio && (
-                            <button onClick={() => onNuevoServicio(cliente)}
-                                className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-[#D13A28] dark:bg-[#E8422F] text-white rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
-                                🔧 Serv.
+                    {/* Acciones rápidas — 2 filas */}
+                    <div className="px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C] space-y-2">
+                        {/* Fila 1: acciones principales */}
+                        <div className="flex gap-2">
+                            <button onClick={() => abrirWhatsApp(cliente.telefono, cliente.nombre)}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#25D366] text-white rounded-xl font-black text-[10px] uppercase active:scale-95 transition-all">
+                                💬 WA
                             </button>
-                        )}
-                        {/* Acceso rápido a nueva venta */}
-                        {onNuevaVenta && (
-                            <button onClick={() => onNuevaVenta(cliente)}
-                                className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-[#D48800] dark:bg-[#F0A500] text-white rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
-                                💰 Venta
+                            <button onClick={() => abrirMaps(cliente)}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-3 bg-[#1C1917] dark:bg-[#2E2E2E] text-white rounded-xl font-black text-[10px] uppercase active:scale-95 transition-all">
+                                📍 Mapa
                             </button>
-                        )}
-                        {/* Historial completo del cliente */}
-                        <button onClick={() => setModalHistorial(true)}
-                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-[#1C1917] dark:bg-[#2E2E2E] text-white rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
-                            📋 Hist.
-                        </button>
-                        <button onClick={() => onEditCliente(cliente)}
-                            className="w-10 flex items-center justify-center py-2.5 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] rounded-xl hover:bg-[#D48800] hover:text-white dark:hover:bg-[#F0A500] active:scale-95 transition-all">
-                            ✏️
-                        </button>
-                        <button onClick={() => onDeleteCliente(cliente.id)}
-                            className="w-10 flex items-center justify-center py-2.5 bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F] rounded-xl hover:bg-[#D13A28] hover:text-white dark:hover:bg-[#E8422F] active:scale-95 transition-all">
-                            🗑️
-                        </button>
+                            {onNuevoServicio && (
+                                <button onClick={() => onNuevoServicio(cliente)}
+                                    className="flex-1 flex items-center justify-center gap-1 py-3 bg-[#D13A28] dark:bg-[#E8422F] text-white rounded-xl font-black text-[10px] uppercase active:scale-95 transition-all">
+                                    🔧 Servicio
+                                </button>
+                            )}
+                            {onNuevaVenta && (
+                                <button onClick={() => onNuevaVenta(cliente)}
+                                    className="flex-1 flex items-center justify-center gap-1 py-3 bg-[#D48800] dark:bg-[#F0A500] text-white rounded-xl font-black text-[10px] uppercase active:scale-95 transition-all">
+                                    💰 Venta
+                                </button>
+                            )}
+                        </div>
+                        {/* Fila 2: secundarias */}
+                        <div className="flex gap-2">
+                            <button onClick={() => setModalHistorial(true)}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
+                                📋 Historial
+                            </button>
+                            <button onClick={() => onEditCliente(cliente)}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
+                                ✏️ Editar
+                            </button>
+                            <button onClick={() => onDeleteCliente(cliente.id)}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F] rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
+                                🗑️ Eliminar
+                            </button>
+                        </div>
                     </div>
 
                     {/* Info + historial */}
