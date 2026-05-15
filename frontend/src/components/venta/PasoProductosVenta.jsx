@@ -60,7 +60,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                     </p>
                                 )}
                                 <p className="font-bold text-sm text-[#1C1917] dark:text-[#F0EEE9] truncate">{p.nombre}</p>
-                                <p className="text-[10px] text-[#A8A29E]">${Number(p.precio).toLocaleString()} c/u</p>
+                                <p className="text-[10px] text-[#A8A29E]">${Math.round(Number(p.precio)).toLocaleString('es-AR')} c/u</p>
                             </div>
                             <div className="flex items-center gap-1 bg-[#E8E5E0] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
                                 <button
@@ -116,7 +116,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                 >+</button>
                             </div>
                             <p className="font-black text-sm w-16 text-right text-[#1C1917] dark:text-[#F0EEE9]">
-                                ${Number(p.subtotal).toLocaleString()}
+                                ${Math.round(Number(p.subtotal)).toLocaleString('es-AR')}
                             </p>
                             <button
                                 type="button"
@@ -148,7 +148,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                 </div>
                 {envioNum > 0 && (
                     <p className="text-[10px] text-[#A8A29E] font-bold mt-1.5">
-                        +${envioNum.toLocaleString()} al total
+                        +${Math.round(envioNum).toLocaleString('es-AR')} al total
                     </p>
                 )}
             </div>

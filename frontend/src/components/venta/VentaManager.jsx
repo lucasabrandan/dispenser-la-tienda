@@ -76,7 +76,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                             {stats.pendientesCount} presupuesto{stats.pendientesCount > 1 ? 's' : ''} pendiente{stats.pendientesCount > 1 ? 's' : ''} de cobro
                         </p>
                         <p className="text-xs text-[var(--warning)] font-bold">
-                            ${stats.pendientesVal.toLocaleString()} por cobrar
+                            ${Math.round(stats.pendientesVal).toLocaleString('es-AR')} por cobrar
                         </p>
                     </div>
                 </div>

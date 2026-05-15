@@ -11,7 +11,7 @@ function M({ valor, prefix = '$', className = '' }) {
     if (!montosVisibles) return <span className={className}>••••••</span>;
     return (
         <span className={className}>
-            {prefix}{typeof valor === 'number' ? valor.toLocaleString() : valor}
+            {prefix}{typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}
         </span>
     );
 }

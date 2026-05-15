@@ -7,7 +7,7 @@ export function M({ valor, className = '' }) {
     if (!montosVisibles) return <span className={className}>••••••</span>;
     return (
         <span className={className}>
-            ${typeof valor === 'number' ? valor.toLocaleString() : valor}
+            ${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}
         </span>
     );
 }

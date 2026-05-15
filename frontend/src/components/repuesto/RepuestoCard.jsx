@@ -64,7 +64,7 @@ export default function RepuestoCard({
 
                 <div className="flex justify-between items-center mt-2">
                     <span className="font-black text-lg text-slate-900 dark:text-white">
-                        $ {Number(r.precio).toLocaleString()}
+                        $ {Math.round(Number(r.precio)).toLocaleString('es-AR')}
                     </span>
 
                     {!modoSeleccion && (

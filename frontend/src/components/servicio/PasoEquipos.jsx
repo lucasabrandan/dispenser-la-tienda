@@ -324,7 +324,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                             </div>
                                             <span className="text-[11px] font-black text-[#A8A29E]">{r.cantidad}x</span>
                                             <p className="font-black text-[13px] text-right text-[#1C1917] dark:text-[#F0EEE9]">
-                                                ${g.subtotal.toLocaleString()}
+                                                ${Math.round(g.subtotal).toLocaleString('es-AR')}
                                             </p>
                                         </div>
                                     );

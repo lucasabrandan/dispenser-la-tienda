@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
 import { exportarGastosCSV, exportarBalanceCSV } from '../../utils/exportarCSV';
 import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnicos';
+import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
 
 const inputCls = `
     px-4 py-3 rounded-xl outline-none transition-all
@@ -31,7 +32,7 @@ function TabBalance({ filtroMes, setFiltroMes }) {
 
     useEffect(() => { cargar(); }, [filtroMes]); // eslint-disable-line
 
-    const fmt = v => ocultar ? '••••' : `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
+    const fmt = v => ocultar ? '••••' : `$${formatearPrecio(v)}`;
     const imp = stats.facturacion * 0.30;
 
     return (
@@ -123,7 +124,7 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
 
     useEffect(() => { cargar(); }, [mes]); // eslint-disable-line
 
-    const fmt = v => ocultar ? '••••' : `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
+    const fmt = v => ocultar ? '••••' : `$${formatearPrecio(v)}`;
 
     // Técnicos únicos para el selector
     const tecnicoOpciones = datos.map(d => ({ id: d.tecnicoId, nombre: d.tecnicoNombre }));
@@ -235,7 +236,7 @@ function TabGastos({ filtroMes }) {
 
     useEffect(() => { cargar(); }, [filtroMes]); // eslint-disable-line
 
-    const fmt = n => parseFloat(n || 0).toLocaleString('es-AR');
+    const fmt = n => formatearPrecio(n);
 
     const handleAgregar = async (e) => {
         e.preventDefault();
@@ -362,7 +363,7 @@ function TabInventario() {
     const totalVenta  = enStock.reduce((s, r) => s + Number(r.precio || 0) * Number(r.stock), 0);
     const ganPotencial = totalVenta - totalCosto;
 
-    const fmt = v => ocultar ? '••••' : `$${Math.round(v).toLocaleString('es-AR')}`;
+    const fmt = v => ocultar ? '••••' : `$${formatearPrecio(v)}`;
 
     if (cargando) return <p className="text-center text-[#A8A29E] py-12">Cargando...</p>;
 
@@ -407,8 +408,8 @@ function TabInventario() {
                                         <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{r.nombre}</p>
                                         <p className="text-[10px] text-[#A8A29E]">
                                             {r.stock} unid.
-                                            {r.costo  ? ` · costo ${ocultar ? '••••' : `$${Number(r.costo).toLocaleString('es-AR')}`}` : ''}
-                                            {r.precio ? ` · venta ${ocultar ? '••••' : `$${Number(r.precio).toLocaleString('es-AR')}`}` : ''}
+                                            {r.costo  ? ` · costo ${ocultar ? '••••' : `$${formatearPrecio(r.costo)}`}` : ''}
+                                            {r.precio ? ` · venta ${ocultar ? '••••' : `$${formatearPrecio(r.precio)}`}` : ''}
                                         </p>
                                     </div>
                                     <div className="text-right shrink-0">
@@ -438,7 +439,7 @@ function TabInventario() {
 
 // ── StatCard ───────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, variante, ocultar }) {
-    const num = parseFloat(value || 0);
+    const num = Math.round(Number(value || 0));
     const estilos = {
         gold:    { wrap: 'bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-[#D48800]/20 dark:border-[#F0A500]/20', val: 'text-[#D48800] dark:text-[#F0A500]' },
         red:     { wrap: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 border-[#D13A28]/20 dark:border-[#E8422F]/20', val: 'text-[#D13A28] dark:text-[#E8422F]' },
@@ -446,10 +447,14 @@ function StatCard({ label, value, sub, variante, ocultar }) {
         muted:   { wrap: 'bg-[#FFFFFF] dark:bg-[#242424] border-black/[0.07] dark:border-white/[0.07]', val: 'text-[#1C1917] dark:text-[#F0EEE9]' },
     };
     const { wrap, val } = estilos[variante] || estilos.muted;
+    // Compacto en mobile, completo en desktop
+    const display = ocultar ? '••••' : `$${formatearPrecioCompacto(num)}`;
+    const displayFull = ocultar ? '••••' : `$${formatearPrecio(num)}`;
     return (
-        <div className={`p-5 rounded-[1.5rem] border ${wrap}`}>
-            <p className="text-[9px] font-black uppercase text-[#A8A29E] tracking-widest mb-3">{label}</p>
-            <p className={`text-2xl font-black ${val}`}>{ocultar ? '••••' : `$${num.toLocaleString('es-AR')}`}</p>
+        <div className={`p-4 sm:p-5 rounded-[1.5rem] border ${wrap}`}>
+            <p className="text-[9px] font-black uppercase text-[#A8A29E] tracking-widest mb-2 sm:mb-3">{label}</p>
+            <p className={`text-lg sm:text-2xl font-black ${val} hidden sm:block`}>{displayFull}</p>
+            <p className={`text-lg font-black ${val} sm:hidden`}>{display}</p>
             <p className="text-[9px] font-bold text-[#A8A29E] uppercase mt-1">{sub}</p>
         </div>
     );

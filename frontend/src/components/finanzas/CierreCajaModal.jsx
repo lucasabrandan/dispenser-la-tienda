@@ -7,7 +7,7 @@ import { generarPDFCierreCaja } from '../../utils/pdf/cierreCaja';
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
     if (!montosVisibles) return <span className={className}>••••</span>;
-    return <span className={className}>${typeof valor === 'number' ? valor.toLocaleString() : valor}</span>;
+    return <span className={className}>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
 }
 
 const hoyISO = () => new Date().toISOString().split('T')[0];

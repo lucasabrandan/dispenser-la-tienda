@@ -58,7 +58,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
                     {repuesto.nombre}
                 </p>
                 <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] mb-2">
-                    ${Number(repuesto.precio || 0).toLocaleString()}
+                    ${Math.round(Number(repuesto.precio || 0)).toLocaleString('es-AR')}
                 </p>
 
                 {/* Controles +/- */}

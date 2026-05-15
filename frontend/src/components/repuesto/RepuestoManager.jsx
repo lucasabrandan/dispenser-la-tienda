@@ -40,7 +40,7 @@ export default function RepuestoManager() {
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-l-4 border-slate-200 dark:border-slate-700 border-l-blue-500 shadow-sm">
                     <p className="text-[10px] font-extrabold text-slate-500 uppercase">Capital invertido</p>
                     <p className="text-lg font-black text-slate-900 dark:text-white mt-1">
-                        $ {valorTotalInventario.toLocaleString()}
+                        $ {Math.round(valorTotalInventario).toLocaleString('es-AR')}
                     </p>
                 </div>
                 <div className={`bg-white dark:bg-slate-800 p-4 rounded-2xl border border-l-4 shadow-sm ${

@@ -45,7 +45,7 @@ export function Monto({ valor, prefijo = '$', className = '', style = {} }) {
 
     return (
         <span className={className} style={style}>
-            {prefijo}{typeof valor === 'number' ? valor.toLocaleString() : valor}
+            {prefijo}{typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}
         </span>
     );
 }

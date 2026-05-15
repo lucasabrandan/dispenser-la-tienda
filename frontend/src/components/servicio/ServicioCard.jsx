@@ -4,7 +4,7 @@ import { useMontos } from '../../context/MontosContext';
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
     if (!montosVisibles) return <span className={className}>••••••</span>;
-    return <span className={className}>${typeof valor === 'number' ? valor.toLocaleString() : valor}</span>;
+    return <span className={className}>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
 }
 
 const BADGE = {

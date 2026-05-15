@@ -61,7 +61,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                         <div className="flex-1 text-right">
                             <p className="text-[10px] font-bold uppercase text-[#A8A29E]">Descuento</p>
                             <p className="text-lg font-black text-[#D13A28] dark:text-[#E8422F]">
-                                -${descuentoMonto.toLocaleString()}
+                                -${Math.round(descuentoMonto).toLocaleString('es-AR')}
                             </p>
                         </div>
                     )}
