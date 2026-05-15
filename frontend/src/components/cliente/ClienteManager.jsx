@@ -87,16 +87,26 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
     return (
         <div className="w-full max-w-7xl mx-auto px-4 pb-20 bg-[#F5F3F1] dark:bg-[#141414] min-h-screen transition-colors">
 
-            {/* BUSCADOR sticky — incluye botón "+ Nuevo" para que siempre sea visible */}
-            <div className="sticky top-0 z-30 py-4 bg-[#F5F3F1]/90 dark:bg-[#141414]/90 backdrop-blur-xl -mx-4 px-4 border-b border-black/[0.07] dark:border-white/[0.07] mb-6">
+            {/* BARRA STICKY — título + buscador + chips */}
+            <div className="sticky top-0 z-30 py-3 bg-[#F5F3F1]/90 dark:bg-[#141414]/90 backdrop-blur-xl -mx-4 px-4 border-b border-black/[0.07] dark:border-white/[0.07] mb-4">
+                {/* Título + contador */}
+                <div className="flex items-baseline justify-between max-w-3xl mx-auto mb-2">
+                    <h2 className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tight leading-none">
+                        Clientes
+                    </h2>
+                    <p className="text-[10px] font-black text-[#A8A29E] uppercase">
+                        {filtrados.length} · pág {paginaActual}/{totalPaginas}
+                    </p>
+                </div>
+                {/* Buscador + botón nuevo */}
                 <div className="flex gap-2 max-w-3xl mx-auto">
                     <div className="relative flex-1">
                         <input
-                            placeholder="Buscar por cliente, ciudad o S/N..."
+                            placeholder="Buscar por cliente, sede, teléfono, S/N..."
                             value={busqueda}
                             onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
                             className="
-                                w-full py-3.5 pl-11 pr-5
+                                w-full py-3 pl-10 pr-4
                                 bg-[#FFFFFF] dark:bg-[#242424]
                                 rounded-2xl border border-black/[0.07] dark:border-white/[0.07]
                                 outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F]
@@ -105,17 +115,17 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                                 placeholder-[#A8A29E] transition-all
                             "
                         />
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A8A29E]">🔍</span>
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm">🔍</span>
                     </div>
                     <button
                         onClick={() => setModalOpen('nuevo')}
-                        className="shrink-0 bg-[#D13A28] dark:bg-[#E8422F] text-white h-[50px] px-5 rounded-2xl font-black text-xs uppercase shadow-lg active:scale-95 transition-all"
+                        className="shrink-0 bg-[#D13A28] dark:bg-[#E8422F] text-white h-[46px] px-5 rounded-2xl font-black text-xs uppercase active:scale-95 transition-all"
                     >
                         + Nuevo
                     </button>
                 </div>
-                {/* Chips filtro rápido */}
-                <div className="flex gap-2 overflow-x-auto mt-3 pb-0.5 no-scrollbar max-w-3xl mx-auto">
+                {/* Chips */}
+                <div className="flex gap-2 overflow-x-auto mt-2 pb-0.5 no-scrollbar max-w-3xl mx-auto">
                     {CHIPS.map(chip => (
                         <button
                             key={chip.id ?? 'todos'}
@@ -130,23 +140,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                         </button>
                     ))}
                 </div>
-                <p className="text-center text-[10px] font-black text-[#A8A29E] uppercase mt-2 max-w-3xl mx-auto">
-                    {filtrados.length} cliente{filtrados.length !== 1 ? 's' : ''} · pág {paginaActual}/{totalPaginas}
-                </p>
             </div>
-
-            {/* HEADER */}
-            <div className="mb-6">
-                <h2 className="text-4xl font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tighter leading-none">
-                    Directorio
-                </h2>
-                <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-[0.3em] mt-1">
-                    Gestión de Flota
-                </p>
-            </div>
-
-            <Paginacion pagina={paginaActual} totalPaginas={totalPaginas}
-                irA={irA} next={() => irA(paginaActual + 1)} prev={() => irA(paginaActual - 1)} />
 
             {/* LISTA / GRID */}
             <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-5 xl:grid-cols-3">
