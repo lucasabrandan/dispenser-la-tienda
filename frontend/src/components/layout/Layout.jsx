@@ -37,7 +37,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             <div className="flex-1 flex flex-col min-w-0">
 
                 {/* HEADER MOBILE */}
-                <header className="md:hidden h-16 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08] dark:border-white/[0.07]">
+                <header className="md:hidden h-[72px] px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08] dark:border-white/[0.07]">
                     {/* Hamburger */}
                     <button
                         onClick={() => setDrawerOpen(true)}
@@ -52,7 +52,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
 
                     {/* Logo + sección actual */}
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => setVistaActual('caja')}>
-                        <img src={logo} alt="Dispenser La Tienda" className="h-10 w-auto" />
+                        <img src={logo} alt="Dispenser La Tienda" className="h-14 w-auto" />
                         <span className="font-black text-[13px] tracking-tight uppercase text-[#1C1917] dark:text-[#F0EEE9] leading-none">
                             {NOMBRES_SECCION[vistaActual] || 'Dispenser'}
                         </span>
