@@ -19,21 +19,6 @@ function formatFecha(fecha) {
     return new Date(fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
-// Badge de estado del servicio
-function badgeEstado(estado) {
-    if (estado === 'REALIZADO')   return 'bg-[#16A34A]/10 text-[#16A34A]';
-    if (estado === 'PRESUPUESTO') return 'bg-[#D48800]/10 text-[#D48800]';
-    if (estado === 'RECHAZADO')   return 'bg-[#D13A28]/10 text-[#D13A28]';
-    return 'bg-[#E8E5E0] text-[#57534E]';
-}
-function labelEstado(estado) {
-    if (estado === 'REALIZADO')   return 'Realizado';
-    if (estado === 'PRESUPUESTO') return 'Pendiente';
-    if (estado === 'RECHAZADO')   return 'Rechazado';
-    return estado;
-}
-
-const HIST_VISIBLE = 4; // servicios visibles por defecto en el historial inline
 
 export default function ClienteCard({
     cliente, sedes, equipos, servicios = [],
@@ -43,8 +28,6 @@ export default function ClienteCard({
     onAddSede, onAddEquipo,
     onNuevoServicio, onNuevaVenta
 }) {
-    const [verHistorial, setVerHistorial] = useState(false);
-    const [historialExpandido, setHistorialExpandido] = useState(false);
     const [equipoHistorial, setEquipoHistorial] = useState(null);
     const [modalHistorial, setModalHistorial] = useState(false);
 
@@ -152,57 +135,17 @@ export default function ClienteCard({
                             {' · '}{cliente.localidad}
                         </p>
 
-                        {/* Resumen historial + toggle */}
+                        {/* Resumen historial — toca para abrir modal */}
                         {serviciosCli.length > 0 ? (
-                            <div>
-                                <button
-                                    onClick={() => setVerHistorial(v => !v)}
-                                    className="flex items-center gap-2 w-full text-left"
-                                >
-                                    <span className="text-[9px] font-black text-[#D48800] dark:text-[#F0A500] uppercase">
-                                        🔧 {serviciosCli.length} servicio{serviciosCli.length !== 1 ? 's' : ''} · último {formatFecha(ultimoServicio?.fecha)}
-                                    </span>
-                                    <span className="text-[9px] text-[#A8A29E] ml-auto">{verHistorial ? '▲' : '▼'}</span>
-                                </button>
-
-                                {/* Lista de servicios inline */}
-                                {verHistorial && (
-                                    <div className="mt-2 space-y-1.5">
-                                        {(historialExpandido ? serviciosCli : serviciosCli.slice(0, HIST_VISIBLE)).map(s => (
-                                            <div key={s.id} className="flex items-start gap-2 bg-[#F5F3F1] dark:bg-[#242424] rounded-xl px-3 py-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${badgeEstado(s.estado)}`}>
-                                                            {labelEstado(s.estado)}
-                                                        </span>
-                                                        <span className="text-[9px] text-[#A8A29E]">{formatFecha(s.fecha)}</span>
-                                                    </div>
-                                                    {s.items?.length > 0 && (
-                                                        <p className="text-[9px] text-[#57534E] dark:text-[#9E9A94] truncate">
-                                                            {s.items.map(it => it.trabajoRealizado || it.equipoSerial).filter(Boolean).join(' · ')}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <span className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0">
-                                                    ${Number(s.total || 0).toLocaleString()}
-                                                </span>
-                                            </div>
-                                        ))}
-
-                                        {/* Ver más / menos */}
-                                        {serviciosCli.length > HIST_VISIBLE && (
-                                            <button
-                                                onClick={() => setHistorialExpandido(v => !v)}
-                                                className="text-[9px] font-black text-[#D48800] dark:text-[#F0A500] uppercase w-full text-center py-1"
-                                            >
-                                                {historialExpandido
-                                                    ? '▲ Ver menos'
-                                                    : `▼ Ver ${serviciosCli.length - HIST_VISIBLE} más`}
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                            <button
+                                onClick={() => setModalHistorial(true)}
+                                className="flex items-center gap-2 w-full text-left active:opacity-70 transition-opacity"
+                            >
+                                <span className="text-[9px] font-black text-[#D48800] dark:text-[#F0A500] uppercase">
+                                    🔧 {serviciosCli.length} servicio{serviciosCli.length !== 1 ? 's' : ''} · último {formatFecha(ultimoServicio?.fecha)}
+                                </span>
+                                <span className="text-[9px] text-[#A8A29E] ml-auto">Ver →</span>
+                            </button>
                         ) : (
                             <p className="text-[9px] font-bold text-[#A8A29E] uppercase">Sin servicios registrados</p>
                         )}
