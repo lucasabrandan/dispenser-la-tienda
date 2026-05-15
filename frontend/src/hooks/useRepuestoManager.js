@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import api from '../../services/api';
+import api from '../services/api';
 import { toast } from 'react-hot-toast';
-import { generarPDFListaPrecios } from '../../utils/generadorPDFListaPrecios';
-import { generarPDFCatalogo } from '../../utils/generadorPDFCatalogo';
+import { generarPDFListaPrecios } from '../utils/generadorPDFListaPrecios';
+import { generarPDFCatalogo } from '../utils/generadorPDFCatalogo';
 
 const POR_PAGINA = 20;
 
