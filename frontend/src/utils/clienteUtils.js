@@ -37,7 +37,7 @@ export const aplicarFiltroChip = (clientes, sedes, equipos, servicios, chip) => 
     if (!chip) return clientes;
     const hoy = new Date();
     return clientes.filter(c => {
-        if (chip === 'empresa') return c.clienteTipo === 'EMPRESA';
+        if (chip === 'empresa') return (c.clienteTipo || c.tipo) === 'EMPRESA';
 
         if (chip === 'sin-servicio') {
             const serviciosCli = servicios.filter(s => s.clienteId === c.id);

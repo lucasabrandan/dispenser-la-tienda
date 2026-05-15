@@ -43,7 +43,7 @@ export default function ClienteCard({
         : null;
     const alertaSinServicio = diasSinAtender !== null && diasSinAtender > 90;
 
-    const esEmpresa = cliente.clienteTipo === 'EMPRESA';
+    const esEmpresa = (cliente.clienteTipo || cliente.tipo) === 'EMPRESA';
 
     return (
         <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden transition-all duration-200">
