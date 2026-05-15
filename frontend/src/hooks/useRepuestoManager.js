@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { generarPDFListaPrecios } from '../../utils/generadorPDFListaPrecios';
+import { generarPDFCatalogo } from '../../utils/generadorPDFCatalogo';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 const POR_PAGINA = 20;
 
 /**
@@ -23,6 +23,7 @@ export function useRepuestoManager() {
     const [modalPrecio, setModalPrecio]   = useState(false);
     const [gananciamasiva, setGananciaMasiva] = useState('');
     const [markupMasivo, setMarkupMasivo]     = useState('');
+    const [impuestosMasivo, setImpuestosMasivo] = useState('');
 
     useEffect(() => { cargarProductos(); }, []);
 
@@ -110,21 +111,37 @@ export function useRepuestoManager() {
     const exportarSeleccionados = () => {
         if (seleccionados.size === 0) return;
         generarPDFListaPrecios(productos.filter(p => seleccionados.has(p.id)));
-        toast.success(`📥 PDF con ${seleccionados.size} producto(s)`);
+        toast.success(`PDF lista con ${seleccionados.size} producto(s)`);
     };
 
     const exportarTodos = () => {
         if (productos.length === 0) { toast.error('No hay productos'); return; }
         generarPDFListaPrecios(productos);
-        toast.success('📥 PDF generado');
+        toast.success('PDF lista generado');
+    };
+
+    const exportarCatalogoSeleccionados = async () => {
+        if (seleccionados.size === 0) return;
+        const t = toast.loading('Generando catalogo...');
+        await generarPDFCatalogo(productos.filter(p => seleccionados.has(p.id)));
+        toast.success(`Catalogo con ${seleccionados.size} producto(s)`, { id: t });
+    };
+
+    const exportarCatalogoTodos = async () => {
+        if (productos.length === 0) { toast.error('No hay productos'); return; }
+        const t = toast.loading('Generando catalogo...');
+        await generarPDFCatalogo(productos);
+        toast.success('Catalogo generado', { id: t });
     };
 
     const aplicarPrecioMasivo = async () => {
-        const gVal = gananciamasiva !== '' ? parseFloat(gananciamasiva) : null;
-        const mVal = markupMasivo   !== '' ? parseFloat(markupMasivo)   : null;
-        if (gVal !== null && (isNaN(gVal) || gVal < 0)) { toast.error('Ganancia inválida'); return; }
-        if (mVal !== null && (isNaN(mVal) || mVal < 0)) { toast.error('Markup inválido');   return; }
-        if (gVal === null && mVal === null) { toast.error('Ingresá al menos un valor'); return; }
+        const gVal = gananciamasiva  !== '' ? parseFloat(gananciamasiva)  : null;
+        const mVal = markupMasivo    !== '' ? parseFloat(markupMasivo)    : null;
+        const iVal = impuestosMasivo !== '' ? parseFloat(impuestosMasivo) : null;
+        if (gVal !== null && (isNaN(gVal) || gVal < 0)) { toast.error('Ganancia invalida'); return; }
+        if (mVal !== null && (isNaN(mVal) || mVal < 0)) { toast.error('Markup invalido');   return; }
+        if (iVal !== null && (isNaN(iVal) || iVal < 0)) { toast.error('Impuestos invalido'); return; }
+        if (gVal === null && mVal === null && iVal === null) { toast.error('Ingresa al menos un valor'); return; }
         if (seleccionados.size === 0) return;
         const t = toast.loading('Actualizando precios...');
         try {
@@ -136,18 +153,29 @@ export function useRepuestoManager() {
                     fd.append('costo', producto.costo);
                     const g = gVal !== null ? gVal : (producto.porcentajeGanancia ?? 0);
                     const m = mVal !== null ? mVal : (producto.porcentajeMarkup   ?? 0);
+                    const i = iVal !== null ? iVal : (producto.porcentajeImpuestos ?? 30);
                     fd.append('porcentajeGanancia', g);
                     fd.append('porcentajeMarkup', m);
-                    const base  = parseFloat(producto.costo) * (1 + g / 100);
-                    const lista = base * (1 + m / 100);
+                    fd.append('porcentajeImpuestos', i);
+                    const costo = parseFloat(producto.costo) || 0;
+                    const precioEfectivo = costo * (1 + g / 100);
+                    const lista = precioEfectivo * (1 + m / 100);
+                    const costoBlanco = costo * 1.21;
+                    const facturado = costoBlanco * (1 + g / 100) * (1 + i / 100);
+                    const netoCliente = facturado / 1.21;
+                    fd.append('precio', precioEfectivo);
                     fd.append('precioLista', lista);
-                    return fetch(`${BASE_URL}/repuestos/${producto.id}`, { method: 'PUT', body: fd });
+                    fd.append('costoBlanco', costoBlanco);
+                    fd.append('precioFacturado', facturado);
+                    fd.append('precioNetoCliente', netoCliente);
+                    return api.put(`/repuestos/${producto.id}`, fd);
                 })
             );
-            toast.success('✅ Precios actualizados', { id: t });
+            toast.success('Precios actualizados', { id: t });
             setModalPrecio(false);
             setGananciaMasiva('');
             setMarkupMasivo('');
+            setImpuestosMasivo('');
             cancelarSeleccion();
             await cargarProductos();
         } catch {
@@ -195,6 +223,7 @@ export function useRepuestoManager() {
         modalPrecio, setModalPrecio,
         gananciamasiva, setGananciaMasiva,
         markupMasivo, setMarkupMasivo,
+        impuestosMasivo, setImpuestosMasivo,
         todosSeleccionados,
         valorTotalInventario, itemsBajoStock,
         // Acciones
@@ -203,6 +232,8 @@ export function useRepuestoManager() {
         eliminarSeleccionados,
         exportarSeleccionados,
         exportarTodos,
+        exportarCatalogoSeleccionados,
+        exportarCatalogoTodos,
         aplicarPrecioMasivo,
         toggleSeleccion,
         seleccionarTodos,

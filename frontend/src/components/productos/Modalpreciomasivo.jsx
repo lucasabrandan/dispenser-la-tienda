@@ -2,11 +2,20 @@ import React from 'react';
 
 export default function ModalPrecioMasivo({
     cantidadSeleccionados,
-    ganancia, markup,
-    onGananciaChange, onMarkupChange,
+    ganancia, markup, impuestos,
+    onGananciaChange, onMarkupChange, onImpuestosChange,
     onAplicar, onCerrar,
 }) {
-    const sinCambios = ganancia === '' && markup === '';
+    const sinCambios = ganancia === '' && markup === '' && impuestos === '';
+
+    const inputClass = `
+        w-full p-3.5 rounded-xl outline-none transition-all mb-4
+        bg-[#E8E5E0] dark:bg-[#2E2E2E]
+        border border-black/[0.07] dark:border-white/[0.07]
+        text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
+        focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
+        placeholder:text-[#A8A29E]
+    `;
 
     return (
         <>
@@ -15,49 +24,58 @@ export default function ModalPrecioMasivo({
                 <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-[2rem] p-6 w-full max-w-sm border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     <h3 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase mb-1">
-                        Actualizar márgenes
+                        Actualizar margenes
                     </h3>
                     <p className="text-[10px] font-bold text-[#A8A29E] uppercase mb-5">
-                        {cantidadSeleccionados} producto{cantidadSeleccionados !== 1 ? 's' : ''} seleccionado{cantidadSeleccionados !== 1 ? 's' : ''} · dejá vacío lo que no querés cambiar
+                        {cantidadSeleccionados} producto{cantidadSeleccionados !== 1 ? 's' : ''} seleccionado{cantidadSeleccionados !== 1 ? 's' : ''} · deja vacio lo que no quieras cambiar
                     </p>
 
                     {/* Ganancia */}
                     <label className="block text-[10px] font-black text-[#A8A29E] uppercase mb-1.5 tracking-widest">
-                        % Ganancia
+                        % Ganancia (efectivo)
                     </label>
                     <input
                         type="number" value={ganancia}
                         onChange={e => onGananciaChange(e.target.value)}
-                        placeholder="Ej: 30  (vacío = sin cambio)"
+                        placeholder="Ej: 40  (vacio = sin cambio)"
                         min="0" step="0.5"
-                        className="
-                            w-full p-3.5 rounded-xl outline-none transition-all mb-4
-                            bg-[#E8E5E0] dark:bg-[#2E2E2E]
-                            border border-black/[0.07] dark:border-white/[0.07]
-                            text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
-                            focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
-                            placeholder:text-[#A8A29E]
-                        "
+                        className={inputClass}
                     />
 
                     {/* Markup */}
                     <label className="block text-[10px] font-black text-[#A8A29E] uppercase mb-1.5 tracking-widest">
-                        % Markup
+                        % Markup adicional
                     </label>
                     <input
                         type="number" value={markup}
                         onChange={e => onMarkupChange(e.target.value)}
-                        placeholder="Ej: 15  (vacío = sin cambio)"
+                        placeholder="Ej: 15  (vacio = sin cambio)"
                         min="0" step="0.5"
-                        className="
-                            w-full p-3.5 rounded-xl outline-none transition-all mb-5
-                            bg-[#E8E5E0] dark:bg-[#2E2E2E]
-                            border border-black/[0.07] dark:border-white/[0.07]
-                            text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
-                            focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
-                            placeholder:text-[#A8A29E]
-                        "
+                        className={inputClass}
                     />
+
+                    {/* Impuestos */}
+                    <label className="block text-[10px] font-black text-[#A8A29E] uppercase mb-1.5 tracking-widest">
+                        % Impuestos (facturado)
+                    </label>
+                    <input
+                        type="number" value={impuestos}
+                        onChange={e => onImpuestosChange(e.target.value)}
+                        placeholder="Ej: 30  (vacio = sin cambio)"
+                        min="0" step="0.5"
+                        className={inputClass}
+                    />
+
+                    {/* Preview */}
+                    <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] rounded-xl p-3 mb-4 border border-black/[0.05] dark:border-white/[0.05]">
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase mb-1">Formula</p>
+                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">
+                            Efectivo = Costo × (1 + Ganancia%)
+                        </p>
+                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">
+                            Facturado = Efectivo × (1 + Impuestos%)
+                        </p>
+                    </div>
 
                     {/* Botones */}
                     <div className="flex gap-2">

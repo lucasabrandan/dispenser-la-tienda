@@ -22,21 +22,34 @@ public class Repuesto {
 
     private BigDecimal costo;
     private BigDecimal porcentajeGanancia;
-    private BigDecimal porcentajeMarkup; // ← NUEVO
+    private BigDecimal porcentajeMarkup;
 
     @Column(nullable = false)
-    private BigDecimal precio;
+    private BigDecimal precio; // precio en negro (efectivo)
 
-    // ← NUEVO: Para guardar precio lista (calculado en frontend, guardamos acá para ref)
     private BigDecimal precioLista;
+
+    // Pricing facturado
+    private BigDecimal costoBlanco;         // costo × 1.21 (o manual)
+    private BigDecimal porcentajeImpuestos; // default 30 en frontend
+    private BigDecimal precioFacturado;     // costoBlanco × (1+ganancia%) × (1+imp%)
+    private BigDecimal precioNetoCliente;   // precioFacturado / 1.21 (lo que se le dice al cliente)
+
+    // Precio por cantidad / mayorista
+    private BigDecimal precioCantidad;
+    private Integer cantidadMinima;
+
+    // Cuotas (solo almacena %, frontend calcula)
+    private BigDecimal porcentajeCuotas3;
+    private BigDecimal porcentajeCuotas6;
 
     @Column(nullable = false)
     private Integer stock = 0;
 
-    // ← MODIFICADO: Ahora guarda URL relativa de foto (/uploads/productos/nombre.jpg)
     private String fotoUrl;
+    private String fotoUrl2;
+    private String fotoUrl3;
 
-    // ← MANTENER: Por backward compatibility (ya no se usa, fotoUrl reemplaza esto)
     @Column(columnDefinition = "TEXT")
     private String imagen;
 
@@ -90,14 +103,44 @@ public class Repuesto {
     public BigDecimal getPrecio() { return precio; }
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
 
-    public BigDecimal getPrecioLista() { return precioLista; } // ← NUEVO
+    public BigDecimal getPrecioLista() { return precioLista; }
     public void setPrecioLista(BigDecimal precioLista) { this.precioLista = precioLista; }
+
+    public BigDecimal getCostoBlanco() { return costoBlanco; }
+    public void setCostoBlanco(BigDecimal costoBlanco) { this.costoBlanco = costoBlanco; }
+
+    public BigDecimal getPorcentajeImpuestos() { return porcentajeImpuestos; }
+    public void setPorcentajeImpuestos(BigDecimal porcentajeImpuestos) { this.porcentajeImpuestos = porcentajeImpuestos; }
+
+    public BigDecimal getPrecioFacturado() { return precioFacturado; }
+    public void setPrecioFacturado(BigDecimal precioFacturado) { this.precioFacturado = precioFacturado; }
+
+    public BigDecimal getPrecioNetoCliente() { return precioNetoCliente; }
+    public void setPrecioNetoCliente(BigDecimal precioNetoCliente) { this.precioNetoCliente = precioNetoCliente; }
+
+    public BigDecimal getPrecioCantidad() { return precioCantidad; }
+    public void setPrecioCantidad(BigDecimal precioCantidad) { this.precioCantidad = precioCantidad; }
+
+    public Integer getCantidadMinima() { return cantidadMinima; }
+    public void setCantidadMinima(Integer cantidadMinima) { this.cantidadMinima = cantidadMinima; }
+
+    public BigDecimal getPorcentajeCuotas3() { return porcentajeCuotas3; }
+    public void setPorcentajeCuotas3(BigDecimal porcentajeCuotas3) { this.porcentajeCuotas3 = porcentajeCuotas3; }
+
+    public BigDecimal getPorcentajeCuotas6() { return porcentajeCuotas6; }
+    public void setPorcentajeCuotas6(BigDecimal porcentajeCuotas6) { this.porcentajeCuotas6 = porcentajeCuotas6; }
 
     public Integer getStock() { return stock; }
     public void setStock(Integer stock) { this.stock = stock; }
 
-    public String getFotoUrl() { return fotoUrl; } // ← NUEVO
+    public String getFotoUrl() { return fotoUrl; }
     public void setFotoUrl(String fotoUrl) { this.fotoUrl = fotoUrl; }
+
+    public String getFotoUrl2() { return fotoUrl2; }
+    public void setFotoUrl2(String fotoUrl2) { this.fotoUrl2 = fotoUrl2; }
+
+    public String getFotoUrl3() { return fotoUrl3; }
+    public void setFotoUrl3(String fotoUrl3) { this.fotoUrl3 = fotoUrl3; }
 
     public String getImagen() { return imagen; }
     public void setImagen(String imagen) { this.imagen = imagen; }
