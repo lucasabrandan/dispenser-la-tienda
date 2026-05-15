@@ -139,11 +139,13 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
 
                 <IconBtn onClick={() => onArchivar(s.id)} title="Archivar" cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
                 <IconBtn onClick={() => onRechazar(s.id)} title="Rechazar" cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
-                <button onClick={() => onDespachar(s)}
-                    className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
-                    📬 Despachar
-                </button>
-                {!ejecutado && (
+                {esTecnico && (
+                    <button onClick={() => onDespachar(s)}
+                        className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                        📬 Despachar
+                    </button>
+                )}
+                {esTecnico && !ejecutado && (
                     <button onClick={() => onEjecutar(s)}
                         className="h-9 px-3 rounded-xl font-bold text-[11px] shrink-0 active:scale-95 transition-all bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
                         🔧 Ejecutar
