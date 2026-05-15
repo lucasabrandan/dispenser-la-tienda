@@ -32,7 +32,7 @@ function IconBtn({ onClick, title, children, cls = '' }) {
 
 export default function ServicioCard({
     servicio, modoSeleccion, seleccionado,
-    onToggleSelect, onEditar, onEjecutar, onCobrar,
+    onToggleSelect, onEditar, onEjecutar, onCobrar, onDuplicar,
     onRechazar, onArchivar, onEliminar, onGenerarPDF, onDetalle, calcularTotal,
 }) {
     const [expandido, setExpandido] = useState(false);
@@ -41,6 +41,12 @@ export default function ServicioCard({
     const total    = calcularTotal(servicio);
     const esPpto   = servicio.estado === 'PRESUPUESTO';
     const esArch   = servicio.estado === 'ARCHIVADO';
+
+    // Antigüedad en días para presupuestos pendientes
+    const diasPendiente = esPpto && servicio.fecha
+        ? Math.floor((Date.now() - new Date(servicio.fecha + 'T00:00:00').getTime()) / 86400000)
+        : 0;
+    const antiguedadCritica = diasPendiente > 7;
 
     // Chips de info rápida del primer ítem
     const items       = servicio.items || [];
@@ -74,6 +80,11 @@ export default function ServicioCard({
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${badge.cls}`}>
                             {badge.label}
                         </span>
+                        {esPpto && diasPendiente > 0 && (
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${antiguedadCritica ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]' : 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'}`}>
+                                {diasPendiente}d
+                            </span>
+                        )}
                         <span className="text-[11px] font-bold text-[#A8A29E] shrink-0">#{servicio.id}</span>
                         {servicio.nroDocumento && (
                             <span className="text-[9px] text-[#A8A29E] truncate">{servicio.nroDocumento}</span>
@@ -168,6 +179,10 @@ export default function ServicioCard({
                 {esPpto && onEditar && (
                     <IconBtn onClick={() => onEditar(servicio)} title="Editar presupuesto"
                         cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✏️</IconBtn>
+                )}
+                {onDuplicar && (
+                    <IconBtn onClick={() => onDuplicar(servicio)} title="Duplicar como nuevo presupuesto"
+                        cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">⧉</IconBtn>
                 )}
 
                 <div className="flex-1" />

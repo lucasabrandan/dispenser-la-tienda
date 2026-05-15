@@ -10,6 +10,7 @@ import Paginacion from '../ui/Paginacion';
 import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
+import ServicioAgenda from '../servicio/ServicioAgenda';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -67,12 +68,14 @@ export default function ServicioManager({
 
     const [servicioEjecutar, setServicioEjecutar]           = useState(null);
     const [servicioEjecutarSimple, setServicioEjecutarSimple] = useState(null); // para técnicos
+    const [servicioDuplicar, setServicioDuplicar]   = useState(null);
     const [modalImportar, setModalImportar]         = useState(false);
     const [confirmEliminar, setConfirmEliminar]     = useState(null); // { ids: [], modo: 'uno'|'masivo' }
     const [tecnicos, setTecnicos]               = useState([]);
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
     const [mostrarRango, setMostrarRango]       = useState(false);
+    const [vistaAgenda, setVistaAgenda]         = useState(false);
 
     const tabActual = filtros.estado || 'PRESUPUESTO';
 
@@ -101,7 +104,22 @@ export default function ServicioManager({
         if (esAdmin) { setServicioEjecutar(s); setModalCrear(true); }
         else          setServicioEjecutarSimple(s);
     };
-    const cerrarModalCompleto = () => { cerrarModal(); setServicioEjecutar(null); };
+    const cerrarModalCompleto = () => { cerrarModal(); setServicioEjecutar(null); setServicioDuplicar(null); };
+
+    // Duplicar: copia todo menos id/estado/nroDocumento, con fecha de hoy
+    const duplicarServicio = (s) => {
+        const copia = {
+            ...s,
+            id: undefined,
+            estado: 'PRESUPUESTO',
+            nroDocumento: undefined,
+            fecha: new Date().toISOString().slice(0, 10),
+            presupuestoOrigenId: undefined,
+            ordenId: undefined,
+        };
+        setServicioDuplicar(copia);
+        setModalCrear(true);
+    };
 
     useEffect(() => { if (esAdmin) getUsuarios().then(r => setTecnicos(r.data)).catch(() => {}); }, [esAdmin]);
     useEffect(() => { if (clienteInicial)    setModalCrear(true); }, [clienteInicial]);
@@ -118,6 +136,11 @@ export default function ServicioManager({
                         Servicio Técnico
                     </h2>
                     <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setVistaAgenda(v => !v)}
+                            title={vistaAgenda ? 'Vista lista' : 'Vista agenda'}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${vistaAgenda ? 'bg-[#D13A28] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
+                        >{vistaAgenda ? '☰' : '📅'}</button>
                         <button
                             onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
                             title="Selección múltiple"
@@ -300,7 +323,14 @@ export default function ServicioManager({
 
                 <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
-                {cargando ? (
+                {vistaAgenda ? (
+                    <ServicioAgenda
+                        servicios={filtros.itemsFiltrados}
+                        onDetalle={setModalDetalle}
+                        onEjecutar={abrirEjecutar}
+                        calcularTotal={calcularTotal}
+                    />
+                ) : cargando ? (
                     <div className="flex flex-col gap-3">
                         {[1, 2, 3].map(i => (
                             <div key={i} className="h-36 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />
@@ -321,6 +351,7 @@ export default function ServicioManager({
                                 onEditar={esAdmin ? abrirEditar : null}
                                 onEjecutar={abrirEjecutar}
                                 onCobrar={confirmarServicio}
+                                onDuplicar={esAdmin ? duplicarServicio : null}
                                 onRechazar={rechazarServicio}
                                 onArchivar={archivarServicio}
                                 onEliminar={esAdmin ? (id) => setConfirmEliminar({ ids: [id], modo: 'uno' }) : null}
@@ -355,14 +386,16 @@ export default function ServicioManager({
                         <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
                             <div>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
-                                    {servicioEjecutar ? '🔧 Ejecutar Trabajo' : servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
+                                    {servicioEjecutar ? '🔧 Ejecutar Trabajo' : servicioDuplicar ? '⧉ Duplicar Presupuesto' : servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
                                 </h3>
                                 <p className="text-[11px] text-[#A8A29E] mt-0.5">
                                     {servicioEjecutar
                                         ? `Ppto #${servicioEjecutar.id} · modificá y confirmá`
-                                        : servicioEditar
-                                            ? `Presupuesto #${servicioEditar.id}`
-                                            : 'Cargá el trabajo a realizar'}
+                                        : servicioDuplicar
+                                            ? 'Copia del servicio anterior · ajustá y guardá'
+                                            : servicioEditar
+                                                ? `Presupuesto #${servicioEditar.id}`
+                                                : 'Cargá el trabajo a realizar'}
                                 </p>
                             </div>
                             <button onClick={cerrarModalCompleto}
@@ -376,7 +409,7 @@ export default function ServicioManager({
                                 if (onPresupuestoOrigenConsumido) onPresupuestoOrigenConsumido();
                                 if (onOrdenOrigenConsumido) onOrdenOrigenConsumido();
                             }}
-                            servicioParaEditar={servicioEditar || servicioEjecutar}
+                            servicioParaEditar={servicioEditar || servicioEjecutar || servicioDuplicar}
                             clienteInicialId={clienteInicial?.id}
                             presupuestoOrigen={presupuestoOrigen}
                             ordenOrigen={ordenOrigen}
