@@ -85,10 +85,15 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
             {/* LOGO / TOGGLE */}
             <div className={`relative border-b border-black/[0.07] dark:border-white/[0.07] flex items-center ${colapsado ? 'justify-center py-5' : 'px-8 pt-8 pb-6'}`}>
                 {!colapsado && (
-                    <>
-                        <img src={logo} alt="Logo" className="w-full max-w-[150px] mx-auto block drop-shadow-sm dark:brightness-110" />
+                    <div className="cursor-pointer" onClick={() => setVistaActual('caja')}>
+                        <img src={logo} alt="Logo" className="w-full max-w-[180px] mx-auto block drop-shadow-sm dark:brightness-110" />
                         <p className="text-[9px] font-black text-[#A8A29E] mt-3 tracking-[0.2em] uppercase text-center">Sistema de Logística</p>
-                    </>
+                    </div>
+                )}
+                {colapsado && (
+                    <div className="cursor-pointer" onClick={() => setVistaActual('caja')}>
+                        <img src={logo} alt="Logo" className="w-10 h-10 object-contain drop-shadow-sm dark:brightness-110" />
+                    </div>
                 )}
                 <button onClick={() => setColapsado(!colapsado)}
                     title={colapsado ? 'Expandir sidebar' : 'Colapsar sidebar'}

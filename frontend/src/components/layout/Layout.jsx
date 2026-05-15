@@ -50,9 +50,9 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                         </svg>
                     </button>
 
-                    {/* Sección actual */}
-                    <div className="flex items-center gap-2">
-                        <img src={logo} alt="Dispenser La Tienda" className="h-8 w-auto" />
+                    {/* Logo + sección actual */}
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setVistaActual('caja')}>
+                        <img src={logo} alt="Dispenser La Tienda" className="h-10 w-auto" />
                         <span className="font-black text-[13px] tracking-tight uppercase text-[#1C1917] dark:text-[#F0EEE9] leading-none">
                             {NOMBRES_SECCION[vistaActual] || 'Dispenser'}
                         </span>
