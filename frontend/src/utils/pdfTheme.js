@@ -12,7 +12,6 @@ export const WHITE      = [255, 255, 255];
 export const GRAY_LIGHT = [245, 244, 242];
 export const GRAY_MID   = [200, 196, 190];
 export const GRAY_TEXT  = [120, 116, 110];
-export const WARM_BG    = [250, 248, 245];
 export const WARM_BORDER= [220, 212, 200];
 
 // ── Datos empresa — se toman del perfil del usuario logueado ─────────────────
@@ -103,65 +102,6 @@ export function dibujarHeaderPDF(doc, tipoLabel, fecha, subtitulo = null, nroDoc
     doc.text(tipoLabel, 14, 44);
 }
 
-// ── Header compacto (2+ equipos) ─────────────────────────────────────────────
-// Idéntica estructura pero todo más pequeño para maximizar espacio de contenido
-// Altura total ≈ 37mm → contenido empieza en y=37
-export function dibujarHeaderPDFCompacto(doc, tipoLabel, fecha, subtitulo = null, nroDoc = null) {
-    const pageW = doc.internal.pageSize.getWidth();
-
-    // Banda superior roja
-    doc.setFillColor(...RED);
-    doc.rect(0, 0, pageW, 2, 'F');
-
-    // Logo
-    if (logoUrl) {
-        try { doc.addImage(logoUrl, 'PNG', 14, 5, 28, 11); } catch {}
-    }
-
-    // Datos de contacto — 1 línea debajo del logo
-    const emp2 = getEmpresa();
-    doc.setFontSize(6);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...GRAY_TEXT);
-    const contactoLine = [
-        emp2.contacto ? `WA: ${emp2.contacto}` : null,
-        emp2.email    ? `Email: ${emp2.email}`  : null,
-        emp2.web      ? `Web: ${emp2.web}`      : null,
-    ].filter(Boolean).join('  ·  ');
-    if (contactoLine) doc.text(contactoLine, 14, 20);
-
-    // Bloque derecho: fecha / nroDoc / técnico
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(155, 150, 144);
-    doc.text(`Fecha: ${fecha}`, pageW - 14, 10, { align: 'right' });
-
-    if (nroDoc) {
-        doc.setFontSize(8.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...RED);
-        doc.text(nroDoc, pageW - 14, 17, { align: 'right' });
-    }
-
-    if (subtitulo) {
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(155, 150, 144);
-        doc.text(subtitulo, pageW - 14, 23, { align: 'right' });
-    }
-
-    // Línea separadora
-    doc.setDrawColor(220, 216, 210);
-    doc.setLineWidth(0.3);
-    doc.line(14, 27, pageW - 14, 27);
-
-    // Título — izquierda, tamaño mínimo funcional
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...DARK);
-    doc.text(tipoLabel, 14, 34);
-}
-
 // ── Footer ────────────────────────────────────────────────────────────────────
 // Estructura (2 filas):
 //   ────────────────────── línea separadora ──────────────────────
@@ -203,17 +143,3 @@ export function dibujarFooterPDF(doc, pagina = null, totalPaginas = null, textoC
     }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-export function pdfLabel(doc, txt, x, y) {
-    doc.setFontSize(6.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...GRAY_TEXT);
-    doc.text(txt.toUpperCase(), x, y);
-}
-
-export function pdfValue(doc, txt, x, y, color = DARK) {
-    doc.setFontSize(9.5);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...color);
-    doc.text(txt, x, y);
-}
