@@ -158,7 +158,7 @@ export function generarPDFHistorialCliente({ cliente, servicios }) {
         // Total
         doc.setFontSize(T.xs);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(total > 0 ? C.dark : C.grayText);
+        doc.setTextColor(...(total > 0 ? C.dark : C.grayText));
         doc.text(total > 0 ? fmt(total) : '-', cols[3], y + 2, { align: 'right' });
 
         // Equipos (segunda línea, más chica)
