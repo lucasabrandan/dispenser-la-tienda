@@ -7,7 +7,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 
 const NOMBRES_SECCION = {
-    'caja':             'Caja',
+    'caja':             'Panel',
     'venta':            'Ventas',
     'servicio-tecnico': 'Servicio Técnico',
     'historial':        'Historial',

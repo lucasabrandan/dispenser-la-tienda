@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import { useCajaData } from '../hooks/useCajaData';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useMontos } from '../context/MontosContext';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import CierreCajaModal from './finanzas/CierreCajaModal';
 
-// ── Helper: muestra monto o puntitos según estado global ────────────────────
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
-    if (!montosVisibles) return <span className={className}>••••••</span>;
+    if (!montosVisibles) return <span className={className}>······</span>;
     return (
         <span className={className}>
             {prefix}{typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}
@@ -15,65 +14,115 @@ function M({ valor, prefix = '$', className = '' }) {
     );
 }
 
+function StatMini({ label, valor, sub, accent }) {
+    return (
+        <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-0.5">{label}</p>
+            <p className={`text-[20px] font-black leading-none ${accent || 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>{valor}</p>
+            {sub && <p className="text-[9px] text-[#A8A29E] mt-0.5">{sub}</p>}
+        </div>
+    );
+}
+
 export default function DashboardCaja({ setVistaActual }) {
-    const { stats, cargando, recargar } = useCajaData();
     const { esAdmin } = useAuth();
     const [modalCierre, setModalCierre] = useState(false);
+    const [cargando, setCargando] = useState(true);
+    const [servicios, setServicios] = useState([]);
+    const [ordenes, setOrdenes] = useState([]);
+    const [alertasRadar, setAlertasRadar] = useState([]);
 
-    const hoy = new Date().toLocaleDateString('es-AR', {
-        weekday: 'long', day: 'numeric', month: 'long'
-    });
-
-    const calcularTotal = (s) =>
-        s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
-
-    // Badges de estado — sistema de colores del proyecto
-    const badgeEstado = (s) => {
-        if (s.estado === 'PRESUPUESTO') return {
-            label: 'Pendiente',
-            cls: 'bg-[var(--warning-bg)] text-[var(--warning-tx)] dark:bg-[var(--warning-bg)] dark:text-[var(--warning-tx)]'
-        };
-        if (s.estado === 'REALIZADO') return {
-            label: 'Cobrado',
-            cls: 'bg-[var(--success-bg)] text-[var(--success-tx)] dark:bg-[var(--success-bg)] dark:text-[var(--success-tx)]'
-        };
-        return {
-            label: s.estado,
-            cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]'
-        };
+    const cargar = async () => {
+        setCargando(true);
+        try {
+            const calls = [api.get('/servicios?page=0&size=500&sort=fechaServicio,desc')];
+            if (esAdmin) {
+                calls.push(api.get('/ordenes'));
+                calls.push(api.get('/radar/alertas').catch(() => ({ data: [] })));
+            }
+            const [sRes, oRes, rRes] = await Promise.all(calls);
+            setServicios(sRes.data.content || sRes.data || []);
+            if (oRes) setOrdenes(oRes.data || []);
+            if (rRes) setAlertasRadar(rRes.data || []);
+        } catch { /* silenciar */ } finally { setCargando(false); }
     };
 
-    const tipoIcon = (s) => s.servicioTipo === 'TECNICA' ? '🔧' : '🛒';
+    useEffect(() => { cargar(); }, []);
+
+    const hoyStr = new Date().toISOString().split('T')[0];
+    const mesStr = hoyStr.substring(0, 7);
+    const hoyLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    const calcTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
+
+    const data = useMemo(() => {
+        const realizados = servicios.filter(s => s.estado === 'REALIZADO');
+        const pendientes = servicios.filter(s => s.estado === 'PRESUPUESTO');
+
+        const hoyItems = realizados.filter(s => s.fecha === hoyStr);
+        const totalHoy = hoyItems.reduce((a, s) => a + calcTotal(s), 0);
+        const countHoy = hoyItems.length;
+
+        const mesItems = realizados.filter(s => s.fecha?.startsWith(mesStr));
+        const totalMes = mesItems.reduce((a, s) => a + calcTotal(s), 0);
+        const countMes = mesItems.length;
+
+        const moHoy = hoyItems
+            .filter(s => s.servicioTipo === 'TECNICA')
+            .reduce((a, s) => a + (s.items?.reduce((b, it) => b + Number(it.costoExtra || 0), 0) || 0), 0);
+
+        // Presupuestos vencidos (>7 dias)
+        const pptoVencidos = pendientes.filter(s => {
+            if (!s.fecha) return false;
+            const dias = Math.floor((Date.now() - new Date(s.fecha + 'T00:00:00').getTime()) / 86400000);
+            return dias > 7;
+        });
+
+        // Agenda: servicios de hoy (todos los estados)
+        const agendaHoy = servicios
+            .filter(s => s.fecha === hoyStr)
+            .sort((a, b) => (a.estado === 'PRESUPUESTO' ? -1 : 1));
+
+        // Ordenes activas (no completadas ni canceladas)
+        const ordenesActivas = ordenes.filter(o =>
+            o.estado !== 'COMPLETADA' && o.estado !== 'CANCELADA'
+        );
+
+        return {
+            totalHoy, countHoy, totalMes, countMes, moHoy,
+            pendientesCount: pendientes.length,
+            pendientesVal: pendientes.reduce((a, s) => a + calcTotal(s), 0),
+            pptoVencidos,
+            agendaHoy,
+            ordenesActivas,
+        };
+    }, [servicios, ordenes]);
+
+    // Total alertas para el badge
+    const totalAlertas = data.pptoVencidos.length + data.ordenesActivas.length + alertasRadar.length;
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
-            {/* ── HEADER ───────────────────────────────────────────────── */}
+            {/* Header */}
             <div className="px-4 md:px-0 pt-5 md:pt-0 pb-4">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h2 className="text-[32px] md:text-[28px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
-                            Caja
+                        <h2 className="text-[28px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
+                            Panel
                         </h2>
-                        <p className="text-[11px] font-medium capitalize mt-1 text-[#A8A29E]">
-                            {hoy}
-                        </p>
+                        <p className="text-[11px] font-medium capitalize mt-1 text-[#A8A29E]">{hoyLabel}</p>
                     </div>
                     <div className="flex gap-2">
                         {esAdmin && (
-                            <button
-                                onClick={() => setModalCierre(true)}
-                                className="h-10 px-3 rounded-xl flex items-center gap-1.5 font-bold text-[11px] uppercase transition-all active:scale-90 bg-[#D13A28] dark:bg-[#E8422F] text-white"
-                            >
-                                🗄️ Cierre
+                            <button onClick={() => setModalCierre(true)}
+                                className="h-9 px-3 rounded-xl flex items-center gap-1.5 font-bold text-[11px] uppercase active:scale-90 bg-[#D13A28] dark:bg-[#E8422F] text-white">
+                                Cierre
                             </button>
                         )}
-                        <button
-                            onClick={recargar}
-                            disabled={cargando}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]"
-                        >
-                            <span className={`text-base ${cargando ? 'animate-spin' : ''}`}>🔄</span>
+                        <button onClick={cargar} disabled={cargando}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center active:scale-90 disabled:opacity-40 bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
+                            <span className={`text-sm ${cargando ? 'animate-spin' : ''}`}>↻</span>
                         </button>
                     </div>
                 </div>
@@ -81,195 +130,161 @@ export default function DashboardCaja({ setVistaActual }) {
 
             <div className="px-4 md:px-0 space-y-3">
 
-                {/* ── FACTURADO HOY ─────────────────────────────────────── */}
-                <div
-                    className="rounded-2xl p-4 md:p-5 bg-[#FFFFFF] dark:bg-[#242424]"
-                    style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: '3px solid #D13A28' }}
-                >
-                    <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">
-                        Facturado hoy
-                    </p>
-                    <M
-                        valor={stats.totalHoy}
-                        className="text-[40px] font-black tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
-                    />
-                    <div className="flex gap-4 mt-2 pt-2 border-t border-black/[0.06] dark:border-white/[0.06]">
-                        <span className="text-[10px] font-medium text-[#A8A29E]">
-                            🔧 {stats.serviciosHoy} servicios
-                        </span>
-                        <span className="text-[10px] font-medium text-[#A8A29E]">
-                            🛒 {stats.ventasHoy} ventas
-                        </span>
-                        {stats.moHoy > 0 && (
-                            <span className="text-[10px] font-bold text-[#D48800] dark:text-[#F0A500]">
-                                💰 MO: <M valor={stats.moHoy} />
-                            </span>
+                {/* Resumen compacto — 1 card con 3 métricas */}
+                <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                    style={{ borderLeft: '3px solid #D13A28' }}>
+                    <div className="flex gap-4">
+                        <StatMini label="Hoy" valor={<M valor={data.totalHoy} />} sub={`${data.countHoy} operaciones`} />
+                        <StatMini label="Mes" valor={<M valor={data.totalMes} />} sub={`${data.countMes} cobradas`} />
+                        {data.moHoy > 0 && (
+                            <StatMini label="MO hoy" valor={<M valor={data.moHoy} />} accent="text-[#D48800] dark:text-[#F0A500]" />
                         )}
                     </div>
-                </div>
-
-                {/* ── MÉTRICAS SECUNDARIAS ───────────────────────────────── */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">
-                            Este mes
-                        </p>
-                        <M
-                            valor={stats.totalMes}
-                            className="text-[22px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
-                        />
-                        <p className="text-[9px] font-medium mt-1 uppercase text-[#A8A29E]">
-                            {stats.serviciosMes + stats.ventasMes} operaciones
-                        </p>
-                    </div>
-
-                    <button
-                        onClick={() => setVistaActual('presupuestos')}
-                        className={`rounded-2xl p-4 text-left transition-all active:scale-95 border border-black/[0.07] dark:border-white/[0.07] ${
-                            stats.pendientesCount > 0
-                                ? 'bg-[var(--warning-bg)]'
-                                : 'bg-[#FFFFFF] dark:bg-[#242424]'
-                        }`}
-                    >
-                        <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">
-                            Pendientes
-                        </p>
-                        <p className={`text-[22px] font-black leading-none ${
-                            stats.pendientesCount > 0
-                                ? 'text-[var(--warning-tx)]'
-                                : 'text-[#1C1917] dark:text-[#F0EEE9]'
-                        }`}>
-                            {stats.pendientesCount}
-                        </p>
-                        <p className="text-[9px] font-medium mt-1 uppercase text-[#A8A29E]">
-                            {stats.pendientesCount > 0
-                                ? <M valor={stats.pendientesVal} />
-                                : 'Todo cobrado ✅'}
-                            {stats.pendientesCount > 0 && ' por cobrar'}
-                        </p>
-                    </button>
-                </div>
-
-                {/* ── ACCESOS RÁPIDOS ────────────────────────────────────── */}
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        onClick={() => setVistaActual('servicio-tecnico')}
-                        className="rounded-2xl p-4 text-left transition-all active:scale-95 hover:opacity-90 bg-[#D13A28] dark:bg-[#E8422F]"
-                    >
-                        <p className="text-xl mb-2">🔧</p>
-                        <p className="font-black text-[13px] text-white uppercase leading-tight">
-                            Nuevo Servicio
-                        </p>
-                        <p className="text-[10px] font-medium mt-0.5 text-white/60">
-                            Técnico + presupuesto
-                        </p>
-                    </button>
-
-                    <button
-                        onClick={() => setVistaActual('venta')}
-                        className="rounded-2xl p-4 text-left transition-all active:scale-95 hover:opacity-90 bg-[#D48800] dark:bg-[#F0A500]"
-                    >
-                        <p className="text-xl mb-2">🛒</p>
-                        <p className="font-black text-[13px] text-white uppercase leading-tight">
-                            Nueva Venta
-                        </p>
-                        <p className="text-[10px] font-medium mt-0.5 text-white/60">
-                            Insumos + mostrador
-                        </p>
-                    </button>
-
-                    <button
-                        onClick={() => setVistaActual('historial')}
-                        className="rounded-2xl p-4 text-left transition-all active:scale-95 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
-                    >
-                        <p className="text-xl mb-2">📋</p>
-                        <p className="font-black text-[13px] uppercase leading-tight text-[#1C1917] dark:text-[#F0EEE9]">
-                            Historial
-                        </p>
-                        <p className="text-[10px] font-medium mt-0.5 text-[#A8A29E]">
-                            Todos los registros
-                        </p>
-                    </button>
-
-                    <button
-                        onClick={() => setVistaActual('presupuestos')}
-                        className="rounded-2xl p-4 text-left transition-all active:scale-95 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
-                    >
-                        <p className="text-xl mb-2">💰</p>
-                        <p className="font-black text-[13px] uppercase leading-tight text-[#1C1917] dark:text-[#F0EEE9]">
-                            Presupuestos
-                        </p>
-                        <p className="text-[10px] font-medium mt-0.5 text-[#A8A29E]">
-                            {stats.pendientesCount > 0
-                                ? `${stats.pendientesCount} pendiente${stats.pendientesCount > 1 ? 's' : ''}`
-                                : 'Sin pendientes'}
-                        </p>
-                    </button>
-                </div>
-
-                {/* ── ÚLTIMOS MOVIMIENTOS ───────────────────────────────── */}
-                <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.3em] mb-3 px-1 text-[#A8A29E]">
-                        Últimos movimientos
-                    </p>
-
-                    {cargando ? (
-                        <div className="text-center py-10 text-sm font-bold text-[#A8A29E]">
-                            Cargando...
-                        </div>
-                    ) : stats.ultimos.length === 0 ? (
-                        <div className="text-center py-10 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                            <p className="font-bold text-sm text-[#A8A29E]">Sin movimientos aún</p>
-                            <p className="text-xs mt-1 text-[#A8A29E]">Los servicios y ventas aparecerán aquí</p>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-2">
-                            {stats.ultimos.map(s => {
-                                const badge = badgeEstado(s);
-                                const total = calcularTotal(s);
-                                return (
-                                    <div key={s.id}
-                                         className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 bg-[#E8E5E0] dark:bg-[#2E2E2E]">
-                                            {tipoIcon(s)}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-sm truncate text-[#1C1917] dark:text-[#F0EEE9]">
-                                                {s.clienteNombre}
-                                            </p>
-                                            <p className="text-[10px] truncate text-[#A8A29E]">
-                                                {s.sedeNombre} · {s.fecha}
-                                            </p>
-                                        </div>
-                                        <div className="text-right flex-shrink-0">
-                                            <M
-                                                valor={total}
-                                                className="font-black text-sm text-[#1C1917] dark:text-[#F0EEE9] block"
-                                            />
-                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase ${badge.cls}`}>
-                                                {badge.label}
-                                            </span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-
-                            <button
-                                onClick={() => setVistaActual('historial')}
-                                className="text-center py-3 font-bold text-xs uppercase tracking-widest text-[#D13A28] dark:text-[#E8422F] hover:opacity-75 transition-opacity"
-                            >
-                                Ver historial completo →
+                    {data.pendientesCount > 0 && (
+                        <div className="mt-3 pt-3 border-t border-black/[0.06] dark:border-white/[0.06] flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-[#D48800] dark:text-[#F0A500]">
+                                {data.pendientesCount} pendiente{data.pendientesCount !== 1 ? 's' : ''} — <M valor={data.pendientesVal} />
+                            </span>
+                            <button onClick={() => setVistaActual('presupuestos')}
+                                className="text-[10px] font-black uppercase text-[#D13A28] dark:text-[#E8422F]">
+                                Ver →
                             </button>
                         </div>
                     )}
                 </div>
 
+                {/* Alertas — solo si hay */}
+                {totalAlertas > 0 && (
+                    <div className="space-y-2">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.3em] px-1 text-[#A8A29E]">
+                            Alertas ({totalAlertas})
+                        </p>
+
+                        {data.pptoVencidos.length > 0 && (
+                            <button onClick={() => setVistaActual('presupuestos')}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left active:scale-[0.98] transition-all bg-[#FEE2E2] dark:bg-[#3B1111] border border-[#D13A28]/20">
+                                <span className="text-lg">⏰</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[12px] font-black text-[#D13A28] dark:text-[#F87171]">
+                                        {data.pptoVencidos.length} presupuesto{data.pptoVencidos.length !== 1 ? 's' : ''} sin respuesta +7d
+                                    </p>
+                                    <p className="text-[10px] text-[#D13A28]/70 dark:text-[#F87171]/70 truncate">
+                                        {data.pptoVencidos.slice(0, 3).map(s => s.clienteNombre).join(', ')}
+                                    </p>
+                                </div>
+                                <span className="text-[10px] font-black text-[#D13A28] dark:text-[#F87171]">→</span>
+                            </button>
+                        )}
+
+                        {data.ordenesActivas.length > 0 && (
+                            <button onClick={() => setVistaActual('despacho')}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left active:scale-[0.98] transition-all bg-[#FEF3C7] dark:bg-[#2E2207] border border-[#D48800]/20">
+                                <span className="text-lg">📌</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[12px] font-black text-[#92400E] dark:text-[#FBBF24]">
+                                        {data.ordenesActivas.length} orden{data.ordenesActivas.length !== 1 ? 'es' : ''} de visita activa{data.ordenesActivas.length !== 1 ? 's' : ''}
+                                    </p>
+                                    <p className="text-[10px] text-[#92400E]/70 dark:text-[#FBBF24]/70 truncate">
+                                        {data.ordenesActivas.slice(0, 3).map(o => o.clienteNombre).join(', ')}
+                                    </p>
+                                </div>
+                                <span className="text-[10px] font-black text-[#92400E] dark:text-[#FBBF24]">→</span>
+                            </button>
+                        )}
+
+                        {alertasRadar.length > 0 && (
+                            <button onClick={() => setVistaActual('radar')}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left active:scale-[0.98] transition-all bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07]">
+                                <span className="text-lg">🚨</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                        {alertasRadar.length} equipo{alertasRadar.length !== 1 ? 's' : ''} sin mantenimiento
+                                    </p>
+                                    <p className="text-[10px] text-[#A8A29E] truncate">
+                                        {alertasRadar.slice(0, 3).map(a => a.clienteNombre).join(', ')}
+                                    </p>
+                                </div>
+                                <span className="text-[10px] font-black text-[#A8A29E]">→</span>
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Agenda del dia */}
+                <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.3em] px-1 mb-2 text-[#A8A29E]">
+                        Hoy ({data.agendaHoy.length})
+                    </p>
+                    {data.agendaHoy.length === 0 ? (
+                        <div className="text-center py-8 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                            <p className="text-2xl mb-1">📭</p>
+                            <p className="text-[12px] font-bold text-[#A8A29E]">Sin servicios para hoy</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-1.5">
+                            {data.agendaHoy.map(s => {
+                                const esPendiente = s.estado === 'PRESUPUESTO';
+                                return (
+                                    <div key={s.id}
+                                        onClick={() => setVistaActual('servicio-tecnico')}
+                                        className="flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer active:scale-[0.98] transition-all bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${esPendiente ? 'bg-[#D48800]' : s.estado === 'REALIZADO' ? 'bg-[#16A34A]' : 'bg-[#A8A29E]'}`} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">
+                                                {s.clienteNombre}
+                                            </p>
+                                            <p className="text-[10px] text-[#A8A29E] truncate">
+                                                {s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'} {s.sedeNombre}
+                                                {s.usuarioNombre ? ` — ${s.usuarioNombre}` : ''}
+                                            </p>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[var(--warning-bg)] text-[var(--warning-tx)]' : 'bg-[var(--success-bg)] text-[var(--success-tx)]'}`}>
+                                                {esPendiente ? 'Pendiente' : 'Cobrado'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Accesos rapidos */}
+                <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.3em] px-1 mb-2 text-[#A8A29E]">
+                        Acceso rapido
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button onClick={() => setVistaActual('servicio-tecnico')}
+                            className="rounded-2xl p-4 text-left active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                            <p className="text-lg mb-1">🔧</p>
+                            <p className="font-black text-[12px] text-white uppercase">Nuevo Servicio</p>
+                        </button>
+                        <button onClick={() => setVistaActual('venta')}
+                            className="rounded-2xl p-4 text-left active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                            <p className="text-lg mb-1">🛒</p>
+                            <p className="font-black text-[12px] text-white uppercase">Nueva Venta</p>
+                        </button>
+                        <button onClick={() => setVistaActual('clientes')}
+                            className="rounded-2xl p-4 text-left active:scale-95 transition-all bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                            <p className="text-lg mb-1">👥</p>
+                            <p className="font-black text-[12px] uppercase text-[#1C1917] dark:text-[#F0EEE9]">Clientes</p>
+                        </button>
+                        <button onClick={() => setVistaActual('finanzas')}
+                            className="rounded-2xl p-4 text-left active:scale-95 transition-all bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                            <p className="text-lg mb-1">💹</p>
+                            <p className="font-black text-[12px] uppercase text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</p>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {modalCierre && (
                 <CierreCajaModal
                     onClose={() => setModalCierre(false)}
-                    onArchivar={() => { setModalCierre(false); recargar(); }}
+                    onArchivar={() => { setModalCierre(false); cargar(); }}
                 />
             )}
         </div>

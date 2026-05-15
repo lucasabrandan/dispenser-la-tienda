@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 const NAV_ADMIN = [
-    { id: 'caja',             nombre: 'Caja',     icon: '🏠' },
+    { id: 'caja',             nombre: 'Panel',    icon: '🏠' },
     { id: 'venta',            nombre: 'Venta',    icon: '🛒' },
     { id: 'servicio-tecnico', nombre: 'Técnico',  icon: '🔧' },
     { id: 'historial',        nombre: 'Historial',icon: '📋' },

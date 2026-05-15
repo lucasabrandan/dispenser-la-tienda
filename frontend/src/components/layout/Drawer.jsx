@@ -6,7 +6,7 @@ import { useBadges } from '../../hooks/useBadges';
 // IDs deben coincidir EXACTAMENTE con App.js, Sidebar y BottomNav
 // ─────────────────────────────────────────────────────────────────────────────
 const MENU_OPERACIONES_ADMIN = [
-    { id: 'caja',             nombre: '🏠 Caja'             },
+    { id: 'caja',             nombre: '🏠 Panel'            },
     { id: 'venta',            nombre: '🛒 Venta / Insumos'  },
     { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico' },
     { id: 'historial',        nombre: '📋 Historial'        },
