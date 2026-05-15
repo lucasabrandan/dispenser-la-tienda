@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { generarPDFHistorialCliente } from '../../utils/pdf/historialCliente';
 
 function formatFecha(f) {
     if (!f) return '-';
@@ -58,10 +59,18 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                             {cliente?.nombre}
                         </h2>
                     </div>
-                    <button onClick={onClose}
-                        className="w-9 h-9 flex items-center justify-center rounded-2xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] font-black text-sm hover:opacity-70 transition-opacity">
-                        ✕
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {esAdmin && servicios.length > 0 && (
+                            <button onClick={() => generarPDFHistorialCliente({ cliente, servicios })}
+                                className="h-9 px-3 flex items-center justify-center rounded-2xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[10px] uppercase hover:opacity-90 active:scale-95 transition-all">
+                                PDF
+                            </button>
+                        )}
+                        <button onClick={onClose}
+                            className="w-9 h-9 flex items-center justify-center rounded-2xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] font-black text-sm hover:opacity-70 transition-opacity">
+                            ✕
+                        </button>
+                    </div>
                 </div>
 
                 {/* Contenido scrolleable */}
