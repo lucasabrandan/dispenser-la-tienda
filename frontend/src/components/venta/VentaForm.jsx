@@ -14,10 +14,10 @@ const TITULOS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-export default function VentaForm({ onSaved, clienteInicialId = null }) {
-    const hook      = useVentaForm(onSaved, clienteInicialId);
+export default function VentaForm({ onSaved, clienteInicialId = null, ventaParaEditar = null }) {
+    const hook      = useVentaForm(onSaved, clienteInicialId, ventaParaEditar);
     const mostrador = useMostrador();
-    const [paso, setPaso] = useState(0);
+    const [paso, setPaso] = useState(ventaParaEditar ? 1 : 0);
 
     const subtituloPaso1 = hook.productos.length > 0
         ? `${hook.productos.length} producto${hook.productos.length > 1 ? 's' : ''} cargado${hook.productos.length > 1 ? 's' : ''}`

@@ -38,6 +38,7 @@ export default function VentaList({
     onConfirmar,
     onEliminar,
     onPDF,
+    onDuplicar,
 }) {
     return (
         <div>
@@ -52,7 +53,14 @@ export default function VentaList({
                 </div>
             ) : (
                 <div className="flex flex-col gap-3">
-                    {ventas.map(v => (
+                    {ventas.map(v => {
+                        const esPendiente = v.estado === 'PRESUPUESTO';
+                        const diasPendiente = esPendiente && v.fecha
+                            ? Math.floor((Date.now() - new Date(v.fecha + 'T00:00:00').getTime()) / 86400000)
+                            : 0;
+                        const antiguedadCritica = diasPendiente > 7;
+
+                        return (
                         <div key={v.id}
                             className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden transition-colors">
 
@@ -65,6 +73,11 @@ export default function VentaList({
                                             <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase ${badgeClass(v)}`}>
                                                 {badgeLabel(v)}
                                             </span>
+                                            {esPendiente && diasPendiente > 0 && (
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${antiguedadCritica ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]' : 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'}`}>
+                                                    {diasPendiente}d
+                                                </span>
+                                            )}
                                         </div>
                                         <h4 className="text-[15px] font-extrabold text-[#1C1917] dark:text-[#F0EEE9] tracking-tight leading-tight">
                                             {v.clienteNombre}
@@ -116,6 +129,27 @@ export default function VentaList({
                                     📄
                                 </button>
 
+                                {/* Duplicar */}
+                                {onDuplicar && (
+                                    <button
+                                        onClick={() => onDuplicar(v)}
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                        title="Duplicar como nueva venta">
+                                        ⧉
+                                    </button>
+                                )}
+
+                                {/* WhatsApp */}
+                                {v.clienteTelefono && (
+                                    <a
+                                        href={`https://wa.me/${v.clienteTelefono.replace(/\D/g, '')}?text=${encodeURIComponent(esPendiente ? `Hola ${v.clienteNombre}, te enviamos el presupuesto de venta #${v.id} por $${Math.round(calcularTotal(v)).toLocaleString('es-AR')}. Quedamos a tu disposición.` : `Hola ${v.clienteNombre}, gracias por tu compra #${v.id}.`)}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#25D366]/15 text-[#25D366] active:scale-90 transition-all"
+                                        title="Enviar WhatsApp">
+                                        💬
+                                    </a>
+                                )}
+
                                 <div className="flex-1" />
 
                                 {/* Confirmar / Cobrar — solo pendientes */}
@@ -137,7 +171,8 @@ export default function VentaList({
                                 </button>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

@@ -72,6 +72,17 @@ export default function VentaStats({ stats }) {
                     valor total pendiente
                 </p>
             </div>
+
+            {/* Ganancia / Margen */}
+            {stats.gananciaTotal > 0 && (
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] p-4 rounded-2xl border border-black/[0.07] dark:border-white/[0.07] border-l-[3px] border-l-[#D48800]">
+                    <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-widest">Ganancia mes</p>
+                    <M valor={stats.gananciaTotal} className="text-[22px] font-black text-[#D48800] dark:text-[#F0A500] mt-1 block leading-none" />
+                    <p className="text-[9px] text-[#A8A29E] font-bold mt-1 uppercase">
+                        {stats.totalMes > 0 ? `${Math.round((stats.gananciaTotal / stats.totalMes) * 100)}% margen` : 'margen neto'}
+                    </p>
+                </div>
+            )}
         </div>
     );
 }

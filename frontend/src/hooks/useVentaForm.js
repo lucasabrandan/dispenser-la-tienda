@@ -2,17 +2,27 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
+import { registrarProductosVendidos } from '../components/venta/PasoProductosVenta';
 
-export function useVentaForm(onSaved, clienteInicialId = null) {
+export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar = null) {
     const [clientes,  setClientes]  = useState([]);
     const [repuestos, setRepuestos] = useState([]);
-    const [clienteId, setClienteId] = useState(clienteInicialId ? String(clienteInicialId) : null);
-    const [productos, setProductos] = useState([]);
+    const [clienteId, setClienteId] = useState(clienteInicialId ? String(clienteInicialId) : (ventaParaEditar?.clienteId ? String(ventaParaEditar.clienteId) : null));
+    const [productos, setProductos] = useState(() => {
+        if (!ventaParaEditar?.items?.length) return [];
+        return ventaParaEditar.items.flatMap(it => (it.repuestosUsados || []).map(r => ({
+            id: r.id, nombre: r.nombre, sku: r.sku || '',
+            precio: parseFloat(r.precio) || 0,
+            cantidad: r.cantidad || 1,
+            subtotal: (r.cantidad || 1) * (parseFloat(r.precio) || 0),
+            fotoUrl: r.fotoUrl || null,
+        })));
+    });
     const [repuestoElegido, setRepuestoElegido] = useState(null);
-    const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(0);
+    const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(ventaParaEditar?.descuentoPorcentaje || 0);
     const [costoEnvio, setCostoEnvio] = useState('');
-    const [fechaVenta, setFechaVenta] = useState(new Date().toISOString().split('T')[0]);
-    const [leyenda, setLeyenda] = useState('');
+    const [fechaVenta, setFechaVenta] = useState(ventaParaEditar?.fecha || new Date().toISOString().split('T')[0]);
+    const [leyenda, setLeyenda] = useState(ventaParaEditar?.observaciones || '');
     const [modalClienteAbierto, setModalClienteAbierto] = useState(false);
     const [nombreClientePrellenado, setNombreClientePrellenado] = useState('');
 
@@ -197,6 +207,7 @@ export function useVentaForm(onSaved, clienteInicialId = null) {
             });
 
             toast.success('¡Venta guardada!', { id: loading });
+            registrarProductosVendidos(productos);
             resetForm();
             if (onSaved) onSaved();
         } catch (err) {

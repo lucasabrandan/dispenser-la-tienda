@@ -1,7 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Label, NextBtn, BackBtn } from '../servicio/ServicioUI';
 import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
 import RepuestoRapidoModal from '../repuesto/RepuestoRapidoModal';
+
+// Productos frecuentes basados en historial local
+const FREQ_KEY = 'venta_productos_frecuentes';
+function getProductosFrecuentes() {
+    try {
+        const data = JSON.parse(localStorage.getItem(FREQ_KEY) || '{}');
+        return Object.entries(data)
+            .sort((a, b) => b[1].count - a[1].count)
+            .slice(0, 5)
+            .map(([, v]) => v);
+    } catch { return []; }
+}
+export function registrarProductosVendidos(productos) {
+    try {
+        const data = JSON.parse(localStorage.getItem(FREQ_KEY) || '{}');
+        productos.forEach(p => {
+            const key = String(p.id);
+            if (!data[key]) data[key] = { id: p.id, nombre: p.nombre, sku: p.sku, precio: p.precio, fotoUrl: p.fotoUrl, count: 0 };
+            data[key].count += p.cantidad || 1;
+            data[key].precio = p.precio; // actualizar precio
+        });
+        localStorage.setItem(FREQ_KEY, JSON.stringify(data));
+    } catch { /* silenciar */ }
+}
 
 export default function PasoProductosVenta({ hook, onNext, onBack }) {
     const {
@@ -13,11 +37,45 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
     } = hook;
 
     const [sheetOpen, setSheetOpen] = useState(false);
+    const frecuentes = useMemo(() => getProductosFrecuentes(), []);
+
+    const agregarFrecuente = (p) => {
+        setProductos(prev => {
+            const idx = prev.findIndex(x => x.id === p.id);
+            if (idx > -1) {
+                const nuevos = [...prev];
+                nuevos[idx] = { ...nuevos[idx], cantidad: nuevos[idx].cantidad + 1, subtotal: (nuevos[idx].cantidad + 1) * nuevos[idx].precio };
+                return nuevos;
+            }
+            return [...prev, { id: p.id, nombre: p.nombre, sku: p.sku, precio: p.precio, cantidad: 1, subtotal: p.precio, fotoUrl: p.fotoUrl || null }];
+        });
+    };
 
     const puedeAvanzar = productos.length > 0;
 
     return (
         <div className="flex flex-col gap-4 px-5 pb-6">
+
+            {/* ── Productos frecuentes ── */}
+            {frecuentes.length > 0 && (
+                <div>
+                    <Label>Frecuentes</Label>
+                    <div className="flex flex-wrap gap-2">
+                        {frecuentes.map(p => (
+                            <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => agregarFrecuente(p)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold active:scale-95 transition-all bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.07] dark:border-white/[0.07]"
+                            >
+                                <span className="text-[#D13A28] dark:text-[#E8422F]">+</span>
+                                {p.nombre}
+                                <span className="text-[10px] text-[#A8A29E]">${Math.round(p.precio).toLocaleString('es-AR')}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* ── Botón abrir selector de productos ── */}
             <div>

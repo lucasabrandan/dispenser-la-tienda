@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useVentaManager } from '../../hooks/useVentaManager';
 import VentaStats  from './VentaStats';
 import VentaList   from './VentaList';
@@ -28,10 +28,26 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
         filtros,
     } = useVentaManager();
 
+    const [ventaDuplicar, setVentaDuplicar] = useState(null);
+
     // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
     useEffect(() => {
         if (clienteInicial) setModalCrear(true);
     }, [clienteInicial, setModalCrear]);
+
+    // Duplicar: copia todo menos id/estado/nroDocumento, con fecha de hoy
+    const duplicarVenta = (v) => {
+        const copia = {
+            ...v,
+            id: undefined,
+            estado: 'PRESUPUESTO',
+            nroDocumento: undefined,
+            fecha: new Date().toISOString().slice(0, 10),
+        };
+        setVentaDuplicar(copia);
+        setModalCrear(true);
+    };
+    const cerrarModalDuplicar = () => { cerrarModal(); setVentaDuplicar(null); };
 
     return (
         <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] p-4 pb-28 font-sans transition-colors">
@@ -99,6 +115,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                     onConfirmar={confirmarVenta}
                     onEliminar={eliminarVenta}
                     onPDF={generarPDF}
+                    onDuplicar={duplicarVenta}
                 />
             )}
 
@@ -116,24 +133,26 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                         <div className="sticky top-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] px-5 py-4 border-b border-black/[0.08] dark:border-white/[0.07] flex justify-between items-center z-10 md:rounded-t-3xl">
                             <div>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
-                                    {ventaEditar ? 'Editar Venta' : 'Nueva Venta'}
+                                    {ventaDuplicar ? 'Duplicar Venta' : ventaEditar ? 'Editar Venta' : 'Nueva Venta'}
                                 </h3>
                                 <p className="text-[11px] text-[#A8A29E] mt-0.5">
-                                    {ventaEditar
-                                        ? `${ventaEditar.estado === 'REALIZADO' ? 'Venta' : 'Presupuesto'} #${ventaEditar.id}`
-                                        : 'Seleccioná cliente y productos'}
+                                    {ventaDuplicar
+                                        ? 'Copia de venta anterior — ajustá y guardá'
+                                        : ventaEditar
+                                            ? `${ventaEditar.estado === 'REALIZADO' ? 'Venta' : 'Presupuesto'} #${ventaEditar.id}`
+                                            : 'Seleccioná cliente y productos'}
                                 </p>
                             </div>
                             <button
-                                onClick={cerrarModal}
+                                onClick={cerrarModalDuplicar}
                                 className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90"
                             >
                                 ✕
                             </button>
                         </div>
                         <VentaForm
-                            onSaved={() => { cerrarModal(); cargarVentas(); if (onClienteConsumido) onClienteConsumido(); }}
-                            ventaParaEditar={ventaEditar}
+                            onSaved={() => { cerrarModalDuplicar(); cargarVentas(); if (onClienteConsumido) onClienteConsumido(); }}
+                            ventaParaEditar={ventaEditar || ventaDuplicar}
                             clienteInicialId={clienteInicial?.id}
                         />
                     </div>
