@@ -102,6 +102,46 @@ export function exportarVentasCSV(ventas) {
     exportarCSV(filas, columnas, `ventas_${fecha}.csv`);
 }
 
+/** Exporta balance mensual — resumen + operaciones */
+export function exportarBalanceCSV(stats, mes) {
+    const imp = stats.facturacion * 0.30;
+    const resumen = [
+        { concepto: 'Facturación bruta',             monto: stats.facturacion },
+        { concepto: 'Impuestos (30%)',                monto: -imp },
+        { concepto: 'Repuestos / costos directos',    monto: -stats.costoRepuestos },
+        { concepto: 'Gastos operacionales',            monto: -stats.gastosVarios },
+        { concepto: 'GANANCIA REAL',                   monto: stats.gananciaReal },
+    ];
+
+    const lineas = ['\uFEFF'];
+    lineas.push(`Balance - ${mes}`);
+    lineas.push('');
+    lineas.push('Concepto,Monto ($)');
+    resumen.forEach(r => lineas.push(`${escapar(r.concepto)},${r.monto}`));
+
+    if (stats.transacciones?.length) {
+        lineas.push('');
+        lineas.push('Operaciones del mes');
+        lineas.push('Fecha,Tipo,Concepto,Costo ($),Venta ($),Margen (%)');
+        stats.transacciones.forEach(t => {
+            const costo  = parseFloat(t.costo || 0);
+            const venta  = parseFloat(t.venta || 0);
+            const margen = venta > 0 ? Math.round((venta - costo) / venta * 100) : 0;
+            lineas.push([escapar(t.fecha), escapar(t.tipo), escapar(t.concepto), costo, venta, margen].join(','));
+        });
+    }
+
+    const blob = new Blob([lineas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `balance_${mes}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
 /** Exporta gastos — tabla plana */
 export function exportarGastosCSV(gastos, mes) {
     const columnas = [

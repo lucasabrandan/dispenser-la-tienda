@@ -766,41 +766,6 @@ export async function dibujarQRWhatsApp(doc, { x, y, telefono, mensaje = '', tit
     }
 }
 
-export async function dibujarQRGoogle(doc, { y, link }) {
-    try {
-        const QRCode = await import('qrcode').catch(() => null);
-        if (!QRCode) return dibujarQRPlaceholderSimple(doc, M, y);
-
-        const dataUrl = await QRCode.default.toDataURL(link, { width: 140, margin: 1, color: { dark: '#1F9D55', light: '#ffffff' } });
-
-        const QR_W = 24;
-        const QR_H = 24;
-
-        doc.addImage(dataUrl, 'PNG', M, y, QR_W, QR_H);
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.15);
-        doc.roundedRect(M, y, QR_W, QR_H, 1, 1, 'S');
-
-        doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.dark);
-        doc.text('¡Dejanos tu reseña en Google!', M + QR_W + 6, y + 8);
-
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Tu opinión nos ayuda a mejorar.', M + QR_W + 6, y + 14);
-
-        doc.setFontSize(9);
-        doc.setTextColor(255, 180, 0);
-        doc.text('* * * * *', M + QR_W + 6, y + 21);
-
-        return y + QR_H + 8;
-    } catch {
-        return dibujarQRPlaceholderSimple(doc, M, y);
-    }
-}
-
 function dibujarQRPlaceholder(doc, x, y) {
     doc.setFillColor(...C.grayBg);
     doc.setDrawColor(...C.grayBorder);
@@ -811,17 +776,6 @@ function dibujarQRPlaceholder(doc, x, y) {
     doc.setTextColor(...C.grayText);
     doc.text('[QR WhatsApp]', M + 4, y + 20);
     return y + 44;
-}
-
-function dibujarQRPlaceholderSimple(doc, x, y) {
-    doc.setFillColor(...C.grayBg);
-    doc.setDrawColor(...C.grayBorder);
-    doc.setLineWidth(0.2);
-    doc.roundedRect(x, y, 24, 24, 1.5, 1.5, 'FD');
-    doc.setFontSize(T.label);
-    doc.setTextColor(...C.grayText);
-    doc.text('QR', x + 12, y + 14, { align: 'center' });
-    return y + 32;
 }
 
 // ── RESUMEN EJECUTIVO (multi-equipo, página 1) ────────────────────────────────

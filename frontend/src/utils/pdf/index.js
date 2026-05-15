@@ -95,7 +95,7 @@ function construirFilasItem(item) {
 
 async function generarSingleTecnico(doc, {
     item, cliente, sede, tipo, y, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, proximoMantenimiento, googleReviewLink,
+    firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, proximoMantenimiento,
     incluirFirmas = true, descuentoPorcentaje = 0, leyenda = '',
 }) {
     const pageW = doc.internal.pageSize.getWidth();
@@ -603,7 +603,7 @@ async function generarSinglePresupuesto(doc, {
 
 async function generarMultiTecnico(doc, {
     ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico, y: yInicial,
-    firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, googleReviewLink, leyenda,
+    firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, leyenda,
     incluirFirmas = true, descuentoPorcentaje = 0,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
@@ -1405,7 +1405,6 @@ export const generarPDF = async ({
     proximoMantenimiento = null,
     garantiaTexto      = null,
     estadoFinal        = null,
-    googleReviewLink   = null,
     incluirFirmas      = true,
     aclaracionCliente  = '',
 }) => {
@@ -1455,7 +1454,7 @@ export const generarPDF = async ({
         firmaTecnico:  incluirFirmas ? firmaTecnico  : null,
         incluirFirmas, aclaracionCliente,
         descuentoPorcentaje, garantiaTexto,
-        proximoMantenimiento, googleReviewLink, leyenda,
+        proximoMantenimiento, leyenda,
     };
 
     if (tipoDetectado === 'COMPROBANTE') {

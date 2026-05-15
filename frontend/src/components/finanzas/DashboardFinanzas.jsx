@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
-import { exportarGastosCSV } from '../../utils/exportarCSV';
+import { exportarGastosCSV, exportarBalanceCSV } from '../../utils/exportarCSV';
 import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnicos';
 
 const inputCls = `
@@ -42,6 +42,10 @@ function TabBalance({ filtroMes, setFiltroMes }) {
                 <button onClick={cargar} disabled={cargando}
                     className="px-4 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase active:scale-95 transition-all disabled:opacity-50">
                     {cargando ? 'Cargando...' : 'Actualizar'}
+                </button>
+                <button onClick={() => exportarBalanceCSV(stats, filtroMes)}
+                    className="px-4 py-3 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] font-black text-[11px] uppercase active:scale-95 transition-all border border-black/[0.07] dark:border-white/[0.07]">
+                    Exportar CSV
                 </button>
             </div>
 
