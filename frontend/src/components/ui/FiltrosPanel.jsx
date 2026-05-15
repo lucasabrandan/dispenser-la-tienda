@@ -33,7 +33,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
                 className={`px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide transition-all active:scale-95 ${
                     activo
                         ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                        : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                        : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
                 }`}
             >
                 {label}
@@ -42,7 +42,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
     };
 
     return (
-        <div className="rounded-2xl p-4 mb-3 space-y-3 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+        <div className="rounded-2xl p-4 mb-3 space-y-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
             {/* FILA 1 — Períodos rápidos + selector mes + rango */}
             <div className="flex flex-wrap gap-2 items-center">
                 {btnRapido('MES',     'Este mes')}
@@ -54,7 +54,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
                     <select
                         value={mesSelector}
                         onChange={e => aplicarMesSelector(e.target.value)}
-                        className={`px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none transition-all bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] ${
+                        className={`px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none transition-all bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] ${
                             mesSelector
                                 ? 'border-[1.5px] border-[#D13A28] dark:border-[#E8422F]'
                                 : 'border border-transparent'
@@ -71,7 +71,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
                         className={`px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase transition-all active:scale-95 ${
                             mostrarRango
                                 ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
                         }`}
                     >
                         Rango
@@ -91,14 +91,14 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
                         type="date"
                         value={desdeLocal}
                         onChange={e => setDesdeLocal(e.target.value)}
-                        className="px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]"
+                        className="px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]"
                     />
                     <span className="text-[10px] font-bold text-[#A8A29E] uppercase">Hasta</span>
                     <input
                         type="date"
                         value={hastaLocal}
                         onChange={e => setHastaLocal(e.target.value)}
-                        className="px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]"
+                        className="px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]"
                     />
                     <button
                         onClick={() => { aplicarRango(desdeLocal, hastaLocal); setMostrarRango(false); }}
@@ -108,7 +108,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
                     </button>
                     <button
                         onClick={() => { setMostrarRango(false); setDesdeLocal(''); setHastaLocal(''); aplicarRapido('MES'); }}
-                        className="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all active:scale-95 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] hover:opacity-80"
+                        className="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] hover:opacity-80"
                     >
                         Limpiar
                     </button>
@@ -129,7 +129,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
                                         className={`px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase transition-all active:scale-95 ${
                                             activo
                                                 ? 'bg-[#1C1917] dark:bg-[#F0EEE9] text-[#F0EEE9] dark:text-[#1C1917]'
-                                                : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                                : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
                                         }`}
                                     >
                                         {e.label}
@@ -147,7 +147,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
                                 placeholder={placeholderBusqueda}
                                 value={busqueda}
                                 onChange={e => setBusqueda(e.target.value)}
-                                className="w-full pl-8 pr-3 py-2 rounded-xl text-[12px] font-medium outline-none transition-all border border-black/[0.07] dark:border-white/[0.07] focus:border-[#D13A28] dark:focus:border-[#E8422F] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E]"
+                                className="w-full pl-8 pr-3 py-2 rounded-xl text-[12px] font-medium outline-none transition-all border border-black/[0.07] dark:border-white/[0.07] focus:border-[#D13A28] dark:focus:border-[#E8422F] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E]"
                             />
                         </div>
                     )}

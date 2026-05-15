@@ -9,7 +9,7 @@ const PRIORIDADES = [
     { value: 'URGENTE', label: 'Urgente' },
 ];
 
-const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
+const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
 const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
 
 /**
@@ -68,11 +68,11 @@ export default function ModalDespachoRapido({ presupuesto, onCreada, onCerrar })
     return (
         <div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
             onClick={onCerrar}>
-            <div className="w-full sm:max-w-md bg-[#EDEAE6] dark:bg-[#242424] rounded-t-3xl sm:rounded-3xl shadow-2xl"
+            <div className="w-full sm:max-w-md bg-[#FFFFFF] dark:bg-[#242424] rounded-t-3xl sm:rounded-3xl shadow-2xl"
                 onClick={e => e.stopPropagation()}>
 
                 {/* Handle */}
-                <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] sm:hidden" />
+                <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] sm:hidden" />
 
                 {/* Header */}
                 <div className="px-5 pt-5 pb-4 border-b border-black/[0.07] dark:border-white/[0.07]">
@@ -125,7 +125,7 @@ export default function ModalDespachoRapido({ presupuesto, onCreada, onCerrar })
                 {/* Botones */}
                 <div className="flex gap-2 px-5 pb-6">
                     <button onClick={onCerrar}
-                        className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                        className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
                         Cancelar
                     </button>
                     <button onClick={handleGuardar} disabled={guardando || !tecnicoId || !fecha}

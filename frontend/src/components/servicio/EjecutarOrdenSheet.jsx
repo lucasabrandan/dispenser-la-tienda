@@ -167,13 +167,13 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
     };
 
     return (
-        <div className="fixed inset-0 z-[2000] flex flex-col bg-[#C8C4BE] dark:bg-[#141414]">
+        <div className="fixed inset-0 z-[2000] flex flex-col bg-[#F5F3F1] dark:bg-[#141414]">
 
             {/* Header */}
-            <div className="shrink-0 px-4 pt-4 pb-3 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
+            <div className="shrink-0 px-4 pt-4 pb-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
                 <div className="flex items-center gap-3">
                     <button onClick={onCerrar}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-90">
+                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-90">
                         ←
                     </button>
                     <div className="flex-1 min-w-0">
@@ -194,7 +194,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                 {/* Steps */}
                 <div className="flex gap-1 mt-3">
                     {['detalle', 'firmas'].map((s, i) => (
-                        <div key={s} className={`flex-1 h-1 rounded-full transition-colors ${paso === s || (i === 0) ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#C0BCB6] dark:bg-[#2E2E2E]'} ${paso === 'firmas' && s === 'firmas' ? 'bg-[#D13A28] dark:bg-[#E8422F]' : ''}`} />
+                        <div key={s} className={`flex-1 h-1 rounded-full transition-colors ${paso === s || (i === 0) ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E]'} ${paso === 'firmas' && s === 'firmas' ? 'bg-[#D13A28] dark:bg-[#E8422F]' : ''}`} />
                     ))}
                 </div>
             </div>
@@ -211,7 +211,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                                 Equipos y trabajo asignado
                             </p>
                             {servicio.items?.map((it, i) => (
-                                <div key={i} className="p-3 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.06]">
+                                <div key={i} className="p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.06]">
                                     <div className="flex items-start justify-between gap-2 mb-1">
                                         <p className="text-[13px] font-black text-[#D13A28] dark:text-[#E8422F]">
                                             {it.equipoSerial}
@@ -231,7 +231,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                                     {it.repuestosUsados?.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-black/[0.06]">
                                             {it.repuestosUsados.map((r, ri) => (
-                                                <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                                <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
                                                     {r.cantidad}× {r.nombre}
                                                 </span>
                                             ))}
@@ -249,7 +249,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                             <button
                                 type="button"
                                 onClick={() => setSheetRepuestosOpen(true)}
-                                className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-[13px] border border-dashed border-[#C0BCB6] dark:border-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] bg-[#EDEAE6] dark:bg-[#1C1C1C] active:scale-[0.98] transition-all"
+                                className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-[13px] border border-dashed border-[#E8E5E0] dark:border-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] bg-[#FFFFFF] dark:bg-[#1C1C1C] active:scale-[0.98] transition-all"
                             >
                                 <span>
                                     {repuestosAgregados.length > 0
@@ -261,13 +261,13 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
 
                             {/* Lista de repuestos seleccionados con miniatura */}
                             {repuestosAgregados.length > 0 && (
-                                <div className="rounded-xl overflow-hidden bg-[#D8D4CE] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
+                                <div className="rounded-xl overflow-hidden bg-[#EFEDEA] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
                                     {repuestosAgregados.map((r, i) => (
                                         <div key={r.id ?? i}
                                             className={`px-3 py-2.5 flex items-center gap-3 ${i < repuestosAgregados.length - 1 ? 'border-b border-black/[0.07] dark:border-white/[0.07]' : ''}`}>
                                             {r.fotoUrl && (
                                                 <img src={r.fotoUrl} alt={r.nombre}
-                                                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#C0BCB6] dark:bg-[#242424]"
+                                                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#E8E5E0] dark:bg-[#242424]"
                                                     onError={e => { e.target.style.display = 'none'; }} />
                                             )}
                                             <div className="flex-1 min-w-0">
@@ -300,7 +300,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                                 onChange={e => setObservaciones(e.target.value)}
                                 placeholder="Anotá cualquier detalle del trabajo realizado..."
                                 rows={3}
-                                className="w-full px-3 py-2.5 rounded-xl text-[13px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] outline-none resize-none"
+                                className="w-full px-3 py-2.5 rounded-xl text-[13px] border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] outline-none resize-none"
                             />
                         </section>
 
@@ -321,7 +321,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                         </div>
 
                         {/* Desglose */}
-                        <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
+                        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
                             style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                             <div className="px-4 py-3 space-y-2.5">
                                 <div className="flex justify-between text-[13px]">
@@ -382,7 +382,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                             onClick={() => setIncluirFirmas(v => !v)}
                             className="flex items-center gap-2 text-[11px] text-[#A8A29E] font-bold active:scale-95 transition-all"
                         >
-                            <span className={`w-8 h-4 rounded-full flex items-center transition-colors ${incluirFirmas ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#C0BCB6] dark:bg-[#2E2E2E]'}`}>
+                            <span className={`w-8 h-4 rounded-full flex items-center transition-colors ${incluirFirmas ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E]'}`}>
                                 <span className={`w-3 h-3 rounded-full bg-white shadow transition-transform mx-0.5 ${incluirFirmas ? 'translate-x-4' : 'translate-x-0'}`} />
                             </span>
                             Incluir firmas en el PDF
@@ -390,7 +390,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
 
                         {/* Firma técnico */}
                         {incluirFirmas && (!editandoFirma ? (
-                            <div className="flex items-center gap-2 px-3 py-3 rounded-xl bg-[#EDEAE6] dark:bg-[#242424]">
+                            <div className="flex items-center gap-2 px-3 py-3 rounded-xl bg-[#FFFFFF] dark:bg-[#242424]">
                                 <span className="text-[12px] font-bold text-[#16A34A]">✓ Firma del técnico guardada</span>
                                 <button onClick={() => setEditandoFirma(true)}
                                     className="ml-auto text-[11px] font-bold text-[#A8A29E]">Cambiar</button>

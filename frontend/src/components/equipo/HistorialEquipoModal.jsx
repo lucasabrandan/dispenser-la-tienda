@@ -7,7 +7,7 @@ function Badge({ estado }) {
         PRESUPUESTO: { label: 'Pendiente',  cls: 'bg-[#D48800]/10 text-[#D48800]' },
         RECHAZADO:   { label: 'Rechazado',  cls: 'bg-[#D13A28]/10 text-[#D13A28]' },
     };
-    const { label, cls } = map[estado] || { label: estado, cls: 'bg-[#C0BCB6] text-[#57534E]' };
+    const { label, cls } = map[estado] || { label: estado, cls: 'bg-[#E8E5E0] text-[#57534E]' };
     return (
         <span className={`text-[8px] font-black px-2 py-0.5 rounded-lg uppercase ${cls}`}>
             {label}
@@ -49,12 +49,12 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
             onClick={onClose}
         >
             <div
-                className="w-full rounded-t-[2rem] max-h-[92vh] flex flex-col shadow-2xl bg-[#EDEAE6] dark:bg-[#1C1C1C]"
+                className="w-full rounded-t-[2rem] max-h-[92vh] flex flex-col shadow-2xl bg-[#FFFFFF] dark:bg-[#1C1C1C]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}
                 <div className="flex justify-center pt-3 pb-1 shrink-0">
-                    <div className="w-10 h-1 rounded-full bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                    <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
                 </div>
 
                 {/* Header del equipo */}
@@ -74,7 +74,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                         </div>
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#A8A29E] active:scale-90"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E] active:scale-90"
                         >
                             ✕
                         </button>
@@ -82,15 +82,15 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
 
                     {/* Stats rápidas */}
                     <div className="grid grid-cols-3 gap-2 mt-4">
-                        <div className="bg-[#D8D4CE] dark:bg-[#242424] rounded-xl p-3 text-center">
+                        <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
                             <p className="text-[18px] font-black text-[#D13A28] dark:text-[#E8422F] leading-none">{historial.length}</p>
                             <p className="text-[8px] font-black text-[#A8A29E] uppercase mt-0.5">Servicios</p>
                         </div>
-                        <div className="bg-[#D8D4CE] dark:bg-[#242424] rounded-xl p-3 text-center">
+                        <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
                             <p className="text-[18px] font-black text-[#D48800] dark:text-[#F0A500] leading-none">${fmt(totalGastado)}</p>
                             <p className="text-[8px] font-black text-[#A8A29E] uppercase mt-0.5">Total facturado</p>
                         </div>
-                        <div className="bg-[#D8D4CE] dark:bg-[#242424] rounded-xl p-3 text-center">
+                        <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
                             <p className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">
                                 {diasSinAtender !== null ? diasSinAtender : '—'}
                             </p>
@@ -108,7 +108,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                     ) : (
                         <div className="relative">
                             {/* Línea vertical del timeline */}
-                            <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                            <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
 
                             <div className="space-y-4">
                                 {historial.map((s, idx) => {
@@ -123,13 +123,13 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                 <div className={`w-4 h-4 rounded-full border-2 ${
                                                     esPrimero
                                                         ? 'bg-[#D13A28] dark:bg-[#E8422F] border-[#D13A28] dark:border-[#E8422F]'
-                                                        : 'bg-[#EDEAE6] dark:bg-[#1C1C1C] border-[#C0BCB6] dark:border-[#2E2E2E]'
+                                                        : 'bg-[#FFFFFF] dark:bg-[#1C1C1C] border-[#E8E5E0] dark:border-[#2E2E2E]'
                                                 }`} />
                                             </div>
 
                                             {/* Contenido */}
                                             <div className="flex-1 pb-1">
-                                                <div className="bg-[#D8D4CE] dark:bg-[#242424] rounded-2xl p-4 border border-black/[0.05] dark:border-white/[0.05]">
+                                                <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-2xl p-4 border border-black/[0.05] dark:border-white/[0.05]">
                                                     {/* Fecha + estado */}
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                     {repuestos.length > 0 && (
                                                         <div className="flex flex-wrap gap-1 mb-2">
                                                             {repuestos.map((r, i) => (
-                                                                <span key={i} className="text-[8px] font-black px-2 py-0.5 rounded-lg bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] uppercase">
+                                                                <span key={i} className="text-[8px] font-black px-2 py-0.5 rounded-lg bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] uppercase">
                                                                     {r.cantidad}× {r.nombre}
                                                                 </span>
                                                             ))}

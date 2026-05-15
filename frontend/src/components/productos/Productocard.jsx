@@ -34,7 +34,7 @@ export default function ProductoCard({
 
     return (
         <div className={`
-            bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl
+            bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl
             border border-black/[0.07] dark:border-white/[0.07]
             overflow-hidden transition-all
             ${estaSeleccionado ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''}
@@ -49,7 +49,7 @@ export default function ProductoCard({
                             className={`w-6 h-6 rounded-lg border-2 flex-shrink-0 flex items-center justify-center transition-all ${
                                 estaSeleccionado
                                     ? 'bg-[#D13A28] dark:bg-[#E8422F] border-[#D13A28] dark:border-[#E8422F] text-white'
-                                    : 'border-[#C0BCB6] dark:border-[#2E2E2E] bg-[#EDEAE6] dark:bg-[#242424]'
+                                    : 'border-[#E8E5E0] dark:border-[#2E2E2E] bg-[#FFFFFF] dark:bg-[#242424]'
                             }`}
                         >
                             {estaSeleccionado && <span className="text-xs font-black">✓</span>}
@@ -58,7 +58,7 @@ export default function ProductoCard({
 
                     {/* Foto */}
                     <div
-                        className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden flex-shrink-0 bg-[#C0BCB6] dark:bg-[#2E2E2E]"
+                        className="w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden flex-shrink-0 bg-[#E8E5E0] dark:bg-[#2E2E2E]"
                         onClick={() => modoSeleccion && onToggleSeleccion(producto.id)}
                     >
                         {producto.fotoUrl ? (
@@ -95,7 +95,7 @@ export default function ProductoCard({
                             </button>
                             <button
                                 onClick={() => onEditar(producto)}
-                                className="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] px-2 md:px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase hover:opacity-80 transition-all">
+                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] px-2 md:px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase hover:opacity-80 transition-all">
                                 ✏️ Editar
                             </button>
                             <button
@@ -112,12 +112,12 @@ export default function ProductoCard({
                     <div className="mt-3 pt-3 border-t border-black/[0.07] dark:border-white/[0.07] space-y-2">
                         {/* Descripción si existe */}
                         {producto.descripcion?.trim() && (
-                            <div className="bg-[#D8D4CE] dark:bg-[#1C1C1C] px-3 py-2.5 rounded-xl">
+                            <div className="bg-[#EFEDEA] dark:bg-[#1C1C1C] px-3 py-2.5 rounded-xl">
                                 <p className="text-[9px] font-black text-[#A8A29E] uppercase mb-1">Descripción</p>
                                 <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{producto.descripcion}</p>
                             </div>
                         )}
-                        <div className="bg-[#D8D4CE] dark:bg-[#1C1C1C] p-3 rounded-xl">
+                        <div className="bg-[#EFEDEA] dark:bg-[#1C1C1C] p-3 rounded-xl">
                             <h4 className="font-black text-[10px] text-[#1C1917] dark:text-[#F0EEE9] mb-2 uppercase">Detalle de Márgenes</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
                                 {detalles.map(({ label, value, color }) => (

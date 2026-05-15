@@ -30,7 +30,7 @@ export default function RadarMantenimiento() {
     };
 
     if (cargando) return (
-        <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] flex items-center justify-center p-5 transition-colors">
+        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] flex items-center justify-center p-5 transition-colors">
             <p className="font-black text-[#A8A29E] animate-pulse uppercase text-sm tracking-widest">
                 Escaneando base de datos...
             </p>
@@ -38,7 +38,7 @@ export default function RadarMantenimiento() {
     );
 
     return (
-        <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] p-4 pb-28 transition-colors">
+        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] p-4 pb-28 transition-colors">
 
             {/* Header */}
             <div className="bg-[#1C1917] dark:bg-[#1C1C1C] text-[#F0EEE9] p-6 rounded-[2rem] mb-5 border border-black/20 dark:border-white/[0.07]">
@@ -84,7 +84,7 @@ export default function RadarMantenimiento() {
 
             {/* Sin alertas */}
             {alertas.length === 0 ? (
-                <div className="text-center p-10 bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07]">
+                <div className="text-center p-10 bg-[#FFFFFF] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07]">
                     <p className="text-[#D13A28] dark:text-[#E8422F] font-black text-xl uppercase">Todo al día</p>
                     <p className="text-[#A8A29E] text-[11px] font-bold uppercase mt-2">No hay dispensers vencidos.</p>
                 </div>
@@ -97,7 +97,7 @@ export default function RadarMantenimiento() {
                             : a.fechaUltimoServicio;
                         return (
                             <div key={i} className={`
-                                bg-[#EDEAE6] dark:bg-[#242424] rounded-[1.5rem]
+                                bg-[#FFFFFF] dark:bg-[#242424] rounded-[1.5rem]
                                 border border-black/[0.07] dark:border-white/[0.07]
                                 border-l-4 overflow-hidden
                                 ${esFiltro

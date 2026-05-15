@@ -10,10 +10,10 @@ import React from 'react';
  */
 // Mapa de capas a clases Tailwind del sistema de diseño
 const LAYER_CLASSES = {
-    base:    'bg-[#C8C4BE] dark:bg-[#141414]',
-    surface: 'bg-[#D8D4CE] dark:bg-[#1C1C1C]',
-    card:    'bg-[#EDEAE6] dark:bg-[#242424]',
-    raised:  'bg-[#C0BCB6] dark:bg-[#2E2E2E]',
+    base:    'bg-[#F5F3F1] dark:bg-[#141414]',
+    surface: 'bg-[#EFEDEA] dark:bg-[#1C1C1C]',
+    card:    'bg-[#FFFFFF] dark:bg-[#242424]',
+    raised:  'bg-[#E8E5E0] dark:bg-[#2E2E2E]',
 };
 
 export default function Card({ children, className = '', layer = 'card', ...props }) {

@@ -13,7 +13,7 @@ const INITIAL_FORM = {
 // Estilo común para inputs y selects del sistema
 const fieldCls = `
     w-full h-12 px-4 rounded-xl
-    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+    bg-[#E8E5E0] dark:bg-[#2E2E2E]
     border border-black/[0.07] dark:border-white/[0.07]
     font-bold text-[11px] uppercase outline-none
     text-[#1C1917] dark:text-[#F0EEE9]
@@ -86,11 +86,11 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end z-[2000]">
-            <div className="bg-[#EDEAE6] dark:bg-[#242424] w-full max-w-xl rounded-t-[2rem] shadow-2xl animate-slide-up h-[92vh] flex flex-col">
+            <div className="bg-[#FFFFFF] dark:bg-[#242424] w-full max-w-xl rounded-t-[2rem] shadow-2xl animate-slide-up h-[92vh] flex flex-col">
 
                 {/* Handle */}
                 <div className="flex justify-center pt-4 pb-2">
-                    <div className="w-12 h-1 bg-[#C0BCB6] dark:bg-[#2E2E2E] rounded-full" />
+                    <div className="w-12 h-1 bg-[#E8E5E0] dark:bg-[#2E2E2E] rounded-full" />
                 </div>
 
                 {/* Título */}
@@ -110,7 +110,7 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
                             </div>
                         ) : (
                             equipos.map(eq => (
-                                <div key={eq.id} className="p-4 bg-[#D8D4CE] dark:bg-[#1C1C1C] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] flex justify-between items-center">
+                                <div key={eq.id} className="p-4 bg-[#EFEDEA] dark:bg-[#1C1C1C] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] flex justify-between items-center">
                                     <div>
                                         <p className="font-black text-[12px] text-[#1C1917] dark:text-[#F0EEE9] uppercase leading-none mb-1">
                                             S/N: {eq.numeroSerie}
@@ -119,7 +119,7 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
                                             {eq.marca} · {eq.modelo}
                                         </p>
                                     </div>
-                                    <span className="text-[8px] font-black bg-[#EDEAE6] dark:bg-[#242424] px-3 py-1.5 rounded-xl border border-black/[0.07] dark:border-white/[0.07] uppercase text-[#A8A29E]">
+                                    <span className="text-[8px] font-black bg-[#FFFFFF] dark:bg-[#242424] px-3 py-1.5 rounded-xl border border-black/[0.07] dark:border-white/[0.07] uppercase text-[#A8A29E]">
                                         {sedes.find(s => s.id === eq.sedeId)?.nombreSede}
                                     </span>
                                 </div>
@@ -207,7 +207,7 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
 
                     <div className="flex gap-3 pt-2">
                         <button type="button" onClick={onClose} disabled={cargando}
-                            className="flex-1 h-14 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-2xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
+                            className="flex-1 h-14 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-2xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
                             Cancelar
                         </button>
                         <button type="submit" disabled={cargando}

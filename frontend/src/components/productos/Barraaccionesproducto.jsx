@@ -29,7 +29,7 @@ export default function BarraAccionesProductos({
                         Lista PDF
                     </button>
                     <button onClick={onActivarSeleccion}
-                        className="flex-1 md:flex-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] px-4 py-2.5 rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                        className="flex-1 md:flex-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] px-4 py-2.5 rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
                         Seleccionar
                     </button>
                 </div>
@@ -46,7 +46,7 @@ export default function BarraAccionesProductos({
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <button onClick={onSeleccionarTodos}
-                            className="bg-[#EDEAE6] dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9] px-3 py-1.5 rounded-lg text-[10px] font-bold border border-black/[0.07] dark:border-white/[0.07] hover:opacity-80 transition-all">
+                            className="bg-[#FFFFFF] dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9] px-3 py-1.5 rounded-lg text-[10px] font-bold border border-black/[0.07] dark:border-white/[0.07] hover:opacity-80 transition-all">
                             {todosSeleccionados ? '✕ Deselec. todos' : '✓ Todos'}
                         </button>
                         <button onClick={onExportarSeleccionados} disabled={seleccionados.size === 0}
@@ -75,7 +75,7 @@ export default function BarraAccionesProductos({
                     placeholder="Buscar por nombre o SKU..."
                     className="
                         w-full pl-11 pr-10 py-3.5 rounded-2xl outline-none transition-all
-                        bg-[#EDEAE6] dark:bg-[#242424]
+                        bg-[#FFFFFF] dark:bg-[#242424]
                         border border-black/[0.07] dark:border-white/[0.07]
                         text-[13px] font-bold text-[#1C1917] dark:text-[#F0EEE9]
                         placeholder-[#A8A29E]
@@ -103,7 +103,7 @@ export default function BarraAccionesProductos({
                 <select
                     value={ordenProducto}
                     onChange={e => onOrdenChange(e.target.value)}
-                    className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
+                    className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
                 >
                     <option value="nombre_asc">Nombre A → Z</option>
                     <option value="nombre_desc">Nombre Z → A</option>

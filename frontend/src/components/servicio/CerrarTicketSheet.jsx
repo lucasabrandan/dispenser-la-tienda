@@ -10,7 +10,7 @@ const PRIORIDADES = [
     { value: 'ALTA',    label: 'Alta'    },
     { value: 'URGENTE', label: 'Urgente' },
 ];
-const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D48800]/40 placeholder:text-[#A8A29E]';
+const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D48800]/40 placeholder:text-[#A8A29E]';
 const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
 
 /**
@@ -169,7 +169,7 @@ export default function CerrarTicketSheet({
         bg-black/60 backdrop-blur-sm
     `;
     const panelCls = `
-        w-full max-w-lg bg-[#EDEAE6] dark:bg-[#242424]
+        w-full max-w-lg bg-[#FFFFFF] dark:bg-[#242424]
         rounded-t-[2rem] shadow-2xl overflow-hidden
     `;
 
@@ -179,7 +179,7 @@ export default function CerrarTicketSheet({
             <div className={panelCls} onClick={e => e.stopPropagation()}>
 
                 {/* Handle */}
-                <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
 
                 {/* ── PASO MENU ──────────────────────────────────────────── */}
                 {paso === 'menu' && (
@@ -206,7 +206,7 @@ export default function CerrarTicketSheet({
                         {/* Guardar presupuesto — solo admin */}
                         {esAdmin && (
                             <button onClick={handleGuardar} disabled={procesando}
-                                className="w-full p-4 rounded-2xl text-left transition-all active:scale-[0.98] bg-[#EDEAE6] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07] disabled:opacity-50">
+                                className="w-full p-4 rounded-2xl text-left transition-all active:scale-[0.98] bg-[#FFFFFF] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07] disabled:opacity-50">
                                 <p className="text-[15px] font-black leading-none mb-1 text-[#1C1917] dark:text-[#F0EEE9]">
                                     {procesando ? 'Guardando…' : '📋 Guardar presupuesto'}
                                 </p>
@@ -227,7 +227,7 @@ export default function CerrarTicketSheet({
                         <div className="flex items-center gap-3 mb-2">
                             {!modoEjecucion && (
                                 <button onClick={() => setPaso('menu')}
-                                    className="w-8 h-8 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] flex items-center justify-center text-[#57534E] dark:text-[#9E9A94] text-sm font-bold">
+                                    className="w-8 h-8 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] flex items-center justify-center text-[#57534E] dark:text-[#9E9A94] text-sm font-bold">
                                     ←
                                 </button>
                             )}
@@ -241,7 +241,7 @@ export default function CerrarTicketSheet({
 
                         {/* Firma técnico */}
                         {incluirFirmas && (tecnicoFirmaGuardada ? (
-                            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                                 <span className="text-[12px] font-bold text-[#1E8A4A]">✓ Firma técnico guardada</span>
                                 <button onClick={() => setEditandoTecnico(true)}
                                     className="ml-auto text-[11px] text-[#A8A29E] hover:text-[#D13A28] transition-colors font-bold">
@@ -273,7 +273,7 @@ export default function CerrarTicketSheet({
                             onClick={() => setIncluirFirmas(v => !v)}
                             className="flex items-center gap-2 text-[11px] text-[#A8A29E] font-bold active:scale-95 transition-all"
                         >
-                            <span className={`w-8 h-4 rounded-full flex items-center transition-colors ${incluirFirmas ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#C0BCB6] dark:bg-[#2E2E2E]'}`}>
+                            <span className={`w-8 h-4 rounded-full flex items-center transition-colors ${incluirFirmas ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E]'}`}>
                                 <span className={`w-3 h-3 rounded-full bg-white shadow transition-transform mx-0.5 ${incluirFirmas ? 'translate-x-4' : 'translate-x-0'}`} />
                             </span>
                             Incluir firmas en el PDF
@@ -283,7 +283,7 @@ export default function CerrarTicketSheet({
                         <div className="flex gap-2 pt-1">
                             {!modoEjecucion && (
                                 <button onClick={() => setPaso('menu')}
-                                    className="flex-1 py-3 rounded-2xl text-[11px] font-black uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    className="flex-1 py-3 rounded-2xl text-[11px] font-black uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                     Volver
                                 </button>
                             )}
@@ -356,7 +356,7 @@ export default function CerrarTicketSheet({
 
                                 <div className="flex gap-2">
                                     <button onClick={onCerrar}
-                                        className="flex-1 py-3 rounded-2xl text-[11px] font-black uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                        className="flex-1 py-3 rounded-2xl text-[11px] font-black uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                         Ahora no
                                     </button>
                                     <button onClick={handleCrearOrden} disabled={creandoOrden || !dispTecnico || !dispFecha}
@@ -367,7 +367,7 @@ export default function CerrarTicketSheet({
                             </>
                         ) : (
                             <div className="space-y-3">
-                                <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                                <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                                     <span className="text-[12px] font-bold text-[#1E8A4A]">✓ Orden de visita creada y asignada</span>
                                 </div>
                                 <button onClick={onCerrar}

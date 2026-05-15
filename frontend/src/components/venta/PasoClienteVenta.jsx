@@ -6,7 +6,7 @@ const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucum
 
 const inputCls = `
     w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+    bg-[#E8E5E0] dark:bg-[#2E2E2E]
     text-[#1C1917] dark:text-[#F0EEE9]
     border border-black/10 dark:border-white/10
     placeholder-[#A8A29E]
@@ -73,7 +73,7 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                                     p-3 rounded-2xl text-left transition-all active:scale-95
                                     ${activo
                                         ? 'bg-[#D48800] dark:bg-[#F0A500] border border-[#D48800] dark:border-[#F0A500]'
-                                        : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10'
+                                        : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10'
                                     }
                                 `}
                             >
@@ -109,7 +109,7 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                     <div className={`p-4 rounded-2xl border-2 transition-all ${
                         registrarCliente
                             ? 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/5'
-                            : 'border-black/10 dark:border-white/10 bg-[#C0BCB6] dark:bg-[#2E2E2E]'
+                            : 'border-black/10 dark:border-white/10 bg-[#E8E5E0] dark:bg-[#2E2E2E]'
                     }`}>
                         <button type="button" onClick={() => setRegistrarCliente(!registrarCliente)}
                             className="flex items-center justify-between w-full">
@@ -197,7 +197,7 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                         isClearable
                     />
                     {clienteObj && (
-                        <div className="mt-2 p-3 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] grid grid-cols-2 gap-2">
+                        <div className="mt-2 p-3 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] grid grid-cols-2 gap-2">
                             {clienteObj.telefono && (
                                 <div>
                                     <p className="text-[9px] font-bold uppercase text-[#A8A29E]">Teléfono</p>

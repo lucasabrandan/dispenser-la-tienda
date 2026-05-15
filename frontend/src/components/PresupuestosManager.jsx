@@ -37,14 +37,14 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
         : '';
 
     return (
-        <div className={`rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
+        <div className={`rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${ejecutado ? '#16A34A' : '#D48800'}` }}>
             <div className="p-4">
                 {/* Fila 1: checkbox + tipo + ejecutado + id + monto + fecha */}
                 <div className="flex items-start gap-2 mb-2.5">
                     {modoSeleccion && (
                         <button onClick={() => onToggleSelect(s.id)}
-                            className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all ${seleccionado ? 'bg-[#D13A28] border-[#D13A28]' : 'border-[#C0BCB6] dark:border-[#3E3E3E]'}`}>
+                            className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all ${seleccionado ? 'bg-[#D13A28] border-[#D13A28]' : 'border-[#E8E5E0] dark:border-[#3E3E3E]'}`}>
                             {seleccionado && <span className="text-white text-[9px] font-black">✓</span>}
                         </button>
                     )}
@@ -78,13 +78,13 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
                 {(seriales.length > 0 || ubicInfo) && (
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
                         {seriales.slice(0, 2).map((sr, i) => (
-                            <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">{sr}</span>
+                            <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">{sr}</span>
                         ))}
                         {seriales.length > 2 && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#A8A29E]">+{seriales.length - 2}</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#A8A29E]">+{seriales.length - 2}</span>
                         )}
                         {ubicInfo && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-lg bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#A8A29E]">{ubicInfo}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#A8A29E]">{ubicInfo}</span>
                         )}
                     </div>
                 )}
@@ -92,7 +92,7 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
                 {/* Toggle detalle */}
                 {items.length > 0 && (
                     <button onClick={() => setExpandido(v => !v)}
-                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-[0.98] bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
+                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
                         <span>Detalle · {items.length} ítem{items.length > 1 ? 's' : ''}</span>
                         <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
                     </button>
@@ -100,7 +100,7 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
 
                 {/* Detalle expandido */}
                 {expandido && items.map((it, i) => (
-                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                         style={{ border: '0.5px solid rgba(0,0,0,0.05)' }}>
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
@@ -119,7 +119,7 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
                         {it.repuestosUsados?.length > 0 && (
                             <div className="mt-1.5 pt-1.5 border-t border-black/[0.05] dark:border-white/[0.05] flex flex-wrap gap-1">
                                 {it.repuestosUsados.map((r, ri) => (
-                                    <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                    <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
                                         {r.cantidad}× {r.nombre}
                                     </span>
                                 ))}
@@ -130,15 +130,15 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
             </div>
 
             {/* Barra de acciones */}
-            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                 style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                <IconBtn onClick={() => onVer(s)} title="Ver detalle" cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
-                <IconBtn onClick={() => onPDF(s)} title="Generar PDF" cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+                <IconBtn onClick={() => onVer(s)} title="Ver detalle" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
+                <IconBtn onClick={() => onPDF(s)} title="Generar PDF" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
 
                 <div className="flex-1" />
 
-                <IconBtn onClick={() => onArchivar(s.id)} title="Archivar" cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
-                <IconBtn onClick={() => onRechazar(s.id)} title="Rechazar" cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
+                <IconBtn onClick={() => onArchivar(s.id)} title="Archivar" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
+                <IconBtn onClick={() => onRechazar(s.id)} title="Rechazar" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
                 {esTecnico && (
                     <button onClick={() => onDespachar(s)}
                         className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
@@ -147,7 +147,7 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
                 )}
                 {esTecnico && !ejecutado && (
                     <button onClick={() => onEjecutar(s)}
-                        className="h-9 px-3 rounded-xl font-bold text-[11px] shrink-0 active:scale-95 transition-all bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                        className="h-9 px-3 rounded-xl font-bold text-[11px] shrink-0 active:scale-95 transition-all bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
                         🔧 Ejecutar
                     </button>
                 )}
@@ -164,14 +164,14 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
 function ModalDetalle({ s, calcularTotal, onClose }) {
     return (
         <div className="fixed inset-0 z-[2000] flex items-end" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
-            <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-[#EDEAE6] dark:bg-[#242424]"
+            <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-[#FFFFFF] dark:bg-[#242424]"
                 onClick={e => e.stopPropagation()}>
-                <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
                 <h3 className="text-[16px] font-black mb-1 text-[#1C1917] dark:text-[#F0EEE9]">{s.clienteNombre}</h3>
                 <p className="text-[11px] text-[#A8A29E] mb-4">📍 {s.sedeNombre} · {s.fecha}</p>
                 <div className="overflow-y-auto flex-1 mb-4 space-y-3">
                     {s.items?.map((it, idx) => (
-                        <div key={idx} className="p-4 rounded-2xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                        <div key={idx} className="p-4 rounded-2xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                             <div className="flex justify-between mb-1">
                                 <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
                                 <M valor={Number(it.costo || 0)} className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]" />
@@ -326,10 +326,10 @@ export default function PresupuestosManager({ onEjecutar }) {
     }), [presupuestos]); // eslint-disable-line
 
     return (
-        <div className="min-h-screen pb-28 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
+        <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
             {/* Header sticky */}
-            <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-[#C8C4BE] dark:bg-[#141414]"
+            <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-[#F5F3F1] dark:bg-[#141414]"
                 style={{ borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="text-[22px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
@@ -345,7 +345,7 @@ export default function PresupuestosManager({ onEjecutar }) {
                         <button
                             onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
                             title="Selección múltiple"
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${modoSeleccion ? 'bg-[#D13A28] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${modoSeleccion ? 'bg-[#D13A28] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
                         >☑</button>
                     </div>
                 </div>
@@ -357,7 +357,7 @@ export default function PresupuestosManager({ onEjecutar }) {
                         value={filtros.busqueda}
                         onChange={e => filtros.setBusqueda(e.target.value)}
                         placeholder="Cliente, teléfono, S/N, sede..."
-                        className="w-full h-10 pl-9 pr-8 rounded-xl text-[13px] outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E]"
+                        className="w-full h-10 pl-9 pr-8 rounded-xl text-[13px] outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E]"
                     />
                     {filtros.busqueda && (
                         <button onClick={() => filtros.setBusqueda('')}
@@ -370,19 +370,19 @@ export default function PresupuestosManager({ onEjecutar }) {
 
                 {/* Stats chips */}
                 <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-0.5" style={{ scrollbarWidth: 'none' }}>
-                    <div className="shrink-0 rounded-2xl p-3 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[120px]"
+                    <div className="shrink-0 rounded-2xl p-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[120px]"
                         style={{ borderLeft: '3px solid #D48800' }}>
                         <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">Total pendiente</p>
                         <M valor={stats.total} className="text-[18px] font-black leading-none text-[#D48800] dark:text-[#F0A500] block" />
                         <p className="text-[9px] text-[#A8A29E] mt-0.5">{stats.count} presupuestos</p>
                     </div>
-                    <div className="shrink-0 rounded-2xl p-3 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[100px]"
+                    <div className="shrink-0 rounded-2xl p-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[100px]"
                         style={{ borderLeft: '3px solid #D13A28' }}>
                         <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">Servicios</p>
                         <p className="text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9]">{stats.servicios}</p>
                         <p className="text-[9px] text-[#A8A29E] mt-0.5">técnicos</p>
                     </div>
-                    <div className="shrink-0 rounded-2xl p-3 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[100px]">
+                    <div className="shrink-0 rounded-2xl p-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[100px]">
                         <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">Ventas</p>
                         <p className="text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9]">{stats.ventas}</p>
                         <p className="text-[9px] text-[#A8A29E] mt-0.5">insumos</p>
@@ -406,7 +406,7 @@ export default function PresupuestosManager({ onEjecutar }) {
                 <div className="flex gap-2">
                     {TIPO_TABS.map(t => (
                         <button key={t.id} onClick={() => setTipoFiltro(t.id)}
-                            className={`flex-1 h-10 rounded-xl font-bold text-[12px] uppercase transition-all active:scale-95 ${tipoFiltro === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            className={`flex-1 h-10 rounded-xl font-bold text-[12px] uppercase transition-all active:scale-95 ${tipoFiltro === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
                             {t.label}
                         </button>
                     ))}
@@ -414,12 +414,12 @@ export default function PresupuestosManager({ onEjecutar }) {
 
                 {/* Barra selección masiva */}
                 {modoSeleccion && seleccionados.size > 0 && (
-                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                         <span className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
                         <button onClick={ejecutarMasivaArchivar}
-                            className="h-9 px-4 rounded-xl font-bold text-xs bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            className="h-9 px-4 rounded-xl font-bold text-xs bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                             🗄️ Archivar
                         </button>
                     </div>
@@ -429,10 +429,10 @@ export default function PresupuestosManager({ onEjecutar }) {
 
                 {cargando ? (
                     <div className="flex flex-col gap-3">
-                        {[1, 2, 3].map(i => <div key={i} className="h-36 rounded-2xl animate-pulse bg-[#EDEAE6] dark:bg-[#242424]" />)}
+                        {[1, 2, 3].map(i => <div key={i} className="h-36 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
-                    <div className="text-center py-16 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-[36px] mb-2">✅</p>
                         <p className="font-bold text-[#A8A29E]">Sin presupuestos pendientes</p>
                     </div>

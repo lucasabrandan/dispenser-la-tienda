@@ -12,7 +12,7 @@ export default function ModalPrecioMasivo({
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onCerrar} />
             <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] p-6 w-full max-w-sm border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-[2rem] p-6 w-full max-w-sm border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     <h3 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase mb-1">
                         Actualizar márgenes
@@ -32,7 +32,7 @@ export default function ModalPrecioMasivo({
                         min="0" step="0.5"
                         className="
                             w-full p-3.5 rounded-xl outline-none transition-all mb-4
-                            bg-[#C0BCB6] dark:bg-[#2E2E2E]
+                            bg-[#E8E5E0] dark:bg-[#2E2E2E]
                             border border-black/[0.07] dark:border-white/[0.07]
                             text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
                             focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
@@ -51,7 +51,7 @@ export default function ModalPrecioMasivo({
                         min="0" step="0.5"
                         className="
                             w-full p-3.5 rounded-xl outline-none transition-all mb-5
-                            bg-[#C0BCB6] dark:bg-[#2E2E2E]
+                            bg-[#E8E5E0] dark:bg-[#2E2E2E]
                             border border-black/[0.07] dark:border-white/[0.07]
                             text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
                             focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
@@ -62,7 +62,7 @@ export default function ModalPrecioMasivo({
                     {/* Botones */}
                     <div className="flex gap-2">
                         <button onClick={onCerrar}
-                            className="flex-1 py-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            className="flex-1 py-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
                             Cancelar
                         </button>
                         <button onClick={onAplicar} disabled={sinCambios}

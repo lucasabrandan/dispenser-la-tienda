@@ -102,7 +102,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
         });
     };
 
-    const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
+    const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
     const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
 
     const clienteOpciones = clientes.map(c => ({
@@ -258,7 +258,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
             {/* Botones */}
             <div className="flex gap-3 pt-2">
                 <button type="button" onClick={onCancelar}
-                    className="flex-1 py-3 rounded-xl font-bold text-[13px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                    className="flex-1 py-3 rounded-xl font-bold text-[13px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
                     Cancelar
                 </button>
                 <button type="submit"

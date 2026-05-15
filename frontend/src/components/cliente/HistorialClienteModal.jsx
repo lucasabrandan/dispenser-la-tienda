@@ -11,7 +11,7 @@ function badgeEstado(estado) {
     if (estado === 'REALIZADO')   return 'bg-[#16A34A]/15 text-[#16A34A]';
     if (estado === 'PRESUPUESTO') return 'bg-[#D48800]/15 text-[#D48800]';
     if (estado === 'RECHAZADO')   return 'bg-[#D13A28]/15 text-[#D13A28]';
-    return 'bg-[#C0BCB6] text-[#57534E]';
+    return 'bg-[#E8E5E0] text-[#57534E]';
 }
 function labelEstado(estado) {
     if (estado === 'REALIZADO')   return 'Realizado';
@@ -47,7 +47,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
             onClick={onClose}>
             <div
-                className="w-full sm:max-w-2xl bg-[#EDEAE6] dark:bg-[#1C1C1C] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh]"
+                className="w-full sm:max-w-2xl bg-[#FFFFFF] dark:bg-[#1C1C1C] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -59,7 +59,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                         </h2>
                     </div>
                     <button onClick={onClose}
-                        className="w-9 h-9 flex items-center justify-center rounded-2xl bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] font-black text-sm hover:opacity-70 transition-opacity">
+                        className="w-9 h-9 flex items-center justify-center rounded-2xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] font-black text-sm hover:opacity-70 transition-opacity">
                         ✕
                     </button>
                 </div>
@@ -80,7 +80,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
 
                         return (
                             <div key={s.id}
-                                className="bg-[#D8D4CE] dark:bg-[#242424] rounded-2xl px-4 py-3 flex gap-3 items-start">
+                                className="bg-[#EFEDEA] dark:bg-[#242424] rounded-2xl px-4 py-3 flex gap-3 items-start">
                                 <div className="flex-1 min-w-0 space-y-1">
                                     {/* Fila: fecha + estado */}
                                     <div className="flex items-center gap-2 flex-wrap">

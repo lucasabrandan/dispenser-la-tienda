@@ -138,7 +138,7 @@ export default function ServicioForm({
     };
 
     return (
-        <div className="font-sans transition-colors bg-[#EDEAE6] dark:bg-[#141414]" style={{ minHeight: '100%' }}>
+        <div className="font-sans transition-colors bg-[#FFFFFF] dark:bg-[#141414]" style={{ minHeight: '100%' }}>
 
             {/* Banner borrador */}
             {borradorDisponible && !servicioParaEditar && (

@@ -128,7 +128,7 @@ export default function UsuariosManager() {
         : usuarios.filter(u => u.rol === filtroRol);
 
     return (
-        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
+        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
             {/* HEADER */}
             <div className="px-4 md:px-0 pt-5 md:pt-0 pb-4 flex justify-between items-end">
@@ -157,7 +157,7 @@ export default function UsuariosManager() {
                             className={`rounded-2xl p-3 text-center border transition-all active:scale-95 ${
                                 filtroRol === rol
                                     ? 'bg-[#D13A28] dark:bg-[#E8422F] border-transparent text-white'
-                                    : 'bg-[#EDEAE6] dark:bg-[#242424] border-black/[0.07] dark:border-white/[0.07] text-[#57534E] dark:text-[#A8A29E]'
+                                    : 'bg-[#FFFFFF] dark:bg-[#242424] border-black/[0.07] dark:border-white/[0.07] text-[#57534E] dark:text-[#A8A29E]'
                             }`}
                         >
                             <p className="text-[18px] font-black leading-none">
@@ -172,7 +172,7 @@ export default function UsuariosManager() {
 
                 {/* CONFIGURACIÓN DE EMPRESA — solo ADMIN */}
                 {usuarioActual?.rol === 'ADMIN' && (
-                    <div className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] p-4 space-y-3">
+                    <div className="rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] p-4 space-y-3">
                         <p className="text-[11px] font-bold text-[#A8A29E] uppercase tracking-wider">Configuración de empresa</p>
                         <div>
                             <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">
@@ -180,7 +180,7 @@ export default function UsuariosManager() {
                             </label>
                             <div className="mt-1 flex gap-2">
                                 <textarea
-                                    className="flex-1 h-16 px-3 py-2 rounded-xl text-[12px] bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none resize-none"
+                                    className="flex-1 h-16 px-3 py-2 rounded-xl text-[12px] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none resize-none"
                                     value={condicionesPDF}
                                     onChange={e => setCondicionesPDF(e.target.value)}
                                     placeholder="Garantía 90 días mano de obra · Repuestos según fabricante..."
@@ -205,14 +205,14 @@ export default function UsuariosManager() {
                 {cargando ? (
                     <div className="text-center py-16 font-bold text-[#A8A29E]">Cargando...</div>
                 ) : usuariosFiltrados.length === 0 ? (
-                    <div className="text-center py-16 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] text-[#A8A29E] font-bold">
+                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] text-[#A8A29E] font-bold">
                         Sin usuarios en esta categoría
                     </div>
                 ) : (
                     <div className="flex flex-col gap-3">
                         {usuariosFiltrados.map(u => (
                             <div key={u.id}
-                                 className={`rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] overflow-hidden border ${
+                                 className={`rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] overflow-hidden border ${
                                      u.activo
                                          ? 'border-black/[0.07] dark:border-white/[0.07]'
                                          : 'border-dashed border-black/[0.15] dark:border-white/[0.15] opacity-60'
@@ -242,17 +242,17 @@ export default function UsuariosManager() {
                                         <button
                                             onClick={() => { setModalPass(u); setNuevaClave(''); }}
                                             title="Cambiar contraseña"
-                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#D8D4CE] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                                         >🔑</button>
                                         <button
                                             onClick={() => abrirEditar(u)}
                                             title="Editar"
-                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#D8D4CE] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                                         >✏️</button>
                                         <button
                                             onClick={() => toggleActivo(u)}
                                             title={u.activo ? 'Desactivar' : 'Activar'}
-                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#D8D4CE] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                                         >{u.activo ? '🔒' : '✅'}</button>
                                         {usuarioActual?.id !== u.id && (
                                             <button
@@ -272,7 +272,7 @@ export default function UsuariosManager() {
             {/* MODAL CREAR / EDITAR */}
             {modal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="w-full max-w-sm rounded-3xl p-6 bg-[#EDEAE6] dark:bg-[#242424] shadow-2xl space-y-4">
+                    <div className="w-full max-w-sm rounded-3xl p-6 bg-[#FFFFFF] dark:bg-[#242424] shadow-2xl space-y-4">
                         <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                             {modal === 'crear' ? 'Nuevo usuario' : `Editar: ${modal.nombre}`}
                         </h3>
@@ -281,7 +281,7 @@ export default function UsuariosManager() {
                             <div>
                                 <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Nombre completo</label>
                                 <input
-                                    className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={form.nombre}
                                     onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                                     placeholder="Ej: Juan Pérez"
@@ -292,7 +292,7 @@ export default function UsuariosManager() {
                                     <div>
                                         <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Usuario (login)</label>
                                         <input
-                                            className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                            className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                             value={form.username}
                                             onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
                                             placeholder="Ej: juan"
@@ -303,7 +303,7 @@ export default function UsuariosManager() {
                                         <div className="relative mt-1">
                                             <input
                                                 type={verClave ? 'text' : 'password'}
-                                                className="w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                                className="w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                                 value={form.password}
                                                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                                                 placeholder="Mínimo 6 caracteres"
@@ -319,7 +319,7 @@ export default function UsuariosManager() {
                                         <div className="relative mt-1">
                                             <input
                                                 type={verClaveConfirm ? 'text' : 'password'}
-                                                className={`w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none border ${
+                                                className={`w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none border ${
                                                     form.passwordConfirm && form.password !== form.passwordConfirm
                                                         ? 'border-[#D13A28] dark:border-[#E8422F]'
                                                         : 'border-black/[0.08] dark:border-white/[0.08]'
@@ -340,7 +340,7 @@ export default function UsuariosManager() {
                                 <div>
                                     <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Teléfono</label>
                                     <input
-                                        className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                         value={form.telefono}
                                         onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
                                         placeholder="(011) XXXX-XXXX"
@@ -349,7 +349,7 @@ export default function UsuariosManager() {
                                 <div>
                                     <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">WhatsApp</label>
                                     <input
-                                        className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                         value={form.whatsapp}
                                         onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))}
                                         placeholder="11 XXXX-XXXX"
@@ -359,7 +359,7 @@ export default function UsuariosManager() {
                             <div>
                                 <label className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">Rol</label>
                                 <select
-                                    className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={form.rol}
                                     onChange={e => setForm(f => ({ ...f, rol: e.target.value }))}
                                 >
@@ -372,7 +372,7 @@ export default function UsuariosManager() {
                         <div className="flex gap-3 pt-2">
                             <button
                                 onClick={() => setModal(null)}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
+                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
                             >Cancelar</button>
                             <button
                                 onClick={guardar}
@@ -387,7 +387,7 @@ export default function UsuariosManager() {
             {/* MODAL CONFIRMAR ELIMINACIÓN */}
             {confirmEliminar && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="w-full max-w-sm rounded-3xl p-6 bg-[#EDEAE6] dark:bg-[#242424] shadow-2xl space-y-4">
+                    <div className="w-full max-w-sm rounded-3xl p-6 bg-[#FFFFFF] dark:bg-[#242424] shadow-2xl space-y-4">
                         <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                             Eliminar usuario
                         </h3>
@@ -397,7 +397,7 @@ export default function UsuariosManager() {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setConfirmEliminar(null)}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
+                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
                             >Cancelar</button>
                             <button
                                 onClick={eliminar}
@@ -411,7 +411,7 @@ export default function UsuariosManager() {
             {/* MODAL CAMBIAR CONTRASEÑA */}
             {modalPass && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="w-full max-w-sm rounded-3xl p-6 bg-[#EDEAE6] dark:bg-[#242424] shadow-2xl space-y-4">
+                    <div className="w-full max-w-sm rounded-3xl p-6 bg-[#FFFFFF] dark:bg-[#242424] shadow-2xl space-y-4">
                         <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                             Cambiar clave: {modalPass.nombre}
                         </h3>
@@ -420,7 +420,7 @@ export default function UsuariosManager() {
                             <div className="relative mt-1">
                                 <input
                                     type={verNuevaClave ? 'text' : 'password'}
-                                    className="w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={nuevaClave}
                                     onChange={e => setNuevaClave(e.target.value)}
                                     placeholder="Mínimo 6 caracteres"
@@ -434,7 +434,7 @@ export default function UsuariosManager() {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => { setModalPass(null); setNuevaClave(''); }}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
+                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
                             >Cancelar</button>
                             <button
                                 onClick={guardarClave}

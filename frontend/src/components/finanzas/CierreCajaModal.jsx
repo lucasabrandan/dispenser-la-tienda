@@ -125,12 +125,12 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
     return (
         <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm"
             onClick={onClose}>
-            <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl max-h-[90vh] flex flex-col bg-[#EDEAE6] dark:bg-[#242424] shadow-2xl"
+            <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl max-h-[90vh] flex flex-col bg-[#FFFFFF] dark:bg-[#242424] shadow-2xl"
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
                 <div className="px-5 pt-5 pb-4 border-b border-black/[0.07] dark:border-white/[0.07] flex-shrink-0">
-                    <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#C0BCB6] dark:bg-[#2E2E2E] md:hidden" />
+                    <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E] md:hidden" />
                     <div className="flex items-start justify-between">
                         <div>
                             <h3 className="text-[18px] font-black uppercase tracking-tighter text-[#1C1917] dark:text-[#F0EEE9]">
@@ -147,7 +147,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                     <div className="flex gap-2">
                         {PERIODOS_RAPIDOS.map(p => (
                             <button key={p.id} onClick={() => setPeriodo(p.id)}
-                                className={`flex-1 h-9 rounded-xl font-bold text-[11px] uppercase transition-all active:scale-95 ${periodo === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                                className={`flex-1 h-9 rounded-xl font-bold text-[11px] uppercase transition-all active:scale-95 ${periodo === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
                                 {p.label}
                             </button>
                         ))}
@@ -155,9 +155,9 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                     {periodo === 'custom' && (
                         <div className="flex gap-2">
                             <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
-                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
+                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                             <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
-                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
+                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                         </div>
                     )}
                     {/* Filtro técnico */}
@@ -165,7 +165,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                         <select
                             value={tecnicoFiltro}
                             onChange={e => setTecnicoFiltro(e.target.value)}
-                            className="w-full h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
+                            className="w-full h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
                         >
                             <option value="">Todos los técnicos</option>
                             {tecnicos.map(t => (
@@ -188,7 +188,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                 <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
                     {cargando ? (
                         <div className="space-y-2">
-                            {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl animate-pulse bg-[#D8D4CE] dark:bg-[#2E2E2E]" />)}
+                            {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl animate-pulse bg-[#EFEDEA] dark:bg-[#2E2E2E]" />)}
                         </div>
                     ) : servicios.length === 0 ? (
                         <div className="text-center py-10">
@@ -214,7 +214,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                             {/* Por técnico */}
                             <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] px-1">Por técnico</p>
                             {porTecnico.map(tec => (
-                                <div key={tec.nombre} className="rounded-2xl p-4 bg-[#D8D4CE] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07]">
+                                <div key={tec.nombre} className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07]">
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
                                             <p className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]">{tec.nombre}</p>
@@ -247,12 +247,12 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                                 return (
                                     <div key={`liq-${tec.nombre}`} className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
                                         {/* Cabecera técnico */}
-                                        <div className="px-4 py-2.5 bg-[#C8C4BE] dark:bg-[#2E2E2E] flex justify-between items-center">
+                                        <div className="px-4 py-2.5 bg-[#F5F3F1] dark:bg-[#2E2E2E] flex justify-between items-center">
                                             <span className="font-black text-[13px] text-[#1C1917] dark:text-[#F0EEE9]">{tec.nombre}</span>
                                             <span className="text-[11px] text-[#A8A29E]">cobrado: <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${tec.total.toLocaleString('es-AR')}</span></span>
                                         </div>
                                         {/* Desglose */}
-                                        <div className="px-4 py-3 bg-[#EDEAE6] dark:bg-[#1C1C1C] space-y-1.5">
+                                        <div className="px-4 py-3 bg-[#FFFFFF] dark:bg-[#1C1C1C] space-y-1.5">
                                             <div className="flex justify-between text-[11px]">
                                                 <span className="text-[#A8A29E]">− Impuestos {PCT_IMPUESTOS}%</span>
                                                 <M valor={impuestos} className="text-[#D13A28] dark:text-[#E8422F] font-bold" />
@@ -270,11 +270,11 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                                         </div>
                                         {/* Split 50/50 */}
                                         <div className="grid grid-cols-2 divide-x divide-black/[0.06] dark:divide-white/[0.06] border-t border-black/[0.07] dark:border-white/[0.07]">
-                                            <div className="px-4 py-3 bg-[#D8D4CE] dark:bg-[#242424]">
+                                            <div className="px-4 py-3 bg-[#EFEDEA] dark:bg-[#242424]">
                                                 <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">{tec.nombre.split(' ')[0]}</p>
                                                 <M valor={porPartes} className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
                                             </div>
-                                            <div className="px-4 py-3 bg-[#D8D4CE] dark:bg-[#242424]">
+                                            <div className="px-4 py-3 bg-[#EFEDEA] dark:bg-[#242424]">
                                                 <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">Empresa</p>
                                                 <M valor={porPartes} className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
                                             </div>
@@ -327,7 +327,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                     <div className="px-5 pb-6 pt-3 border-t border-black/[0.07] dark:border-white/[0.07] flex-shrink-0 space-y-2">
                         <div className="flex gap-3">
                             <button onClick={onClose}
-                                className="flex-1 h-11 rounded-2xl font-bold text-[12px] uppercase bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                                className="flex-1 h-11 rounded-2xl font-bold text-[12px] uppercase bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
                                 Cancelar
                             </button>
                             <button
@@ -340,7 +340,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                         <button
                             onClick={() => generarPDFCierreCaja({ servicios, porTecnico, totalGeneral, moGeneral, repuestosGeneral, desde, hasta })}
                             disabled={servicios.length === 0}
-                            className="w-full h-9 rounded-2xl font-bold text-[11px] uppercase active:scale-95 transition-all disabled:opacity-40 bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
+                            className="w-full h-9 rounded-2xl font-bold text-[11px] uppercase active:scale-95 transition-all disabled:opacity-40 bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
                             📄 Descargar PDF del período
                         </button>
                     </div>
@@ -352,7 +352,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                         </button>
                         <button
                             onClick={() => generarPDFCierreCaja({ servicios, porTecnico, totalGeneral, moGeneral, repuestosGeneral, desde, hasta })}
-                            className="w-full h-9 rounded-2xl font-bold text-[11px] uppercase active:scale-95 transition-all bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
+                            className="w-full h-9 rounded-2xl font-bold text-[11px] uppercase active:scale-95 transition-all bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
                             📄 Descargar PDF del período
                         </button>
                     </div>

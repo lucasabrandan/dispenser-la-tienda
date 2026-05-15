@@ -36,11 +36,11 @@ ventas, clientes, repuestos e inventario. Usada en tablet/mobile en campo.
 - bg-card:    #242424  (cards)
 - bg-raised:  #2E2E2E  (inputs, chips)
 
-#### Light mode (warm, NO blanco puro)
-- bg-base:    #C8C4BE
-- bg-surface: #D8D4CE
-- bg-card:    #EDEAE6
-- bg-raised:  #C0BCB6
+#### Light mode (limpio, profesional)
+- bg-base:    #F5F3F1
+- bg-surface: #EFEDEA
+- bg-card:    #FFFFFF
+- bg-raised:  #E8E5E0
 
 #### Marca
 - brand:  #D13A28 (light) / #E8422F (dark) — rojo principal

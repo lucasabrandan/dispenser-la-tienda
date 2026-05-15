@@ -27,7 +27,7 @@ export default function BottomNav({ vistaActual, setVistaActual }) {
     const NAV_ITEMS = esAdmin ? NAV_ADMIN : NAV_TECNICO;
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#D8D4CE] dark:bg-[#1C1C1C] transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#EFEDEA] dark:bg-[#1C1C1C] transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">
 
             {/* Indicador de sección activa — línea roja arriba */}
             <div className="flex">

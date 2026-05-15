@@ -5,14 +5,14 @@ import api from '../../services/api';
 import { generarPDFCotizacion } from '../../utils/generadorPDFCotizacion';
 
 function buildSelectStyles(isDark) {
-    const bg      = isDark ? '#2E2E2E' : '#C0BCB6';
-    const bgMenu  = isDark ? '#242424' : '#EDEAE6';
+    const bg      = isDark ? '#2E2E2E' : '#E8E5E0';
+    const bgMenu  = isDark ? '#242424' : '#FFFFFF';
     const text    = isDark ? '#F0EEE9' : '#1C1917';
     const muted   = '#A8A29E';
     return {
         control:      (b, s) => ({ ...b, background: bg, border: s.isFocused ? '1px solid #D13A28' : '1px solid rgba(0,0,0,0.07)', borderRadius: 12, boxShadow: 'none', minHeight: 44, cursor: 'pointer' }),
         menu:         (b)    => ({ ...b, background: bgMenu, borderRadius: 12, border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }),
-        option:       (b, s) => ({ ...b, background: s.isFocused ? (isDark ? '#2E2E2E' : '#D8D4CE') : 'transparent', color: text, fontSize: 13, cursor: 'pointer' }),
+        option:       (b, s) => ({ ...b, background: s.isFocused ? (isDark ? '#2E2E2E' : '#EFEDEA') : 'transparent', color: text, fontSize: 13, cursor: 'pointer' }),
         singleValue:  (b)    => ({ ...b, color: text, fontSize: 13, fontWeight: 700 }),
         placeholder:  (b)    => ({ ...b, color: muted, fontSize: 13 }),
         input:        (b)    => ({ ...b, color: text }),
@@ -21,7 +21,7 @@ function buildSelectStyles(isDark) {
 }
 
 const INPUT = `w-full p-3 rounded-xl outline-none transition-all
-    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+    bg-[#E8E5E0] dark:bg-[#2E2E2E]
     border border-black/[0.07] dark:border-white/[0.07]
     text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
     focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
@@ -158,10 +158,10 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onCerrar} />
             <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[1000] p-0 sm:p-4">
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-md max-h-[92vh] flex flex-col border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-md max-h-[92vh] flex flex-col border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     {/* Handle móvil */}
-                    <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-0 bg-[#C0BCB6] dark:bg-[#2E2E2E] sm:hidden" />
+                    <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-0 bg-[#E8E5E0] dark:bg-[#2E2E2E] sm:hidden" />
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
@@ -174,7 +174,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                             </p>
                         </div>
                         <button onClick={onCerrar}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-sm font-black hover:opacity-70 transition-all">
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-sm font-black hover:opacity-70 transition-all">
                             ✕
                         </button>
                     </div>
@@ -233,7 +233,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                         }}
                                     />
                                     {productoOpt && (
-                                        <div className="mt-2 px-3 py-2.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
+                                        <div className="mt-2 px-3 py-2.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider">Precio lista</span>
                                                 {productoOpt.sku && <span className="text-[9px] font-black text-[#D13A28] dark:text-[#E8422F]">{productoOpt.sku}</span>}
@@ -304,11 +304,11 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                                                 value={fila.precioUnitario}
                                                                 onChange={e => actualizarPrecio(idx, e.target.value)}
                                                                 className="w-full pl-6 pr-2 py-1.5 rounded-lg text-[11px] font-bold outline-none
-                                                                    bg-[#D8D4CE] dark:bg-[#1C1C1C]
+                                                                    bg-[#EFEDEA] dark:bg-[#1C1C1C]
                                                                     text-[#A8A29E] dark:text-[#9E9A94]
                                                                     border border-black/[0.05] dark:border-white/[0.05]
                                                                     focus:ring-1 focus:ring-[#D13A28]/20 focus:border-[#D13A28]/40
-                                                                    placeholder:text-[#C0BCB6] dark:placeholder:text-[#3E3E3E]"
+                                                                    placeholder:text-[#E8E5E0] dark:placeholder:text-[#3E3E3E]"
                                                             />
                                                         </div>
                                                     </div>
@@ -354,7 +354,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                     {/* Footer */}
                     <div className="flex gap-2 px-6 py-4 shrink-0" style={{ borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
                         <button onClick={onCerrar}
-                            className="flex-1 py-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            className="flex-1 py-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
                             Cancelar
                         </button>
                         <button onClick={generarPDF}

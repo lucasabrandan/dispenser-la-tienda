@@ -27,7 +27,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
             seleccionado
                 ? 'border-[#D13A28] dark:border-[#E8422F] shadow-md'
                 : 'border-black/[0.08] dark:border-white/[0.08]'
-        } bg-[#EDEAE6] dark:bg-[#242424]`}>
+        } bg-[#FFFFFF] dark:bg-[#242424]`}>
 
             {/* Badge cantidad */}
             {seleccionado && (
@@ -37,7 +37,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
             )}
 
             {/* Foto */}
-            <div className="w-full aspect-square bg-[#D8D4CE] dark:bg-[#1C1C1C] flex items-center justify-center overflow-hidden">
+            <div className="w-full aspect-square bg-[#EFEDEA] dark:bg-[#1C1C1C] flex items-center justify-center overflow-hidden">
                 {tieneFoto
                     ? <>
                         <FotoRepuesto repuesto={repuesto} />
@@ -63,7 +63,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
 
                 {/* Controles +/- */}
                 {seleccionado ? (
-                    <div className="flex items-center justify-between bg-[#D8D4CE] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
+                    <div className="flex items-center justify-between bg-[#EFEDEA] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
                         <button
                             type="button"
                             onClick={onRestar}
@@ -193,12 +193,12 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
             onClick={onClose}
         >
             <div
-                className="w-full rounded-t-3xl flex flex-col bg-[#EDEAE6] dark:bg-[#1C1C1C]"
+                className="w-full rounded-t-3xl flex flex-col bg-[#FFFFFF] dark:bg-[#1C1C1C]"
                 style={{ maxHeight: '88vh', border: '0.5px solid rgba(255,255,255,0.08)' }}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}
-                <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-2 bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
 
                 {/* Header */}
                 <div className="px-4 pb-3 flex items-center justify-between">
@@ -213,7 +213,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                     <button
                         type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#D8D4CE] dark:bg-[#2E2E2E] active:scale-90"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90"
                     >✕</button>
                 </div>
 
@@ -226,7 +226,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                             value={busqueda}
                             onChange={e => setBusqueda(e.target.value)}
                             placeholder="Buscar por nombre o SKU..."
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] focus:ring-2 focus:ring-[#D13A28]/20 border border-black/[0.07] dark:border-white/[0.07]"
+                            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] focus:ring-2 focus:ring-[#D13A28]/20 border border-black/[0.07] dark:border-white/[0.07]"
                         />
                     </div>
                 </div>
@@ -257,7 +257,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                         <button
                             type="button"
                             onClick={onCrearNuevo}
-                            className="w-full py-3 rounded-xl text-[12px] font-black uppercase text-[#A8A29E] border border-dashed border-[#C0BCB6] dark:border-[#2E2E2E] active:scale-95 transition-all mt-1 mb-3"
+                            className="w-full py-3 rounded-xl text-[12px] font-black uppercase text-[#A8A29E] border border-dashed border-[#E8E5E0] dark:border-[#2E2E2E] active:scale-95 transition-all mt-1 mb-3"
                         >
                             + Crear repuesto nuevo
                         </button>

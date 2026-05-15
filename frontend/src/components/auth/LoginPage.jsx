@@ -28,7 +28,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#C8C4BE] dark:bg-[#141414] px-4">
+        <div className="min-h-screen flex items-center justify-center bg-[#F5F3F1] dark:bg-[#141414] px-4">
             <div className="w-full max-w-sm">
 
                 {/* Logo */}
@@ -43,7 +43,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Card */}
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl p-8 shadow-xl border border-black/[0.06] dark:border-white/[0.06]">
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl p-8 shadow-xl border border-black/[0.06] dark:border-white/[0.06]">
                     <h1 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] mb-6 tracking-tight">
                         Iniciar sesión
                     </h1>
@@ -58,7 +58,7 @@ export default function LoginPage() {
                                 autoComplete="username"
                                 value={form.username}
                                 onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-xl text-sm font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
+                                className="w-full px-4 py-3 rounded-xl text-sm font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
                                 placeholder="admin"
                                 disabled={cargando}
                             />
@@ -74,7 +74,7 @@ export default function LoginPage() {
                                     autoComplete="current-password"
                                     value={form.password}
                                     onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                                    className="w-full px-4 py-3 pr-11 rounded-xl text-sm font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
+                                    className="w-full px-4 py-3 pr-11 rounded-xl text-sm font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
                                     placeholder="••••••••"
                                     disabled={cargando}
                                 />

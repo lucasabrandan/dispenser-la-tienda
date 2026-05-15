@@ -7,10 +7,10 @@
   --brand:        #D13A28;
   --brand-dim:    #FDECEA;
   --gold:         #D48800;
-  --bg-base:      #C8C4BE;
-  --bg-surface:   #D8D4CE;
-  --bg-card:      #EDEAE6;
-  --bg-raised:    #C0BCB6;
+  --bg-base:      #F5F3F1;
+  --bg-surface:   #EFEDEA;
+  --bg-card:      #FFFFFF;
+  --bg-raised:    #E8E5E0;
   --text-1:       #1C1917;
   --text-2:       #57534E;
   --text-3:       #A8A29E;
@@ -66,7 +66,7 @@ html, body, #root {
   transition: background-color 0.3s, color 0.3s;
   -webkit-font-smoothing: antialiased;
 }
-html      { background-color: #C8C4BE; }
+html      { background-color: #F5F3F1; }
 html.dark { background-color: #141414; }
 
 ::-webkit-scrollbar       { width: 4px; }

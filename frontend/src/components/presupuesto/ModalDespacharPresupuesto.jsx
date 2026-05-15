@@ -9,7 +9,7 @@ const PRIORIDADES = [
 ];
 
 const INPUT = `w-full px-3 py-2.5 rounded-xl text-[13px] font-medium outline-none
-    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+    bg-[#E8E5E0] dark:bg-[#2E2E2E]
     text-[#1C1917] dark:text-[#F0EEE9]
     border border-black/[0.07] dark:border-white/[0.07]
     placeholder:text-[#A8A29E]
@@ -96,10 +96,10 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={!ordenCreada ? onCerrar : undefined} />
             <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[1000] p-0 sm:p-4">
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-md border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-md border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     {/* Handle */}
-                    <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] sm:hidden" />
+                    <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] sm:hidden" />
 
                     {/* Header */}
                     <div className="flex items-start justify-between px-6 pt-5 pb-3">
@@ -134,7 +134,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                             </div>
 
                             {/* Resumen de lo que verá el técnico */}
-                            <div className="p-3 rounded-2xl bg-[#D8D4CE] dark:bg-[#1C1C1C] space-y-1.5">
+                            <div className="p-3 rounded-2xl bg-[#EFEDEA] dark:bg-[#1C1C1C] space-y-1.5">
                                 <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">El técnico verá en Mis Órdenes</p>
                                 <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                                     Visita · {presupuesto.clienteNombre}
@@ -205,7 +205,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                                     className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95 ${
                                                         form.prioridad === p.value
                                                             ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                                            : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                                            : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
                                                     }`}>
                                                     {p.label}
                                                 </button>
@@ -215,7 +215,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
 
                                     {/* Qué verá el técnico — preview */}
                                     {form.tecnicoId && form.fechaProgramada && (
-                                        <div className="p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                                        <div className="p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                                             style={{ border: '0.5px solid rgba(0,0,0,0.06)' }}>
                                             <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-widest mb-1.5">
                                                 Preview · aparecerá en Mis Órdenes
@@ -232,7 +232,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                     {/* Botones */}
                                     <div className="flex gap-2 pt-1">
                                         <button type="button" onClick={onCerrar}
-                                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                             Cancelar
                                         </button>
                                         <button type="button" onClick={handleGuardar} disabled={guardando}

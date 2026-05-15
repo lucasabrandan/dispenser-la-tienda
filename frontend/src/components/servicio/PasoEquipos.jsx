@@ -57,7 +57,7 @@ function FotoUpload({ label, foto, onChange }) {
     return (
         <div className="flex flex-col gap-1">
             {/* Preview */}
-            <div className="relative rounded-xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-[#C0BCB6] dark:bg-[#2E2E2E] aspect-[3/4] flex items-center justify-center">
+            <div className="relative rounded-xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-[#E8E5E0] dark:bg-[#2E2E2E] aspect-[3/4] flex items-center justify-center">
                 {preview ? (
                     <img src={preview} alt={label} className="w-full h-full object-cover" />
                 ) : (
@@ -80,7 +80,7 @@ function FotoUpload({ label, foto, onChange }) {
                 </button>
                 <button type="button"
                     onClick={() => refGaleria.current?.click()}
-                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-95 transition-all">
+                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95 transition-all">
                     🖼️ Galería
                 </button>
             </div>
@@ -148,7 +148,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
     const inputClass = `
         w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-        bg-[#C0BCB6] dark:bg-[#1C1C1C]
+        bg-[#E8E5E0] dark:bg-[#1C1C1C]
         text-[#1C1917] dark:text-[#F0EEE9]
         border border-black/10 dark:border-white/[0.08]
         placeholder-[#A8A29E]
@@ -169,7 +169,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                     <div className="flex flex-col gap-2">
                         {ticketItems.map((it, idx) => (
                             <div key={idx}
-                                className="flex items-center justify-between p-3 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
+                                className="flex items-center justify-between p-3 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 bg-[#D13A28] dark:bg-[#E8422F]">
                                         {idx + 1}
@@ -210,7 +210,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                     + Agregar otro equipo
                 </button>
             ) : (
-            <div className="rounded-2xl p-4 bg-[#D8D4CE] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+            <div className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black bg-[#D13A28] dark:bg-[#E8422F]">
                         {ticketItems.length + 1}
@@ -297,7 +297,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         <button
                             type="button"
                             onClick={() => setSheetRepuestos(true)}
-                            className="w-full py-3 rounded-xl font-bold text-[13px] flex items-center justify-between px-4 transition-all active:scale-[0.98] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                            className="w-full py-3 rounded-xl font-bold text-[13px] flex items-center justify-between px-4 transition-all active:scale-[0.98] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
                         >
                             <span>
                                 {itemActual.repuestosUsados?.length > 0
@@ -310,7 +310,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
                         {/* Resumen repuestos elegidos */}
                         {itemActual.repuestosUsados?.length > 0 && (
-                            <div className="mt-2 rounded-xl overflow-hidden bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
+                            <div className="mt-2 rounded-xl overflow-hidden bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
                                 {itemActual.repuestosUsados.map((r, i) => {
                                     const g = calcularGananciaRepuesto(r, r.cantidad);
                                     return (

@@ -20,7 +20,7 @@ function M({ valor, prefix = '$', className = '' }) {
 const badgeClass = (v) => {
     if (v.estado === 'PRESUPUESTO') return 'bg-[var(--warning-bg)] text-[var(--warning-tx)]';
     if (v.estado === 'REALIZADO')   return 'bg-[var(--success-bg)] text-[var(--success-tx)]';
-    return 'bg-[#C0BCB6] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]';
+    return 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]';
 };
 
 const badgeLabel = (v) => {
@@ -47,14 +47,14 @@ export default function VentaList({
                     Cargando ventas...
                 </div>
             ) : ventas.length === 0 ? (
-                <div className="text-center py-16 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] text-[#A8A29E] font-bold">
+                <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] text-[#A8A29E] font-bold">
                     No hay ventas en esta categoría.
                 </div>
             ) : (
                 <div className="flex flex-col gap-3">
                     {ventas.map(v => (
                         <div key={v.id}
-                            className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden transition-colors">
+                            className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden transition-colors">
 
                             {/* CUERPO */}
                             <div className="p-4">
@@ -97,12 +97,12 @@ export default function VentaList({
                             </div>
 
                             {/* BARRA ACCIONES */}
-                            <div className="flex items-center gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
+                            <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
                                 {/* Editar — solo pendientes */}
                                 {v.estado === 'PRESUPUESTO' && (
                                     <button
                                         onClick={() => onEditar(v)}
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                                         title="Editar">
                                         ✏️
                                     </button>
@@ -111,7 +111,7 @@ export default function VentaList({
                                 {/* PDF */}
                                 <button
                                     onClick={() => onPDF(v)}
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                                     title="Generar PDF">
                                     📄
                                 </button>

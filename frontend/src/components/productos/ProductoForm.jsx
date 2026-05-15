@@ -6,7 +6,7 @@ import api from '../../services/api';
 
 const inputCls = (error) => `
     w-full p-3 mt-2 rounded-xl outline-none transition-all
-    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+    bg-[#E8E5E0] dark:bg-[#2E2E2E]
     text-[#1C1917] dark:text-[#F0EEE9]
     ${error
         ? 'border-2 border-[#D13A28] dark:border-[#E8422F]'
@@ -66,7 +66,7 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-[2rem] w-full max-w-3xl max-h-[95vh] overflow-y-auto border border-black/[0.07] dark:border-white/[0.07] shadow-2xl p-6">
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-[2rem] w-full max-w-3xl max-h-[95vh] overflow-y-auto border border-black/[0.07] dark:border-white/[0.07] shadow-2xl p-6">
 
                     {/* Header */}
                     <div className="flex justify-between items-center mb-6 pb-4 border-b border-black/[0.07] dark:border-white/[0.07]">
@@ -82,7 +82,7 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
                     <form onSubmit={handleGuardar} className="space-y-5">
 
                         {/* Foto */}
-                        <div className="bg-[#D8D4CE] dark:bg-[#1C1C1C] p-4 rounded-2xl border border-dashed border-black/[0.10] dark:border-white/[0.10]">
+                        <div className="bg-[#EFEDEA] dark:bg-[#1C1C1C] p-4 rounded-2xl border border-dashed border-black/[0.10] dark:border-white/[0.10]">
                             <label className="text-[10px] font-black text-[#A8A29E] uppercase">Foto del Producto</label>
                             <div className="mt-3 flex gap-4">
                                 {previewFoto && (
@@ -158,7 +158,7 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
                             </div>
 
                             {/* Resumen de precios */}
-                            <div className="bg-[#EDEAE6] dark:bg-[#242424] p-4 rounded-xl space-y-2 border border-black/[0.07] dark:border-white/[0.07]">
+                            <div className="bg-[#FFFFFF] dark:bg-[#242424] p-4 rounded-xl space-y-2 border border-black/[0.07] dark:border-white/[0.07]">
                                 <div className="flex justify-between text-sm">
                                     <span className="font-bold text-[#A8A29E]">Ganancia/u:</span>
                                     <span className="font-black text-[#D48800] dark:text-[#F0A500]">{M(gananciaUnidad)}</span>
@@ -184,7 +184,7 @@ export default function ProductoForm({ isOpen, onClose, onProductoGuardado, prod
                         {/* Botones */}
                         <div className="flex gap-3 pt-4 border-t border-black/[0.07] dark:border-white/[0.07]">
                             <button type="button" onClick={onClose} disabled={cargando}
-                                className="flex-1 py-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
+                                className="flex-1 py-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95 disabled:opacity-50">
                                 Cancelar
                             </button>
                             <button type="submit" disabled={cargando}

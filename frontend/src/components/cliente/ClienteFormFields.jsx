@@ -7,7 +7,7 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
     const inputBase = `
         w-full p-3 mt-2 rounded-xl border transition-all outline-none
         border-black/[0.08] dark:border-white/[0.08]
-        bg-[#C0BCB6] dark:bg-[#2E2E2E]
+        bg-[#E8E5E0] dark:bg-[#2E2E2E]
         text-[#1C1917] dark:text-[#F0EEE9]
         placeholder-[#A8A29E]
         focus:border-[#D13A28] dark:focus:border-[#E8422F]
@@ -34,7 +34,7 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
                                 transition-all active:scale-95
                                 ${activo
                                     ? 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/8 dark:bg-[#E8422F]/10'
-                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#1C1C1C] hover:opacity-80'
+                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#1C1C1C] hover:opacity-80'
                                 }
                             `}
                         >

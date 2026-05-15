@@ -24,7 +24,7 @@ function badgeEstado(estado) {
     if (estado === 'REALIZADO')   return 'bg-[#16A34A]/10 text-[#16A34A]';
     if (estado === 'PRESUPUESTO') return 'bg-[#D48800]/10 text-[#D48800]';
     if (estado === 'RECHAZADO')   return 'bg-[#D13A28]/10 text-[#D13A28]';
-    return 'bg-[#C0BCB6] text-[#57534E]';
+    return 'bg-[#E8E5E0] text-[#57534E]';
 }
 function labelEstado(estado) {
     if (estado === 'REALIZADO')   return 'Realizado';
@@ -65,7 +65,7 @@ export default function ClienteCard({
     const alertaSinServicio = diasSinAtender !== null && diasSinAtender > 90;
 
     return (
-        <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden transition-all duration-200">
+        <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden transition-all duration-200">
 
             {/* FILA COMPACTA — tap para expandir */}
             <button
@@ -102,7 +102,7 @@ export default function ClienteCard({
                 <div className="border-t border-black/[0.07] dark:border-white/[0.07]">
 
                     {/* Acciones rápidas — 2 filas */}
-                    <div className="px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C] space-y-2">
+                    <div className="px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] space-y-2">
                         {/* Fila 1: acciones principales */}
                         <div className="flex gap-2">
                             <button onClick={() => abrirWhatsApp(cliente.telefono, cliente.nombre)}
@@ -129,11 +129,11 @@ export default function ClienteCard({
                         {/* Fila 2: secundarias */}
                         <div className="flex gap-2">
                             <button onClick={() => setModalHistorial(true)}
-                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
+                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
                                 📋 Historial
                             </button>
                             <button onClick={() => onEditCliente(cliente)}
-                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
+                                className="flex-1 flex items-center justify-center gap-1 py-2 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">
                                 ✏️ Editar
                             </button>
                             <button onClick={() => onDeleteCliente(cliente.id)}
@@ -144,7 +144,7 @@ export default function ClienteCard({
                     </div>
 
                     {/* Info + historial */}
-                    <div className="px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-t border-black/[0.05] dark:border-white/[0.05] space-y-1.5">
+                    <div className="px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.05] dark:border-white/[0.05] space-y-1.5">
                         <p className="text-[10px] font-bold text-[#A8A29E] uppercase">
                             📍 {cliente.calle} {cliente.numero}
                             {cliente.piso ? `, Piso ${cliente.piso}` : ''}
@@ -169,7 +169,7 @@ export default function ClienteCard({
                                 {verHistorial && (
                                     <div className="mt-2 space-y-1.5">
                                         {(historialExpandido ? serviciosCli : serviciosCli.slice(0, HIST_VISIBLE)).map(s => (
-                                            <div key={s.id} className="flex items-start gap-2 bg-[#C8C4BE] dark:bg-[#242424] rounded-xl px-3 py-2">
+                                            <div key={s.id} className="flex items-start gap-2 bg-[#F5F3F1] dark:bg-[#242424] rounded-xl px-3 py-2">
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-1.5 mb-0.5">
                                                         <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${badgeEstado(s.estado)}`}>
@@ -250,7 +250,7 @@ export default function ClienteCard({
                         {/* Botones agregar sede/equipo */}
                         <div className="flex gap-2 mt-2">
                             <button onClick={() => onAddSede(cliente)}
-                                className="flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase transition-all active:scale-95 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] hover:opacity-80">
+                                className="flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase transition-all active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] hover:opacity-80">
                                 + Sede
                             </button>
                             <button onClick={() => onAddEquipo(cliente)}

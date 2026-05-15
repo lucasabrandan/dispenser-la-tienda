@@ -85,10 +85,10 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 pb-20 bg-[#C8C4BE] dark:bg-[#141414] min-h-screen transition-colors">
+        <div className="w-full max-w-7xl mx-auto px-4 pb-20 bg-[#F5F3F1] dark:bg-[#141414] min-h-screen transition-colors">
 
             {/* BUSCADOR sticky — incluye botón "+ Nuevo" para que siempre sea visible */}
-            <div className="sticky top-0 z-30 py-4 bg-[#C8C4BE]/90 dark:bg-[#141414]/90 backdrop-blur-xl -mx-4 px-4 border-b border-black/[0.07] dark:border-white/[0.07] mb-6">
+            <div className="sticky top-0 z-30 py-4 bg-[#F5F3F1]/90 dark:bg-[#141414]/90 backdrop-blur-xl -mx-4 px-4 border-b border-black/[0.07] dark:border-white/[0.07] mb-6">
                 <div className="flex gap-2 max-w-3xl mx-auto">
                     <div className="relative flex-1">
                         <input
@@ -97,7 +97,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
                             className="
                                 w-full py-3.5 pl-11 pr-5
-                                bg-[#EDEAE6] dark:bg-[#242424]
+                                bg-[#FFFFFF] dark:bg-[#242424]
                                 rounded-2xl border border-black/[0.07] dark:border-white/[0.07]
                                 outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F]
                                 focus:ring-2 focus:ring-[#D13A28]/20
@@ -123,7 +123,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             className={`shrink-0 px-3 py-1.5 rounded-xl font-black text-[9px] uppercase transition-all active:scale-95 ${
                                 filtroChip === chip.id
                                     ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                    : 'bg-[#EDEAE6] dark:bg-[#242424] text-[#57534E] dark:text-[#A8A29E]'
+                                    : 'bg-[#FFFFFF] dark:bg-[#242424] text-[#57534E] dark:text-[#A8A29E]'
                             }`}
                         >
                             {chip.label}
@@ -204,7 +204,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                 <>
                     <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
                     <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
-                        <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
+                        <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
                             <div className="text-center mb-5">
                                 <p className="text-[36px] mb-2">⚠️</p>
                                 <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Eliminar cliente</h3>
@@ -214,7 +214,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             </p>
                             <div className="flex gap-2">
                                 <button onClick={() => setConfirmEliminarCliente(null)}
-                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                     Cancelar
                                 </button>
                                 <button onClick={confirmarEliminarCliente}

@@ -60,10 +60,10 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="w-full max-w-lg bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl shadow-2xl overflow-hidden">
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[#C0BCB6] dark:border-[#2E2E2E]">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-[#E8E5E0] dark:border-[#2E2E2E]">
                     <h2 className="font-bold text-[#1C1917] dark:text-[#F0EEE9] text-base">
                         Generar PDF
                     </h2>
@@ -76,7 +76,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                 <div className="p-5 flex flex-col gap-4">
 
                     {/* Toggle incluir firmas */}
-                    <label className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] cursor-pointer select-none">
+                    <label className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] cursor-pointer select-none">
                         <input
                             type="checkbox"
                             checked={incluirFirmas}
@@ -96,7 +96,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                         <>
                             {/* Firma técnico */}
                             {firmaGuardada ? (
-                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                                     <span className="text-[12px] font-bold text-[var(--success-tx)]">✓ Firma técnico guardada</span>
                                     <button
                                         onClick={() => setEditandoTecnico(true)}
@@ -142,7 +142,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                                 value={aclaracionCliente}
                                 onChange={e => setAclaracionCliente(e.target.value)}
                                 placeholder="Aclaración (nombre de quien firma)"
-                                className="w-full mt-1 px-3 py-2 rounded-xl text-[12px] bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-[#C0BCB6] dark:border-[#2E2E2E] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#D13A28]"
+                                className="w-full mt-1 px-3 py-2 rounded-xl text-[12px] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-[#E8E5E0] dark:border-[#2E2E2E] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#D13A28]"
                             />
                         </>
                     )}
@@ -152,7 +152,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                         <button
                             type="button"
                             onClick={onCancel}
-                            className="flex-1 py-2.5 rounded-xl border border-[#C0BCB6] dark:border-[#2E2E2E] text-sm font-semibold text-[#A8A29E] transition-colors"
+                            className="flex-1 py-2.5 rounded-xl border border-[#E8E5E0] dark:border-[#2E2E2E] text-sm font-semibold text-[#A8A29E] transition-colors"
                         >
                             Cancelar
                         </button>

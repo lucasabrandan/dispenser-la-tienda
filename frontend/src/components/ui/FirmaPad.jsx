@@ -76,7 +76,7 @@ export default function FirmaPad({ value, onChange, label, height = 110 }) {
                     {label}
                 </span>
             )}
-            <div className="relative border border-[#C0BCB6] dark:border-[#2E2E2E] rounded-lg bg-white overflow-hidden"
+            <div className="relative border border-[#E8E5E0] dark:border-[#2E2E2E] rounded-lg bg-white overflow-hidden"
                  style={{ height }}>
                 <canvas
                     ref={canvasRef}
@@ -92,7 +92,7 @@ export default function FirmaPad({ value, onChange, label, height = 110 }) {
                     onTouchEnd={stopDraw}
                 />
                 {/* Línea guía */}
-                <div className="absolute bottom-8 left-4 right-4 border-b border-dashed border-[#C0BCB6] pointer-events-none" />
+                <div className="absolute bottom-8 left-4 right-4 border-b border-dashed border-[#E8E5E0] pointer-events-none" />
                 {isEmpty && (
                     <span className="absolute inset-0 flex items-center justify-center text-xs text-[#A8A29E] pointer-events-none select-none">
                         Firmar aquí

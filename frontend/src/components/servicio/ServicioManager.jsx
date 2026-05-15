@@ -21,7 +21,7 @@ function StatChip({ label, valor, sub, color, valorCls = '', onClick }) {
     return (
         <div
             onClick={onClick}
-            className={`shrink-0 rounded-2xl p-3 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[112px] ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
+            className={`shrink-0 rounded-2xl p-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[112px] ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
             style={color ? { borderLeft: `3px solid ${color}` } : {}}
         >
             <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">{label}</p>
@@ -109,10 +109,10 @@ export default function ServicioManager({
     useEffect(() => { if (ordenOrigen)       setModalCrear(true); }, [ordenOrigen]);
 
     return (
-        <div className="min-h-screen pb-28 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
+        <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
             {/* Header sticky con buscador */}
-            <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-[#C8C4BE] dark:bg-[#141414] border-b border-black/[0.06]">
+            <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.06]">
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="text-[22px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
                         Servicio Técnico
@@ -121,16 +121,16 @@ export default function ServicioManager({
                         <button
                             onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
                             title="Selección múltiple"
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${modoSeleccion ? 'bg-[#D13A28] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${modoSeleccion ? 'bg-[#D13A28] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
                         >☑</button>
                         <button
                             onClick={() => exportarServiciosCSV(filtros.itemsFiltrados)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black transition-all active:scale-90 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black transition-all active:scale-90 bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
                             title="Exportar CSV"
                         >CSV</button>
                         <button
                             onClick={() => setModalImportar(true)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] transition-all active:scale-90 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] transition-all active:scale-90 bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
                             title="Importar servicios históricos"
                         >📤</button>
                         {esAdmin && (
@@ -148,7 +148,7 @@ export default function ServicioManager({
                         value={filtros.busqueda}
                         onChange={e => filtros.setBusqueda(e.target.value)}
                         placeholder="Cliente, S/N, ubicación, sede..."
-                        className="w-full h-10 pl-9 pr-8 rounded-xl text-[13px] outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E]"
+                        className="w-full h-10 pl-9 pr-8 rounded-xl text-[13px] outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E]"
                     />
                     {filtros.busqueda && (
                         <button onClick={() => filtros.setBusqueda('')}
@@ -208,7 +208,7 @@ export default function ServicioManager({
                 <div className="flex gap-2">
                     {TABS.map(t => (
                         <button key={t.id} onClick={() => cambiarTab(t.id)}
-                            className={`flex-1 h-10 rounded-xl font-bold text-[12px] uppercase transition-all active:scale-95 ${tabActual === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            className={`flex-1 h-10 rounded-xl font-bold text-[12px] uppercase transition-all active:scale-95 ${tabActual === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
                             {t.label}
                             {t.id === tabActual && filtros.totalItems > 0 && (
                                 <span className="ml-1 text-[10px] opacity-70">({filtros.totalItems})</span>
@@ -220,7 +220,7 @@ export default function ServicioManager({
                 {/* Toggle filtros avanzados */}
                 <button
                     onClick={() => setMostrarRango(v => !v)}
-                    className={`w-full h-8 rounded-xl font-bold text-[11px] uppercase flex items-center justify-center gap-1.5 transition-all active:scale-95 ${mostrarRango ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                    className={`w-full h-8 rounded-xl font-bold text-[11px] uppercase flex items-center justify-center gap-1.5 transition-all active:scale-95 ${mostrarRango ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
                     {mostrarRango ? '▲' : '▼'} Filtros avanzados
                 </button>
 
@@ -231,7 +231,7 @@ export default function ServicioManager({
                             {PERIODOS.map(p => (
                                 <button key={p.id}
                                     onClick={() => filtros.aplicarRapido(p.id)}
-                                    className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                                    className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
                                     {p.label}
                                 </button>
                             ))}
@@ -241,16 +241,16 @@ export default function ServicioManager({
                         <div className="flex gap-2">
                             <input type="date" value={filtros.desde}
                                 onChange={e => filtros.aplicarRango(e.target.value, filtros.hasta)}
-                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
                             <input type="date" value={filtros.hasta}
                                 onChange={e => filtros.aplicarRango(filtros.desde, e.target.value)}
-                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
                         </div>
 
                         {/* Filtro técnico — admin */}
                         {esAdmin && tecnicos.length > 0 && (
                             <select value={usuarioId} onChange={e => setUsuarioId(e.target.value)}
-                                className="w-full h-10 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
+                                className="w-full h-10 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
                                 <option value="">Todos los técnicos</option>
                                 {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                             </select>
@@ -262,7 +262,7 @@ export default function ServicioManager({
                             <select
                                 value={ordenServicio}
                                 onChange={e => setOrdenServicio(e.target.value)}
-                                className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
+                                className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
                             >
                                 <option value="fechaServicio,desc">Más reciente primero</option>
                                 <option value="fechaServicio,asc">Más antiguo primero</option>
@@ -275,7 +275,7 @@ export default function ServicioManager({
 
                 {/* Barra selección masiva */}
                 {modoSeleccion && seleccionados.size > 0 && (
-                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                         <span className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
@@ -286,7 +286,7 @@ export default function ServicioManager({
                             </button>
                         )}
                         <button onClick={() => ejecutarMasiva('ARCHIVADO')}
-                            className="h-9 px-4 rounded-xl font-bold text-xs bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            className="h-9 px-4 rounded-xl font-bold text-xs bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                             🗄️ Archivar
                         </button>
                         {esAdmin && (
@@ -303,11 +303,11 @@ export default function ServicioManager({
                 {cargando ? (
                     <div className="flex flex-col gap-3">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="h-36 rounded-2xl animate-pulse bg-[#EDEAE6] dark:bg-[#242424]" />
+                            <div key={i} className="h-36 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />
                         ))}
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
-                    <div className="text-center py-16 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-[36px] mb-2">📋</p>
                         <p className="font-bold text-[#A8A29E]">Sin resultados</p>
                     </div>
@@ -347,12 +347,12 @@ export default function ServicioManager({
             {/* Modal crear/editar */}
             {modalCrear && (
                 <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/55">
-                    <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-[#EDEAE6] dark:bg-[#141414]">
+                    <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-[#FFFFFF] dark:bg-[#141414]">
                         {/* Drag handle — indica scroll en mobile */}
-                        <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-[#EDEAE6] dark:bg-[#141414]">
-                            <div className="w-10 h-1 rounded-full bg-[#C0BCB6] dark:bg-[#3E3E3E]" />
+                        <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-[#FFFFFF] dark:bg-[#141414]">
+                            <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
-                        <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
+                        <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
                             <div>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                                     {servicioEjecutar ? '🔧 Ejecutar Trabajo' : servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
@@ -366,7 +366,7 @@ export default function ServicioManager({
                                 </p>
                             </div>
                             <button onClick={cerrarModalCompleto}
-                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90">✕</button>
+                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">✕</button>
                         </div>
                         <ServicioForm
                             onSaved={() => {
@@ -391,14 +391,14 @@ export default function ServicioManager({
             {modalDetalle && (
                 <div className="fixed inset-0 z-[2000] flex items-end" style={{ background: 'rgba(0,0,0,0.5)' }}
                     onClick={() => setModalDetalle(null)}>
-                    <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-[#EDEAE6] dark:bg-[#242424]"
+                    <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-[#FFFFFF] dark:bg-[#242424]"
                         onClick={e => e.stopPropagation()}>
-                        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
                         <h3 className="text-[16px] font-black mb-1 text-[#1C1917] dark:text-[#F0EEE9]">{modalDetalle.clienteNombre}</h3>
                         <p className="text-[11px] text-[#A8A29E] mb-4">📍 {modalDetalle.sedeNombre} · {modalDetalle.fecha}</p>
                         <div className="overflow-y-auto flex-1 mb-4 space-y-3">
                             {modalDetalle.items?.map((it, idx) => (
-                                <div key={idx} className="p-4 rounded-2xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                                <div key={idx} className="p-4 rounded-2xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                                     <div className="flex justify-between mb-1">
                                         <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
                                         <M valor={Number(it.costo || 0)} className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]" />
@@ -449,7 +449,7 @@ export default function ServicioManager({
                 <>
                     <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
                     <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
-                        <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
+                        <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
                             <div className="text-center mb-5">
                                 <p className="text-[36px] mb-2">⚠️</p>
                                 <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">
@@ -464,7 +464,7 @@ export default function ServicioManager({
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => setConfirmEliminar(null)}
-                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                     Cancelar
                                 </button>
                                 <button onClick={async () => {

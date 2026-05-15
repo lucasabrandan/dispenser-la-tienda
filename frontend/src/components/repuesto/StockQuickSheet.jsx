@@ -93,12 +93,12 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
             onClick={onClose}
         >
             <div
-                className="w-full rounded-t-3xl flex flex-col bg-[#EDEAE6] dark:bg-[#1C1C1C]"
+                className="w-full rounded-t-3xl flex flex-col bg-[#FFFFFF] dark:bg-[#1C1C1C]"
                 style={{ maxHeight: '90vh', border: '0.5px solid rgba(255,255,255,0.08)' }}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}
-                <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-2 bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
 
                 {/* Header */}
                 <div className="px-4 pb-3 flex items-center justify-between">
@@ -115,7 +115,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                     <button
                         type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#D8D4CE] dark:bg-[#2E2E2E] active:scale-90"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90"
                     >✕</button>
                 </div>
 
@@ -126,7 +126,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                         value={busqueda}
                         onChange={e => setBusqueda(e.target.value)}
                         placeholder="Buscar por nombre o SKU..."
-                        className="w-full px-4 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#D8D4CE] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/[0.07] dark:border-white/[0.07]"
+                        className="w-full px-4 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/[0.07] dark:border-white/[0.07]"
                     />
                 </div>
 
@@ -146,11 +146,11 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
                                     modificado
                                         ? 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/5 dark:bg-[#E8422F]/5'
-                                        : 'border-black/[0.07] dark:border-white/[0.07] bg-[#EDEAE6] dark:bg-[#242424]'
+                                        : 'border-black/[0.07] dark:border-white/[0.07] bg-[#FFFFFF] dark:bg-[#242424]'
                                 }`}
                             >
                                 {/* Foto miniatura */}
-                                <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#D8D4CE] dark:bg-[#2E2E2E] flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#EFEDEA] dark:bg-[#2E2E2E] flex items-center justify-center">
                                     {fotoSrc
                                         ? <img src={fotoSrc} alt={r.nombre} className="w-full h-full object-cover"
                                                onError={e => { e.target.style.display = 'none'; }} />
@@ -168,7 +168,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                                 </div>
 
                                 {/* Controles +/− */}
-                                <div className="flex items-center gap-1 shrink-0 bg-[#D8D4CE] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
+                                <div className="flex items-center gap-1 shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
                                     <button
                                         type="button"
                                         onClick={() => restar(r)}

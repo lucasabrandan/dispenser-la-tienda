@@ -25,7 +25,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                 <button
                     type="button"
                     onClick={() => setSheetOpen(true)}
-                    className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-[13px] border border-dashed border-[#C0BCB6] dark:border-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] bg-[#D8D4CE] dark:bg-[#1C1C1C] active:scale-[0.98] transition-all"
+                    className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-[13px] border border-dashed border-[#E8E5E0] dark:border-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] bg-[#EFEDEA] dark:bg-[#1C1C1C] active:scale-[0.98] transition-all"
                 >
                     <span>
                         {productos.length > 0
@@ -38,7 +38,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
 
             {/* ── Lista de productos seleccionados ── */}
             {productos.length > 0 && (
-                <div className="rounded-xl overflow-hidden bg-[#D8D4CE] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
+                <div className="rounded-xl overflow-hidden bg-[#EFEDEA] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
                     {productos.map((p, i) => (
                         <div
                             key={p.id ?? i}
@@ -49,7 +49,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                 <img
                                     src={p.fotoUrl}
                                     alt={p.nombre}
-                                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#C0BCB6] dark:bg-[#242424]"
+                                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#E8E5E0] dark:bg-[#242424]"
                                     onError={e => { e.target.style.display = 'none'; }}
                                 />
                             )}
@@ -62,7 +62,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                 <p className="font-bold text-sm text-[#1C1917] dark:text-[#F0EEE9] truncate">{p.nombre}</p>
                                 <p className="text-[10px] text-[#A8A29E]">${Number(p.precio).toLocaleString()} c/u</p>
                             </div>
-                            <div className="flex items-center gap-1 bg-[#C0BCB6] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
+                            <div className="flex items-center gap-1 bg-[#E8E5E0] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -138,7 +138,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                         onChange={e => setCostoEnvio(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0))}
                         onFocus={e => e.target.select()}
                         placeholder="0"
-                        className="flex-1 h-11 rounded-xl px-4 font-black text-xl text-[#1C1917] dark:text-[#F0EEE9] bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10 outline-none focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
+                        className="flex-1 h-11 rounded-xl px-4 font-black text-xl text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10 outline-none focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
                     />
                     {envioNum > 0 && (
                         <button type="button" onClick={() => setCostoEnvio('')} className="text-[#A8A29E] hover:text-[#D13A28] text-lg">

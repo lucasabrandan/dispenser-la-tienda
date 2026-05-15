@@ -20,7 +20,7 @@ export function StepBar({ paso, total }) {
                 <div key={i}
                     className="flex-1 h-1 rounded-full transition-all duration-300"
                     style={{
-                        background: i <= paso ? '#D13A28' : '#C0BCB6',
+                        background: i <= paso ? '#D13A28' : '#E8E5E0',
                         opacity: i < paso ? 0.45 : 1,
                     }}
                 />
@@ -74,7 +74,7 @@ export function BackBtn({ onClick }) {
     return (
         <button
             onClick={onClick}
-            className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]"
+            className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]"
         >
             ← Volver
         </button>
@@ -84,7 +84,7 @@ export function BackBtn({ onClick }) {
 // ── Card del sistema ──────────────────────────────────────────────────────────
 export function DSCard({ children, className = '' }) {
     return (
-        <div className={`rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] ${className}`}>
+        <div className={`rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] ${className}`}>
             {children}
         </div>
     );
@@ -99,7 +99,7 @@ export function DSInput({ label, className = '', ...props }) {
                 {...props}
                 className={`
                     w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-                    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+                    bg-[#E8E5E0] dark:bg-[#2E2E2E]
                     text-[#1C1917] dark:text-[#F0EEE9]
                     border border-black/10 dark:border-white/10
                     placeholder-[#A8A29E]
@@ -122,7 +122,7 @@ export function DSTextarea({ label, className = '', ...props }) {
                 {...props}
                 className={`
                     w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none resize-none
-                    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+                    bg-[#E8E5E0] dark:bg-[#2E2E2E]
                     text-[#1C1917] dark:text-[#F0EEE9]
                     border border-black/10 dark:border-white/10
                     placeholder-[#A8A29E]
@@ -141,7 +141,7 @@ export function buildSelectStyles(isDark) {
     return {
         control: (base, state) => ({
             ...base,
-            background:  isDark ? '#2E2E2E' : '#C0BCB6',
+            background:  isDark ? '#2E2E2E' : '#E8E5E0',
             border:      state.isFocused
                 ? `1.5px solid ${isDark ? '#E8422F' : '#D13A28'}`
                 : isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
@@ -155,8 +155,8 @@ export function buildSelectStyles(isDark) {
             backgroundColor: state.isSelected
                 ? (isDark ? '#E8422F' : '#D13A28')
                 : state.isFocused
-                    ? (isDark ? '#3A3A3A' : '#D8D4CE')
-                    : (isDark ? '#2E2E2E' : '#C0BCB6'),
+                    ? (isDark ? '#3A3A3A' : '#EFEDEA')
+                    : (isDark ? '#2E2E2E' : '#E8E5E0'),
             color:       state.isSelected ? '#fff' : isDark ? '#F0EEE9' : '#1C1917',
             padding:     '6px 12px',
             fontSize:    '13px',
@@ -164,7 +164,7 @@ export function buildSelectStyles(isDark) {
         }),
         menu:        b => ({
             ...b,
-            background:   isDark ? '#2E2E2E' : '#C0BCB6',
+            background:   isDark ? '#2E2E2E' : '#E8E5E0',
             borderRadius: '12px',
             border:       isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
             boxShadow:    '0 8px 24px rgba(0,0,0,0.2)',

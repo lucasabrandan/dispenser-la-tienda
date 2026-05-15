@@ -133,7 +133,7 @@ export default function ServicioList({ onEditar }) {
         .reduce((a, s) => a + calcularCosto(s), 0);
 
     return (
-        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
+        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
             {/* ── HEADER ───────────────────────────────────────────────── */}
             <div className="px-4 md:px-0 pt-5 md:pt-0 pb-4">
@@ -156,7 +156,7 @@ export default function ServicioList({ onEditar }) {
                             className="px-4 py-1.5 rounded-xl text-[12px] font-bold transition-all active:scale-95"
                             style={tipoFiltro === t.value
                                 ? { background: '#D13A28', color: '#fff' }
-                                : { background: '#C0BCB6', color: '#57534E' }
+                                : { background: '#E8E5E0', color: '#57534E' }
                             }
                         >
                             {t.label}
@@ -167,7 +167,7 @@ export default function ServicioList({ onEditar }) {
                 {/* ── MÉTRICAS — solo admin ────────────────────────────── */}
                 {esAdmin && (
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                        <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
                              style={{ borderLeft: '3px solid #D48800' }}>
                             <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#D48800] dark:text-[#F0A500]">
                                 Ventas insumos
@@ -177,7 +177,7 @@ export default function ServicioList({ onEditar }) {
                                 className="text-[20px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block"
                             />
                         </div>
-                        <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                        <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
                              style={{ borderLeft: '3px solid #D13A28' }}>
                             <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#D13A28] dark:text-[#E8422F]">
                                 Técnica / MO
@@ -203,7 +203,7 @@ export default function ServicioList({ onEditar }) {
                 {/* ── LISTADO ───────────────────────────────────────────── */}
                 <div className="flex flex-col gap-3">
                     {filtros.itemsPagina.length === 0 ? (
-                        <div className="text-center py-12 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <div className="text-center py-12 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                             <p className="text-[#A8A29E] font-bold">No se encontraron registros</p>
                         </div>
                     ) : filtros.itemsPagina.map(s => {
@@ -213,7 +213,7 @@ export default function ServicioList({ onEditar }) {
 
                         return (
                             <div key={s.id}
-                                 className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] overflow-hidden transition-colors"
+                                 className="rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] overflow-hidden transition-colors"
                                  style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
 
                                 {/* Cuerpo */}
@@ -269,20 +269,20 @@ export default function ServicioList({ onEditar }) {
 
                                 {/* Barra de acciones */}
                                 <div
-                                    className="flex items-center gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                                    className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                                     style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}
                                 >
                                     {esAdmin && esPendiente && (
                                         <button
                                             onClick={() => onEditar?.(s)}
-                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]"
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E]"
                                             title="Editar">
                                             ✏️
                                         </button>
                                     )}
                                     <button
                                         onClick={() => setModalDetalle(s)}
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]"
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E]"
                                         title="Ver detalle">
                                         👁️
                                     </button>
@@ -312,7 +312,7 @@ export default function ServicioList({ onEditar }) {
                                                 leyenda: s.observaciones || s.leyenda || '',
                                             });
                                         }}
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]"
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E]"
                                         title="Generar PDF">
                                         📄
                                     </button>
@@ -358,11 +358,11 @@ export default function ServicioList({ onEditar }) {
                     onClick={() => setModalDetalle(null)}
                 >
                     <div
-                        className="w-full rounded-t-3xl p-5 bg-[#EDEAE6] dark:bg-[#242424]"
+                        className="w-full rounded-t-3xl p-5 bg-[#FFFFFF] dark:bg-[#242424]"
                         style={{ border: '0.5px solid rgba(255,255,255,0.08)' }}
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#C0BCB6] dark:bg-[#2E2E2E]" />
+                        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
                         <h3 className="text-[16px] font-black mb-1 text-[#1C1917] dark:text-[#F0EEE9]">
                             Desglose — {modalDetalle.clienteNombre}
                         </h3>
@@ -373,7 +373,7 @@ export default function ServicioList({ onEditar }) {
                         <div className="max-h-[50vh] overflow-y-auto space-y-3 mb-4">
                             {modalDetalle.items.map((it, idx) => (
                                 <div key={idx}
-                                     className="p-4 rounded-2xl bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                                     className="p-4 rounded-2xl bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                                      style={{ border: '0.5px solid rgba(0,0,0,0.06)' }}>
                                     <div className="flex justify-between mb-1">
                                         <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">

@@ -30,13 +30,13 @@ export default function ClienteForm({ form, setForm, onSubmit, onClose }) {
     };
 
     // Estilo común para inputs del sistema
-    const inputClass = 'w-full p-3 mt-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all';
+    const inputClass = 'w-full p-3 mt-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all';
 
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
-                <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     {/* HEADER */}
                     <div className="flex justify-between items-center p-5 pb-4 border-b border-black/[0.07] dark:border-white/[0.07]">
@@ -46,7 +46,7 @@ export default function ClienteForm({ form, setForm, onSubmit, onClose }) {
                         </div>
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                         >
                             ✕
                         </button>
@@ -61,7 +61,7 @@ export default function ClienteForm({ form, setForm, onSubmit, onClose }) {
                         />
 
                         {/* DIRECCIÓN */}
-                        <div className="rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-[#D8D4CE] dark:bg-[#1C1C1C] p-4">
+                        <div className="rounded-2xl border border-black/[0.07] dark:border-white/[0.07] bg-[#EFEDEA] dark:bg-[#1C1C1C] p-4">
                             <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-3">
                                 Dirección
                             </p>
@@ -95,7 +95,7 @@ export default function ClienteForm({ form, setForm, onSubmit, onClose }) {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 py-3 rounded-xl font-black text-sm uppercase transition-all hover:opacity-80 active:scale-95 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]"
+                                className="flex-1 py-3 rounded-xl font-black text-sm uppercase transition-all hover:opacity-80 active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]"
                             >
                                 Cancelar
                             </button>

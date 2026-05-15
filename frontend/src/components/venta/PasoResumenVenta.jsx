@@ -13,7 +13,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
 
     const textareaCls = `
         w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none resize-none
-        bg-[#C0BCB6] dark:bg-[#2E2E2E]
+        bg-[#E8E5E0] dark:bg-[#2E2E2E]
         text-[#1C1917] dark:text-[#F0EEE9]
         border border-black/10 dark:border-white/10
         placeholder-[#A8A29E]
@@ -28,7 +28,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
             {/* ── Resumen de productos ── */}
             <div>
                 <Label>Resumen del pedido</Label>
-                <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-[#EDEAE6] dark:bg-[#242424]">
+                <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-[#FFFFFF] dark:bg-[#242424]">
                     {productos.map((p, i) => (
                         <div key={i} className="px-4 py-2.5 border-b border-black/[0.07] dark:border-white/[0.07] last:border-0 flex justify-between items-center">
                             <span className="text-[13px] font-medium text-[#1C1917] dark:text-[#F0EEE9]">
@@ -47,14 +47,14 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
             </div>
 
             {/* ── Descuento ── */}
-            <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+            <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                 <Label>Descuento (%)</Label>
                 <div className="flex items-center gap-3 mb-3">
                     <input
                         type="number" min="0" max="100"
                         value={descuentoPorcentaje}
                         onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                        className="w-20 h-12 rounded-xl text-center font-black text-2xl outline-none bg-[#C0BCB6] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/[0.08] focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
+                        className="w-20 h-12 rounded-xl text-center font-black text-2xl outline-none bg-[#E8E5E0] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/[0.08] focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
                     />
                     <span className="font-black text-xl text-[#A8A29E]">%</span>
                     {descuentoPorcentaje > 0 && (
@@ -72,7 +72,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                             className={`flex-1 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
                                 descuentoPorcentaje === p
                                     ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                    : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
                             }`}>
                             {p}%
                         </button>
@@ -81,7 +81,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
             </div>
 
             {/* ── Observaciones ── */}
-            <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+            <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                 <Label>Observaciones (opcional)</Label>
                 <textarea
                     value={leyenda}

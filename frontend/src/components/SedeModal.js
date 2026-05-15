@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 // Estilos reutilizables del sistema
 const fieldCls = `
     w-full h-12 px-4 rounded-xl
-    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+    bg-[#E8E5E0] dark:bg-[#2E2E2E]
     border border-black/[0.07] dark:border-white/[0.07]
     font-bold text-[12px] uppercase outline-none
     text-[#1C1917] dark:text-[#F0EEE9]
@@ -75,11 +75,11 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end z-[2000]">
-            <div className="bg-[#EDEAE6] dark:bg-[#242424] w-full max-w-xl rounded-t-[2rem] shadow-2xl animate-slide-up h-[90vh] flex flex-col">
+            <div className="bg-[#FFFFFF] dark:bg-[#242424] w-full max-w-xl rounded-t-[2rem] shadow-2xl animate-slide-up h-[90vh] flex flex-col">
 
                 {/* Handle */}
                 <div className="flex justify-center pt-4 pb-2">
-                    <div className="w-12 h-1 bg-[#C0BCB6] dark:bg-[#2E2E2E] rounded-full" />
+                    <div className="w-12 h-1 bg-[#E8E5E0] dark:bg-[#2E2E2E] rounded-full" />
                 </div>
 
                 {/* Título */}
@@ -98,7 +98,7 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
                         </div>
                     ) : (
                         sedes.map(s => (
-                            <div key={s.id} className="p-4 bg-[#D8D4CE] dark:bg-[#1C1C1C] rounded-2xl border border-black/[0.07] dark:border-white/[0.07]">
+                            <div key={s.id} className="p-4 bg-[#EFEDEA] dark:bg-[#1C1C1C] rounded-2xl border border-black/[0.07] dark:border-white/[0.07]">
                                 <div className="flex justify-between items-start gap-3">
                                     <div className="flex-1 min-w-0">
                                         <p className="font-black text-[13px] text-[#1C1917] dark:text-[#F0EEE9] uppercase leading-none mb-1">
@@ -159,7 +159,7 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
                     </div>
                     <div className="flex gap-3">
                         <button type="button" onClick={onClose}
-                            className="flex-1 py-3.5 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            className="flex-1 py-3.5 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
                             Cerrar
                         </button>
                         <button type="submit"

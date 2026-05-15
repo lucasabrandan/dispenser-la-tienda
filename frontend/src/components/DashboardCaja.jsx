@@ -39,14 +39,14 @@ export default function DashboardCaja({ setVistaActual }) {
         };
         return {
             label: s.estado,
-            cls: 'bg-[#C0BCB6] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]'
+            cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]'
         };
     };
 
     const tipoIcon = (s) => s.servicioTipo === 'TECNICA' ? '🔧' : '🛒';
 
     return (
-        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#C8C4BE] dark:bg-[#141414] transition-colors">
+        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
             {/* ── HEADER ───────────────────────────────────────────────── */}
             <div className="px-4 md:px-0 pt-5 md:pt-0 pb-4">
@@ -71,7 +71,7 @@ export default function DashboardCaja({ setVistaActual }) {
                         <button
                             onClick={recargar}
                             disabled={cargando}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]"
+                            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 disabled:opacity-40 bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]"
                         >
                             <span className={`text-base ${cargando ? 'animate-spin' : ''}`}>🔄</span>
                         </button>
@@ -83,7 +83,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
                 {/* ── FACTURADO HOY ─────────────────────────────────────── */}
                 <div
-                    className="rounded-2xl p-4 md:p-5 bg-[#EDEAE6] dark:bg-[#242424]"
+                    className="rounded-2xl p-4 md:p-5 bg-[#FFFFFF] dark:bg-[#242424]"
                     style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: '3px solid #D13A28' }}
                 >
                     <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">
@@ -110,7 +110,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
                 {/* ── MÉTRICAS SECUNDARIAS ───────────────────────────────── */}
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-2xl p-4 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">
                             Este mes
                         </p>
@@ -128,7 +128,7 @@ export default function DashboardCaja({ setVistaActual }) {
                         className={`rounded-2xl p-4 text-left transition-all active:scale-95 border border-black/[0.07] dark:border-white/[0.07] ${
                             stats.pendientesCount > 0
                                 ? 'bg-[var(--warning-bg)]'
-                                : 'bg-[#EDEAE6] dark:bg-[#242424]'
+                                : 'bg-[#FFFFFF] dark:bg-[#242424]'
                         }`}
                     >
                         <p className="text-[9px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">
@@ -180,7 +180,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
                     <button
                         onClick={() => setVistaActual('historial')}
-                        className="rounded-2xl p-4 text-left transition-all active:scale-95 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                        className="rounded-2xl p-4 text-left transition-all active:scale-95 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
                     >
                         <p className="text-xl mb-2">📋</p>
                         <p className="font-black text-[13px] uppercase leading-tight text-[#1C1917] dark:text-[#F0EEE9]">
@@ -193,7 +193,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
                     <button
                         onClick={() => setVistaActual('presupuestos')}
-                        className="rounded-2xl p-4 text-left transition-all active:scale-95 bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
+                        className="rounded-2xl p-4 text-left transition-all active:scale-95 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]"
                     >
                         <p className="text-xl mb-2">💰</p>
                         <p className="font-black text-[13px] uppercase leading-tight text-[#1C1917] dark:text-[#F0EEE9]">
@@ -218,7 +218,7 @@ export default function DashboardCaja({ setVistaActual }) {
                             Cargando...
                         </div>
                     ) : stats.ultimos.length === 0 ? (
-                        <div className="text-center py-10 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <div className="text-center py-10 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                             <p className="font-bold text-sm text-[#A8A29E]">Sin movimientos aún</p>
                             <p className="text-xs mt-1 text-[#A8A29E]">Los servicios y ventas aparecerán aquí</p>
                         </div>
@@ -229,8 +229,8 @@ export default function DashboardCaja({ setVistaActual }) {
                                 const total = calcularTotal(s);
                                 return (
                                     <div key={s.id}
-                                         className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 bg-[#C0BCB6] dark:bg-[#2E2E2E]">
+                                         className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 bg-[#E8E5E0] dark:bg-[#2E2E2E]">
                                             {tipoIcon(s)}
                                         </div>
                                         <div className="flex-1 min-w-0">

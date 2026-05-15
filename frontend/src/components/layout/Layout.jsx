@@ -28,7 +28,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     const { montosVisibles, toggleMontos } = useMontos();
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row transition-colors duration-300 antialiased bg-[#C8C4BE] dark:bg-[#141414]">
+        <div className="min-h-screen flex flex-col md:flex-row transition-colors duration-300 antialiased bg-[#F5F3F1] dark:bg-[#141414]">
 
             {/* SIDEBAR DESKTOP */}
             <Sidebar vistaActual={vistaActual} setVistaActual={setVistaActual}
@@ -37,7 +37,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             <div className="flex-1 flex flex-col min-w-0">
 
                 {/* HEADER MOBILE */}
-                <header className="md:hidden h-16 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-b border-black/[0.08] dark:border-white/[0.07]">
+                <header className="md:hidden h-16 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08] dark:border-white/[0.07]">
                     {/* Hamburger */}
                     <button
                         onClick={() => setDrawerOpen(true)}

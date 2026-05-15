@@ -6,7 +6,7 @@ import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
 
 const PRIORIDAD_COLOR = {
-    BAJA:    { bg: 'bg-[#C0BCB6] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
+    BAJA:    { bg: 'bg-[#E8E5E0] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
     NORMAL:  { bg: 'bg-[#DBEAFE] dark:bg-[#1E3A5F]', tx: 'text-[#2563EB] dark:text-[#60A5FA]' },
     ALTA:    { bg: 'bg-[var(--warning-bg)]',           tx: 'text-[var(--warning-tx)]' },
     URGENTE: { bg: 'bg-[var(--danger-bg)]',            tx: 'text-[var(--danger-tx)]' },
@@ -34,7 +34,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
     const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
 
     return (
-        <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
+        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}>
             <div className="p-4">
                 {/* Prioridad + título + hora */}
@@ -79,12 +79,12 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                 {!esFinal && orden.descripcion && (
                     <>
                         <button onClick={() => setExpandido(v => !v)}
-                            className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                            className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
                             <span>Instrucciones</span>
                             <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
                         </button>
                         {expandido && (
-                            <div className="mt-2 p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                            <div className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                                 <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{orden.descripcion}</p>
                             </div>
                         )}
@@ -101,7 +101,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
 
             {/* Barra acciones */}
             {!esFinal && sig && (
-                <div className="flex flex-col gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+                <div className="flex flex-col gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                     style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
 
                     {/* EN_SITIO sin presupuesto: forzar Registrar trabajo */}
@@ -143,16 +143,16 @@ const MESES_ES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'S
 function MesCard({ d, fmt, labelMes }) {
     const [abierto, setAbierto] = useState(false);
     return (
-        <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
+        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
             style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
             {/* Header colapsable */}
             <button onClick={() => setAbierto(v => !v)}
-                className="w-full flex items-center justify-between px-4 py-3 active:bg-[#D8D4CE] dark:active:bg-[#1C1C1C] transition-colors">
+                className="w-full flex items-center justify-between px-4 py-3 active:bg-[#EFEDEA] dark:active:bg-[#1C1C1C] transition-colors">
                 <div className="flex items-center gap-2">
                     <p className="text-[14px] font-black text-[#1C1917] dark:text-[#F0EEE9] capitalize">
                         {labelMes(d.periodo)}
                     </p>
-                    <span className="text-[10px] font-bold text-[#A8A29E] bg-[#D8D4CE] dark:bg-[#1C1C1C] px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] font-bold text-[#A8A29E] bg-[#EFEDEA] dark:bg-[#1C1C1C] px-2 py-0.5 rounded-md">
                         {d.cantidadServicios} {d.cantidadServicios === 1 ? 'trabajo' : 'trabajos'}
                     </span>
                 </div>
@@ -244,12 +244,12 @@ function RendimientoTab({ tecnicoId }) {
             {/* Botón recargar */}
             <div className="flex justify-end">
                 <button onClick={() => setTick(t => t + 1)}
-                    className="text-[11px] font-bold text-[#A8A29E] px-3 py-1.5 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] active:scale-95 transition-all">
+                    className="text-[11px] font-bold text-[#A8A29E] px-3 py-1.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] active:scale-95 transition-all">
                     ↻ Recargar
                 </button>
             </div>
             {/* ── Acumulado total — protagonista ── */}
-            <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
+            <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
                 style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                 <div className="p-4">
                     <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-1">
@@ -398,7 +398,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         className={`shrink-0 px-4 py-2 rounded-xl font-bold text-[12px] transition-all active:scale-95 ${
                             tab === t.id
                                 ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                : 'bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]'
+                                : 'bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]'
                         }`}>
                         {t.label}
                     </button>

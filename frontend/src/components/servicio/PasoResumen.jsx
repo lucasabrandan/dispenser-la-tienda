@@ -125,7 +125,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
     const inputCls = `
         w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-        bg-[#C0BCB6] dark:bg-[#1C1C1C]
+        bg-[#E8E5E0] dark:bg-[#1C1C1C]
         text-[#1C1917] dark:text-[#F0EEE9]
         border border-black/10 dark:border-white/[0.08]
         placeholder-[#A8A29E]
@@ -138,7 +138,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
         h-9 px-3.5 rounded-xl text-[12px] font-black transition-all active:scale-95
         ${activo
             ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-            : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+            : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
         }
     `;
 
@@ -150,7 +150,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                 <Label>Equipos en el ticket</Label>
                 <div className="flex flex-col gap-2">
                     {ticketItems.map((it, idx) => (
-                        <div key={idx} className="rounded-2xl overflow-hidden bg-[#D8D4CE] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <div key={idx} className="rounded-2xl overflow-hidden bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                             <div className="p-4 flex justify-between items-start">
                                 <div className="flex-1 min-w-0 pr-3">
                                     <p className="font-black text-[13px] text-[#D13A28] dark:text-[#E8422F]">
@@ -206,7 +206,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                             type="number" min="0" max="100" autoFocus
                             value={descuentoPorcentaje || ''}
                             onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                            className="w-20 h-9 rounded-xl text-center font-black text-sm outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
+                            className="w-20 h-9 rounded-xl text-center font-black text-sm outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
                         />
                     )}
                     {descuentoPorcentaje > 0 && (
@@ -222,7 +222,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
             {/* Técnico responsable — OBLIGATORIO para admin */}
             {esAdmin && tecnicos.length > 0 && (
-                <div className={`rounded-2xl p-4 border-2 transition-colors ${!tecnicoSeleccionado ? 'border-[#D13A28] bg-[#D13A28]/5 dark:bg-[#D13A28]/10' : 'border-transparent bg-[#D8D4CE] dark:bg-[#242424]'}`}>
+                <div className={`rounded-2xl p-4 border-2 transition-colors ${!tecnicoSeleccionado ? 'border-[#D13A28] bg-[#D13A28]/5 dark:bg-[#D13A28]/10' : 'border-transparent bg-[#EFEDEA] dark:bg-[#242424]'}`}>
                     <div className="flex items-center justify-between mb-2">
                         <Label>Técnico responsable</Label>
                         {!tecnicoSeleccionado ? (

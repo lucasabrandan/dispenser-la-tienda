@@ -50,7 +50,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 className={`w-full px-4 py-3 rounded-xl text-left text-sm font-bold transition-all flex items-center ${
                     activa
                         ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
-                        : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E]'
+                        : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
                 }`}
             >
                 <span className="flex-1">{item.nombre}</span>
@@ -74,7 +74,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
             )}
 
             {/* Panel */}
-            <div className={`fixed top-0 left-0 h-full w-64 bg-[#D8D4CE] dark:bg-[#1C1C1C] shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
+            <div className={`fixed top-0 left-0 h-full w-64 bg-[#EFEDEA] dark:bg-[#1C1C1C] shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
                 isOpen ? 'translate-x-0' : '-translate-x-full'
             }`}>
 
@@ -134,7 +134,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 </div>
 
                 {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07] bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07] bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                     <p className="text-[9px] text-[#A8A29E] text-center uppercase tracking-widest font-black">
                         Dispenser La Tienda v1.0
                     </p>

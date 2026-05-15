@@ -27,7 +27,7 @@ export default function Paginacion({ pagina, totalPaginas, irA, next, prev }) {
             <button
                 onClick={prev}
                 disabled={pagina === 1}
-                className={`${baseClass} bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] disabled:opacity-40 disabled:cursor-not-allowed`}
+                className={`${baseClass} bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] disabled:opacity-40 disabled:cursor-not-allowed`}
             >
                 ‹
             </button>
@@ -50,7 +50,7 @@ export default function Paginacion({ pagina, totalPaginas, irA, next, prev }) {
                             className={`${baseClass} ${
                                 p === pagina
                                     ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                    : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
                             }`}
                         >
                             {p}
@@ -62,7 +62,7 @@ export default function Paginacion({ pagina, totalPaginas, irA, next, prev }) {
             <button
                 onClick={next}
                 disabled={pagina === totalPaginas}
-                className={`${baseClass} bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] disabled:opacity-40 disabled:cursor-not-allowed`}
+                className={`${baseClass} bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] disabled:opacity-40 disabled:cursor-not-allowed`}
             >
                 ›
             </button>

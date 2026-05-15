@@ -7,7 +7,7 @@ import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnic
 
 const inputCls = `
     px-4 py-3 rounded-xl outline-none transition-all
-    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+    bg-[#E8E5E0] dark:bg-[#2E2E2E]
     border border-black/[0.07] dark:border-white/[0.07]
     text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
     focus:ring-2 focus:ring-[#D13A28]/20
@@ -44,7 +44,7 @@ function TabBalance({ filtroMes, setFiltroMes }) {
                     {cargando ? 'Cargando...' : 'Actualizar'}
                 </button>
                 <button onClick={() => exportarBalanceCSV(stats, filtroMes)}
-                    className="px-4 py-3 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] font-black text-[11px] uppercase active:scale-95 transition-all border border-black/[0.07] dark:border-white/[0.07]">
+                    className="px-4 py-3 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] font-black text-[11px] uppercase active:scale-95 transition-all border border-black/[0.07] dark:border-white/[0.07]">
                     Exportar CSV
                 </button>
             </div>
@@ -58,7 +58,7 @@ function TabBalance({ filtroMes, setFiltroMes }) {
             </div>
 
             {/* Desglose waterfall */}
-            <div className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] p-5" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+            <div className="rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] p-5" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                 <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-4">Desglose del mes</p>
                 {[
                     { label: 'Facturación bruta',           valor: stats.facturacion,    color: 'text-[#D48800] dark:text-[#F0A500]' },
@@ -79,8 +79,8 @@ function TabBalance({ filtroMes, setFiltroMes }) {
 
             {/* Operaciones del mes */}
             {stats.transacciones.length > 0 && (
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                    <div className="px-5 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div className="px-5 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Operaciones del mes</p>
                     </div>
                     {stats.transacciones.map((t, idx) => {
@@ -171,7 +171,7 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
                     { label: 'Facturado',         valor: fmt(totFact),   gold: false },
                     { label: 'A pagar técnicos',  valor: fmt(totParte),  gold: true  },
                 ].map(({ label, valor, gold }) => (
-                    <div key={label} className="rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] p-3 text-center" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div key={label} className="rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] p-3 text-center" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">{label}</p>
                         <p className={`text-[16px] font-black ${gold ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>{valor}</p>
                     </div>
@@ -182,9 +182,9 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
             {datosFiltrados.length === 0 ? (
                 <p className="text-center text-[#A8A29E] py-12">Sin trabajos para este período</p>
             ) : (
-                <div className="rounded-2xl overflow-x-auto bg-[#EDEAE6] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="rounded-2xl overflow-x-auto bg-[#FFFFFF] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                     <div className="min-w-[480px]">
-                        <div className="grid grid-cols-[minmax(120px,1fr)_60px_90px_90px_90px] px-4 py-2 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                        <div className="grid grid-cols-[minmax(120px,1fr)_60px_90px_90px_90px] px-4 py-2 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                             {['Técnico','Trab.','Facturado','Repuestos','Su parte'].map(h => (
                                 <p key={h} className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider text-center first:text-left">{h}</p>
                             ))}
@@ -264,7 +264,7 @@ function TabGastos({ filtroMes }) {
     return (
         <div className="space-y-5">
             {/* Formulario */}
-            <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl p-5" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+            <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl p-5" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                 <p className="text-[11px] font-black text-[#A8A29E] uppercase tracking-wider mb-4">Agregar gasto</p>
                 <form onSubmit={handleAgregar} className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="text"   placeholder="Descripción"  value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className={inputCls} />
@@ -282,8 +282,8 @@ function TabGastos({ filtroMes }) {
             {gastos.length === 0 ? (
                 <p className="text-center text-[#A8A29E] py-8 font-bold text-sm uppercase">No hay gastos este mes</p>
             ) : (
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                    <div className="flex items-center justify-between px-5 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div className="flex items-center justify-between px-5 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Gastos del mes</p>
                         <button onClick={() => exportarGastosCSV(gastos, filtroMes)}
                             className="text-[10px] font-black text-[#A8A29E] uppercase hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors">
@@ -303,7 +303,7 @@ function TabGastos({ filtroMes }) {
                             </button>
                         </div>
                     ))}
-                    <div className="flex justify-between items-center px-5 py-3 bg-[#D8D4CE]/50 dark:bg-[#1C1C1C]/50">
+                    <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
                         <p className="text-[11px] font-black text-[#A8A29E] uppercase">Total</p>
                         <p className="text-[15px] font-black text-[#D48800] dark:text-[#F0A500]">
                             ${fmt(gastos.reduce((s, g) => s + parseFloat(g.monto || 0), 0))}
@@ -317,7 +317,7 @@ function TabGastos({ filtroMes }) {
                 <>
                     <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
                     <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
-                        <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
+                        <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
                             <div className="text-center mb-4">
                                 <p className="text-[32px] mb-2">🗑️</p>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Eliminar gasto</h3>
@@ -325,7 +325,7 @@ function TabGastos({ filtroMes }) {
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => setConfirmEliminarGasto(null)}
-                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                     Cancelar
                                 </button>
                                 <button onClick={confirmarEliminarGasto}
@@ -376,14 +376,14 @@ function TabInventario() {
             </div>
 
             {enStock.length === 0 ? (
-                <div className="text-center py-12 rounded-2xl bg-[#EDEAE6] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="text-center py-12 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                     <p className="text-[#A8A29E] font-bold text-sm">Sin stock registrado</p>
                     <p className="text-[11px] text-[#A8A29E] mt-1">Usá el botón 📦 en la sección Repuestos para cargar stock</p>
                 </div>
             ) : (
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                     {/* Cabecera */}
-                    <div className="flex items-center justify-between px-5 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                    <div className="flex items-center justify-between px-5 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">
                             Detalle por producto ({enStock.length})
                         </p>
@@ -421,7 +421,7 @@ function TabInventario() {
                     }
 
                     {/* Totales */}
-                    <div className="flex justify-between items-center px-5 py-3 bg-[#D8D4CE]/50 dark:bg-[#1C1C1C]/50">
+                    <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
                         <p className="text-[11px] font-black text-[#A8A29E] uppercase">Totales</p>
                         <div className="text-right">
                             <p className="text-[15px] font-black text-[#D48800] dark:text-[#F0A500]">
@@ -443,7 +443,7 @@ function StatCard({ label, value, sub, variante, ocultar }) {
         gold:    { wrap: 'bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-[#D48800]/20 dark:border-[#F0A500]/20', val: 'text-[#D48800] dark:text-[#F0A500]' },
         red:     { wrap: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 border-[#D13A28]/20 dark:border-[#E8422F]/20', val: 'text-[#D13A28] dark:text-[#E8422F]' },
         redBold: { wrap: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 border-[#D13A28]/30 ring-2 ring-[#D13A28]/20 dark:ring-[#E8422F]/20', val: 'text-[#D13A28] dark:text-[#E8422F]' },
-        muted:   { wrap: 'bg-[#EDEAE6] dark:bg-[#242424] border-black/[0.07] dark:border-white/[0.07]', val: 'text-[#1C1917] dark:text-[#F0EEE9]' },
+        muted:   { wrap: 'bg-[#FFFFFF] dark:bg-[#242424] border-black/[0.07] dark:border-white/[0.07]', val: 'text-[#1C1917] dark:text-[#F0EEE9]' },
     };
     const { wrap, val } = estilos[variante] || estilos.muted;
     return (
@@ -476,12 +476,12 @@ export default function DashboardFinanzas() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 mb-5 bg-[#D8D4CE] dark:bg-[#1C1C1C] p-1 rounded-2xl">
+            <div className="flex gap-1 mb-5 bg-[#EFEDEA] dark:bg-[#1C1C1C] p-1 rounded-2xl">
                 {TABS.map(t => (
                     <button key={t.id} onClick={() => setTab(t.id)}
                         className={`flex-1 py-2 rounded-xl font-black text-[12px] uppercase tracking-wide transition-all active:scale-95
                             ${tab === t.id
-                                ? 'bg-[#EDEAE6] dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9]'
+                                ? 'bg-[#FFFFFF] dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9]'
                                 : 'text-[#A8A29E]'}`}>
                         {t.label}
                     </button>

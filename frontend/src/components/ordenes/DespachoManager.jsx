@@ -4,7 +4,7 @@ import OrdenForm from './OrdenForm';
 import { toast } from 'react-hot-toast';
 
 const PRIORIDAD_COLOR = {
-    BAJA:    { bg: 'bg-[#C0BCB6] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
+    BAJA:    { bg: 'bg-[#E8E5E0] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
     NORMAL:  { bg: 'bg-[#DBEAFE] dark:bg-[#1E3A5F]', tx: 'text-[#2563EB] dark:text-[#60A5FA]' },
     ALTA:    { bg: 'bg-[var(--warning-bg)]',           tx: 'text-[var(--warning-tx)]' },
     URGENTE: { bg: 'bg-[var(--danger-bg)]',            tx: 'text-[var(--danger-tx)]' },
@@ -26,7 +26,7 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
     const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
 
     return (
-        <div className="rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424]"
+        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${es.dot}` }}>
             <div className="p-4">
                 {/* Header */}
@@ -79,13 +79,13 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                 {/* Expandir descripción */}
                 {(orden.descripcion || orden.notasTecnico) && (
                     <button onClick={() => setExpanded(v => !v)}
-                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
                         <span>Detalle</span>
                         <span className="text-[10px]">{expanded ? '▲' : '▼'}</span>
                     </button>
                 )}
                 {expanded && (
-                    <div className="mt-2 p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] space-y-1">
+                    <div className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] space-y-1">
                         {orden.descripcion && <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{orden.descripcion}</p>}
                         {orden.notasTecnico && (
                             <p className="text-[11px] text-[#16A34A] dark:text-[#4ADE80] leading-snug">
@@ -97,23 +97,23 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
             </div>
 
             {/* Acciones */}
-            <div className="flex items-center gap-2 px-4 py-3 bg-[#D8D4CE] dark:bg-[#1C1C1C]"
+            <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                 style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                 {!esFinal && (
                     <button onClick={() => onEditar(orden)}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#C0BCB6] dark:bg-[#2E2E2E]">✏️</button>
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E]">✏️</button>
                 )}
                 <div className="flex-1" />
                 {!esFinal && !confirmCancelar && (
                     <button onClick={() => setConfirmCancelar(true)}
-                        className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                        className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                         Cancelar
                     </button>
                 )}
                 {confirmCancelar && (
                     <>
                         <button onClick={() => setConfirmCancelar(false)}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                             No
                         </button>
                         <button onClick={() => { setConfirmCancelar(false); onAvanzar(orden.id, 'CANCELADA'); }}
@@ -177,11 +177,11 @@ export default function DespachoManager() {
             {/* Filtros */}
             <div className="grid grid-cols-2 gap-2 mb-5 md:flex md:items-center md:gap-3">
                 <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
-                    className="w-full md:w-auto px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
+                    className="w-full md:w-auto px-3 py-2 rounded-xl text-[12px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                 <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
-                    className="w-full md:w-auto px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
+                    className="w-full md:w-auto px-3 py-2 rounded-xl text-[12px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                 <select value={filtrTecnico} onChange={e => setFiltrTecnico(e.target.value)}
-                    className="col-span-2 md:flex-1 px-3 py-2 rounded-xl text-[12px] font-bold bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none">
+                    className="col-span-2 md:flex-1 px-3 py-2 rounded-xl text-[12px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none">
                     <option value="">Todos los técnicos</option>
                     {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                 </select>
@@ -226,10 +226,10 @@ export default function DespachoManager() {
             {/* Modal crear / editar */}
             {(modalCrear || ordenEditar) && (
                 <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
-                    <div className="w-full max-w-lg bg-[#EDEAE6] dark:bg-[#242424] rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-lg bg-[#FFFFFF] dark:bg-[#242424] rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
                         {/* Drag handle — indica scroll en mobile */}
                         <div className="md:hidden flex justify-center -mt-2 mb-4">
-                            <div className="w-10 h-1 rounded-full bg-[#C0BCB6] dark:bg-[#3E3E3E]" />
+                            <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
                         <h2 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] mb-5">
                             {ordenEditar ? 'Editar orden' : 'Nueva orden'}

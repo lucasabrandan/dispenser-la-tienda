@@ -11,7 +11,7 @@ function DSInput({ label, ...props }) {
                 {...props}
                 className="
                     w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-                    bg-[#C0BCB6] dark:bg-[#2E2E2E]
+                    bg-[#E8E5E0] dark:bg-[#2E2E2E]
                     text-[#1C1917] dark:text-[#F0EEE9]
                     border border-black/10 dark:border-white/10
                     placeholder-[#A8A29E]
@@ -26,7 +26,7 @@ function DSInput({ label, ...props }) {
 
 function InfoCard({ children }) {
     return (
-        <div className="rounded-xl p-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
+        <div className="rounded-xl p-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
             {children}
         </div>
     );
@@ -83,7 +83,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                     onChange={e => setFechaServicio(e.target.value)}
                     className="
                         w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-                        bg-[#C0BCB6] dark:bg-[#2E2E2E]
+                        bg-[#E8E5E0] dark:bg-[#2E2E2E]
                         text-[#1C1917] dark:text-[#F0EEE9]
                         border border-black/10 dark:border-white/10
                         focus:border-[#D13A28] dark:focus:border-[#E8422F]
@@ -117,7 +117,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                                 p-3 rounded-2xl text-left transition-all active:scale-95
                                 ${modo === opt.id
                                     ? 'bg-[#D48800] dark:bg-[#F0A500] border border-[#D48800] dark:border-[#F0A500]'
-                                    : 'bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10'
+                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10'
                                 }
                             `}
                         >
@@ -187,7 +187,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                             {sedesCliente.length === 1 ? (
                                 <div>
                                     <Label>Sede / Domicilio</Label>
-                                    <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#C0BCB6] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
+                                    <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
                                         <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1 truncate">{sedesCliente[0].nombreSede}</span>
                                         <span className="text-[10px] font-black text-[#1F9D55]">✓ Auto</span>
                                     </div>

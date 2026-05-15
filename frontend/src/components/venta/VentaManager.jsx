@@ -34,7 +34,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     }, [clienteInicial, setModalCrear]);
 
     return (
-        <div className="min-h-screen bg-[#C8C4BE] dark:bg-[#141414] p-4 pb-28 font-sans transition-colors">
+        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] p-4 pb-28 font-sans transition-colors">
 
             {/* ── HEADER ───────────────────────────────────────────────── */}
             <div className="flex justify-between items-end mb-5 pt-1 md:pt-0">
@@ -50,7 +50,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                     <button
                         onClick={() => exportarVentasCSV(filtros.itemsFiltrados)}
                         title="Exportar a CSV"
-                        className="h-10 px-4 rounded-xl font-bold text-xs uppercase transition-all active:scale-95 hover:opacity-90 bg-[#EDEAE6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                        className="h-10 px-4 rounded-xl font-bold text-xs uppercase transition-all active:scale-95 hover:opacity-90 bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
                     >
                         CSV
                     </button>
@@ -108,12 +108,12 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
             {/* ── MODAL CREAR / EDITAR ──────────────────────────────────── */}
             {modalCrear && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end md:items-center justify-center p-0 md:p-4">
-                    <div className="bg-[#EDEAE6] dark:bg-[#141414] w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+                    <div className="bg-[#FFFFFF] dark:bg-[#141414] w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
                         {/* Drag handle — indica scroll en mobile */}
                         <div className="md:hidden flex justify-center pt-3 pb-1">
-                            <div className="w-10 h-1 rounded-full bg-[#C0BCB6] dark:bg-[#3E3E3E]" />
+                            <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
-                        <div className="sticky top-0 bg-[#D8D4CE] dark:bg-[#1C1C1C] px-5 py-4 border-b border-black/[0.08] dark:border-white/[0.07] flex justify-between items-center z-10 md:rounded-t-3xl">
+                        <div className="sticky top-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] px-5 py-4 border-b border-black/[0.08] dark:border-white/[0.07] flex justify-between items-center z-10 md:rounded-t-3xl">
                             <div>
                                 <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                                     {ventaEditar ? 'Editar Venta' : 'Nueva Venta'}
@@ -126,7 +126,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                             </div>
                             <button
                                 onClick={cerrarModal}
-                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90"
+                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90"
                             >
                                 ✕
                             </button>

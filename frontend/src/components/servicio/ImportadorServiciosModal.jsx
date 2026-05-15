@@ -94,9 +94,9 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={!cargando ? onCerrar : undefined} />
             <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[1000] p-0 sm:p-4">
-                <div className="bg-[#EDEAE6] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-lg max-h-[92vh] flex flex-col border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-lg max-h-[92vh] flex flex-col border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
-                    <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#C0BCB6] dark:bg-[#2E2E2E] sm:hidden" />
+                    <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] sm:hidden" />
 
                     {/* Header */}
                     <div className="flex items-start justify-between px-6 pt-5 pb-3 shrink-0">
@@ -109,7 +109,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                             </p>
                         </div>
                         <button onClick={onCerrar} disabled={cargando}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-sm font-black active:scale-90 disabled:opacity-40">
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-sm font-black active:scale-90 disabled:opacity-40">
                             ✕
                         </button>
                     </div>
@@ -117,7 +117,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                     <div className="overflow-y-auto flex-1 px-6 pb-2 space-y-4">
 
                         {/* Paso 1 — Plantilla */}
-                        <div className="p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
+                        <div className="p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
                             <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">Paso 1 — Descargá la plantilla</p>
                             <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] mb-2 leading-snug">
                                 Completala con tus datos en Google Sheets o Excel y guardala como CSV.
@@ -135,7 +135,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                             <select
                                 value={tecnicoId}
                                 onChange={e => setTecnicoId(e.target.value)}
-                                className="w-full px-3 py-2.5 rounded-xl text-[13px] font-bold outline-none bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.07] dark:border-white/[0.07]">
+                                className="w-full px-3 py-2.5 rounded-xl text-[13px] font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.07] dark:border-white/[0.07]">
                                 {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                             </select>
                         </div>
@@ -143,7 +143,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         {/* Paso 3 — Subir CSV */}
                         <div>
                             <label className={LABEL}>Paso 3 — Subí tu CSV</label>
-                            <label className="flex flex-col items-center justify-center w-full py-6 rounded-xl border-2 border-dashed border-[#C0BCB6] dark:border-[#2E2E2E] cursor-pointer hover:border-[#D13A28]/40 transition-all bg-[#D8D4CE]/50 dark:bg-[#1C1C1C]/50">
+                            <label className="flex flex-col items-center justify-center w-full py-6 rounded-xl border-2 border-dashed border-[#E8E5E0] dark:border-[#2E2E2E] cursor-pointer hover:border-[#D13A28]/40 transition-all bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
                                 <span className="text-2xl mb-1">📂</span>
                                 <span className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
                                     {archivo ? archivo.name : 'Tocá para seleccionar archivo'}
@@ -164,7 +164,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                                 <div className="rounded-xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
                                     <table className="w-full text-[10px]">
                                         <thead>
-                                            <tr className="bg-[#D8D4CE] dark:bg-[#1C1C1C]">
+                                            <tr className="bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                                                 {['Fecha','Cliente','Modelo','Serial','Monto','Técnico'].map(h => (
                                                     <th key={h} className="px-2 py-1.5 text-left font-black text-[#A8A29E] uppercase">{h}</th>
                                                 ))}
@@ -172,7 +172,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                                         </thead>
                                         <tbody>
                                             {preview.map((r, i) => (
-                                                <tr key={i} className={i % 2 === 0 ? 'bg-[#EDEAE6] dark:bg-[#242424]' : 'bg-[#E8E4E0] dark:bg-[#1C1C1C]'}>
+                                                <tr key={i} className={i % 2 === 0 ? 'bg-[#FFFFFF] dark:bg-[#242424]' : 'bg-[#E8E4E0] dark:bg-[#1C1C1C]'}>
                                                     <td className="px-2 py-1.5 text-[#1C1917] dark:text-[#F0EEE9]">{r.fecha}</td>
                                                     <td className="px-2 py-1.5 text-[#1C1917] dark:text-[#F0EEE9] font-bold">{r.cliente}</td>
                                                     <td className="px-2 py-1.5 text-[#A8A29E]">{r.modelo}</td>
@@ -210,7 +210,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                     {/* Footer */}
                     <div className="flex gap-2 px-6 py-4 shrink-0 border-t border-black/[0.07] dark:border-white/[0.07]">
                         <button onClick={onCerrar} disabled={cargando}
-                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] active:scale-95 disabled:opacity-40">
+                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] active:scale-95 disabled:opacity-40">
                             {resultado ? 'Cerrar' : 'Cancelar'}
                         </button>
                         {!resultado && (

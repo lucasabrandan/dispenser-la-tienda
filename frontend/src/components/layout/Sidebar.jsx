@@ -48,7 +48,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
             null;
         const baseBtn = activa
             ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white font-black shadow-lg'
-            : 'text-[#57534E] dark:text-[#A8A29E] hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] font-bold';
+            : 'text-[#57534E] dark:text-[#A8A29E] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] font-bold';
 
         if (colapsado) {
             return (
@@ -77,10 +77,10 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
         );
     };
 
-    const iconBtn = 'p-2 rounded-xl transition-all hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E]';
+    const iconBtn = 'p-2 rounded-xl transition-all hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]';
 
     return (
-        <aside className={`hidden md:flex flex-col h-screen sticky top-0 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-r border-black/[0.07] dark:border-white/[0.07] transition-all duration-300 z-50 overflow-hidden ${colapsado ? 'w-[64px]' : 'w-[270px]'}`}>
+        <aside className={`hidden md:flex flex-col h-screen sticky top-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-r border-black/[0.07] dark:border-white/[0.07] transition-all duration-300 z-50 overflow-hidden ${colapsado ? 'w-[64px]' : 'w-[270px]'}`}>
 
             {/* LOGO / TOGGLE */}
             <div className={`relative border-b border-black/[0.07] dark:border-white/[0.07] flex items-center ${colapsado ? 'justify-center py-5' : 'px-8 pt-8 pb-6'}`}>
@@ -92,7 +92,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                 )}
                 <button onClick={() => setColapsado(!colapsado)}
                     title={colapsado ? 'Expandir sidebar' : 'Colapsar sidebar'}
-                    className={`${colapsado ? '' : 'absolute top-3 right-3'} w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#C0BCB6] dark:hover:bg-[#2E2E2E] text-[#A8A29E] transition-all`}>
+                    className={`${colapsado ? '' : 'absolute top-3 right-3'} w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] text-[#A8A29E] transition-all`}>
                     {colapsado ? <ChevronRight /> : <ChevronLeft />}
                 </button>
             </div>

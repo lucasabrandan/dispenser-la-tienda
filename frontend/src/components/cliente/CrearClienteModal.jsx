@@ -75,14 +75,14 @@ export default function CrearClienteModal({
     if (!isOpen) return null;
 
     // Input base del sistema
-    const inputBase = 'w-full p-3 mt-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all';
+    const inputBase = 'w-full p-3 mt-2 rounded-xl border border-black/[0.08] dark:border-white/[0.08] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all';
     const inputError = 'border-[#D13A28] bg-[var(--danger-bg)]';
 
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
-                <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     {/* HEADER */}
                     <div className="flex justify-between items-center p-5 pb-4 border-b border-black/[0.07] dark:border-white/[0.07]">
@@ -94,7 +94,7 @@ export default function CrearClienteModal({
                         </div>
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#C0BCB6] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
                         >
                             ✕
                         </button>
@@ -111,7 +111,7 @@ export default function CrearClienteModal({
                             className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
                                 !modoFlota
                                     ? 'border-[#D13A28] dark:border-[#E8422F] bg-[var(--danger-bg)]'
-                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#1C1C1C] hover:opacity-80'
+                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#1C1C1C] hover:opacity-80'
                             }`}
                         >
                             <p className="text-xl mb-1">👤</p>
@@ -128,7 +128,7 @@ export default function CrearClienteModal({
                             className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-95 ${
                                 modoFlota
                                     ? 'border-[#D48800] dark:border-[#F0A500] bg-[var(--warning-bg)]'
-                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4CE] dark:bg-[#1C1C1C] hover:opacity-80'
+                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#1C1C1C] hover:opacity-80'
                             }`}
                         >
                             <p className="text-xl mb-1">🏢</p>
@@ -149,7 +149,7 @@ export default function CrearClienteModal({
                         <div className={`rounded-2xl border p-4 transition-all ${
                             modoFlota
                                 ? 'border-[#D48800] dark:border-[#F0A500] bg-[var(--warning-bg)]'
-                                : 'border-black/[0.07] dark:border-white/[0.07] bg-[#D8D4CE] dark:bg-[#1C1C1C]'
+                                : 'border-black/[0.07] dark:border-white/[0.07] bg-[#EFEDEA] dark:bg-[#1C1C1C]'
                         }`}>
                             <p className={`text-[10px] font-black uppercase tracking-widest mb-3 ${
                                 modoFlota ? 'text-[var(--warning-tx)]' : 'text-[#A8A29E]'
@@ -190,7 +190,7 @@ export default function CrearClienteModal({
                                 type="button"
                                 onClick={onClose}
                                 disabled={cargando}
-                                className="flex-1 py-3 rounded-xl font-black text-sm uppercase transition-all hover:opacity-80 active:scale-95 disabled:opacity-50 bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]"
+                                className="flex-1 py-3 rounded-xl font-black text-sm uppercase transition-all hover:opacity-80 active:scale-95 disabled:opacity-50 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]"
                             >
                                 Cancelar
                             </button>

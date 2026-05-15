@@ -11,7 +11,7 @@ const BADGE = {
     PRESUPUESTO: { label: 'Pendiente', cls: 'bg-[var(--warning-bg)] text-[var(--warning-tx)]' },
     REALIZADO:   { label: 'Realizado', cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
     RECHAZADO:   { label: 'Rechazado', cls: 'bg-[var(--danger-bg)]  text-[var(--danger-tx)]'  },
-    ARCHIVADO:   { label: 'Archivado', cls: 'bg-[#C0BCB6] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' },
+    ARCHIVADO:   { label: 'Archivado', cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' },
 };
 
 const BORDER = {
@@ -56,7 +56,7 @@ export default function ServicioCard({
 
     return (
         <div
-            className={`rounded-2xl overflow-hidden bg-[#EDEAE6] dark:bg-[#242424] border border-black/[0.07] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
+            className={`rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
             style={{ borderLeft: `3px solid ${BORDER[servicio.estado] || '#A8A29E'}` }}
         >
             <div className="p-4">
@@ -65,7 +65,7 @@ export default function ServicioCard({
                     {modoSeleccion && (
                         <button
                             onClick={() => onToggleSelect(servicio.id)}
-                            className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all ${seleccionado ? 'bg-[#D13A28] border-[#D13A28]' : 'border-[#C0BCB6] dark:border-[#3E3E3E]'}`}
+                            className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all ${seleccionado ? 'bg-[#D13A28] border-[#D13A28]' : 'border-[#E8E5E0] dark:border-[#3E3E3E]'}`}
                         >
                             {seleccionado && <span className="text-white text-[9px] font-black">✓</span>}
                         </button>
@@ -100,17 +100,17 @@ export default function ServicioCard({
                 {(seriales.length > 0 || ubicInfo) && (
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
                         {seriales.slice(0, 2).map((s, i) => (
-                            <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
+                            <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
                                 {s}
                             </span>
                         ))}
                         {seriales.length > 2 && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#A8A29E]">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#A8A29E]">
                                 +{seriales.length - 2}
                             </span>
                         )}
                         {ubicInfo && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-lg bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#A8A29E]">
+                            <span className="text-[10px] px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#A8A29E]">
                                 {ubicInfo}
                             </span>
                         )}
@@ -121,7 +121,7 @@ export default function ServicioCard({
                 {items.length > 0 && (
                     <button
                         onClick={() => setExpandido(v => !v)}
-                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-[0.98] bg-[#D8D4CE] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]"
+                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]"
                     >
                         <span>Detalle trabajo · {items.length} equipo{items.length > 1 ? 's' : ''}</span>
                         <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
@@ -130,7 +130,7 @@ export default function ServicioCard({
 
                 {/* Detalle expandido por equipo */}
                 {expandido && items.map((it, i) => (
-                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#D8D4CE] dark:bg-[#1C1C1C] border border-black/[0.05]">
+                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05]">
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
                                 <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
@@ -147,7 +147,7 @@ export default function ServicioCard({
                             <div className="mt-1.5 pt-1.5 border-t border-black/[0.05] dark:border-white/[0.05]">
                                 <div className="flex flex-wrap gap-1 mt-1">
                                     {it.repuestosUsados.map((r, ri) => (
-                                        <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                        <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
                                             {r.cantidad}× {r.nombre}
                                         </span>
                                     ))}
@@ -159,15 +159,15 @@ export default function ServicioCard({
             </div>
 
             {/* Barra de acciones */}
-            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#D8D4CE] dark:bg-[#1C1C1C] border-t border-black/[0.06]">
+            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06]">
                 {/* Izquierda: ver · pdf · editar */}
                 <IconBtn onClick={() => onDetalle(servicio)} title="Ver detalle"
-                    cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
+                    cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
                 <IconBtn onClick={() => onGenerarPDF(servicio)} title="Generar PDF"
-                    cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+                    cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
                 {esPpto && onEditar && (
                     <IconBtn onClick={() => onEditar(servicio)} title="Editar presupuesto"
-                        cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✏️</IconBtn>
+                        cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✏️</IconBtn>
                 )}
 
                 <div className="flex-1" />
@@ -179,12 +179,12 @@ export default function ServicioCard({
                 )}
                 {!esArch && (
                     <IconBtn onClick={() => onArchivar(servicio.id)} title="Archivar"
-                        cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
+                        cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
                 )}
                 {esPpto && (
                     <>
                         <IconBtn onClick={() => onRechazar(servicio.id)} title="Rechazar"
-                            cls="bg-[#C0BCB6] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
+                            cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
                         <button
                             onClick={() => onEjecutar(servicio)}
                             className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]"
