@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
 
 function FotoRepuesto({ repuesto }) {
-    const src = construirUrlFoto(repuesto.fotoUrl || repuesto.imagen);
+    const src = construirUrlFoto(repuesto.fotoUrl);
     if (src) {
         return (
             <img
@@ -17,7 +17,7 @@ function FotoRepuesto({ repuesto }) {
 }
 
 function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
-    const tieneFoto = repuesto.fotoUrl || repuesto.imagen;
+    const tieneFoto = !!repuesto.fotoUrl;
     const seleccionado = cantidad > 0;
     const [inputVal, setInputVal] = React.useState(String(cantidad || ''));
     React.useEffect(() => { setInputVal(String(cantidad || '')); }, [cantidad]);

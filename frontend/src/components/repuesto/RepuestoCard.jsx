@@ -1,4 +1,5 @@
 import React from 'react';
+import { construirUrlFoto } from '../../utils/construirUrlFoto';
 
 export default function RepuestoCard({
     repuesto,
@@ -10,8 +11,9 @@ export default function RepuestoCard({
 }) {
     const r = repuesto;
     const bajosStock = Number(r.stock) <= 3;
-    const precioNegro = Number(r.precio) || 0;
+    const precioNegro = Number(r.precio) || Number(r.precioLista) || 0;
     const netoCliente = Number(r.precioNetoCliente) || 0;
+    const fotoSrc = r.fotoUrl ? construirUrlFoto(r.fotoUrl) : null;
 
     return (
         <div
@@ -35,8 +37,8 @@ export default function RepuestoCard({
 
             {/* Imagen */}
             <div className="min-w-[70px] h-[70px] rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] flex justify-center items-center overflow-hidden border border-black/[0.07] dark:border-white/[0.07] flex-shrink-0">
-                {r.imagen
-                    ? <img src={r.imagen} className="w-full h-full object-cover" alt={r.nombre} />
+                {fotoSrc
+                    ? <img src={fotoSrc} className="w-full h-full object-cover" alt={r.nombre} />
                     : <span className="text-2xl opacity-50">📦</span>
                 }
             </div>

@@ -138,7 +138,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                         const stock      = getStock(r);
                         const stockOrig  = Number(r.stock) || 0;
                         const modificado = cambios[r.id] !== undefined && cambios[r.id] !== stockOrig;
-                        const fotoSrc    = construirUrlFoto(r.fotoUrl || r.imagen);
+                        const fotoSrc    = r.fotoUrl ? construirUrlFoto(r.fotoUrl) : null;
 
                         return (
                             <div

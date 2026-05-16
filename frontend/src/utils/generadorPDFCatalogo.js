@@ -1,9 +1,10 @@
 import jsPDF from 'jspdf';
 import { construirUrlFoto } from './construirUrlFoto';
-import { DARK, RED, GOLD, GRAY_TEXT, WARM_BORDER, dibujarHeaderPDF, dibujarFooterPDF } from './pdfTheme';
+import { DARK, RED, GOLD, GRAY_TEXT, GRAY_LIGHT, WARM_BORDER, WHITE, dibujarHeaderPDF, dibujarFooterPDF } from './pdfTheme';
 
-// Descarga imagen, comprime y devuelve { data, w, h } con dimensiones reales
-async function cargarImagen(url, maxPx = 500) {
+// ── Helpers de imagen ────────────────────────────────────────────────────────
+
+async function cargarImagen(url, maxPx = 600) {
     try {
         const res = await fetch(url);
         if (!res.ok) return null;
@@ -12,16 +13,14 @@ async function cargarImagen(url, maxPx = 500) {
         return new Promise((resolve) => {
             const img = new Image();
             img.onload = () => {
-                const naturalW = img.width;
-                const naturalH = img.height;
-                const ratio = Math.min(1, maxPx / Math.max(naturalW, naturalH));
+                const ratio = Math.min(1, maxPx / Math.max(img.width, img.height));
                 const canvas = document.createElement('canvas');
-                canvas.width  = Math.round(naturalW * ratio);
-                canvas.height = Math.round(naturalH * ratio);
+                canvas.width  = Math.round(img.width  * ratio);
+                canvas.height = Math.round(img.height * ratio);
                 canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
                 const data = canvas.toDataURL('image/jpeg', 0.85);
                 URL.revokeObjectURL(blobUrl);
-                resolve({ data, w: naturalW, h: naturalH });
+                resolve({ data, w: img.width, h: img.height });
             };
             img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(null); };
             img.src = blobUrl;
@@ -29,38 +28,40 @@ async function cargarImagen(url, maxPx = 500) {
     } catch { return null; }
 }
 
-// Carga todas las fotos de un producto (hasta 3)
 async function cargarFotosProducto(producto) {
     const urls = [producto.fotoUrl, producto.fotoUrl2, producto.fotoUrl3]
         .filter(Boolean)
         .map(u => construirUrlFoto(u));
-    const fotos = await Promise.all(urls.map(u => cargarImagen(u, 500)));
+    const fotos = await Promise.all(urls.map(u => cargarImagen(u, 600)));
     return fotos.filter(Boolean);
 }
 
-// Dibuja imagen centrada dentro de un box sin deformar (object-fit: contain)
-function dibujarImagenContenida(doc, img, boxX, boxY, boxW, boxH) {
-    const imgRatio = img.w / img.h;
-    const boxRatio = boxW / boxH;
-
-    let drawW, drawH;
-    if (imgRatio > boxRatio) {
-        // Imagen mas ancha que el box: ajustar por ancho
-        drawW = boxW;
-        drawH = boxW / imgRatio;
-    } else {
-        // Imagen mas alta que el box: ajustar por alto
-        drawH = boxH;
-        drawW = boxH * imgRatio;
-    }
-
-    // Centrar dentro del box
-    const drawX = boxX + (boxW - drawW) / 2;
-    const drawY = boxY + (boxH - drawH) / 2;
-
+// Dibuja imagen centrada sin deformar (object-fit: contain)
+function dibujarImg(doc, img, bx, by, bw, bh) {
+    const ir = img.w / img.h;
+    const br = bw / bh;
+    let dw, dh;
+    if (ir > br) { dw = bw; dh = bw / ir; }
+    else         { dh = bh; dw = bh * ir; }
     try {
-        doc.addImage(img.data, 'JPEG', drawX, drawY, drawW, drawH);
-    } catch { /* imagen corrupta, ignorar */ }
+        doc.addImage(img.data, 'JPEG', bx + (bw - dw) / 2, by + (bh - dh) / 2, dw, dh);
+    } catch {}
+}
+
+// Fondo gris para slot de foto
+function fondoSlot(doc, x, y, w, h) {
+    doc.setFillColor(248, 246, 244);
+    doc.roundedRect(x, y, w, h, 2, 2, 'F');
+}
+
+// Badge con fondo redondeado
+function badge(doc, text, x, y, w, h, bgColor, textColor, fontSize = 7) {
+    doc.setFillColor(...bgColor);
+    doc.roundedRect(x, y, w, h, h / 2, h / 2, 'F');
+    doc.setFontSize(fontSize);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...textColor);
+    doc.text(text, x + w / 2, y + h / 2 + fontSize * 0.12, { align: 'center' });
 }
 
 const fmt = (v) => {
@@ -68,9 +69,161 @@ const fmt = (v) => {
     return n > 0 ? `$${Math.round(n).toLocaleString('es-AR')}` : '';
 };
 
+// ── Layouts de fotos ─────────────────────────────────────────────────────────
+
+// 1 foto: hero full width
+function layoutFoto1(doc, fotos, x, y, w, h) {
+    fondoSlot(doc, x, y, w, h);
+    if (fotos[0]) dibujarImg(doc, fotos[0], x, y, w, h);
+    else {
+        doc.setFontSize(10);
+        doc.setTextColor(180, 180, 180);
+        doc.text('SIN FOTO', x + w / 2, y + h / 2 + 3, { align: 'center' });
+    }
+}
+
+// 2 fotos: grande izquierda (65%) + chica derecha (35%)
+function layoutFoto2(doc, fotos, x, y, w, h) {
+    const gap = 3;
+    const wGrande = w * 0.63;
+    const wChica  = w - wGrande - gap;
+
+    fondoSlot(doc, x, y, wGrande, h);
+    if (fotos[0]) dibujarImg(doc, fotos[0], x, y, wGrande, h);
+
+    fondoSlot(doc, x + wGrande + gap, y, wChica, h);
+    if (fotos[1]) dibujarImg(doc, fotos[1], x + wGrande + gap, y, wChica, h);
+}
+
+// 3 fotos: 1 grande arriba + 2 chicas abajo (galeria)
+function layoutFoto3(doc, fotos, x, y, w, h) {
+    const gap = 3;
+    const hGrande = h * 0.6;
+    const hChica  = h - hGrande - gap;
+    const wChica  = (w - gap) / 2;
+
+    // Grande arriba
+    fondoSlot(doc, x, y, w, hGrande);
+    if (fotos[0]) dibujarImg(doc, fotos[0], x, y, w, hGrande);
+
+    // Chica izquierda abajo
+    fondoSlot(doc, x, y + hGrande + gap, wChica, hChica);
+    if (fotos[1]) dibujarImg(doc, fotos[1], x, y + hGrande + gap, wChica, hChica);
+
+    // Chica derecha abajo
+    fondoSlot(doc, x + wChica + gap, y + hGrande + gap, wChica, hChica);
+    if (fotos[2]) dibujarImg(doc, fotos[2], x + wChica + gap, y + hGrande + gap, wChica, hChica);
+}
+
+// ── Bloque de precios con badges ─────────────────────────────────────────────
+
+function dibujarPrecios(doc, producto, x, y, w) {
+    const precioNegro = parseFloat(producto.precio) || parseFloat(producto.precioLista) || 0;
+    const netoCliente = parseFloat(producto.precioNetoCliente) || 0;
+    const precioFact  = parseFloat(producto.precioFacturado) || 0;
+    const precioCant  = parseFloat(producto.precioCantidad) || 0;
+    const cantMin     = parseInt(producto.cantidadMinima) || 0;
+    const cuotas3pct  = parseFloat(producto.porcentajeCuotas3) || 0;
+    const cuotas6pct  = parseFloat(producto.porcentajeCuotas6) || 0;
+
+    let cy = y;
+    const badgeW = w;
+    const badgeH = 14;
+    const gap = 3;
+
+    // Precio efectivo (negro) — badge verde
+    if (precioNegro > 0) {
+        doc.setFillColor(240, 253, 244); // green-50
+        doc.roundedRect(x, cy, badgeW, badgeH, 3, 3, 'F');
+        doc.setFillColor(220, 252, 231); // green-100
+        doc.roundedRect(x, cy, badgeW, 5, 3, 3, 'F');
+        doc.rect(x, cy + 2.5, badgeW, 2.5, 'F'); // tapar bordes inferiores del mini header
+
+        doc.setFontSize(5.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(22, 101, 52); // green-800
+        doc.text('EFECTIVO', x + badgeW / 2, cy + 3.5, { align: 'center' });
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(22, 101, 52);
+        doc.text(fmt(precioNegro), x + badgeW / 2, cy + 11, { align: 'center' });
+        cy += badgeH + gap;
+    }
+
+    // Precio facturado — badge azul
+    if (netoCliente > 0) {
+        doc.setFillColor(239, 246, 255); // blue-50
+        doc.roundedRect(x, cy, badgeW, badgeH + 3, 3, 3, 'F');
+        doc.setFillColor(219, 234, 254); // blue-100
+        doc.roundedRect(x, cy, badgeW, 5, 3, 3, 'F');
+        doc.rect(x, cy + 2.5, badgeW, 2.5, 'F');
+
+        doc.setFontSize(5.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 64, 175); // blue-800
+        doc.text('FACTURADO', x + badgeW / 2, cy + 3.5, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 64, 175);
+        doc.text(`${fmt(netoCliente)} + IVA`, x + badgeW / 2, cy + 10.5, { align: 'center' });
+
+        doc.setFontSize(5.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Total: ${fmt(precioFact)}`, x + badgeW / 2, cy + 15, { align: 'center' });
+        cy += badgeH + 3 + gap;
+    }
+
+    // Precio por cantidad — badge dorado
+    if (precioCant > 0 && cantMin > 0) {
+        doc.setFillColor(255, 251, 235); // amber-50
+        doc.roundedRect(x, cy, badgeW, badgeH, 3, 3, 'F');
+        doc.setFillColor(254, 243, 199); // amber-100
+        doc.roundedRect(x, cy, badgeW, 5, 3, 3, 'F');
+        doc.rect(x, cy + 2.5, badgeW, 2.5, 'F');
+
+        doc.setFontSize(5.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(146, 64, 14); // amber-800
+        doc.text(`DESDE ${cantMin} UNID.`, x + badgeW / 2, cy + 3.5, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(146, 64, 14);
+        doc.text(`${fmt(precioCant)} c/u`, x + badgeW / 2, cy + 11, { align: 'center' });
+        cy += badgeH + gap;
+    }
+
+    // Cuotas — badge violeta compacto
+    if (precioFact > 0 && (cuotas3pct > 0 || cuotas6pct > 0)) {
+        doc.setFillColor(250, 245, 255); // purple-50
+        doc.roundedRect(x, cy, badgeW, 10, 3, 3, 'F');
+
+        doc.setFontSize(5.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(107, 33, 168); // purple-800
+
+        const partes = [];
+        if (cuotas3pct > 0) {
+            const val3 = precioFact * (1 + cuotas3pct / 100);
+            partes.push(`3x ${fmt(Math.round(val3 / 3))}`);
+        }
+        if (cuotas6pct > 0) {
+            const val6 = precioFact * (1 + cuotas6pct / 100);
+            partes.push(`6x ${fmt(Math.round(val6 / 6))}`);
+        }
+        doc.text(partes.join('  |  '), x + badgeW / 2, cy + 6.5, { align: 'center' });
+    }
+}
+
+// ── Generador principal ──────────────────────────────────────────────────────
+
 /**
  * generarPDFCatalogo
- * 2 productos por pagina, fotos grandes sin deformar, precios completos
+ * Layout dinamico: multi-foto → 1 por pagina, 1 foto → 2 por pagina
+ * Fotos inteligentes, badges de precios, numeracion de producto
  */
 export async function generarPDFCatalogo(productos) {
     const doc    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -80,12 +233,7 @@ export async function generarPDFCatalogo(productos) {
     const headerH = 48;
     const footerH = 18;
     const contentW = pageW - margin * 2;
-
-    // Cada producto ocupa la mitad de la pagina util
-    const slotH = (pageH - headerH - footerH - 6) / 2; // ~108mm
-    const infoH = 28; // espacio para texto/precios debajo de fotos
-    const fotoH = slotH - infoH - 6; // ~74mm para fotos
-    const fotoGap = 3;
+    const usableH = pageH - headerH - footerH;
 
     const fecha = new Date().toLocaleDateString('es-AR');
 
@@ -93,116 +241,46 @@ export async function generarPDFCatalogo(productos) {
     const nuevaPagina = () => {
         if (paginaNum > 0) doc.addPage();
         paginaNum++;
-        dibujarHeaderPDF(doc, 'CATALOGO DE PRODUCTOS', fecha, 'Precios sujetos a modificacion');
+        dibujarHeaderPDF(doc, 'CATALOGO DE PRODUCTOS', fecha, 'Precios sujetos a modificacion sin previo aviso');
     };
 
-    for (let i = 0; i < productos.length; i += 2) {
-        nuevaPagina();
+    // Pre-cargar todas las fotos para saber cuantas tiene cada producto
+    const fotosMap = [];
+    for (const p of productos) {
+        fotosMap.push(await cargarFotosProducto(p));
+    }
 
-        for (let j = 0; j < 2 && (i + j) < productos.length; j++) {
-            const producto = productos[i + j];
-            const baseY = headerH + j * (slotH + 6);
+    // Agrupar: productos con multi-foto van solos, con 1 foto se agrupan de a 2
+    let idx = 0;
+    let productoNum = 0;
 
-            const fotos = await cargarFotosProducto(producto);
+    while (idx < productos.length) {
+        const fotos = fotosMap[idx];
+        const esMultiFoto = fotos.length > 1;
+        const tieneDescLarga = (productos[idx].descripcion || '').length > 80;
+        const ocupaPaginaCompleta = esMultiFoto || tieneDescLarga;
 
-            // ── Card fondo ──
-            doc.setFillColor(255, 255, 255);
-            doc.setDrawColor(...WARM_BORDER);
-            doc.setLineWidth(0.3);
-            doc.roundedRect(margin, baseY, contentW, slotH, 3, 3, 'FD');
+        if (ocupaPaginaCompleta) {
+            // ── 1 producto por pagina (layout grande) ──
+            nuevaPagina();
+            productoNum++;
+            dibujarProductoGrande(doc, productos[idx], fotos, productoNum, margin, headerH, contentW, usableH, pageW);
+            idx++;
+        } else {
+            // ── 2 productos por pagina (layout compacto) ──
+            nuevaPagina();
+            const slotH = (usableH - 6) / 2;
 
-            // Acento rojo superior
-            doc.setFillColor(...RED);
-            doc.rect(margin, baseY, contentW, 2, 'F');
+            // Producto 1
+            productoNum++;
+            dibujarProductoCompacto(doc, productos[idx], fotos, productoNum, margin, headerH, contentW, slotH, pageW);
+            idx++;
 
-            // ── Fotos ──
-            const fotoY = baseY + 4;
-            const numSlots = Math.max(1, fotos.length);
-
-            // Calcular ancho de cada slot de foto
-            const totalGaps = (numSlots - 1) * fotoGap;
-            const slotW = (contentW - 4 - totalGaps) / numSlots;
-
-            for (let f = 0; f < numSlots; f++) {
-                const fX = margin + 2 + f * (slotW + fotoGap);
-
-                // Fondo gris claro del slot
-                doc.setFillColor(248, 246, 244);
-                doc.roundedRect(fX, fotoY, slotW, fotoH, 2, 2, 'F');
-
-                if (fotos[f]) {
-                    dibujarImagenContenida(doc, fotos[f], fX, fotoY, slotW, fotoH);
-                } else {
-                    doc.setFontSize(8);
-                    doc.setTextColor(180, 180, 180);
-                    doc.text('SIN FOTO', fX + slotW / 2, fotoY + fotoH / 2 + 2, { align: 'center' });
-                }
-            }
-
-            // ── Info debajo de fotos ──
-            const infoY = fotoY + fotoH + 4;
-
-            // SKU
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...RED);
-            doc.text(`SKU: ${producto.sku || '—'}`, margin + 4, infoY);
-
-            // Nombre
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...DARK);
-            const nombreLines = doc.splitTextToSize(producto.nombre || '', contentW * 0.55);
-            doc.text(nombreLines.slice(0, 1), margin + 4, infoY + 6);
-
-            // Descripcion
-            if (producto.descripcion) {
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(...GRAY_TEXT);
-                const descLines = doc.splitTextToSize(producto.descripcion, contentW * 0.5);
-                doc.text(descLines.slice(0, 2), margin + 4, infoY + 12);
-            }
-
-            // ── Precios (columna derecha) ──
-            const precioX = pageW - margin - 4;
-            const precioNegro = parseFloat(producto.precio) || 0;
-            const netoCliente = parseFloat(producto.precioNetoCliente) || 0;
-            const precioCant  = parseFloat(producto.precioCantidad) || 0;
-            const cantMin     = parseInt(producto.cantidadMinima) || 0;
-
-            // Precio efectivo
-            if (precioNegro > 0) {
-                doc.setFontSize(7);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(...GRAY_TEXT);
-                doc.text('EFECTIVO', precioX, infoY, { align: 'right' });
-
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(16, 120, 60);
-                doc.text(fmt(precioNegro), precioX, infoY + 7, { align: 'right' });
-            }
-
-            // Precio facturado (neto + IVA)
-            if (netoCliente > 0) {
-                doc.setFontSize(7);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(...GRAY_TEXT);
-                doc.text('FACTURADO', precioX, infoY + 13, { align: 'right' });
-
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(30, 64, 175);
-                doc.text(`${fmt(netoCliente)} + IVA`, precioX, infoY + 19, { align: 'right' });
-            }
-
-            // Precio por cantidad
-            if (precioCant > 0 && cantMin > 0) {
-                doc.setFontSize(7);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(...GOLD);
-                doc.text(`Desde ${cantMin} unid: ${fmt(precioCant)} c/u`, precioX, infoY + 25, { align: 'right' });
+            // Producto 2 (si hay)
+            if (idx < productos.length && fotosMap[idx].length <= 1 && (productos[idx].descripcion || '').length <= 80) {
+                productoNum++;
+                dibujarProductoCompacto(doc, productos[idx], fotosMap[idx], productoNum, margin, headerH + slotH + 6, contentW, slotH, pageW);
+                idx++;
             }
         }
     }
@@ -215,4 +293,150 @@ export async function generarPDFCatalogo(productos) {
     }
 
     doc.save('catalogo-productos-dispenser.pdf');
+}
+
+// ── Layout grande: 1 producto por pagina ─────────────────────────────────────
+
+function dibujarProductoGrande(doc, producto, fotos, num, margin, baseY, contentW, usableH, pageW) {
+    const pad = 4;
+    const precioW = 48;
+    const infoW = contentW - precioW - pad * 2;
+    const fotoH = usableH * 0.6;
+    const infoY = baseY + fotoH + 6;
+
+    // Card fondo
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...WARM_BORDER);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, baseY, contentW, usableH, 4, 4, 'FD');
+
+    // Acento rojo superior
+    doc.setFillColor(...RED);
+    doc.roundedRect(margin, baseY, contentW, 3, 4, 4, 'F');
+    doc.rect(margin, baseY + 1.5, contentW, 1.5, 'F');
+
+    // Numero de producto (badge rojo arriba derecha)
+    const numTxt = `#${num}`;
+    doc.setFillColor(...RED);
+    doc.roundedRect(margin + contentW - 16, baseY + 6, 12, 7, 3.5, 3.5, 'F');
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(numTxt, margin + contentW - 10, baseY + 10.8, { align: 'center' });
+
+    // Fotos
+    const fotoX = margin + pad;
+    const fotoY = baseY + 6;
+    const fotoW = contentW - pad * 2;
+
+    if (fotos.length === 0)      layoutFoto1(doc, fotos, fotoX, fotoY, fotoW, fotoH);
+    else if (fotos.length === 1) layoutFoto1(doc, fotos, fotoX, fotoY, fotoW, fotoH);
+    else if (fotos.length === 2) layoutFoto2(doc, fotos, fotoX, fotoY, fotoW, fotoH);
+    else                         layoutFoto3(doc, fotos, fotoX, fotoY, fotoW, fotoH);
+
+    // Separador horizontal
+    doc.setDrawColor(235, 232, 228);
+    doc.setLineWidth(0.3);
+    doc.line(margin + pad, infoY - 2, margin + contentW - pad, infoY - 2);
+
+    // Info izquierda
+    const textX = margin + pad;
+
+    // SKU badge
+    const skuTxt = producto.sku || '—';
+    doc.setFillColor(...RED);
+    const skuW = doc.getTextWidth(skuTxt) * 0.35 + 6;
+    doc.roundedRect(textX, infoY, skuW > 14 ? skuW : 14, 5, 2.5, 2.5, 'F');
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(skuTxt, textX + (skuW > 14 ? skuW : 14) / 2, infoY + 3.5, { align: 'center' });
+
+    // Nombre
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...DARK);
+    const nombreLines = doc.splitTextToSize(producto.nombre || '', infoW - 4);
+    doc.text(nombreLines.slice(0, 2), textX, infoY + 12);
+
+    // Descripcion
+    if (producto.descripcion) {
+        const descY = infoY + 12 + Math.min(nombreLines.length, 2) * 6;
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...GRAY_TEXT);
+        const descLines = doc.splitTextToSize(producto.descripcion, infoW - 4);
+        doc.text(descLines.slice(0, 4), textX, descY);
+    }
+
+    // Precios (columna derecha)
+    dibujarPrecios(doc, producto, margin + contentW - precioW - pad, infoY, precioW);
+}
+
+// ── Layout compacto: 2 productos por pagina ──────────────────────────────────
+
+function dibujarProductoCompacto(doc, producto, fotos, num, margin, baseY, contentW, slotH, pageW) {
+    const pad = 4;
+    const precioW = 46;
+    const fotoH = slotH - 30;
+    const infoY = baseY + fotoH + 6;
+
+    // Card fondo
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...WARM_BORDER);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, baseY, contentW, slotH, 3, 3, 'FD');
+
+    // Acento rojo superior
+    doc.setFillColor(...RED);
+    doc.roundedRect(margin, baseY, contentW, 2.5, 3, 3, 'F');
+    doc.rect(margin, baseY + 1, contentW, 1.5, 'F');
+
+    // Numero de producto
+    const numTxt = `#${num}`;
+    doc.setFillColor(...RED);
+    doc.roundedRect(margin + contentW - 14, baseY + 5, 10, 6, 3, 3, 'F');
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(numTxt, margin + contentW - 9, baseY + 9, { align: 'center' });
+
+    // Foto (siempre 1 en compacto)
+    layoutFoto1(doc, fotos, margin + pad, baseY + 5, contentW - pad * 2, fotoH);
+
+    // Separador
+    doc.setDrawColor(235, 232, 228);
+    doc.setLineWidth(0.2);
+    doc.line(margin + pad, infoY - 2, margin + contentW - pad, infoY - 2);
+
+    // SKU badge
+    const skuTxt = producto.sku || '—';
+    doc.setFillColor(...RED);
+    const skuW = Math.max(14, doc.getTextWidth(skuTxt) * 0.35 + 6);
+    doc.roundedRect(margin + pad, infoY, skuW, 4.5, 2, 2, 'F');
+    doc.setFontSize(5.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(skuTxt, margin + pad + skuW / 2, infoY + 3.2, { align: 'center' });
+
+    // Nombre
+    const infoW = contentW - precioW - pad * 2;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...DARK);
+    const nombreLines = doc.splitTextToSize(producto.nombre || '', infoW - 4);
+    doc.text(nombreLines.slice(0, 2), margin + pad, infoY + 10);
+
+    // Descripcion
+    if (producto.descripcion) {
+        const descY = infoY + 10 + Math.min(nombreLines.length, 2) * 5;
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...GRAY_TEXT);
+        const descLines = doc.splitTextToSize(producto.descripcion, infoW - 4);
+        doc.text(descLines.slice(0, 2), margin + pad, descY);
+    }
+
+    // Precios
+    dibujarPrecios(doc, producto, margin + contentW - precioW - pad, infoY, precioW);
 }

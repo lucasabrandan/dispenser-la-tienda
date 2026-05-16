@@ -8,6 +8,13 @@ export default function ModalPrecioMasivo({
 }) {
     const sinCambios = ganancia === '' && markup === '' && impuestos === '';
 
+    const sanitizar = (v) => {
+        let limpio = v.replace(',', '.').replace(/[^0-9.]/g, '');
+        const partes = limpio.split('.');
+        if (partes.length > 2) limpio = partes[0] + '.' + partes.slice(1).join('');
+        return limpio;
+    };
+
     const inputClass = `
         w-full p-3.5 rounded-xl outline-none transition-all mb-4
         bg-[#E8E5E0] dark:bg-[#2E2E2E]
@@ -35,10 +42,9 @@ export default function ModalPrecioMasivo({
                         % Ganancia (efectivo)
                     </label>
                     <input
-                        type="number" value={ganancia}
-                        onChange={e => onGananciaChange(e.target.value)}
+                        type="text" inputMode="decimal" value={ganancia}
+                        onChange={e => onGananciaChange(sanitizar(e.target.value))}
                         placeholder="Ej: 40  (vacio = sin cambio)"
-                        min="0" step="0.5"
                         className={inputClass}
                     />
 
@@ -47,10 +53,9 @@ export default function ModalPrecioMasivo({
                         % Markup adicional
                     </label>
                     <input
-                        type="number" value={markup}
-                        onChange={e => onMarkupChange(e.target.value)}
+                        type="text" inputMode="decimal" value={markup}
+                        onChange={e => onMarkupChange(sanitizar(e.target.value))}
                         placeholder="Ej: 15  (vacio = sin cambio)"
-                        min="0" step="0.5"
                         className={inputClass}
                     />
 
@@ -59,10 +64,9 @@ export default function ModalPrecioMasivo({
                         % Impuestos (facturado)
                     </label>
                     <input
-                        type="number" value={impuestos}
-                        onChange={e => onImpuestosChange(e.target.value)}
+                        type="text" inputMode="decimal" value={impuestos}
+                        onChange={e => onImpuestosChange(sanitizar(e.target.value))}
                         placeholder="Ej: 30  (vacio = sin cambio)"
-                        min="0" step="0.5"
                         className={inputClass}
                     />
 

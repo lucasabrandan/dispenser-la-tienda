@@ -55,7 +55,7 @@ const INITIAL_FORM = {
     precioFacturado: '', precioNetoCliente: '',
     precioCantidad: '', cantidadMinima: '',
     porcentajeCuotas3: '', porcentajeCuotas6: '',
-    stock: '', imagen: ''
+    stock: '', fotoUrl: '', fotoUrl2: '', fotoUrl3: ''
 };
 
 // Calcula todos los precios derivados
@@ -109,9 +109,19 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
         setSeccionAbierta('basico');
     }, [repuestoEdicion, isOpen]);
 
+    // Solo permite numeros, punto y coma en campos de precio
+    const sanitizarNumero = (valor) => {
+        // Reemplazar coma por punto, quitar todo lo que no sea digito o punto
+        let limpio = valor.replace(',', '.').replace(/[^0-9.]/g, '');
+        // Solo un punto decimal
+        const partes = limpio.split('.');
+        if (partes.length > 2) limpio = partes[0] + '.' + partes.slice(1).join('');
+        return limpio;
+    };
+
     // Cambio en campos financieros: recalcula precios
     const cambiarFinanciero = (campo, valor) => {
-        const nuevoForm = { ...form, [campo]: valor };
+        const nuevoForm = { ...form, [campo]: sanitizarNumero(valor) };
 
         // Si cambia costoBlanco manualmente, marcarlo
         if (campo === 'costoBlanco') {
@@ -140,11 +150,7 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
         setFotoFiles(prev => { const n = [...prev]; n[index] = compressed; return n; });
         const reader = new FileReader();
         reader.onloadend = () => {
-            if (index === 0) {
-                setForm(prev => ({ ...prev, imagen: reader.result }));
-            } else {
-                setFotoPreviews(prev => { const n = [...prev]; n[index] = reader.result; return n; });
-            }
+            setFotoPreviews(prev => { const n = [...prev]; n[index] = reader.result; return n; });
         };
         reader.readAsDataURL(compressed);
     };
@@ -267,10 +273,9 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                         <label className={`${labelBase} text-[#A8A29E] mb-2 block`}>Fotos del producto (hasta 3)</label>
                         <div className="grid grid-cols-3 gap-2">
                             {[0, 1, 2].map(i => {
-                                const fotoKeys = ['imagen', 'fotoUrl2', 'fotoUrl3'];
-                                const preview = i === 0
-                                    ? form.imagen
-                                    : (fotoPreviews[i] || (form[fotoKeys[i]] ? construirUrlFoto(form[fotoKeys[i]]) : ''));
+                                const fotoUrlKeys = ['fotoUrl', 'fotoUrl2', 'fotoUrl3'];
+                                const preview = fotoPreviews[i]
+                                    || (form[fotoUrlKeys[i]] ? construirUrlFoto(form[fotoUrlKeys[i]]) : '');
                                 return (
                                     <div key={i} className="relative">
                                         <label className="cursor-pointer block">
@@ -320,8 +325,8 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                         <div>
                             <label className={`${labelBase} text-[#A8A29E]`}>Stock actual</label>
                             <input
-                                type="number" value={form.stock}
-                                onChange={e => setForm({ ...form, stock: e.target.value })}
+                                type="text" inputMode="numeric" value={form.stock}
+                                onChange={e => setForm({ ...form, stock: e.target.value.replace(/[^0-9]/g, '') })}
                                 className={inputBase}
                             />
                         </div>
@@ -342,16 +347,18 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                             <div>
                                 <label className={`${labelBase} text-[#A8A29E]`}>Costo $</label>
                                 <input
-                                    type="number" step="0.01" value={form.costo}
+                                    type="text" inputMode="decimal" value={form.costo}
                                     onChange={e => cambiarFinanciero('costo', e.target.value)}
+                                    placeholder="0"
                                     className={inputBase}
                                 />
                             </div>
                             <div>
                                 <label className={`${labelBase} text-[#A8A29E]`}>Ganancia %</label>
                                 <input
-                                    type="number" step="0.5" value={form.porcentajeGanancia}
+                                    type="text" inputMode="decimal" value={form.porcentajeGanancia}
                                     onChange={e => cambiarFinanciero('porcentajeGanancia', e.target.value)}
+                                    placeholder="0"
                                     className={inputBase}
                                 />
                             </div>
@@ -377,7 +384,7 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                             <div>
                                 <label className={`${labelBase} text-[#A8A29E]`}>Costo blanco $</label>
                                 <input
-                                    type="number" step="0.01" value={form.costoBlanco}
+                                    type="text" inputMode="decimal" value={form.costoBlanco}
                                     onChange={e => cambiarFinanciero('costoBlanco', e.target.value)}
                                     placeholder={costoN > 0 ? `Auto: ${(costoN * 1.21).toFixed(0)}` : 'Costo + IVA'}
                                     className={inputBase}
@@ -389,7 +396,7 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                             <div>
                                 <label className={`${labelBase} text-[#A8A29E]`}>Impuestos %</label>
                                 <input
-                                    type="number" step="0.5" value={form.porcentajeImpuestos}
+                                    type="text" inputMode="decimal" value={form.porcentajeImpuestos}
                                     onChange={e => cambiarFinanciero('porcentajeImpuestos', e.target.value)}
                                     placeholder="30"
                                     className={inputBase}
@@ -433,8 +440,8 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                             <div>
                                 <label className={`${labelBase} text-[#A8A29E]`}>Desde (unid.)</label>
                                 <input
-                                    type="number" min="2" value={form.cantidadMinima}
-                                    onChange={e => setForm({ ...form, cantidadMinima: e.target.value })}
+                                    type="text" inputMode="numeric" value={form.cantidadMinima}
+                                    onChange={e => setForm({ ...form, cantidadMinima: e.target.value.replace(/[^0-9]/g, '') })}
                                     placeholder="Ej: 5"
                                     className={inputBase}
                                 />
@@ -442,8 +449,8 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                             <div>
                                 <label className={`${labelBase} text-amber-600 dark:text-amber-400`}>Precio unit. $</label>
                                 <input
-                                    type="number" step="0.01" value={form.precioCantidad}
-                                    onChange={e => setForm({ ...form, precioCantidad: e.target.value })}
+                                    type="text" inputMode="decimal" value={form.precioCantidad}
+                                    onChange={e => setForm({ ...form, precioCantidad: sanitizarNumero(e.target.value) })}
                                     placeholder="Precio especial"
                                     className={inputBase}
                                 />
@@ -469,8 +476,8 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                             <div>
                                 <label className={`${labelBase} text-[#A8A29E]`}>Recargo 3 cuotas %</label>
                                 <input
-                                    type="number" step="0.5" value={form.porcentajeCuotas3}
-                                    onChange={e => setForm({ ...form, porcentajeCuotas3: e.target.value })}
+                                    type="text" inputMode="decimal" value={form.porcentajeCuotas3}
+                                    onChange={e => setForm({ ...form, porcentajeCuotas3: sanitizarNumero(e.target.value) })}
                                     placeholder="Ej: 15"
                                     className={inputBase}
                                 />
@@ -483,8 +490,8 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                             <div>
                                 <label className={`${labelBase} text-[#A8A29E]`}>Recargo 6 cuotas %</label>
                                 <input
-                                    type="number" step="0.5" value={form.porcentajeCuotas6}
-                                    onChange={e => setForm({ ...form, porcentajeCuotas6: e.target.value })}
+                                    type="text" inputMode="decimal" value={form.porcentajeCuotas6}
+                                    onChange={e => setForm({ ...form, porcentajeCuotas6: sanitizarNumero(e.target.value) })}
                                     placeholder="Ej: 30"
                                     className={inputBase}
                                 />

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-
-// URL base sin /api al final para las llamadas con fetch nativo
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import api from '../../services/api';
 
 /**
  * RepuestoRapidoModal
@@ -30,24 +28,18 @@ export default function RepuestoRapidoModal({ isOpen, onClose, nombreInicial = '
         setCargando(true);
         const t = toast.loading('Creando repuesto...');
         try {
-            // fetch nativo: Axios 1.x ignora FormData y envía JSON por el header
-            // Content-Type: application/json fijado en la instancia (mismo fix que subirFoto).
             const fd = new FormData();
             fd.append('sku',    form.sku.trim().toUpperCase());
             fd.append('nombre', form.nombre.trim());
             fd.append('precio', parseFloat(form.precio) || 0);
-            const res = await fetch(`${BASE_URL}/repuestos`, { method: 'POST', body: fd });
-            if (!res.ok) {
-                const msg = res.status === 409 ? 'Ya existe un repuesto con ese SKU' : 'Error al crear repuesto';
-                toast.error(msg, { id: t });
-                return;
-            }
-            const data = await res.json();
+            fd.append('stock', 0);
+            const { data } = await api.post('/repuestos', fd);
             toast.success(`"${data.nombre}" creado`, { id: t });
             onCreado(data);
             onClose();
-        } catch {
-            toast.error('Error al crear repuesto', { id: t });
+        } catch (err) {
+            const msg = err.response?.status === 409 ? 'Ya existe un repuesto con ese SKU' : 'Error al crear repuesto';
+            toast.error(msg, { id: t });
         } finally {
             setCargando(false);
         }
@@ -108,9 +100,13 @@ export default function RepuestoRapidoModal({ isOpen, onClose, nombreInicial = '
                             Precio de venta *
                         </label>
                         <input
-                            type="number" min="0" step="any"
+                            type="text" inputMode="decimal"
                             value={form.precio}
-                            onChange={e => setForm(f => ({ ...f, precio: e.target.value }))}
+                            onChange={e => {
+                                let v = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+                                const p = v.split('.'); if (p.length > 2) v = p[0] + '.' + p.slice(1).join('');
+                                setForm(f => ({ ...f, precio: v }));
+                            }}
                             placeholder="0"
                             className={inputCls}
                         />
