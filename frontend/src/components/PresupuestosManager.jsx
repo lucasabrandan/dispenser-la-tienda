@@ -133,7 +133,8 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
             <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                 style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                 <IconBtn onClick={() => onVer(s)} title="Ver detalle" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
-                <IconBtn onClick={() => onPDF(s)} title="Generar PDF" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+                <IconBtn onClick={() => onPDF(s)} title="PDF con precios" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+                <IconBtn onClick={() => onPDF(s, { sinPrecios: true })} title="PDF sin precios" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📋</IconBtn>
 
                 <div className="flex-1" />
 
@@ -254,14 +255,14 @@ export default function PresupuestosManager({ onEjecutar }) {
         } catch { toast.error('Error', { id: t }); }
     };
 
-    const confirmar = (id) => patchEstado(id, 'REALIZADO', '¡Cobrado!');
+    const confirmar = (id) => patchEstado(id, 'COBRADO', '¡Cobrado!');
     const rechazar  = (id) => { if (!window.confirm('¿Rechazar este presupuesto?')) return; patchEstado(id, 'RECHAZADO', 'Rechazado'); };
     const archivar  = (id) => { if (!window.confirm('¿Archivar este presupuesto?')) return; patchEstado(id, 'ARCHIVADO', 'Archivado'); };
 
     const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
 
     // Presupuesto: genera PDF directo sin pedir firmas (las firmas son para trabajo terminado)
-    const generarPDF = useCallback(async (s) => {
+    const generarPDF = useCallback(async (s, { sinPrecios = false } = {}) => {
         await generarRemitoPDFPremium({
             tipo:         s.servicioTipo === 'VENTA' ? 'PRESUPUESTO_VENTA' : undefined,
             esPresupuesto: true,
@@ -281,6 +282,7 @@ export default function PresupuestosManager({ onEjecutar }) {
             fechaServicio: s.fecha,
             leyenda: s.observaciones || '',
             incluirFirmas: false,
+            sinPrecios,
         });
     }, []);
 

@@ -96,7 +96,7 @@ function construirFilasItem(item) {
 async function generarSingleTecnico(doc, {
     item, cliente, sede, tipo, y, fecha, nroDoc, tecnico,
     firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, proximoMantenimiento,
-    incluirFirmas = true, descuentoPorcentaje = 0, leyenda = '',
+    incluirFirmas = true, descuentoPorcentaje = 0, leyenda = '', sinPrecios = false,
 }) {
     const pageW = doc.internal.pageSize.getWidth();
 
@@ -163,22 +163,25 @@ async function generarSingleTecnico(doc, {
         const importeStr = r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`;
         // MO sin imagen: concepto ocupa columna imagen+concepto (colSpan 2) para no dejar celda vacía
         if (hayFotosST && r.esServicio) {
-            return [
+            const row = [
                 { content: r.concepto, colSpan: 2, styles: { textColor: C.navy, fontStyle: 'bold', fontSize: T.xs } },
-                cantStr, unitStr, importeStr,
+                cantStr,
             ];
+            if (!sinPrecios) row.push(unitStr, importeStr);
+            return row;
         }
-        const fila = [r.concepto, cantStr, unitStr, importeStr];
+        const fila = sinPrecios ? [r.concepto, cantStr] : [r.concepto, cantStr, unitStr, importeStr];
         if (hayFotosST) fila.unshift('');
         return fila;
     });
 
+    const headColsST = sinPrecios
+        ? (hayFotosST ? ['Img', 'CONCEPTO', 'CANT'] : ['CONCEPTO', 'CANT'])
+        : (hayFotosST ? ['Img', 'CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE'] : ['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']);
+
     autoTable(doc, {
         startY: y,
-        head:  [hayFotosST
-            ? ['Img', 'CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']
-            : ['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']
-        ],
+        head:  [headColsST],
         body:  tableData,
         theme: 'grid',
         headStyles: {
@@ -191,18 +194,25 @@ async function generarSingleTecnico(doc, {
             lineColor: C.grayBorder, lineWidth: 0.15,
             ...(hayFotosST ? { valign: 'middle' } : {}),
         },
-        columnStyles: hayFotosST ? {
+        columnStyles: hayFotosST ? (sinPrecios ? {
+            0: { cellWidth: FOTO_ST_W + 4 },
+            1: { cellWidth: 'auto', overflow: 'linebreak' },
+            2: { halign: 'center', cellWidth: 13 },
+        } : {
             0: { cellWidth: FOTO_ST_W + 4 },
             1: { cellWidth: 'auto', overflow: 'linebreak' },
             2: { halign: 'center', cellWidth: 13 },
             3: { halign: 'right',  cellWidth: 26 },
             4: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
+        }) : (sinPrecios ? {
+            0: { cellWidth: 'auto', overflow: 'linebreak' },
+            1: { halign: 'center', cellWidth: 13 },
         } : {
             0: { cellWidth: 'auto', overflow: 'linebreak' },
             1: { halign: 'center', cellWidth: 13 },
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
-        },
+        }),
         rowPageBreak: 'avoid',
         margin: { left: M, right: M, top: HEADER_H.compact + 8 },
         didDrawPage: (data) => {
@@ -237,42 +247,44 @@ async function generarSingleTecnico(doc, {
 
     let tableEndY = doc.lastAutoTable.finalY + 3;
 
-    // Desglose subtotal → descuento → total
-    const pct = parseFloat(descuentoPorcentaje || 0);
-    const descuentoMonto = (!sinItems && pct > 0) ? Math.round(totalEquipo * pct / 100) : 0;
-    const totalFinal = totalEquipo - descuentoMonto;
-    const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${totalFinal.toLocaleString('es-AR')}`;
+    if (!sinPrecios) {
+        // Desglose subtotal → descuento → total
+        const pct = parseFloat(descuentoPorcentaje || 0);
+        const descuentoMonto = (!sinItems && pct > 0) ? Math.round(totalEquipo * pct / 100) : 0;
+        const totalFinal = totalEquipo - descuentoMonto;
+        const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${totalFinal.toLocaleString('es-AR')}`;
 
-    if (pct > 0 && !sinItems) {
-        doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Subtotal', M + 3, tableEndY + 4.5);
-        doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 4.5, { align: 'right' });
-        tableEndY += 6;
+        if (pct > 0 && !sinItems) {
+            doc.setFontSize(T.xs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.grayText);
+            doc.text('Subtotal', M + 3, tableEndY + 4.5);
+            doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 4.5, { align: 'right' });
+            tableEndY += 6;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.red);
+            doc.text(`Descuento ${pct}%`, M + 3, tableEndY + 4.5);
+            doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 4.5, { align: 'right' });
+            tableEndY += 6;
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.line(M, tableEndY, pageW - M, tableEndY);
+            tableEndY += 2;
+        }
+
+        doc.setFillColor(...C.grayBg);
+        doc.setDrawColor(...C.navy);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(M, tableEndY, CONTENT_W, 13, 1.5, 1.5, 'FD');
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.red);
-        doc.text(`Descuento ${pct}%`, M + 3, tableEndY + 4.5);
-        doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 4.5, { align: 'right' });
-        tableEndY += 6;
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.15);
-        doc.line(M, tableEndY, pageW - M, tableEndY);
-        tableEndY += 2;
+        doc.setTextColor(...C.navy);
+        doc.text('TOTAL DEL SERVICIO', M + 3, tableEndY + 5.5);
+        doc.setFontSize(sinItems ? T.xs : T.md);
+        doc.setTextColor(...C.navy);
+        doc.text(totalLabel, pageW - M - 2, tableEndY + 10, { align: 'right' });
+        tableEndY += 18;
     }
-
-    doc.setFillColor(...C.grayBg);
-    doc.setDrawColor(...C.navy);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(M, tableEndY, CONTENT_W, 13, 1.5, 1.5, 'FD');
-    doc.setFontSize(T.xxs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text('TOTAL DEL SERVICIO', M + 3, tableEndY + 5.5);
-    doc.setFontSize(sinItems ? T.xs : T.md);
-    doc.setTextColor(...C.navy);
-    doc.text(totalLabel, pageW - M - 2, tableEndY + 10, { align: 'right' });
-    tableEndY += 18;
     y = tableEndY;
 
     // Registro fotográfico — umbral reducido acorde al nuevo tamaño de foto
@@ -373,7 +385,7 @@ async function generarSingleTecnico(doc, {
 
 async function generarSinglePresupuesto(doc, {
     item, cliente, sede, y, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, descuentoPorcentaje, incluirFirmas = true,
+    firmaCliente, firmaTecnico, descuentoPorcentaje, incluirFirmas = true, sinPrecios = false,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -441,22 +453,25 @@ async function generarSinglePresupuesto(doc, {
         const importeStr = r.importe.startsWith('A')  ? r.importe  : `$ ${r.importe}`;
         // MO sin imagen: concepto ocupa columna imagen+concepto (colSpan 2) para no dejar celda vacía
         if (hayFotosSP && r.esServicio) {
-            return [
+            const row = [
                 { content: r.concepto, colSpan: 2, styles: { textColor: C.navy, fontStyle: 'bold', fontSize: T.xs } },
-                cantStr, unitStr, importeStr,
+                cantStr,
             ];
+            if (!sinPrecios) row.push(unitStr, importeStr);
+            return row;
         }
-        const fila = [r.concepto, cantStr, unitStr, importeStr];
+        const fila = sinPrecios ? [r.concepto, cantStr] : [r.concepto, cantStr, unitStr, importeStr];
         if (hayFotosSP) fila.unshift('');
         return fila;
     });
 
+    const headColsSP = sinPrecios
+        ? (hayFotosSP ? ['Img', 'CONCEPTO', 'CANT'] : ['CONCEPTO', 'CANT'])
+        : (hayFotosSP ? ['Img', 'CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE'] : ['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']);
+
     autoTable(doc, {
         startY: y,
-        head:  [hayFotosSP
-            ? ['Img', 'CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']
-            : ['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']
-        ],
+        head:  [headColsSP],
         body:  tableDataP,
         theme: 'grid',
         headStyles: {
@@ -469,18 +484,25 @@ async function generarSinglePresupuesto(doc, {
             lineColor: C.grayBorder, lineWidth: 0.15,
             ...(hayFotosSP ? { valign: 'middle' } : {}),
         },
-        columnStyles: hayFotosSP ? {
+        columnStyles: hayFotosSP ? (sinPrecios ? {
+            0: { cellWidth: FOTO_SP_W + 4 },
+            1: { cellWidth: 'auto', overflow: 'linebreak' },
+            2: { halign: 'center', cellWidth: 13 },
+        } : {
             0: { cellWidth: FOTO_SP_W + 4 },
             1: { cellWidth: 'auto', overflow: 'linebreak' },
             2: { halign: 'center', cellWidth: 13 },
             3: { halign: 'right',  cellWidth: 26 },
             4: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
+        }) : (sinPrecios ? {
+            0: { cellWidth: 'auto', overflow: 'linebreak' },
+            1: { halign: 'center', cellWidth: 13 },
         } : {
             0: { cellWidth: 'auto', overflow: 'linebreak' },
             1: { halign: 'center', cellWidth: 13 },
             2: { halign: 'right',  cellWidth: 26 },
             3: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
-        },
+        }),
         rowPageBreak: 'avoid',
         margin: { left: M, right: M, top: HEADER_H.compact + 8 },
         didDrawPage: (data) => {
@@ -514,49 +536,52 @@ async function generarSinglePresupuesto(doc, {
     });
 
     let presupTableEndY = doc.lastAutoTable.finalY + 3;
-    const totalPresupLabel = sinItems ? 'A coordinar con el cliente' : total.toLocaleString('es-AR');
 
-    // Desglose subtotal → descuento → total
-    if (pct > 0 && !sinItems) {
-        doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Subtotal', M + 3, presupTableEndY + 4.5);
-        doc.text(`$ ${totalBruto.toLocaleString('es-AR')}`, pageW - M - 2, presupTableEndY + 4.5, { align: 'right' });
-        presupTableEndY += 6;
+    if (!sinPrecios) {
+        const totalPresupLabel = sinItems ? 'A coordinar con el cliente' : total.toLocaleString('es-AR');
+
+        // Desglose subtotal → descuento → total
+        if (pct > 0 && !sinItems) {
+            doc.setFontSize(T.xs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.grayText);
+            doc.text('Subtotal', M + 3, presupTableEndY + 4.5);
+            doc.text(`$ ${totalBruto.toLocaleString('es-AR')}`, pageW - M - 2, presupTableEndY + 4.5, { align: 'right' });
+            presupTableEndY += 6;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.red);
+            doc.text(`Descuento ${pct}%`, M + 3, presupTableEndY + 4.5);
+            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 2, presupTableEndY + 4.5, { align: 'right' });
+            presupTableEndY += 6;
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.line(M, presupTableEndY, pageW - M, presupTableEndY);
+            presupTableEndY += 2;
+        }
+
+        // Validez — calculada desde la fecha del documento
+        const [dSP, mSP, aSP] = fecha.split('/').map(Number);
+        const validezSP = new Date(aSP, mSP - 1, dSP + 7);
+
+        // Caja total + validez integrada (ahorra 6mm)
+        doc.setFillColor(...C.goldLight);
+        doc.setDrawColor(...C.gold);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(M, presupTableEndY, CONTENT_W, 16, 1.5, 1.5, 'FD');
+        doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.red);
-        doc.text(`Descuento ${pct}%`, M + 3, presupTableEndY + 4.5);
-        doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 2, presupTableEndY + 4.5, { align: 'right' });
-        presupTableEndY += 6;
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.15);
-        doc.line(M, presupTableEndY, pageW - M, presupTableEndY);
-        presupTableEndY += 2;
+        doc.setTextColor(...C.gold);
+        doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 5);
+        doc.setFontSize(sinItems ? T.xs : T.md);
+        doc.setTextColor(...C.navy);
+        doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 2, presupTableEndY + 9.5, { align: 'right' });
+        // Validez dentro de la caja
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'italic');
+        doc.setTextColor(...C.grayText);
+        doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 3, presupTableEndY + 13);
+        presupTableEndY += 20;
     }
-
-    // Validez — calculada desde la fecha del documento
-    const [dSP, mSP, aSP] = fecha.split('/').map(Number);
-    const validezSP = new Date(aSP, mSP - 1, dSP + 7);
-
-    // Caja total + validez integrada (ahorra 6mm)
-    doc.setFillColor(...C.goldLight);
-    doc.setDrawColor(...C.gold);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(M, presupTableEndY, CONTENT_W, 16, 1.5, 1.5, 'FD');
-    doc.setFontSize(T.xxs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.gold);
-    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 5);
-    doc.setFontSize(sinItems ? T.xs : T.md);
-    doc.setTextColor(...C.navy);
-    doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 2, presupTableEndY + 9.5, { align: 'right' });
-    // Validez dentro de la caja
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'italic');
-    doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 3, presupTableEndY + 13);
-    presupTableEndY += 20;
     y = presupTableEndY;
 
     // Registro fotográfico + condiciones: intentar que todo quede en la misma página
@@ -604,7 +629,7 @@ async function generarSinglePresupuesto(doc, {
 async function generarMultiTecnico(doc, {
     ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico, y: yInicial,
     firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, leyenda,
-    incluirFirmas = true, descuentoPorcentaje = 0,
+    incluirFirmas = true, descuentoPorcentaje = 0, sinPrecios = false,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
 
@@ -616,8 +641,10 @@ async function generarMultiTecnico(doc, {
     let y = yInicial ?? (HEADER_H.compact + 8);
 
     // Bloque cliente con resumen inline (ahorra 22mm del bloque resumen separado)
-    const resumenTexto = `${ticketItems.length} equipos atendidos\nTotal: $ ${subtotalTotal.toLocaleString('es-AR')}`;
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: resumenTexto, tituloDiag: 'RESUMEN' });
+    const resumenTextoMT = sinPrecios
+        ? `${ticketItems.length} equipos atendidos`
+        : `${ticketItems.length} equipos atendidos\nTotal: $ ${subtotalTotal.toLocaleString('es-AR')}`;
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: resumenTextoMT, tituloDiag: 'RESUMEN' });
 
     // Garantía compacta + firmas
     const firmasHM = incluirFirmas ? 44 : 0;
@@ -669,27 +696,35 @@ async function generarMultiTecnico(doc, {
         const desc = (item.trabajo || item.trabajoRealizado || '').trim();
         const partesMO = [];
         if (desc) partesMO.push(desc);
-        if (mo > 0) partesMO.push(`MO: $${mo.toLocaleString('es-AR')}`);
+        if (!sinPrecios && mo > 0) partesMO.push(`MO: $${mo.toLocaleString('es-AR')}`);
         const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
 
         // Repuestos: una línea por ítem
         const reps = item.repuestosUsados || [];
         const repCell = reps.length > 0
             ? reps.map(r => {
+                if (sinPrecios) return `· ${r.nombre} (x${r.cantidad})`;
                 const sub = parseFloat(r.subtotal ?? r.precio * r.cantidad ?? 0);
                 return `· ${r.nombre} (x${r.cantidad}) — $${sub.toLocaleString('es-AR')}`;
               }).join('\n')
             : '—';
 
-        const sub = parseFloat(item.totalCalculado || item.costo || 0);
-        const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
-
-        bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
+        if (sinPrecios) {
+            bodyRows.push([equipoCell, trabajoCell, repCell]);
+        } else {
+            const sub = parseFloat(item.totalCalculado || item.costo || 0);
+            const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
+            bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
+        }
     });
+
+    const headMT = sinPrecios
+        ? [['EQUIPO', 'TRABAJO INCLUIDO', 'REPUESTOS INCLUIDOS']]
+        : [['EQUIPO', 'TRABAJO INCLUIDO', 'REPUESTOS INCLUIDOS', 'IMPORTE']];
 
     autoTable(doc, {
         startY: y,
-        head:  [['EQUIPO', 'TRABAJO INCLUIDO', 'REPUESTOS INCLUIDOS', 'IMPORTE']],
+        head:  headMT,
         body:  bodyRows,
         theme: 'grid',
         headStyles: {
@@ -701,7 +736,11 @@ async function generarMultiTecnico(doc, {
             cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
-        columnStyles: {
+        columnStyles: sinPrecios ? {
+            0: { cellWidth: 50, fontStyle: 'bold' },
+            1: { cellWidth: 50 },
+            2: { cellWidth: 'auto' },
+        } : {
             0: { cellWidth: 42, fontStyle: 'bold' },
             1: { cellWidth: 37 },
             2: { cellWidth: 'auto' },
@@ -721,41 +760,43 @@ async function generarMultiTecnico(doc, {
 
     y = doc.lastAutoTable.finalY + 4;
 
-    // Desglose subtotal → descuento → total
-    const pctM = parseFloat(descuentoPorcentaje || 0);
-    const descuentoM = pctM > 0 ? Math.round(subtotalTotal * pctM / 100) : 0;
-    const totalFinalM = subtotalTotal - descuentoM;
+    if (!sinPrecios) {
+        // Desglose subtotal → descuento → total
+        const pctM = parseFloat(descuentoPorcentaje || 0);
+        const descuentoM = pctM > 0 ? Math.round(subtotalTotal * pctM / 100) : 0;
+        const totalFinalM = subtotalTotal - descuentoM;
 
-    if (pctM > 0) {
+        if (pctM > 0) {
+            doc.setFontSize(T.xs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.grayText);
+            doc.text('Subtotal', M + 4, y + 4.5);
+            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            y += 6;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.red);
+            doc.text(`Descuento ${pctM}%`, M + 4, y + 4.5);
+            doc.text(`- $ ${descuentoM.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            y += 6;
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.line(M, y, pageW - M, y);
+            y += 2;
+        }
+
+        doc.setFillColor(...C.grayBg);
+        doc.setDrawColor(...C.navy);
+        doc.setLineWidth(0.4);
+        doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
         doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Subtotal', M + 4, y + 4.5);
-        doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
-        y += 6;
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.red);
-        doc.text(`Descuento ${pctM}%`, M + 4, y + 4.5);
-        doc.text(`- $ ${descuentoM.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
-        y += 6;
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.15);
-        doc.line(M, y, pageW - M, y);
-        y += 2;
+        doc.setTextColor(...C.navy);
+        doc.text('TOTAL FACTURADO', M + 4, y + 5.5);
+        doc.setFontSize(T.xl);
+        doc.setTextColor(...C.navy);
+        doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
+        y += 18;
     }
-
-    doc.setFillColor(...C.grayBg);
-    doc.setDrawColor(...C.navy);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
-    doc.setFontSize(T.xs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text('TOTAL FACTURADO', M + 4, y + 5.5);
-    doc.setFontSize(T.xl);
-    doc.setTextColor(...C.navy);
-    doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
-    y += 18;
 
     // Condiciones del servicio (leyenda) — solo si caben y no duplican la garantía
     const leyLimpiaM = (leyenda || '').trim();
@@ -791,7 +832,7 @@ async function generarMultiTecnico(doc, {
 
 async function generarMultiPresupuesto(doc, {
     ticketItems, cliente, sede, fecha, nroDoc, tecnico, y: yInicial,
-    firmaCliente, firmaTecnico, incluirFirmas = true, descuentoPorcentaje, leyenda,
+    firmaCliente, firmaTecnico, incluirFirmas = true, descuentoPorcentaje, leyenda, sinPrecios = false,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -806,8 +847,10 @@ async function generarMultiPresupuesto(doc, {
     const total     = subtotalTotal - descuento;
 
     // Bloque cliente — con resumen inline en columna derecha (ahorra 22mm del bloque resumen)
-    const resumenTexto = `${ticketItems.length} equipos\nTotal estimado: $ ${total.toLocaleString('es-AR')}`;
-    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: resumenTexto, tituloDiag: 'RESUMEN' });
+    const resumenTextoP = sinPrecios
+        ? `${ticketItems.length} equipos`
+        : `${ticketItems.length} equipos\nTotal estimado: $ ${total.toLocaleString('es-AR')}`;
+    y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: resumenTextoP, tituloDiag: 'RESUMEN' });
 
     // Detectar si todos los equipos tienen el mismo trabajo → mostrar una sola vez arriba de la tabla
     const trabajos = ticketItems.map(it => (it.trabajo || it.trabajoRealizado || '').trim()).filter(Boolean);
@@ -840,25 +883,33 @@ async function generarMultiPresupuesto(doc, {
         const desc = (item.trabajo || item.trabajoRealizado || '').trim();
         const partesMO = [];
         if (desc) partesMO.push(desc);
-        if (mo > 0) partesMO.push(`MO: $${mo.toLocaleString('es-AR')}`);
+        if (!sinPrecios && mo > 0) partesMO.push(`MO: $${mo.toLocaleString('es-AR')}`);
         const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
 
         // Repuestos con precio
         const reps = item.repuestosUsados || [];
         const repCell = reps.length > 0
             ? reps.map(r => {
+                if (sinPrecios) return `· ${r.nombre} (x${r.cantidad})`;
                 const sub = parseFloat(r.subtotal ?? r.precio * r.cantidad ?? 0);
                 return `· ${r.nombre} (x${r.cantidad}) — $${sub.toLocaleString('es-AR')}`;
               }).join('\n')
             : '—';
 
-        const sub = parseFloat(item.totalCalculado || item.costo || 0);
-        const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
-
-        if (trabajoComun) {
-            bodyRows.push([equipoCell, repCell, importeCell]);
+        if (sinPrecios) {
+            if (trabajoComun) {
+                bodyRows.push([equipoCell, repCell]);
+            } else {
+                bodyRows.push([equipoCell, trabajoCell, repCell]);
+            }
         } else {
-            bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
+            const sub = parseFloat(item.totalCalculado || item.costo || 0);
+            const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
+            if (trabajoComun) {
+                bodyRows.push([equipoCell, repCell, importeCell]);
+            } else {
+                bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
+            }
         }
     });
 
@@ -871,12 +922,20 @@ async function generarMultiPresupuesto(doc, {
     doc.text('DETALLE DE EQUIPOS Y CONCEPTOS', M, y);
     y += 5;
 
-    const headCols  = trabajoComun
-        ? [['EQUIPO', 'REPUESTOS ESTIMADOS', 'IMPORTE']]
-        : [['EQUIPO', 'TRABAJO ESTIMADO', 'REPUESTOS ESTIMADOS', 'IMPORTE']];
-    const colStyles = trabajoComun
-        ? { 0: { cellWidth: 55, fontStyle: 'bold' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy } }
-        : { 0: { cellWidth: 45, fontStyle: 'bold' }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy } };
+    const headCols  = sinPrecios
+        ? (trabajoComun
+            ? [['EQUIPO', 'REPUESTOS ESTIMADOS']]
+            : [['EQUIPO', 'TRABAJO ESTIMADO', 'REPUESTOS ESTIMADOS']])
+        : (trabajoComun
+            ? [['EQUIPO', 'REPUESTOS ESTIMADOS', 'IMPORTE']]
+            : [['EQUIPO', 'TRABAJO ESTIMADO', 'REPUESTOS ESTIMADOS', 'IMPORTE']]);
+    const colStyles = sinPrecios
+        ? (trabajoComun
+            ? { 0: { cellWidth: 60, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } }
+            : { 0: { cellWidth: 50, fontStyle: 'bold' }, 1: { cellWidth: 45 }, 2: { cellWidth: 'auto' } })
+        : (trabajoComun
+            ? { 0: { cellWidth: 55, fontStyle: 'bold' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy } }
+            : { 0: { cellWidth: 45, fontStyle: 'bold' }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy } });
 
     autoTable(doc, {
         startY: y,
@@ -908,46 +967,48 @@ async function generarMultiPresupuesto(doc, {
 
     y = doc.lastAutoTable.finalY + 4;
 
-    // Desglose subtotal → descuento → total
-    if (pct > 0) {
+    if (!sinPrecios) {
+        // Desglose subtotal → descuento → total
+        if (pct > 0) {
+            doc.setFontSize(T.xs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.grayText);
+            doc.text('Subtotal', M + 4, y + 4.5);
+            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            y += 6;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.red);
+            doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
+            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            y += 6;
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.line(M, y, pageW - M, y);
+            y += 2;
+        }
+
+        // Validez — calculada desde la fecha del documento
+        const [dMP, mMP, aMP] = fecha.split('/').map(Number);
+        const validezMP = new Date(aMP, mMP - 1, dMP + 7);
+
+        // Total final + validez integrada
+        doc.setFillColor(...C.goldLight);
+        doc.setDrawColor(...C.gold);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
         doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Subtotal', M + 4, y + 4.5);
-        doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
-        y += 6;
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.red);
-        doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
-        doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
-        y += 6;
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.15);
-        doc.line(M, y, pageW - M, y);
-        y += 2;
+        doc.setTextColor(...C.gold);
+        doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 5);
+        doc.setFontSize(T.xl);
+        doc.setTextColor(...C.navy);
+        doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 2, y + 9.5, { align: 'right' });
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'italic');
+        doc.setTextColor(...C.grayText);
+        doc.text(`Válido hasta: ${validezMP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 4, y + 13);
+        y += 20;
     }
-
-    // Validez — calculada desde la fecha del documento
-    const [dMP, mMP, aMP] = fecha.split('/').map(Number);
-    const validezMP = new Date(aMP, mMP - 1, dMP + 7);
-
-    // Total final + validez integrada
-    doc.setFillColor(...C.goldLight);
-    doc.setDrawColor(...C.gold);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
-    doc.setFontSize(T.xs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.gold);
-    doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 5);
-    doc.setFontSize(T.xl);
-    doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 2, y + 9.5, { align: 'right' });
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'italic');
-    doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validezMP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 4, y + 13);
-    y += 20;
 
     // Condiciones compactas (presupuesto no lleva QR ni firmas)
     y = checkSalto(doc, y, 20);
@@ -965,7 +1026,7 @@ async function generarMultiPresupuesto(doc, {
 // ── FLUJO PRESUPUESTO VENTA (cotización de productos) ────────────────────────
 
 async function generarPresupuestoVenta(doc, {
-    ticketItems, cliente, sede, y, fecha, descuentoPorcentaje, nroDoc, leyenda = '',
+    ticketItems, cliente, sede, y, fecha, descuentoPorcentaje, nroDoc, leyenda = '', sinPrecios = false,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -996,22 +1057,30 @@ async function generarPresupuestoVenta(doc, {
             const desc         = (r.descripcion || '').trim();
             const nombreDesc   = desc ? `${r.nombre}\n${desc}` : (r.nombre || '—');
 
-            filas.push([
-                '',
-                r.sku || '',
-                nombreDesc,
-                String(cant),
-                `$ ${precioUnit.toLocaleString('es-AR')}`,
-                precioDesc !== null ? `$ ${precioDesc.toLocaleString('es-AR')}` : '—',
-                `$ ${totalLinea.toLocaleString('es-AR')}`,
-            ]);
+            if (sinPrecios) {
+                filas.push(['', r.sku || '', nombreDesc, String(cant)]);
+            } else {
+                filas.push([
+                    '',
+                    r.sku || '',
+                    nombreDesc,
+                    String(cant),
+                    `$ ${precioUnit.toLocaleString('es-AR')}`,
+                    precioDesc !== null ? `$ ${precioDesc.toLocaleString('es-AR')}` : '—',
+                    `$ ${totalLinea.toLocaleString('es-AR')}`,
+                ]);
+            }
             fotos.push(await cargarFoto(r.fotoUrl || null));
             metas.push({ tieneDesc: precioDesc !== null });
         }
         // Envío como línea separada (sin descuento, sin foto)
         const envio = parseFloat(item.costoExtra || 0);
         if (envio > 0) {
-            filas.push(['', '', 'Envío', '1', `$ ${envio.toLocaleString('es-AR')}`, '—', `$ ${envio.toLocaleString('es-AR')}`]);
+            if (sinPrecios) {
+                filas.push(['', '', 'Envío', '1']);
+            } else {
+                filas.push(['', '', 'Envío', '1', `$ ${envio.toLocaleString('es-AR')}`, '—', `$ ${envio.toLocaleString('es-AR')}`]);
+            }
             fotos.push(null);
             metas.push({ tieneDesc: false, isEnvio: true });
         }
@@ -1025,36 +1094,59 @@ async function generarPresupuestoVenta(doc, {
         doc.text('DETALLE DE PRODUCTOS', M, y);
         y += 5;
 
-        const conDescuento = pct > 0;
+        const conDescuento = !sinPrecios && pct > 0;
         // Solo incluir columna imagen si al menos un repuesto tiene foto (ENVÍO nunca tiene foto)
         const hayFotosPV = fotos.some(f => f !== null);
 
-        // Construye head y body según si hay fotos y si hay descuento
-        const headBase   = ['SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', ...(conDescuento ? ['P. c/Desc.'] : []), 'Total'];
-        const headFinal  = hayFotosPV ? ['Imagen', ...headBase] : headBase;
-        // filas[i][0] es '' (placeholder imagen), índice 5 es P.c/Desc (solo cuando conDescuento)
-        const bodyFinal = filas.map((f, i) => {
-            const sinImg  = f.slice(1); // [sku, nombre, cant, pUnit, pDesc, total]
-            const sinDesc = conDescuento ? sinImg : sinImg.filter((_, j) => j !== 4);
-            if (!hayFotosPV) return sinDesc;
-            // Envío: sin imagen ni SKU — concepto ocupa imagen+SKU+nombre (colSpan 3)
-            if (metas[i]?.isEnvio) {
-                const [, , nombre, cant, pUnit, pDesc, total] = f;
-                const cols = [
-                    { content: nombre, colSpan: 3 },
-                    cant, pUnit,
-                    ...(conDescuento ? [pDesc] : []),
-                    total,
-                ];
-                return cols;
-            }
-            return [f[0], ...sinDesc];
-        });
+        // Construye head y body según si hay fotos, descuento y sinPrecios
+        let headBase, headFinal, bodyFinal;
+        if (sinPrecios) {
+            headBase  = ['SKU', 'Producto / Descripción', 'Cant.'];
+            headFinal = hayFotosPV ? ['Imagen', ...headBase] : headBase;
+            bodyFinal = filas.map((f, i) => {
+                // f = ['', sku, nombre, cant] cuando sinPrecios
+                const sinImg = f.slice(1);
+                if (!hayFotosPV) return sinImg;
+                if (metas[i]?.isEnvio) {
+                    return [{ content: f[2], colSpan: 3 }, f[3]];
+                }
+                return [f[0], ...sinImg];
+            });
+        } else {
+            headBase   = ['SKU', 'Producto / Descripción', 'Cant.', 'P. Unit.', ...(conDescuento ? ['P. c/Desc.'] : []), 'Total'];
+            headFinal  = hayFotosPV ? ['Imagen', ...headBase] : headBase;
+            bodyFinal = filas.map((f, i) => {
+                const sinImg  = f.slice(1);
+                const sinDesc = conDescuento ? sinImg : sinImg.filter((_, j) => j !== 4);
+                if (!hayFotosPV) return sinDesc;
+                if (metas[i]?.isEnvio) {
+                    const [, , nombre, cant, pUnit, pDesc, total] = f;
+                    return [
+                        { content: nombre, colSpan: 3 },
+                        cant, pUnit,
+                        ...(conDescuento ? [pDesc] : []),
+                        total,
+                    ];
+                }
+                return [f[0], ...sinDesc];
+            });
+        }
 
         // columnStyles dinámico
-        let colStyles;
-        if (hayFotosPV && conDescuento) {
-            colStyles = {
+        let colStylesPV;
+        if (sinPrecios) {
+            colStylesPV = hayFotosPV ? {
+                0: { cellWidth: FOTO_W + 4 },
+                1: { cellWidth: 22, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
+                2: { cellWidth: 'auto' },
+                3: { halign: 'center', cellWidth: 14 },
+            } : {
+                0: { cellWidth: 22, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
+                1: { cellWidth: 'auto' },
+                2: { halign: 'center', cellWidth: 14 },
+            };
+        } else if (hayFotosPV && conDescuento) {
+            colStylesPV = {
                 0: { cellWidth: FOTO_W + 4 },
                 1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
                 2: { cellWidth: 'auto' },
@@ -1064,7 +1156,7 @@ async function generarPresupuestoVenta(doc, {
                 6: { halign: 'right',  cellWidth: 24, fontStyle: 'bold' },
             };
         } else if (hayFotosPV) {
-            colStyles = {
+            colStylesPV = {
                 0: { cellWidth: FOTO_W + 4 },
                 1: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
                 2: { cellWidth: 'auto' },
@@ -1073,7 +1165,7 @@ async function generarPresupuestoVenta(doc, {
                 5: { halign: 'right',  cellWidth: 28, fontStyle: 'bold' },
             };
         } else if (conDescuento) {
-            colStyles = {
+            colStylesPV = {
                 0: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
                 1: { cellWidth: 'auto' },
                 2: { halign: 'center', cellWidth: 12 },
@@ -1082,7 +1174,7 @@ async function generarPresupuestoVenta(doc, {
                 5: { halign: 'right',  cellWidth: 24, fontStyle: 'bold' },
             };
         } else {
-            colStyles = {
+            colStylesPV = {
                 0: { cellWidth: 18, textColor: C.red, fontStyle: 'bold', fontSize: T.xxs },
                 1: { cellWidth: 'auto' },
                 2: { halign: 'center', cellWidth: 12 },
@@ -1111,7 +1203,7 @@ async function generarPresupuestoVenta(doc, {
                 lineColor: C.grayBorder, lineWidth: 0.1,
             },
             rowPageBreak: 'avoid',
-            columnStyles: colStyles,
+            columnStyles: colStylesPV,
             margin: { left: M, right: M, top: HEADER_H.compact + 8 },
             didDrawPage: (data) => {
                 if (data.pageNumber > 1) {
@@ -1126,7 +1218,7 @@ async function generarPresupuestoVenta(doc, {
                     data.cell.styles.minCellHeight = FOTO_H + 4;
                 }
                 // col descuento en gris si la fila no tiene descuento aplicado
-                if (descColIdx >= 0 && data.column.index === descColIdx && !metas[data.row.index]?.tieneDesc) {
+                if (!sinPrecios && descColIdx >= 0 && data.column.index === descColIdx && !metas[data.row.index]?.tieneDesc) {
                     data.cell.styles.textColor = C.grayText;
                 }
             },
@@ -1144,54 +1236,56 @@ async function generarPresupuestoVenta(doc, {
         y = doc.lastAutoTable.finalY + 8;
     }
 
-    // Subtotal bruto (productos + envío), descuento, total final
-    const subtotalBruto = ticketItems.reduce((a, it) => {
-        const prods = (it.repuestosUsados || []).reduce((s, r) => s + Number(r.precio || 0) * Number(r.cantidad || 1), 0);
-        return a + prods + parseFloat(it.costoExtra || 0);
-    }, 0);
-    const descuentoMonto = pct > 0 ? subtotalBruto * pct / 100 : 0;
-    const total          = subtotalBruto - descuentoMonto;
+    if (!sinPrecios) {
+        // Subtotal bruto (productos + envío), descuento, total final
+        const subtotalBruto = ticketItems.reduce((a, it) => {
+            const prods = (it.repuestosUsados || []).reduce((s, r) => s + Number(r.precio || 0) * Number(r.cantidad || 1), 0);
+            return a + prods + parseFloat(it.costoExtra || 0);
+        }, 0);
+        const descuentoMonto = pct > 0 ? subtotalBruto * pct / 100 : 0;
+        const totalPV        = subtotalBruto - descuentoMonto;
 
-    // Desglose subtotal → descuento → total
-    if (pct > 0) {
+        // Desglose subtotal → descuento → total
+        if (pct > 0) {
+            doc.setFontSize(T.xs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.grayText);
+            doc.text('Subtotal', M + 4, y + 4.5);
+            doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            y += 6;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.red);
+            doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
+            doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            y += 6;
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.line(M, y, pageW - M, y);
+            y += 2;
+        }
+
+        // Validez — calculada desde la fecha del documento
+        const [dPV, mPV, aPV] = fecha.split('/').map(Number);
+        const validezPV = new Date(aPV, mPV - 1, dPV + 7);
+
+        // Total estimado + validez integrada
+        doc.setFillColor(...C.goldLight);
+        doc.setDrawColor(...C.gold);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
         doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Subtotal', M + 4, y + 4.5);
-        doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
-        y += 6;
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.red);
-        doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
-        doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
-        y += 6;
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.15);
-        doc.line(M, y, pageW - M, y);
-        y += 2;
+        doc.setTextColor(...C.gold);
+        doc.text('TOTAL ESTIMADO', M + 4, y + 5);
+        doc.setFontSize(T.xl);
+        doc.setTextColor(...C.navy);
+        doc.text(`$ ${totalPV.toLocaleString('es-AR')}`, pageW - M, y + 9.5, { align: 'right' });
+        doc.setFontSize(T.label);
+        doc.setFont(undefined, 'italic');
+        doc.setTextColor(...C.grayText);
+        doc.text(`Válido hasta: ${validezPV.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 4, y + 13);
+        y += 20;
     }
-
-    // Validez — calculada desde la fecha del documento
-    const [dPV, mPV, aPV] = fecha.split('/').map(Number);
-    const validezPV = new Date(aPV, mPV - 1, dPV + 7);
-
-    // Total estimado + validez integrada
-    doc.setFillColor(...C.goldLight);
-    doc.setDrawColor(...C.gold);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
-    doc.setFontSize(T.xs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.gold);
-    doc.text('TOTAL ESTIMADO', M + 4, y + 5);
-    doc.setFontSize(T.xl);
-    doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 9.5, { align: 'right' });
-    doc.setFontSize(T.label);
-    doc.setFont(undefined, 'italic');
-    doc.setTextColor(...C.grayText);
-    doc.text(`Válido hasta: ${validezPV.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 4, y + 13);
-    y += 20;
 
     // Leyenda / observaciones
     const leyLimpiaV = (leyenda || '').trim();
@@ -1238,7 +1332,7 @@ async function generarPresupuestoVenta(doc, {
 // ── FLUJO COMPROBANTE (venta de productos) ────────────────────────────────────
 
 async function generarComprobante(doc, {
-    ticketItems, cliente, sede, y, fecha, nroDoc, descuentoPorcentaje, leyenda,
+    ticketItems, cliente, sede, y, fecha, nroDoc, descuentoPorcentaje, leyenda, sinPrecios = false,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
 
@@ -1254,15 +1348,23 @@ async function generarComprobante(doc, {
             const nombreConDesc = r.descripcion
                 ? `${r.nombre}\n${r.descripcion}`
                 : r.nombre;
-            filas.push(['', nombreConDesc, r.sku || '', String(r.cantidad),
-                `$ ${Number(r.precio).toLocaleString('es-AR')}`,
-                `$ ${Number(r.subtotal ?? r.precio * r.cantidad).toLocaleString('es-AR')}`]);
+            if (sinPrecios) {
+                filas.push(['', nombreConDesc, r.sku || '', String(r.cantidad)]);
+            } else {
+                filas.push(['', nombreConDesc, r.sku || '', String(r.cantidad),
+                    `$ ${Number(r.precio).toLocaleString('es-AR')}`,
+                    `$ ${Number(r.subtotal ?? r.precio * r.cantidad).toLocaleString('es-AR')}`]);
+            }
             fotos.push(await cargarFoto(r.fotoUrl || null));
         }
         // Envío como línea separada
         const envio = parseFloat(item.costoExtra || 0);
         if (envio > 0) {
-            filas.push(['', 'Envío', '', '1', `$ ${envio.toLocaleString('es-AR')}`, `$ ${envio.toLocaleString('es-AR')}`]);
+            if (sinPrecios) {
+                filas.push(['', 'Envío', '', '1']);
+            } else {
+                filas.push(['', 'Envío', '', '1', `$ ${envio.toLocaleString('es-AR')}`, `$ ${envio.toLocaleString('es-AR')}`]);
+            }
             fotos.push(null);
         }
     }
@@ -1270,26 +1372,42 @@ async function generarComprobante(doc, {
     if (filas.length > 0) {
         // Mostrar columna imagen solo si hay al menos un producto con foto
         const hayFotosComp = fotos.some(f => f !== null);
-        const headFinal = hayFotosComp
-            ? [['Imagen', 'Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']]
-            : [['Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']];
+        let headFinalComp, colStylesFinal;
+        if (sinPrecios) {
+            headFinalComp = hayFotosComp
+                ? [['Imagen', 'Producto', 'SKU', 'Cant.']]
+                : [['Producto', 'SKU', 'Cant.']];
+            colStylesFinal = hayFotosComp ? {
+                0: { cellWidth: PROD_W + 4 }, 1: { cellWidth: 'auto', overflow: 'linebreak' },
+                2: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 22 },
+                3: { halign: 'center', cellWidth: 16 },
+            } : {
+                0: { cellWidth: 'auto', overflow: 'linebreak' },
+                1: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 22 },
+                2: { halign: 'center', cellWidth: 16 },
+            };
+        } else {
+            headFinalComp = hayFotosComp
+                ? [['Imagen', 'Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']]
+                : [['Producto', 'SKU', 'Cant.', 'P. Unit.', 'Subtotal']];
+            colStylesFinal = hayFotosComp ? {
+                0: { cellWidth: PROD_W + 4 }, 1: { cellWidth: 'auto', overflow: 'linebreak' },
+                2: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
+                3: { halign: 'center', cellWidth: 14 }, 4: { halign: 'right', cellWidth: 24 },
+                5: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
+            } : {
+                0: { cellWidth: 'auto', overflow: 'linebreak' },
+                1: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
+                2: { halign: 'center', cellWidth: 14 }, 3: { halign: 'right', cellWidth: 24 },
+                4: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
+            };
+        }
         const bodyFinal = filas.map(f => hayFotosComp ? f : f.slice(1));
-        const colStylesFinal = hayFotosComp ? {
-            0: { cellWidth: PROD_W + 4 }, 1: { cellWidth: 'auto', overflow: 'linebreak' },
-            2: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
-            3: { halign: 'center', cellWidth: 14 }, 4: { halign: 'right', cellWidth: 24 },
-            5: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
-        } : {
-            0: { cellWidth: 'auto', overflow: 'linebreak' },
-            1: { textColor: C.grayText, fontSize: T.xxs, cellWidth: 18 },
-            2: { halign: 'center', cellWidth: 14 }, 3: { halign: 'right', cellWidth: 24 },
-            4: { halign: 'right', fontStyle: 'bold', cellWidth: 26 },
-        };
 
         y = checkSalto(doc, y, 40);
         autoTable(doc, {
             startY: y,
-            head:  headFinal,
+            head:  headFinalComp,
             body:  bodyFinal,
             theme: 'grid',
             headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: 'bold', fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 } },
@@ -1321,45 +1439,47 @@ async function generarComprobante(doc, {
         y = doc.lastAutoTable.finalY + 8;
     }
 
-    const subtotalTotal = ticketItems.reduce(
-        (a, it) => a + (parseFloat(it.totalCalculado) || parseFloat(it.costo) || 0), 0,
-    );
-    const pct       = parseFloat(descuentoPorcentaje || 0);
-    const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
-    const total     = subtotalTotal - descuento;
+    if (!sinPrecios) {
+        const subtotalTotal = ticketItems.reduce(
+            (a, it) => a + (parseFloat(it.totalCalculado) || parseFloat(it.costo) || 0), 0,
+        );
+        const pct       = parseFloat(descuentoPorcentaje || 0);
+        const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
+        const total     = subtotalTotal - descuento;
 
-    // Desglose subtotal → descuento → total
-    if (pct > 0) {
+        // Desglose subtotal → descuento → total
+        if (pct > 0) {
+            doc.setFontSize(T.xs);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.grayText);
+            doc.text('Subtotal', M + 4, y + 4.5);
+            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            y += 6;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.red);
+            doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
+            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            y += 6;
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.line(M, y, pageW - M, y);
+            y += 2;
+        }
+
+        // Total
+        doc.setFillColor(...C.grayBg);
+        doc.setDrawColor(...C.navy);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
         doc.setFontSize(T.xs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text('Subtotal', M + 4, y + 4.5);
-        doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
-        y += 6;
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.red);
-        doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
-        doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
-        y += 6;
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.15);
-        doc.line(M, y, pageW - M, y);
-        y += 2;
+        doc.setTextColor(...C.navy);
+        doc.text('TOTAL', M + 4, y + 5.5);
+        doc.setFontSize(T.xl);
+        doc.setTextColor(...C.navy);
+        doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
+        y += 18;
     }
-
-    // Total
-    doc.setFillColor(...C.grayBg);
-    doc.setDrawColor(...C.navy);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(M, y, CONTENT_W, 13, 2, 2, 'FD');
-    doc.setFontSize(T.xs);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...C.navy);
-    doc.text('TOTAL', M + 4, y + 5.5);
-    doc.setFontSize(T.xl);
-    doc.setTextColor(...C.navy);
-    doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
-    y += 18;
 
     // Leyenda / observaciones del comprobante
     const leyLimpiaC = (leyenda || '').trim();
@@ -1407,6 +1527,7 @@ export const generarPDF = async ({
     estadoFinal        = null,
     incluirFirmas      = true,
     aclaracionCliente  = '',
+    sinPrecios         = false,
 }) => {
     if (!cliente || ticketItems.length === 0) {
         return toast.error('Datos insuficientes para generar el PDF.');
@@ -1454,7 +1575,7 @@ export const generarPDF = async ({
         firmaTecnico:  incluirFirmas ? firmaTecnico  : null,
         incluirFirmas, aclaracionCliente,
         descuentoPorcentaje, garantiaTexto,
-        proximoMantenimiento, leyenda,
+        proximoMantenimiento, leyenda, sinPrecios,
     };
 
     if (tipoDetectado === 'COMPROBANTE') {

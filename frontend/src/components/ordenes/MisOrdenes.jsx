@@ -339,7 +339,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     };
 
     const handleConfirmado = async () => {
-        // Avanzar la orden a COMPLETADA — esto también marca el servicio como REALIZADO (sincronizarConServicios)
+        // Avanzar la orden a COMPLETADA — sincroniza servicio a COMPLETADO (falta cobro)
         if (ordenEjecutandoId) {
             try {
                 await api.patch(`/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' });

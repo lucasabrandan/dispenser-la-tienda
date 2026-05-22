@@ -8,17 +8,31 @@ function M({ valor, className = '' }) {
 }
 
 const BADGE = {
-    PRESUPUESTO: { label: 'Pendiente', cls: 'bg-[var(--warning-bg)] text-[var(--warning-tx)]' },
-    REALIZADO:   { label: 'Realizado', cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
-    RECHAZADO:   { label: 'Rechazado', cls: 'bg-[var(--danger-bg)]  text-[var(--danger-tx)]'  },
-    ARCHIVADO:   { label: 'Archivado', cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' },
+    PRESUPUESTO:           { label: 'Pendiente',       cls: 'bg-[var(--warning-bg)] text-[var(--warning-tx)]' },
+    COMPLETADO:            { label: 'Realizado',       cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+    PENDIENTE_FACTURACION: { label: 'Por cobrar',      cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+    FACTURADO:             { label: 'Facturado',       cls: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    COBRADO:               { label: 'Cobrado',         cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
+    REALIZADO:             { label: 'Anterior',        cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
+    RECHAZADO:             { label: 'Rechazado',       cls: 'bg-[var(--danger-bg)]  text-[var(--danger-tx)]'  },
+    ARCHIVADO:             { label: 'Archivado',       cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' },
+};
+
+const MODALIDAD_LABELS = {
+    EFECTIVO_SIN_FACTURA: 'Efectivo',
+    CON_FACTURA:          'Con factura',
+    PENDIENTE:            'Pendiente',
 };
 
 const BORDER = {
-    PRESUPUESTO: '#D48800',
-    REALIZADO:   '#16A34A',
-    RECHAZADO:   '#D13A28',
-    ARCHIVADO:   '#A8A29E',
+    PRESUPUESTO:           '#D48800',
+    COMPLETADO:            '#3B82F6',
+    PENDIENTE_FACTURACION: '#8B5CF6',
+    FACTURADO:             '#6366F1',
+    COBRADO:               '#16A34A',
+    REALIZADO:             '#16A34A',
+    RECHAZADO:             '#D13A28',
+    ARCHIVADO:             '#A8A29E',
 };
 
 function IconBtn({ onClick, title, children, cls = '' }) {
@@ -34,12 +48,17 @@ export default function ServicioCard({
     servicio, modoSeleccion, seleccionado,
     onToggleSelect, onEditar, onEjecutar, onCobrar, onDuplicar,
     onRechazar, onArchivar, onEliminar, onGenerarPDF, onDetalle, calcularTotal,
+    onAbrirCobro,
 }) {
     const [expandido, setExpandido] = useState(false);
+    const [menuAbierto, setMenuAbierto] = useState(false);
 
     const badge    = BADGE[servicio.estado] || { label: servicio.estado, cls: '' };
     const total    = calcularTotal(servicio);
     const esPpto   = servicio.estado === 'PRESUPUESTO';
+    const esComp   = servicio.estado === 'COMPLETADO';
+    const esPendFact = servicio.estado === 'PENDIENTE_FACTURACION';
+    const esFact   = servicio.estado === 'FACTURADO';
     const esArch   = servicio.estado === 'ARCHIVADO';
 
     // Antigüedad en días para presupuestos pendientes
@@ -101,11 +120,47 @@ export default function ServicioCard({
                     {servicio.clienteNombre}
                 </p>
 
-                {/* Fila 3: sede + técnico */}
+                {/* Fila 3: sede + técnico + modalidad cobro */}
                 <div className="flex items-center gap-3 text-[11px] text-[#A8A29E] flex-wrap">
                     {servicio.sedeNombre    && <span>📍 {servicio.sedeNombre}</span>}
                     {servicio.usuarioNombre && <span>👤 {servicio.usuarioNombre}</span>}
+                    {servicio.modalidadCobro && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${servicio.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]' : servicio.modalidadCobro === 'CON_FACTURA' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]'}`}>
+                            {MODALIDAD_LABELS[servicio.modalidadCobro] || servicio.modalidadCobro}
+                        </span>
+                    )}
                 </div>
+
+                {/* Fila 3b: info de cobro — fechas y monto final */}
+                {(servicio.fechaCompletado || servicio.fechaFacturacion || servicio.fechaCobro || servicio.montoFinal) && (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {servicio.montoFinal && Number(servicio.montoFinal) !== total && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
+                                Final: ${Math.round(Number(servicio.montoFinal)).toLocaleString('es-AR')}
+                            </span>
+                        )}
+                        {servicio.fechaCompletado && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                                Hecho {servicio.fechaCompletado.slice(0, 10)}
+                            </span>
+                        )}
+                        {servicio.fechaFacturacion && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
+                                Fact. {servicio.fechaFacturacion.slice(0, 10)}
+                            </span>
+                        )}
+                        {servicio.fechaCobro && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
+                                Cobrado {servicio.fechaCobro.slice(0, 10)}
+                            </span>
+                        )}
+                        {servicio.datosBancariosEnviados && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+                                Datos enviados
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 {/* Fila 4: chips serie + ubicación */}
                 {(seriales.length > 0 || ubicInfo) && (
@@ -169,46 +224,95 @@ export default function ServicioCard({
                 ))}
             </div>
 
-            {/* Barra de acciones */}
-            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06]">
-                {/* Izquierda: ver · pdf · editar */}
+            {/* Barra de acciones — compacta con menu overflow */}
+            <div className="flex items-center gap-1.5 px-3 py-2 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06]">
+                {/* Izquierda: solo acciones rapidas */}
                 <IconBtn onClick={() => onDetalle(servicio)} title="Ver detalle"
                     cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
-                <IconBtn onClick={() => onGenerarPDF(servicio)} title="Generar PDF"
+                <IconBtn onClick={() => onGenerarPDF(servicio)} title="PDF"
                     cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
-                {esPpto && onEditar && (
-                    <IconBtn onClick={() => onEditar(servicio)} title="Editar presupuesto"
-                        cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✏️</IconBtn>
-                )}
-                {onDuplicar && (
-                    <IconBtn onClick={() => onDuplicar(servicio)} title="Duplicar como nuevo presupuesto"
-                        cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">⧉</IconBtn>
-                )}
+
+                {/* Menu overflow para acciones secundarias */}
+                <div className="relative">
+                    <IconBtn onClick={() => setMenuAbierto(v => !v)} title="Mas acciones"
+                        cls={`${menuAbierto ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                        ⋯
+                    </IconBtn>
+                    {menuAbierto && (
+                        <>
+                            <div className="fixed inset-0 z-[100]" onClick={() => setMenuAbierto(false)} />
+                            <div className="absolute left-0 bottom-full mb-1 z-[101] w-48 rounded-xl shadow-2xl border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] overflow-hidden">
+                                <button onClick={() => { onGenerarPDF(servicio, { sinPrecios: true }); setMenuAbierto(false); }}
+                                    className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                    📋 PDF sin precios
+                                </button>
+                                {esPpto && onEditar && (
+                                    <button onClick={() => { onEditar(servicio); setMenuAbierto(false); }}
+                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        ✏️ Editar
+                                    </button>
+                                )}
+                                {onDuplicar && (
+                                    <button onClick={() => { onDuplicar(servicio); setMenuAbierto(false); }}
+                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        ⧉ Duplicar
+                                    </button>
+                                )}
+                                {!esArch && (
+                                    <button onClick={() => { onArchivar(servicio.id); setMenuAbierto(false); }}
+                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        🗄️ Archivar
+                                    </button>
+                                )}
+                                {esPpto && (
+                                    <button onClick={() => { onRechazar(servicio.id); setMenuAbierto(false); }}
+                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        ✗ Rechazar
+                                    </button>
+                                )}
+                                {onEliminar && (
+                                    <button onClick={() => { onEliminar(servicio.id); setMenuAbierto(false); }}
+                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#FEE2E2] dark:hover:bg-[#3B1111] transition-colors">
+                                        🗑️ Eliminar
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
 
                 <div className="flex-1" />
 
-                {/* Derecha: eliminar (admin) · archivar · rechazar · ejecutar · cobrar */}
-                {onEliminar && (
-                    <IconBtn onClick={() => onEliminar(servicio.id)} title="Eliminar definitivamente"
-                        cls="bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]">🗑️</IconBtn>
-                )}
-                {!esArch && (
-                    <IconBtn onClick={() => onArchivar(servicio.id)} title="Archivar"
-                        cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
-                )}
+                {/* Derecha: accion principal del estado */}
                 {esPpto && (
                     <>
-                        <IconBtn onClick={() => onRechazar(servicio.id)} title="Rechazar"
-                            cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
-                        <button
-                            onClick={() => onEjecutar(servicio)}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]"
-                        >🔧 Ejecutar</button>
-                        <button
-                            onClick={() => onEjecutar(servicio)}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]"
-                        >✓ Cobrar</button>
+                        <button onClick={() => onEjecutar(servicio)}
+                            className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                            Ejecutar
+                        </button>
+                        <button onClick={() => onCobrar(servicio.id)}
+                            className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                            Cobrar
+                        </button>
                     </>
+                )}
+                {esComp && (
+                    <button onClick={() => onAbrirCobro ? onAbrirCobro(servicio) : onCobrar(servicio.id, 'COBRADO')}
+                        className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                        Definir cobro
+                    </button>
+                )}
+                {esPendFact && (
+                    <button onClick={() => onCobrar(servicio.id, 'FACTURADO')}
+                        className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#6366F1]">
+                        Factura enviada
+                    </button>
+                )}
+                {esFact && (
+                    <button onClick={() => onCobrar(servicio.id, 'COBRADO')}
+                        className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#16A34A]">
+                        Cobrado
+                    </button>
                 )}
             </div>
         </div>

@@ -34,7 +34,8 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     const condFiscal = cliente?.condicionFiscal || cliente?.condicionIva || null;
     const datosCliente = [
         cliente?.telefono   ? `Tel: ${cliente.telefono}`            : null,
-        sede?.direccion     ? `Dir: ${sede.direccion}`              : (sede?.nombreSede ? `Sede: ${sede.nombreSede}` : null),
+        sede?.nombreSede    ? `Sede: ${sede.nombreSede}`             : null,
+        sede?.direccion     ? `Dir: ${sede.direccion}`              : null,
         cliente?.cuilDni    ? `CUIT/DNI: ${cliente.cuilDni}`        : null,
         condFiscal          ? `Cond. fiscal: ${condFiscal}`         : null,
         cliente?.email      ? `Email: ${cliente.email}`             : null,
@@ -433,6 +434,7 @@ export function dibujarTablaDetalle(doc, {
     titulo  = 'DETALLE DE TRABAJOS Y REPUESTOS',
     total   = null,
     labelTotal = 'TOTAL ESTIMADO DEL SERVICIO',
+    sinPrecios = false,
 }) {
     if (!rows || rows.length === 0) return y;
 
@@ -442,18 +444,15 @@ export function dibujarTablaDetalle(doc, {
     doc.text(titulo, leftX, y);
     y += 5;
 
-    const tableData = rows.map(r => [
-        r.concepto,
-        String(r.cant),
-        r.unitario ? `$ ${r.unitario}` : '—',
-        `$ ${r.importe}`,
-    ]);
+    const tableData = sinPrecios
+        ? rows.map(r => [r.concepto, String(r.cant)])
+        : rows.map(r => [r.concepto, String(r.cant), r.unitario ? `$ ${r.unitario}` : '—', `$ ${r.importe}`]);
 
     const rightMargin = doc.internal.pageSize.getWidth() - leftX - tableW;
 
     autoTable(doc, {
         startY: y,
-        head: [['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']],
+        head: [sinPrecios ? ['CONCEPTO', 'CANT'] : ['CONCEPTO', 'CANT', 'UNITARIO', 'IMPORTE']],
         body: tableData,
         theme: 'grid',
         headStyles: {
@@ -470,7 +469,10 @@ export function dibujarTablaDetalle(doc, {
             lineColor: C.grayBorder,
             lineWidth: 0.15,
         },
-        columnStyles: {
+        columnStyles: sinPrecios ? {
+            0: { cellWidth: 'auto' },
+            1: { halign: 'center', cellWidth: 13 },
+        } : {
             0: { cellWidth: 'auto' },
             1: { halign: 'center', cellWidth: 13 },
             2: { halign: 'right',  cellWidth: 28 },
@@ -488,7 +490,7 @@ export function dibujarTablaDetalle(doc, {
     y = doc.lastAutoTable.finalY + 3;
 
     // Fila total
-    if (total !== null) {
+    if (total !== null && !sinPrecios) {
         const totalW = tableW;
         doc.setFillColor(...C.redLight);
         doc.setDrawColor(...C.red);
@@ -779,7 +781,7 @@ function dibujarQRPlaceholder(doc, x, y) {
 }
 
 // ── RESUMEN EJECUTIVO (multi-equipo, página 1) ────────────────────────────────
-export function dibujarResumenEjecutivo(doc, { y, cliente, fecha, cantEquipos, cantServicios = null, total, estado, pageW }) {
+export function dibujarResumenEjecutivo(doc, { y, cliente, fecha, cantEquipos, cantServicios = null, total, estado, pageW, sinPrecios = false }) {
     const cardH = 42;
 
     doc.setFillColor(...C.navy);
@@ -800,7 +802,7 @@ export function dibujarResumenEjecutivo(doc, { y, cliente, fecha, cantEquipos, c
 
     // Stats
     const stats = [
-        { l: 'Total facturado', v: `$ ${total}` },
+        ...(sinPrecios ? [] : [{ l: 'Total facturado', v: `$ ${total}` }]),
         { l: 'Equipos',          v: String(cantEquipos)  },
         cantServicios ? { l: 'Servicios', v: String(cantServicios) } : { l: 'Fecha',  v: fecha },
         { l: 'Estado', v: estado === 'COMPLETADO' ? 'ÓPTIMO' : (estado || '—') },

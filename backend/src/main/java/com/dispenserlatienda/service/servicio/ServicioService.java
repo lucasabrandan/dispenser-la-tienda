@@ -16,6 +16,7 @@ import com.dispenserlatienda.domain.servicio.*;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.servicio.*;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
+import com.dispenserlatienda.repository.common.ConfiguracionGlobalRepository;
 import com.dispenserlatienda.repository.equipo.EquipoRepository;
 import com.dispenserlatienda.repository.gasto.GastoRepository;
 import com.dispenserlatienda.repository.sede.SedeRepository;
@@ -47,15 +48,18 @@ public class ServicioService {
     private final UsuarioRepository usuarioRepository;
     private final EquipoRepository equipoRepository;
     private final GastoRepository gastoRepository;
+    private final ConfiguracionGlobalRepository configRepo;
     private final ObjectMapper objectMapper;
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
                            UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
-                           GastoRepository gastoRepository, ObjectMapper objectMapper) {
+                           GastoRepository gastoRepository, ConfiguracionGlobalRepository configRepo,
+                           ObjectMapper objectMapper) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
         this.equipoRepository = equipoRepository;
         this.gastoRepository = gastoRepository;
+        this.configRepo = configRepo;
         this.objectMapper = objectMapper;
     }
 
@@ -94,8 +98,13 @@ public class ServicioService {
         LocalDate inicioMes = hoy.withDayOfMonth(1);
         LocalDate finMes    = inicioMes.plusMonths(1).minusDays(1);
 
-        List<Servicio> realizados = servicioRepository.findAll(
+        // Cobrados + Realizados (legacy) = servicios finalizados
+        List<Servicio> cobrados = servicioRepository.findAll(
+                buildSpec(tipoStr, "COBRADO", null, null, null, null, null));
+        List<Servicio> realizadosLegacy = servicioRepository.findAll(
                 buildSpec(tipoStr, "REALIZADO", null, null, null, null, null));
+        List<Servicio> realizados = new ArrayList<>(cobrados);
+        realizados.addAll(realizadosLegacy);
         List<Servicio> pendientes = servicioRepository.findAll(
                 buildSpec(tipoStr, "PRESUPUESTO", null, null, null, null, null));
 
@@ -168,8 +177,12 @@ public class ServicioService {
         final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
         YearMonth mesActual = YearMonth.now();
 
-        List<Servicio> realizados = servicioRepository.findAll(
+        List<Servicio> cobrados = servicioRepository.findAll(
+                buildSpec(null, "COBRADO", null, null, null, tecnicoId, null));
+        List<Servicio> realizadosLegacy = servicioRepository.findAll(
                 buildSpec(null, "REALIZADO", null, null, null, tecnicoId, null));
+        List<Servicio> realizados = new ArrayList<>(cobrados);
+        realizados.addAll(realizadosLegacy);
 
         // [0]=facturado [1]=repuestos
         Map<YearMonth, BigDecimal[]> porMes  = new TreeMap<>();
@@ -245,8 +258,12 @@ public class ServicioService {
         String desde = mes.atDay(1).toString();
         String hasta  = mes.atEndOfMonth().toString();
 
-        List<Servicio> realizados = servicioRepository.findAll(
+        List<Servicio> cobrados = servicioRepository.findAll(
+                buildSpec(null, "COBRADO", null, desde, hasta, tecnicoId, null));
+        List<Servicio> realizadosLegacy = servicioRepository.findAll(
                 buildSpec(null, "REALIZADO", null, desde, hasta, tecnicoId, null));
+        List<Servicio> realizados = new ArrayList<>(cobrados);
+        realizados.addAll(realizadosLegacy);
 
         // Agrupar por usuario
         Map<Long, List<Servicio>> porTecnico = new LinkedHashMap<>();
@@ -372,6 +389,24 @@ public class ServicioService {
         if (dto.getOrdenId() != null) {
             servicio.setOrdenId(dto.getOrdenId());
         }
+        // Campos de cobro
+        if (dto.getModalidadCobro() != null && !dto.getModalidadCobro().isEmpty()) {
+            try {
+                servicio.setModalidadCobro(ModalidadCobro.valueOf(dto.getModalidadCobro()));
+            } catch (IllegalArgumentException ignored) {}
+        }
+        if (dto.getMontoFinal() != null) servicio.setMontoFinal(dto.getMontoFinal());
+        if (dto.getEsVisita() != null) servicio.setEsVisita(dto.getEsVisita());
+        if (dto.getAbonoVisita() != null) servicio.setAbonoVisita(dto.getAbonoVisita());
+        if (dto.getPresupuestoVisitaId() != null) servicio.setPresupuestoVisitaId(dto.getPresupuestoVisitaId());
+        // Auto-setear fechas según estado
+        EstadoServicio est = servicio.getEstado();
+        if (est == EstadoServicio.COMPLETADO && servicio.getFechaCompletado() == null) {
+            servicio.setFechaCompletado(LocalDateTime.now());
+        }
+        if (est == EstadoServicio.COBRADO && servicio.getFechaCobro() == null) {
+            servicio.setFechaCobro(LocalDateTime.now());
+        }
 
         ServicioTipo tipoDetectado = ServicioTipo.VENTA;
 
@@ -436,13 +471,40 @@ public class ServicioService {
 
     @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado) {
+        return cambiarEstado(id, nuevoEstado, null, null);
+    }
+
+    @Transactional
+    public ServicioDTO cambiarEstado(Long id, String nuevoEstado, String modalidadCobro, BigDecimal montoFinal) {
         Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
 
-        // Convertir String a EstadoServicio enum
+        EstadoServicio estado;
         try {
-            s.setEstado(EstadoServicio.valueOf(nuevoEstado));
+            estado = EstadoServicio.valueOf(nuevoEstado);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Estado inválido: " + nuevoEstado + ". Valores permitidos: " + java.util.Arrays.toString(EstadoServicio.values()));
+            throw new IllegalArgumentException("Estado inválido: " + nuevoEstado);
+        }
+        s.setEstado(estado);
+
+        // Modalidad de cobro
+        if (modalidadCobro != null && !modalidadCobro.isEmpty()) {
+            try { s.setModalidadCobro(ModalidadCobro.valueOf(modalidadCobro)); } catch (IllegalArgumentException ignored) {}
+        }
+        if (montoFinal != null) s.setMontoFinal(montoFinal);
+
+        // Auto-setear fechas según transición
+        if (estado == EstadoServicio.COMPLETADO && s.getFechaCompletado() == null) {
+            s.setFechaCompletado(LocalDateTime.now());
+        }
+        if (estado == EstadoServicio.PENDIENTE_FACTURACION && s.getFechaCompletado() == null) {
+            s.setFechaCompletado(LocalDateTime.now());
+        }
+        if (estado == EstadoServicio.FACTURADO && s.getFechaFacturacion() == null) {
+            s.setFechaFacturacion(LocalDateTime.now());
+            s.setDatosBancariosEnviados(true);
+        }
+        if (estado == EstadoServicio.COBRADO && s.getFechaCobro() == null) {
+            s.setFechaCobro(LocalDateTime.now());
         }
 
         return mapToDTO(servicioRepository.save(s));
@@ -507,7 +569,16 @@ public class ServicioService {
                 usuario != null ? usuario.getNombre() : null,
                 s.getModificadoPorNombre(),
                 fechaMod,
-                s.getPresupuestoOrigenId()
+                s.getPresupuestoOrigenId(),
+                s.getModalidadCobro() != null ? s.getModalidadCobro().name() : null,
+                s.getMontoFinal(),
+                s.getFechaCompletado() != null ? s.getFechaCompletado().toString() : null,
+                s.getFechaFacturacion() != null ? s.getFechaFacturacion().toString() : null,
+                s.getFechaCobro() != null ? s.getFechaCobro().toString() : null,
+                s.getDatosBancariosEnviados(),
+                s.getEsVisita(),
+                s.getAbonoVisita(),
+                s.getPresupuestoVisitaId()
         );
     }
 

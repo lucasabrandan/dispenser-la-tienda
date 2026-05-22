@@ -22,6 +22,11 @@ public class ServicioCreateDTO {
     private java.math.BigDecimal descuentoPorcentaje;
     private Long presupuestoOrigenId;
     private Long ordenId;
+    private String modalidadCobro;
+    private java.math.BigDecimal montoFinal;
+    private Boolean esVisita;
+    private java.math.BigDecimal abonoVisita;
+    private Long presupuestoVisitaId;
 
     public ServicioCreateDTO() {}
 
@@ -52,4 +57,14 @@ public class ServicioCreateDTO {
     public void setPresupuestoOrigenId(Long presupuestoOrigenId) { this.presupuestoOrigenId = presupuestoOrigenId; }
     public Long getOrdenId() { return ordenId; }
     public void setOrdenId(Long ordenId) { this.ordenId = ordenId; }
+    public String getModalidadCobro() { return modalidadCobro; }
+    public void setModalidadCobro(String modalidadCobro) { this.modalidadCobro = modalidadCobro; }
+    public java.math.BigDecimal getMontoFinal() { return montoFinal; }
+    public void setMontoFinal(java.math.BigDecimal montoFinal) { this.montoFinal = montoFinal; }
+    public Boolean getEsVisita() { return esVisita; }
+    public void setEsVisita(Boolean esVisita) { this.esVisita = esVisita; }
+    public java.math.BigDecimal getAbonoVisita() { return abonoVisita; }
+    public void setAbonoVisita(java.math.BigDecimal abonoVisita) { this.abonoVisita = abonoVisita; }
+    public Long getPresupuestoVisitaId() { return presupuestoVisitaId; }
+    public void setPresupuestoVisitaId(Long presupuestoVisitaId) { this.presupuestoVisitaId = presupuestoVisitaId; }
 }

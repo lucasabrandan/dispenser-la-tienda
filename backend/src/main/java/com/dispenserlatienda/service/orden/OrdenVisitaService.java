@@ -159,8 +159,9 @@ public class OrdenVisitaService {
         if (o.getPresupuestoId() != null) {
             // Caso 1: orden vinculada a presupuesto → marcar REALIZADO y asignar técnico para rendimientos
             servicioRepository.findById(o.getPresupuestoId()).ifPresent(s -> {
-                s.setEstado(EstadoServicio.REALIZADO);
-                // Actualizar usuario al técnico que ejecutó la orden (impacta rendimientos correctamente)
+                // Técnico terminó — ahora falta definir cobro
+                s.setEstado(EstadoServicio.COMPLETADO);
+                s.setFechaCompletado(java.time.LocalDateTime.now());
                 if (o.getTecnico() != null) {
                     s.setUsuario(o.getTecnico());
                 }
@@ -185,7 +186,8 @@ public class OrdenVisitaService {
                 o.getFechaProgramada() != null ? o.getFechaProgramada() : LocalDate.now(),
                 ServicioTipo.TECNICA
             );
-            servicio.setEstado(EstadoServicio.REALIZADO);
+            servicio.setEstado(EstadoServicio.COMPLETADO);
+            servicio.setFechaCompletado(java.time.LocalDateTime.now());
             servicio.setClienteNombre(o.getClienteNombre() != null ? o.getClienteNombre() : "Particular");
             servicio.setSedeNombre(sedeMostrador.getNombreSede());
             servicio.setOrdenId(o.getId());

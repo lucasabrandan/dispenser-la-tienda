@@ -25,5 +25,15 @@ public record ServicioDTO(
         String usuarioNombre,
         String modificadoPorNombre,
         String fechaModificacion,
-        Long presupuestoOrigenId
+        Long presupuestoOrigenId,
+        // Campos de cobro
+        String modalidadCobro,
+        java.math.BigDecimal montoFinal,
+        String fechaCompletado,
+        String fechaFacturacion,
+        String fechaCobro,
+        Boolean datosBancariosEnviados,
+        Boolean esVisita,
+        java.math.BigDecimal abonoVisita,
+        Long presupuestoVisitaId
 ) {}

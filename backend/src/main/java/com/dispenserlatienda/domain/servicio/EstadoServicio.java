@@ -1,27 +1,20 @@
 package com.dispenserlatienda.domain.servicio;
 
-// Enum que define todos los estados posibles de un Servicio
-// Reemplaza al String "estado" que estaba en la entidad Servicio
-// Uso: servicio.setEstado(EstadoServicio.PRESUPUESTO);
 public enum EstadoServicio {
-    // Cliente aún no aprobó el presupuesto
     PRESUPUESTO,
-
-    // Cliente aprobó el presupuesto
     APROBADO,
-
-    // El técnico está trabajando en el servicio
     EN_PROGRESO,
-
-    // Servicio completado y pagado
+    // Técnico terminó el trabajo, falta definir cobro
+    COMPLETADO,
+    // Admin debe emitir factura (+30% impuestos)
+    PENDIENTE_FACTURACION,
+    // Factura emitida, esperando transferencia del cliente
+    FACTURADO,
+    // Pagado (efectivo o transferencia) — estado final
+    COBRADO,
+    // Legacy: mantener compatibilidad con datos existentes
     REALIZADO,
-
-    // Cliente rechazó el presupuesto
     RECHAZADO,
-
-    // Servicio cancelado por ambas partes
     CANCELADO,
-
-    // Archivado manualmente — no se elimina, queda auditable
     ARCHIVADO
 }

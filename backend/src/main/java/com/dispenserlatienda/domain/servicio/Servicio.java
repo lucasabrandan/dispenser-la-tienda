@@ -32,11 +32,37 @@ public class Servicio {
     @Column(nullable = false, length = 20)
     private ServicioTipo servicioTipo;
 
-    // CAMBIO: De String a EstadoServicio enum
-    // Ahora solo pueden ser: PRESUPUESTO, APROBADO, EN_PROGRESO, REALIZADO, RECHAZADO, CANCELADO
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 25)
     private EstadoServicio estado = EstadoServicio.PRESUPUESTO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "modalidad_cobro", length = 25)
+    private ModalidadCobro modalidadCobro;
+
+    @Column(name = "monto_final")
+    private BigDecimal montoFinal;
+
+    @Column(name = "fecha_completado")
+    private LocalDateTime fechaCompletado;
+
+    @Column(name = "fecha_facturacion")
+    private LocalDateTime fechaFacturacion;
+
+    @Column(name = "fecha_cobro")
+    private LocalDateTime fechaCobro;
+
+    @Column(name = "datos_bancarios_enviados")
+    private Boolean datosBancariosEnviados;
+
+    @Column(name = "es_visita")
+    private Boolean esVisita;
+
+    @Column(name = "abono_visita")
+    private BigDecimal abonoVisita;
+
+    @Column(name = "presupuesto_visita_id")
+    private Long presupuestoVisitaId;
 
     @Column(name = "cliente_nombre")
     private String clienteNombre;
@@ -149,4 +175,31 @@ public class Servicio {
 
     public Long getOrdenId() { return ordenId; }
     public void setOrdenId(Long ordenId) { this.ordenId = ordenId; }
+
+    public ModalidadCobro getModalidadCobro() { return modalidadCobro; }
+    public void setModalidadCobro(ModalidadCobro modalidadCobro) { this.modalidadCobro = modalidadCobro; }
+
+    public BigDecimal getMontoFinal() { return montoFinal; }
+    public void setMontoFinal(BigDecimal montoFinal) { this.montoFinal = montoFinal; }
+
+    public LocalDateTime getFechaCompletado() { return fechaCompletado; }
+    public void setFechaCompletado(LocalDateTime fechaCompletado) { this.fechaCompletado = fechaCompletado; }
+
+    public LocalDateTime getFechaFacturacion() { return fechaFacturacion; }
+    public void setFechaFacturacion(LocalDateTime fechaFacturacion) { this.fechaFacturacion = fechaFacturacion; }
+
+    public LocalDateTime getFechaCobro() { return fechaCobro; }
+    public void setFechaCobro(LocalDateTime fechaCobro) { this.fechaCobro = fechaCobro; }
+
+    public Boolean getDatosBancariosEnviados() { return datosBancariosEnviados; }
+    public void setDatosBancariosEnviados(Boolean datosBancariosEnviados) { this.datosBancariosEnviados = datosBancariosEnviados; }
+
+    public Boolean getEsVisita() { return esVisita; }
+    public void setEsVisita(Boolean esVisita) { this.esVisita = esVisita; }
+
+    public BigDecimal getAbonoVisita() { return abonoVisita; }
+    public void setAbonoVisita(BigDecimal abonoVisita) { this.abonoVisita = abonoVisita; }
+
+    public Long getPresupuestoVisitaId() { return presupuestoVisitaId; }
+    public void setPresupuestoVisitaId(Long presupuestoVisitaId) { this.presupuestoVisitaId = presupuestoVisitaId; }
 }

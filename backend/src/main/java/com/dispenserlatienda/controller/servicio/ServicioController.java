@@ -76,13 +76,18 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.actualizarServicio(id, dto));
     }
 
-    // PATCH: Cambiar estado
+    // PATCH: Cambiar estado (acepta modalidadCobro y montoFinal opcionales)
     @PatchMapping("/{id}/estado")
     public ResponseEntity<ServicioDTO> cambiarEstado(
             @PathVariable Long id,
-            @RequestBody java.util.Map<String, String> payload) {
-        String nuevoEstado = payload.get("estado");
-        return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado));
+            @RequestBody java.util.Map<String, Object> payload) {
+        String nuevoEstado = (String) payload.get("estado");
+        String modalidadCobro = (String) payload.get("modalidadCobro");
+        java.math.BigDecimal montoFinal = null;
+        if (payload.get("montoFinal") != null) {
+            montoFinal = new java.math.BigDecimal(payload.get("montoFinal").toString());
+        }
+        return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal));
     }
 
     // PATCH: Guardar número de documento generado al crear el PDF

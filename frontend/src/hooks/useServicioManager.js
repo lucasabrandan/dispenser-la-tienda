@@ -141,13 +141,20 @@ export function useServicioManager() {
     useEffect(() => { cargarStats(); },   [cargarStats]);
 
     // ── Acciones ─────────────────────────────────────────────────────────────────
-    const confirmarServicio = async (id) => {
-        const loading = toast.loading('Confirmando servicio...');
+    const confirmarServicio = async (id, estadoDestino = 'COBRADO', { modalidadCobro, montoFinal } = {}) => {
+        const labels = {
+            COBRADO: 'Cobrado', COMPLETADO: 'Completado',
+            PENDIENTE_FACTURACION: 'Pendiente facturacion', FACTURADO: 'Facturado',
+        };
+        const loading = toast.loading('Procesando...');
         try {
-            await api.patch(`/servicios/${id}/estado`, { estado: 'REALIZADO' });
-            toast.success('✅ Servicio confirmado', { id: loading });
+            const payload = { estado: estadoDestino };
+            if (modalidadCobro) payload.modalidadCobro = modalidadCobro;
+            if (montoFinal != null) payload.montoFinal = montoFinal;
+            await api.patch(`/servicios/${id}/estado`, payload);
+            toast.success(labels[estadoDestino] || 'Actualizado', { id: loading });
             cargarServicios(); cargarStats();
-        } catch { toast.error('Error al confirmar', { id: loading }); }
+        } catch { toast.error('Error al actualizar', { id: loading }); }
     };
 
     const rechazarServicio = async (id) => {
@@ -196,24 +203,25 @@ export function useServicioManager() {
         return est === 'PRESUPUESTO' || est === 'ARCHIVADO' || est === 'RECHAZADO';
     };
 
-    const generarPDF = (servicio) => {
+    const generarPDF = (servicio, { sinPrecios = false } = {}) => {
         if (sinFirmaDirecto(servicio)) {
-            generarPDFDirecto(servicio, { firmaTecnico: null, firmaCliente: null, incluirFirmas: false });
+            generarPDFDirecto(servicio, { firmaTecnico: null, firmaCliente: null, incluirFirmas: false, sinPrecios });
             return;
         }
-        setPendingPdfServicio(servicio);
+        setPendingPdfServicio({ ...servicio, _sinPrecios: sinPrecios });
         setModalFirmas(true);
     };
 
     const confirmarFirmasYGenerarPDF = async ({ firmaTecnico, firmaCliente, aclaracionCliente = '', incluirFirmas = true }) => {
         setModalFirmas(false);
         const servicio = pendingPdfServicio;
+        const sinPrecios = servicio?._sinPrecios || false;
         setPendingPdfServicio(null);
         if (!servicio) return;
-        await generarPDFDirecto(servicio, { firmaTecnico, firmaCliente, aclaracionCliente, incluirFirmas });
+        await generarPDFDirecto(servicio, { firmaTecnico, firmaCliente, aclaracionCliente, incluirFirmas, sinPrecios });
     };
 
-    const generarPDFDirecto = async (servicio, { firmaTecnico, firmaCliente, aclaracionCliente = '', incluirFirmas = true }) => {
+    const generarPDFDirecto = async (servicio, { firmaTecnico, firmaCliente, aclaracionCliente = '', incluirFirmas = true, sinPrecios = false }) => {
         // Forzar sin firmas si es presupuesto (por seguridad, aunque el caller ya lo haga)
         const esPpto = esPresupuesto(servicio);
         if (esPpto) incluirFirmas = false;
@@ -259,6 +267,7 @@ export function useServicioManager() {
                 firmaCliente:        firmaCliente  || null,
                 aclaracionCliente:   aclaracionCliente || '',
                 incluirFirmas:       incluirFirmas,
+                sinPrecios,
             });
         } catch (e) {
             console.error('Error generando PDF:', e);

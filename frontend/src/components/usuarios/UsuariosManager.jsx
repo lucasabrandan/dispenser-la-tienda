@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword, eliminarUsuario } from '../../services/api';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const ROL_LABEL = { ADMIN: 'Administrador', TECNICO: 'Técnico' };
@@ -18,17 +19,36 @@ export default function UsuariosManager() {
     const [filtroRol, setFiltroRol]   = useState('TODOS');
     const [confirmEliminar, setConfirmEliminar] = useState(null); // null | usuario
 
-    // Configuración de empresa (solo en localStorage, solo ADMIN)
-    const CONDICIONES_DEFAULT = 'Garantía 90 días mano de obra  ·  Repuestos según fabricante  ·  El servicio se coordina una vez aprobado';
+    // Configuracion de empresa (solo en localStorage, solo ADMIN)
+    const CONDICIONES_DEFAULT = 'Garantia 90 dias mano de obra  ·  Repuestos segun fabricante  ·  El servicio se coordina una vez aprobado';
     const [condicionesPDF, setCondicionesPDF] = useState(() => localStorage.getItem('empresa_condiciones_pdf') || CONDICIONES_DEFAULT);
     const [condGuardado, setCondGuardado] = useState(false);
 
+    // Configuracion global de pricing
+    const [configGlobal, setConfigGlobal] = useState(null);
+    const [configGuardado, setConfigGuardado] = useState(false);
+
+    useEffect(() => {
+        if (usuarioActual?.rol === 'ADMIN') {
+            api.get('/configuracion').then(r => setConfigGlobal(r.data)).catch(() => {});
+        }
+    }, [usuarioActual?.rol]);
 
     const guardarCondiciones = () => {
         localStorage.setItem('empresa_condiciones_pdf', condicionesPDF.trim() || CONDICIONES_DEFAULT);
         setCondGuardado(true);
         toast.success('Condiciones guardadas');
         setTimeout(() => setCondGuardado(false), 2000);
+    };
+
+    const guardarConfig = async () => {
+        try {
+            const res = await api.put('/configuracion', configGlobal);
+            setConfigGlobal(res.data);
+            setConfigGuardado(true);
+            toast.success('Configuracion guardada');
+            setTimeout(() => setConfigGuardado(false), 2000);
+        } catch { toast.error('Error al guardar'); }
     };
 
     // Modal crear/editar

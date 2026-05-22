@@ -125,8 +125,14 @@ export default function VentaList({
                                 <button
                                     onClick={() => onPDF(v)}
                                     className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
-                                    title="Generar PDF">
+                                    title="PDF con precios">
                                     📄
+                                </button>
+                                <button
+                                    onClick={() => onPDF(v, { sinPrecios: true })}
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                    title="PDF sin precios">
+                                    📋
                                 </button>
 
                                 {/* Duplicar */}

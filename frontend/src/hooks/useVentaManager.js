@@ -147,7 +147,7 @@ export function useVentaManager() {
         } catch { toast.error('Error al eliminar'); }
     };
 
-    const generarPDF = async (venta) => {
+    const generarPDF = async (venta, { sinPrecios = false } = {}) => {
         const tecnico = localStorage.getItem('tecnico_nombre') || 'Mostrador';
 
         // Enriquecer repuestosUsados con fotoUrl/descripcion actuales del catálogo
@@ -195,6 +195,7 @@ export function useVentaManager() {
             fechaServicio:           venta.fecha,
             descuentoPorcentaje:     venta.descuentoPorcentaje || 0,
             leyenda:                 venta.observaciones || '',
+            sinPrecios,
         });
     };
 
