@@ -618,7 +618,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             costoExtra:       parseFloat(it.costoExtra) || 0,
             metodoPago:       'EFECTIVO',
             trabajoRealizado: it.trabajo || it.resumenTexto || '',
-            trabajoTipo:      tieneEquipo ? (esFiltro ? 'CAMBIO_FILTRO' : 'REPARACION') : 'VENTA',
+            trabajoTipo:      it.esVisita ? 'VISITA' : (tieneEquipo ? (esFiltro ? 'CAMBIO_FILTRO' : 'REPARACION') : 'VENTA'),
             repuestosUsados:  it.repuestosUsados || [],
             garantiaHasta:    confirmarTrabajo && tieneEquipo
               ? new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3))).toISOString().split('T')[0]

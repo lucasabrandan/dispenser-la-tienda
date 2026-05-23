@@ -238,6 +238,7 @@ export function useServicioManager() {
                 equipoPiso:      it.equipoPiso      || null,
                 equipoSector:    it.equipoSector    || null,
                 trabajo:         it.trabajo         || it.trabajoRealizado || '',
+                esVisita:        it.esVisita || it.trabajoTipo === 'VISITA' || false,
             }));
             toast.dismiss(loading);
             // Para ventas presupuesto → tipo explícito para usar condiciones comerciales
