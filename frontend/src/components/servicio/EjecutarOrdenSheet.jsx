@@ -172,11 +172,12 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
             toast.success('Trabajo confirmado', { id: loading });
 
             // Resumen de ganancias para el tecnico
-            // En efectivo el tecnico se lleva la mitad del total (sin impuestos)
-            // En factura se le descuentan impuestos primero
+            // Visita: el tecnico se queda con TODO (va 1 solo)
+            // Reparacion: se divide 50/50 (van 2)
             const moSinRepuestos = pricing.esVisita ? pricing.visitaPrecio : pricing.precioConExtra;
-            const netoEfectivo = Math.round(moSinRepuestos / 2);
-            const netoFactura = Math.round((moSinRepuestos * (1 + pricing.pctIVA / 100) * (1 - pricing.pctImp / 100)) / 2);
+            const divisor = pricing.esVisita ? 1 : 2;
+            const netoEfectivo = Math.round(moSinRepuestos / divisor);
+            const netoFactura = Math.round((moSinRepuestos * (1 + pricing.pctIVA / 100) * (1 - pricing.pctImp / 100)) / divisor);
             setResumenGanancias({
                 modalidadCobro,
                 montoFinal,

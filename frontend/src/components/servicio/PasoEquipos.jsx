@@ -117,6 +117,8 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const [gananciaDeseada, setGananciaDeseada] = useState('');
 
     // Desglose calculado desde el precio al cliente
+    const esVisitaActual = tipoMO === 'VISITA';
+    const divisor = esVisitaActual ? 1 : 2; // visita = 1 tecnico, reparacion = 2
     const desglose = useMemo(() => {
         const precioCliente = parseFloat(itemActual.costoExtra) || 0;
         const conIVA = Math.round(precioCliente * (1 + pctIVA / 100));
@@ -124,18 +126,18 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
         return {
             precioCliente,
             efectivoTotal: precioCliente,
-            efectivoCada: Math.round(precioCliente / 2),
+            efectivoCada: Math.round(precioCliente / divisor),
             facturaCliente: conIVA,
             facturaNeto: netoFactura,
-            facturaCada: Math.round(netoFactura / 2),
+            facturaCada: Math.round(netoFactura / divisor),
         };
-    }, [itemActual.costoExtra, pctIVA, pctImp]);
+    }, [itemActual.costoExtra, pctIVA, pctImp, divisor]);
 
     // Calculo reverso: cuanto cobrar para ganar X por tecnico
     const reverso = useMemo(() => {
         const deseada = parseFloat(gananciaDeseada) || 0;
         if (deseada <= 0) return null;
-        const netoTotal = deseada * 2; // 2 tecnicos
+        const netoTotal = deseada * divisor; // visita=1 tecnico, reparacion=2
         const precioCliente = Math.round(netoTotal / factor);
         const conIVA = Math.round(precioCliente * (1 + pctIVA / 100));
         return { precioCliente, conIVA, netoTotal };
@@ -148,10 +150,15 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const [formVisible,    setFormVisible]      = useState(true);
 
     // Si editarItem carga datos en itemActual, mostrar el form automáticamente
+    // Solo si tiene serial o repuestos (no por costoExtra que se pre-llena)
+    const prevSerial = useRef(itemActual.equipoSerial);
     React.useEffect(() => {
-        if (itemActual.equipoSerial || itemActual.costoExtra > 0 || itemActual.repuestosUsados?.length > 0) {
+        const tieneContenido = itemActual.equipoSerial || itemActual.repuestosUsados?.length > 0;
+        // Solo abrir si cambió el serial (edición), no por reset con costoExtra pre-llenado
+        if (tieneContenido && itemActual.equipoSerial !== prevSerial.current) {
             setFormVisible(true);
         }
+        prevSerial.current = itemActual.equipoSerial;
     }, [itemActual]);
 
     // Equipos del inventario del cliente
@@ -473,12 +480,12 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                             <div className="p-2.5 rounded-xl bg-[#16A34A]/10">
                                                 <p className="text-[9px] font-bold text-[#16A34A] uppercase">Efectivo</p>
                                                 <p className="text-[14px] font-black text-[#16A34A]">${desglose.efectivoTotal.toLocaleString('es-AR')}</p>
-                                                <p className="text-[10px] text-[#16A34A]/70">c/u ${desglose.efectivoCada.toLocaleString('es-AR')}</p>
+                                                <p className="text-[10px] text-[#16A34A]/70">{esVisitaActual ? 'te queda' : 'c/u'} ${desglose.efectivoCada.toLocaleString('es-AR')}</p>
                                             </div>
                                             <div className="p-2.5 rounded-xl bg-[#8B5CF6]/10">
                                                 <p className="text-[9px] font-bold text-[#8B5CF6] uppercase">Con factura</p>
                                                 <p className="text-[14px] font-black text-[#8B5CF6]">${desglose.facturaCliente.toLocaleString('es-AR')}</p>
-                                                <p className="text-[10px] text-[#8B5CF6]/70">neto ${desglose.facturaNeto.toLocaleString('es-AR')} · c/u ${desglose.facturaCada.toLocaleString('es-AR')}</p>
+                                                <p className="text-[10px] text-[#8B5CF6]/70">neto ${desglose.facturaNeto.toLocaleString('es-AR')} · {esVisitaActual ? 'te queda' : 'c/u'} ${desglose.facturaCada.toLocaleString('es-AR')}</p>
                                             </div>
                                         </div>
                                     </div>

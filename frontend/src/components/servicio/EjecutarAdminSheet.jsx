@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useMontos } from '../../context/MontosContext';
-import api from '../../services/api';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -10,7 +9,7 @@ function M({ valor, className = '' }) {
 
 const MODALIDADES = [
     { id: 'EFECTIVO_SIN_FACTURA', label: 'Efectivo sin factura', desc: 'Cobrado en mano, sin ARCA', color: '#16A34A', destino: 'COBRADO' },
-    { id: 'CON_FACTURA',          label: 'Con factura',          desc: 'Precio base + 21% IVA', color: '#8B5CF6', destino: 'PENDIENTE_FACTURACION' },
+    { id: 'CON_FACTURA',          label: 'Con factura',          desc: 'Facturar + enviar datos bancarios', color: '#8B5CF6', destino: 'PENDIENTE_FACTURACION' },
     { id: 'PENDIENTE',            label: 'Definir despues',      desc: 'Queda como realizado, cobro pendiente', color: '#A8A29E', destino: 'COMPLETADO' },
 ];
 
@@ -19,25 +18,14 @@ export default function EjecutarAdminSheet({ servicio, calcularTotal, onConfirma
     const totalBase = calcularTotal(servicio);
     const items = servicio.items || [];
 
-    const [config, setConfig] = useState(null);
     const [modalidad, setModalidad] = useState('');
     const [montoEditado, setMontoEditado] = useState(null); // null = auto-calculado
     const [observaciones, setObservaciones] = useState(servicio.observaciones || '');
     const [procesando, setProcesando] = useState(false);
 
-    useEffect(() => {
-        api.get('/configuracion')
-            .then(r => setConfig(r.data))
-            .catch(() => setConfig({ porcentajeIVA: 21 }));
-    }, []);
-
-    const pctIVA = Number(config?.porcentajeIVA) || 21;
-
-    // Monto auto-calculado segun modalidad
-    const montoAuto = useMemo(() => {
-        if (modalidad === 'CON_FACTURA') return Math.round(totalBase * (1 + pctIVA / 100));
-        return totalBase; // efectivo o pendiente = precio del presupuesto
-    }, [modalidad, totalBase, pctIVA]);
+    // Monto = siempre el total del presupuesto (ya tiene el pricing calculado)
+    // La modalidad solo define el estado, no cambia el monto
+    const montoAuto = totalBase;
 
     // Monto final: editado manualmente o auto
     const montoFinal = montoEditado !== null ? Number(montoEditado) : montoAuto;
@@ -134,41 +122,12 @@ export default function EjecutarAdminSheet({ servicio, calcularTotal, onConfirma
                                         className={`w-full p-3.5 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-[#EFEDEA] dark:bg-[#1C1C1C]'}`}
                                         style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}
                                     >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{o.label}</p>
-                                                <p className="text-[10px] text-[#A8A29E] mt-0.5">{o.desc}</p>
-                                            </div>
-                                            {o.id !== 'PENDIENTE' && (
-                                                <p className="text-[16px] font-black shrink-0 ml-2" style={{ color: o.color }}>
-                                                    <M valor={o.id === 'CON_FACTURA' ? Math.round(totalBase * (1 + pctIVA / 100)) : totalBase} className="" />
-                                                </p>
-                                            )}
-                                        </div>
+                                        <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{o.label}</p>
+                                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{o.desc}</p>
                                     </button>
                                 ))}
                             </div>
                         </div>
-
-                        {/* Desglose + monto final (solo si eligio modalidad) */}
-                        {modalidad && modalidad !== 'PENDIENTE' && (
-                            <div className="p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] space-y-2">
-                                <div className="flex justify-between text-[11px]">
-                                    <span className="text-[#57534E] dark:text-[#9E9A94]">Precio base (presupuesto)</span>
-                                    <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${Math.round(totalBase).toLocaleString('es-AR')}</span>
-                                </div>
-                                {modalidad === 'CON_FACTURA' && (
-                                    <div className="flex justify-between text-[11px]">
-                                        <span className="text-[#57534E] dark:text-[#9E9A94]">IVA {pctIVA}%</span>
-                                        <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">+${Math.round(totalBase * pctIVA / 100).toLocaleString('es-AR')}</span>
-                                    </div>
-                                )}
-                                <div className="flex justify-between text-[12px] pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
-                                    <span className="font-black text-[#1C1917] dark:text-[#F0EEE9]">Total cliente</span>
-                                    <span className="font-black text-[#1C1917] dark:text-[#F0EEE9]">${Math.round(montoAuto).toLocaleString('es-AR')}</span>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Monto final editable */}
                         {modalidad && (
