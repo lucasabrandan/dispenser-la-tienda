@@ -473,20 +473,40 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             </button>
                             {desgloseAbierto && (
                                 <div className="px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.05] dark:border-white/[0.05] space-y-3">
-                                    {/* Desglose desde precio al cliente */}
-                                    <div className="space-y-1.5">
-                                        <p className="text-[10px] font-black text-[#D13A28] dark:text-[#E8422F] uppercase tracking-widest">Si le cobras ${desglose.precioCliente.toLocaleString('es-AR')}</p>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="p-2.5 rounded-xl bg-[#16A34A]/10">
-                                                <p className="text-[9px] font-bold text-[#16A34A] uppercase">Efectivo (sin imp.)</p>
-                                                <p className="text-[14px] font-black text-[#16A34A]">${desglose.efectivoTotal.toLocaleString('es-AR')}</p>
-                                                <p className="text-[10px] text-[#16A34A]/70">{esVisitaActual ? 'te queda' : 'c/u'} ${desglose.efectivoCada.toLocaleString('es-AR')}</p>
+                                    {/* Precio al cliente */}
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">Al cliente le decis</p>
+                                        <div className="p-3 rounded-xl bg-[#FFFFFF]/50 dark:bg-[#242424]/50 space-y-1.5">
+                                            <div className="flex justify-between text-[12px]">
+                                                <span className="text-[#57534E] dark:text-[#9E9A94]">Efectivo (sin factura)</span>
+                                                <span className="font-black text-[#16A34A]">${desglose.precioCliente.toLocaleString('es-AR')}</span>
                                             </div>
-                                            <div className="p-2.5 rounded-xl bg-[#8B5CF6]/10">
-                                                <p className="text-[9px] font-bold text-[#8B5CF6] uppercase">Factura (cliente paga)</p>
-                                                <p className="text-[14px] font-black text-[#8B5CF6]">${desglose.facturaCliente.toLocaleString('es-AR')}</p>
-                                                <p className="text-[10px] text-[#8B5CF6]/70">neto -30% imp. · {esVisitaActual ? 'te queda' : 'c/u'} ${desglose.facturaCada.toLocaleString('es-AR')}</p>
+                                            <div className="flex justify-between text-[12px]">
+                                                <span className="text-[#57534E] dark:text-[#9E9A94]">Con factura (+IVA)</span>
+                                                <span className="font-black text-[#8B5CF6]">${desglose.facturaCliente.toLocaleString('es-AR')}</span>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Lo que te queda */}
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">
+                                            {esVisitaActual ? 'Te queda en limpio' : 'Cada tecnico se lleva'}
+                                        </p>
+                                        <div className="p-3 rounded-xl bg-[#D48800]/10 space-y-1.5">
+                                            <div className="flex justify-between text-[12px]">
+                                                <span className="text-[#D48800] dark:text-[#F0A500]">Si paga efectivo</span>
+                                                <span className="font-black text-[#D48800] dark:text-[#F0A500]">${desglose.efectivoCada.toLocaleString('es-AR')}</span>
+                                            </div>
+                                            <div className="flex justify-between text-[12px]">
+                                                <span className="text-[#D48800] dark:text-[#F0A500]">Si paga con factura</span>
+                                                <span className="font-black text-[#D48800] dark:text-[#F0A500]">${desglose.facturaCada.toLocaleString('es-AR')}</span>
+                                            </div>
+                                            {!esVisitaActual && desglose.efectivoCada > desglose.facturaCada && (
+                                                <p className="text-[9px] text-[#A8A29E] pt-1 border-t border-[#D48800]/20">
+                                                    Efectivo rinde mas porque no pagas impuestos
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
@@ -500,7 +520,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                         {modoReverso && (
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[11px] text-[#57534E] dark:text-[#9E9A94] whitespace-nowrap">Quiero c/u:</span>
+                                                    <span className="text-[11px] text-[#57534E] dark:text-[#9E9A94] whitespace-nowrap">Quiero {esVisitaActual ? '' : 'c/u '}minimo:</span>
                                                     <div className="flex items-center gap-1 flex-1">
                                                         <span className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$</span>
                                                         <input
@@ -515,11 +535,11 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                                 {reverso && (
                                                     <div className="p-2.5 rounded-xl bg-[#D48800]/10 space-y-1">
                                                         <div className="flex justify-between text-[11px]">
-                                                            <span className="text-[#D48800]">Cobrar al cliente:</span>
+                                                            <span className="text-[#D48800]">Decirle al cliente:</span>
                                                             <span className="font-black text-[#D48800]">${reverso.precioCliente.toLocaleString('es-AR')}</span>
                                                         </div>
                                                         <div className="flex justify-between text-[11px]">
-                                                            <span className="text-[#D48800]">Con factura (+IVA):</span>
+                                                            <span className="text-[#D48800]">Si pide factura:</span>
                                                             <span className="font-black text-[#D48800]">${reverso.conIVA.toLocaleString('es-AR')}</span>
                                                         </div>
                                                         <button type="button"
