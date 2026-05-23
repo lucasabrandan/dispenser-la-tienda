@@ -10,6 +10,7 @@ import Paginacion from '../ui/Paginacion';
 import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
+import EjecutarAdminSheet from '../servicio/EjecutarAdminSheet';
 import ServicioAgenda from '../servicio/ServicioAgenda';
 
 function M({ valor, className = '' }) {
@@ -187,10 +188,18 @@ export default function ServicioManager({
         setModoSeleccion(false);
     };
 
-    // Admin: abre ServicioForm completo; técnico: abre EjecutarOrdenSheet simplificado
+    // Admin: abre sheet simplificado; técnico: abre EjecutarOrdenSheet
+    const [servicioEjecutarAdmin, setServicioEjecutarAdmin] = useState(null);
     const abrirEjecutar = (s) => {
-        if (esAdmin) { setServicioEjecutar(s); setModalCrear(true); }
-        else          setServicioEjecutarSimple(s);
+        if (esAdmin) setServicioEjecutarAdmin(s);
+        else         setServicioEjecutarSimple(s);
+    };
+    // "Editar detalle completo" desde el sheet admin abre el form completo
+    const abrirEditarCompleto = () => {
+        const s = servicioEjecutarAdmin;
+        setServicioEjecutarAdmin(null);
+        setServicioEjecutar(s);
+        setModalCrear(true);
     };
     const cerrarModalCompleto = () => { cerrarModal(); setServicioEjecutar(null); setServicioDuplicar(null); };
 
@@ -562,6 +571,20 @@ export default function ServicioManager({
                         cargarServicios();
                     }}
                     onCerrar={() => setServicioEjecutarSimple(null)}
+                />
+            )}
+
+            {/* Sheet ejecutar simplificado — admin */}
+            {servicioEjecutarAdmin && (
+                <EjecutarAdminSheet
+                    servicio={servicioEjecutarAdmin}
+                    calcularTotal={calcularTotal}
+                    onConfirmar={async (estadoDestino, extras) => {
+                        await confirmarServicio(servicioEjecutarAdmin.id, estadoDestino, extras);
+                        setServicioEjecutarAdmin(null);
+                    }}
+                    onEditarCompleto={abrirEditarCompleto}
+                    onCerrar={() => setServicioEjecutarAdmin(null)}
                 />
             )}
 

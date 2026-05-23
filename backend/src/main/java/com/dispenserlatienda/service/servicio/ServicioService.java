@@ -471,11 +471,16 @@ public class ServicioService {
 
     @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado) {
-        return cambiarEstado(id, nuevoEstado, null, null);
+        return cambiarEstado(id, nuevoEstado, null, null, null);
     }
 
     @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado, String modalidadCobro, BigDecimal montoFinal) {
+        return cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal, null);
+    }
+
+    @Transactional
+    public ServicioDTO cambiarEstado(Long id, String nuevoEstado, String modalidadCobro, BigDecimal montoFinal, String observaciones) {
         Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
 
         EstadoServicio estado;
@@ -491,6 +496,7 @@ public class ServicioService {
             try { s.setModalidadCobro(ModalidadCobro.valueOf(modalidadCobro)); } catch (IllegalArgumentException ignored) {}
         }
         if (montoFinal != null) s.setMontoFinal(montoFinal);
+        if (observaciones != null) s.setObservaciones(observaciones);
 
         // Auto-setear fechas según transición
         if (estado == EstadoServicio.COMPLETADO && s.getFechaCompletado() == null) {

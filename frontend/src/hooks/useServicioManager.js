@@ -141,7 +141,7 @@ export function useServicioManager() {
     useEffect(() => { cargarStats(); },   [cargarStats]);
 
     // ── Acciones ─────────────────────────────────────────────────────────────────
-    const confirmarServicio = async (id, estadoDestino = 'COBRADO', { modalidadCobro, montoFinal } = {}) => {
+    const confirmarServicio = async (id, estadoDestino = 'COBRADO', { modalidadCobro, montoFinal, observaciones } = {}) => {
         const labels = {
             COBRADO: 'Cobrado', COMPLETADO: 'Completado',
             PENDIENTE_FACTURACION: 'Pendiente facturacion', FACTURADO: 'Facturado',
@@ -151,6 +151,7 @@ export function useServicioManager() {
             const payload = { estado: estadoDestino };
             if (modalidadCobro) payload.modalidadCobro = modalidadCobro;
             if (montoFinal != null) payload.montoFinal = montoFinal;
+            if (observaciones != null) payload.observaciones = observaciones;
             await api.patch(`/servicios/${id}/estado`, payload);
             toast.success(labels[estadoDestino] || 'Actualizado', { id: loading });
             cargarServicios(); cargarStats();

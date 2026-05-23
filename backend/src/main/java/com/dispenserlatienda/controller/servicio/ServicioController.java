@@ -87,7 +87,8 @@ public class ServicioController {
         if (payload.get("montoFinal") != null) {
             montoFinal = new java.math.BigDecimal(payload.get("montoFinal").toString());
         }
-        return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal));
+        String observaciones = (String) payload.get("observaciones");
+        return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal, observaciones));
     }
 
     // PATCH: Guardar número de documento generado al crear el PDF

@@ -285,16 +285,10 @@ export default function ServicioCard({
 
                 {/* Derecha: accion principal del estado */}
                 {esPpto && (
-                    <>
-                        <button onClick={() => onEjecutar(servicio)}
-                            className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
-                            Ejecutar
-                        </button>
-                        <button onClick={() => onCobrar(servicio.id)}
-                            className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
-                            Cobrar
-                        </button>
-                    </>
+                    <button onClick={() => onEjecutar(servicio)}
+                        className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                        Ejecutar
+                    </button>
                 )}
                 {esComp && (
                     <button onClick={() => onAbrirCobro ? onAbrirCobro(servicio) : onCobrar(servicio.id, 'COBRADO')}
