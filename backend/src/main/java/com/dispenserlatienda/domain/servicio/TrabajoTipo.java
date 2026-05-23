@@ -5,5 +5,6 @@ public enum TrabajoTipo {
     VENTA,
     INSTALACION,
     REVISION,
-    CAMBIO_FILTRO  // 👈 AGREGÁ ESTE AQUÍ
+    CAMBIO_FILTRO,
+    VISITA
 }
