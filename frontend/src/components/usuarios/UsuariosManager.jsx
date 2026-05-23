@@ -20,7 +20,7 @@ export default function UsuariosManager() {
     const [confirmEliminar, setConfirmEliminar] = useState(null); // null | usuario
 
     // Configuracion de empresa (solo en localStorage, solo ADMIN)
-    const CONDICIONES_DEFAULT = 'Garantia 90 dias mano de obra  ·  Repuestos segun fabricante  ·  El servicio se coordina una vez aprobado';
+    const CONDICIONES_DEFAULT = 'Precio incluye IVA (efectivo sin factura: precio sin IVA)  ·  Visita sin reparacion: 50% MO  ·  Garantia 90 dias MO  ·  Valido 7 dias';
     const [condicionesPDF, setCondicionesPDF] = useState(() => localStorage.getItem('empresa_condiciones_pdf') || CONDICIONES_DEFAULT);
     const [condGuardado, setCondGuardado] = useState(false);
 

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 
-const QUICK_PCTS = [0, 5, 10, 15, 20];
+const QUICK_PCTS = [5, 10];
 
 // ── Panel de rentabilidad discreta ────────────────────────────────────────────
 function RentabilidadPanel({ resumen }) {
@@ -111,6 +111,16 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
         }
     }, [esAdmin]);
 
+    // Auto-descuento 10% a partir de 5 equipos
+    const [descuentoAutoAplicado, setDescuentoAutoAplicado] = useState(false);
+    useEffect(() => {
+        if (ticketItems.length >= 5 && descuentoPorcentaje === 0 && !descuentoAutoAplicado) {
+            setDescuentoPorcentaje(10);
+            setDescuentoAutoAplicado(true);
+            toast.success(`10% de descuento aplicado (${ticketItems.length} equipos)`);
+        }
+    }, [ticketItems.length]); // eslint-disable-line
+
     // Si el descuento actual no está en los chips rápidos, activar modoCustom
     useEffect(() => {
         if (descuentoPorcentaje > 0 && !QUICK_PCTS.includes(descuentoPorcentaje)) {
@@ -188,13 +198,25 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
             {/* ── Descuento compacto ────────────────────────────────────── */}
             <div>
-                <Label>Descuento</Label>
+                <div className="flex items-center gap-2">
+                    <Label>Descuento</Label>
+                    {ticketItems.length >= 5 && descuentoPorcentaje === 10 && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#D48800]/15 text-[#D48800] dark:text-[#F0A500]">
+                            Auto · {ticketItems.length} equipos
+                        </span>
+                    )}
+                </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                        onClick={() => { setDescuentoPorcentaje(0); setModoCustom(false); }}
+                        className={chipCls(descuentoPorcentaje === 0 && !modoCustom)}>
+                        Sin descuento
+                    </button>
                     {QUICK_PCTS.map(p => (
                         <button key={p}
                             onClick={() => { setDescuentoPorcentaje(p); setModoCustom(false); }}
                             className={chipCls(descuentoPorcentaje === p && !modoCustom)}>
-                            {p === 0 ? 'Sin descuento' : `${p}%`}
+                            {p}%
                         </button>
                     ))}
                     <button onClick={() => setModoCustom(true)}

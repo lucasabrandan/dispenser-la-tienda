@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import imageCompression from 'browser-image-compression';
 import { Label, NextBtn, BackBtn, DSCard, DSInput, DSTextarea, M } from './ServicioUI';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
+import { useAuth } from '../../context/AuthContext';
 import RepuestoRapidoModal from '../repuesto/RepuestoRapidoModal';
 import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
 
@@ -99,7 +100,46 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
         actualizarCantidad, quitarRepuesto,
         agregarAlTicket, calcularGananciaRepuesto,
         consultarAntecedentes, historialEquipo,
+        configGlobal,
     } = hook;
+
+    // Calcular precios de MO desde config
+    const moBase = Number(configGlobal?.manoDeObraBase) || 60000;
+    const pctImp = Number(configGlobal?.porcentajeImpuestos) || 30;
+    const pctIVA = Number(configGlobal?.porcentajeIVA) || 21;
+    const factor = (1 + pctIVA / 100) * (1 - pctImp / 100);
+    const precioReparacion = Math.round(moBase / factor);
+    const precioVisita = Math.round((moBase / 2) / factor);
+    const [tipoMO, setTipoMO] = useState('REPARACION'); // 'REPARACION' | 'VISITA'
+    const { esAdmin } = useAuth();
+    const [desgloseAbierto, setDesgloseAbierto] = useState(false);
+    const [modoReverso, setModoReverso] = useState(false);
+    const [gananciaDeseada, setGananciaDeseada] = useState('');
+
+    // Desglose calculado desde el precio al cliente
+    const desglose = useMemo(() => {
+        const precioCliente = parseFloat(itemActual.costoExtra) || 0;
+        const conIVA = Math.round(precioCliente * (1 + pctIVA / 100));
+        const netoFactura = Math.round(conIVA * (1 - pctImp / 100));
+        return {
+            precioCliente,
+            efectivoTotal: precioCliente,
+            efectivoCada: Math.round(precioCliente / 2),
+            facturaCliente: conIVA,
+            facturaNeto: netoFactura,
+            facturaCada: Math.round(netoFactura / 2),
+        };
+    }, [itemActual.costoExtra, pctIVA, pctImp]);
+
+    // Calculo reverso: cuanto cobrar para ganar X por tecnico
+    const reverso = useMemo(() => {
+        const deseada = parseFloat(gananciaDeseada) || 0;
+        if (deseada <= 0) return null;
+        const netoTotal = deseada * 2; // 2 tecnicos
+        const precioCliente = Math.round(netoTotal / factor);
+        const conIVA = Math.round(precioCliente * (1 + pctIVA / 100));
+        return { precioCliente, conIVA, netoTotal };
+    }, [gananciaDeseada, factor, pctIVA]);
 
     const [modalRepuesto, setModalRepuesto]     = useState(false);
     const [nombreRepuesto, setNombreRepuesto]   = useState('');
@@ -381,8 +421,29 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         )}
                     </div>
 
-                    {/* Mano de obra */}
-                    <div className="rounded-2xl p-4 bg-[#1C1917] dark:bg-[#0F0F0F]">
+                    {/* Tipo de servicio + Mano de obra */}
+                    <div className="rounded-2xl p-4 bg-[#1C1917] dark:bg-[#0F0F0F] space-y-3">
+                        <Label>Tipo de servicio</Label>
+                        <div className="flex gap-2">
+                            <button type="button"
+                                onClick={() => { setTipoMO('REPARACION'); setItemActual({ ...itemActual, costoExtra: precioReparacion }); }}
+                                className={`flex-1 py-2.5 rounded-xl text-[12px] font-black uppercase transition-all active:scale-95 ${
+                                    tipoMO === 'REPARACION'
+                                        ? 'bg-[#D13A28] text-white'
+                                        : 'bg-[#2E2E2E] text-[#9E9A94]'
+                                }`}>
+                                Reparacion · ${precioReparacion.toLocaleString('es-AR')}
+                            </button>
+                            <button type="button"
+                                onClick={() => { setTipoMO('VISITA'); setItemActual({ ...itemActual, costoExtra: precioVisita }); }}
+                                className={`flex-1 py-2.5 rounded-xl text-[12px] font-black uppercase transition-all active:scale-95 ${
+                                    tipoMO === 'VISITA'
+                                        ? 'bg-[#D48800] text-white'
+                                        : 'bg-[#2E2E2E] text-[#9E9A94]'
+                                }`}>
+                                Visita · ${precioVisita.toLocaleString('es-AR')}
+                            </button>
+                        </div>
                         <Label>Mano de obra ($)</Label>
                         <input
                             type="number" min="0"
@@ -393,6 +454,85 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             className="w-full bg-transparent border-none text-white text-4xl font-black outline-none mt-1 placeholder-[#666]"
                         />
                     </div>
+
+                    {/* Calculadora de desglose — solo admin */}
+                    {esAdmin && desglose.precioCliente > 0 && (
+                        <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
+                            <button type="button"
+                                onClick={() => setDesgloseAbierto(!desgloseAbierto)}
+                                className="w-full px-4 py-2.5 flex items-center justify-between bg-[#EFEDEA] dark:bg-[#1C1C1C] active:scale-[0.99] transition-all">
+                                <span className="text-[11px] font-black text-[#A8A29E] uppercase tracking-widest">Calculadora</span>
+                                <span className="text-[11px] text-[#A8A29E]">{desgloseAbierto ? '▲' : '▼'}</span>
+                            </button>
+                            {desgloseAbierto && (
+                                <div className="px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.05] dark:border-white/[0.05] space-y-3">
+                                    {/* Desglose desde precio al cliente */}
+                                    <div className="space-y-1.5">
+                                        <p className="text-[10px] font-black text-[#D13A28] dark:text-[#E8422F] uppercase tracking-widest">Si le cobras ${desglose.precioCliente.toLocaleString('es-AR')}</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="p-2.5 rounded-xl bg-[#16A34A]/10">
+                                                <p className="text-[9px] font-bold text-[#16A34A] uppercase">Efectivo</p>
+                                                <p className="text-[14px] font-black text-[#16A34A]">${desglose.efectivoTotal.toLocaleString('es-AR')}</p>
+                                                <p className="text-[10px] text-[#16A34A]/70">c/u ${desglose.efectivoCada.toLocaleString('es-AR')}</p>
+                                            </div>
+                                            <div className="p-2.5 rounded-xl bg-[#8B5CF6]/10">
+                                                <p className="text-[9px] font-bold text-[#8B5CF6] uppercase">Con factura</p>
+                                                <p className="text-[14px] font-black text-[#8B5CF6]">${desglose.facturaCliente.toLocaleString('es-AR')}</p>
+                                                <p className="text-[10px] text-[#8B5CF6]/70">neto ${desglose.facturaNeto.toLocaleString('es-AR')} · c/u ${desglose.facturaCada.toLocaleString('es-AR')}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Modo reverso */}
+                                    <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.06] space-y-2">
+                                        <button type="button"
+                                            onClick={() => setModoReverso(!modoReverso)}
+                                            className="text-[10px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-widest">
+                                            {modoReverso ? '▲ Cerrar' : '▼ Quiero ganar X → cuanto cobro?'}
+                                        </button>
+                                        {modoReverso && (
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[11px] text-[#57534E] dark:text-[#9E9A94] whitespace-nowrap">Quiero c/u:</span>
+                                                    <div className="flex items-center gap-1 flex-1">
+                                                        <span className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$</span>
+                                                        <input
+                                                            type="number" min="0"
+                                                            value={gananciaDeseada}
+                                                            onChange={e => setGananciaDeseada(e.target.value)}
+                                                            placeholder="30000"
+                                                            className="flex-1 px-2 py-1.5 rounded-lg text-[13px] font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {reverso && (
+                                                    <div className="p-2.5 rounded-xl bg-[#D48800]/10 space-y-1">
+                                                        <div className="flex justify-between text-[11px]">
+                                                            <span className="text-[#D48800]">Cobrar al cliente:</span>
+                                                            <span className="font-black text-[#D48800]">${reverso.precioCliente.toLocaleString('es-AR')}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-[11px]">
+                                                            <span className="text-[#D48800]">Con factura (+IVA):</span>
+                                                            <span className="font-black text-[#D48800]">${reverso.conIVA.toLocaleString('es-AR')}</span>
+                                                        </div>
+                                                        <button type="button"
+                                                            onClick={() => {
+                                                                setItemActual({ ...itemActual, costoExtra: reverso.precioCliente });
+                                                                setModoReverso(false);
+                                                                setGananciaDeseada('');
+                                                            }}
+                                                            className="w-full mt-1 py-2 rounded-lg text-[11px] font-black uppercase text-white bg-[#D48800] active:scale-95 transition-all">
+                                                            Usar ${reverso.precioCliente.toLocaleString('es-AR')}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Botón agregar */}
                     <button onClick={() => { agregarAlTicket(); setMostrarFotos(false); setFormVisible(false); }}

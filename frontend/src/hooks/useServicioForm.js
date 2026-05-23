@@ -6,6 +6,7 @@ const DRAFT_KEY = 'servicio_borrador';
 
 export function useServicioForm(servicioParaEditar = null, clienteInicialId = null, presupuestoOrigen = null, ordenOrigen = null) {
   const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
+  const [configGlobal, setConfigGlobal] = useState(null);
 
   // Borrador: true si existe un draft guardado al montar el formulario (solo en creación)
   const [borradorDisponible, setBorradorDisponible] = useState(() => {
@@ -48,11 +49,12 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   useEffect(() => {
     const cargar = async () => {
       try {
-        const [c, s, e, r] = await Promise.all([
+        const [c, s, e, r, cfg] = await Promise.all([
           api.get('/clientes?page=0&size=500'),
           api.get('/sedes?page=0&size=500'),
           api.get('/equipos?page=0&size=500'),
-          api.get('/repuestos?page=0&size=500')
+          api.get('/repuestos?page=0&size=500'),
+          api.get('/configuracion').catch(() => ({ data: { manoDeObraBase: 60000, porcentajeImpuestos: 30, porcentajeIVA: 21 } })),
         ]);
         setDb({
           clientes:  c.data.content || c.data,
@@ -60,6 +62,17 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           equipos:   e.data.content || e.data,
           repuestos: r.data.content || r.data
         });
+        // Guardar config para calcular precioCliente default
+        const conf = cfg.data;
+        setConfigGlobal(conf);
+        // Pre-llenar mano de obra con precioCliente si es creacion nueva
+        if (!servicioParaEditar && !presupuestoOrigen && !ordenOrigen) {
+          const moBase = Number(conf.manoDeObraBase) || 60000;
+          const pctImp = Number(conf.porcentajeImpuestos) || 30;
+          const pctIVA = Number(conf.porcentajeIVA) || 21;
+          const precioCliente = Math.round(moBase / ((1 + pctIVA / 100) * (1 - pctImp / 100)));
+          setItemActual(prev => ({ ...prev, costoExtra: precioCliente }));
+        }
 
         if (ordenOrigen) {
           setEsPresupuesto(false);
@@ -456,9 +469,14 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`
     };
     setTicketItems(prev => [...prev, nuevoRenglon]);
+    // Calcular precioCliente default para pre-llenar el proximo item
+    const moBase = Number(configGlobal?.manoDeObraBase) || 60000;
+    const pctImp = Number(configGlobal?.porcentajeImpuestos) || 30;
+    const pctIVA = Number(configGlobal?.porcentajeIVA) || 21;
+    const defaultMO = Math.round(moBase / ((1 + pctIVA / 100) * (1 - pctImp / 100)));
     setItemActual(prev => ({
       ...prev,
-      equipoSerial: '', trabajo: '', costoExtra: '',
+      equipoSerial: '', trabajo: '', costoExtra: defaultMO,
       repuestosUsados: [], modeloEquipo: '', ubicacionEquipo: '',
       fotoAntes: null, fotoDespues: null, esNuevoEquipo: false,
     }));
@@ -707,5 +725,6 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     borradorDisponible,
     recuperarBorrador,
     descartarBorrador,
+    configGlobal,
   };
 }

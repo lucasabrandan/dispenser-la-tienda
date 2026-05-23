@@ -889,8 +889,9 @@ export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null,
 export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
     const condDefault = [
         '· Valido por 7 dias corridos.',
-        '· El servicio se coordina una vez confirmado el presupuesto.',
-        '· Garantia: 90 dias sobre mano de obra - repuestos segun fabricante.',
+        '· Precios publicados incluyen IVA. Abonando en efectivo sin factura se aplica precio sin IVA.',
+        '· Si solo se realiza visita/diagnostico sin reparacion, se cobra el 50% de la mano de obra.',
+        '· Garantia: 90 dias sobre mano de obra. Repuestos segun fabricante.',
     ].join('\n');
 
     const textoCond = texto || condDefault;
@@ -915,9 +916,9 @@ export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
 export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
     const conds = [
         '· Valido por 7 dias corridos desde la fecha de emision.',
-        '· El servicio se coordina una vez aprobado.',
-        '· Garantia 90 dias mano de obra.',
-        '· Repuestos segun fabricante.',
+        '· Precios incluyen IVA. En efectivo sin factura se aplica precio sin IVA.',
+        '· Visita/diagnostico sin reparacion: 50% de la mano de obra.',
+        '· Garantia 90 dias mano de obra. Repuestos segun fabricante.',
     ];
 
     const cardH = conds.length * 5 + 14;
@@ -963,7 +964,7 @@ export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc }) 
     y += 4;
 
     // Condiciones configurables desde Usuarios > Config empresa
-    const textoCond = empresa.condicionesPDF || 'Garantía 90 días mano de obra  ·  Repuestos según fabricante  ·  El servicio se coordina una vez aprobado';
+    const textoCond = empresa.condicionesPDF || 'Precio incluye IVA (efectivo sin factura: precio sin IVA)  ·  Visita sin reparacion: 50% MO  ·  Garantia 90 dias MO  ·  Valido 7 dias';
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);

@@ -3,12 +3,14 @@
  * Vista simplificada para tecnicos al ejecutar un presupuesto asignado.
  * Flujo: detalle → firmas → cobro → resumen
  *
- * Pricing:
- *   Reparacion con factura:     MO base + 30% = $78.000
- *   Reparacion sin factura:     MO con factura - 10% = $70.200
- *   Visita con factura:         mitad MO facturada + 21% IVA = $50.700
- *   Visita sin factura:         mitad MO facturada = $39.000
- *   Tecnico siempre:            $30.000 (50% MO base)
+ * Pricing (fórmula: precioCliente = netoDeseado / (1.21 × 0.70)):
+ *   Reparacion (neto 60k): precioCliente = $70.839
+ *     Efectivo:   $70.839 (queda todo)
+ *     Factura:    $70.839 + 21% IVA = $85.715
+ *   Visita (neto 30k):     precioCliente = $35.420
+ *     Efectivo:   $35.420
+ *     Factura:    $35.420 + 21% IVA = $42.858
+ *   Tecnico siempre:       $30.000 (50% neto base)
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
@@ -54,27 +56,24 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
     }, []);
 
     // Calculos de pricing
+    // Formula: precioCliente = netoDeseado / ((1 + IVA) × (1 - impuestos))
+    // Efectivo = precioCliente (sin impuestos, queda todo)
+    // Factura = precioCliente + 21% IVA (al cliente se le dice "+IVA")
     const pricing = useMemo(() => {
         if (!config) return null;
-        const moBase = Number(config.manoDeObraBase) || 60000;
+        const moBase = Number(config.manoDeObraBase) || 60000; // neto deseado (ej $60k entre 2 tecnicos)
         const pctImp = Number(config.porcentajeImpuestos) || 30;
-        const pctDesc = Number(config.descuentoEfectivo) || 10;
         const pctIVA = Number(config.porcentajeIVA) || 21;
         const esVisita = servicio.esVisita || false;
 
-        // MO facturada = base + impuestos
-        const moFacturada = Math.round(moBase * (1 + pctImp / 100));
-        // MO efectivo = facturada - descuento
-        const moEfectivo = Math.round(moFacturada * (1 - pctDesc / 100));
-        // Tecnico siempre 50% de MO base
+        // Precio base que se le dice al cliente (absorbe el 9% extra de impuestos)
+        const factor = (1 + pctIVA / 100) * (1 - pctImp / 100);
+        const precioCliente = Math.round(moBase / factor);
+        // Tecnico siempre 50% del neto base
         const parteTecnico = Math.round(moBase / 2);
 
-        let moVisitaBase, moVisitaFacturada;
-        if (esVisita) {
-            // Visita = mitad de MO facturada
-            moVisitaBase = Math.round(moFacturada / 2);
-            moVisitaFacturada = Math.round(moVisitaBase * (1 + pctIVA / 100));
-        }
+        // Visita = mitad
+        const visitaPrecio = Math.round((moBase / 2) / factor);
 
         // Repuestos originales del presupuesto
         const repuestosOriginales = (servicio.items || []).reduce((s, it) => {
@@ -86,18 +85,19 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
         const totalRepuestos = repuestosOriginales + repuestosNuevos;
 
         // MO + extra (tecnico puede subir, nunca bajar)
-        const moConExtra = moBase + Number(costoMOExtra || 0);
-        const moConExtraFacturada = Math.round(moConExtra * (1 + pctImp / 100));
-        const moConExtraEfectivo = Math.round(moConExtraFacturada * (1 - pctDesc / 100));
+        const extraNeto = Number(costoMOExtra || 0);
+        const precioConExtra = Math.round((moBase + extraNeto) / factor);
 
         return {
-            moBase, moFacturada, moEfectivo, parteTecnico, pctImp, pctDesc, pctIVA,
-            esVisita, moVisitaBase, moVisitaFacturada,
+            moBase, precioCliente, parteTecnico, pctImp, pctIVA,
+            esVisita, visitaPrecio,
             repuestosOriginales, repuestosNuevos, totalRepuestos,
-            moConExtra, moConExtraFacturada, moConExtraEfectivo,
-            // Totales finales para cada modalidad
-            totalEfectivo: esVisita ? moVisitaBase : (moConExtraEfectivo + totalRepuestos),
-            totalFacturado: esVisita ? moVisitaFacturada : (moConExtraFacturada + totalRepuestos),
+            precioConExtra,
+            // Totales finales: efectivo = precio base, factura = +IVA
+            totalEfectivo: esVisita ? visitaPrecio : (precioConExtra + totalRepuestos),
+            totalFacturado: esVisita
+                ? Math.round(visitaPrecio * (1 + pctIVA / 100))
+                : Math.round((precioConExtra + totalRepuestos) * (1 + pctIVA / 100)),
         };
     }, [config, servicio, repuestosAgregados, costoMOExtra]);
 
@@ -172,12 +172,19 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
             toast.success('Trabajo confirmado', { id: loading });
 
             // Resumen de ganancias para el tecnico
+            // En efectivo el tecnico se lleva la mitad del total (sin impuestos)
+            // En factura se le descuentan impuestos primero
+            const moSinRepuestos = pricing.esVisita ? pricing.visitaPrecio : pricing.precioConExtra;
+            const netoEfectivo = Math.round(moSinRepuestos / 2);
+            const netoFactura = Math.round((moSinRepuestos * (1 + pricing.pctIVA / 100) * (1 - pricing.pctImp / 100)) / 2);
             setResumenGanancias({
                 modalidadCobro,
                 montoFinal,
-                parteTecnico: pricing.parteTecnico,
+                parteTecnico: modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? netoEfectivo : netoFactura,
                 totalRepuestos: pricing.totalRepuestos,
                 esVisita: pricing.esVisita,
+                netoEfectivo,
+                netoFactura,
             });
 
             // Generar PDF
@@ -450,7 +457,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                                     {pricing.esVisita ? 'Visita diagnostica' : 'Mano de obra'}
                                 </span>
                                 <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">
-                                    {fmt(pricing.esVisita ? pricing.moVisitaBase : pricing.moFacturada)}
+                                    {fmt(pricing.esVisita ? pricing.visitaPrecio : pricing.precioCliente)}
                                 </span>
                             </div>
                             {!pricing.esVisita && pricing.totalRepuestos > 0 && (
@@ -462,7 +469,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                             {!pricing.esVisita && costoMOExtra > 0 && (
                                 <div className="flex justify-between text-[12px]">
                                     <span className="text-[#57534E] dark:text-[#9E9A94]">Ajuste MO extra</span>
-                                    <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">+{fmt(costoMOExtra * (1 + pricing.pctImp / 100))}</span>
+                                    <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">+{fmt(Math.round(costoMOExtra / ((1 + pricing.pctIVA / 100) * (1 - pricing.pctImp / 100))))}</span>
                                 </div>
                             )}
                         </div>
@@ -501,7 +508,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                                     <div>
                                         <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Efectivo sin factura</p>
                                         <p className="text-[10px] text-[#A8A29E] mt-0.5">
-                                            {pricing.esVisita ? 'Mitad MO' : `${pricing.pctDesc}% descuento`} · Cobras en mano
+                                            Sin impuestos · Cobras en mano
                                         </p>
                                     </div>
                                     <p className="text-[20px] font-black text-[#D13A28] dark:text-[#E8422F]">
@@ -523,7 +530,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                                     <div>
                                         <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Con factura</p>
                                         <p className="text-[10px] text-[#A8A29E] mt-0.5">
-                                            {pricing.esVisita ? `+${pricing.pctIVA}% IVA` : `+${pricing.pctImp}% impuestos`} · Admin gestiona cobro
+                                            +{pricing.pctIVA}% IVA · Admin gestiona cobro
                                         </p>
                                     </div>
                                     <p className="text-[20px] font-black text-[#D48800] dark:text-[#F0A500]">
@@ -572,20 +579,33 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                             <div className="px-4 py-3 space-y-2.5">
                                 <div className="flex justify-between text-[13px]">
                                     <span className="text-[#57534E] dark:text-[#9E9A94]">
-                                        {resumenGanancias.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'Cobrado' : 'Total servicio'}
+                                        {resumenGanancias.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'Cobrado en mano' : 'Total con factura'}
                                     </span>
                                     <span className="font-black text-[#1C1917] dark:text-[#F0EEE9]">
                                         {fmt(resumenGanancias.montoFinal)}
                                     </span>
                                 </div>
+                                {resumenGanancias.modalidadCobro === 'CON_FACTURA' && (
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="text-[#A8A29E]">Despues de impuestos (30%)</span>
+                                        <span className="text-[#A8A29E]">{fmt(Math.round(resumenGanancias.montoFinal * 0.70))}</span>
+                                    </div>
+                                )}
                             </div>
                             {/* Tu parte destacada */}
-                            <div className="flex items-center justify-between px-4 py-3 bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-t border-[#D48800]/20">
-                                <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-wide">
-                                    {resumenGanancias.esVisita ? 'Te llevas' : 'Tu parte (50% MO)'}
-                                </p>
-                                <p className="text-[24px] font-black text-[#D48800] dark:text-[#F0A500]">
-                                    {fmt(resumenGanancias.parteTecnico)}
+                            <div className="px-4 py-3 bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-t border-[#D48800]/20">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-wide">
+                                        {resumenGanancias.esVisita ? 'Te llevas' : 'Tu parte (50% MO)'}
+                                    </p>
+                                    <p className="text-[24px] font-black text-[#D48800] dark:text-[#F0A500]">
+                                        {fmt(resumenGanancias.parteTecnico)}
+                                    </p>
+                                </div>
+                                <p className="text-[10px] text-[#D48800]/60 dark:text-[#F0A500]/60 mt-0.5">
+                                    {resumenGanancias.modalidadCobro === 'EFECTIVO_SIN_FACTURA'
+                                        ? 'Neto en mano, sin impuestos'
+                                        : 'Neto despues de impuestos'}
                                 </p>
                             </div>
                         </div>
