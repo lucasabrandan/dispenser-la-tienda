@@ -65,7 +65,7 @@ function AppInterna() {
             case 'historial':
                 return <ServicioList />;
             case 'presupuestos':
-                return <PresupuestosManager onEjecutar={ejecutarPresupuesto} />;
+                return <PresupuestosManager />;
             case 'clientes':
                 return <ClienteManager
                     onNuevoServicio={(c) => irASeccionConCliente('servicio-tecnico', c)}

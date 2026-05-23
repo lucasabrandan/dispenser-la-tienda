@@ -8,6 +8,7 @@ import Paginacion from './ui/Paginacion';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import ModalCotizacionVolumen from './presupuesto/ModalCotizacionVolumen';
 import ModalDespacharPresupuesto from './presupuesto/ModalDespacharPresupuesto';
+import EjecutarAdminSheet from './servicio/EjecutarAdminSheet';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -25,10 +26,12 @@ function IconBtn({ onClick, title, children, cls = '' }) {
 }
 
 // ─── Card de presupuesto ─────────────────────────────────────────────────────
-function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar, onArchivar, onEjecutar, onDespachar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
+function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, onArchivar, onEjecutar, onDespachar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
     const [expandido, setExpandido] = useState(false);
+    const [menuAbierto, setMenuAbierto] = useState(false);
     const total    = calcularTotal(s);
     const esTecnico = s.servicioTipo === 'TECNICA';
+    const esVenta   = s.servicioTipo === 'VENTA';
     const items     = s.items || [];
     const seriales  = items.map(it => it.equipoSerial).filter(Boolean);
     const primerItem = items[0];
@@ -132,64 +135,47 @@ function PresupuestoCard({ s, calcularTotal, onVer, onPDF, onCobrar, onRechazar,
             {/* Barra de acciones */}
             <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
                 style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                <IconBtn onClick={() => onVer(s)} title="Ver detalle" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
-                <IconBtn onClick={() => onPDF(s)} title="PDF con precios" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
-                <IconBtn onClick={() => onPDF(s, { sinPrecios: true })} title="PDF sin precios" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📋</IconBtn>
+                {/* PDF */}
+                <IconBtn onClick={() => onPDF(s)} title="PDF" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+
+                {/* Menú overflow */}
+                <div className="relative">
+                    <IconBtn onClick={() => setMenuAbierto(v => !v)} title="Más opciones" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">⋮</IconBtn>
+                    {menuAbierto && (
+                        <>
+                            <div className="fixed inset-0 z-[100]" onClick={() => setMenuAbierto(false)} />
+                            <div className="absolute left-0 bottom-full mb-1 z-[101] w-48 rounded-xl shadow-2xl border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] overflow-hidden">
+                                {esVenta && (
+                                    <button onClick={() => { onPDF(s, { sinPrecios: true }); setMenuAbierto(false); }}
+                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        📋 PDF sin precios
+                                    </button>
+                                )}
+                                {esTecnico && (
+                                    <button onClick={() => { onDespachar(s); setMenuAbierto(false); }}
+                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        📬 Despachar
+                                    </button>
+                                )}
+                                <button onClick={() => { onArchivar(s.id); setMenuAbierto(false); }}
+                                    className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                    🗄️ Archivar
+                                </button>
+                                <button onClick={() => { onRechazar(s.id); setMenuAbierto(false); }}
+                                    className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                    ✗ Rechazar
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
 
                 <div className="flex-1" />
 
-                <IconBtn onClick={() => onArchivar(s.id)} title="Archivar" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">🗄️</IconBtn>
-                <IconBtn onClick={() => onRechazar(s.id)} title="Rechazar" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✗</IconBtn>
-                {esTecnico && (
-                    <button onClick={() => onDespachar(s)}
-                        className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
-                        📬 Despachar
-                    </button>
-                )}
-                {esTecnico && !ejecutado && (
-                    <button onClick={() => onEjecutar(s)}
-                        className="h-9 px-3 rounded-xl font-bold text-[11px] shrink-0 active:scale-95 transition-all bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
-                        🔧 Ejecutar
-                    </button>
-                )}
-                <button onClick={() => onCobrar(s.id)}
-                    className="h-9 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
-                    ✓ Cobrar
-                </button>
-            </div>
-        </div>
-    );
-}
-
-// ─── Modal detalle ───────────────────────────────────────────────────────────
-function ModalDetalle({ s, calcularTotal, onClose }) {
-    return (
-        <div className="fixed inset-0 z-[2000] flex items-end" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
-            <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-[#FFFFFF] dark:bg-[#242424]"
-                onClick={e => e.stopPropagation()}>
-                <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
-                <h3 className="text-[16px] font-black mb-1 text-[#1C1917] dark:text-[#F0EEE9]">{s.clienteNombre}</h3>
-                <p className="text-[11px] text-[#A8A29E] mb-4">📍 {s.sedeNombre} · {s.fecha}</p>
-                <div className="overflow-y-auto flex-1 mb-4 space-y-3">
-                    {s.items?.map((it, idx) => (
-                        <div key={idx} className="p-4 rounded-2xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
-                            <div className="flex justify-between mb-1">
-                                <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
-                                <M valor={Number(it.costo || 0)} className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]" />
-                            </div>
-                            <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] mb-2">{it.trabajoRealizado}</p>
-                            {it.repuestosUsados?.length > 0 && (
-                                <p className="text-[10px] text-[#A8A29E] pt-2 border-t border-black/[0.05] dark:border-white/[0.05]">
-                                    <span className="font-bold">Repuestos: </span>
-                                    {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
-                                </p>
-                            )}
-                        </div>
-                    ))}
-                </div>
-                <button onClick={onClose}
-                    className="w-full py-3.5 rounded-2xl font-bold text-sm text-white active:scale-95 bg-[#1C1917] dark:bg-[#F0EEE9] dark:text-[#1C1917]">
-                    Cerrar
+                {/* Acción principal */}
+                <button onClick={() => onEjecutar(s)}
+                    className="h-9 px-4 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                    {ejecutado ? '✓ Ejecutado' : '⚡ Ejecutar y cobrar'}
                 </button>
             </div>
         </div>
@@ -213,17 +199,17 @@ const TIPO_TABS = [
 ];
 
 // ─── Componente principal ────────────────────────────────────────────────────
-export default function PresupuestosManager({ onEjecutar }) {
+export default function PresupuestosManager() {
     const { esAdmin, usuario } = useAuth();
     const [presupuestos, setPresupuestos]   = useState([]);
     const [cargando, setCargando]           = useState(true);
-    const [modalDetalle, setModalDetalle]   = useState(null);
     const [ejecutadosIds, setEjecutadosIds] = useState(new Set());
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
     const [tipoFiltro, setTipoFiltro]             = useState('');
     const [modalCotizar, setModalCotizar]         = useState(false);
     const [presupuestoDespachar, setPresupuestoDespachar] = useState(null);
+    const [presupuestoEjecutar, setPresupuestoEjecutar] = useState(null);
 
     useEffect(() => { cargar(); }, []); // eslint-disable-line
 
@@ -246,16 +232,25 @@ export default function PresupuestosManager({ onEjecutar }) {
         finally  { setCargando(false); }
     };
 
-    const patchEstado = async (id, estado, msg) => {
+    const patchEstado = async (id, estado, msg, extras = {}) => {
         const t = toast.loading('Guardando...');
         try {
-            await api.patch(`/servicios/${id}/estado`, { estado });
+            const payload = { estado, ...extras };
+            await api.patch(`/servicios/${id}/estado`, payload);
             toast.success(msg, { id: t });
             cargar();
         } catch { toast.error('Error', { id: t }); }
     };
 
-    const confirmar = (id) => patchEstado(id, 'COBRADO', '¡Cobrado!');
+    const confirmarServicio = async (id, estadoDestino, { modalidadCobro, montoFinal, observaciones } = {}) => {
+        const labels = { COBRADO: 'Cobrado', COMPLETADO: 'Completado', PENDIENTE_FACTURACION: 'Pendiente facturación' };
+        const extras = {};
+        if (modalidadCobro) extras.modalidadCobro = modalidadCobro;
+        if (montoFinal != null) extras.montoFinal = montoFinal;
+        if (observaciones != null) extras.observaciones = observaciones;
+        await patchEstado(id, estadoDestino, labels[estadoDestino] || 'Actualizado', extras);
+    };
+
     const rechazar  = (id) => { if (!window.confirm('¿Rechazar este presupuesto?')) return; patchEstado(id, 'RECHAZADO', 'Rechazado'); };
     const archivar  = (id) => { if (!window.confirm('¿Archivar este presupuesto?')) return; patchEstado(id, 'ARCHIVADO', 'Archivado'); };
 
@@ -443,12 +438,10 @@ export default function PresupuestosManager({ onEjecutar }) {
                         {filtros.itemsPagina.map(s => (
                             <PresupuestoCard key={s.id} s={s}
                                 calcularTotal={calcularTotal}
-                                onVer={setModalDetalle}
                                 onPDF={generarPDF}
-                                onCobrar={confirmar}
                                 onRechazar={rechazar}
                                 onArchivar={archivar}
-                                onEjecutar={onEjecutar}
+                                onEjecutar={(serv) => setPresupuestoEjecutar(serv)}
                                 onDespachar={setPresupuestoDespachar}
                                 ejecutado={ejecutadosIds.has(s.id)}
                                 modoSeleccion={modoSeleccion}
@@ -462,12 +455,6 @@ export default function PresupuestosManager({ onEjecutar }) {
                 <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
             </div>
 
-            {modalDetalle && (
-                <ModalDetalle s={modalDetalle} calcularTotal={calcularTotal} onClose={() => setModalDetalle(null)} />
-            )}
-
-            {/* Firmas solo para órdenes de servicio, no presupuestos */}
-
             {modalCotizar && (
                 <ModalCotizacionVolumen onCerrar={() => setModalCotizar(false)} />
             )}
@@ -478,6 +465,18 @@ export default function PresupuestosManager({ onEjecutar }) {
                     calcularTotal={calcularTotal}
                     onCerrar={() => { setPresupuestoDespachar(null); cargar(); }}
                     onDespachado={() => { cargar(); }}
+                />
+            )}
+
+            {presupuestoEjecutar && (
+                <EjecutarAdminSheet
+                    servicio={presupuestoEjecutar}
+                    calcularTotal={calcularTotal}
+                    onConfirmar={async (estadoDestino, extras) => {
+                        await confirmarServicio(presupuestoEjecutar.id, estadoDestino, extras);
+                        setPresupuestoEjecutar(null);
+                    }}
+                    onCerrar={() => setPresupuestoEjecutar(null)}
                 />
             )}
         </div>
