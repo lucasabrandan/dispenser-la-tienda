@@ -433,7 +433,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         <Label>Tipo de servicio</Label>
                         <div className="flex gap-2">
                             <button type="button"
-                                onClick={() => { setTipoMO('REPARACION'); setItemActual({ ...itemActual, costoExtra: precioReparacion }); }}
+                                onClick={() => { setTipoMO('REPARACION'); setItemActual({ ...itemActual, costoExtra: precioReparacion, esVisita: false }); }}
                                 className={`flex-1 py-2.5 rounded-xl text-[12px] font-black uppercase transition-all active:scale-95 ${
                                     tipoMO === 'REPARACION'
                                         ? 'bg-[#D13A28] text-white'
@@ -442,7 +442,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                 Reparacion · ${precioReparacion.toLocaleString('es-AR')}
                             </button>
                             <button type="button"
-                                onClick={() => { setTipoMO('VISITA'); setItemActual({ ...itemActual, costoExtra: precioVisita }); }}
+                                onClick={() => { setTipoMO('VISITA'); setItemActual({ ...itemActual, costoExtra: precioVisita, esVisita: true }); }}
                                 className={`flex-1 py-2.5 rounded-xl text-[12px] font-black uppercase transition-all active:scale-95 ${
                                     tipoMO === 'VISITA'
                                         ? 'bg-[#D48800] text-white'

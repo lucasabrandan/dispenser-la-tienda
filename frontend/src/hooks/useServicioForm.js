@@ -466,7 +466,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       totalCalculado: extra + totalR,
       resumenTexto:   tieneSerial
         ? `${tieneDescripcion || ''} | MO: $${extra}`
-        : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`
+        : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`,
+      esVisita:       itemActual.esVisita || false,
     };
     setTicketItems(prev => [...prev, nuevoRenglon]);
     // Calcular precioCliente default para pre-llenar el proximo item

@@ -913,13 +913,19 @@ export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
 
 // ── CONDICIONES + CTA compacto (presupuesto single) ───────────────────────────
 // Agrupa condiciones y llamada a la acción en un solo bloque para evitar página vacía
-export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
-    const defaultConds = [
+export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc, esVisita = false }) {
+    const condsRep = [
         '· Valido por 7 dias corridos desde la fecha de emision.',
         '· Precios incluyen IVA. En efectivo sin factura se aplica precio sin IVA.',
         '· Visita/diagnostico sin reparacion: 50% de la mano de obra.',
         '· Garantia 90 dias mano de obra. Repuestos segun fabricante.',
     ];
+    const condsVis = [
+        '· Valido por 7 dias corridos desde la fecha de emision.',
+        '· Precios incluyen IVA. En efectivo sin factura se aplica precio sin IVA.',
+        '· Garantia 90 dias mano de obra.',
+    ];
+    const defaultConds = esVisita ? condsVis : condsRep;
     // Usar condiciones configuradas si existen
     const conds = empresa.condicionesPDF
         ? empresa.condicionesPDF.split(/[·\n]/).map(c => c.trim()).filter(Boolean).map(c => `· ${c}`)
@@ -960,7 +966,7 @@ export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
 }
 
 // ── CONDICIONES COMPACTAS (presupuesto single — todo en 1 línea + contacto) ──
-export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc }) {
+export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita = false }) {
     // Línea divisora sutil
     doc.setDrawColor(...C.grayBorder);
     doc.setLineWidth(0.15);
@@ -968,7 +974,11 @@ export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc }) 
     y += 4;
 
     // Condiciones configurables desde Usuarios > Config empresa
-    const textoCond = empresa.condicionesPDF || 'Precio incluye IVA (efectivo sin factura: precio sin IVA)  ·  Visita sin reparacion: 50% MO  ·  Garantia 90 dias MO  ·  Valido 7 dias';
+    const defaultRep = 'Precio incluye IVA (efectivo sin factura: precio sin IVA)  ·  Visita sin reparacion: 50% MO  ·  Garantia 90 dias MO  ·  Valido 7 dias';
+    const defaultVis = 'Precio incluye IVA (efectivo sin factura: precio sin IVA)  ·  Garantia 90 dias MO  ·  Valido 7 dias';
+    let textoCond = empresa.condicionesPDF || (esVisita ? defaultVis : defaultRep);
+    // Si es visita, quitar mención de "50% MO" de condiciones custom también
+    if (esVisita) textoCond = textoCond.replace(/[·\s]*Visita sin reparacion:?\s*50%\s*MO/gi, '');
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);

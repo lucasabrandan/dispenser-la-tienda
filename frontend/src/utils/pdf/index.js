@@ -70,7 +70,7 @@ function construirFilasItem(item) {
     const mo = parseFloat(item.costoExtra || 0);
     if (mo > 0) {
         filas.push({
-            concepto:   'Mano de obra / Servicio técnico',
+            concepto:   item.esVisita ? 'Visita / Diagnostico' : 'Mano de obra / Servicio tecnico',
             cant:       1,
             unitario:   mo.toLocaleString('es-AR'),
             importe:    mo.toLocaleString('es-AR'),
@@ -130,8 +130,8 @@ async function generarSingleTecnico(doc, {
     const totalEquipo = parseFloat(item.totalCalculado || item.costo || 0);
 
     const filas = construirFilasItem(item);
-    // Concepto MO más específico: usar el trabajo real en lugar del genérico
-    if (filas.length > 0 && filas[0].esServicio && item.trabajo?.trim()) {
+    // Concepto MO más específico: usar el trabajo real en lugar del genérico (solo reparaciones)
+    if (filas.length > 0 && filas[0].esServicio && item.trabajo?.trim() && !item.esVisita) {
         const t = item.trabajo.trim();
         filas[0].concepto = t.length > 55 ? t.substring(0, 52) + '...' : t;
     }
@@ -619,7 +619,7 @@ async function generarSinglePresupuesto(doc, {
     }
 
     // Condiciones compactas — siempre en la misma página que el contenido
-    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
+    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita: item.esVisita || false });
 
     return y;
 }
@@ -1011,8 +1011,9 @@ async function generarMultiPresupuesto(doc, {
     }
 
     // Condiciones compactas (presupuesto no lleva QR ni firmas)
+    const todosVisita = ticketItems.every(it => it.esVisita);
     y = checkSalto(doc, y, 20);
-    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc });
+    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita: todosVisita });
 
     // Fotos — inline si caben, nueva página si no
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
