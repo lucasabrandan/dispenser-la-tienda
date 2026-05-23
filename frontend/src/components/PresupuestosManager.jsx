@@ -273,6 +273,7 @@ export default function PresupuestosManager() {
                 modeloEquipo:    it.modeloEquipo    || it.equipoModelo    || null,
                 ubicacionEquipo: it.ubicacionEquipo || it.equipoUbicacion || null,
                 trabajo:         it.trabajo         || it.trabajoRealizado || '',
+                esVisita:        it.esVisita || it.trabajoTipo === 'VISITA' || false,
             })) || [],
             fechaServicio: s.fecha,
             leyenda: s.observaciones || '',
