@@ -400,9 +400,9 @@ export default function ServicioManager({
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
                         {tabActual === 'PRESUPUESTO' && (
-                            <button onClick={() => ejecutarMasiva('COBRADO')}
+                            <button onClick={() => ejecutarMasiva('APROBADO')}
                                 className="h-9 px-4 rounded-xl font-bold text-xs text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
-                                ✓ Cobrar
+                                ✓ Aprobar
                             </button>
                         )}
                         {tabActual === 'COMPLETADO' && (
@@ -518,7 +518,6 @@ export default function ServicioManager({
                             presupuestoOrigen={presupuestoOrigen}
                             ordenOrigen={ordenOrigen}
                             modoEjecucion={!!servicioEjecutar}
-                            soloTecnico
                         />
                     </div>
                 </div>

@@ -478,14 +478,14 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                         <p className="text-[10px] font-black text-[#D13A28] dark:text-[#E8422F] uppercase tracking-widest">Si le cobras ${desglose.precioCliente.toLocaleString('es-AR')}</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div className="p-2.5 rounded-xl bg-[#16A34A]/10">
-                                                <p className="text-[9px] font-bold text-[#16A34A] uppercase">Efectivo</p>
+                                                <p className="text-[9px] font-bold text-[#16A34A] uppercase">Efectivo (sin imp.)</p>
                                                 <p className="text-[14px] font-black text-[#16A34A]">${desglose.efectivoTotal.toLocaleString('es-AR')}</p>
                                                 <p className="text-[10px] text-[#16A34A]/70">{esVisitaActual ? 'te queda' : 'c/u'} ${desglose.efectivoCada.toLocaleString('es-AR')}</p>
                                             </div>
                                             <div className="p-2.5 rounded-xl bg-[#8B5CF6]/10">
-                                                <p className="text-[9px] font-bold text-[#8B5CF6] uppercase">Con factura</p>
+                                                <p className="text-[9px] font-bold text-[#8B5CF6] uppercase">Factura (cliente paga)</p>
                                                 <p className="text-[14px] font-black text-[#8B5CF6]">${desglose.facturaCliente.toLocaleString('es-AR')}</p>
-                                                <p className="text-[10px] text-[#8B5CF6]/70">neto ${desglose.facturaNeto.toLocaleString('es-AR')} · {esVisitaActual ? 'te queda' : 'c/u'} ${desglose.facturaCada.toLocaleString('es-AR')}</p>
+                                                <p className="text-[10px] text-[#8B5CF6]/70">neto -30% imp. · {esVisitaActual ? 'te queda' : 'c/u'} ${desglose.facturaCada.toLocaleString('es-AR')}</p>
                                             </div>
                                         </div>
                                     </div>

@@ -914,12 +914,16 @@ export function dibujarCondiciones(doc, { y, pageW, texto = null }) {
 // ── CONDICIONES + CTA compacto (presupuesto single) ───────────────────────────
 // Agrupa condiciones y llamada a la acción en un solo bloque para evitar página vacía
 export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc }) {
-    const conds = [
+    const defaultConds = [
         '· Valido por 7 dias corridos desde la fecha de emision.',
         '· Precios incluyen IVA. En efectivo sin factura se aplica precio sin IVA.',
         '· Visita/diagnostico sin reparacion: 50% de la mano de obra.',
         '· Garantia 90 dias mano de obra. Repuestos segun fabricante.',
     ];
+    // Usar condiciones configuradas si existen
+    const conds = empresa.condicionesPDF
+        ? empresa.condicionesPDF.split(/[·\n]/).map(c => c.trim()).filter(Boolean).map(c => `· ${c}`)
+        : defaultConds;
 
     const cardH = conds.length * 5 + 14;
 

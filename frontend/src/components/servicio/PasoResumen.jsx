@@ -111,13 +111,18 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
         }
     }, [esAdmin]);
 
-    // Auto-descuento 10% a partir de 5 equipos
+    // Auto-descuento 10% a partir de 5 equipos (reversible)
     const [descuentoAutoAplicado, setDescuentoAutoAplicado] = useState(false);
     useEffect(() => {
         if (ticketItems.length >= 5 && descuentoPorcentaje === 0 && !descuentoAutoAplicado) {
             setDescuentoPorcentaje(10);
             setDescuentoAutoAplicado(true);
             toast.success(`10% de descuento aplicado (${ticketItems.length} equipos)`);
+        } else if (ticketItems.length < 5 && descuentoAutoAplicado && descuentoPorcentaje === 10) {
+            // Reversar si quitaron equipos y bajan de 5
+            setDescuentoPorcentaje(0);
+            setDescuentoAutoAplicado(false);
+            toast('Descuento 10% removido (menos de 5 equipos)', { icon: 'ℹ️' });
         }
     }, [ticketItems.length]); // eslint-disable-line
 

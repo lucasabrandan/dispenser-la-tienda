@@ -276,8 +276,11 @@ export function useServicioManager() {
         }
     };
 
-    const calcularTotal = (s) =>
-        s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
+    const calcularTotal = (s) => {
+        const bruto = s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
+        const desc = Number(s.descuentoPorcentaje) || 0;
+        return desc > 0 ? Math.round(bruto * (1 - desc / 100)) : bruto;
+    };
 
     const abrirEditar   = (servicio) => { setServicioEditar(servicio); setModalCrear(true); };
     const cerrarModal   = ()          => { setModalCrear(false); setServicioEditar(null); };

@@ -106,7 +106,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
         if (!pricing) return 0;
         if (modalidadCobro === 'EFECTIVO_SIN_FACTURA') return pricing.totalEfectivo;
         if (modalidadCobro === 'CON_FACTURA') return pricing.totalFacturado;
-        return pricing.moConExtraFacturada + pricing.totalRepuestos; // default: facturado
+        return pricing.totalFacturado; // default: facturado
     }, [pricing, modalidadCobro]);
 
     const guardarFirma = async () => {
@@ -174,10 +174,12 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
             // Resumen de ganancias para el tecnico
             // Visita: el tecnico se queda con TODO (va 1 solo)
             // Reparacion: se divide 50/50 (van 2)
-            const moSinRepuestos = pricing.esVisita ? pricing.visitaPrecio : pricing.precioConExtra;
+            // Neto = moBase (lo que realmente queda), no precioCliente (lo que paga el cliente)
+            const extraNeto = Number(costoMOExtra || 0);
+            const netoBase = pricing.esVisita ? (pricing.moBase / 2) : (pricing.moBase + extraNeto);
             const divisor = pricing.esVisita ? 1 : 2;
-            const netoEfectivo = Math.round(moSinRepuestos / divisor);
-            const netoFactura = Math.round((moSinRepuestos * (1 + pricing.pctIVA / 100) * (1 - pricing.pctImp / 100)) / divisor);
+            const netoEfectivo = Math.round(netoBase / divisor);
+            const netoFactura = Math.round(netoBase / divisor); // mismo neto, la formula ya lo garantiza
             setResumenGanancias({
                 modalidadCobro,
                 montoFinal,
