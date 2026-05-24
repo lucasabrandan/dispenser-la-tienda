@@ -43,7 +43,6 @@ const TABS = [
     { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar'   },
     { id: 'FACTURADO',             label: 'Facturados'   },
     { id: 'COBRADO',               label: 'Cobrados'     },
-    { id: 'HISTORIAL',             label: 'Historial'    },
 ];
 
 const PERIODOS = [
