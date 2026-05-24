@@ -39,10 +39,10 @@ function StatsStrip({ stats, expanded, onToggle }) {
 }
 
 const TABS = [
-    { id: 'PRESUPUESTO',           label: 'Presupuestos' },
-    { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar'   },
-    { id: 'FACTURADO',             label: 'Facturados'   },
-    { id: 'COBRADO',               label: 'Cobrados'     },
+    { id: 'PRESUPUESTO',           label: 'Presupuestos', short: 'Ppto'     },
+    { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar' },
+    { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.'    },
+    { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado'  },
 ];
 
 const PERIODOS = [
@@ -326,17 +326,29 @@ export default function ServicioManager({
                     </div>
                 )}
 
-                {/* Tabs */}
-                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
-                    {TABS.map(t => (
-                        <button key={t.id} onClick={() => cambiarTab(t.id)}
-                            className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${tabActual === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}>
-                            {t.label}
-                            {t.id === tabActual && filtros.totalItems > 0 && (
-                                <span className="ml-1 text-[10px] opacity-70">({filtros.totalItems})</span>
-                            )}
-                        </button>
-                    ))}
+                {/* Pipeline de estados */}
+                <div className="flex items-center rounded-lg overflow-hidden shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    {TABS.map((t, i) => {
+                        const activo = tabActual === t.id;
+                        const idx = TABS.findIndex(x => x.id === tabActual);
+                        const completado = i < idx;
+                        return (
+                            <button key={t.id} onClick={() => cambiarTab(t.id)}
+                                className={`flex-1 h-9 flex items-center justify-center gap-1 text-[10px] font-bold uppercase transition-all active:scale-[0.98] relative ${
+                                    activo
+                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white z-[1]'
+                                        : completado
+                                            ? 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                            : 'bg-white dark:bg-[#1C1C1C] text-[#A8A29E]'
+                                } ${i > 0 ? 'border-l border-black/[0.05] dark:border-white/[0.05]' : ''}`}>
+                                <span className="hidden sm:inline">{t.label}</span>
+                                <span className="sm:hidden">{t.short || t.label}</span>
+                                {activo && filtros.totalItems > 0 && (
+                                    <span className="text-[9px] opacity-70">({filtros.totalItems})</span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Filtros colapsables */}
