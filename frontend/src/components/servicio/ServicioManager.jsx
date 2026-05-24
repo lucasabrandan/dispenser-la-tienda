@@ -19,16 +19,15 @@ function M({ valor, className = '' }) {
     return <span className={className}>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
 }
 
-function StatChip({ label, valor, sub, color, valorCls = '', onClick }) {
+function StatChip({ label, valor, sub, borderColor, valorCls = '', onClick }) {
     return (
         <div
             onClick={onClick}
-            className={`shrink-0 rounded-2xl p-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[112px] ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
-            style={color ? { borderLeft: `3px solid ${color}` } : {}}
+            className={`shrink-0 rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] min-w-[100px] ${borderColor || ''} ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
         >
-            <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">{label}</p>
-            <p className={`text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] ${valorCls}`}>{valor}</p>
-            <p className="text-[9px] text-[#A8A29E] mt-0.5">{sub}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">{label}</p>
+            <p className={`text-lg font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] ${valorCls}`}>{valor}</p>
+            {sub && <p className="text-[10px] text-[#A8A29E] mt-0.5">{sub}</p>}
         </div>
     );
 }
@@ -225,71 +224,73 @@ export default function ServicioManager({
         <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
             {/* Header sticky con buscador */}
-            <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.06]">
-                <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-[22px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
-                        Servicio Técnico
-                    </h2>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setVistaAgenda(v => !v)}
-                            title={vistaAgenda ? 'Vista lista' : 'Vista agenda'}
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${vistaAgenda ? 'bg-[#D13A28] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
-                        >{vistaAgenda ? '☰' : '📅'}</button>
-                        <button
-                            onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
-                            title="Selección múltiple"
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${modoSeleccion ? 'bg-[#D13A28] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
-                        >☑</button>
-                        <button
-                            onClick={() => exportarServiciosCSV(filtros.itemsFiltrados)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[11px] font-black transition-all active:scale-90 bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
-                            title="Exportar CSV"
-                        >CSV</button>
-                        <button
-                            onClick={() => setModalImportar(true)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] transition-all active:scale-90 bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
-                            title="Importar servicios históricos"
-                        >📤</button>
-                        {esAdmin && (
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3">
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
+                            Servicio Técnico
+                        </h2>
+                        <div className="flex items-center gap-1.5">
                             <button
-                                onClick={() => setModalCrear(true)}
-                                className="hidden md:flex h-9 px-5 rounded-xl items-center font-bold text-xs text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]"
-                            >+ Nuevo</button>
+                                onClick={() => setVistaAgenda(v => !v)}
+                                title={vistaAgenda ? 'Vista lista' : 'Vista agenda'}
+                                className={`h-8 px-2.5 rounded-lg flex items-center gap-1 text-[11px] font-bold transition-all active:scale-95 ${vistaAgenda ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}
+                            >{vistaAgenda ? '☰' : '📅'} <span className="hidden sm:inline">{vistaAgenda ? 'Lista' : 'Agenda'}</span></button>
+                            <button
+                                onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
+                                title="Selección múltiple"
+                                className={`h-8 px-2.5 rounded-lg flex items-center gap-1 text-[11px] font-bold transition-all active:scale-95 ${modoSeleccion ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}
+                            >☑ <span className="hidden sm:inline">Seleccionar</span></button>
+                            <button
+                                onClick={() => exportarServiciosCSV(filtros.itemsFiltrados)}
+                                title="Exportar CSV"
+                                className="h-8 px-2.5 rounded-lg flex items-center text-[11px] font-bold transition-all active:scale-95 bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                            >CSV</button>
+                            <button
+                                onClick={() => setModalImportar(true)}
+                                title="Importar históricos"
+                                className="h-8 px-2.5 rounded-lg flex items-center text-[13px] transition-all active:scale-95 bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                            >📤</button>
+                            {esAdmin && (
+                                <button
+                                    onClick={() => setModalCrear(true)}
+                                    className="hidden md:flex h-8 px-4 rounded-lg items-center font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]"
+                                >+ Nuevo</button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                        <input
+                            value={filtros.busqueda}
+                            onChange={e => filtros.setBusqueda(e.target.value)}
+                            placeholder="Cliente, S/N, ubicación, sede..."
+                            className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                        />
+                        {filtros.busqueda && (
+                            <button onClick={() => filtros.setBusqueda('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
                         )}
                     </div>
                 </div>
-
-                <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
-                    <input
-                        value={filtros.busqueda}
-                        onChange={e => filtros.setBusqueda(e.target.value)}
-                        placeholder="Cliente, S/N, ubicación, sede..."
-                        className="w-full h-10 pl-9 pr-8 rounded-xl text-[13px] outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E]"
-                    />
-                    {filtros.busqueda && (
-                        <button onClick={() => filtros.setBusqueda('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
-                    )}
-                </div>
             </div>
 
-            <div className="px-4 pt-3 space-y-3">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-                {/* Stats — scroll horizontal en mobile, fila en tablet */}
-                <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-0.5" style={{ scrollbarWidth: 'none' }}>
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <StatChip
                         label="Fact. mes"
                         valor={<M valor={stats.totalMes} />}
                         sub={`${stats.cantidadMes} servicios`}
-                        color="#D13A28"
+                        borderColor="border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]"
                     />
                     <StatChip
                         label="MO mes"
                         valor={<M valor={stats.gananciaTotal} />}
                         sub="mano de obra"
-                        color="#D48800"
+                        borderColor="border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]"
                         valorCls="text-[#D48800] dark:text-[#F0A500]"
                     />
                     <StatChip
@@ -301,32 +302,17 @@ export default function ServicioManager({
                         label="Pendientes"
                         valor={stats.pendientesCount}
                         sub={<M valor={stats.pendientesVal} />}
-                        color={stats.pendientesCount > 0 ? '#D48800' : undefined}
+                        borderColor={stats.pendientesCount > 0 ? 'border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]' : ''}
                         valorCls={stats.pendientesCount > 0 ? 'text-[#D48800] dark:text-[#F0A500]' : ''}
                         onClick={() => cambiarTab('PRESUPUESTO')}
                     />
                 </div>
 
-                {/* Alerta pendientes */}
-                {tabActual === 'PRESUPUESTO' && stats.pendientesCount > 0 && (
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[var(--warning-bg)] border border-[rgba(212,136,0,0.25)]">
-                        <span className="text-lg shrink-0">⚠️</span>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-black text-[var(--warning-tx)]">
-                                {stats.pendientesCount} sin confirmar
-                            </p>
-                            <p className="text-[11px] font-bold text-[#D48800] dark:text-[#F0A500]">
-                                <M valor={stats.pendientesVal} /> por cobrar
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Tabs — scroll horizontal en mobile */}
-                <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-0.5" style={{ scrollbarWidth: 'none' }}>
+                {/* Tabs */}
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
                     {TABS.map(t => (
                         <button key={t.id} onClick={() => cambiarTab(t.id)}
-                            className={`shrink-0 h-10 px-3 rounded-xl font-bold text-[11px] uppercase transition-all active:scale-95 ${tabActual === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${tabActual === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}>
                             {t.label}
                             {t.id === tabActual && filtros.totalItems > 0 && (
                                 <span className="ml-1 text-[10px] opacity-70">({filtros.totalItems})</span>
@@ -338,18 +324,18 @@ export default function ServicioManager({
                 {/* Toggle filtros avanzados */}
                 <button
                     onClick={() => setMostrarRango(v => !v)}
-                    className={`w-full h-8 rounded-xl font-bold text-[11px] uppercase flex items-center justify-center gap-1.5 transition-all active:scale-95 ${mostrarRango ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                    className={`w-full h-7 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 transition-all active:scale-95 ${mostrarRango ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}>
                     {mostrarRango ? '▲' : '▼'} Filtros avanzados
                 </button>
 
                 {mostrarRango && (
                     <>
                         {/* Período */}
-                        <div className="flex gap-2 overflow-x-auto -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+                        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
                             {PERIODOS.map(p => (
                                 <button key={p.id}
                                     onClick={() => filtros.aplicarRapido(p.id)}
-                                    className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                                    className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}>
                                     {p.label}
                                 </button>
                             ))}
@@ -432,12 +418,12 @@ export default function ServicioManager({
                         ))}
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
-                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-[36px] mb-2">📋</p>
-                        <p className="font-bold text-[#A8A29E]">Sin resultados</p>
+                    <div className="text-center py-12 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <p className="text-2xl mb-1">📋</p>
+                        <p className="text-[12px] font-bold text-[#A8A29E]">Sin resultados</p>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                         {filtros.itemsPagina.map(s => (
                             <ServicioCard key={s.id} servicio={s}
                                 modoSeleccion={modoSeleccion}
@@ -517,7 +503,7 @@ export default function ServicioManager({
 
             {/* Modal detalle */}
             {modalDetalle && (
-                <div className="fixed inset-0 z-[2000] flex items-end" style={{ background: 'rgba(0,0,0,0.5)' }}
+                <div className="fixed inset-0 z-[2000] flex items-end bg-black/50"
                     onClick={() => setModalDetalle(null)}>
                     <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-[#FFFFFF] dark:bg-[#242424]"
                         onClick={e => e.stopPropagation()}>
