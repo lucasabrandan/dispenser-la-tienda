@@ -342,19 +342,20 @@ export default function ServicioManager({
                         </div>
 
                         {/* Rango personalizado */}
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                             <input type="date" value={filtros.desde}
                                 onChange={e => filtros.aplicarRango(e.target.value, filtros.hasta)}
-                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                            <span className="text-[10px] text-[#A8A29E]">a</span>
                             <input type="date" value={filtros.hasta}
                                 onChange={e => filtros.aplicarRango(filtros.desde, e.target.value)}
-                                className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                         </div>
 
                         {/* Filtro técnico — admin */}
                         {esAdmin && tecnicos.length > 0 && (
                             <select value={usuarioId} onChange={e => setUsuarioId(e.target.value)}
-                                className="w-full h-10 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]">
+                                className="w-full h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                                 <option value="">Todos los técnicos</option>
                                 {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                             </select>
@@ -362,11 +363,11 @@ export default function ServicioManager({
 
                         {/* Ordenamiento */}
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider shrink-0">Orden</span>
+                            <span className="text-[10px] font-bold text-[#A8A29E] uppercase shrink-0">Orden</span>
                             <select
                                 value={ordenServicio}
                                 onChange={e => setOrdenServicio(e.target.value)}
-                                className="flex-1 h-9 px-3 rounded-xl text-[12px] font-bold border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none"
+                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
                             >
                                 <option value="fechaServicio,desc">Más reciente primero</option>
                                 <option value="fechaServicio,asc">Más antiguo primero</option>
