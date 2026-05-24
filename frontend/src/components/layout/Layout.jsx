@@ -37,22 +37,11 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             <div className="flex-1 flex flex-col min-w-0">
 
                 {/* HEADER MOBILE */}
-                <header className="md:hidden h-[72px] px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08] dark:border-white/[0.07]">
-                    {/* Hamburger */}
-                    <button
-                        onClick={() => setDrawerOpen(true)}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-[#9E9A94]"
-                    >
-                        <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
-                            <rect width="18" height="2" rx="1" fill="currentColor"/>
-                            <rect y="6" width="12" height="2" rx="1" fill="currentColor"/>
-                            <rect y="12" width="18" height="2" rx="1" fill="currentColor"/>
-                        </svg>
-                    </button>
+                <header className="md:hidden h-14 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08] dark:border-white/[0.07]">
 
                     {/* Logo + sección actual */}
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => setVistaActual('caja')}>
-                        <img src={logo} alt="Dispenser La Tienda" className="h-14 w-auto" />
+                        <img src={logo} alt="Dispenser La Tienda" className="h-10 w-auto" />
                         <span className="font-black text-[13px] tracking-tight uppercase text-[#1C1917] dark:text-[#F0EEE9] leading-none">
                             {NOMBRES_SECCION[vistaActual] || 'Dispenser'}
                         </span>
@@ -60,14 +49,11 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
 
                     {/* Iconos derecha */}
                     <div className="flex items-center gap-0.5">
-
-                        {/* Ojito — ocultar/mostrar montos */}
                         <button
                             onClick={toggleMontos}
                             className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90 ${
                                 montosVisibles ? 'text-[#9E9A94]' : 'text-[#E8422F]'
                             }`}
-                            title={montosVisibles ? 'Ocultar montos' : 'Mostrar montos'}
                         >
                             {montosVisibles ? (
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -82,24 +68,20 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                                 </svg>
                             )}
                         </button>
-
-                        {/* Toggle dark/light */}
                         <button
                             onClick={toggleTheme}
                             className={`w-9 h-9 flex items-center justify-center rounded-xl transition-colors ${
                                 isDark ? 'text-[#F0A500]' : 'text-[#9E9A94]'
                             }`}
-                            title={isDark ? 'Modo claro' : 'Modo oscuro'}
                         >
                             <span className="text-[18px]">{isDark ? '☀️' : '🌙'}</span>
                         </button>
-
                     </div>
                 </header>
 
                 {/* CONTENIDO */}
                 <main className="flex-1 min-h-0 overflow-y-auto">
-                    <div className="w-full pb-24 md:pb-0">
+                    <div className="w-full max-w-7xl mx-auto pb-24 md:pb-0">
                         {children}
                     </div>
                 </main>
@@ -114,7 +96,8 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             />
 
             {/* BOTTOM NAV MOBILE */}
-            <BottomNav vistaActual={vistaActual} setVistaActual={setVistaActual} />
+            <BottomNav vistaActual={vistaActual} setVistaActual={setVistaActual}
+                onMoreClick={() => setDrawerOpen(true)} />
         </div>
     );
 }

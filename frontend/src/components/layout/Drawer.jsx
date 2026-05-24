@@ -2,65 +2,24 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// IDs deben coincidir EXACTAMENTE con App.js, Sidebar y BottomNav
-// ─────────────────────────────────────────────────────────────────────────────
-const MENU_OPERACIONES_ADMIN = [
-    { id: 'caja',             nombre: '🏠 Panel'            },
-    { id: 'venta',            nombre: '🛒 Venta / Insumos'  },
-    { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico' },
-    { id: 'historial',        nombre: '📋 Historial'        },
-    { id: 'presupuestos',     nombre: '💰 Presupuestos'     },
-];
-
-const MENU_OPERACIONES_TECNICO = [
-    { id: 'servicio-tecnico', nombre: '🔧 Servicio Técnico' },
-    { id: 'mis-ordenes',      nombre: '📌 Mis Órdenes'      },
-    { id: 'historial',        nombre: '📋 Historial'        },
-];
-
-const MENU_ADMIN_ITEMS = [
-    { id: 'clientes',  nombre: '👥 Clientes'  },
-    { id: 'productos', nombre: '📦 Productos' },
-    { id: 'despacho',  nombre: '📌 Despacho'  },
-    { id: 'radar',     nombre: '🚨 Radar'     },
-    { id: 'finanzas',  nombre: '💹 Finanzas'  },
-    { id: 'usuarios',  nombre: '🔐 Usuarios'  },
+// Solo secciones que NO están en el BottomNav
+const MENU_ITEMS = [
+    { id: 'presupuestos', nombre: 'Presupuestos',  icon: '💰' },
+    { id: 'clientes',     nombre: 'Clientes',       icon: '👥' },
+    { id: 'productos',    nombre: 'Productos',      icon: '📦' },
+    { id: 'despacho',     nombre: 'Despacho',        icon: '📌' },
+    { id: 'radar',        nombre: 'Radar',           icon: '🚨' },
+    { id: 'finanzas',     nombre: 'Finanzas',        icon: '💹' },
+    { id: 'usuarios',     nombre: 'Usuarios',        icon: '🔐' },
 ];
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
-    const { usuario, logout, esAdmin } = useAuth();
+    const { usuario, logout } = useAuth();
     const { pendientes, ordenesActivas } = useBadges();
-    const menuOperaciones = esAdmin ? MENU_OPERACIONES_ADMIN : MENU_OPERACIONES_TECNICO;
 
     const handleClick = (id) => {
         setVistaActual(id);
         onClose();
-    };
-
-    const MenuButton = ({ item }) => {
-        const activa = vistaActual === item.id;
-        const badge =
-            item.id === 'servicio-tecnico' && pendientes > 0 ? pendientes :
-            (item.id === 'mis-ordenes' || item.id === 'despacho') && ordenesActivas > 0 ? ordenesActivas :
-            null;
-        return (
-            <button
-                onClick={() => handleClick(item.id)}
-                className={`w-full px-4 py-3 rounded-xl text-left text-sm font-bold transition-all flex items-center ${
-                    activa
-                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
-                        : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
-                }`}
-            >
-                <span className="flex-1">{item.nombre}</span>
-                {badge && (
-                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${activa ? 'bg-white/30 text-white' : 'bg-[#D13A28] dark:bg-[#E8422F] text-white'}`}>
-                        {badge}
-                    </span>
-                )}
-            </button>
-        );
     };
 
     return (
@@ -73,73 +32,69 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 />
             )}
 
-            {/* Panel */}
-            <div className={`fixed top-0 left-0 h-full w-64 bg-[#EFEDEA] dark:bg-[#1C1C1C] shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
-                isOpen ? 'translate-x-0' : '-translate-x-full'
+            {/* Panel lateral */}
+            <div className={`fixed top-0 right-0 h-full w-72 bg-[#EFEDEA] dark:bg-[#1C1C1C] shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
+                isOpen ? 'translate-x-0' : 'translate-x-full'
             }`}>
 
                 {/* Header */}
-                <div className="p-6 border-b border-black/[0.07] dark:border-white/[0.07] flex justify-between items-center">
-                    <h2 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9]">MENÚ</h2>
+                <div className="p-5 border-b border-black/[0.07] dark:border-white/[0.07] flex justify-between items-center">
+                    <div>
+                        <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{usuario?.nombre}</p>
+                        <p className="text-[9px] font-bold text-[#A8A29E] uppercase tracking-wider">
+                            {usuario?.rol === 'ADMIN' ? 'Administrador' : 'Técnico'}
+                        </p>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="text-2xl text-[#A8A29E] hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-[#A8A29E] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] transition-colors"
                     >
-                        ✕
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
                     </button>
                 </div>
 
                 {/* Items */}
-                <div className="overflow-y-auto h-[calc(100%-140px)]">
-
-                    <div className="p-4">
-                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
-                            Operaciones
-                        </p>
-                        <div className="space-y-1">
-                            {menuOperaciones.map(item => <MenuButton key={item.id} item={item} />)}
-                        </div>
-                    </div>
-
-                    {esAdmin && (
-                        <div className="p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
-                            <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
-                                Administración
-                            </p>
-                            <div className="space-y-1">
-                                {MENU_ADMIN_ITEMS.map(item => <MenuButton key={item.id} item={item} />)}
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-3">
-                            Cuenta
-                        </p>
-                        <div className="mb-3 px-1">
-                            <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
-                                {usuario?.nombre}
-                            </p>
-                            <p className="text-[9px] font-bold text-[#A8A29E] uppercase tracking-wider">
-                                {usuario?.rol === 'ADMIN' ? 'Administrador' : 'Técnico'}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => { logout(); onClose(); }}
-                            className="w-full px-4 py-3 rounded-xl text-left text-sm font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all"
-                        >
-                            🚪 Cerrar sesión
-                        </button>
-                    </div>
+                <div className="p-3 space-y-0.5">
+                    {MENU_ITEMS.map(item => {
+                        const activa = vistaActual === item.id;
+                        const badge =
+                            item.id === 'despacho' && ordenesActivas > 0 ? ordenesActivas : null;
+                        return (
+                            <button
+                                key={item.id}
+                                onClick={() => handleClick(item.id)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-[13px] font-bold transition-all active:scale-[0.98] ${
+                                    activa
+                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
+                                        : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
+                                }`}
+                            >
+                                <span>{item.icon}</span>
+                                <span className="flex-1">{item.nombre}</span>
+                                {badge && (
+                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${
+                                        activa ? 'bg-white/30 text-white' : 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+                                    }`}>
+                                        {badge}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
 
-                {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07] bg-[#EFEDEA] dark:bg-[#1C1C1C]">
-                    <p className="text-[9px] text-[#A8A29E] text-center uppercase tracking-widest font-black">
+                {/* Cerrar sesión */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
+                    <button
+                        onClick={() => { logout(); onClose(); }}
+                        className="w-full px-4 py-3 rounded-xl text-left text-[13px] font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all"
+                    >
+                        🚪 Cerrar sesión
+                    </button>
+                    <p className="text-[8px] text-[#A8A29E] text-center mt-2 uppercase tracking-widest font-bold">
                         Dispenser La Tienda v1.0
-                    </p>
-                    <p className="text-[8px] text-[#A8A29E] text-center mt-0.5">
-                        www.dispenserlatienda.com.ar
                     </p>
                 </div>
             </div>

@@ -6,7 +6,7 @@ const NAV_ADMIN = [
     { id: 'venta',            nombre: 'Venta',    icon: '🛒' },
     { id: 'servicio-tecnico', nombre: 'Técnico',  icon: '🔧' },
     { id: 'historial',        nombre: 'Historial',icon: '📋' },
-    { id: 'finanzas',         nombre: 'Finanzas', icon: '💹' },
+    { id: '_more',            nombre: 'Más',      icon: '⋯'  },
 ];
 
 const NAV_TECNICO = [
@@ -15,24 +15,22 @@ const NAV_TECNICO = [
     { id: 'historial',        nombre: 'Historial',icon: '📋' },
 ];
 
-// ─── Colores de marca ────────────────────────────────────────────────────────
-// Activo:   rojo #E8422F (dark) / #D13A28 (light)
-// Inactivo: gris #606060 (dark) / #9E9E9E (light)
-// Fondo:    #1A1A1A (dark) / #FFFFFF (light)
-// Borde:    rgba(255,255,255,0.08) / rgba(0,0,0,0.08)
-// ────────────────────────────────────────────────────────────────────────────
+// Secciones que se acceden desde "Más"
+const SECCIONES_MAS = ['presupuestos', 'clientes', 'productos', 'despacho', 'radar', 'finanzas', 'usuarios'];
 
-export default function BottomNav({ vistaActual, setVistaActual }) {
+export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) {
     const { esAdmin } = useAuth();
     const NAV_ITEMS = esAdmin ? NAV_ADMIN : NAV_TECNICO;
 
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#EFEDEA] dark:bg-[#1C1C1C] transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">
 
-            {/* Indicador de sección activa — línea roja arriba */}
+            {/* Indicador de sección activa */}
             <div className="flex">
                 {NAV_ITEMS.map(item => {
-                    const activo = vistaActual === item.id;
+                    const activo = item.id === '_more'
+                        ? SECCIONES_MAS.includes(vistaActual)
+                        : vistaActual === item.id;
                     return (
                         <div
                             key={item.id + '-indicator'}
@@ -44,24 +42,19 @@ export default function BottomNav({ vistaActual, setVistaActual }) {
 
             <div className="flex justify-around items-center h-16">
                 {NAV_ITEMS.map(item => {
-                    const activo = vistaActual === item.id;
+                    const activo = item.id === '_more'
+                        ? SECCIONES_MAS.includes(vistaActual)
+                        : vistaActual === item.id;
                     return (
                         <button
                             key={item.id}
-                            onClick={() => setVistaActual(item.id)}
+                            onClick={() => item.id === '_more' ? onMoreClick?.() : setVistaActual(item.id)}
                             className="flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all active:scale-90"
                         >
-                            <span
-                                className="text-[20px] transition-transform duration-200"
-                                style={{ transform: activo ? 'scale(1.15)' : 'scale(1)' }}
-                            >
+                            <span className={`text-[20px] transition-transform duration-200 ${activo ? 'scale-110' : 'scale-100'}`}>
                                 {item.icon}
                             </span>
-                            <span
-                                className={`text-[9px] font-bold uppercase tracking-tight transition-colors duration-200 ${
-                                    activo ? 'text-[#E8422F]' : 'text-[#9E9A94]'
-                                }`}
-                            >
+                            <span className={`text-[9px] font-bold uppercase tracking-tight transition-colors duration-200 ${activo ? 'text-[#E8422F]' : 'text-[#9E9A94]'}`}>
                                 {item.nombre}
                             </span>
                         </button>
@@ -69,8 +62,8 @@ export default function BottomNav({ vistaActual, setVistaActual }) {
                 })}
             </div>
 
-            {/* Safe area para iPhone con home indicator */}
-            <div style={{ height: 'env(safe-area-inset-bottom)' }} />
+            {/* Safe area para iPhone */}
+            <div className="h-[env(safe-area-inset-bottom)]" />
         </nav>
     );
 }
