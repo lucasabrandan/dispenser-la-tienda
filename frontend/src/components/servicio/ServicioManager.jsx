@@ -245,54 +245,53 @@ export default function ServicioManager({
             {/* Header minimalista */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
-                            Servicio Técnico
-                        </h2>
-                        <div className="flex items-center gap-1.5">
-                            {/* Menú overflow — CSV/Import */}
-                            <div className="relative">
-                                <button onClick={() => setMenuOverflow(v => !v)}
-                                    className="h-8 w-8 rounded-lg flex items-center justify-center text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
-                                    ⋯
-                                </button>
-                                {menuOverflow && (
-                                    <>
-                                        <div className="fixed inset-0 z-10" onClick={() => setMenuOverflow(false)} />
-                                        <div className="absolute right-0 top-10 z-20 w-48 rounded-xl bg-white dark:bg-[#242424] shadow-lg border border-black/[0.08] dark:border-white/[0.08] py-1">
-                                            <button onClick={() => { exportarServiciosCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
-                                                className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
-                                                📥 Exportar CSV
-                                            </button>
-                                            <button onClick={() => { setModalImportar(true); setMenuOverflow(false); }}
-                                                className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
-                                                📤 Importar históricos
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                            {esAdmin && (
-                                <button onClick={() => setModalCrear(true)}
-                                    className="h-8 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
-                                    + Nuevo
-                                </button>
+                    {/* Título — solo desktop (mobile lo muestra el header) */}
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9] mb-2.5">
+                        Servicio Técnico
+                    </h2>
+
+                    {/* Búsqueda + acciones */}
+                    <div className="flex gap-1.5">
+                        <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <input
+                                value={filtros.busqueda}
+                                onChange={e => filtros.setBusqueda(e.target.value)}
+                                placeholder="Cliente, S/N, ubicación, sede..."
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                            />
+                            {filtros.busqueda && (
+                                <button onClick={() => filtros.setBusqueda('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
                             )}
                         </div>
-                    </div>
-
-                    {/* Búsqueda — siempre visible */}
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
-                        <input
-                            value={filtros.busqueda}
-                            onChange={e => filtros.setBusqueda(e.target.value)}
-                            placeholder="Cliente, S/N, ubicación, sede..."
-                            className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
-                        />
-                        {filtros.busqueda && (
-                            <button onClick={() => filtros.setBusqueda('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
+                        {/* Menú overflow */}
+                        <div className="relative">
+                            <button onClick={() => setMenuOverflow(v => !v)}
+                                className="h-9 w-9 rounded-lg flex items-center justify-center text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                                ⋯
+                            </button>
+                            {menuOverflow && (
+                                <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setMenuOverflow(false)} />
+                                    <div className="absolute right-0 top-11 z-20 w-48 rounded-xl bg-white dark:bg-[#242424] shadow-lg border border-black/[0.08] dark:border-white/[0.08] py-1">
+                                        <button onClick={() => { exportarServiciosCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
+                                            className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
+                                            📥 Exportar CSV
+                                        </button>
+                                        <button onClick={() => { setModalImportar(true); setMenuOverflow(false); }}
+                                            className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
+                                            📤 Importar históricos
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        {esAdmin && (
+                            <button onClick={() => setModalCrear(true)}
+                                className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] shrink-0">
+                                + Nuevo
+                            </button>
                         )}
                     </div>
                 </div>

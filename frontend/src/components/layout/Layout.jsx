@@ -40,9 +40,9 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                 <header className="md:hidden h-14 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08] dark:border-white/[0.07]">
 
                     {/* Logo + sección actual */}
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setVistaActual('caja')}>
-                        <img src={logo} alt="Dispenser La Tienda" className="h-10 w-auto" />
-                        <span className="font-black text-[13px] tracking-tight uppercase text-[#1C1917] dark:text-[#F0EEE9] leading-none">
+                    <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setVistaActual('caja')}>
+                        <img src={logo} alt="Dispenser La Tienda" className="h-12 w-auto" />
+                        <span className="font-black text-[14px] tracking-tight uppercase text-[#1C1917] dark:text-[#F0EEE9] leading-none">
                             {NOMBRES_SECCION[vistaActual] || 'Dispenser'}
                         </span>
                     </div>
