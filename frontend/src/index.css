@@ -59,14 +59,21 @@ body {
   transition: padding 0.3s ease;
 }
 
-/* En computadoras le damos más aire */
+/* En computadoras: más aire + escala más legible */
 @media (min-width: 768px) {
   .main-content {
     padding: 40px;
-    padding-bottom: 40px; /* En PC no hace falta el padding-bottom de 100px */
+    padding-bottom: 40px;
   }
   body {
     padding-bottom: 0;
+  }
+}
+
+/* Desktop: escalar toda la UI para mejor legibilidad */
+@media (min-width: 1024px) {
+  main {
+    zoom: 1.2;
   }
 }
 

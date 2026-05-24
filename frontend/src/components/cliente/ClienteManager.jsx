@@ -11,7 +11,7 @@ import SedeModal          from '../SedeModal';
 import EquipoModal        from '../EquipoModal';
 import Paginacion         from '../ui/Paginacion';
 
-const POR_PAGINA = 10;
+const POR_PAGINA = 18;
 
 const CHIPS = [
     { id: null,             label: 'Todos' },
@@ -90,7 +90,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
             {/* BARRA STICKY — título + buscador + chips */}
             <div className="sticky top-0 z-30 py-3 bg-[#F5F3F1]/90 dark:bg-[#141414]/90 backdrop-blur-xl -mx-4 px-4 border-b border-black/[0.07] dark:border-white/[0.07] mb-4">
                 {/* Título + contador */}
-                <div className="flex items-baseline justify-between max-w-3xl mx-auto mb-2">
+                <div className="flex items-baseline justify-between mx-auto mb-2">
                     <h2 className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tight leading-none">
                         Clientes
                     </h2>
@@ -99,7 +99,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     </p>
                 </div>
                 {/* Buscador + botón nuevo */}
-                <div className="flex gap-2 max-w-3xl mx-auto">
+                <div className="flex gap-2 mx-auto">
                     <div className="relative flex-1">
                         <input
                             placeholder="Buscar por cliente, sede, teléfono, S/N..."
@@ -125,7 +125,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     </button>
                 </div>
                 {/* Chips */}
-                <div className="flex gap-2 overflow-x-auto mt-2 pb-0.5 no-scrollbar max-w-3xl mx-auto">
+                <div className="flex gap-2 overflow-x-auto mt-2 pb-0.5 no-scrollbar mx-auto">
                     {CHIPS.map(chip => (
                         <button
                             key={chip.id ?? 'todos'}

@@ -141,8 +141,16 @@ public class ServicioService {
             List<Predicate> predicates = new ArrayList<>();
             if (tipoStr != null && !tipoStr.isBlank())
                 predicates.add(cb.equal(root.get("servicioTipo"), ServicioTipo.valueOf(tipoStr)));
-            if (estadoStr != null && !estadoStr.isBlank())
-                predicates.add(cb.equal(root.get("estado"), EstadoServicio.valueOf(estadoStr)));
+            if (estadoStr != null && !estadoStr.isBlank()) {
+                if (estadoStr.contains(",")) {
+                    List<EstadoServicio> estados = java.util.Arrays.stream(estadoStr.split(","))
+                            .map(String::trim).map(EstadoServicio::valueOf)
+                            .collect(java.util.stream.Collectors.toList());
+                    predicates.add(root.get("estado").in(estados));
+                } else {
+                    predicates.add(cb.equal(root.get("estado"), EstadoServicio.valueOf(estadoStr)));
+                }
+            }
             if (busqueda != null && !busqueda.isBlank()) {
                 String like = "%" + busqueda.toLowerCase() + "%";
                 // JOIN items→equipo para buscar por número de serie

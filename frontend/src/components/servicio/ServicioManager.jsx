@@ -35,12 +35,10 @@ function StatChip({ label, valor, sub, color, valorCls = '', onClick }) {
 
 const TABS = [
     { id: 'PRESUPUESTO',           label: 'Presupuestos' },
-    { id: 'COMPLETADO',            label: 'Realizados'   },
     { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar'   },
     { id: 'FACTURADO',             label: 'Facturados'   },
     { id: 'COBRADO',               label: 'Cobrados'     },
-    { id: 'REALIZADO',             label: 'Anteriores'   },
-    { id: 'ARCHIVADO',             label: 'Archivados'   },
+    { id: 'HISTORIAL',             label: 'Historial'    },
 ];
 
 const PERIODOS = [
@@ -403,12 +401,6 @@ export default function ServicioManager({
                             <button onClick={() => ejecutarMasiva('APROBADO')}
                                 className="h-9 px-4 rounded-xl font-bold text-xs text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
                                 ✓ Aprobar
-                            </button>
-                        )}
-                        {tabActual === 'COMPLETADO' && (
-                            <button onClick={() => ejecutarMasiva('COBRADO')}
-                                className="h-9 px-4 rounded-xl font-bold text-xs text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
-                                ✓ Cobrado
                             </button>
                         )}
                         <button onClick={() => ejecutarMasiva('ARCHIVADO')}

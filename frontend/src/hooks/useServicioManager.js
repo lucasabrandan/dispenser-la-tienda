@@ -109,7 +109,12 @@ export function useServicioManager() {
                 size: 20,
                 sort: ordenServicio,
             };
-            if (estado !== 'TODOS')  params.estado    = estado;
+            // Tabs compuestos: mapear a estados reales del backend
+            const estadoMap = {
+                COBRADO:   'COBRADO,REALIZADO',
+                HISTORIAL: 'COMPLETADO,RECHAZADO,CANCELADO,ARCHIVADO',
+            };
+            if (estado !== 'TODOS')  params.estado = estadoMap[estado] || estado;
             if (busquedaApi)         params.busqueda  = busquedaApi;
             if (fechas.desde)        params.desde     = fechas.desde;
             if (fechas.hasta)        params.hasta     = fechas.hasta;
@@ -289,7 +294,7 @@ export function useServicioManager() {
     // setFiltroTab: alias para compatibilidad con ServicioManager (click en card Pendientes)
     const setFiltroTab = (tab) => {
         if      (tab === 'PENDIENTES') setEstado('PRESUPUESTO');
-        else if (tab === 'REALIZADOS') setEstado('REALIZADO');
+        else if (tab === 'REALIZADOS') setEstado('COBRADO');
         else                           setEstado('TODOS');
     };
 
