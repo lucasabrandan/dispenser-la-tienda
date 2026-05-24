@@ -1,14 +1,9 @@
 import React from 'react';
 import { useMontos } from '../../context/MontosContext';
 
-/**
- * VentaList — lista de ventas con acciones por fila.
- * Componente presentacional puro, usa sistema de colores del proyecto.
- */
-
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
-    if (!montosVisibles) return <span className={className}>••••••</span>;
+    if (!montosVisibles) return <span className={className}>······</span>;
     return (
         <span className={className}>
             {prefix}{typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}
@@ -16,10 +11,9 @@ function M({ valor, prefix = '$', className = '' }) {
     );
 }
 
-// Badge de estado usando variables CSS del sistema
 const badgeClass = (v) => {
-    if (v.estado === 'PRESUPUESTO') return 'bg-[var(--warning-bg)] text-[var(--warning-tx)]';
-    if (v.estado === 'REALIZADO')   return 'bg-[var(--success-bg)] text-[var(--success-tx)]';
+    if (v.estado === 'PRESUPUESTO') return 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]';
+    if (v.estado === 'REALIZADO')   return 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]';
     return 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]';
 };
 
@@ -29,158 +23,124 @@ const badgeLabel = (v) => {
     return v.estado;
 };
 
+// Botón de acción compacto con label
+const Accion = ({ onClick, icon, label, className = '', href, ...rest }) => {
+    const cls = `inline-flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-bold transition-all active:scale-95 ${className}`;
+    if (href) return <a href={href} className={cls} {...rest}>{icon} <span className="hidden sm:inline">{label}</span></a>;
+    return <button onClick={onClick} className={cls}>{icon} <span className="hidden sm:inline">{label}</span></button>;
+};
+
 export default function VentaList({
     ventas, cargando,
-    busqueda, setBusqueda,
-    filtroTab, setFiltroTab,
     calcularTotal,
-    onEditar,
-    onConfirmar,
-    onEliminar,
-    onPDF,
-    onDuplicar,
+    onEditar, onConfirmar, onEliminar, onPDF, onDuplicar,
 }) {
+    if (cargando) return <div className="text-center py-16 text-[#A8A29E] font-bold">Cargando ventas...</div>;
+
+    if (ventas.length === 0) return (
+        <div className="text-center py-12 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+            <p className="text-2xl mb-1">📭</p>
+            <p className="text-[12px] font-bold text-[#A8A29E]">No hay ventas en esta categoría</p>
+        </div>
+    );
+
     return (
-        <div>
-            {/* LISTA */}
-            {cargando ? (
-                <div className="text-center py-16 text-[#A8A29E] font-bold">
-                    Cargando ventas...
-                </div>
-            ) : ventas.length === 0 ? (
-                <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] text-[#A8A29E] font-bold">
-                    No hay ventas en esta categoría.
-                </div>
-            ) : (
-                <div className="flex flex-col gap-3">
-                    {ventas.map(v => {
-                        const esPendiente = v.estado === 'PRESUPUESTO';
-                        const diasPendiente = esPendiente && v.fecha
-                            ? Math.floor((Date.now() - new Date(v.fecha + 'T00:00:00').getTime()) / 86400000)
-                            : 0;
-                        const antiguedadCritica = diasPendiente > 7;
+        <div className="flex flex-col gap-2">
+            {ventas.map(v => {
+                const esPendiente = v.estado === 'PRESUPUESTO';
+                const diasPendiente = esPendiente && v.fecha
+                    ? Math.floor((Date.now() - new Date(v.fecha + 'T00:00:00').getTime()) / 86400000)
+                    : 0;
 
-                        return (
-                        <div key={v.id}
-                            className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden transition-colors">
+                return (
+                    <div key={v.id}
+                        className={`rounded-xl shadow-sm border border-black/[0.05] dark:border-white/[0.05] overflow-hidden border-l-[3px] ${
+                            esPendiente
+                                ? 'border-l-[#D48800] dark:border-l-[#F0A500] bg-[#FFFBF0] dark:bg-[#242118]'
+                                : v.estado === 'REALIZADO'
+                                    ? 'border-l-[#16A34A] bg-white dark:bg-[#242424]'
+                                    : 'border-l-[#A8A29E] bg-white dark:bg-[#242424]'
+                        }`}>
 
-                            {/* CUERPO */}
-                            <div className="p-4">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <div className="flex gap-2 items-center mb-1">
-                                            <span className="text-[11px] text-[#A8A29E] font-bold">#{v.id}</span>
-                                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase ${badgeClass(v)}`}>
-                                                {badgeLabel(v)}
+                        {/* Contenido */}
+                        <div className="p-3.5">
+                            <div className="flex justify-between items-start">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 mb-1">
+                                        <span className="text-[10px] text-[#A8A29E] font-bold">#{v.id}</span>
+                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ${badgeClass(v)}`}>
+                                            {badgeLabel(v)}
+                                        </span>
+                                        {esPendiente && diasPendiente > 0 && (
+                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
+                                                diasPendiente > 7
+                                                    ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]'
+                                                    : 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'
+                                            }`}>
+                                                {diasPendiente}d
                                             </span>
-                                            {esPendiente && diasPendiente > 0 && (
-                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${antiguedadCritica ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]' : 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'}`}>
-                                                    {diasPendiente}d
-                                                </span>
-                                            )}
-                                        </div>
-                                        <h4 className="text-[15px] font-extrabold text-[#1C1917] dark:text-[#F0EEE9] tracking-tight leading-tight">
-                                            {v.clienteNombre}
-                                        </h4>
-                                        <p className="text-[11px] text-[#A8A29E] font-medium mt-0.5">
-                                            {v.sedeNombre} · {v.fecha}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <M valor={calcularTotal(v)} className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none block" />
-                                        {v.descuentoPorcentaje > 0 && (
-                                            <p className="text-[10px] text-[#D13A28] dark:text-[#E8422F] font-bold">
-                                                -{v.descuentoPorcentaje}% desc.
-                                            </p>
                                         )}
                                     </div>
+                                    <p className="text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{v.clienteNombre}</p>
+                                    <p className="text-[10px] text-[#A8A29E] mt-0.5">{v.sedeNombre} · {v.fecha}</p>
                                 </div>
-
-                                {/* DETALLE PRODUCTOS */}
-                                {v.items?.length > 0 && (() => {
-                                    const prods = v.items.flatMap(it => it.repuestosUsados || []).map(r => r.nombre);
-                                    if (prods.length === 0) return null;
-                                    const preview = prods.slice(0, 3).join(', ') + (prods.length > 3 ? ` +${prods.length - 3} más` : '');
-                                    return (
-                                        <div className="mt-2 pt-2 border-t border-black/[0.05] dark:border-white/[0.05]">
-                                            <p className="text-[10px] text-[#A8A29E] truncate">{preview}</p>
-                                        </div>
-                                    );
-                                })()}
+                                <div className="text-right shrink-0 ml-3">
+                                    <M valor={calcularTotal(v)} className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                                    {v.descuentoPorcentaje > 0 && (
+                                        <p className="text-[9px] text-[#D13A28] dark:text-[#E8422F] font-bold">-{v.descuentoPorcentaje}% desc.</p>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* BARRA ACCIONES */}
-                            <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
-                                {/* Editar — solo pendientes */}
-                                {v.estado === 'PRESUPUESTO' && (
-                                    <button
-                                        onClick={() => onEditar(v)}
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
-                                        title="Editar">
-                                        ✏️
-                                    </button>
-                                )}
-
-                                {/* PDF */}
-                                <button
-                                    onClick={() => onPDF(v)}
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
-                                    title="PDF con precios">
-                                    📄
-                                </button>
-                                <button
-                                    onClick={() => onPDF(v, { sinPrecios: true })}
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
-                                    title="PDF sin precios">
-                                    📋
-                                </button>
-
-                                {/* Duplicar */}
-                                {onDuplicar && (
-                                    <button
-                                        onClick={() => onDuplicar(v)}
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90 transition-all"
-                                        title="Duplicar como nueva venta">
-                                        ⧉
-                                    </button>
-                                )}
-
-                                {/* WhatsApp */}
-                                {v.clienteTelefono && (
-                                    <a
-                                        href={`https://wa.me/${v.clienteTelefono.replace(/\D/g, '')}?text=${encodeURIComponent(esPendiente ? `Hola ${v.clienteNombre}, te enviamos el presupuesto de venta #${v.id} por $${Math.round(calcularTotal(v)).toLocaleString('es-AR')}. Quedamos a tu disposición.` : `Hola ${v.clienteNombre}, gracias por tu compra #${v.id}.`)}`}
-                                        target="_blank" rel="noopener noreferrer"
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#25D366]/15 text-[#25D366] active:scale-90 transition-all"
-                                        title="Enviar WhatsApp">
-                                        💬
-                                    </a>
-                                )}
-
-                                <div className="flex-1" />
-
-                                {/* Confirmar / Cobrar — solo pendientes */}
-                                {v.estado === 'PRESUPUESTO' && (
-                                    <button
-                                        onClick={() => onConfirmar(v.id)}
-                                        className="h-9 px-4 rounded-xl font-bold text-xs text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-80"
-                                        title="Confirmar cobro">
-                                        ✓ Cobrar
-                                    </button>
-                                )}
-
-                                {/* Eliminar */}
-                                <button
-                                    onClick={() => onEliminar(v.id)}
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[var(--danger-bg)] text-[var(--danger-tx)] active:scale-90 transition-all"
-                                    title="Eliminar">
-                                    🗑️
-                                </button>
-                            </div>
+                            {/* Productos preview */}
+                            {v.items?.length > 0 && (() => {
+                                const prods = v.items.flatMap(it => it.repuestosUsados || []).map(r => r.nombre);
+                                if (prods.length === 0) return null;
+                                const preview = prods.slice(0, 3).join(', ') + (prods.length > 3 ? ` +${prods.length - 3} más` : '');
+                                return <p className="text-[10px] text-[#A8A29E] mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">{preview}</p>;
+                            })()}
                         </div>
-                        );
-                    })}
-                </div>
-            )}
+
+                        {/* Acciones */}
+                        <div className="flex items-center gap-1.5 px-3.5 py-2 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
+                            {esPendiente && (
+                                <Accion onClick={() => onEditar(v)} icon="✏️" label="Editar"
+                                    className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                            )}
+                            <Accion onClick={() => onPDF(v)} icon="📄" label="PDF"
+                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                            <Accion onClick={() => onPDF(v, { sinPrecios: true })} icon="📋" label="Sin $"
+                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                            {onDuplicar && (
+                                <Accion onClick={() => onDuplicar(v)} icon="⧉" label="Duplicar"
+                                    className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                            )}
+                            {v.clienteTelefono && (
+                                <Accion
+                                    href={`https://wa.me/${v.clienteTelefono.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                        esPendiente
+                                            ? `Hola ${v.clienteNombre}, te enviamos el presupuesto de venta #${v.id} por $${Math.round(calcularTotal(v)).toLocaleString('es-AR')}. Quedamos a tu disposición.`
+                                            : `Hola ${v.clienteNombre}, gracias por tu compra #${v.id}.`
+                                    )}`}
+                                    target="_blank" rel="noopener noreferrer"
+                                    icon="💬" label="WhatsApp"
+                                    className="bg-[#25D366]/10 text-[#25D366]" />
+                            )}
+
+                            <div className="flex-1" />
+
+                            {esPendiente && (
+                                <button onClick={() => onConfirmar(v.id)}
+                                    className="h-7 px-3 rounded-lg font-bold text-[10px] text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                                    Cobrar
+                                </button>
+                            )}
+                            <Accion onClick={() => onEliminar(v.id)} icon="🗑️" label=""
+                                className="text-[#D13A28]/60 dark:text-[#E8422F]/60 hover:bg-[#FEE2E2] dark:hover:bg-[#3B1111]" />
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     );
 }

@@ -50,15 +50,16 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     const cerrarModalDuplicar = () => { cerrarModal(); setVentaDuplicar(null); };
 
     return (
-        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] p-4 pb-28 font-sans transition-colors">
+        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-28 font-sans transition-colors">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6">
 
             {/* ── HEADER ───────────────────────────────────────────────── */}
-            <div className="flex justify-between items-end mb-5 pt-1 md:pt-0">
+            <div className="flex justify-between items-center mb-5">
                 <div>
-                    <h2 className="text-[28px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
+                    <h2 className="text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
                         Ventas
                     </h2>
-                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-[0.3em] mt-1">
+                    <p className="text-[11px] font-medium text-[#A8A29E] mt-0.5">
                         Gestión comercial
                     </p>
                 </div>
@@ -66,13 +67,13 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                     <button
                         onClick={() => exportarVentasCSV(filtros.itemsFiltrados)}
                         title="Exportar a CSV"
-                        className="h-10 px-4 rounded-xl font-bold text-xs uppercase transition-all active:scale-95 hover:opacity-90 bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
+                        className="h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
                     >
                         CSV
                     </button>
                     <button
                         onClick={() => setModalCrear(true)}
-                        className="h-10 px-5 rounded-xl font-bold text-xs text-white uppercase transition-all active:scale-95 hover:opacity-90 bg-[#D48800] dark:bg-[#F0A500]"
+                        className="h-8 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D48800] dark:bg-[#F0A500]"
                     >
                         + Nueva Venta
                     </button>
@@ -81,24 +82,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
             <VentaStats stats={stats} />
 
-            {/* ── ALERTA PENDIENTES ─────────────────────────────────────── */}
-            {stats.pendientesCount > 0 && (
-                <div
-                    onClick={() => filtros.setEstado('PRESUPUESTO')}
-                    className="bg-[var(--warning-bg)] border border-[rgba(212,136,0,0.25)] rounded-2xl p-4 mb-4 flex items-center gap-3 cursor-pointer transition-all hover:opacity-90">
-                    <span className="text-xl">⚠️</span>
-                    <div>
-                        <p className="text-sm font-black text-[var(--warning-tx)]">
-                            {stats.pendientesCount} presupuesto{stats.pendientesCount > 1 ? 's' : ''} pendiente{stats.pendientesCount > 1 ? 's' : ''} de cobro
-                        </p>
-                        <p className="text-xs text-[var(--warning)] font-bold">
-                            ${Math.round(stats.pendientesVal).toLocaleString('es-AR')} por cobrar
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {/* ── FILTROS ARRIBA ─────────────────────────────────────────── */}
+            {/* ── FILTROS ───────────────────────────────────────────────── */}
             <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda conRango placeholderBusqueda="Cliente, S/N, sede..." />
             <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
@@ -121,6 +105,8 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
             {/* ── PAGINACIÓN ABAJO ──────────────────────────────────────── */}
             <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
+
+            </div>{/* cierre max-w-6xl */}
 
             {/* ── MODAL CREAR / EDITAR ──────────────────────────────────── */}
             {modalCrear && (
