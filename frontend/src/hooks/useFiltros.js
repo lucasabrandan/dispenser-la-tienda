@@ -60,8 +60,8 @@ export function useFiltros(items = [], { porPagina = 10, campoFecha = 'fecha', c
         const now = hoy();
         let resultado = [...items];
 
-        // Filtro período
-        if (periodoRapido !== 'TODO') {
+        // Filtro período — se ignora si hay búsqueda activa (para encontrar en todo el historial)
+        if (periodoRapido !== 'TODO' && !busqueda.trim()) {
             let desdeFecha, hastaFecha;
 
             if (periodoRapido === 'MES') {

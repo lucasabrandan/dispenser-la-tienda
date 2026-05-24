@@ -102,8 +102,11 @@ export function useVentaManager() {
             };
             if (estado !== 'TODOS') params.estado   = estado;
             if (busquedaApi)        params.busqueda  = busquedaApi;
-            if (fechas.desde)       params.desde     = fechas.desde;
-            if (fechas.hasta)       params.hasta     = fechas.hasta;
+            // Si hay búsqueda activa, ignorar período para buscar en todo el historial
+            if (!busquedaApi) {
+                if (fechas.desde)   params.desde     = fechas.desde;
+                if (fechas.hasta)   params.hasta     = fechas.hasta;
+            }
 
             const res  = await api.get('/servicios', { params });
             const page = res.data;

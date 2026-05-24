@@ -116,8 +116,11 @@ export function useServicioManager() {
             };
             if (estado !== 'TODOS')  params.estado = estadoMap[estado] || estado;
             if (busquedaApi)         params.busqueda  = busquedaApi;
-            if (fechas.desde)        params.desde     = fechas.desde;
-            if (fechas.hasta)        params.hasta     = fechas.hasta;
+            // Si hay búsqueda activa, ignorar período para buscar en todo el historial
+            if (!busquedaApi) {
+                if (fechas.desde)    params.desde     = fechas.desde;
+                if (fechas.hasta)    params.hasta     = fechas.hasta;
+            }
             // técnico: siempre filtra por su propio ID; admin: usa el selector
             if (!esAdmin && usuario?.id) params.usuarioId = usuario.id;
             else if (usuarioId)           params.usuarioId = usuarioId;
