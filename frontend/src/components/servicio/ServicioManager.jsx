@@ -11,7 +11,7 @@ import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 import EjecutarAdminSheet from '../servicio/EjecutarAdminSheet';
-import ServicioAgenda from '../servicio/ServicioAgenda';
+
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -19,16 +19,22 @@ function M({ valor, className = '' }) {
     return <span className={className}>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
 }
 
-function StatChip({ label, valor, sub, borderColor, valorCls = '', onClick }) {
+// Stats inline colapsable
+function StatsStrip({ stats, expanded, onToggle }) {
     return (
-        <div
-            onClick={onClick}
-            className={`shrink-0 rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] min-w-[100px] ${borderColor || ''} ${onClick ? 'cursor-pointer active:scale-95 transition-all' : ''}`}
-        >
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">{label}</p>
-            <p className={`text-lg font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] ${valorCls}`}>{valor}</p>
-            {sub && <p className="text-[10px] text-[#A8A29E] mt-0.5">{sub}</p>}
-        </div>
+        <button onClick={onToggle}
+            className="w-full flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-left transition-all active:scale-[0.99]">
+            <span className="text-[11px] font-bold text-[#A8A29E]">Mes</span>
+            <M valor={stats.totalMes} className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
+            <span className="text-[11px] font-bold text-[#A8A29E]">MO</span>
+            <M valor={stats.gananciaTotal} className="text-[11px] font-black text-[#D48800] dark:text-[#F0A500]" />
+            <span className="text-[11px] font-bold text-[#A8A29E]">Hoy</span>
+            <M valor={stats.totalHoy} className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
+            {stats.pendientesCount > 0 && <>
+                <span className="text-[11px] font-bold text-[#D48800]">Pend. {stats.pendientesCount}</span>
+            </>}
+            <span className="ml-auto text-[10px] text-[#A8A29E]">{expanded ? '▲' : '▼'}</span>
+        </button>
     );
 }
 
@@ -160,10 +166,23 @@ export default function ServicioManager({
     const [tecnicos, setTecnicos]               = useState([]);
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
-    const [mostrarRango, setMostrarRango]       = useState(false);
-    const [vistaAgenda, setVistaAgenda]         = useState(false);
+    const [mostrarFiltros, setMostrarFiltros]   = useState(false);
+    const [statsExpanded, setStatsExpanded]     = useState(false);
+    const [menuOverflow, setMenuOverflow]       = useState(false);
 
     const tabActual = filtros.estado || 'PRESUPUESTO';
+
+    // Long-press para activar selección masiva
+    const longPressRef = React.useRef(null);
+    const iniciarLongPress = (id) => {
+        longPressRef.current = setTimeout(() => {
+            setModoSeleccion(true);
+            setSeleccionados(new Set([id]));
+        }, 500);
+    };
+    const cancelarLongPress = () => {
+        if (longPressRef.current) clearTimeout(longPressRef.current);
+    };
 
     const cambiarTab = (id) => {
         filtros.setEstado(id);
@@ -223,43 +242,46 @@ export default function ServicioManager({
     return (
         <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
-            {/* Header sticky con buscador */}
+            {/* Header minimalista */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3">
-                    <div className="flex items-center justify-between mb-3">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
                             Servicio Técnico
                         </h2>
                         <div className="flex items-center gap-1.5">
-                            <button
-                                onClick={() => setVistaAgenda(v => !v)}
-                                title={vistaAgenda ? 'Vista lista' : 'Vista agenda'}
-                                className={`h-8 px-2.5 rounded-lg flex items-center gap-1 text-[11px] font-bold transition-all active:scale-95 ${vistaAgenda ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}
-                            >{vistaAgenda ? '☰' : '📅'} <span className="hidden sm:inline">{vistaAgenda ? 'Lista' : 'Agenda'}</span></button>
-                            <button
-                                onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
-                                title="Selección múltiple"
-                                className={`h-8 px-2.5 rounded-lg flex items-center gap-1 text-[11px] font-bold transition-all active:scale-95 ${modoSeleccion ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}
-                            >☑ <span className="hidden sm:inline">Seleccionar</span></button>
-                            <button
-                                onClick={() => exportarServiciosCSV(filtros.itemsFiltrados)}
-                                title="Exportar CSV"
-                                className="h-8 px-2.5 rounded-lg flex items-center text-[11px] font-bold transition-all active:scale-95 bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
-                            >CSV</button>
-                            <button
-                                onClick={() => setModalImportar(true)}
-                                title="Importar históricos"
-                                className="h-8 px-2.5 rounded-lg flex items-center text-[13px] transition-all active:scale-95 bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
-                            >📤</button>
+                            {/* Menú overflow — CSV/Import */}
+                            <div className="relative">
+                                <button onClick={() => setMenuOverflow(v => !v)}
+                                    className="h-8 w-8 rounded-lg flex items-center justify-center text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                                    ⋯
+                                </button>
+                                {menuOverflow && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setMenuOverflow(false)} />
+                                        <div className="absolute right-0 top-10 z-20 w-48 rounded-xl bg-white dark:bg-[#242424] shadow-lg border border-black/[0.08] dark:border-white/[0.08] py-1">
+                                            <button onClick={() => { exportarServiciosCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
+                                                className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
+                                                📥 Exportar CSV
+                                            </button>
+                                            <button onClick={() => { setModalImportar(true); setMenuOverflow(false); }}
+                                                className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
+                                                📤 Importar históricos
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                             {esAdmin && (
-                                <button
-                                    onClick={() => setModalCrear(true)}
-                                    className="hidden md:flex h-8 px-4 rounded-lg items-center font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]"
-                                >+ Nuevo</button>
+                                <button onClick={() => setModalCrear(true)}
+                                    className="h-8 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                                    + Nuevo
+                                </button>
                             )}
                         </div>
                     </div>
 
+                    {/* Búsqueda — siempre visible */}
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
                         <input
@@ -276,37 +298,35 @@ export default function ServicioManager({
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-2">
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <StatChip
-                        label="Fact. mes"
-                        valor={<M valor={stats.totalMes} />}
-                        sub={`${stats.cantidadMes} servicios`}
-                        borderColor="border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]"
-                    />
-                    <StatChip
-                        label="MO mes"
-                        valor={<M valor={stats.gananciaTotal} />}
-                        sub="mano de obra"
-                        borderColor="border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]"
-                        valorCls="text-[#D48800] dark:text-[#F0A500]"
-                    />
-                    <StatChip
-                        label="Hoy"
-                        valor={<M valor={stats.totalHoy} />}
-                        sub={`${stats.cantidadHoy} servicios`}
-                    />
-                    <StatChip
-                        label="Pendientes"
-                        valor={stats.pendientesCount}
-                        sub={<M valor={stats.pendientesVal} />}
-                        borderColor={stats.pendientesCount > 0 ? 'border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]' : ''}
-                        valorCls={stats.pendientesCount > 0 ? 'text-[#D48800] dark:text-[#F0A500]' : ''}
-                        onClick={() => cambiarTab('PRESUPUESTO')}
-                    />
-                </div>
+                {/* Stats compacto — una línea */}
+                <StatsStrip stats={stats} expanded={statsExpanded} onToggle={() => setStatsExpanded(v => !v)} />
+
+                {/* Stats expandidos */}
+                {statsExpanded && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Facturado mes</p>
+                            <M valor={stats.totalMes} className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                            <p className="text-[10px] text-[#A8A29E] mt-0.5">{stats.cantidadMes} servicios</p>
+                        </div>
+                        <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Mano de obra</p>
+                            <M valor={stats.gananciaTotal} className="text-lg font-black text-[#D48800] dark:text-[#F0A500] block" />
+                        </div>
+                        <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Hoy</p>
+                            <M valor={stats.totalHoy} className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                            <p className="text-[10px] text-[#A8A29E] mt-0.5">{stats.cantidadHoy} servicios</p>
+                        </div>
+                        <div className={`rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${stats.pendientesCount > 0 ? 'border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]' : ''}`}>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Pendientes</p>
+                            <p className={`text-lg font-black ${stats.pendientesCount > 0 ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>{stats.pendientesCount}</p>
+                            <M valor={stats.pendientesVal} className="text-[10px] text-[#A8A29E] mt-0.5 block" />
+                        </div>
+                    </div>
+                )}
 
                 {/* Tabs */}
                 <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
@@ -321,15 +341,18 @@ export default function ServicioManager({
                     ))}
                 </div>
 
-                {/* Toggle filtros avanzados */}
+                {/* Filtros colapsables */}
                 <button
-                    onClick={() => setMostrarRango(v => !v)}
-                    className={`w-full h-7 rounded-lg font-bold text-[10px] uppercase flex items-center justify-center gap-1 transition-all active:scale-95 ${mostrarRango ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}>
-                    {mostrarRango ? '▲' : '▼'} Filtros avanzados
+                    onClick={() => setMostrarFiltros(v => !v)}
+                    className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
+                    <span className="text-[10px] font-bold uppercase text-[#A8A29E]">
+                        {mostrarFiltros ? '▲' : '▼'} Filtros
+                    </span>
+                    <span className="text-[10px] font-bold text-[#A8A29E]">{filtros.totalItems} resultados</span>
                 </button>
 
-                {mostrarRango && (
-                    <>
+                {mostrarFiltros && (
+                    <div className="space-y-2 pb-1">
                         {/* Período */}
                         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
                             {PERIODOS.map(p => (
@@ -340,8 +363,7 @@ export default function ServicioManager({
                                 </button>
                             ))}
                         </div>
-
-                        {/* Rango personalizado */}
+                        {/* Rango */}
                         <div className="flex gap-2 items-center">
                             <input type="date" value={filtros.desde}
                                 onChange={e => filtros.aplicarRango(e.target.value, filtros.hasta)}
@@ -351,8 +373,7 @@ export default function ServicioManager({
                                 onChange={e => filtros.aplicarRango(filtros.desde, e.target.value)}
                                 className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                         </div>
-
-                        {/* Filtro técnico — admin */}
+                        {/* Técnico + Orden */}
                         {esAdmin && tecnicos.length > 0 && (
                             <select value={usuarioId} onChange={e => setUsuarioId(e.target.value)}
                                 className="w-full h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
@@ -360,59 +381,53 @@ export default function ServicioManager({
                                 {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                             </select>
                         )}
-
-                        {/* Ordenamiento */}
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-bold text-[#A8A29E] uppercase shrink-0">Orden</span>
-                            <select
-                                value={ordenServicio}
-                                onChange={e => setOrdenServicio(e.target.value)}
-                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
-                            >
+                            <select value={ordenServicio} onChange={e => setOrdenServicio(e.target.value)}
+                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                                 <option value="fechaServicio,desc">Más reciente primero</option>
                                 <option value="fechaServicio,asc">Más antiguo primero</option>
                                 <option value="total,desc">Mayor monto primero</option>
                                 <option value="total,asc">Menor monto primero</option>
                             </select>
                         </div>
-                    </>
+                    </div>
                 )}
 
-                {/* Barra selección masiva */}
-                {modoSeleccion && seleccionados.size > 0 && (
-                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                        <span className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] flex-1">
+                {/* Barra selección masiva (activada por long-press) */}
+                {modoSeleccion && (
+                    <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
-                        {tabActual === 'PRESUPUESTO' && (
+                        {seleccionados.size > 0 && tabActual === 'PRESUPUESTO' && (
                             <button onClick={() => ejecutarMasiva('APROBADO')}
-                                className="h-9 px-4 rounded-xl font-bold text-xs text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
-                                ✓ Aprobar
+                                className="h-7 px-3 rounded-lg font-bold text-[10px] text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                Aprobar
                             </button>
                         )}
-                        <button onClick={() => ejecutarMasiva('ARCHIVADO')}
-                            className="h-9 px-4 rounded-xl font-bold text-xs bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
-                            🗄️ Archivar
-                        </button>
-                        {esAdmin && (
+                        {seleccionados.size > 0 && (
+                            <button onClick={() => ejecutarMasiva('ARCHIVADO')}
+                                className="h-7 px-3 rounded-lg font-bold text-[10px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                Archivar
+                            </button>
+                        )}
+                        {seleccionados.size > 0 && esAdmin && (
                             <button onClick={() => setConfirmEliminar({ ids: [...seleccionados], modo: 'masivo' })}
-                                className="h-9 px-4 rounded-xl font-bold text-xs bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F] border border-[#D13A28]/30 active:scale-95">
-                                🗑️ Eliminar
+                                className="h-7 px-3 rounded-lg font-bold text-[10px] text-[#D13A28] dark:text-[#E8422F] active:scale-95">
+                                Eliminar
                             </button>
                         )}
+                        <button onClick={() => { setModoSeleccion(false); setSeleccionados(new Set()); }}
+                            className="h-7 px-3 rounded-lg font-bold text-[10px] text-[#A8A29E] active:scale-95">
+                            Cancelar
+                        </button>
                     </div>
                 )}
 
                 <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
-                {vistaAgenda ? (
-                    <ServicioAgenda
-                        servicios={filtros.itemsFiltrados}
-                        onDetalle={setModalDetalle}
-                        onEjecutar={abrirEjecutar}
-                        calcularTotal={calcularTotal}
-                    />
-                ) : cargando ? (
+                {cargando ? (
                     <div className="flex flex-col gap-3">
                         {[1, 2, 3].map(i => (
                             <div key={i} className="h-36 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />
@@ -426,7 +441,15 @@ export default function ServicioManager({
                 ) : (
                     <div className="flex flex-col gap-2">
                         {filtros.itemsPagina.map(s => (
-                            <ServicioCard key={s.id} servicio={s}
+                            <div key={s.id}
+                                onTouchStart={() => iniciarLongPress(s.id)}
+                                onTouchEnd={cancelarLongPress}
+                                onTouchMove={cancelarLongPress}
+                                onMouseDown={() => iniciarLongPress(s.id)}
+                                onMouseUp={cancelarLongPress}
+                                onMouseLeave={cancelarLongPress}
+                            >
+                            <ServicioCard servicio={s}
                                 modoSeleccion={modoSeleccion}
                                 seleccionado={seleccionados.has(s.id)}
                                 onToggleSelect={toggleSeleccion}
@@ -442,6 +465,7 @@ export default function ServicioManager({
                                 calcularTotal={calcularTotal}
                                 onAbrirCobro={esAdmin ? setServicioCobro : null}
                             />
+                            </div>
                         ))}
                     </div>
                 )}
