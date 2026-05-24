@@ -8,6 +8,14 @@ function formatMes(ym) {
     return `${MESES[parseInt(m) - 1]} ${y}`;
 }
 
+const pill = (activo) => activo
+    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+    : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
+
+const pillAlt = (activo) => activo
+    ? 'bg-[#1C1917] dark:bg-[#F0EEE9] text-[#F0EEE9] dark:text-[#1C1917]'
+    : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
+
 export default function FiltrosPanel({ estados = [], conBusqueda = true, conRango = true, placeholderBusqueda = 'Buscar...', hook }) {
     const {
         busqueda, setBusqueda,
@@ -20,135 +28,78 @@ export default function FiltrosPanel({ estados = [], conBusqueda = true, conRang
     } = hook;
 
     const [mostrarRango, setMostrarRango] = useState(false);
-    const [desdeLocal,   setDesdeLocal]   = useState('');
-    const [hastaLocal,   setHastaLocal]   = useState('');
-
-    // ── Pill de período rápido ──────────────────────────────────────────────
-    const btnRapido = (tipo, label) => {
-        const activo = periodoRapido === tipo && !mesSelector;
-        return (
-            <button
-                key={tipo}
-                onClick={() => { aplicarRapido(tipo); setMostrarRango(false); }}
-                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide transition-all active:scale-95 ${
-                    activo
-                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                        : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
-                }`}
-            >
-                {label}
-            </button>
-        );
-    };
+    const [desdeLocal, setDesdeLocal] = useState('');
+    const [hastaLocal, setHastaLocal] = useState('');
 
     return (
-        <div className="rounded-2xl p-4 mb-3 space-y-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-            {/* FILA 1 — Períodos rápidos + selector mes + rango */}
-            <div className="flex flex-wrap gap-2 items-center">
-                {btnRapido('MES',     'Este mes')}
-                {btnRapido('MES_ANT', 'Mes ant.')}
-                {btnRapido('ANO',     'Este año')}
-                {btnRapido('TODO',    'Todo')}
+        <div className="space-y-2">
+            {/* Fila 1 — Períodos + selector mes + rango + contador */}
+            <div className="flex flex-wrap gap-1.5 items-center">
+                {['MES', 'MES_ANT', 'ANO', 'TODO'].map(tipo => (
+                    <button key={tipo}
+                        onClick={() => { aplicarRapido(tipo); setMostrarRango(false); }}
+                        className={`h-8 px-3 rounded-lg text-[11px] font-bold uppercase transition-all active:scale-95 ${pill(periodoRapido === tipo && !mesSelector)}`}>
+                        {{ MES: 'Este mes', MES_ANT: 'Mes ant.', ANO: 'Este año', TODO: 'Todo' }[tipo]}
+                    </button>
+                ))}
 
-                {mesesDisponibles.length > 0 && (
-                    <select
-                        value={mesSelector}
+                {mesesDisponibles?.length > 0 && (
+                    <select value={mesSelector}
                         onChange={e => aplicarMesSelector(e.target.value)}
-                        className={`px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none transition-all bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] ${
-                            mesSelector
-                                ? 'border-[1.5px] border-[#D13A28] dark:border-[#E8422F]'
-                                : 'border border-transparent'
-                        }`}
-                    >
+                        className={`h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] shadow-sm ${
+                            mesSelector ? 'border-[1.5px] border-[#D13A28] dark:border-[#E8422F]' : 'border border-black/[0.05] dark:border-white/[0.05]'
+                        }`}>
                         <option value="">Elegir mes...</option>
                         {mesesDisponibles.map(m => <option key={m} value={m}>{formatMes(m)}</option>)}
                     </select>
                 )}
 
                 {conRango && (
-                    <button
-                        onClick={() => setMostrarRango(!mostrarRango)}
-                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase transition-all active:scale-95 ${
-                            mostrarRango
-                                ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
-                        }`}
-                    >
+                    <button onClick={() => setMostrarRango(!mostrarRango)}
+                        className={`h-8 px-3 rounded-lg text-[11px] font-bold uppercase transition-all active:scale-95 ${pill(mostrarRango)}`}>
                         Rango
                     </button>
                 )}
 
-                <span className="ml-auto text-[10px] font-bold text-[#A8A29E] uppercase shrink-0">
-                    {totalItems} resultado{totalItems !== 1 ? 's' : ''} · pág {pagina}/{totalPaginas}
+                <span className="ml-auto text-[10px] font-bold text-[#A8A29E] shrink-0">
+                    {totalItems} resultados · pág {pagina}/{totalPaginas}
                 </span>
             </div>
 
-            {/* RANGO PERSONALIZADO */}
+            {/* Rango personalizado */}
             {mostrarRango && (
-                <div className="flex gap-2 items-center flex-wrap pt-3 border-t border-black/[0.06] dark:border-white/[0.06]">
-                    <span className="text-[10px] font-bold text-[#A8A29E] uppercase">Desde</span>
-                    <input
-                        type="date"
-                        value={desdeLocal}
-                        onChange={e => setDesdeLocal(e.target.value)}
-                        className="px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]"
-                    />
-                    <span className="text-[10px] font-bold text-[#A8A29E] uppercase">Hasta</span>
-                    <input
-                        type="date"
-                        value={hastaLocal}
-                        onChange={e => setHastaLocal(e.target.value)}
-                        className="px-2 py-1.5 rounded-xl text-[11px] font-bold outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]"
-                    />
-                    <button
-                        onClick={() => { aplicarRango(desdeLocal, hastaLocal); setMostrarRango(false); }}
-                        className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-white transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-80"
-                    >
-                        Aplicar
-                    </button>
-                    <button
-                        onClick={() => { setMostrarRango(false); setDesdeLocal(''); setHastaLocal(''); aplicarRapido('MES'); }}
-                        className="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] hover:opacity-80"
-                    >
-                        Limpiar
-                    </button>
+                <div className="flex gap-2 items-center flex-wrap">
+                    <input type="date" value={desdeLocal} onChange={e => setDesdeLocal(e.target.value)}
+                        className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                    <span className="text-[10px] text-[#A8A29E]">a</span>
+                    <input type="date" value={hastaLocal} onChange={e => setHastaLocal(e.target.value)}
+                        className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                    <button onClick={() => { aplicarRango(desdeLocal, hastaLocal); setMostrarRango(false); }}
+                        className="h-8 px-3 rounded-lg text-[11px] font-bold text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">Aplicar</button>
+                    <button onClick={() => { setMostrarRango(false); setDesdeLocal(''); setHastaLocal(''); aplicarRapido('MES'); }}
+                        className="h-8 px-3 rounded-lg text-[11px] font-bold active:scale-95 bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">Limpiar</button>
                 </div>
             )}
 
-            {/* FILA 2 — Estado + búsqueda */}
+            {/* Fila 2 — Estados + búsqueda */}
             {(estados.length > 0 || conBusqueda) && (
-                <div className="flex gap-2 flex-wrap items-center pt-3 border-t border-black/[0.06] dark:border-white/[0.06]">
+                <div className="flex gap-1.5 flex-wrap items-center">
                     {estados.length > 0 && (
-                        <div className="flex gap-1.5 flex-wrap">
-                            {[{ value: 'TODOS', label: 'Todos' }, ...estados].map(e => {
-                                const activo = estado === e.value;
-                                return (
-                                    <button
-                                        key={e.value}
-                                        onClick={() => setEstado(e.value)}
-                                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold uppercase transition-all active:scale-95 ${
-                                            activo
-                                                ? 'bg-[#1C1917] dark:bg-[#F0EEE9] text-[#F0EEE9] dark:text-[#1C1917]'
-                                                : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
-                                        }`}
-                                    >
-                                        {e.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <>
+                            {[{ value: 'TODOS', label: 'Todos' }, ...estados].map(e => (
+                                <button key={e.value} onClick={() => setEstado(e.value)}
+                                    className={`h-8 px-3 rounded-lg text-[11px] font-bold uppercase transition-all active:scale-95 ${pillAlt(estado === e.value)}`}>
+                                    {e.label}
+                                </button>
+                            ))}
+                        </>
                     )}
-
                     {conBusqueda && (
                         <div className="relative flex-1 min-w-[160px]">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs">🔍</span>
-                            <input
-                                type="text"
-                                placeholder={placeholderBusqueda}
-                                value={busqueda}
-                                onChange={e => setBusqueda(e.target.value)}
-                                className="w-full pl-8 pr-3 py-2 rounded-xl text-[12px] font-medium outline-none transition-all border border-black/[0.07] dark:border-white/[0.07] focus:border-[#D13A28] dark:focus:border-[#E8422F] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E]"
-                            />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs pointer-events-none">🔍</span>
+                            <input type="text" placeholder={placeholderBusqueda}
+                                value={busqueda} onChange={e => setBusqueda(e.target.value)}
+                                className="w-full h-8 pl-8 pr-3 rounded-lg text-[12px] font-medium outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
                         </div>
                     )}
                 </div>
