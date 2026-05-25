@@ -112,6 +112,7 @@ export default function ServicioManager({
     clienteInicial = null, onClienteConsumido,
     presupuestoOrigen = null, onPresupuestoOrigenConsumido,
     ordenOrigen = null, onOrdenOrigenConsumido,
+    abrirCrearDirecto = false, onCrearConsumido,
 }) {
     const { esAdmin } = useAuth();
     const {
@@ -250,6 +251,7 @@ export default function ServicioManager({
     useEffect(() => { if (clienteInicial)    setModalCrear(true); }, [clienteInicial]);
     useEffect(() => { if (presupuestoOrigen) setModalCrear(true); }, [presupuestoOrigen]);
     useEffect(() => { if (ordenOrigen)       setModalCrear(true); }, [ordenOrigen]);
+    useEffect(() => { if (abrirCrearDirecto) { setModalCrear(true); onCrearConsumido?.(); } }, [abrirCrearDirecto]); // eslint-disable-line
 
     // Swipe en contenido para cambiar tab
     const columnIds = enBusquedaGlobal ? ['TODOS', ...TABS.map(t => t.id)] : TABS.map(t => t.id);

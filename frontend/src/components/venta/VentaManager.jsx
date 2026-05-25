@@ -19,7 +19,7 @@ function MV({ valor }) {
     return <span>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
 }
 
-export default function VentaManager({ clienteInicial = null, onClienteConsumido }) {
+export default function VentaManager({ clienteInicial = null, onClienteConsumido, abrirCrearDirecto = false, onCrearConsumido }) {
     const {
         cargando, stats,
         modalCrear, setModalCrear,
@@ -43,6 +43,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     useEffect(() => {
         if (clienteInicial) setModalCrear(true);
     }, [clienteInicial, setModalCrear]);
+    useEffect(() => { if (abrirCrearDirecto) { setModalCrear(true); onCrearConsumido?.(); } }, [abrirCrearDirecto]); // eslint-disable-line
 
     // Duplicar: copia todo menos id/estado/nroDocumento, con fecha de hoy
     const duplicarVenta = (v) => {

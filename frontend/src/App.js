@@ -29,6 +29,7 @@ function AppInterna() {
     const [clientePreload, setClientePreload] = useState(null);
     const [presupuestoOrigen, setPresupuestoOrigen] = useState(null);
     const [ordenOrigen, setOrdenOrigen] = useState(null);
+    const [abrirCrear, setAbrirCrear] = useState(false);
 
     if (!autenticado) return <LoginPage />;
 
@@ -50,9 +51,13 @@ function AppInterna() {
     const renderSeccion = () => {
         switch (seccionActual) {
             case 'caja':
-                return <DashboardCaja setVistaActual={setSeccionActual} />;
+                return <DashboardCaja setVistaActual={(seccion, opts) => {
+                    if (opts?.crear) setAbrirCrear(true);
+                    setSeccionActual(seccion);
+                }} />;
             case 'venta':
-                return <VentaManager clienteInicial={clientePreload} onClienteConsumido={() => setClientePreload(null)} />;
+                return <VentaManager clienteInicial={clientePreload} onClienteConsumido={() => setClientePreload(null)}
+                    abrirCrearDirecto={abrirCrear} onCrearConsumido={() => setAbrirCrear(false)} />;
             case 'servicio-tecnico':
                 return <ServicioManager
                     clienteInicial={clientePreload}
@@ -61,6 +66,8 @@ function AppInterna() {
                     onPresupuestoOrigenConsumido={() => setPresupuestoOrigen(null)}
                     ordenOrigen={ordenOrigen}
                     onOrdenOrigenConsumido={() => setOrdenOrigen(null)}
+                    abrirCrearDirecto={abrirCrear}
+                    onCrearConsumido={() => setAbrirCrear(false)}
                 />;
             case 'historial':
                 return <ServicioList />;

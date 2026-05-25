@@ -365,12 +365,12 @@ export default function DashboardCaja({ setVistaActual }) {
                 <div className="md:hidden space-y-4">
                     {/* Acciones rápidas arriba de todo */}
                     <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => setVistaActual('servicio-tecnico')}
+                        <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
                             className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] text-white">
                             <span>🔧</span>
                             <span className="text-[12px] font-black">Nuevo Servicio</span>
                         </button>
-                        <button onClick={() => setVistaActual('venta')}
+                        <button onClick={() => setVistaActual('venta', { crear: true })}
                             className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-[#D48800] dark:bg-[#F0A500] text-white">
                             <span>🛒</span>
                             <span className="text-[12px] font-black">Nueva Venta</span>
