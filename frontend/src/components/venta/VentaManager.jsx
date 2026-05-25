@@ -1,27 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useVentaManager } from '../../hooks/useVentaManager';
-import { useMontos } from '../../context/MontosContext';
+import { useAuth } from '../../context/AuthContext';
 import VentaList   from './VentaList';
 import VentaForm   from './VentaForm';
-import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion   from '../ui/Paginacion';
+import SwipeColumns from '../ui/SwipeColumns';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { exportarVentasCSV } from '../../utils/exportarCSV';
+import api from '../../services/api';
 
-const ESTADOS_VENTA = [
-    { value: 'PRESUPUESTO', label: 'Pendiente' },
-    { value: 'REALIZADO',   label: 'Cobrada'   },
-    { value: 'RECHAZADO',   label: 'Rechazada' },
+const TABS = [
+    { id: 'PRESUPUESTO', label: 'Pendientes', short: 'Pend.',   color: '#D48800', icon: '💰' },
+    { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#16A34A', icon: '✅' },
+    { id: 'RECHAZADO',   label: 'Rechazadas', short: 'Rech.',   color: '#D13A28', icon: '✗' },
 ];
 
-function MV({ valor }) {
-    const { montosVisibles } = useMontos();
-    if (!montosVisibles) return <span>······</span>;
-    return <span>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
-}
+const ESTADO_API_MAP = {
+    REALIZADO: 'REALIZADO',
+};
 
 export default function VentaManager({ clienteInicial = null, onClienteConsumido, abrirCrearDirecto = false, onCrearConsumido }) {
+    const { esAdmin } = useAuth();
     const {
-        cargando, stats,
+        cargando,
         modalCrear, setModalCrear,
         ventaEditar,
         cargarVentas,
@@ -35,148 +36,166 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     } = useVentaManager();
 
     const [ventaDuplicar, setVentaDuplicar] = useState(null);
+    const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
-    const [statsExpanded, setStatsExpanded] = useState(false);
     const [menuOverflow, setMenuOverflow] = useState(false);
+    const [tabCounts, setTabCounts] = useState({});
 
-    // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
+    const tabActual = filtros.estado || 'PRESUPUESTO';
+
+    // Cargar conteos por estado
+    const fetchTabCounts = useCallback(async () => {
+        try {
+            const results = await Promise.all(
+                TABS.map(t => api.get('/servicios', {
+                    params: { tipo: 'VENTA', estado: ESTADO_API_MAP[t.id] || t.id, page: 0, size: 1 }
+                }).catch(() => ({ data: { totalElements: 0 } })))
+            );
+            const counts = {};
+            TABS.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
+            setTabCounts(counts);
+        } catch { /* silenciar */ }
+    }, []);
+
+    useEffect(() => { fetchTabCounts(); }, [fetchTabCounts]);
     useEffect(() => {
-        if (clienteInicial) setModalCrear(true);
-    }, [clienteInicial, setModalCrear]);
+        setTabCounts(prev => ({ ...prev, [tabActual]: filtros.totalItems }));
+    }, [filtros.totalItems, tabActual]);
+
+    const cambiarTab = (id) => {
+        filtros.setEstado(id);
+    };
+
+    useEffect(() => { if (clienteInicial) setModalCrear(true); }, [clienteInicial, setModalCrear]);
     useEffect(() => { if (abrirCrearDirecto) { setModalCrear(true); onCrearConsumido?.(); } }, [abrirCrearDirecto]); // eslint-disable-line
 
-    // Duplicar: copia todo menos id/estado/nroDocumento, con fecha de hoy
     const duplicarVenta = (v) => {
-        const copia = {
-            ...v,
-            id: undefined,
-            estado: 'PRESUPUESTO',
-            nroDocumento: undefined,
+        setVentaDuplicar({
+            ...v, id: undefined, estado: 'PRESUPUESTO', nroDocumento: undefined,
             fecha: new Date().toISOString().slice(0, 10),
-        };
-        setVentaDuplicar(copia);
+        });
         setModalCrear(true);
     };
     const cerrarModalDuplicar = () => { cerrarModal(); setVentaDuplicar(null); };
 
-    return (
-        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-28 font-sans transition-colors">
+    const confirmarConRefresh = async (...args) => {
+        await confirmarVenta(...args);
+        fetchTabCounts();
+    };
 
-            {/* Header sticky */}
+    const columns = TABS.map(t => ({
+        id: t.id, label: t.short, fullLabel: t.label,
+        count: tabCounts[t.id] ?? null, color: t.color, icon: t.icon,
+    }));
+
+    const columnIds = TABS.map(t => t.id);
+    const swipeHandlers = useSwipeGesture(columnIds, tabActual, cambiarTab);
+
+    return (
+        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-28 font-sans transition-colors"
+            {...swipeHandlers}>
+
+            {/* Header */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9] mb-2.5">
                         Ventas
                     </h2>
-                    {/* Búsqueda + acciones */}
-                    <div className="flex gap-1.5">
-                        <div className="relative flex-1">
+                    <div className="flex items-center gap-1.5">
+                        <button onClick={() => setMostrarBusqueda(v => !v)}
+                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-[#D48800] dark:bg-[#F0A500] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            🔍
+                        </button>
+                        <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, producto, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                                autoFocus={mostrarBusqueda} />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
                             )}
                         </div>
+
                         <div className="relative">
                             <button onClick={() => setMenuOverflow(v => !v)}
                                 className="h-9 w-9 rounded-lg flex items-center justify-center text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">⋯</button>
-                            {menuOverflow && (<>
-                                <div className="fixed inset-0 z-10" onClick={() => setMenuOverflow(false)} />
-                                <div className="absolute right-0 top-11 z-20 w-44 rounded-xl bg-white dark:bg-[#242424] shadow-lg border border-black/[0.08] dark:border-white/[0.08] py-1">
-                                    <button onClick={() => { exportarVentasCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
-                                        className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
-                                        📥 Exportar CSV
-                                    </button>
-                                </div>
-                            </>)}
+                            {menuOverflow && (
+                                <>
+                                    <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
+                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
+                                        <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E] md:hidden" />
+                                        <button onClick={() => { exportarVentasCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-[14px] md:text-[13px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
+                                            📥 Exportar CSV
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                        <button onClick={() => setModalCrear(true)}
-                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D48800] dark:bg-[#F0A500] shrink-0">
-                            + Venta
-                        </button>
+
+                        {esAdmin && (
+                            <button onClick={() => setModalCrear(true)}
+                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase items-center active:scale-95 bg-[#D48800] dark:bg-[#F0A500] shrink-0">
+                                + Venta
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-            {/* Stats compacto */}
-            <button onClick={() => setStatsExpanded(v => !v)}
-                className="w-full flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-left active:scale-[0.99]">
-                <span className="text-[11px] font-bold text-[#A8A29E]">Mes</span>
-                <span className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]"><MV valor={stats.totalMes} /></span>
-                <span className="text-[11px] font-bold text-[#A8A29E]">Hoy</span>
-                <span className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]"><MV valor={stats.totalHoy} /></span>
-                {stats.pendientesCount > 0 && (
-                    <span className="text-[11px] font-bold text-[#D48800]">Pend. {stats.pendientesCount}</span>
+                {/* SwipeColumns */}
+                <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
+
+                {/* Filtros colapsables */}
+                {mostrarFiltros && (
+                    <div className="space-y-2 p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <p className="text-[10px] text-center text-[#A8A29E] font-bold">{filtros.totalItems} resultados</p>
+                    </div>
                 )}
-                <span className="ml-auto text-[10px] text-[#A8A29E]">{statsExpanded ? '▲' : '▼'}</span>
-            </button>
 
-            {statsExpanded && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Facturado mes</p>
-                        <span className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] block"><MV valor={stats.totalMes} /></span>
-                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{stats.cantidadMes} cobradas</p>
+                {/* Lista */}
+                {cargando ? (
+                    <div className="flex flex-col gap-2">
+                        {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
                     </div>
-                    <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Hoy</p>
-                        <span className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] block"><MV valor={stats.totalHoy} /></span>
-                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{stats.cantidadHoy} ventas</p>
+                ) : filtros.itemsPagina.length === 0 ? (
+                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <p className="text-3xl mb-2">{TABS.find(t => t.id === tabActual)?.icon || '🛒'}</p>
+                        <p className="text-[13px] font-bold text-[#A8A29E]">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'ventas'}</p>
                     </div>
-                    <div className={`rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${stats.pendientesCount > 0 ? 'border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]' : ''}`}>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Pendientes</p>
-                        <p className={`text-lg font-black ${stats.pendientesCount > 0 ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>{stats.pendientesCount}</p>
-                    </div>
-                    <div className={`rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${stats.pendientesVal > 0 ? 'border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]' : ''}`}>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Por cobrar</p>
-                        <span className={`text-lg font-black block ${stats.pendientesVal > 0 ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}><MV valor={stats.pendientesVal} /></span>
-                    </div>
-                </div>
+                ) : (
+                    <VentaList
+                        ventas={filtros.itemsPagina}
+                        cargando={false}
+                        busqueda={filtros.busqueda} setBusqueda={filtros.setBusqueda}
+                        filtroTab="TODOS" setFiltroTab={() => {}}
+                        calcularTotal={calcularTotal}
+                        onEditar={abrirEditar}
+                        onConfirmar={confirmarConRefresh}
+                        onEliminar={eliminarVenta}
+                        onPDF={generarPDF}
+                        onDuplicar={duplicarVenta}
+                    />
+                )}
+
+                <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
+            </div>
+
+            {/* FAB — mobile */}
+            {esAdmin && (
+                <button onClick={() => setModalCrear(true)}
+                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-white bg-[#D48800] dark:bg-[#F0A500] active:scale-90 transition-all z-20"
+                    aria-label="Nueva venta">+</button>
             )}
 
-            {/* Filtros colapsables */}
-            <button onClick={() => setMostrarFiltros(v => !v)}
-                className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
-                <span className="text-[10px] font-bold uppercase text-[#A8A29E]">{mostrarFiltros ? '▲' : '▼'} Filtros</span>
-                <span className="text-[10px] font-bold text-[#A8A29E]">{filtros.totalItems} resultados</span>
-            </button>
-
-            {mostrarFiltros && (
-                <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda={false} conRango />
-            )}
-
-            {cargando ? (
-                <div className="text-center py-16 text-[#A8A29E] font-bold">Cargando ventas...</div>
-            ) : (
-                <VentaList
-                    ventas={filtros.itemsPagina}
-                    cargando={false}
-                    busqueda={filtros.busqueda}     setBusqueda={filtros.setBusqueda}
-                    filtroTab="TODOS"               setFiltroTab={() => {}}
-                    calcularTotal={calcularTotal}
-                    onEditar={abrirEditar}
-                    onConfirmar={confirmarVenta}
-                    onEliminar={eliminarVenta}
-                    onPDF={generarPDF}
-                    onDuplicar={duplicarVenta}
-                />
-            )}
-
-            {/* ── PAGINACIÓN ABAJO ──────────────────────────────────────── */}
-            <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
-
-            </div>{/* cierre max-w-6xl */}
-
-            {/* ── MODAL CREAR / EDITAR ──────────────────────────────────── */}
+            {/* Modal crear/editar */}
             {modalCrear && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end md:items-center justify-center p-0 md:p-4">
                     <div className="bg-[#FFFFFF] dark:bg-[#141414] w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
-                        {/* Drag handle — indica scroll en mobile */}
                         <div className="md:hidden flex justify-center pt-3 pb-1">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
@@ -186,22 +205,16 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                                     {ventaDuplicar ? 'Duplicar Venta' : ventaEditar ? 'Editar Venta' : 'Nueva Venta'}
                                 </h3>
                                 <p className="text-[11px] text-[#A8A29E] mt-0.5">
-                                    {ventaDuplicar
-                                        ? 'Copia de venta anterior — ajustá y guardá'
-                                        : ventaEditar
-                                            ? `${ventaEditar.estado === 'REALIZADO' ? 'Venta' : 'Presupuesto'} #${ventaEditar.id}`
-                                            : 'Seleccioná cliente y productos'}
+                                    {ventaDuplicar ? 'Copia — ajustá y guardá'
+                                        : ventaEditar ? `#${ventaEditar.id}`
+                                        : 'Seleccioná cliente y productos'}
                                 </p>
                             </div>
-                            <button
-                                onClick={cerrarModalDuplicar}
-                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90"
-                            >
-                                ✕
-                            </button>
+                            <button onClick={cerrarModalDuplicar}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">✕</button>
                         </div>
                         <VentaForm
-                            onSaved={() => { cerrarModalDuplicar(); cargarVentas(); if (onClienteConsumido) onClienteConsumido(); }}
+                            onSaved={() => { cerrarModalDuplicar(); cargarVentas(); fetchTabCounts(); if (onClienteConsumido) onClienteConsumido(); }}
                             ventaParaEditar={ventaEditar || ventaDuplicar}
                             clienteInicialId={clienteInicial?.id}
                         />
