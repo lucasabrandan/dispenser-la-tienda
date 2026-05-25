@@ -34,47 +34,47 @@ function TabBalance({ filtroMes, setFiltroMes }) {
 
     const fmt = v => ocultar ? '••••' : `$${formatearPrecio(v)}`;
     const imp = stats.facturacion * 0.30;
+    // Ganancia neta real = facturación − impuestos 30% − repuestos − gastos
+    const gananciaNeta = stats.facturacion - imp - stats.costoRepuestos - stats.gastosVarios;
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-4">
             {/* Controles mes */}
-            <div className="flex gap-3 items-center justify-end flex-wrap">
-                <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)} className={`${inputCls} text-[13px]`} />
-                <button onClick={cargar} disabled={cargando}
-                    className="px-4 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase active:scale-95 transition-all disabled:opacity-50">
-                    {cargando ? 'Cargando...' : 'Actualizar'}
-                </button>
+            <div className="flex gap-2 items-center">
+                <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
+                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 <button onClick={() => exportarBalanceCSV(stats, filtroMes)}
-                    className="px-4 py-3 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] font-black text-[11px] uppercase active:scale-95 transition-all border border-black/[0.07] dark:border-white/[0.07]">
-                    Exportar CSV
+                    className="h-8 px-3 rounded-lg text-[10px] font-bold uppercase bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                    CSV
                 </button>
+                {cargando && <span className="text-[10px] text-[#A8A29E] animate-pulse">Cargando...</span>}
             </div>
 
             {/* Cards resumen */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard label="Facturación"    value={stats.facturacion}    sub="Total bruto"      variante="gold"    ocultar={ocultar} />
-                <StatCard label="Impuestos 30%"  value={imp}                  sub="Estimado fiscal"  variante="red"     ocultar={ocultar} />
-                <StatCard label="Repuestos"       value={stats.costoRepuestos} sub="Inversión directa" variante="muted"  ocultar={ocultar} />
-                <StatCard label="Ganancia real"  value={stats.gananciaReal}   sub="Lo que queda"     variante="redBold" ocultar={ocultar} />
+                <StatCard label="Facturación"    value={stats.facturacion}    sub="Total bruto"        variante="gold"    ocultar={ocultar} />
+                <StatCard label="Impuestos 30%"  value={imp}                  sub="Estimado fiscal"    variante="red"     ocultar={ocultar} />
+                <StatCard label="Costos"         value={stats.costoRepuestos + stats.gastosVarios} sub="Repuestos + gastos" variante="muted" ocultar={ocultar} />
+                <StatCard label="Ganancia neta"  value={gananciaNeta}         sub="Lo que queda"       variante="redBold" ocultar={ocultar} />
             </div>
 
             {/* Desglose waterfall */}
-            <div className="rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] p-5" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-4">Desglose del mes</p>
+            <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider mb-3">Desglose del mes</p>
                 {[
-                    { label: 'Facturación bruta',           valor: stats.facturacion,    color: 'text-[#D48800] dark:text-[#F0A500]' },
+                    { label: 'Facturación bruta',            valor: stats.facturacion,    color: 'text-[#D48800] dark:text-[#F0A500]' },
                     { label: '− Impuestos (30%)',            valor: imp,                  color: 'text-[#D13A28] dark:text-[#E8422F]' },
                     { label: '− Repuestos / costos directos', valor: stats.costoRepuestos, color: 'text-[#D13A28] dark:text-[#E8422F]' },
                     { label: '− Gastos operacionales',       valor: stats.gastosVarios,   color: 'text-[#D13A28] dark:text-[#E8422F]' },
                 ].map(({ label, valor, color }) => (
-                    <div key={label} className="flex justify-between items-center py-2 border-b border-black/[0.05] dark:border-white/[0.05]">
-                        <p className="text-[12px] font-bold text-[#A8A29E]">{label}</p>
-                        <p className={`text-[13px] font-black ${color}`}>{fmt(valor)}</p>
+                    <div key={label} className="flex justify-between items-center py-1.5 border-b border-black/[0.04] dark:border-white/[0.04]">
+                        <p className="text-[11px] font-bold text-[#A8A29E]">{label}</p>
+                        <p className={`text-[12px] font-black ${color}`}>{fmt(valor)}</p>
                     </div>
                 ))}
-                <div className="flex justify-between items-center pt-3 mt-1">
-                    <p className="text-[14px] font-black text-[#1C1917] dark:text-[#F0EEE9]">= Ganancia real</p>
-                    <p className="text-[22px] font-black text-[#D48800] dark:text-[#F0A500]">{fmt(stats.gananciaReal)}</p>
+                <div className="flex justify-between items-center pt-2 mt-1">
+                    <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">= Ganancia neta</p>
+                    <p className="text-[18px] font-black text-[#D48800] dark:text-[#F0A500]">{fmt(gananciaNeta)}</p>
                 </div>
             </div>
 
@@ -110,59 +110,44 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
     const { ocultar } = useMontos();
     const [datos,      setDatos]      = useState([]);
     const [cargando,   setCargando]   = useState(false);
-    const mes = filtroMes;
-    const setMes = setFiltroMes;
     const [filtroTec,  setFiltroTec]  = useState('');
 
-    const cargar = (mesVal = mes) => {
+    const cargar = () => {
         setCargando(true);
-        api.get(`/servicios/rendimiento/mes-actual?mes=${mesVal}`)
+        api.get(`/servicios/rendimiento/mes-actual?mes=${filtroMes}`)
             .then(r => setDatos(r.data || []))
             .catch(() => setDatos([]))
             .finally(() => setCargando(false));
     };
 
-    useEffect(() => { cargar(); }, [mes]); // eslint-disable-line
+    useEffect(() => { cargar(); }, [filtroMes]); // eslint-disable-line
 
     const fmt = v => ocultar ? '••••' : `$${formatearPrecio(v)}`;
 
-    // Técnicos únicos para el selector
     const tecnicoOpciones = datos.map(d => ({ id: d.tecnicoId, nombre: d.tecnicoNombre }));
-
-    // Filtro client-side por técnico
     const datosFiltrados = filtroTec
         ? datos.filter(d => String(d.tecnicoId) === filtroTec)
         : datos;
 
-    const periodo  = mes;
     const totFact  = datosFiltrados.reduce((s, d) => s + Number(d.totalFacturado || 0), 0);
     const totParte = datosFiltrados.reduce((s, d) => s + Number(d.parteTecnico   || 0), 0);
     const totTrab  = datosFiltrados.reduce((s, d) => s + (d.cantidadTrabajos || 0), 0);
-
-    const handleMes = e => {
-        setMes(e.target.value);
-        cargar(e.target.value);
-    };
 
     if (cargando) return <p className="text-center text-[#A8A29E] py-12">Cargando...</p>;
 
     return (
         <div className="space-y-5">
             {/* Filtros */}
-            <div className="flex gap-3 flex-wrap items-center">
-                <input type="month" value={mes} onChange={handleMes}
-                    className={`${inputCls} text-[13px]`} />
+            <div className="flex gap-2 flex-wrap items-center">
+                <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
+                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 <select value={filtroTec} onChange={e => setFiltroTec(e.target.value)}
-                    className={`${inputCls} text-[13px]`}>
+                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <option value="">Todos los técnicos</option>
                     {tecnicoOpciones.map(t => (
                         <option key={t.id} value={t.id}>{t.nombre}</option>
                     ))}
                 </select>
-                <button onClick={() => cargar()}
-                    className="h-[46px] px-4 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase active:scale-95 transition-all">
-                    Recargar
-                </button>
             </div>
 
             {/* Resumen */}
@@ -206,8 +191,8 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
             {/* Exportar PDF */}
             {datosFiltrados.length > 0 && (
                 <div className="flex justify-end">
-                    <button onClick={() => generarPDFRendimientoTecnicos({ datos: datosFiltrados, periodo })}
-                        className="h-9 px-4 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
+                    <button onClick={() => generarPDFRendimientoTecnicos({ datos: datosFiltrados, periodo: filtroMes })}
+                        className="h-8 px-4 rounded-lg font-bold text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
                         Exportar PDF
                     </button>
                 </div>
@@ -220,7 +205,7 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
 }
 
 // ── Tab Gastos ─────────────────────────────────────────────────────────────────
-function TabGastos({ filtroMes }) {
+function TabGastos({ filtroMes, setFiltroMes }) {
     const [gastos,   setGastos]   = useState([]);
     const [cargando, setCargando] = useState(false);
     const [form, setForm] = useState({ descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' });
@@ -264,14 +249,26 @@ function TabGastos({ filtroMes }) {
 
     return (
         <div className="space-y-5">
+            {/* Selector mes */}
+            <div className="flex gap-2 items-center">
+                <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
+                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+            </div>
+
             {/* Formulario */}
-            <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl p-5" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-                <p className="text-[11px] font-black text-[#A8A29E] uppercase tracking-wider mb-4">Agregar gasto</p>
+            <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider mb-3">Agregar gasto</p>
                 <form onSubmit={handleAgregar} className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="text"   placeholder="Descripción"  value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className={inputCls} />
                     <input type="number" placeholder="Monto" step="0.01" value={form.monto}  onChange={e => setForm({ ...form, monto: e.target.value })}       className={inputCls} />
                     <input type="date"                               value={form.fecha}       onChange={e => setForm({ ...form, fecha: e.target.value })}        className={inputCls} />
-                    <input type="text"   placeholder="Categoría"    value={form.categoria}   onChange={e => setForm({ ...form, categoria: e.target.value })}    className={inputCls} />
+                    <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })}
+                        className={inputCls}>
+                        <option value="">Categoría...</option>
+                        {['Combustible', 'Herramientas', 'Vehículo', 'Insumos', 'Publicidad', 'Alquiler', 'Impuestos', 'Servicios', 'Comida', 'Otro'].map(c => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
+                    </select>
                     <button type="submit" disabled={cargando}
                         className="px-6 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase active:scale-95 transition-all md:col-span-4 disabled:opacity-50">
                         Guardar gasto
@@ -497,7 +494,7 @@ export default function DashboardFinanzas() {
 
             {tab === 'balance'    && <TabBalance    filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
             {tab === 'tecnicos'   && <TabTecnicos   filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
-            {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} />}
+            {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
             {tab === 'inventario' && <TabInventario />}
             </div>
         </div>
