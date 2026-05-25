@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
 import { getUsuarios } from '../../services/api';
+import api from '../../services/api';
 import ServicioForm from '../servicio/ServicioForm';
 import ServicioCard from '../servicio/ServicioCard';
+import SwipeColumns from '../ui/SwipeColumns';
 import Paginacion from '../ui/Paginacion';
 import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
@@ -19,30 +21,11 @@ function M({ valor, className = '' }) {
     return <span className={className}>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
 }
 
-// Stats inline colapsable
-function StatsStrip({ stats, expanded, onToggle }) {
-    return (
-        <button onClick={onToggle}
-            className="w-full flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-left transition-all active:scale-[0.99]">
-            <span className="text-[11px] font-bold text-[#A8A29E]">Mes</span>
-            <M valor={stats.totalMes} className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
-            <span className="text-[11px] font-bold text-[#A8A29E]">MO</span>
-            <M valor={stats.gananciaTotal} className="text-[11px] font-black text-[#D48800] dark:text-[#F0A500]" />
-            <span className="text-[11px] font-bold text-[#A8A29E]">Hoy</span>
-            <M valor={stats.totalHoy} className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
-            {stats.pendientesCount > 0 && <>
-                <span className="text-[11px] font-bold text-[#D48800]">Pend. {stats.pendientesCount}</span>
-            </>}
-            <span className="ml-auto text-[10px] text-[#A8A29E]">{expanded ? '▲' : '▼'}</span>
-        </button>
-    );
-}
-
 const TABS = [
-    { id: 'PRESUPUESTO',           label: 'Presupuestos', short: 'Ppto'     },
-    { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar' },
-    { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.'    },
-    { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado'  },
+    { id: 'PRESUPUESTO',           label: 'Presupuestos', short: 'Ppto',     color: '#D48800', icon: '💰' },
+    { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar', color: '#8B5CF6', icon: '📋' },
+    { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', icon: '📄' },
+    { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', icon: '✅' },
 ];
 
 const PERIODOS = [
@@ -52,7 +35,11 @@ const PERIODOS = [
     { id: 'TODO',    label: 'Todo'      },
 ];
 
-// Sheet para que admin defina modalidad de cobro al avanzar un servicio completado
+const ESTADO_API_MAP = {
+    COBRADO: 'COBRADO,REALIZADO',
+};
+
+// Sheet para que admin defina modalidad de cobro
 function CobroSheet({ servicio, calcularTotal, onConfirmar, onCerrar }) {
     const [modalidad, setModalidad] = useState(servicio.modalidadCobro || '');
     const [montoFinal, setMontoFinal] = useState(servicio.montoFinal || calcularTotal(servicio));
@@ -78,47 +65,31 @@ function CobroSheet({ servicio, calcularTotal, onConfirmar, onCerrar }) {
             <div className="fixed inset-x-0 bottom-0 z-[2000] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md">
                 <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-t-3xl md:rounded-3xl p-5 shadow-2xl border-t border-black/[0.07]">
                     <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E] md:hidden" />
-
                     <div className="mb-4">
                         <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Definir cobro</h3>
-                        <p className="text-[11px] text-[#A8A29E] mt-0.5">
-                            {servicio.clienteNombre} · #{servicio.id}
-                        </p>
+                        <p className="text-[11px] text-[#A8A29E] mt-0.5">{servicio.clienteNombre} · #{servicio.id}</p>
                     </div>
-
-                    {/* Monto final editable */}
                     <div className="mb-4 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                         <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest block mb-1">Monto final a cobrar</label>
                         <div className="flex items-center gap-2">
                             <span className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$</span>
-                            <input
-                                type="number"
-                                value={montoFinal}
-                                onChange={e => setMontoFinal(e.target.value)}
-                                className="flex-1 bg-transparent text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] outline-none"
-                            />
+                            <input type="number" value={montoFinal} onChange={e => setMontoFinal(e.target.value)}
+                                className="flex-1 bg-transparent text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                         </div>
                         {Number(montoFinal) !== total && (
-                            <p className="text-[10px] text-[#A8A29E] mt-1">
-                                Presupuesto original: ${Math.round(total).toLocaleString('es-AR')}
-                            </p>
+                            <p className="text-[10px] text-[#A8A29E] mt-1">Presupuesto original: ${Math.round(total).toLocaleString('es-AR')}</p>
                         )}
                     </div>
-
-                    {/* Modalidad */}
                     <div className="space-y-2 mb-5">
                         {opciones.map(o => (
-                            <button key={o.id}
-                                onClick={() => setModalidad(o.id)}
-                                className={`w-full p-3.5 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? 'border-[' + o.color + '] bg-[' + o.color + ']/5' : 'border-black/[0.06] dark:border-white/[0.06] bg-[#EFEDEA] dark:bg-[#1C1C1C]'}`}
-                                style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}
-                            >
+                            <button key={o.id} onClick={() => setModalidad(o.id)}
+                                className={`w-full p-3.5 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-[#EFEDEA] dark:bg-[#1C1C1C]'}`}
+                                style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}>
                                 <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{o.label}</p>
                                 <p className="text-[10px] text-[#A8A29E] mt-0.5">{o.desc}</p>
                             </button>
                         ))}
                     </div>
-
                     <div className="flex gap-2">
                         <button onClick={onCerrar}
                             className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
@@ -156,22 +127,57 @@ export default function ServicioManager({
         ordenServicio, setOrdenServicio,
     } = useServicioManager();
 
-    const [servicioEjecutar, setServicioEjecutar]           = useState(null);
-    const [servicioEjecutarSimple, setServicioEjecutarSimple] = useState(null); // para técnicos
+    const [servicioEjecutar, setServicioEjecutar]             = useState(null);
+    const [servicioEjecutarSimple, setServicioEjecutarSimple] = useState(null);
     const [servicioDuplicar, setServicioDuplicar]   = useState(null);
     const [modalImportar, setModalImportar]         = useState(false);
-    const [confirmEliminar, setConfirmEliminar]     = useState(null); // { ids: [], modo: 'uno'|'masivo' }
-    const [servicioCobro, setServicioCobro]         = useState(null); // servicio para definir cobro (admin)
-    const [tecnicos, setTecnicos]               = useState([]);
-    const [modoSeleccion, setModoSeleccion]     = useState(false);
-    const [seleccionados, setSeleccionados]     = useState(new Set());
-    const [mostrarFiltros, setMostrarFiltros]   = useState(false);
-    const [statsExpanded, setStatsExpanded]     = useState(false);
-    const [menuOverflow, setMenuOverflow]       = useState(false);
+    const [confirmEliminar, setConfirmEliminar]     = useState(null);
+    const [servicioCobro, setServicioCobro]         = useState(null);
+    const [tecnicos, setTecnicos]                   = useState([]);
+    const [modoSeleccion, setModoSeleccion]         = useState(false);
+    const [seleccionados, setSeleccionados]         = useState(new Set());
+    const [mostrarFiltros, setMostrarFiltros]       = useState(false);
+    const [mostrarBusqueda, setMostrarBusqueda]     = useState(false);
+    const [menuOverflow, setMenuOverflow]           = useState(false);
+    const [tabCounts, setTabCounts]                 = useState({});
+    const [tabAntesBusqueda, setTabAntesBusqueda]   = useState(null);
 
     const tabActual = filtros.estado || 'PRESUPUESTO';
+    const enBusquedaGlobal = tabActual === 'TODOS' && !!filtros.busqueda;
 
-    // Long-press para activar selección masiva
+    // Auto-switch a TODOS cuando se escribe búsqueda, volver al tab anterior al borrar
+    useEffect(() => {
+        if (filtros.busqueda && tabActual !== 'TODOS') {
+            setTabAntesBusqueda(tabActual);
+            filtros.setEstado('TODOS');
+        } else if (!filtros.busqueda && tabActual === 'TODOS' && tabAntesBusqueda) {
+            filtros.setEstado(tabAntesBusqueda);
+            setTabAntesBusqueda(null);
+        }
+    }, [filtros.busqueda]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Cargar conteos por estado (para las SwipeColumns)
+    const fetchTabCounts = useCallback(async () => {
+        try {
+            const results = await Promise.all(
+                TABS.map(t => api.get('/servicios', {
+                    params: { tipo: 'TECNICA', estado: ESTADO_API_MAP[t.id] || t.id, page: 0, size: 1 }
+                }).catch(() => ({ data: { totalElements: 0 } })))
+            );
+            const counts = {};
+            TABS.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
+            setTabCounts(counts);
+        } catch { /* silenciar */ }
+    }, []);
+
+    useEffect(() => { fetchTabCounts(); }, [fetchTabCounts]);
+
+    // Actualizar count del tab activo cuando cambian los items
+    useEffect(() => {
+        setTabCounts(prev => ({ ...prev, [tabActual]: filtros.totalItems }));
+    }, [filtros.totalItems, tabActual]);
+
+    // Long-press para selección masiva
     const longPressRef = React.useRef(null);
     const iniciarLongPress = (id) => {
         longPressRef.current = setTimeout(() => {
@@ -184,6 +190,11 @@ export default function ServicioManager({
     };
 
     const cambiarTab = (id) => {
+        // Si toca un tab específico estando en búsqueda global, limpiar búsqueda
+        if (id !== 'TODOS' && enBusquedaGlobal) {
+            filtros.setBusqueda('');
+            setTabAntesBusqueda(null);
+        }
         filtros.setEstado(id);
         setModoSeleccion(false);
         setSeleccionados(new Set());
@@ -201,15 +212,14 @@ export default function ServicioManager({
         await accionMasiva([...seleccionados], accion);
         setSeleccionados(new Set());
         setModoSeleccion(false);
+        fetchTabCounts();
     };
 
-    // Admin: abre sheet simplificado; técnico: abre EjecutarOrdenSheet
     const [servicioEjecutarAdmin, setServicioEjecutarAdmin] = useState(null);
     const abrirEjecutar = (s) => {
         if (esAdmin) setServicioEjecutarAdmin(s);
         else         setServicioEjecutarSimple(s);
     };
-    // "Editar detalle completo" desde el sheet admin abre el form completo
     const abrirEditarCompleto = () => {
         const s = servicioEjecutarAdmin;
         setServicioEjecutarAdmin(null);
@@ -218,19 +228,20 @@ export default function ServicioManager({
     };
     const cerrarModalCompleto = () => { cerrarModal(); setServicioEjecutar(null); setServicioDuplicar(null); };
 
-    // Duplicar: copia todo menos id/estado/nroDocumento, con fecha de hoy
     const duplicarServicio = (s) => {
         const copia = {
-            ...s,
-            id: undefined,
-            estado: 'PRESUPUESTO',
-            nroDocumento: undefined,
+            ...s, id: undefined, estado: 'PRESUPUESTO', nroDocumento: undefined,
             fecha: new Date().toISOString().slice(0, 10),
-            presupuestoOrigenId: undefined,
-            ordenId: undefined,
+            presupuestoOrigenId: undefined, ordenId: undefined,
         };
         setServicioDuplicar(copia);
         setModalCrear(true);
+    };
+
+    // Refrescar conteos al confirmar/eliminar
+    const confirmarConRefresh = async (...args) => {
+        await confirmarServicio(...args);
+        fetchTabCounts();
     };
 
     useEffect(() => { if (esAdmin) getUsuarios().then(r => setTecnicos(r.data)).catch(() => {}); }, [esAdmin]);
@@ -238,32 +249,61 @@ export default function ServicioManager({
     useEffect(() => { if (presupuestoOrigen) setModalCrear(true); }, [presupuestoOrigen]);
     useEffect(() => { if (ordenOrigen)       setModalCrear(true); }, [ordenOrigen]);
 
+    // Columnas para SwipeColumns — agrega "Todos" cuando hay búsqueda
+    const columns = [
+        ...(enBusquedaGlobal ? [{
+            id: 'TODOS', label: 'Todos', fullLabel: 'Todos', color: '#1C1917',
+            count: filtros.totalItems, icon: '🔍',
+        }] : []),
+        ...TABS.map(t => ({
+            id: t.id,
+            label: t.short,
+            fullLabel: t.label,
+            count: tabCounts[t.id] ?? null,
+            color: t.color,
+            icon: t.icon,
+        })),
+    ];
+
     return (
         <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
-            {/* Header minimalista */}
+            {/* ═══ HEADER ═══ */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    {/* Título — solo desktop (mobile lo muestra el header) */}
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
+                    {/* Desktop: título */}
                     <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9] mb-2.5">
                         Servicio Técnico
                     </h2>
 
-                    {/* Búsqueda + acciones */}
-                    <div className="flex gap-1.5">
-                        <div className="relative flex-1">
+                    {/* Barra de acciones */}
+                    <div className="flex items-center gap-1.5">
+                        {/* Búsqueda — mobile: toggle, desktop: siempre visible */}
+                        <button onClick={() => setMostrarBusqueda(v => !v)}
+                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            🔍
+                        </button>
+                        <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
                             <input
                                 value={filtros.busqueda}
                                 onChange={e => filtros.setBusqueda(e.target.value)}
-                                placeholder="Cliente, S/N, ubicación, sede..."
+                                placeholder="Cliente, S/N, ubicación..."
                                 className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                                autoFocus={mostrarBusqueda}
                             />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
                             )}
                         </div>
+
+                        {/* Filtros toggle */}
+                        <button onClick={() => setMostrarFiltros(v => !v)}
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            ⚙
+                        </button>
+
                         {/* Menú overflow */}
                         <div className="relative">
                             <button onClick={() => setMenuOverflow(v => !v)}
@@ -272,23 +312,26 @@ export default function ServicioManager({
                             </button>
                             {menuOverflow && (
                                 <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setMenuOverflow(false)} />
-                                    <div className="absolute right-0 top-11 z-20 w-48 rounded-xl bg-white dark:bg-[#242424] shadow-lg border border-black/[0.08] dark:border-white/[0.08] py-1">
+                                    <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
+                                    {/* Mobile: bottom-sheet, Desktop: dropdown */}
+                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
+                                        <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E] md:hidden" />
                                         <button onClick={() => { exportarServiciosCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
-                                            className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-[14px] md:text-[13px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
                                             📥 Exportar CSV
                                         </button>
                                         <button onClick={() => { setModalImportar(true); setMenuOverflow(false); }}
-                                            className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-[14px] md:text-[13px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
                                             📤 Importar históricos
                                         </button>
                                     </div>
                                 </>
                             )}
                         </div>
+
                         {esAdmin && (
                             <button onClick={() => setModalCrear(true)}
-                                className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] shrink-0">
+                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase items-center transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] shrink-0">
                                 + Nuevo
                             </button>
                         )}
@@ -296,97 +339,35 @@ export default function ServicioManager({
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-2">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-                {/* Stats compacto — una línea */}
-                <StatsStrip stats={stats} expanded={statsExpanded} onToggle={() => setStatsExpanded(v => !v)} />
+                {/* ═══ SWIPE COLUMNS (mobile) / PIPELINE TABS (desktop) ═══ */}
+                <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
 
-                {/* Stats expandidos */}
-                {statsExpanded && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Facturado mes</p>
-                            <M valor={stats.totalMes} className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                            <p className="text-[10px] text-[#A8A29E] mt-0.5">{stats.cantidadMes} servicios</p>
-                        </div>
-                        <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Mano de obra</p>
-                            <M valor={stats.gananciaTotal} className="text-lg font-black text-[#D48800] dark:text-[#F0A500] block" />
-                        </div>
-                        <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Hoy</p>
-                            <M valor={stats.totalHoy} className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                            <p className="text-[10px] text-[#A8A29E] mt-0.5">{stats.cantidadHoy} servicios</p>
-                        </div>
-                        <div className={`rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${stats.pendientesCount > 0 ? 'border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]' : ''}`}>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Pendientes</p>
-                            <p className={`text-lg font-black ${stats.pendientesCount > 0 ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>{stats.pendientesCount}</p>
-                            <M valor={stats.pendientesVal} className="text-[10px] text-[#A8A29E] mt-0.5 block" />
-                        </div>
-                    </div>
-                )}
-
-                {/* Pipeline de estados */}
-                <div className="flex items-center rounded-lg overflow-hidden shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    {TABS.map((t, i) => {
-                        const activo = tabActual === t.id;
-                        const idx = TABS.findIndex(x => x.id === tabActual);
-                        const completado = i < idx;
-                        return (
-                            <button key={t.id} onClick={() => cambiarTab(t.id)}
-                                className={`flex-1 h-9 flex items-center justify-center gap-1 text-[10px] font-bold uppercase transition-all active:scale-[0.98] relative ${
-                                    activo
-                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white z-[1]'
-                                        : completado
-                                            ? 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
-                                            : 'bg-white dark:bg-[#1C1C1C] text-[#A8A29E]'
-                                } ${i > 0 ? 'border-l border-black/[0.05] dark:border-white/[0.05]' : ''}`}>
-                                <span className="hidden sm:inline">{t.label}</span>
-                                <span className="sm:hidden">{t.short || t.label}</span>
-                                {activo && filtros.totalItems > 0 && (
-                                    <span className="text-[9px] opacity-70">({filtros.totalItems})</span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* Filtros colapsables */}
-                <button
-                    onClick={() => setMostrarFiltros(v => !v)}
-                    className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
-                    <span className="text-[10px] font-bold uppercase text-[#A8A29E]">
-                        {mostrarFiltros ? '▲' : '▼'} Filtros
-                    </span>
-                    <span className="text-[10px] font-bold text-[#A8A29E]">{filtros.totalItems} resultados</span>
-                </button>
-
+                {/* ═══ FILTROS COLAPSABLES ═══ */}
                 {mostrarFiltros && (
-                    <div className="space-y-2 pb-1">
-                        {/* Período */}
+                    <div className="space-y-2 p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
                             {PERIODOS.map(p => (
                                 <button key={p.id}
                                     onClick={() => filtros.aplicarRapido(p.id)}
-                                    className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}>
+                                    className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]'}`}>
                                     {p.label}
                                 </button>
                             ))}
                         </div>
-                        {/* Rango */}
                         <div className="flex gap-2 items-center">
                             <input type="date" value={filtros.desde}
                                 onChange={e => filtros.aplicarRango(e.target.value, filtros.hasta)}
-                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
                             <span className="text-[10px] text-[#A8A29E]">a</span>
                             <input type="date" value={filtros.hasta}
                                 onChange={e => filtros.aplicarRango(filtros.desde, e.target.value)}
-                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
                         </div>
-                        {/* Técnico + Orden */}
                         {esAdmin && tecnicos.length > 0 && (
                             <select value={usuarioId} onChange={e => setUsuarioId(e.target.value)}
-                                className="w-full h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                                className="w-full h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]">
                                 <option value="">Todos los técnicos</option>
                                 {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                             </select>
@@ -394,17 +375,18 @@ export default function ServicioManager({
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-bold text-[#A8A29E] uppercase shrink-0">Orden</span>
                             <select value={ordenServicio} onChange={e => setOrdenServicio(e.target.value)}
-                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]">
                                 <option value="fechaServicio,desc">Más reciente primero</option>
                                 <option value="fechaServicio,asc">Más antiguo primero</option>
                                 <option value="total,desc">Mayor monto primero</option>
                                 <option value="total,asc">Menor monto primero</option>
                             </select>
                         </div>
+                        <p className="text-[10px] text-center text-[#A8A29E] font-bold">{filtros.totalItems} resultados</p>
                     </div>
                 )}
 
-                {/* Barra selección masiva (activada por long-press) */}
+                {/* ═══ SELECCIÓN MASIVA ═══ */}
                 {modoSeleccion && (
                     <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1">
@@ -435,18 +417,18 @@ export default function ServicioManager({
                     </div>
                 )}
 
-                <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
-
+                {/* ═══ LISTA ═══ */}
                 {cargando ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="h-36 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />
+                            <div key={i} className="h-28 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />
                         ))}
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
-                    <div className="text-center py-12 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <p className="text-2xl mb-1">📋</p>
-                        <p className="text-[12px] font-bold text-[#A8A29E]">Sin resultados</p>
+                    <div className="text-center py-16 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <p className="text-3xl mb-2">{TABS.find(t => t.id === tabActual)?.icon || '📋'}</p>
+                        <p className="text-[13px] font-bold text-[#A8A29E]">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'resultados'}</p>
+                        <p className="text-[11px] text-[#A8A29E] mt-1">Deslizá para ver otros estados</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-2">
@@ -465,7 +447,7 @@ export default function ServicioManager({
                                 onToggleSelect={toggleSeleccion}
                                 onEditar={esAdmin ? abrirEditar : null}
                                 onEjecutar={abrirEjecutar}
-                                onCobrar={confirmarServicio}
+                                onCobrar={confirmarConRefresh}
                                 onDuplicar={esAdmin ? duplicarServicio : null}
                                 onRechazar={rechazarServicio}
                                 onArchivar={archivarServicio}
@@ -483,7 +465,7 @@ export default function ServicioManager({
                 <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
             </div>
 
-            {/* FAB Nuevo — solo mobile, solo admin */}
+            {/* FAB — solo mobile, solo admin */}
             {esAdmin && (
                 <button
                     onClick={() => setModalCrear(true)}
@@ -492,11 +474,11 @@ export default function ServicioManager({
                 >+</button>
             )}
 
-            {/* Modal crear/editar */}
+            {/* ═══ MODALES ═══ */}
+
             {modalCrear && (
                 <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/55">
                     <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-[#FFFFFF] dark:bg-[#141414]">
-                        {/* Drag handle — indica scroll en mobile */}
                         <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-[#FFFFFF] dark:bg-[#141414]">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
@@ -522,6 +504,7 @@ export default function ServicioManager({
                             onSaved={() => {
                                 cerrarModalCompleto();
                                 cargarServicios();
+                                fetchTabCounts();
                                 if (onClienteConsumido) onClienteConsumido();
                                 if (onPresupuestoOrigenConsumido) onPresupuestoOrigenConsumido();
                                 if (onOrdenOrigenConsumido) onOrdenOrigenConsumido();
@@ -536,7 +519,6 @@ export default function ServicioManager({
                 </div>
             )}
 
-            {/* Modal detalle */}
             {modalDetalle && (
                 <div className="fixed inset-0 z-[2000] flex items-end bg-black/50"
                     onClick={() => setModalDetalle(null)}>
@@ -574,25 +556,20 @@ export default function ServicioManager({
                 <ModalFirmasPDF onConfirm={confirmarFirmasYGenerarPDF} onCancel={() => setModalFirmas(false)} />
             )}
 
-            {/* Sheet simplificado para técnicos */}
             {servicioEjecutarSimple && (
                 <EjecutarOrdenSheet
                     servicio={servicioEjecutarSimple}
-                    onConfirmado={() => {
-                        setServicioEjecutarSimple(null);
-                        cargarServicios();
-                    }}
+                    onConfirmado={() => { setServicioEjecutarSimple(null); cargarServicios(); fetchTabCounts(); }}
                     onCerrar={() => setServicioEjecutarSimple(null)}
                 />
             )}
 
-            {/* Sheet ejecutar simplificado — admin */}
             {servicioEjecutarAdmin && (
                 <EjecutarAdminSheet
                     servicio={servicioEjecutarAdmin}
                     calcularTotal={calcularTotal}
                     onConfirmar={async (estadoDestino, extras) => {
-                        await confirmarServicio(servicioEjecutarAdmin.id, estadoDestino, extras);
+                        await confirmarConRefresh(servicioEjecutarAdmin.id, estadoDestino, extras);
                         setServicioEjecutarAdmin(null);
                     }}
                     onEditarCompleto={abrirEditarCompleto}
@@ -603,24 +580,22 @@ export default function ServicioManager({
             {modalImportar && (
                 <ImportadorServiciosModal
                     onCerrar={() => setModalImportar(false)}
-                    onImportado={() => { filtros.cargar?.(); }}
+                    onImportado={() => { filtros.cargar?.(); fetchTabCounts(); }}
                 />
             )}
 
-            {/* Sheet definir cobro — admin */}
             {servicioCobro && (
                 <CobroSheet
                     servicio={servicioCobro}
                     calcularTotal={calcularTotal}
                     onConfirmar={async (estadoDestino, extras) => {
-                        await confirmarServicio(servicioCobro.id, estadoDestino, extras);
+                        await confirmarConRefresh(servicioCobro.id, estadoDestino, extras);
                         setServicioCobro(null);
                     }}
                     onCerrar={() => setServicioCobro(null)}
                 />
             )}
 
-            {/* Modal confirmación eliminación — solo admin */}
             {confirmEliminar && (
                 <>
                     <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
@@ -635,7 +610,7 @@ export default function ServicioManager({
                             <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-[#D13A28]/20 mb-4 space-y-1.5">
                                 <p className="text-[11px] font-black text-[#D13A28] uppercase tracking-wide">Esta acción no se puede deshacer</p>
                                 <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] leading-snug">
-                                    Se eliminarán permanentemente el servicio, todos sus ítems, repuestos usados y registros asociados. No aparecerá más en el historial ni en estadísticas.
+                                    Se eliminarán permanentemente el servicio, todos sus ítems, repuestos usados y registros asociados.
                                 </p>
                             </div>
                             <div className="flex gap-2">
@@ -649,9 +624,10 @@ export default function ServicioManager({
                                     setSeleccionados(new Set());
                                     setModoSeleccion(false);
                                     await Promise.all(ids.map(id => eliminarServicio(id)));
+                                    fetchTabCounts();
                                 }}
                                     className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
-                                    Sí, eliminar definitivamente
+                                    Sí, eliminar
                                 </button>
                             </div>
                         </div>

@@ -181,26 +181,26 @@ export default function DashboardCaja({ setVistaActual }) {
                     )}
                 </div>
 
-                {/* === ACCIONES RÁPIDAS — mobile: scroll horizontal, desktop: oculto (ya están en sidebar) === */}
+                {/* === ACCIONES RÁPIDAS — mobile: grid centrado, desktop: oculto (ya están en sidebar) === */}
                 <div className="md:hidden mb-4">
-                    <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                    <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => setVistaActual('servicio-tecnico')}
-                            className="shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]">
+                            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]">
                             <span>🔧</span>
-                            <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] whitespace-nowrap">Nuevo Servicio</span>
+                            <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Nuevo Servicio</span>
                         </button>
                         <button onClick={() => setVistaActual('venta')}
-                            className="shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]">
+                            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]">
                             <span>🛒</span>
-                            <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] whitespace-nowrap">Nueva Venta</span>
+                            <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Nueva Venta</span>
                         </button>
                         <button onClick={() => setVistaActual('presupuestos')}
-                            className="shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                             <span>💰</span>
-                            <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] whitespace-nowrap">Presupuestos</span>
+                            <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Presupuestos</span>
                         </button>
                         <button onClick={() => setVistaActual('clientes')}
-                            className="shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                             <span>👥</span>
                             <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] whitespace-nowrap">Clientes</span>
                         </button>
