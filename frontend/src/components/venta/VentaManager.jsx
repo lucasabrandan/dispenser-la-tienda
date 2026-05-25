@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useVentaManager } from '../../hooks/useVentaManager';
-import VentaStats  from './VentaStats';
+import { useMontos } from '../../context/MontosContext';
 import VentaList   from './VentaList';
 import VentaForm   from './VentaForm';
 import FiltrosPanel from '../ui/FiltrosPanel';
@@ -12,6 +12,12 @@ const ESTADOS_VENTA = [
     { value: 'REALIZADO',   label: 'Cobrada'   },
     { value: 'RECHAZADO',   label: 'Rechazada' },
 ];
+
+function MV({ valor }) {
+    const { montosVisibles } = useMontos();
+    if (!montosVisibles) return <span>······</span>;
+    return <span>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
+}
 
 export default function VentaManager({ clienteInicial = null, onClienteConsumido }) {
     const {
@@ -29,6 +35,8 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     } = useVentaManager();
 
     const [ventaDuplicar, setVentaDuplicar] = useState(null);
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [statsExpanded, setStatsExpanded] = useState(false);
 
     // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
     useEffect(() => {
@@ -84,11 +92,52 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-            <VentaStats stats={stats} />
+            {/* Stats compacto */}
+            <button onClick={() => setStatsExpanded(v => !v)}
+                className="w-full flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-left active:scale-[0.99]">
+                <span className="text-[11px] font-bold text-[#A8A29E]">Mes</span>
+                <span className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]"><MV valor={stats.totalMes} /></span>
+                <span className="text-[11px] font-bold text-[#A8A29E]">Hoy</span>
+                <span className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]"><MV valor={stats.totalHoy} /></span>
+                {stats.pendientesCount > 0 && (
+                    <span className="text-[11px] font-bold text-[#D48800]">Pend. {stats.pendientesCount}</span>
+                )}
+                <span className="ml-auto text-[10px] text-[#A8A29E]">{statsExpanded ? '▲' : '▼'}</span>
+            </button>
 
-            {/* ── FILTROS colapsables ──────────────────────────────────── */}
-            <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda={false} conRango placeholderBusqueda="Cliente, S/N, sede..." />
-            <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
+            {statsExpanded && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Facturado mes</p>
+                        <span className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] block"><MV valor={stats.totalMes} /></span>
+                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{stats.cantidadMes} cobradas</p>
+                    </div>
+                    <div className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Hoy</p>
+                        <span className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] block"><MV valor={stats.totalHoy} /></span>
+                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{stats.cantidadHoy} ventas</p>
+                    </div>
+                    <div className={`rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${stats.pendientesCount > 0 ? 'border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]' : ''}`}>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Pendientes</p>
+                        <p className={`text-lg font-black ${stats.pendientesCount > 0 ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>{stats.pendientesCount}</p>
+                    </div>
+                    <div className={`rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${stats.pendientesVal > 0 ? 'border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]' : ''}`}>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Por cobrar</p>
+                        <span className={`text-lg font-black block ${stats.pendientesVal > 0 ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}><MV valor={stats.pendientesVal} /></span>
+                    </div>
+                </div>
+            )}
+
+            {/* Filtros colapsables */}
+            <button onClick={() => setMostrarFiltros(v => !v)}
+                className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
+                <span className="text-[10px] font-bold uppercase text-[#A8A29E]">{mostrarFiltros ? '▲' : '▼'} Filtros</span>
+                <span className="text-[10px] font-bold text-[#A8A29E]">{filtros.totalItems} resultados</span>
+            </button>
+
+            {mostrarFiltros && (
+                <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda={false} conRango />
+            )}
 
             {cargando ? (
                 <div className="text-center py-16 text-[#A8A29E] font-bold">Cargando ventas...</div>

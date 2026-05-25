@@ -60,6 +60,7 @@ export default function ServicioList({ onEditar }) {
     const [servicios, setServicios]       = useState([]);
     const [modalDetalle, setModalDetalle] = useState(null);
     const [tipoFiltro, setTipoFiltro]     = useState('TODOS');
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
     useEffect(() => { cargarServicios(); }, []); // eslint-disable-line
 
@@ -159,7 +160,18 @@ export default function ServicioList({ onEditar }) {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
-                <div className="space-y-3">
+                <div className="space-y-2">
+
+                    {/* Stats compacto — solo admin */}
+                    {esAdmin && (
+                        <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                            <span className="text-[11px] font-bold text-[#A8A29E]">Ventas</span>
+                            <M valor={totalVentas} className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
+                            <span className="text-[11px] text-[#A8A29E]">·</span>
+                            <span className="text-[11px] font-bold text-[#A8A29E]">Técnica</span>
+                            <M valor={totalTecnica} className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
+                        </div>
+                    )}
 
                     {/* Filtro tipo */}
                     <div className="flex gap-1.5">
@@ -175,22 +187,16 @@ export default function ServicioList({ onEditar }) {
                         ))}
                     </div>
 
-                    {/* Métricas — solo admin */}
-                    {esAdmin && (
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className={`${card} p-3.5 border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]`}>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Ventas insumos</p>
-                                <M valor={totalVentas} className="text-xl font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                            </div>
-                            <div className={`${card} p-3.5 border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]`}>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Técnica / MO</p>
-                                <M valor={totalTecnica} className="text-xl font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                            </div>
-                        </div>
-                    )}
+                    {/* Filtros colapsables */}
+                    <button onClick={() => setMostrarFiltros(v => !v)}
+                        className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
+                        <span className="text-[10px] font-bold uppercase text-[#A8A29E]">{mostrarFiltros ? '▲' : '▼'} Filtros</span>
+                        <span className="text-[10px] font-bold text-[#A8A29E]">{filtros.totalItems} resultados</span>
+                    </button>
 
-                    {/* Filtros — sin búsqueda (ya está en header) */}
-                    <FiltrosPanel hook={filtros} estados={ESTADOS_HISTORIAL} conBusqueda={false} conRango />
+                    {mostrarFiltros && (
+                        <FiltrosPanel hook={filtros} estados={ESTADOS_HISTORIAL} conBusqueda={false} conRango />
+                    )}
                     <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
                     {/* Listado */}
