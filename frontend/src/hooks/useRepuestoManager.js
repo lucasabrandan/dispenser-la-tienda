@@ -53,12 +53,15 @@ export function useRepuestoManager() {
 
     // ── Filtrado + paginación ──────────────────────────────────────────────────
     const productosFiltrados = useMemo(() => {
-        if (!busqueda.trim()) return productos;
-        const q = busqueda.toLowerCase().trim();
-        return productos.filter(p =>
-            p.nombre?.toLowerCase().includes(q) ||
-            p.sku?.toLowerCase().includes(q)
-        );
+        let items = [...productos].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+        if (busqueda.trim()) {
+            const q = busqueda.toLowerCase().trim();
+            items = items.filter(p =>
+                p.nombre?.toLowerCase().includes(q) ||
+                p.sku?.toLowerCase().includes(q)
+            );
+        }
+        return items;
     }, [productos, busqueda]);
 
     const totalPaginas   = Math.max(1, Math.ceil(productosFiltrados.length / POR_PAGINA));

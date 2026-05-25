@@ -5,6 +5,7 @@ import { useClienteData } from '../../hooks/useClienteData';
 import { useEquipoActions } from '../../hooks/useEquipoActions';
 import { filtrarClientesPorBusqueda } from '../../utils/clienteUtils';
 import { toTitleCase } from '../../utils/titleCase';
+import { migrarClientesTitleCase } from '../../utils/migrarTitleCase';
 import ClienteCard        from './ClienteCard';
 import ClienteForm        from './ClienteForm';
 import CrearClienteModal  from './CrearClienteModal';
@@ -99,9 +100,24 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             + Nuevo
                         </button>
                     </div>
-                    <span className="text-[10px] font-bold text-[#A8A29E]">
-                        {filtrados.length} clientes · A-Z
-                    </span>
+                    <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#A8A29E]">
+                            {filtrados.length} clientes · A-Z
+                        </span>
+                        {/* Botón migración Title Case — TEMPORAL, eliminar después de usar */}
+                        <button onClick={async () => {
+                            const { toast } = await import('react-hot-toast');
+                            const t = toast.loading('Aplicando Title Case...');
+                            try {
+                                const r = await migrarClientesTitleCase();
+                                toast.success(`${r.actualizados} clientes actualizados`, { id: t });
+                                cargarDatos();
+                            } catch { toast.error('Error', { id: t }); }
+                        }}
+                            className="text-[9px] font-bold text-[#A8A29E] px-2 py-1 rounded bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95">
+                            Aa→Title Case
+                        </button>
+                    </div>
                 </div>
             </div>
 

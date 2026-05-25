@@ -310,9 +310,10 @@ export default function PresupuestosManager() {
         nroDocPdf: p.nroDocumento || localStorage.getItem(`pdf_nro_${p.id}`) || '',
     })), [presupuestos]);
 
-    const presupuestosFiltradosTipo = useMemo(() =>
-        tipoFiltro ? presupuestosConNro.filter(p => p.servicioTipo === tipoFiltro) : presupuestosConNro
-    , [presupuestosConNro, tipoFiltro]);
+    const presupuestosFiltradosTipo = useMemo(() => {
+        const items = tipoFiltro ? presupuestosConNro.filter(p => p.servicioTipo === tipoFiltro) : presupuestosConNro;
+        return [...items].sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha));
+    }, [presupuestosConNro, tipoFiltro]);
 
     const filtros = useFiltros(presupuestosFiltradosTipo, {
         porPagina: 10, campoFecha: 'fecha',
