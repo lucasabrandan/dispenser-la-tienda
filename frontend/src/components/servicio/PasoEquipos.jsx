@@ -147,6 +147,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const [nombreRepuesto, setNombreRepuesto]   = useState('');
     const [sheetRepuestos, setSheetRepuestos]   = useState(false);
     const [mostrarFotos,   setMostrarFotos]     = useState(false);
+    const [mostrarEquipo,  setMostrarEquipo]    = useState(false);
     const [formVisible,    setFormVisible]      = useState(true);
 
     // Si editarItem carga datos en itemActual, mostrar el form automáticamente
@@ -269,286 +270,206 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
                 <div className="flex flex-col gap-3">
 
-                    {/* S/N */}
-                    <div>
-                        <Label>N/S Dispenser (opcional)</Label>
-                        <CreatableSelect
-                            styles={selectStyles}
-                            menuPosition="fixed"
-                            menuPlacement="auto"
-                            menuPortalTarget={document.body}
-                            options={opcionesSerial}
-                            value={itemActual.equipoSerial ? { label: itemActual.equipoSerial, value: itemActual.equipoSerial } : null}
-                            onChange={s => {
-                                if (!s) { setItemActual({ ...itemActual, equipoSerial: '', esNuevoEquipo: false }); return; }
-                                // Auto-rellenar modelo y ubicación desde el inventario si existen
-                                const equipoDB = db.equipos?.find(e => e.numeroSerie === s.value);
-                                setItemActual({
-                                    ...itemActual,
-                                    equipoSerial:    s.value,
-                                    esNuevoEquipo:   false,
-                                    modeloEquipo:    itemActual.modeloEquipo    || equipoDB?.modelo    || '',
-                                    ubicacionEquipo: itemActual.ubicacionEquipo || equipoDB?.ubicacion || '',
-                                });
-                                consultarAntecedentes(s.value);
-                            }}
-                            onCreateOption={val => {
-                                // Marcar como nuevo para guardarlo en la BD al agregar al ticket
-                                setItemActual({ ...itemActual, equipoSerial: val, esNuevoEquipo: true });
-                                consultarAntecedentes(val);
-                            }}
-                            isClearable
-                            placeholder="Buscar o escribir S/N..."
-                            noOptionsMessage={() => 'Escribí el S/N manualmente'}
-                        />
-                    </div>
+                    {/* ═══ ZONA OBLIGATORIA ═══ */}
 
-                    {/* Antecedente */}
-                    {historialEquipo && (
-                        <div className="p-3 rounded-xl bg-[#FFF4D6] dark:bg-[#2A1E00] border border-[#D48800]/30">
-                            <p className="text-[10px] font-bold mb-1 text-[#D48800] dark:text-[#F0A500]">
-                                Último servicio registrado
-                            </p>
-                            <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94]">
-                                {historialEquipo.fecha} — {historialEquipo.items?.[0]?.trabajoRealizado}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Modelo */}
-                    <div>
-                        <Label>Modelo (opcional)</Label>
-                        <input
-                            className={inputClass}
-                            value={itemActual.modeloEquipo || ''}
-                            onChange={e => setItemActual({ ...itemActual, modeloEquipo: e.target.value })}
-                            placeholder="Ej: Bacope frío/calor..."
-                        />
-                    </div>
-
-                    {/* Ubicación */}
-                    <div>
-                        <Label>Ubicación dentro del local (opcional)</Label>
-                        <input
-                            className={inputClass}
-                            value={itemActual.ubicacionEquipo || ''}
-                            onChange={e => setItemActual({ ...itemActual, ubicacionEquipo: e.target.value })}
-                            placeholder="Ej: Piso 2, depósito..."
-                        />
-                    </div>
-
-                    {/* Repuestos — bottom sheet con fotos */}
-                    <div style={{ borderTop: '0.5px solid rgba(0,0,0,0.07)', paddingTop: '12px' }}>
-                        <Label>Repuestos (opcional)</Label>
-
-                        <button
-                            type="button"
-                            onClick={() => setSheetRepuestos(true)}
-                            className="w-full py-3 rounded-xl font-bold text-[13px] flex items-center justify-between px-4 transition-all active:scale-[0.98] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
-                        >
-                            <span>
-                                {itemActual.repuestosUsados?.length > 0
-                                    ? `${itemActual.repuestosUsados.length} repuesto${itemActual.repuestosUsados.length > 1 ? 's' : ''} seleccionado${itemActual.repuestosUsados.length > 1 ? 's' : ''}`
-                                    : '+ Seleccionar repuestos'
-                                }
-                            </span>
-                            <span className="text-[#A8A29E]">▾</span>
-                        </button>
-
-                        {/* Resumen repuestos elegidos */}
-                        {itemActual.repuestosUsados?.length > 0 && (
-                            <div className="mt-2 rounded-xl overflow-hidden bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
-                                {itemActual.repuestosUsados.map((r, i) => {
-                                    const g = calcularGananciaRepuesto(r, r.cantidad);
-                                    return (
-                                        <div key={i} className="px-3 py-2.5 flex items-center gap-3"
-                                             style={{ borderBottom: i < itemActual.repuestosUsados.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-[12px] truncate text-[#1C1917] dark:text-[#F0EEE9]">{r.nombre}</p>
-                                                {g.ganancia > 0 && (
-                                                    <p className="text-[10px] font-bold text-[#1E8A4A]">+${g.ganancia.toFixed(0)} margen</p>
-                                                )}
-                                            </div>
-                                            <span className="text-[11px] font-black text-[#A8A29E]">{r.cantidad}x</span>
-                                            <p className="font-black text-[13px] text-right text-[#1C1917] dark:text-[#F0EEE9]">
-                                                ${Math.round(g.subtotal).toLocaleString('es-AR')}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Descripción con contador de caracteres */}
+                    {/* Descripción del trabajo */}
                     <div>
                         <Label>Descripción del trabajo</Label>
                         <textarea
                             className={`${inputClass} resize-none min-h-[80px]`}
                             placeholder="Describí el trabajo realizado o a realizar..."
                             maxLength={400}
+                            autoFocus
                             value={itemActual.trabajo || ''}
                             onChange={e => setItemActual({ ...itemActual, trabajo: e.target.value })}
                         />
                         <div className="flex justify-end mt-1">
-                            {(() => {
-                                const n = (itemActual.trabajo || '').length;
-                                return (
-                                    <span className={`text-[10px] font-bold transition-colors ${
-                                        n >= 380 ? 'text-[#D13A28] dark:text-[#E8422F]' :
-                                        n >= 300 ? 'text-[#D48800] dark:text-[#F0A500]' :
-                                        'text-[#A8A29E]'
-                                    }`}>
-                                        {n}/400
-                                    </span>
-                                );
-                            })()}
+                            <span className={`text-[10px] font-bold ${(itemActual.trabajo || '').length >= 380 ? 'text-[#D13A28]' : (itemActual.trabajo || '').length >= 300 ? 'text-[#D48800]' : 'text-[#A8A29E]'}`}>
+                                {(itemActual.trabajo || '').length}/400
+                            </span>
                         </div>
                     </div>
 
-                    {/* Fotos — colapsadas por defecto, solo si el cliente las envía */}
-                    <div>
-                        <button
-                            type="button"
-                            onClick={() => setMostrarFotos(v => !v)}
-                            className="w-full flex items-center justify-between py-2 text-left"
-                        >
-                            <span className="text-[11px] font-bold text-[#A8A29E] uppercase tracking-widest">
-                                {(itemActual.fotoAntes || itemActual.fotoDespues) ? '📷 Fotos adjuntas' : '📷 Adjuntar fotos del cliente (opcional)'}
-                            </span>
-                            <span className="text-[#A8A29E] text-xs">{mostrarFotos ? '▲' : '▼'}</span>
+                    {/* Tipo + Mano de obra */}
+                    <div className="rounded-2xl p-4 bg-[#1C1917] dark:bg-[#0F0F0F] space-y-3">
+                        <div className="flex gap-2">
+                            <button type="button"
+                                onClick={() => { setTipoMO('REPARACION'); setItemActual({ ...itemActual, costoExtra: precioReparacion, esVisita: false }); }}
+                                className={`flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95 ${tipoMO === 'REPARACION' ? 'bg-[#D13A28] text-white' : 'bg-[#2E2E2E] text-[#9E9A94]'}`}>
+                                Reparación · ${precioReparacion.toLocaleString('es-AR')}
+                            </button>
+                            <button type="button"
+                                onClick={() => { setTipoMO('VISITA'); setItemActual({ ...itemActual, costoExtra: precioVisita, esVisita: true }); }}
+                                className={`flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95 ${tipoMO === 'VISITA' ? 'bg-[#D48800] text-white' : 'bg-[#2E2E2E] text-[#9E9A94]'}`}>
+                                Visita · ${precioVisita.toLocaleString('es-AR')}
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-black text-[#5C5954] uppercase tracking-widest">MO $</span>
+                            <input
+                                type="number" min="0"
+                                value={itemActual.costoExtra}
+                                onChange={e => setItemActual({ ...itemActual, costoExtra: e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0) })}
+                                onFocus={e => e.target.select()}
+                                placeholder="0"
+                                className="flex-1 bg-transparent border-none text-white text-3xl font-black outline-none placeholder-[#666]"
+                            />
+                        </div>
+                    </div>
+
+                    {/* ═══ ZONA OPCIONAL — expandibles ═══ */}
+                    <div className="border-t border-black/[0.07] dark:border-white/[0.07] pt-3 space-y-1.5">
+
+                        {/* + Equipo (S/N, modelo, ubicación) */}
+                        <button type="button" onClick={() => setMostrarEquipo(v => !v)}
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                            <span>{itemActual.equipoSerial ? `🔧 ${itemActual.equipoSerial}` : '🔧 Equipo (S/N, modelo, ubicación)'}</span>
+                            <span className="text-[10px]">{mostrarEquipo ? '▲' : '▼'}</span>
+                        </button>
+                        {mostrarEquipo && (
+                            <div className="space-y-3 p-3 rounded-xl bg-[#E8E5E0]/50 dark:bg-[#2E2E2E]/50">
+                                <div>
+                                    <Label>N/S Dispenser</Label>
+                                    <CreatableSelect
+                                        styles={selectStyles}
+                                        menuPosition="fixed"
+                                        menuPlacement="auto"
+                                        menuPortalTarget={document.body}
+                                        options={opcionesSerial}
+                                        value={itemActual.equipoSerial ? { label: itemActual.equipoSerial, value: itemActual.equipoSerial } : null}
+                                        onChange={s => {
+                                            if (!s) { setItemActual({ ...itemActual, equipoSerial: '', esNuevoEquipo: false }); return; }
+                                            const equipoDB = db.equipos?.find(e => e.numeroSerie === s.value);
+                                            setItemActual({
+                                                ...itemActual,
+                                                equipoSerial: s.value, esNuevoEquipo: false,
+                                                modeloEquipo: itemActual.modeloEquipo || equipoDB?.modelo || '',
+                                                ubicacionEquipo: itemActual.ubicacionEquipo || equipoDB?.ubicacion || '',
+                                            });
+                                            consultarAntecedentes(s.value);
+                                        }}
+                                        onCreateOption={val => {
+                                            setItemActual({ ...itemActual, equipoSerial: val, esNuevoEquipo: true });
+                                            consultarAntecedentes(val);
+                                        }}
+                                        isClearable
+                                        placeholder="Buscar o escribir S/N..."
+                                        noOptionsMessage={() => 'Escribí el S/N manualmente'}
+                                    />
+                                </div>
+                                {historialEquipo && (
+                                    <div className="p-2.5 rounded-xl bg-[#FFF4D6] dark:bg-[#2A1E00] border border-[#D48800]/30">
+                                        <p className="text-[10px] font-bold text-[#D48800] dark:text-[#F0A500]">Último servicio</p>
+                                        <p className="text-[10px] text-[#57534E] dark:text-[#9E9A94]">{historialEquipo.fecha} — {historialEquipo.items?.[0]?.trabajoRealizado}</p>
+                                    </div>
+                                )}
+                                <input className={inputClass} value={itemActual.modeloEquipo || ''}
+                                    onChange={e => setItemActual({ ...itemActual, modeloEquipo: e.target.value })}
+                                    placeholder="Modelo (ej: Bacope frío/calor)" />
+                                <input className={inputClass} value={itemActual.ubicacionEquipo || ''}
+                                    onChange={e => setItemActual({ ...itemActual, ubicacionEquipo: e.target.value })}
+                                    placeholder="Ubicación (ej: Piso 2, depósito)" />
+                            </div>
+                        )}
+
+                        {/* + Repuestos */}
+                        <button type="button" onClick={() => setSheetRepuestos(true)}
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                            <span>{itemActual.repuestosUsados?.length > 0
+                                ? `📦 ${itemActual.repuestosUsados.length} repuesto${itemActual.repuestosUsados.length > 1 ? 's' : ''}`
+                                : '📦 Repuestos'
+                            }</span>
+                            <span className="text-[10px]">+</span>
+                        </button>
+                        {itemActual.repuestosUsados?.length > 0 && (
+                            <div className="rounded-xl overflow-hidden bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
+                                {itemActual.repuestosUsados.map((r, i) => {
+                                    const g = calcularGananciaRepuesto(r, r.cantidad);
+                                    return (
+                                        <div key={i} className="px-3 py-2 flex items-center gap-3"
+                                             style={{ borderBottom: i < itemActual.repuestosUsados.length - 1 ? '0.5px solid rgba(0,0,0,0.07)' : 'none' }}>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-[11px] truncate text-[#1C1917] dark:text-[#F0EEE9]">{r.nombre}</p>
+                                            </div>
+                                            <span className="text-[10px] font-black text-[#A8A29E]">{r.cantidad}x</span>
+                                            <p className="font-black text-[12px] text-[#1C1917] dark:text-[#F0EEE9]">${Math.round(g.subtotal).toLocaleString('es-AR')}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* + Fotos */}
+                        <button type="button" onClick={() => setMostrarFotos(v => !v)}
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                            <span>{(itemActual.fotoAntes || itemActual.fotoDespues) ? '📷 Fotos adjuntas' : '📷 Fotos'}</span>
+                            <span className="text-[10px]">{mostrarFotos ? '▲' : '▼'}</span>
                         </button>
                         {mostrarFotos && (
-                            <div className="grid grid-cols-2 gap-3 mt-2">
+                            <div className="grid grid-cols-2 gap-3">
                                 <FotoUpload label="Antes" foto={itemActual.fotoAntes}
                                     onChange={f => setItemActual({ ...itemActual, fotoAntes: f })} />
                                 <FotoUpload label="Después" foto={itemActual.fotoDespues}
                                     onChange={f => setItemActual({ ...itemActual, fotoDespues: f })} />
                             </div>
                         )}
-                    </div>
 
-                    {/* Tipo de servicio + Mano de obra */}
-                    <div className="rounded-2xl p-4 bg-[#1C1917] dark:bg-[#0F0F0F] space-y-3">
-                        <Label>Tipo de servicio</Label>
-                        <div className="flex gap-2">
-                            <button type="button"
-                                onClick={() => { setTipoMO('REPARACION'); setItemActual({ ...itemActual, costoExtra: precioReparacion, esVisita: false }); }}
-                                className={`flex-1 py-2.5 rounded-xl text-[12px] font-black uppercase transition-all active:scale-95 ${
-                                    tipoMO === 'REPARACION'
-                                        ? 'bg-[#D13A28] text-white'
-                                        : 'bg-[#2E2E2E] text-[#9E9A94]'
-                                }`}>
-                                Reparacion · ${precioReparacion.toLocaleString('es-AR')}
-                            </button>
-                            <button type="button"
-                                onClick={() => { setTipoMO('VISITA'); setItemActual({ ...itemActual, costoExtra: precioVisita, esVisita: true }); }}
-                                className={`flex-1 py-2.5 rounded-xl text-[12px] font-black uppercase transition-all active:scale-95 ${
-                                    tipoMO === 'VISITA'
-                                        ? 'bg-[#D48800] text-white'
-                                        : 'bg-[#2E2E2E] text-[#9E9A94]'
-                                }`}>
-                                Visita · ${precioVisita.toLocaleString('es-AR')}
-                            </button>
-                        </div>
-                        <Label>Mano de obra ($)</Label>
-                        <input
-                            type="number" min="0"
-                            value={itemActual.costoExtra}
-                            onChange={e => setItemActual({ ...itemActual, costoExtra: e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0) })}
-                            onFocus={e => e.target.select()}
-                            placeholder="0"
-                            className="w-full bg-transparent border-none text-white text-4xl font-black outline-none mt-1 placeholder-[#666]"
-                        />
-                    </div>
-
-                    {/* Calculadora de desglose — solo admin */}
-                    {esAdmin && desglose.precioCliente > 0 && (
-                        <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
-                            <button type="button"
-                                onClick={() => setDesgloseAbierto(!desgloseAbierto)}
-                                className="w-full px-4 py-2.5 flex items-center justify-between bg-[#EFEDEA] dark:bg-[#1C1C1C] active:scale-[0.99] transition-all">
-                                <span className="text-[11px] font-black text-[#A8A29E] uppercase tracking-widest">Calculadora</span>
-                                <span className="text-[11px] text-[#A8A29E]">{desgloseAbierto ? '▲' : '▼'}</span>
-                            </button>
-                            {desgloseAbierto && (
-                                <div className="px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.05] dark:border-white/[0.05] space-y-3">
-                                    {/* Precio al cliente */}
-                                    <div className="space-y-2">
-                                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">Al cliente le decis</p>
+                        {/* + Calculadora (admin) */}
+                        {esAdmin && desglose.precioCliente > 0 && (
+                            <>
+                                <button type="button" onClick={() => setDesgloseAbierto(v => !v)}
+                                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                                    <span>🧮 Calculadora</span>
+                                    <span className="text-[10px]">{desgloseAbierto ? '▲' : '▼'}</span>
+                                </button>
+                                {desgloseAbierto && (
+                                    <div className="p-3 rounded-xl bg-[#E8E5E0]/50 dark:bg-[#2E2E2E]/50 space-y-3">
                                         <div className="p-3 rounded-xl bg-[#FFFFFF]/50 dark:bg-[#242424]/50 space-y-1.5">
-                                            <div className="flex justify-between text-[12px]">
-                                                <span className="text-[#57534E] dark:text-[#9E9A94]">Efectivo (sin factura)</span>
+                                            <p className="text-[9px] font-black text-[#A8A29E] uppercase mb-1">Al cliente</p>
+                                            <div className="flex justify-between text-[11px]">
+                                                <span className="text-[#57534E] dark:text-[#9E9A94]">Efectivo</span>
                                                 <span className="font-black text-[#16A34A]">${desglose.precioCliente.toLocaleString('es-AR')}</span>
                                             </div>
-                                            <div className="flex justify-between text-[12px]">
-                                                <span className="text-[#57534E] dark:text-[#9E9A94]">Con factura (+IVA)</span>
+                                            <div className="flex justify-between text-[11px]">
+                                                <span className="text-[#57534E] dark:text-[#9E9A94]">Con factura</span>
                                                 <span className="font-black text-[#8B5CF6]">${desglose.facturaCliente.toLocaleString('es-AR')}</span>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Lo que te queda */}
-                                    <div className="space-y-2">
-                                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">
-                                            {esVisitaActual ? 'Te queda en limpio' : 'Cada tecnico se lleva'}
-                                        </p>
                                         <div className="p-3 rounded-xl bg-[#D48800]/10 space-y-1.5">
-                                            <div className="flex justify-between text-[12px]">
-                                                <span className="text-[#D48800] dark:text-[#F0A500]">Si paga efectivo</span>
-                                                <span className="font-black text-[#D48800] dark:text-[#F0A500]">${desglose.efectivoCada.toLocaleString('es-AR')}</span>
+                                            <p className="text-[9px] font-black text-[#D48800] uppercase mb-1">{esVisitaActual ? 'Te queda' : 'Cada técnico'}</p>
+                                            <div className="flex justify-between text-[11px]">
+                                                <span className="text-[#D48800]">Efectivo</span>
+                                                <span className="font-black text-[#D48800]">${desglose.efectivoCada.toLocaleString('es-AR')}</span>
                                             </div>
-                                            <div className="flex justify-between text-[12px]">
-                                                <span className="text-[#D48800] dark:text-[#F0A500]">Si paga con factura</span>
-                                                <span className="font-black text-[#D48800] dark:text-[#F0A500]">${desglose.facturaCada.toLocaleString('es-AR')}</span>
+                                            <div className="flex justify-between text-[11px]">
+                                                <span className="text-[#D48800]">Factura</span>
+                                                <span className="font-black text-[#D48800]">${desglose.facturaCada.toLocaleString('es-AR')}</span>
                                             </div>
-                                            {!esVisitaActual && desglose.efectivoCada > desglose.facturaCada && (
-                                                <p className="text-[9px] text-[#A8A29E] pt-1 border-t border-[#D48800]/20">
-                                                    Efectivo rinde mas porque no pagas impuestos
-                                                </p>
-                                            )}
                                         </div>
-                                    </div>
-
-                                    {/* Modo reverso */}
-                                    <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.06] space-y-2">
-                                        <button type="button"
-                                            onClick={() => setModoReverso(!modoReverso)}
-                                            className="text-[10px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-widest">
-                                            {modoReverso ? '▲ Cerrar' : '▼ Quiero ganar X → cuanto cobro?'}
+                                        <button type="button" onClick={() => setModoReverso(!modoReverso)}
+                                            className="text-[10px] font-black text-[#D48800] dark:text-[#F0A500] uppercase">
+                                            {modoReverso ? '▲ Cerrar' : '▼ Quiero ganar X → cuánto cobro?'}
                                         </button>
                                         {modoReverso && (
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[11px] text-[#57534E] dark:text-[#9E9A94] whitespace-nowrap">Quiero {esVisitaActual ? '' : 'c/u '}minimo:</span>
+                                                    <span className="text-[11px] text-[#57534E] dark:text-[#9E9A94] whitespace-nowrap">Quiero {esVisitaActual ? '' : 'c/u '}mínimo:</span>
                                                     <div className="flex items-center gap-1 flex-1">
                                                         <span className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$</span>
-                                                        <input
-                                                            type="number" min="0"
-                                                            value={gananciaDeseada}
-                                                            onChange={e => setGananciaDeseada(e.target.value)}
-                                                            placeholder="30000"
-                                                            className="flex-1 px-2 py-1.5 rounded-lg text-[13px] font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]"
-                                                        />
+                                                        <input type="number" min="0" value={gananciaDeseada}
+                                                            onChange={e => setGananciaDeseada(e.target.value)} placeholder="30000"
+                                                            className="flex-1 px-2 py-1.5 rounded-lg text-[13px] font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]" />
                                                     </div>
                                                 </div>
                                                 {reverso && (
                                                     <div className="p-2.5 rounded-xl bg-[#D48800]/10 space-y-1">
                                                         <div className="flex justify-between text-[11px]">
-                                                            <span className="text-[#D48800]">Decirle al cliente:</span>
+                                                            <span className="text-[#D48800]">Al cliente:</span>
                                                             <span className="font-black text-[#D48800]">${reverso.precioCliente.toLocaleString('es-AR')}</span>
                                                         </div>
-                                                        <div className="flex justify-between text-[11px]">
-                                                            <span className="text-[#D48800]">Si pide factura:</span>
-                                                            <span className="font-black text-[#D48800]">${reverso.conIVA.toLocaleString('es-AR')}</span>
-                                                        </div>
                                                         <button type="button"
-                                                            onClick={() => {
-                                                                setItemActual({ ...itemActual, costoExtra: reverso.precioCliente });
-                                                                setModoReverso(false);
-                                                                setGananciaDeseada('');
-                                                            }}
-                                                            className="w-full mt-1 py-2 rounded-lg text-[11px] font-black uppercase text-white bg-[#D48800] active:scale-95 transition-all">
+                                                            onClick={() => { setItemActual({ ...itemActual, costoExtra: reverso.precioCliente }); setModoReverso(false); setGananciaDeseada(''); }}
+                                                            className="w-full mt-1 py-2 rounded-lg text-[11px] font-black uppercase text-white bg-[#D48800] active:scale-95">
                                                             Usar ${reverso.precioCliente.toLocaleString('es-AR')}
                                                         </button>
                                                     </div>
@@ -556,13 +477,13 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
+                            </>
+                        )}
+                    </div>
 
                     {/* Botón agregar */}
-                    <button onClick={() => { agregarAlTicket(); setMostrarFotos(false); setFormVisible(false); }}
+                    <button onClick={() => { agregarAlTicket(); setMostrarFotos(false); setMostrarEquipo(false); setFormVisible(false); }}
                         className="w-full py-3.5 rounded-xl font-black text-sm text-white active:scale-[0.98] transition-all bg-[#D13A28] dark:bg-[#E8422F]">
                         + Agregar equipo al ticket
                     </button>
