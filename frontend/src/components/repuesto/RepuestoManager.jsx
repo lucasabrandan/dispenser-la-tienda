@@ -35,62 +35,53 @@ export default function RepuestoManager() {
     } = useRepuestoManager();
 
     return (
-        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] p-4 pb-32 font-sans transition-colors">
+        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-32 font-sans transition-colors">
 
-            {/* METRICAS */}
-            <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="bg-[#FFFFFF] dark:bg-[#242424] p-4 rounded-2xl border border-l-4 border-black/[0.07] dark:border-white/[0.07] border-l-[#D13A28] dark:border-l-[#E8422F] shadow-sm">
-                    <p className="text-[10px] font-extrabold text-[#A8A29E] uppercase">Capital invertido</p>
-                    <p className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] mt-1">
-                        $ {Math.round(valorTotalInventario).toLocaleString('es-AR')}
-                    </p>
-                </div>
-                <div className={`bg-[#FFFFFF] dark:bg-[#242424] p-4 rounded-2xl border border-l-4 shadow-sm border-black/[0.07] dark:border-white/[0.07] ${
-                    itemsBajoStock > 0 ? 'border-l-rose-500' : 'border-l-emerald-500'
-                }`}>
-                    <p className="text-[10px] font-extrabold text-[#A8A29E] uppercase">Stock critico</p>
-                    <p className={`text-lg font-black mt-1 ${itemsBajoStock > 0 ? 'text-rose-500' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
-                        {itemsBajoStock} prod.
-                    </p>
+            {/* Header sticky */}
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Productos</h2>
+                    <div className="flex gap-1.5">
+                        <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <input placeholder="Buscar por nombre o SKU..."
+                                value={busqueda} onChange={e => setBusqueda(e.target.value)}
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                        </div>
+                        <button onClick={() => setStockSheetOpen(true)} title="Stock"
+                            className="h-9 w-9 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">📦</button>
+                        <button onClick={abrirNuevo}
+                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">+ Nuevo</button>
+                    </div>
                 </div>
             </div>
 
-            {/* BARRA DE BUSQUEDA + ACCIONES */}
-            <div className="flex gap-2 mb-4">
-                <div className="relative flex-1">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-50">🔍</span>
-                    <input
-                        placeholder="Buscar por nombre o SKU..."
-                        value={busqueda}
-                        onChange={e => setBusqueda(e.target.value)}
-                        className="w-full py-3.5 pl-11 pr-4 bg-[#FFFFFF] dark:bg-[#242424] rounded-xl border border-black/[0.07] dark:border-white/[0.07] text-sm font-semibold text-[#1C1917] dark:text-[#F0EEE9] outline-none focus:ring-2 focus:ring-[#D13A28]/20"
-                    />
-                </div>
-                <button
-                    onClick={() => setStockSheetOpen(true)}
-                    title="Ajustar stock"
-                    className="bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] text-[#A8A29E] w-11 rounded-xl flex justify-center items-center text-lg transition-all active:scale-95"
-                >📦</button>
-                <button
-                    onClick={abrirNuevo}
-                    className="bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-90 text-white w-14 rounded-xl flex justify-center items-center text-2xl font-bold shadow-md shadow-[#D13A28]/30 transition-all active:scale-95"
-                >+</button>
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
+
+            {/* Stats compacto */}
+            <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                <span className="text-[11px] font-bold text-[#A8A29E]">Capital</span>
+                <span className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$ {Math.round(valorTotalInventario).toLocaleString('es-AR')}</span>
+                <span className="text-[11px] text-[#A8A29E]">·</span>
+                <span className={`text-[11px] font-bold ${itemsBajoStock > 0 ? 'text-[#D13A28] dark:text-[#E8422F]' : 'text-[#A8A29E]'}`}>
+                    {itemsBajoStock} stock crítico
+                </span>
             </div>
 
-            {/* BARRA SELECCION */}
+            {/* Acciones secundarias */}
             {!modoSeleccion ? (
-                <div className="flex gap-2 mb-4">
+                <div className="flex gap-1.5">
                     <button onClick={() => setModoSeleccion(true)}
-                        className="py-2 px-4 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl text-xs font-black uppercase">
+                        className="h-7 px-3 rounded-lg font-bold text-[10px] uppercase bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                         Seleccionar
                     </button>
                     <button onClick={exportarTodos}
-                        className="py-2 px-4 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl text-xs font-black uppercase">
+                        className="h-7 px-3 rounded-lg font-bold text-[10px] uppercase bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                         Lista
                     </button>
                     <button onClick={exportarCatalogoTodos}
-                        className="py-2 px-4 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl text-xs font-black uppercase">
-                        Catalogo
+                        className="h-7 px-3 rounded-lg font-bold text-[10px] uppercase bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                        Catálogo
                     </button>
                 </div>
             ) : (
@@ -144,6 +135,7 @@ export default function RepuestoManager() {
                 )}
             </div>
             <Paginacion pagina={pagina} totalPaginas={totalPaginas} irA={irA} next={next} prev={prev} />
+            </div>{/* cierre max-w-6xl */}
 
             {/* MODAL PRECIO MASIVO */}
             {modalPrecio && (

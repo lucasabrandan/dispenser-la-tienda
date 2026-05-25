@@ -150,45 +150,31 @@ export default function UsuariosManager() {
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
-            {/* HEADER */}
-            <div className="px-4 md:px-0 pt-5 md:pt-0 pb-4 flex justify-between items-end">
-                <div>
-                    <h2 className="text-[28px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
-                        Usuarios
-                    </h2>
-                    <p className="text-[11px] font-medium mt-1 text-[#A8A29E]">Gestión de accesos y permisos</p>
+            {/* Header sticky */}
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Usuarios</h2>
+                    <div className="flex gap-1.5 items-center">
+                        {['TODOS', 'ADMIN', 'TECNICO'].map(rol => (
+                            <button key={rol} onClick={() => setFiltroRol(rol)}
+                                className={`h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${
+                                    filtroRol === rol
+                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+                                        : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
+                                }`}>
+                                {rol === 'TODOS' ? `Todos (${usuarios.length})` : `${ROL_LABEL[rol]} (${usuarios.filter(u => u.rol === rol).length})`}
+                            </button>
+                        ))}
+                        <div className="flex-1" />
+                        <button onClick={abrirCrear}
+                            className="h-8 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                            + Nuevo
+                        </button>
+                    </div>
                 </div>
-                <button
-                    onClick={abrirCrear}
-                    className="h-10 px-5 rounded-xl font-bold text-xs text-white uppercase transition-all active:scale-95 hover:opacity-90 bg-[#D13A28] dark:bg-[#E8422F]"
-                >
-                    + Nuevo
-                </button>
             </div>
 
-            <div className="px-4 md:px-0 space-y-3">
-
-                {/* STATS */}
-                <div className="grid grid-cols-3 gap-3">
-                    {['TODOS', 'ADMIN', 'TECNICO'].map(rol => (
-                        <button
-                            key={rol}
-                            onClick={() => setFiltroRol(rol)}
-                            className={`rounded-2xl p-3 text-center border transition-all active:scale-95 ${
-                                filtroRol === rol
-                                    ? 'bg-[#D13A28] dark:bg-[#E8422F] border-transparent text-white'
-                                    : 'bg-[#FFFFFF] dark:bg-[#242424] border-black/[0.07] dark:border-white/[0.07] text-[#57534E] dark:text-[#A8A29E]'
-                            }`}
-                        >
-                            <p className="text-[18px] font-black leading-none">
-                                {rol === 'TODOS' ? usuarios.length : usuarios.filter(u => u.rol === rol).length}
-                            </p>
-                            <p className="text-[9px] font-bold uppercase tracking-wider mt-1">
-                                {rol === 'TODOS' ? 'Total' : ROL_LABEL[rol]}
-                            </p>
-                        </button>
-                    ))}
-                </div>
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
                 {/* CONFIGURACIÓN DE EMPRESA — solo ADMIN */}
                 {usuarioActual?.rol === 'ADMIN' && (

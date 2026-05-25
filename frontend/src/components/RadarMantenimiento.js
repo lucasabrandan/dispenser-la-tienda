@@ -38,49 +38,34 @@ export default function RadarMantenimiento() {
     );
 
     return (
-        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] p-4 pb-28 transition-colors">
+        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-28 transition-colors">
 
-            {/* Header */}
-            <div className="bg-[#1C1917] dark:bg-[#1C1C1C] text-[#F0EEE9] p-6 rounded-[2rem] mb-5 border border-black/20 dark:border-white/[0.07]">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="font-black text-2xl uppercase tracking-tighter leading-none text-[#E8422F]">
-                            Radar Activo
-                        </h2>
-                        <p className="text-[#A8A29E] text-[11px] font-bold uppercase mt-1">
-                            Dispensers que necesitan atención
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-2xl w-14 h-14 rounded-2xl flex items-center justify-center">
-                            {alertas.length}
-                        </div>
+            {/* Header sticky */}
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Radar</h2>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-[#A8A29E]">Dispensers que necesitan atención</span>
+                        <div className="flex-1" />
+                        <span className="text-[11px] font-black text-[#D13A28] dark:text-[#E8422F]">{alertas.length} alertas</span>
                         <button onClick={cargarAlertas}
-                            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-lg transition-all active:scale-90"
-                            title="Actualizar">
+                            className="h-8 w-8 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 text-sm">
                             🔄
                         </button>
                     </div>
                 </div>
-
-                {/* Resumen por tipo */}
-                {alertas.length > 0 && (
-                    <div className="flex gap-3 mt-4">
-                        <div className="flex-1 bg-[#D13A28]/20 rounded-xl px-3 py-2 text-center">
-                            <p className="text-[#E8422F] font-black text-lg leading-none">
-                                {alertas.filter(a => a.tipoAlerta === 'FILTRO').length}
-                            </p>
-                            <p className="text-[#A8A29E] text-[9px] font-black uppercase mt-0.5">Filtros</p>
-                        </div>
-                        <div className="flex-1 bg-[#D48800]/20 rounded-xl px-3 py-2 text-center">
-                            <p className="text-[#F0A500] font-black text-lg leading-none">
-                                {alertas.filter(a => a.tipoAlerta === 'SANITIZACION').length}
-                            </p>
-                            <p className="text-[#A8A29E] text-[9px] font-black uppercase mt-0.5">Sanitizaciones</p>
-                        </div>
-                    </div>
-                )}
             </div>
+
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
+
+            {/* Stats compacto */}
+            {alertas.length > 0 && (
+                <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] mb-3">
+                    <span className="text-[11px] font-bold text-[#D13A28] dark:text-[#E8422F]">{alertas.filter(a => a.tipoAlerta === 'FILTRO').length} filtros</span>
+                    <span className="text-[11px] text-[#A8A29E]">·</span>
+                    <span className="text-[11px] font-bold text-[#D48800] dark:text-[#F0A500]">{alertas.filter(a => a.tipoAlerta === 'SANITIZACION').length} sanitizaciones</span>
+                </div>
+            )}
 
             {/* Sin alertas */}
             {alertas.length === 0 ? (
@@ -141,6 +126,7 @@ export default function RadarMantenimiento() {
                     })}
                 </div>
             )}
+            </div>{/* cierre max-w-6xl */}
         </div>
     );
 }

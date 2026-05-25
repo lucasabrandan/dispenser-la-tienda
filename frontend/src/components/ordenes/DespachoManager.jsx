@@ -158,30 +158,34 @@ export default function DespachoManager() {
     const totalHoy     = ordenes.filter(o => o.fechaProgramada === new Date().toISOString().split('T')[0]).length;
 
     return (
-        <div className="p-4 max-w-4xl mx-auto">
+        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]">
 
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h1 className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Despacho</h1>
-                    <p className="text-[11px] text-[#A8A29E]">{totalActivas} activas · {totalHoy} hoy</p>
+            {/* Header sticky */}
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Despacho</h2>
+                    <div className="flex gap-1.5 items-center">
+                        <span className="text-[11px] font-bold text-[#A8A29E]">{totalActivas} activas · {totalHoy} hoy</span>
+                        <div className="flex-1" />
+                        <button onClick={() => setModalCrear(true)}
+                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                            + Orden
+                        </button>
+                    </div>
                 </div>
-                <button onClick={() => setModalCrear(true)}
-                    className="h-10 px-4 rounded-2xl font-black text-[13px] text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
-                    + Nueva orden
-                </button>
             </div>
 
-            {/* Órdenes */}
-            {<>
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
+
             {/* Filtros */}
-            <div className="grid grid-cols-2 gap-2 mb-5 md:flex md:items-center md:gap-3">
+            <div className="flex gap-1.5 items-center flex-wrap mb-3">
                 <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
-                    className="w-full md:w-auto px-3 py-2 rounded-xl text-[12px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
+                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                <span className="text-[10px] text-[#A8A29E]">a</span>
                 <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
-                    className="w-full md:w-auto px-3 py-2 rounded-xl text-[12px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
+                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 <select value={filtrTecnico} onChange={e => setFiltrTecnico(e.target.value)}
-                    className="col-span-2 md:flex-1 px-3 py-2 rounded-xl text-[12px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] outline-none">
+                    className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <option value="">Todos los técnicos</option>
                     {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                 </select>
@@ -221,7 +225,7 @@ export default function DespachoManager() {
                 })
             )}
 
-            </>}
+            </div>{/* cierre max-w-6xl */}
 
             {/* Modal crear / editar */}
             {(modalCrear || ordenEditar) && (

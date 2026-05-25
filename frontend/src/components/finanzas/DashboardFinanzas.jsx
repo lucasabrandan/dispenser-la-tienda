@@ -473,30 +473,33 @@ export default function DashboardFinanzas() {
     const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
 
     return (
-        <div className="p-4 max-w-4xl mx-auto pb-20">
-            {/* Header */}
-            <div className="mb-4">
-                <h1 className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</h1>
-                <p className="text-[11px] text-[#A8A29E]">{filtroMes}</p>
+        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]">
+            {/* Header sticky */}
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</h2>
+                    {/* Tabs */}
+                    <div className="flex gap-1 bg-[#EFEDEA] dark:bg-[#1C1C1C] p-1 rounded-lg">
+                        {TABS.map(t => (
+                            <button key={t.id} onClick={() => setTab(t.id)}
+                                className={`flex-1 py-1.5 rounded-md font-bold text-[11px] uppercase transition-all active:scale-95
+                                    ${tab === t.id
+                                        ? 'bg-white dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm'
+                                        : 'text-[#A8A29E]'}`}>
+                                {t.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 mb-5 bg-[#EFEDEA] dark:bg-[#1C1C1C] p-1 rounded-2xl">
-                {TABS.map(t => (
-                    <button key={t.id} onClick={() => setTab(t.id)}
-                        className={`flex-1 py-2 rounded-xl font-black text-[12px] uppercase tracking-wide transition-all active:scale-95
-                            ${tab === t.id
-                                ? 'bg-[#FFFFFF] dark:bg-[#242424] text-[#1C1917] dark:text-[#F0EEE9]'
-                                : 'text-[#A8A29E]'}`}>
-                        {t.label}
-                    </button>
-                ))}
-            </div>
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
             {tab === 'balance'    && <TabBalance    filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
             {tab === 'tecnicos'   && <TabTecnicos   filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
             {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} />}
             {tab === 'inventario' && <TabInventario />}
+            </div>
         </div>
     );
 }
