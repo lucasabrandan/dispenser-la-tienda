@@ -137,6 +137,206 @@ export default function DashboardCaja({ setVistaActual }) {
         );
     };
 
+    // Bloque planificador reutilizable
+    const PlanificadorBlock = () => (
+        <div>
+            <p className={sectionLabel}>Planificador</p>
+            <div className="grid grid-cols-6 gap-1.5 mb-2">
+                {data.planificador.slice(0, 6).map(d => <DiaBtn key={d.fecha} d={d} />)}
+            </div>
+            {data.planificador.length > 6 && (
+                <>
+                    <button onClick={() => setSemana2(v => !v)}
+                        className="w-full flex items-center justify-center gap-1 h-6 rounded-lg text-[9px] font-bold uppercase text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99] mb-2">
+                        {semana2 ? '▲ Ocultar' : '▼ Semana siguiente'}
+                    </button>
+                    {semana2 && (
+                        <div className="grid grid-cols-6 gap-1.5 mb-2">
+                            {data.planificador.slice(6).map(d => <DiaBtn key={d.fecha} d={d} />)}
+                        </div>
+                    )}
+                </>
+            )}
+            {diaSel && (() => {
+                const dia = data.planificador.find(d => d.fecha === diaSel);
+                if (!dia) return null;
+                const libres = dia.horasTotal - dia.horasUsadas;
+                return (
+                    <div className={`${card} p-3 mt-2`}>
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] capitalize">
+                                {dia.dia.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' })}
+                            </p>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                libres <= 0 ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]'
+                                : libres <= 2 ? 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'
+                                : 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]'
+                            }`}>
+                                {libres <= 0 ? 'Completo' : `${Math.round(libres)}h libres`}
+                            </span>
+                        </div>
+                        {dia.items.length === 0 ? (
+                            <p className="text-[11px] text-[#A8A29E] text-center py-3">Día libre</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {dia.items.map(s => {
+                                    const horas = s.duracionMinutos ? `${Math.round(s.duracionMinutos / 60 * 10) / 10}h` : `~${s.servicioTipo === 'TECNICA' ? '2' : '1'}h`;
+                                    const esPendiente = s.estado === 'PRESUPUESTO';
+                                    return (
+                                        <div key={s.id} className="rounded-lg p-2.5 bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
+                                            <div className="flex items-start gap-2">
+                                                <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                        <span className={`text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]' : 'bg-[#16A34A]/10 text-[#16A34A]'}`}>
+                                                            {esPendiente ? 'Pendiente' : s.estado?.replace('_', ' ')}
+                                                        </span>
+                                                    </div>
+                                                    {s.sedeNombre && <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>}
+                                                    {s.sedeDireccion && (
+                                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
+                                                            target="_blank" rel="noopener noreferrer"
+                                                            className="text-[10px] text-[#D13A28] dark:text-[#E8422F] truncate block mt-0.5 active:opacity-70"
+                                                            onClick={e => e.stopPropagation()}>
+                                                            📍 {s.sedeDireccion}
+                                                        </a>
+                                                    )}
+                                                    {s.items?.[0]?.trabajoRealizado && (
+                                                        <p className="text-[10px] text-[#A8A29E] mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
+                                                    )}
+                                                    <div className="flex items-center gap-3 mt-1.5">
+                                                        <span className="text-[9px] font-bold text-[#A8A29E]">⏱ {horas}</span>
+                                                        {s.items?.[0]?.tecnico && (
+                                                            <span className="text-[9px] font-bold text-[#A8A29E]">👤 {s.items[0].tecnico}</span>
+                                                        )}
+                                                        <M valor={calcTotal(s)} className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-auto" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
+        </div>
+    );
+
+    // Bloque agenda reutilizable
+    const AgendaBlock = () => (
+        <div>
+            <p className={sectionLabel}>Agenda de hoy ({data.agendaHoy.length})</p>
+            {data.agendaHoy.length === 0 ? (
+                <div className={`${card} text-center py-8`}>
+                    <p className="text-2xl mb-1">📭</p>
+                    <p className="text-[12px] font-bold text-[#A8A29E]">Sin actividad para hoy</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {data.agendaHoy.filter(s => s.servicioTipo === 'TECNICA').length > 0 && (
+                        <div>
+                            <p className="text-[9px] font-bold text-[#D13A28] dark:text-[#E8422F] uppercase tracking-wider mb-1.5 px-1">🔧 Servicios</p>
+                            <div className="space-y-1.5">
+                                {data.agendaHoy.filter(s => s.servicioTipo === 'TECNICA').map(s => (
+                                    <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('servicio-tecnico')} tipo="tecnica" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {data.agendaHoy.filter(s => s.servicioTipo === 'VENTA').length > 0 && (
+                        <div>
+                            <p className="text-[9px] font-bold text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider mb-1.5 px-1">🛒 Ventas / Entregas</p>
+                            <div className="space-y-1.5">
+                                {data.agendaHoy.filter(s => s.servicioTipo === 'VENTA').map(s => (
+                                    <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('venta')} tipo="venta" />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+
+    // Bloque stats reutilizable
+    const StatsBlock = () => (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className={`${card} p-3.5`}>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Hoy</p>
+                <M valor={data.totalHoy} className="text-xl font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                <p className="text-[10px] text-[#A8A29E] mt-0.5">{data.countHoy} operaciones</p>
+            </div>
+            <div className={`${card} p-3.5`}>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Mes</p>
+                <M valor={data.totalMes} className="text-xl font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                <p className="text-[10px] text-[#A8A29E] mt-0.5">{data.countMes} cobradas</p>
+            </div>
+            {data.moHoy > 0 && (
+                <div className={`${card} p-3.5 col-span-2 md:col-span-1`}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">MO Hoy</p>
+                    <M valor={data.moHoy} className="text-xl font-black text-[#D48800] dark:text-[#F0A500] block" />
+                </div>
+            )}
+        </div>
+    );
+
+    // Bloque alertas
+    const AlertasBlock = () => totalAlertas > 0 ? (
+        <div>
+            <p className={sectionLabel}>Alertas ({totalAlertas})</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {data.pptoVencidos.length > 0 && (
+                    <button onClick={() => setVistaActual('presupuestos')}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#FEE2E2] dark:bg-[#3B1111] border border-[#D13A28]/15">
+                        <span>⏰</span>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold text-[#D13A28] dark:text-[#F87171]">
+                                {data.pptoVencidos.length} presupuesto{data.pptoVencidos.length !== 1 ? 's' : ''} sin respuesta +7d
+                            </p>
+                            <p className="text-[9px] text-[#D13A28]/60 dark:text-[#F87171]/60 truncate">
+                                {data.pptoVencidos.slice(0, 3).map(s => s.clienteNombre).join(', ')}
+                            </p>
+                        </div>
+                        <span className="text-[#D13A28]/40 dark:text-[#F87171]/40 text-lg">›</span>
+                    </button>
+                )}
+                {data.ordenesActivas.length > 0 && (
+                    <button onClick={() => setVistaActual('despacho')}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#FEF3C7] dark:bg-[#2E2207] border border-[#D48800]/15">
+                        <span>📌</span>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold text-[#92400E] dark:text-[#FBBF24]">
+                                {data.ordenesActivas.length} orden{data.ordenesActivas.length !== 1 ? 'es' : ''} activa{data.ordenesActivas.length !== 1 ? 's' : ''}
+                            </p>
+                            <p className="text-[9px] text-[#92400E]/60 dark:text-[#FBBF24]/60 truncate">
+                                {data.ordenesActivas.slice(0, 3).map(o => o.clienteNombre).join(', ')}
+                            </p>
+                        </div>
+                        <span className="text-[#92400E]/40 dark:text-[#FBBF24]/40 text-lg">›</span>
+                    </button>
+                )}
+                {alertasRadar.length > 0 && (
+                    <button onClick={() => setVistaActual('radar')}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
+                        <span>🚨</span>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">
+                                {alertasRadar.length} equipo{alertasRadar.length !== 1 ? 's' : ''} sin mantenimiento
+                            </p>
+                            <p className="text-[9px] text-[#A8A29E] truncate">
+                                {alertasRadar.slice(0, 3).map(a => a.clienteNombre).join(', ')}
+                            </p>
+                        </div>
+                        <span className="text-[#A8A29E] text-lg">›</span>
+                    </button>
+                )}
+            </div>
+        </div>
+    ) : null;
+
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414]">
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6">
@@ -161,28 +361,32 @@ export default function DashboardCaja({ setVistaActual }) {
                     </div>
                 </div>
 
-                {/* === STATS === */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                    <div className={`${card} p-3.5`}>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Hoy</p>
-                        <M valor={data.totalHoy} className="text-xl font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{data.countHoy} operaciones</p>
-                    </div>
-                    <div className={`${card} p-3.5`}>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Mes</p>
-                        <M valor={data.totalMes} className="text-xl font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{data.countMes} cobradas</p>
-                    </div>
-                    {data.moHoy > 0 && (
-                        <div className={`${card} p-3.5 col-span-2 md:col-span-1`}>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">MO Hoy</p>
-                            <M valor={data.moHoy} className="text-xl font-black text-[#D48800] dark:text-[#F0A500] block" />
+                {/* ═══ MOBILE: orden optimizado ═══ */}
+                <div className="md:hidden space-y-4">
+                    <PlanificadorBlock />
+                    <AgendaBlock />
+                    <StatsBlock />
+                    <AlertasBlock />
+
+                    {/* Pendientes */}
+                    {data.pendientesCount > 0 && (
+                        <div className={`${card} p-3.5`}>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Pendientes</p>
+                                    <p className="text-sm font-bold text-[#D48800] dark:text-[#F0A500]">
+                                        {data.pendientesCount} — <M valor={data.pendientesVal} />
+                                    </p>
+                                </div>
+                                <button onClick={() => setVistaActual('presupuestos')}
+                                    className="text-[10px] font-black uppercase text-[#D13A28] dark:text-[#E8422F] hover:underline">
+                                    Ver →
+                                </button>
+                            </div>
                         </div>
                     )}
-                </div>
 
-                {/* === ACCIONES RÁPIDAS — mobile: grid centrado, desktop: oculto (ya están en sidebar) === */}
-                <div className="md:hidden mb-4">
+                    {/* Acciones rápidas */}
                     <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => setVistaActual('servicio-tecnico')}
                             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]">
@@ -202,259 +406,70 @@ export default function DashboardCaja({ setVistaActual }) {
                         <button onClick={() => setVistaActual('clientes')}
                             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                             <span>👥</span>
-                            <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] whitespace-nowrap">Clientes</span>
+                            <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Clientes</span>
                         </button>
                     </div>
                 </div>
 
-                {/* === ALERTAS === */}
-                {totalAlertas > 0 && (
-                    <div className="mb-4">
-                        <p className={sectionLabel}>Alertas ({totalAlertas})</p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                            {data.pptoVencidos.length > 0 && (
-                                <button onClick={() => setVistaActual('presupuestos')}
-                                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#FEE2E2] dark:bg-[#3B1111] border border-[#D13A28]/15">
-                                    <span>⏰</span>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] font-bold text-[#D13A28] dark:text-[#F87171]">
-                                            {data.pptoVencidos.length} presupuesto{data.pptoVencidos.length !== 1 ? 's' : ''} sin respuesta +7d
-                                        </p>
-                                        <p className="text-[9px] text-[#D13A28]/60 dark:text-[#F87171]/60 truncate">
-                                            {data.pptoVencidos.slice(0, 3).map(s => s.clienteNombre).join(', ')}
-                                        </p>
-                                    </div>
-                                    <span className="text-[#D13A28]/40 dark:text-[#F87171]/40 text-lg">›</span>
-                                </button>
-                            )}
-                            {data.ordenesActivas.length > 0 && (
-                                <button onClick={() => setVistaActual('despacho')}
-                                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#FEF3C7] dark:bg-[#2E2207] border border-[#D48800]/15">
-                                    <span>📌</span>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] font-bold text-[#92400E] dark:text-[#FBBF24]">
-                                            {data.ordenesActivas.length} orden{data.ordenesActivas.length !== 1 ? 'es' : ''} activa{data.ordenesActivas.length !== 1 ? 's' : ''}
-                                        </p>
-                                        <p className="text-[9px] text-[#92400E]/60 dark:text-[#FBBF24]/60 truncate">
-                                            {data.ordenesActivas.slice(0, 3).map(o => o.clienteNombre).join(', ')}
-                                        </p>
-                                    </div>
-                                    <span className="text-[#92400E]/40 dark:text-[#FBBF24]/40 text-lg">›</span>
-                                </button>
-                            )}
-                            {alertasRadar.length > 0 && (
-                                <button onClick={() => setVistaActual('radar')}
-                                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
-                                    <span>🚨</span>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">
-                                            {alertasRadar.length} equipo{alertasRadar.length !== 1 ? 's' : ''} sin mantenimiento
-                                        </p>
-                                        <p className="text-[9px] text-[#A8A29E] truncate">
-                                            {alertasRadar.slice(0, 3).map(a => a.clienteNombre).join(', ')}
-                                        </p>
-                                    </div>
-                                    <span className="text-[#A8A29E] text-lg">›</span>
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
+                {/* ═══ DESKTOP: layout original con grid ═══ */}
+                <div className="hidden md:block space-y-5">
+                    <StatsBlock />
+                    <AlertasBlock />
 
-                {/* === GRID PRINCIPAL: Agenda + Sidebar derecho === */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-
-                    {/* Agenda de hoy */}
-                    <div className="lg:col-span-2">
-                        <p className={sectionLabel}>Agenda de hoy ({data.agendaHoy.length})</p>
-                        {data.agendaHoy.length === 0 ? (
-                            <div className={`${card} text-center py-8`}>
-                                <p className="text-2xl mb-1">📭</p>
-                                <p className="text-[12px] font-bold text-[#A8A29E]">Sin actividad para hoy</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {/* Servicios técnicos */}
-                                {data.agendaHoy.filter(s => s.servicioTipo === 'TECNICA').length > 0 && (
-                                    <div>
-                                        <p className="text-[9px] font-bold text-[#D13A28] dark:text-[#E8422F] uppercase tracking-wider mb-1.5 px-1">🔧 Servicios</p>
-                                        <div className="space-y-1.5">
-                                            {data.agendaHoy.filter(s => s.servicioTipo === 'TECNICA').map(s => (
-                                                <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('servicio-tecnico')} tipo="tecnica" />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {/* Ventas */}
-                                {data.agendaHoy.filter(s => s.servicioTipo === 'VENTA').length > 0 && (
-                                    <div>
-                                        <p className="text-[9px] font-bold text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider mb-1.5 px-1">🛒 Ventas / Entregas</p>
-                                        <div className="space-y-1.5">
-                                            {data.agendaHoy.filter(s => s.servicioTipo === 'VENTA').map(s => (
-                                                <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('venta')} tipo="venta" />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Columna derecha: Acciones (desktop) + Pendientes */}
-                    <div className="space-y-4">
-                        {/* Acciones rápidas — solo desktop */}
-                        <div className="hidden md:block">
-                            <p className={sectionLabel}>Acciones</p>
-                            <div className="space-y-1.5">
-                                <button onClick={() => setVistaActual('servicio-tecnico')}
-                                    className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]`}>
-                                    <span>🔧</span>
-                                    <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Nuevo Servicio</span>
-                                </button>
-                                <button onClick={() => setVistaActual('venta')}
-                                    className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]`}>
-                                    <span>🛒</span>
-                                    <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Nueva Venta</span>
-                                </button>
-                                <button onClick={() => setVistaActual('presupuestos')}
-                                    className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow`}>
-                                    <span>💰</span>
-                                    <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Presupuestos</span>
-                                </button>
-                                <button onClick={() => setVistaActual('finanzas')}
-                                    className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow`}>
-                                    <span>💹</span>
-                                    <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</span>
-                                </button>
-                            </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                        {/* Agenda */}
+                        <div className="lg:col-span-2">
+                            <AgendaBlock />
                         </div>
 
-                        {/* Pendientes */}
-                        {data.pendientesCount > 0 && (
-                            <div className={`${card} p-3.5`}>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Pendientes</p>
-                                        <p className="text-sm font-bold text-[#D48800] dark:text-[#F0A500]">
-                                            {data.pendientesCount} — <M valor={data.pendientesVal} />
-                                        </p>
-                                    </div>
+                        {/* Columna derecha */}
+                        <div className="space-y-4">
+                            <div>
+                                <p className={sectionLabel}>Acciones</p>
+                                <div className="space-y-1.5">
+                                    <button onClick={() => setVistaActual('servicio-tecnico')}
+                                        className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]`}>
+                                        <span>🔧</span>
+                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Nuevo Servicio</span>
+                                    </button>
+                                    <button onClick={() => setVistaActual('venta')}
+                                        className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]`}>
+                                        <span>🛒</span>
+                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Nueva Venta</span>
+                                    </button>
                                     <button onClick={() => setVistaActual('presupuestos')}
-                                        className="text-[10px] font-black uppercase text-[#D13A28] dark:text-[#E8422F] hover:underline">
-                                        Ver →
+                                        className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow`}>
+                                        <span>💰</span>
+                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Presupuestos</span>
+                                    </button>
+                                    <button onClick={() => setVistaActual('finanzas')}
+                                        className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow`}>
+                                        <span>💹</span>
+                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</span>
                                     </button>
                                 </div>
                             </div>
-                        )}
 
-                        {/* Días libres próximos */}
-                        {(() => {
-                            const diasLibres = data.planificador.slice(1, 7).filter(d => d.items.length === 0);
-                            if (diasLibres.length === 0) return null;
-                            return (
+                            {data.pendientesCount > 0 && (
                                 <div className={`${card} p-3.5`}>
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Días disponibles</p>
-                                    <p className="text-[12px] font-bold text-[#16A34A]">
-                                        {diasLibres.length} día{diasLibres.length !== 1 ? 's' : ''} libre{diasLibres.length !== 1 ? 's' : ''} esta semana
-                                    </p>
-                                    <p className="text-[10px] text-[#A8A29E] mt-0.5">
-                                        {diasLibres.slice(0, 3).map(d => d.dia.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' })).join(', ')}
-                                    </p>
-                                </div>
-                            );
-                        })()}
-                    </div>
-                </div>
-
-                {/* === PLANIFICADOR — full width === */}
-                <div>
-                    <p className={sectionLabel}>Planificador</p>
-                    {/* Semana 1 */}
-                    <div className="grid grid-cols-6 gap-1.5 mb-2">
-                        {data.planificador.slice(0, 6).map(d => <DiaBtn key={d.fecha} d={d} />)}
-                    </div>
-
-                    {/* Semana 2 — colapsable */}
-                    {data.planificador.length > 6 && (
-                        <>
-                            <button onClick={() => setSemana2(v => !v)}
-                                className="w-full flex items-center justify-center gap-1 h-6 rounded-lg text-[9px] font-bold uppercase text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99] mb-2">
-                                {semana2 ? '▲ Ocultar' : '▼ Semana siguiente'}
-                            </button>
-                            {semana2 && (
-                                <div className="grid grid-cols-6 gap-1.5 mb-2">
-                                    {data.planificador.slice(6).map(d => <DiaBtn key={d.fecha} d={d} />)}
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Pendientes</p>
+                                            <p className="text-sm font-bold text-[#D48800] dark:text-[#F0A500]">
+                                                {data.pendientesCount} — <M valor={data.pendientesVal} />
+                                            </p>
+                                        </div>
+                                        <button onClick={() => setVistaActual('presupuestos')}
+                                            className="text-[10px] font-black uppercase text-[#D13A28] dark:text-[#E8422F] hover:underline">
+                                            Ver →
+                                        </button>
+                                    </div>
                                 </div>
                             )}
-                        </>
-                    )}
+                        </div>
+                    </div>
 
-                    {/* Detalle del día seleccionado */}
-                    {diaSel && (() => {
-                        const dia = data.planificador.find(d => d.fecha === diaSel);
-                        if (!dia) return null;
-                        const libres = dia.horasTotal - dia.horasUsadas;
-                        return (
-                            <div className={`${card} p-3 mt-2`}>
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] capitalize">
-                                        {dia.dia.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' })}
-                                    </p>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                        libres <= 0 ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]'
-                                        : libres <= 2 ? 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'
-                                        : 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]'
-                                    }`}>
-                                        {libres <= 0 ? 'Completo' : `${Math.round(libres)}h libres`}
-                                    </span>
-                                </div>
-                                {dia.items.length === 0 ? (
-                                    <p className="text-[11px] text-[#A8A29E] text-center py-3">Día libre</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {dia.items.map(s => {
-                                            const horas = s.duracionMinutos ? `${Math.round(s.duracionMinutos / 60 * 10) / 10}h` : `~${s.servicioTipo === 'TECNICA' ? '2' : '1'}h`;
-                                            const esPendiente = s.estado === 'PRESUPUESTO';
-                                            return (
-                                                <div key={s.id} className="rounded-lg p-2.5 bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
-                                                    <div className="flex items-start gap-2">
-                                                        <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center justify-between gap-2">
-                                                                <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                                                                <span className={`text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]' : 'bg-[#16A34A]/10 text-[#16A34A]'}`}>
-                                                                    {esPendiente ? 'Pendiente' : s.estado?.replace('_', ' ')}
-                                                                </span>
-                                                            </div>
-                                                            {s.sedeNombre && <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>}
-                                                            {s.sedeDireccion && (
-                                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
-                                                                    target="_blank" rel="noopener noreferrer"
-                                                                    className="text-[10px] text-[#D13A28] dark:text-[#E8422F] truncate block mt-0.5 active:opacity-70"
-                                                                    onClick={e => e.stopPropagation()}>
-                                                                    📍 {s.sedeDireccion}
-                                                                </a>
-                                                            )}
-                                                            {s.items?.[0]?.trabajoRealizado && (
-                                                                <p className="text-[10px] text-[#A8A29E] mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
-                                                            )}
-                                                            <div className="flex items-center gap-3 mt-1.5">
-                                                                <span className="text-[9px] font-bold text-[#A8A29E]">⏱ {horas}</span>
-                                                                {s.items?.[0]?.tecnico && (
-                                                                    <span className="text-[9px] font-bold text-[#A8A29E]">👤 {s.items[0].tecnico}</span>
-                                                                )}
-                                                                <M valor={calcTotal(s)} className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-auto" />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })()}
+                    <PlanificadorBlock />
                 </div>
             </div>
 
