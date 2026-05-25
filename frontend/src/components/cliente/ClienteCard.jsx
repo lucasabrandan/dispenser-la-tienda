@@ -57,21 +57,23 @@ export default function ClienteCard({
     if (!isExpanded) {
         return (
             <div onClick={onToggleExpand}
-                className="bg-[#FFFFFF] dark:bg-[#242424] rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] p-3 flex flex-col justify-between min-h-[80px]"
+                className="bg-[#FFFFFF] dark:bg-[#242424] rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] p-3 flex flex-col justify-between min-h-[85px]"
                 style={{ borderLeft: borderColor !== 'transparent' ? `3px solid ${borderColor}` : undefined }}>
-                <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-tight line-clamp-2">
-                    {cliente.nombre}
-                </p>
-                <div className="flex items-center justify-between mt-2">
-                    <p className="text-[10px] text-[#A8A29E] truncate flex-1">
-                        {cliente.localidad || '—'}
-                        {eqCli.length > 0 ? ` · ${eqCli.length} eq` : ''}
-                    </p>
-                    <div className="flex items-center gap-1 shrink-0 ml-1">
+                <div className="flex items-center justify-between mb-1">
+                    <span className="w-7 h-7 rounded-lg bg-[#D13A28] dark:bg-[#E8422F] flex items-center justify-center text-white font-black text-[10px] shrink-0">
+                        {iniciales}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
                         {alertaSinServicio && <span className="w-1.5 h-1.5 rounded-full bg-[#D48800]" />}
                         {tipoIcon && <span className="text-[11px]">{tipoIcon}</span>}
                     </div>
                 </div>
+                <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-tight line-clamp-2">
+                    {cliente.nombre}
+                </p>
+                <p className="text-[9px] text-[#A8A29E] mt-1 truncate">
+                    {ultimoServicio ? `Últ: ${formatFecha(ultimoServicio.fecha)}` : 'Sin servicios'}
+                </p>
             </div>
         );
     }

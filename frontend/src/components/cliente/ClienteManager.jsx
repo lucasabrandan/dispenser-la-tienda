@@ -3,7 +3,7 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useClienteData } from '../../hooks/useClienteData';
 import { useEquipoActions } from '../../hooks/useEquipoActions';
-import { filtrarClientesPorBusqueda, aplicarFiltroChip } from '../../utils/clienteUtils';
+import { filtrarClientesPorBusqueda } from '../../utils/clienteUtils';
 import ClienteCard        from './ClienteCard';
 import ClienteForm        from './ClienteForm';
 import CrearClienteModal  from './CrearClienteModal';
@@ -13,12 +13,6 @@ import Paginacion         from '../ui/Paginacion';
 
 const POR_PAGINA = 18;
 
-const CHIPS = [
-    { id: null,             label: 'Todos' },
-    { id: 'sin-servicio',  label: '⚠️ +90d sin servicio' },
-    { id: 'empresa',       label: '🏢 Empresa' },
-    { id: 'con-archivados', label: '📦 Con archivados' },
-];
 
 export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
     const { clientes, sedes, equipos, servicios, cargarDatos } = useClienteData();
@@ -30,18 +24,15 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
     const [selectedCliente, setSelectedCliente] = useState(null);
     const [selectedEquipo, setSelectedEquipo]   = useState(null);
     const [expandedId, setExpandedId]           = useState(null);
-    const [filtroChip, setFiltroChip]           = useState(null);
-    const [confirmEliminarCliente, setConfirmEliminarCliente] = useState(null); // id del cliente a eliminar
+    const [confirmEliminarCliente, setConfirmEliminarCliente] = useState(null);
     const [form, setForm] = useState({
         id: null, nombre: '', calle: '', numero: '', piso: '', depto: '',
         localidad: '', provincia: 'Buenos Aires', telefono: '', cuilDni: '',
         notas: '', condicionIva: 'CONSUMIDOR_FINAL', clienteTipo: 'PARTICULAR'
     });
 
-    const filtrados      = aplicarFiltroChip(
-        filtrarClientesPorBusqueda(clientes, sedes, equipos, busqueda),
-        sedes, equipos, servicios, filtroChip
-    );
+    const filtrados      = filtrarClientesPorBusqueda(clientes, sedes, equipos, busqueda)
+        .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
     const totalPaginas   = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
     const paginaActual   = Math.min(pagina, totalPaginas);
     const clientesPagina = useMemo(() =>
@@ -106,22 +97,9 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             + Nuevo
                         </button>
                     </div>
-                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-                        {CHIPS.map(chip => (
-                            <button key={chip.id ?? 'todos'}
-                                onClick={() => { setFiltroChip(chip.id); setPagina(1); setExpandedId(null); }}
-                                className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${
-                                    filtroChip === chip.id
-                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                        : 'bg-white dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
-                                }`}>
-                                {chip.label}
-                            </button>
-                        ))}
-                        <span className="ml-auto text-[10px] font-bold text-[#A8A29E] self-center shrink-0">
-                            {filtrados.length} · pág {paginaActual}/{totalPaginas}
-                        </span>
-                    </div>
+                    <span className="text-[10px] font-bold text-[#A8A29E]">
+                        {filtrados.length} clientes · A-Z
+                    </span>
                 </div>
             </div>
 
