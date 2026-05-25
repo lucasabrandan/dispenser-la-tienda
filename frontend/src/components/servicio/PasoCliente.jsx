@@ -3,28 +3,6 @@ import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, buildSelectStyles } from './ServicioUI';
 import DateInput from '../ui/DateInput';
 
-// ── Componentes locales con Tailwind arbitrary values ─────────────────────
-function DSInput({ label, ...props }) {
-    return (
-        <div>
-            {label && <Label>{label}</Label>}
-            <input
-                {...props}
-                className="
-                    w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-                    bg-[#E8E5E0] dark:bg-[#2E2E2E]
-                    text-[#1C1917] dark:text-[#F0EEE9]
-                    border border-black/10 dark:border-white/10
-                    placeholder-[#A8A29E]
-                    focus:border-[#D13A28] dark:focus:border-[#E8422F]
-                    focus:ring-2 focus:ring-[#D13A28]/20
-                    transition-all
-                "
-            />
-        </div>
-    );
-}
-
 function InfoCard({ children }) {
     return (
         <div className="rounded-xl p-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
@@ -33,23 +11,20 @@ function InfoCard({ children }) {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 export default function PasoCliente({ hook, onNext, selectStyles }) {
     const {
         db, clienteId, setClienteId,
         itemActual, setItemActual,
-        fechaServicio, setFechaServicio,
-        duracionMinutos, setDuracionMinutos,
         onClienteSeleccionado,
         setNombreClientePrellenado, setModalClienteAbierto,
         setNombreSedePrellenado, setModalSedeAbierto,
         _setNombreLibre,
     } = hook;
 
-    const [modo, setModo]               = useState(clienteId ? 'registrado' : 'nuevo');
+    // Default "registrado" porque es lo más común
+    const [modo, setModo]               = useState(clienteId ? 'registrado' : 'registrado');
     const [nombreLibre, setNombreLibre] = useState('');
 
-    // Sincronizar modo cuando clienteId se setea externamente (ej: recuperar borrador)
     useEffect(() => {
         if (clienteId && modo === 'nuevo') setModo('registrado');
     }, [clienteId]);
@@ -64,100 +39,14 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
         onNext();
     };
 
-    const cambiarModo = (nuevoModo) => {
-        setModo(nuevoModo);
-        setClienteId(null);
-        setNombreLibre('');
-    };
-
-    const hoy = new Date().toISOString().split('T')[0];
-
     return (
         <div className="flex flex-col gap-4 px-5 pb-6">
 
-            {/* ── Fecha ──────────────────────────────────────────────────── */}
-            <div>
-                <Label>Fecha del servicio</Label>
-                <DateInput
-                    value={fechaServicio}
-                    onChange={setFechaServicio}
-                    className="w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/10 transition-all"
-                />
-                {fechaServicio !== hoy && (
-                    <div className="flex justify-between mt-1.5">
-                        <span className={`text-[10px] font-bold ${fechaServicio < hoy ? 'text-amber-500' : 'text-blue-500'}`}>
-                            {fechaServicio < hoy ? 'Carga histórica' : 'Fecha futura'}
-                        </span>
-                        <button onClick={() => setFechaServicio(hoy)}
-                            className="text-[10px] text-[#A8A29E] hover:text-[#D13A28]">
-                            Usar hoy
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            {/* ── Duración estimada ─────────────────────────────────────── */}
-            <div>
-                <Label>Duración estimada (opcional)</Label>
-                <div className="flex gap-1.5 flex-wrap">
-                    {[60, 90, 120, 180, 240, 300].map(min => (
-                        <button key={min} type="button"
-                            onClick={() => setDuracionMinutos(duracionMinutos === min ? null : min)}
-                            className={`h-8 px-3 rounded-lg text-[11px] font-bold transition-all active:scale-95 ${
-                                duracionMinutos === min
-                                    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
-                            }`}>
-                            {min < 60 ? `${min}m` : `${min / 60}h`}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* ── Toggle tipo cliente — EXCLUYENTE ───────────────────────── */}
-            <div>
-                <Label>Tipo de cliente</Label>
-                <div className="grid grid-cols-2 gap-2">
-                    {[
-                        { id: 'nuevo',      label: 'Nuevo',      hint: 'Sin cuenta' },
-                        { id: 'registrado', label: 'Registrado', hint: 'Buscar en lista' },
-                    ].map(opt => (
-                        <button
-                            key={opt.id}
-                            onClick={() => cambiarModo(opt.id)}
-                            className={`
-                                p-3 rounded-2xl text-left transition-all active:scale-95
-                                ${modo === opt.id
-                                    ? 'bg-[#D48800] dark:bg-[#F0A500] border border-[#D48800] dark:border-[#F0A500]'
-                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10'
-                                }
-                            `}
-                        >
-                            <p className={`font-black text-[13px] ${modo === opt.id ? 'text-[#1C1917]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
-                                {opt.label}
-                            </p>
-                            <p className={`text-[10px] mt-0.5 ${modo === opt.id ? 'text-[#1C1917]/60' : 'text-[#A8A29E]'}`}>
-                                {opt.hint}
-                            </p>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* ── Input según modo ────────────────────────────────────────── */}
-            {modo === 'nuevo' ? (
-                <DSInput
-                    label="Nombre"
-                    type="text"
-                    value={nombreLibre}
-                    autoFocus
-                    onChange={e => setNombreLibre(e.target.value)}
-                    placeholder="Ej: Juan García, Empresa SA..."
-                />
-            ) : (
+            {/* ── Selector cliente ──────────────────────────────────────── */}
+            {modo === 'registrado' ? (
                 <div className="flex flex-col gap-3">
                     <div>
-                        <Label>Buscar cliente</Label>
+                        <Label>Cliente</Label>
                         <CreatableSelect
                             styles={selectStyles}
                             menuPosition="fixed"
@@ -172,12 +61,12 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                             onCreateOption={val => { setNombreClientePrellenado(val); setModalClienteAbierto(true); }}
                             placeholder="Escribí el nombre..."
                             isClearable
+                            autoFocus
                         />
                     </div>
 
                     {clienteObj && (
                         <>
-                            {/* Info cliente */}
                             <InfoCard>
                                 <div className="grid grid-cols-2 gap-2">
                                     {clienteObj.telefono && (
@@ -195,7 +84,6 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                                 </div>
                             </InfoCard>
 
-                            {/* Sede — comportamiento según cantidad */}
                             {sedesCliente.length === 1 ? (
                                 <div>
                                     <Label>Sede / Domicilio</Label>
@@ -236,10 +124,33 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                             )}
                         </>
                     )}
+
+                    {/* Link para cliente nuevo */}
+                    <button onClick={() => { setModo('nuevo'); setClienteId(null); }}
+                        className="text-[11px] font-bold text-[#A8A29E] active:scale-95 transition-all self-start">
+                        ¿Cliente nuevo? <span className="text-[#D13A28] dark:text-[#E8422F]">Crear sin cuenta</span>
+                    </button>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-3">
+                    <div>
+                        <Label>Nombre del cliente</Label>
+                        <input
+                            type="text"
+                            value={nombreLibre}
+                            autoFocus
+                            onChange={e => setNombreLibre(e.target.value)}
+                            placeholder="Ej: Juan García, Empresa SA..."
+                            className="w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/10 placeholder-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] focus:ring-2 focus:ring-[#D13A28]/20 transition-all"
+                        />
+                    </div>
+                    <button onClick={() => setModo('registrado')}
+                        className="text-[11px] font-bold text-[#A8A29E] active:scale-95 transition-all self-start">
+                        ¿Ya existe? <span className="text-[#D13A28] dark:text-[#E8422F]">Buscar en lista</span>
+                    </button>
                 </div>
             )}
 
-            {/* ── Botón siguiente ─────────────────────────────────────────── */}
             <NextBtn onClick={handleNext} disabled={!puedeAvanzar}>
                 Siguiente — Equipos
             </NextBtn>

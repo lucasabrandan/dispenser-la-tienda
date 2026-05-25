@@ -13,9 +13,9 @@ import PasoResumen      from './PasoResumen';
 import CerrarTicketSheet from './CerrarTicketSheet';
 
 const TITULOS = [
-    { titulo: 'Datos del cliente',  subtitulo: 'Fecha y quién trajo el equipo'      },
+    { titulo: 'Cliente',             subtitulo: '¿Para quién es el servicio?'         },
     { titulo: 'Equipos y trabajo',  subtitulo: 'Describí qué hay que hacer'         },
-    { titulo: 'Resumen y cierre',   subtitulo: 'Descuento, rentabilidad y condiciones' },
+    { titulo: 'Resumen y cierre',   subtitulo: 'Planificación, descuento y condiciones' },
 ];
 
 export default function ServicioForm({

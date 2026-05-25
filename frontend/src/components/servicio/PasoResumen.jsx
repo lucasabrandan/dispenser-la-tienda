@@ -3,6 +3,7 @@ import { Label, BackBtn, M, DSCard } from './ServicioUI';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
+import DateInput from '../ui/DateInput';
 
 const QUICK_PCTS = [5, 10];
 
@@ -95,6 +96,8 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
         calcularGananciaRepuesto, calcularResumenGanancia,
         idEdicion, eliminarItem,
         tecnicoSeleccionado, setTecnicoSeleccionado,
+        fechaServicio, setFechaServicio,
+        duracionMinutos, setDuracionMinutos,
     } = hook;
 
     const { esAdmin } = useAuth();
@@ -246,43 +249,81 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
             {/* ── Rentabilidad — solo admin ─────────────────────────────── */}
             {esAdmin && <RentabilidadPanel resumen={resumen} />}
 
-            {/* Técnico responsable — OBLIGATORIO para admin */}
-            {esAdmin && tecnicos.length > 0 && (
-                <div className={`rounded-2xl p-4 border-2 transition-colors ${!tecnicoSeleccionado ? 'border-[#D13A28] bg-[#D13A28]/5 dark:bg-[#D13A28]/10' : 'border-transparent bg-[#EFEDEA] dark:bg-[#242424]'}`}>
-                    <div className="flex items-center justify-between mb-2">
-                        <Label>Técnico responsable</Label>
-                        {!tecnicoSeleccionado ? (
-                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white bg-[#D13A28]">
-                                ⚠ Obligatorio
-                            </span>
-                        ) : (
-                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white bg-[#1F9D55]">
-                                ✓ Asignado
-                            </span>
-                        )}
-                    </div>
-                    <select
-                        value={tecnicoSeleccionado?.id || ''}
-                        onChange={e => {
-                            const t = tecnicos.find(u => u.id === Number(e.target.value));
-                            setTecnicoSeleccionado(t ? { id: t.id, nombre: t.nombre } : null);
-                        }}
-                        className={`${inputCls} ${!tecnicoSeleccionado ? 'border-[#D13A28]/60 focus:border-[#D13A28] focus:ring-[#D13A28]/20' : ''}`}
-                    >
-                        <option value=''>— Seleccionar técnico —</option>
-                        {tecnicos.map(t => (
-                            <option key={t.id} value={t.id}>{t.nombre} · {t.rol === 'ADMIN' ? 'Admin' : 'Técnico'}</option>
-                        ))}
-                    </select>
-                    <p className={`text-[10px] mt-1.5 font-semibold ${!tecnicoSeleccionado ? 'text-[#D13A28] dark:text-[#E8422F]' : 'text-[#1F9D55]'}`}>
-                        {tecnicoSeleccionado
-                            ? `El PDF se generará a nombre de ${tecnicoSeleccionado.nombre}`
-                            : 'Debés asignar un técnico antes de generar el presupuesto'
-                        }
-                    </p>
 
+            {/* ── Planificación: fecha + duración + técnico ────────────── */}
+            <div className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] space-y-3">
+                <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">Planificación</p>
+
+                {/* Fecha */}
+                <div>
+                    <Label>Fecha del servicio</Label>
+                    <DateInput
+                        value={fechaServicio}
+                        onChange={setFechaServicio}
+                        className={inputCls}
+                    />
+                    {fechaServicio && fechaServicio !== new Date().toISOString().split('T')[0] && (
+                        <div className="flex justify-between mt-1">
+                            <span className={`text-[10px] font-bold ${fechaServicio < new Date().toISOString().split('T')[0] ? 'text-amber-500' : 'text-blue-500'}`}>
+                                {fechaServicio < new Date().toISOString().split('T')[0] ? 'Carga histórica' : 'Fecha futura'}
+                            </span>
+                            <button onClick={() => setFechaServicio(new Date().toISOString().split('T')[0])}
+                                className="text-[10px] text-[#A8A29E] hover:text-[#D13A28]">
+                                Usar hoy
+                            </button>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                {/* Duración */}
+                <div>
+                    <Label>Duración estimada (opcional)</Label>
+                    <div className="flex gap-1.5 flex-wrap">
+                        {[60, 90, 120, 180, 240, 300].map(min => (
+                            <button key={min} type="button"
+                                onClick={() => setDuracionMinutos(duracionMinutos === min ? null : min)}
+                                className={`h-8 px-3 rounded-lg text-[11px] font-bold transition-all active:scale-95 ${
+                                    duracionMinutos === min
+                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+                                        : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                }`}>
+                                {min < 60 ? `${min}m` : `${min / 60}h`}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Técnico responsable — OBLIGATORIO para admin */}
+                {esAdmin && tecnicos.length > 0 && (
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <Label>Técnico responsable</Label>
+                            {!tecnicoSeleccionado ? (
+                                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white bg-[#D13A28]">
+                                    ⚠ Obligatorio
+                                </span>
+                            ) : (
+                                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white bg-[#1F9D55]">
+                                    ✓ Asignado
+                                </span>
+                            )}
+                        </div>
+                        <select
+                            value={tecnicoSeleccionado?.id || ''}
+                            onChange={e => {
+                                const t = tecnicos.find(u => u.id === Number(e.target.value));
+                                setTecnicoSeleccionado(t ? { id: t.id, nombre: t.nombre } : null);
+                            }}
+                            className={inputCls}
+                        >
+                            <option value=''>— Seleccionar técnico —</option>
+                            {tecnicos.map(t => (
+                                <option key={t.id} value={t.id}>{t.nombre} · {t.rol === 'ADMIN' ? 'Admin' : 'Técnico'}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+            </div>
 
             {/* ── Más opciones ──────────────────────────────────────────── */}
             <button onClick={() => setMasOpciones(v => !v)}
