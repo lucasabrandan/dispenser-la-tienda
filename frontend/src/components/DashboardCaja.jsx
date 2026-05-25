@@ -363,6 +363,20 @@ export default function DashboardCaja({ setVistaActual }) {
 
                 {/* ═══ MOBILE: orden optimizado ═══ */}
                 <div className="md:hidden space-y-4">
+                    {/* Acciones rápidas arriba de todo */}
+                    <div className="grid grid-cols-2 gap-2">
+                        <button onClick={() => setVistaActual('servicio-tecnico')}
+                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] text-white">
+                            <span>🔧</span>
+                            <span className="text-[12px] font-black">Nuevo Servicio</span>
+                        </button>
+                        <button onClick={() => setVistaActual('venta')}
+                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-[#D48800] dark:bg-[#F0A500] text-white">
+                            <span>🛒</span>
+                            <span className="text-[12px] font-black">Nueva Venta</span>
+                        </button>
+                    </div>
+
                     <PlanificadorBlock />
                     <AgendaBlock />
                     <StatsBlock />
@@ -386,19 +400,6 @@ export default function DashboardCaja({ setVistaActual }) {
                         </div>
                     )}
 
-                    {/* Acciones rápidas — solo las 2 principales */}
-                    <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => setVistaActual('servicio-tecnico')}
-                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] text-white">
-                            <span>🔧</span>
-                            <span className="text-[12px] font-black">Servicio</span>
-                        </button>
-                        <button onClick={() => setVistaActual('venta')}
-                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-[#D48800] dark:bg-[#F0A500] text-white">
-                            <span>🛒</span>
-                            <span className="text-[12px] font-black">Venta</span>
-                        </button>
-                    </div>
                 </div>
 
                 {/* ═══ DESKTOP ═══ */}
