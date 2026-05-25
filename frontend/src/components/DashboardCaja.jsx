@@ -238,17 +238,30 @@ export default function DashboardCaja({ setVistaActual }) {
                                                     const esPendiente = s.estado === 'PRESUPUESTO';
                                                     return (
                                                         <div key={s.id} onClick={() => setVistaActual('servicio-tecnico')}
-                                                            className={`${card} flex items-center gap-3 px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]`}>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                                                                <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}{s.usuarioNombre ? ` — ${s.usuarioNombre}` : ''}</p>
+                                                            className={`${card} px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]`}>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                                    <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}{s.items?.[0]?.tecnico ? ` — ${s.items[0].tecnico}` : ''}</p>
+                                                                </div>
+                                                                <div className="text-right shrink-0">
+                                                                    <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                                                                    <span className={`text-[9px] font-bold ${esPendiente ? 'text-[#D48800]' : 'text-[#16A34A]'}`}>
+                                                                        {esPendiente ? 'Pendiente' : 'Cobrado'}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                            <div className="text-right shrink-0">
-                                                                <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                                                                <span className={`text-[9px] font-bold ${esPendiente ? 'text-[#D48800]' : 'text-[#16A34A]'}`}>
-                                                                    {esPendiente ? 'Pendiente' : 'Cobrado'}
-                                                                </span>
-                                                            </div>
+                                                            {s.sedeDireccion && (
+                                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
+                                                                    target="_blank" rel="noopener noreferrer"
+                                                                    className="text-[10px] text-[#D13A28] dark:text-[#E8422F] truncate block mt-1 active:opacity-70"
+                                                                    onClick={e => e.stopPropagation()}>
+                                                                    📍 {s.sedeDireccion}
+                                                                </a>
+                                                            )}
+                                                            {s.duracionMinutos && (
+                                                                <p className="text-[9px] font-bold text-[#A8A29E] mt-1">⏱ {Math.round(s.duracionMinutos / 60 * 10) / 10}h estimadas</p>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
@@ -264,17 +277,27 @@ export default function DashboardCaja({ setVistaActual }) {
                                                     const esPendiente = s.estado === 'PRESUPUESTO';
                                                     return (
                                                         <div key={s.id} onClick={() => setVistaActual('venta')}
-                                                            className={`${card} flex items-center gap-3 px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]`}>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                                                                <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>
+                                                            className={`${card} px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]`}>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                                    <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>
+                                                                </div>
+                                                                <div className="text-right shrink-0">
+                                                                    <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                                                                    <span className={`text-[9px] font-bold ${esPendiente ? 'text-[#D48800]' : 'text-[#16A34A]'}`}>
+                                                                        {esPendiente ? 'Pendiente' : 'Cobrado'}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                            <div className="text-right shrink-0">
-                                                                <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                                                                <span className={`text-[9px] font-bold ${esPendiente ? 'text-[#D48800]' : 'text-[#16A34A]'}`}>
-                                                                    {esPendiente ? 'Pendiente' : 'Cobrado'}
-                                                                </span>
-                                                            </div>
+                                                            {s.sedeDireccion && (
+                                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
+                                                                    target="_blank" rel="noopener noreferrer"
+                                                                    className="text-[10px] text-[#D48800] dark:text-[#F0A500] truncate block mt-1 active:opacity-70"
+                                                                    onClick={e => e.stopPropagation()}>
+                                                                    📍 {s.sedeDireccion}
+                                                                </a>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
@@ -377,26 +400,47 @@ export default function DashboardCaja({ setVistaActual }) {
                                         {dia.items.length === 0 ? (
                                             <p className="text-[11px] text-[#A8A29E] text-center py-3">Día libre</p>
                                         ) : (
-                                            <div className="space-y-1.5">
-                                                {dia.items.map(s => (
-                                                    <div key={s.id} className="flex items-center gap-2 text-[10px]">
-                                                        <span>{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                                                            {s.sedeDireccion && (
-                                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
-                                                                    target="_blank" rel="noopener noreferrer"
-                                                                    className="text-[9px] text-[#D13A28] dark:text-[#E8422F] truncate block"
-                                                                    onClick={e => e.stopPropagation()}>
-                                                                    📍 {s.sedeDireccion}
-                                                                </a>
-                                                            )}
+                                            <div className="space-y-2">
+                                                {dia.items.map(s => {
+                                                    const horas = s.duracionMinutos ? `${Math.round(s.duracionMinutos / 60 * 10) / 10}h` : `~${s.servicioTipo === 'TECNICA' ? '2' : '1'}h`;
+                                                    const esPendiente = s.estado === 'PRESUPUESTO';
+                                                    return (
+                                                        <div key={s.id} className="rounded-lg p-2.5 bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                                        <span className={`text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]' : 'bg-[#16A34A]/10 text-[#16A34A]'}`}>
+                                                                            {esPendiente ? 'Pendiente' : s.estado?.replace('_', ' ')}
+                                                                        </span>
+                                                                    </div>
+                                                                    {s.sedeNombre && (
+                                                                        <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>
+                                                                    )}
+                                                                    {s.sedeDireccion && (
+                                                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
+                                                                            target="_blank" rel="noopener noreferrer"
+                                                                            className="text-[10px] text-[#D13A28] dark:text-[#E8422F] truncate block mt-0.5 active:opacity-70"
+                                                                            onClick={e => e.stopPropagation()}>
+                                                                            📍 {s.sedeDireccion}
+                                                                        </a>
+                                                                    )}
+                                                                    {s.items?.[0]?.trabajoRealizado && (
+                                                                        <p className="text-[10px] text-[#A8A29E] mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
+                                                                    )}
+                                                                    <div className="flex items-center gap-3 mt-1.5">
+                                                                        <span className="text-[9px] font-bold text-[#A8A29E]">⏱ {horas}</span>
+                                                                        {s.items?.[0]?.tecnico && (
+                                                                            <span className="text-[9px] font-bold text-[#A8A29E]">👤 {s.items[0].tecnico}</span>
+                                                                        )}
+                                                                        <M valor={calcTotal(s)} className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-auto" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <span className="text-[9px] text-[#A8A29E] shrink-0">
-                                                            {s.duracionMinutos ? `${Math.round(s.duracionMinutos / 60 * 10) / 10}h` : `~${s.servicioTipo === 'TECNICA' ? '2' : '1'}h`}
-                                                        </span>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </div>
