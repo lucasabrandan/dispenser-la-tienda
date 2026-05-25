@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRepuestoManager } from '../../hooks/useRepuestoManager';
 import RepuestoCard from './RepuestoCard';
 import RepuestoModal from './RepuestoModal';
 import StockQuickSheet from './StockQuickSheet';
 import ModalPrecioMasivo from '../productos/Modalpreciomasivo';
 import Paginacion from '../ui/Paginacion';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 export default function RepuestoManager() {
     const [stockSheetOpen, setStockSheetOpen] = useState(false);
@@ -40,8 +41,13 @@ export default function RepuestoManager() {
     };
     const cancelarLP = () => { if (longPressRef.current) clearTimeout(longPressRef.current); };
 
+    // Swipe para paginar
+    const pageIds = Array.from({ length: totalPaginas }, (_, i) => String(i + 1));
+    const handleSwipePage = useCallback((id) => irA(Number(id)), [irA]);
+    const swipeHandlers = useSwipeGesture(pageIds, String(pagina), handleSwipePage);
+
     return (
-        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-32 font-sans transition-colors">
+        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-32 font-sans transition-colors" {...swipeHandlers}>
 
             {/* Header */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
