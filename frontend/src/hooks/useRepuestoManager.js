@@ -24,6 +24,7 @@ export function useRepuestoManager() {
     const [gananciamasiva, setGananciaMasiva] = useState('');
     const [markupMasivo, setMarkupMasivo]     = useState('');
     const [impuestosMasivo, setImpuestosMasivo] = useState('');
+    const [ordenProductos, setOrdenProductos] = useState('az'); // 'az' | 'za' | 'precio-asc' | 'precio-desc' | 'stock'
 
     useEffect(() => { cargarProductos(); }, []);
 
@@ -53,7 +54,7 @@ export function useRepuestoManager() {
 
     // ── Filtrado + paginación ──────────────────────────────────────────────────
     const productosFiltrados = useMemo(() => {
-        let items = [...productos].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+        let items = [...productos];
         if (busqueda.trim()) {
             const q = busqueda.toLowerCase().trim();
             items = items.filter(p =>
@@ -61,8 +62,16 @@ export function useRepuestoManager() {
                 p.sku?.toLowerCase().includes(q)
             );
         }
+        // Ordenar
+        switch (ordenProductos) {
+            case 'za':         items.sort((a, b) => (b.nombre || '').localeCompare(a.nombre || '', 'es')); break;
+            case 'precio-asc': items.sort((a, b) => (Number(a.precio) || 0) - (Number(b.precio) || 0)); break;
+            case 'precio-desc':items.sort((a, b) => (Number(b.precio) || 0) - (Number(a.precio) || 0)); break;
+            case 'stock':      items.sort((a, b) => (Number(a.stock) || 0) - (Number(b.stock) || 0)); break;
+            default:           items.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es')); break;
+        }
         return items;
-    }, [productos, busqueda]);
+    }, [productos, busqueda, ordenProductos]);
 
     const totalPaginas   = Math.max(1, Math.ceil(productosFiltrados.length / POR_PAGINA));
     const paginaActual   = Math.min(pagina, totalPaginas);
@@ -222,6 +231,7 @@ export function useRepuestoManager() {
         irA, next, prev,
         modalAbierto, productoEdicion,
         expandido, busqueda, setBusqueda,
+        ordenProductos, setOrdenProductos,
         seleccionados, setSeleccionados, modoSeleccion, setModoSeleccion,
         modalPrecio, setModalPrecio,
         gananciamasiva, setGananciaMasiva,

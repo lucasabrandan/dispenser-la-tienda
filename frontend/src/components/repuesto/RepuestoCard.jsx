@@ -34,14 +34,6 @@ export default function RepuestoCard({
                     ? <img src={fotoSrc} className="w-full h-full object-cover" alt={r.nombre} />
                     : <span className="text-4xl opacity-30">📦</span>
                 }
-                {/* Badge stock */}
-                <span className={`absolute top-2 right-2 text-[9px] font-black px-1.5 py-0.5 rounded-md ${
-                    stockBajo
-                        ? 'bg-[#D13A28] text-white'
-                        : 'bg-[#1C1917]/60 text-white backdrop-blur-sm'
-                }`}>
-                    {r.stock} u.
-                </span>
                 {/* Checkbox selección */}
                 {modoSeleccion && (
                     <div className={`absolute top-2 left-2 w-6 h-6 rounded-lg border-2 flex items-center justify-center ${

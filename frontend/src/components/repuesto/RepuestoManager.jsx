@@ -16,6 +16,7 @@ export default function RepuestoManager() {
         pagina, totalPaginas, irA, next, prev,
         modalAbierto, productoEdicion,
         busqueda, setBusqueda,
+        ordenProductos, setOrdenProductos,
         seleccionados, setSeleccionados, modoSeleccion, setModoSeleccion,
         modalPrecio, setModalPrecio,
         gananciamasiva, setGananciaMasiva,
@@ -101,18 +102,16 @@ export default function RepuestoManager() {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-                {/* Stats */}
+                {/* Stats + orden */}
                 <div className="flex items-center justify-between px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-[#A8A29E]">{productosFiltrados.length} productos</span>
-                        <span className="text-[11px] text-[#A8A29E]">·</span>
-                        <span className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]">${Math.round(valorTotalInventario).toLocaleString('es-AR')}</span>
-                    </div>
-                    {itemsBajoStock > 0 && (
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F]">
-                            {itemsBajoStock} bajo stock
-                        </span>
-                    )}
+                    <span className="text-[11px] font-bold text-[#A8A29E]">{productosFiltrados.length} productos</span>
+                    <select value={ordenProductos} onChange={e => setOrdenProductos(e.target.value)}
+                        className="h-6 px-2 rounded text-[10px] font-bold outline-none bg-transparent text-[#A8A29E] cursor-pointer">
+                        <option value="az">A → Z</option>
+                        <option value="za">Z → A</option>
+                        <option value="precio-asc">Precio ↑</option>
+                        <option value="precio-desc">Precio ↓</option>
+                    </select>
                 </div>
 
                 {/* Barra selección masiva */}
