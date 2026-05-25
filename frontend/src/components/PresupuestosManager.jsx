@@ -5,10 +5,12 @@ import { useFiltros } from '../hooks/useFiltros';
 import { useMontos } from '../context/MontosContext';
 import { useAuth } from '../context/AuthContext';
 import Paginacion from './ui/Paginacion';
+import SwipeColumns from './ui/SwipeColumns';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import ModalCotizacionVolumen from './presupuesto/ModalCotizacionVolumen';
 import ModalDespacharPresupuesto from './presupuesto/ModalDespacharPresupuesto';
 import EjecutarAdminSheet from './servicio/EjecutarAdminSheet';
+import { useSwipeGesture } from '../hooks/useSwipeGesture';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -56,7 +58,7 @@ function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, onArchivar, onEj
                             {esTecnico ? '🔧 Servicio' : '🛒 Venta'}
                         </span>
                         {ejecutado && (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 bg-[var(--success-bg)] text-[var(--success-tx)]">
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
                                 ✓ Ejecutado
                             </span>
                         )}
@@ -103,8 +105,7 @@ function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, onArchivar, onEj
 
                 {/* Detalle expandido */}
                 {expandido && items.map((it, i) => (
-                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]"
-                        style={{ border: '0.5px solid rgba(0,0,0,0.05)' }}>
+                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
                                 <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F]">
@@ -133,9 +134,7 @@ function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, onArchivar, onEj
             </div>
 
             {/* Barra de acciones */}
-            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
-                style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                {/* PDF */}
+            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
                 <IconBtn onClick={() => onPDF(s)} title="PDF" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
 
                 {/* Menú overflow */}
@@ -193,9 +192,9 @@ function parseFechaSort(f) {
 }
 
 const TIPO_TABS = [
-    { id: '',        label: 'Todos'     },
-    { id: 'TECNICA', label: 'Servicios' },
-    { id: 'VENTA',   label: 'Ventas'   },
+    { id: '',        label: 'Todos',     fullLabel: 'Todos',     color: '#1C1917', icon: '📋' },
+    { id: 'TECNICA', label: 'Servicios', fullLabel: 'Servicios', color: '#D13A28', icon: '🔧' },
+    { id: 'VENTA',   label: 'Ventas',    fullLabel: 'Ventas',    color: '#D48800', icon: '🛒' },
 ];
 
 // ─── Componente principal ────────────────────────────────────────────────────
@@ -206,6 +205,7 @@ export default function PresupuestosManager() {
     const [ejecutadosIds, setEjecutadosIds] = useState(new Set());
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
+    const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
 
     // Long-press para selección masiva
     const longPressRef = React.useRef(null);
@@ -225,7 +225,6 @@ export default function PresupuestosManager() {
 
     const cargar = async () => {
         setCargando(true);
-        // técnico solo ve sus propios presupuestos; admin ve todos
         const filtroUsuario = (!esAdmin && usuario?.id) ? { usuarioId: usuario.id } : {};
         try {
             const [resPresu, resEjec] = await Promise.all([
@@ -245,8 +244,7 @@ export default function PresupuestosManager() {
     const patchEstado = async (id, estado, msg, extras = {}) => {
         const t = toast.loading('Guardando...');
         try {
-            const payload = { estado, ...extras };
-            await api.patch(`/servicios/${id}/estado`, payload);
+            await api.patch(`/servicios/${id}/estado`, { estado, ...extras });
             toast.success(msg, { id: t });
             cargar();
         } catch { toast.error('Error', { id: t }); }
@@ -266,7 +264,6 @@ export default function PresupuestosManager() {
 
     const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
 
-    // Presupuesto: genera PDF directo sin pedir firmas (las firmas son para trabajo terminado)
     const generarPDF = useCallback(async (s, { sinPrecios = false } = {}) => {
         await generarRemitoPDFPremium({
             tipo:         s.servicioTipo === 'VENTA' ? 'PRESUPUESTO_VENTA' : undefined,
@@ -313,7 +310,6 @@ export default function PresupuestosManager() {
         nroDocPdf: p.nroDocumento || localStorage.getItem(`pdf_nro_${p.id}`) || '',
     })), [presupuestos]);
 
-    // Filtro por tipo aplicado antes de pasar a useFiltros
     const presupuestosFiltradosTipo = useMemo(() =>
         tipoFiltro ? presupuestosConNro.filter(p => p.servicioTipo === tipoFiltro) : presupuestosConNro
     , [presupuestosConNro, tipoFiltro]);
@@ -333,21 +329,42 @@ export default function PresupuestosManager() {
         ventas:    presupuestos.filter(p => p.servicioTipo === 'VENTA').length,
     }), [presupuestos]); // eslint-disable-line
 
-    return (
-        <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
+    // Swipe en contenido para cambiar tab
+    const columnIds = TIPO_TABS.map(t => t.id);
+    const swipeHandlers = useSwipeGesture(columnIds, tipoFiltro, (id) => { setTipoFiltro(id); setModoSeleccion(false); setSeleccionados(new Set()); });
 
-            {/* Header sticky */}
+    // Columnas para SwipeColumns
+    const columns = TIPO_TABS.map(t => ({
+        id: t.id,
+        label: t.label,
+        fullLabel: t.fullLabel,
+        color: t.color,
+        icon: t.icon,
+        count: t.id === '' ? stats.count : t.id === 'TECNICA' ? stats.servicios : stats.ventas,
+    }));
+
+    return (
+        <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors"
+            {...swipeHandlers}>
+
+            {/* ═══ HEADER ═══ */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9] mb-2.5">
                         Presupuestos
                     </h2>
-                    <div className="flex gap-1.5">
-                        <div className="relative flex-1">
+                    <div className="flex items-center gap-1.5">
+                        {/* Búsqueda — mobile: toggle */}
+                        <button onClick={() => setMostrarBusqueda(v => !v)}
+                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            🔍
+                        </button>
+                        <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, teléfono, S/N, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                                autoFocus={mostrarBusqueda} />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
@@ -361,29 +378,22 @@ export default function PresupuestosManager() {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-2">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-                {/* Stats compacto */}
-                <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    <span className="text-[11px] font-bold text-[#A8A29E]">Pendiente</span>
-                    <M valor={stats.total} className="text-[11px] font-black text-[#D48800] dark:text-[#F0A500]" />
-                    <span className="text-[11px] text-[#A8A29E]">·</span>
-                    <span className="text-[11px] font-bold text-[#A8A29E]">{stats.servicios} serv.</span>
-                    <span className="text-[11px] text-[#A8A29E]">·</span>
-                    <span className="text-[11px] font-bold text-[#A8A29E]">{stats.ventas} ventas</span>
+                {/* ═══ SWIPE COLUMNS — tipo ═══ */}
+                <SwipeColumns
+                    columns={columns}
+                    activeId={tipoFiltro}
+                    onChangeColumn={(id) => { setTipoFiltro(id); setModoSeleccion(false); setSeleccionados(new Set()); }}
+                />
+
+                {/* Stats resumen — monto total pendiente */}
+                <div className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <span className="text-[11px] font-bold text-[#A8A29E]">Pendiente total</span>
+                    <M valor={stats.total} className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500]" />
                 </div>
 
-                {/* Tabs tipo */}
-                <div className="flex gap-1.5">
-                    {TIPO_TABS.map(t => (
-                        <button key={t.id} onClick={() => setTipoFiltro(t.id)}
-                            className={`flex-1 h-8 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${tipoFiltro === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}>
-                            {t.label}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Barra selección masiva (activada por long-press) */}
+                {/* Selección masiva */}
                 {modoSeleccion && (
                     <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1">
@@ -402,19 +412,18 @@ export default function PresupuestosManager() {
                     </div>
                 )}
 
-                <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
-
+                {/* ═══ LISTA ═══ */}
                 {cargando ? (
-                    <div className="flex flex-col gap-3">
-                        {[1, 2, 3].map(i => <div key={i} className="h-36 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
+                    <div className="flex flex-col gap-2">
+                        {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-[36px] mb-2">✅</p>
-                        <p className="font-bold text-[#A8A29E]">Sin presupuestos pendientes</p>
+                        <p className="text-3xl mb-2">✅</p>
+                        <p className="text-[13px] font-bold text-[#A8A29E]">Sin presupuestos pendientes</p>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                         {filtros.itemsPagina.map(s => (
                             <div key={s.id}
                                 onTouchStart={() => iniciarLongPress(s.id)} onTouchEnd={cancelarLongPress} onTouchMove={cancelarLongPress}

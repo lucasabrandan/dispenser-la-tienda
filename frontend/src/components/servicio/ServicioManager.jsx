@@ -13,6 +13,7 @@ import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 import EjecutarAdminSheet from '../servicio/EjecutarAdminSheet';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 
 function M({ valor, className = '' }) {
@@ -249,6 +250,10 @@ export default function ServicioManager({
     useEffect(() => { if (presupuestoOrigen) setModalCrear(true); }, [presupuestoOrigen]);
     useEffect(() => { if (ordenOrigen)       setModalCrear(true); }, [ordenOrigen]);
 
+    // Swipe en contenido para cambiar tab
+    const columnIds = enBusquedaGlobal ? ['TODOS', ...TABS.map(t => t.id)] : TABS.map(t => t.id);
+    const swipeHandlers = useSwipeGesture(columnIds, tabActual, cambiarTab);
+
     // Columnas para SwipeColumns — agrega "Todos" cuando hay búsqueda
     const columns = [
         ...(enBusquedaGlobal ? [{
@@ -266,7 +271,8 @@ export default function ServicioManager({
     ];
 
     return (
-        <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
+        <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors"
+            {...swipeHandlers}>
 
             {/* ═══ HEADER ═══ */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">

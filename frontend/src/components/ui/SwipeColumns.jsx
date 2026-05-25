@@ -1,11 +1,11 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 
 /**
  * SwipeColumns — navegación por estados swipeable (mobile) / tabs (desktop).
  * Reutilizable para Servicio Técnico, Presupuestos, Despacho, etc.
  *
  * Props:
- *   columns:        [{ id, label, short, count, color, icon }]
+ *   columns:        [{ id, label, fullLabel, count, color, icon }]
  *   activeId:       string — id de la columna activa
  *   onChangeColumn: (id) => void
  */
@@ -13,22 +13,38 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
     const scrollRef = useRef(null);
     const scrollTimer = useRef(null);
     const programmatic = useRef(false);
+    const [sidePad, setSidePad] = useState(0);
 
-    // Scroll programático al cambiar activeId (ej: desde desktop o al montar)
+    // Calcular padding lateral para centrar si los chips caben en pantalla
+    useEffect(() => {
+        const container = scrollRef.current;
+        if (!container) return;
+        const totalWidth = Array.from(container.children).reduce((sum, el) => sum + el.offsetWidth, 0);
+        const gaps = (columns.length - 1) * 8; // gap-2 = 8px
+        const contentWidth = totalWidth + gaps;
+        const available = container.offsetWidth;
+        if (contentWidth < available) {
+            setSidePad(Math.floor((available - contentWidth) / 2));
+        } else {
+            setSidePad(16); // px-4 standard
+        }
+    }, [columns]);
+
+    // Scroll programático al cambiar activeId
     useEffect(() => {
         const container = scrollRef.current;
         if (!container) return;
         const idx = columns.findIndex(c => c.id === activeId);
         if (idx < 0) return;
+        const child = container.children[idx];
+        if (!child) return;
         programmatic.current = true;
-        const cardWidth = container.firstChild?.offsetWidth || 0;
-        const gap = 12;
-        const targetScroll = idx * (cardWidth + gap);
-        container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+        const targetLeft = child.offsetLeft - (container.offsetWidth / 2) + (child.offsetWidth / 2);
+        container.scrollTo({ left: targetLeft, behavior: 'smooth' });
         setTimeout(() => { programmatic.current = false; }, 400);
     }, [activeId, columns]);
 
-    // Detectar snap al terminar scroll (debounced)
+    // Detectar snap al terminar scroll
     const handleScroll = useCallback(() => {
         if (programmatic.current) return;
         clearTimeout(scrollTimer.current);
@@ -50,12 +66,13 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
 
     return (
         <>
-            {/* ═══ MOBILE: chips centrados, scrollable si no caben ═══ */}
+            {/* ═══ MOBILE: chips horizontales scrolleables ═══ */}
             <div className="md:hidden">
                 <div
                     ref={scrollRef}
                     onScroll={handleScroll}
-                    className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 justify-center flex-wrap"
+                    className="flex gap-2 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-1"
+                    style={{ paddingLeft: sidePad, paddingRight: sidePad }}
                 >
                     {columns.map(col => {
                         const activo = col.id === activeId;
@@ -63,7 +80,7 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                             <button
                                 key={col.id}
                                 onClick={() => onChangeColumn(col.id)}
-                                className={`rounded-xl px-4 py-2.5 text-left transition-all active:scale-[0.97] border ${
+                                className={`snap-center shrink-0 rounded-xl px-4 py-2 text-left transition-all active:scale-[0.97] border ${
                                     activo
                                         ? 'shadow-md border-transparent'
                                         : 'bg-white dark:bg-[#242424] border-black/[0.05] dark:border-white/[0.05] shadow-sm'
@@ -71,7 +88,7 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                                 style={activo ? { backgroundColor: col.color || '#D13A28' } : {}}
                             >
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-[12px] font-black ${activo ? 'text-white' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                    <span className={`text-[12px] font-black whitespace-nowrap ${activo ? 'text-white' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
                                         {col.fullLabel || col.label}
                                     </span>
                                     {col.count != null && (
