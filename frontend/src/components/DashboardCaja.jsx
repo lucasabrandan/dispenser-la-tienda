@@ -411,65 +411,58 @@ export default function DashboardCaja({ setVistaActual }) {
                     </div>
                 </div>
 
-                {/* ═══ DESKTOP: layout original con grid ═══ */}
+                {/* ═══ DESKTOP ═══ */}
                 <div className="hidden md:block space-y-5">
-                    <StatsBlock />
-                    <AlertasBlock />
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                        {/* Agenda */}
+                    {/* Fila 1: Stats + Acciones en línea */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div className="lg:col-span-2">
-                            <AgendaBlock />
+                            <StatsBlock />
                         </div>
-
-                        {/* Columna derecha */}
-                        <div className="space-y-4">
-                            <div>
-                                <p className={sectionLabel}>Acciones</p>
-                                <div className="space-y-1.5">
-                                    <button onClick={() => setVistaActual('servicio-tecnico')}
-                                        className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]`}>
-                                        <span>🔧</span>
-                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Nuevo Servicio</span>
-                                    </button>
-                                    <button onClick={() => setVistaActual('venta')}
-                                        className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]`}>
-                                        <span>🛒</span>
-                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Nueva Venta</span>
-                                    </button>
-                                    <button onClick={() => setVistaActual('presupuestos')}
-                                        className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow`}>
-                                        <span>💰</span>
-                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Presupuestos</span>
-                                    </button>
-                                    <button onClick={() => setVistaActual('finanzas')}
-                                        className={`${card} w-full flex items-center gap-2.5 p-3 text-left active:scale-[0.98] hover:shadow-md transition-shadow`}>
-                                        <span>💹</span>
-                                        <span className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</span>
-                                    </button>
-                                </div>
+                        <div className="flex flex-col gap-1.5">
+                            <div className="grid grid-cols-2 gap-1.5 flex-1">
+                                <button onClick={() => setVistaActual('servicio-tecnico')}
+                                    className={`${card} flex items-center gap-2 p-2.5 text-left active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]`}>
+                                    <span>🔧</span>
+                                    <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Servicio</span>
+                                </button>
+                                <button onClick={() => setVistaActual('venta')}
+                                    className={`${card} flex items-center gap-2 p-2.5 text-left active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]`}>
+                                    <span>🛒</span>
+                                    <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Venta</span>
+                                </button>
+                                <button onClick={() => setVistaActual('presupuestos')}
+                                    className={`${card} flex items-center gap-2 p-2.5 text-left active:scale-[0.98] hover:shadow-md transition-shadow`}>
+                                    <span>💰</span>
+                                    <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Presupuestos</span>
+                                </button>
+                                <button onClick={() => setVistaActual('finanzas')}
+                                    className={`${card} flex items-center gap-2 p-2.5 text-left active:scale-[0.98] hover:shadow-md transition-shadow`}>
+                                    <span>💹</span>
+                                    <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</span>
+                                </button>
                             </div>
-
                             {data.pendientesCount > 0 && (
-                                <div className={`${card} p-3.5`}>
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-1">Pendientes</p>
-                                            <p className="text-sm font-bold text-[#D48800] dark:text-[#F0A500]">
-                                                {data.pendientesCount} — <M valor={data.pendientesVal} />
-                                            </p>
-                                        </div>
-                                        <button onClick={() => setVistaActual('presupuestos')}
-                                            className="text-[10px] font-black uppercase text-[#D13A28] dark:text-[#E8422F] hover:underline">
-                                            Ver →
-                                        </button>
-                                    </div>
+                                <div className={`${card} p-2.5 flex items-center justify-between`}>
+                                    <p className="text-[11px] font-bold text-[#D48800] dark:text-[#F0A500]">
+                                        {data.pendientesCount} pendientes — <M valor={data.pendientesVal} />
+                                    </p>
+                                    <button onClick={() => setVistaActual('presupuestos')}
+                                        className="text-[10px] font-black text-[#D13A28] dark:text-[#E8422F]">
+                                        Ver →
+                                    </button>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <PlanificadorBlock />
+                    {/* Fila 2: Alertas */}
+                    <AlertasBlock />
+
+                    {/* Fila 3: Planificador + Agenda */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        <PlanificadorBlock />
+                        <AgendaBlock />
+                    </div>
                 </div>
             </div>
 
