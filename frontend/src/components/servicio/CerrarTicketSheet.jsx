@@ -138,6 +138,9 @@ export default function CerrarTicketSheet({
                 }
                 setPaso('presupuesto_ok');
             }
+        } catch (e) {
+            toast.error('Error al guardar el presupuesto');
+            console.error(e);
         } finally {
             setProcesando(false);
         }
