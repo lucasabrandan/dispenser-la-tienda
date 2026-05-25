@@ -51,39 +51,43 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
     return (
         <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-28 font-sans transition-colors">
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6">
 
-            {/* ── HEADER ───────────────────────────────────────────────── */}
-            <div className="flex justify-between items-center mb-5">
-                <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
+            {/* Header sticky */}
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
                         Ventas
                     </h2>
-                    <p className="text-[11px] font-medium text-[#A8A29E] mt-0.5">
-                        Gestión comercial
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => exportarVentasCSV(filtros.itemsFiltrados)}
-                        title="Exportar a CSV"
-                        className="h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
-                    >
-                        CSV
-                    </button>
-                    <button
-                        onClick={() => setModalCrear(true)}
-                        className="h-8 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D48800] dark:bg-[#F0A500]"
-                    >
-                        + Nueva Venta
-                    </button>
+                    {/* Búsqueda + acciones */}
+                    <div className="flex gap-1.5">
+                        <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
+                                placeholder="Cliente, S/N, sede..."
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                            {filtros.busqueda && (
+                                <button onClick={() => filtros.setBusqueda('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
+                            )}
+                        </div>
+                        <button onClick={() => exportarVentasCSV(filtros.itemsFiltrados)} title="CSV"
+                            className="h-9 w-9 rounded-lg flex items-center justify-center text-[11px] font-bold bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 shrink-0">
+                            CSV
+                        </button>
+                        <button onClick={() => setModalCrear(true)}
+                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D48800] dark:bg-[#F0A500] shrink-0">
+                            + Venta
+                        </button>
+                    </div>
                 </div>
             </div>
 
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
+
             <VentaStats stats={stats} />
 
-            {/* ── FILTROS ───────────────────────────────────────────────── */}
-            <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda conRango placeholderBusqueda="Cliente, S/N, sede..." />
+            {/* ── FILTROS colapsables ──────────────────────────────────── */}
+            <FiltrosPanel hook={filtros} estados={ESTADOS_VENTA} conBusqueda={false} conRango placeholderBusqueda="Cliente, S/N, sede..." />
             <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
             {cargando ? (

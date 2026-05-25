@@ -327,98 +327,67 @@ export default function PresupuestosManager() {
         <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
             {/* Header sticky */}
-            <div className="sticky top-0 z-10 px-4 pt-4 pb-3 bg-[#F5F3F1] dark:bg-[#141414]"
-                style={{ borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
-                <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-[22px] font-black uppercase tracking-tighter leading-none text-[#1C1917] dark:text-[#F0EEE9]">
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
                         Presupuestos
                     </h2>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setModalCotizar(true)}
-                            title="Cotización por volumen"
-                            className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-[11px] font-black uppercase transition-all active:scale-90 bg-[#D48800] dark:bg-[#F0A500] text-white">
-                            📋 Cotizar
+                    <div className="flex gap-1.5">
+                        <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
+                                placeholder="Cliente, teléfono, S/N, sede..."
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                            {filtros.busqueda && (
+                                <button onClick={() => filtros.setBusqueda('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
+                            )}
+                        </div>
+                        <button onClick={() => setModalCotizar(true)}
+                            className="h-9 px-3 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D48800] dark:bg-[#F0A500] shrink-0">
+                            Cotizar
                         </button>
-                        <button
-                            onClick={() => setModoSeleccion(v => { if (v) setSeleccionados(new Set()); return !v; })}
-                            title="Selección múltiple"
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 border border-black/[0.08] dark:border-white/[0.08] ${modoSeleccion ? 'bg-[#D13A28] text-white' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]'}`}
-                        >☑</button>
                     </div>
-                </div>
-
-                {/* Buscador */}
-                <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
-                    <input
-                        value={filtros.busqueda}
-                        onChange={e => filtros.setBusqueda(e.target.value)}
-                        placeholder="Cliente, teléfono, S/N, sede..."
-                        className="w-full h-10 pl-9 pr-8 rounded-xl text-[13px] outline-none border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E]"
-                    />
-                    {filtros.busqueda && (
-                        <button onClick={() => filtros.setBusqueda('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
-                    )}
                 </div>
             </div>
 
-            <div className="px-4 pt-3 space-y-3">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-2">
 
-                {/* Stats chips */}
-                <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-0.5" style={{ scrollbarWidth: 'none' }}>
-                    <div className="shrink-0 rounded-2xl p-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[120px]"
-                        style={{ borderLeft: '3px solid #D48800' }}>
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">Total pendiente</p>
-                        <M valor={stats.total} className="text-[18px] font-black leading-none text-[#D48800] dark:text-[#F0A500] block" />
-                        <p className="text-[9px] text-[#A8A29E] mt-0.5">{stats.count} presupuestos</p>
-                    </div>
-                    <div className="shrink-0 rounded-2xl p-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[100px]"
-                        style={{ borderLeft: '3px solid #D13A28' }}>
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">Servicios</p>
-                        <p className="text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9]">{stats.servicios}</p>
-                        <p className="text-[9px] text-[#A8A29E] mt-0.5">técnicos</p>
-                    </div>
-                    <div className="shrink-0 rounded-2xl p-3 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] min-w-[100px]">
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-[#A8A29E] mb-1">Ventas</p>
-                        <p className="text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9]">{stats.ventas}</p>
-                        <p className="text-[9px] text-[#A8A29E] mt-0.5">insumos</p>
-                    </div>
+                {/* Stats compacto */}
+                <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <span className="text-[11px] font-bold text-[#A8A29E]">Pendiente</span>
+                    <M valor={stats.total} className="text-[11px] font-black text-[#D48800] dark:text-[#F0A500]" />
+                    <span className="text-[11px] text-[#A8A29E]">·</span>
+                    <span className="text-[11px] font-bold text-[#A8A29E]">{stats.servicios} serv.</span>
+                    <span className="text-[11px] text-[#A8A29E]">·</span>
+                    <span className="text-[11px] font-bold text-[#A8A29E]">{stats.ventas} ventas</span>
                 </div>
 
-                {/* Alerta */}
-                {stats.count > 0 && (
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[var(--warning-bg)] border border-[rgba(212,136,0,0.25)]">
-                        <span className="text-lg shrink-0">⚠️</span>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-black text-[var(--warning-tx)]">{stats.count} sin confirmar</p>
-                            <p className="text-[11px] font-bold text-[#D48800] dark:text-[#F0A500]">
-                                <M valor={stats.total} /> por cobrar
-                            </p>
-                        </div>
-                    </div>
-                )}
-
                 {/* Tabs tipo */}
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                     {TIPO_TABS.map(t => (
                         <button key={t.id} onClick={() => setTipoFiltro(t.id)}
-                            className={`flex-1 h-10 rounded-xl font-bold text-[12px] uppercase transition-all active:scale-95 ${tipoFiltro === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            className={`flex-1 h-8 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${tipoFiltro === t.id ? 'text-white bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'}`}>
                             {t.label}
                         </button>
                     ))}
                 </div>
 
-                {/* Barra selección masiva */}
-                {modoSeleccion && seleccionados.size > 0 && (
-                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                        <span className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] flex-1">
+                {/* Barra selección masiva (activada por long-press) */}
+                {modoSeleccion && (
+                    <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
-                        <button onClick={ejecutarMasivaArchivar}
-                            className="h-9 px-4 rounded-xl font-bold text-xs bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
-                            🗄️ Archivar
+                        {seleccionados.size > 0 && (
+                            <button onClick={ejecutarMasivaArchivar}
+                                className="h-7 px-3 rounded-lg font-bold text-[10px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                Archivar
+                            </button>
+                        )}
+                        <button onClick={() => { setModoSeleccion(false); setSeleccionados(new Set()); }}
+                            className="h-7 px-3 rounded-lg font-bold text-[10px] text-[#A8A29E] active:scale-95">
+                            Cancelar
                         </button>
                     </div>
                 )}

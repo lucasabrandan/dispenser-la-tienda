@@ -85,62 +85,47 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 pb-20 bg-[#F5F3F1] dark:bg-[#141414] min-h-screen transition-colors">
+        <div className="min-h-screen pb-20 bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
 
-            {/* BARRA STICKY — título + buscador + chips */}
-            <div className="sticky top-0 z-30 py-3 bg-[#F5F3F1]/90 dark:bg-[#141414]/90 backdrop-blur-xl -mx-4 px-4 border-b border-black/[0.07] dark:border-white/[0.07] mb-4">
-                {/* Título + contador */}
-                <div className="flex items-baseline justify-between mx-auto mb-2">
-                    <h2 className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tight leading-none">
+            {/* Header sticky */}
+            <div className="sticky top-0 z-30 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
                         Clientes
                     </h2>
-                    <p className="text-[10px] font-black text-[#A8A29E] uppercase">
-                        {filtrados.length} · pág {paginaActual}/{totalPaginas}
-                    </p>
-                </div>
-                {/* Buscador + botón nuevo */}
-                <div className="flex gap-2 mx-auto">
-                    <div className="relative flex-1">
-                        <input
-                            placeholder="Buscar por cliente, sede, teléfono, S/N..."
-                            value={busqueda}
-                            onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
-                            className="
-                                w-full py-3 pl-10 pr-4
-                                bg-[#FFFFFF] dark:bg-[#242424]
-                                rounded-2xl border border-black/[0.07] dark:border-white/[0.07]
-                                outline-none focus:border-[#D13A28] dark:focus:border-[#E8422F]
-                                focus:ring-2 focus:ring-[#D13A28]/20
-                                font-bold text-[13px] text-[#1C1917] dark:text-[#F0EEE9]
-                                placeholder-[#A8A29E] transition-all
-                            "
-                        />
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm">🔍</span>
-                    </div>
-                    <button
-                        onClick={() => setModalOpen('nuevo')}
-                        className="shrink-0 bg-[#D13A28] dark:bg-[#E8422F] text-white h-[46px] px-5 rounded-2xl font-black text-xs uppercase active:scale-95 transition-all"
-                    >
-                        + Nuevo
-                    </button>
-                </div>
-                {/* Chips */}
-                <div className="flex gap-2 overflow-x-auto mt-2 pb-0.5 no-scrollbar mx-auto">
-                    {CHIPS.map(chip => (
-                        <button
-                            key={chip.id ?? 'todos'}
-                            onClick={() => { setFiltroChip(chip.id); setPagina(1); setExpandedId(null); }}
-                            className={`shrink-0 px-3 py-1.5 rounded-xl font-black text-[9px] uppercase transition-all active:scale-95 ${
-                                filtroChip === chip.id
-                                    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                    : 'bg-[#FFFFFF] dark:bg-[#242424] text-[#57534E] dark:text-[#A8A29E]'
-                            }`}
-                        >
-                            {chip.label}
+                    <div className="flex gap-1.5">
+                        <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <input placeholder="Cliente, sede, teléfono, S/N..."
+                                value={busqueda}
+                                onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
+                        </div>
+                        <button onClick={() => setModalOpen('nuevo')}
+                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] shrink-0">
+                            + Nuevo
                         </button>
-                    ))}
+                    </div>
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                        {CHIPS.map(chip => (
+                            <button key={chip.id ?? 'todos'}
+                                onClick={() => { setFiltroChip(chip.id); setPagina(1); setExpandedId(null); }}
+                                className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${
+                                    filtroChip === chip.id
+                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+                                        : 'bg-white dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
+                                }`}>
+                                {chip.label}
+                            </button>
+                        ))}
+                        <span className="ml-auto text-[10px] font-bold text-[#A8A29E] self-center shrink-0">
+                            {filtrados.length} · pág {paginaActual}/{totalPaginas}
+                        </span>
+                    </div>
                 </div>
             </div>
+
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
             {/* LISTA / GRID */}
             <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-5 xl:grid-cols-3">
@@ -165,6 +150,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
 
             <Paginacion pagina={paginaActual} totalPaginas={totalPaginas}
                 irA={irA} next={() => irA(paginaActual + 1)} prev={() => irA(paginaActual - 1)} />
+            </div>{/* cierre max-w-6xl */}
 
             {/* MODALES */}
             <CrearClienteModal isOpen={modalOpen === 'nuevo'} onClose={() => setModalOpen(null)}

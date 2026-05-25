@@ -138,13 +138,26 @@ export default function ServicioList({ onEditar }) {
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414]">
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6">
 
-                {/* Header */}
-                <div className="mb-5">
-                    <h2 className="text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Historial</h2>
-                    <p className="text-[11px] font-medium text-[#A8A29E] mt-0.5">Todos los registros</p>
+            {/* Header sticky */}
+            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Historial</h2>
+                    {/* Búsqueda */}
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                        <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
+                            placeholder="Cliente, S/N, ubicación, sede..."
+                            className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                        {filtros.busqueda && (
+                            <button onClick={() => filtros.setBusqueda('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
+                        )}
+                    </div>
                 </div>
+            </div>
+
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
                 <div className="space-y-3">
 
@@ -176,8 +189,8 @@ export default function ServicioList({ onEditar }) {
                         </div>
                     )}
 
-                    {/* Filtros */}
-                    <FiltrosPanel hook={filtros} estados={ESTADOS_HISTORIAL} conBusqueda conRango placeholderBusqueda="Cliente, S/N, ubicación, sede..." />
+                    {/* Filtros — sin búsqueda (ya está en header) */}
+                    <FiltrosPanel hook={filtros} estados={ESTADOS_HISTORIAL} conBusqueda={false} conRango />
                     <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
                     {/* Listado */}
