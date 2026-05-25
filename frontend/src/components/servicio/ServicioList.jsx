@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useFiltros } from '../../hooks/useFiltros';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion   from '../ui/Paginacion';
+import SwipeColumns from '../ui/SwipeColumns';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import { useMontos } from '../../context/MontosContext';
 
@@ -25,9 +27,9 @@ const ESTADOS_HISTORIAL = [
 ];
 
 const TIPOS = [
-    { value: 'TODOS',   label: 'Todos' },
-    { value: 'TECNICA', label: 'Técnica' },
-    { value: 'VENTA',   label: 'Venta' },
+    { id: 'TODOS',   label: 'Todos',   fullLabel: 'Todos',   color: '#1C1917', icon: '📋' },
+    { id: 'TECNICA', label: 'Técnica', fullLabel: 'Técnica', color: '#D48800', icon: '🔧' },
+    { id: 'VENTA',   label: 'Venta',   fullLabel: 'Venta',   color: '#D13A28', icon: '🛒' },
 ];
 
 const badgeTipo = (s) => {
@@ -106,6 +108,14 @@ export default function ServicioList({ onEditar }) {
         ? serviciosConNro
         : serviciosConNro.filter(s => s.servicioTipo === tipoFiltro);
 
+    const tipoIds = TIPOS.map(t => t.id);
+    const swipeHandlers = useSwipeGesture(tipoIds, tipoFiltro, setTipoFiltro);
+    const columns = TIPOS.map(t => ({
+        ...t,
+        count: t.id === 'TODOS' ? serviciosConNro.length
+             : serviciosConNro.filter(s => s.servicioTipo === t.id).length,
+    }));
+
     const filtros = useFiltros(serviciosFiltrados, {
         porPagina: 10,
         campoFecha: 'fecha',
@@ -138,7 +148,7 @@ export default function ServicioList({ onEditar }) {
     };
 
     return (
-        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414]">
+        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414]" {...swipeHandlers}>
 
             {/* Header sticky */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
@@ -173,19 +183,8 @@ export default function ServicioList({ onEditar }) {
                         </div>
                     )}
 
-                    {/* Filtro tipo — barra segmentada */}
-                    <div className="flex items-center rounded-lg overflow-hidden shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        {TIPOS.map((t, i) => (
-                            <button key={t.value} onClick={() => setTipoFiltro(t.value)}
-                                className={`flex-1 h-9 text-[11px] font-bold uppercase transition-all active:scale-[0.98] ${
-                                    tipoFiltro === t.value
-                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white z-[1]'
-                                        : 'bg-white dark:bg-[#1C1C1C] text-[#A8A29E]'
-                                } ${i > 0 ? 'border-l border-black/[0.05] dark:border-white/[0.05]' : ''}`}>
-                                {t.label}
-                            </button>
-                        ))}
-                    </div>
+                    {/* Filtro tipo — SwipeColumns */}
+                    <SwipeColumns columns={columns} activeId={tipoFiltro} onChangeColumn={setTipoFiltro} />
 
                     {/* Filtros colapsables */}
                     <button onClick={() => setMostrarFiltros(v => !v)}

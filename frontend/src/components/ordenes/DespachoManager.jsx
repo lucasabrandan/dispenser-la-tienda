@@ -106,13 +106,15 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
             <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
                 {!esFinal && (
                     <button onClick={() => onEditar(orden)}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E]">✏️</button>
+                        className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                        ✏️ Editar
+                    </button>
                 )}
                 <div className="flex-1" />
                 {!confirmElim ? (
                     <button onClick={() => setConfirmElim(true)}
-                        className="h-9 px-3 rounded-xl font-bold text-[11px] text-[#D13A28] dark:text-[#E8422F] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95">
-                        🗑 Eliminar
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]">
+                        🗑
                     </button>
                 ) : (
                     <>
