@@ -140,22 +140,23 @@ export default function ClienteCard({
                             className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E] active:scale-95">⋯</button>
                         {menuCliente && (
                             <>
-                                <div className="fixed inset-0 z-[100]" onClick={() => setMenuCliente(false)} />
-                                <div className="absolute right-0 bottom-full mb-1 z-[101] w-48 rounded-xl shadow-2xl border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] overflow-hidden">
+                                <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuCliente(false)} />
+                                <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
+                                    <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
                                     <button onClick={() => { onEditCliente(cliente); setMenuCliente(false); }}
-                                        className="w-full px-4 py-3 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#EFEDEA] dark:active:bg-[#3E3E3E]">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                         ✏️ Editar cliente
                                     </button>
                                     <button onClick={() => { setModalHistorial(true); setMenuCliente(false); }}
-                                        className="w-full px-4 py-3 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#EFEDEA] dark:active:bg-[#3E3E3E]">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                         📋 Ver historial
                                     </button>
                                     <button onClick={() => { abrirMaps(cliente); setMenuCliente(false); }}
-                                        className="w-full px-4 py-3 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#EFEDEA] dark:active:bg-[#3E3E3E]">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                         📍 Ver en mapa
                                     </button>
                                     <button onClick={() => { setConfirmEliminar('cliente'); setMenuCliente(false); }}
-                                        className="w-full px-4 py-3 text-left text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] dark:active:bg-[#3B1111]">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] rounded-xl">
                                         🗑 Eliminar cliente
                                     </button>
                                 </div>
@@ -199,18 +200,20 @@ export default function ClienteCard({
                                                         className="w-7 h-7 rounded-lg flex items-center justify-center text-[#A8A29E] active:scale-90 text-[10px]">⋯</button>
                                                     {menuEquipo === eq.id && (
                                                         <>
-                                                            <div className="fixed inset-0 z-[100]" onClick={() => setMenuEquipo(null)} />
-                                                            <div className="absolute right-0 bottom-full mb-1 z-[101] w-40 rounded-xl shadow-2xl border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] overflow-hidden">
+                                                            <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuEquipo(null)} />
+                                                            <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
+                                                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                                                                <p className="px-5 py-2 text-[12px] font-black text-[#A8A29E] truncate">{eq.modelo || eq.numeroSerie}</p>
                                                                 <button onClick={() => { setEquipoHistorial(eq); setMenuEquipo(null); }}
-                                                                    className="w-full px-3 py-2.5 text-left text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#EFEDEA]">
+                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                                                     📋 Historial
                                                                 </button>
                                                                 <button onClick={() => { onEditEquipo(eq, cliente); setMenuEquipo(null); }}
-                                                                    className="w-full px-3 py-2.5 text-left text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#EFEDEA]">
+                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                                                     ✏️ Editar
                                                                 </button>
                                                                 <button onClick={() => { setConfirmEliminar(eq.id); setMenuEquipo(null); }}
-                                                                    className="w-full px-3 py-2.5 text-left text-[11px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2]">
+                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] rounded-xl">
                                                                     🗑 Eliminar
                                                                 </button>
                                                             </div>
