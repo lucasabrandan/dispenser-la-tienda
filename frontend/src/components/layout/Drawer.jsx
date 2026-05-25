@@ -2,13 +2,13 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 
-// Solo secciones que NO están en el BottomNav
+// Items que NO están en el BottomNav, ordenados por frecuencia de uso
 const MENU_ITEMS = [
     { id: 'presupuestos', nombre: 'Presupuestos',  icon: '💰' },
+    { id: 'historial',    nombre: 'Historial',      icon: '📋' },
     { id: 'clientes',     nombre: 'Clientes',       icon: '👥' },
-    { id: 'productos',    nombre: 'Productos',      icon: '📦' },
-    { id: 'despacho',     nombre: 'Despacho',        icon: '📌' },
     { id: 'radar',        nombre: 'Radar',           icon: '🚨' },
+    { id: 'productos',    nombre: 'Productos',      icon: '📦' },
     { id: 'finanzas',     nombre: 'Finanzas',        icon: '💹' },
     { id: 'usuarios',     nombre: 'Usuarios',        icon: '🔐' },
 ];
@@ -60,7 +60,8 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                     {MENU_ITEMS.map(item => {
                         const activa = vistaActual === item.id;
                         const badge =
-                            item.id === 'despacho' && ordenesActivas > 0 ? ordenesActivas : null;
+                            item.id === 'presupuestos' && pendientes > 0 ? pendientes :
+                            null;
                         return (
                             <button
                                 key={item.id}

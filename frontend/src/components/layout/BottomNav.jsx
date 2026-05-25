@@ -1,11 +1,13 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useBadges } from '../../hooks/useBadges';
 
+// Reordenado: las acciones más frecuentes accesibles directamente
 const NAV_ADMIN = [
     { id: 'caja',             nombre: 'Panel',    icon: '🏠' },
-    { id: 'venta',            nombre: 'Venta',    icon: '🛒' },
     { id: 'servicio-tecnico', nombre: 'Técnico',  icon: '🔧' },
-    { id: 'historial',        nombre: 'Historial',icon: '📋' },
+    { id: 'despacho',         nombre: 'Despacho', icon: '📌' },
+    { id: 'venta',            nombre: 'Venta',    icon: '🛒' },
     { id: '_more',            nombre: 'Más',      icon: '⋯'  },
 ];
 
@@ -15,11 +17,12 @@ const NAV_TECNICO = [
     { id: 'historial',        nombre: 'Historial',icon: '📋' },
 ];
 
-// Secciones que se acceden desde "Más"
-const SECCIONES_MAS = ['presupuestos', 'clientes', 'productos', 'despacho', 'radar', 'finanzas', 'usuarios'];
+// Secciones accesibles desde "Más"
+const SECCIONES_MAS = ['presupuestos', 'historial', 'clientes', 'radar', 'productos', 'finanzas', 'usuarios'];
 
 export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) {
     const { esAdmin } = useAuth();
+    const { ordenesActivas } = useBadges();
     const NAV_ITEMS = esAdmin ? NAV_ADMIN : NAV_TECNICO;
 
     return (
@@ -45,11 +48,12 @@ export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) 
                     const activo = item.id === '_more'
                         ? SECCIONES_MAS.includes(vistaActual)
                         : vistaActual === item.id;
+                    const badge = item.id === 'despacho' && ordenesActivas > 0 ? ordenesActivas : null;
                     return (
                         <button
                             key={item.id}
                             onClick={() => item.id === '_more' ? onMoreClick?.() : setVistaActual(item.id)}
-                            className="flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all active:scale-90"
+                            className="relative flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all active:scale-90"
                         >
                             <span className={`text-[20px] transition-transform duration-200 ${activo ? 'scale-110' : 'scale-100'}`}>
                                 {item.icon}
@@ -57,6 +61,11 @@ export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) 
                             <span className={`text-[9px] font-bold uppercase tracking-tight transition-colors duration-200 ${activo ? 'text-[#E8422F]' : 'text-[#9E9A94]'}`}>
                                 {item.nombre}
                             </span>
+                            {badge && (
+                                <span className="absolute top-1.5 right-1/4 text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full bg-[#D13A28] dark:bg-[#E8422F] text-white leading-none">
+                                    {badge}
+                                </span>
+                            )}
                         </button>
                     );
                 })}

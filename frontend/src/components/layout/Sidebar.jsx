@@ -5,31 +5,30 @@ import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 
-// IDs deben coincidir EXACTAMENTE con App.js, Drawer y BottomNav
+// Reordenado por flujo de trabajo real
 const MENU_OPERACIONES_ADMIN = [
     { id: 'caja',             icon: '🏠', nombre: 'Panel'            },
-    { id: 'venta',            icon: '🛒', nombre: 'Venta / Insumos'  },
     { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Técnico' },
-    { id: 'historial',        icon: '📋', nombre: 'Historial'        },
     { id: 'presupuestos',     icon: '💰', nombre: 'Presupuestos'     },
+    { id: 'despacho',         icon: '📌', nombre: 'Despacho'         },
+    { id: 'venta',            icon: '🛒', nombre: 'Venta / Insumos'  },
+    { id: 'historial',        icon: '📋', nombre: 'Historial'        },
 ];
 
 const MENU_OPERACIONES_TECNICO = [
-    { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Técnico' },
     { id: 'mis-ordenes',      icon: '📌', nombre: 'Mis Órdenes'      },
+    { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Técnico' },
     { id: 'historial',        icon: '📋', nombre: 'Historial'        },
 ];
 
-const MENU_ADMIN = [
+const MENU_GESTION = [
     { id: 'clientes',  icon: '👥', nombre: 'Clientes'  },
-    { id: 'productos', icon: '📦', nombre: 'Productos' },
-    { id: 'despacho',  icon: '📌', nombre: 'Despacho'  },
     { id: 'radar',     icon: '🚨', nombre: 'Radar'     },
+    { id: 'productos', icon: '📦', nombre: 'Productos' },
     { id: 'finanzas',  icon: '💹', nombre: 'Finanzas'  },
     { id: 'usuarios',  icon: '🔐', nombre: 'Usuarios'  },
 ];
 
-// Chevron SVG izquierda/derecha
 const ChevronLeft  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const ChevronRight = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 
@@ -112,9 +111,9 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                 </div>
                 {esAdmin && (
                     <div>
-                        {!colapsado && <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-[0.2em] mb-3 px-2">Administración</p>}
+                        {!colapsado && <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-[0.2em] mb-3 px-2">Gestión</p>}
                         <div className="space-y-1">
-                            {MENU_ADMIN.map(item => <MenuItem key={item.id} item={item} />)}
+                            {MENU_GESTION.map(item => <MenuItem key={item.id} item={item} />)}
                         </div>
                     </div>
                 )}
