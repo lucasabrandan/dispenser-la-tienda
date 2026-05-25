@@ -46,14 +46,16 @@ export default function ServicioForm({
     const [sheetVisible, setSheetVisible] = useState(false);
     hook._setNombreLibre = setNombreLibre;
 
-    // Cuando se recupera un borrador con equipos, avanzar al paso correcto
+    // Cuando se recupera un borrador, avanzar al paso correcto
     const prevBorrador = useRef(borradorDisponible);
     useEffect(() => {
         if (prevBorrador.current && !borradorDisponible) {
-            if (ticketItems.length > 0) setPaso(1);
+            // Borrador recuperado — saltar al paso más avanzado posible
+            if (ticketItems.length > 0) setPaso(2);      // tiene equipos → resumen
+            else if (clienteId)         setPaso(1);       // tiene cliente → equipos
         }
         prevBorrador.current = borradorDisponible;
-    }, [borradorDisponible, ticketItems.length]);
+    }, [borradorDisponible, ticketItems.length, clienteId]);
 
     const { usuario } = useAuth();
     const { isDark } = useTheme();

@@ -198,6 +198,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
         ticketItems, itemActual, clienteId,
         fechaServicio, descuentoPorcentaje, leyenda,
+        duracionMinutos, tecnicoSeleccionado,
         ts: Date.now(),
       }));
     } catch { /* localStorage lleno — ignorar */ }
@@ -212,6 +213,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       if (d.fechaServicio)           setFechaServicio(d.fechaServicio);
       if (d.descuentoPorcentaje !== undefined) setDescuentoPorcentaje(d.descuentoPorcentaje);
       if (d.leyenda)                 setLeyenda(d.leyenda);
+      if (d.duracionMinutos)         setDuracionMinutos(d.duracionMinutos);
+      if (d.tecnicoSeleccionado)     setTecnicoSeleccionado(d.tecnicoSeleccionado);
       setBorradorDisponible(false);
       toast.success('✅ Borrador recuperado');
     } catch { toast.error('Error al recuperar el borrador'); }
