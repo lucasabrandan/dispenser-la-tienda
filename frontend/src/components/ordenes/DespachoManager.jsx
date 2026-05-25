@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import OrdenForm from './OrdenForm';
+import SwipeColumns from '../ui/SwipeColumns';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { toast } from 'react-hot-toast';
 
 const PRIORIDAD_COLOR = {
@@ -18,6 +20,14 @@ const ESTADO_COLOR = {
     CANCELADA:  { dot: '#D13A28', label: 'Cancelada'  },
 };
 
+const ESTADO_TABS = [
+    { id: '',           label: 'Todas',       fullLabel: 'Todas',       color: '#1C1917', icon: '📋' },
+    { id: 'PENDIENTE',  label: 'Pendientes',  fullLabel: 'Pendientes',  color: '#A8A29E', icon: '⏳' },
+    { id: 'EN_CAMINO',  label: 'En camino',   fullLabel: 'En camino',   color: '#3B82F6', icon: '🚗' },
+    { id: 'EN_SITIO',   label: 'En sitio',    fullLabel: 'En sitio',    color: '#D48800', icon: '📍' },
+    { id: 'FINAL',      label: 'Finalizadas', fullLabel: 'Finalizadas', color: '#16A34A', icon: '✅' },
+];
+
 function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
     const [expanded, setExpanded] = useState(false);
     const [confirmCancelar, setConfirmCancelar] = useState(false);
@@ -29,7 +39,6 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
         <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${es.dot}` }}>
             <div className="p-4">
-                {/* Header */}
                 <div className="flex items-start gap-2 mb-2">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -49,7 +58,6 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                     </div>
                 </div>
 
-                {/* Técnico + monto */}
                 <div className="flex items-center justify-between">
                     <p className="text-[11px] font-bold text-[#A8A29E]">👤 {orden.tecnicoNombre}</p>
                     {orden.montoEstimado && (
@@ -59,7 +67,6 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                     )}
                 </div>
 
-                {/* Cliente + dirección */}
                 {orden.clienteNombre && (
                     <p className="text-[11px] text-[#A8A29E] mt-0.5">🏢 {orden.clienteNombre}{orden.clienteTelefono ? ` · ${orden.clienteTelefono}` : ''}</p>
                 )}
@@ -76,7 +83,6 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                     </p>
                 )}
 
-                {/* Expandir descripción */}
                 {(orden.descripcion || orden.notasTecnico) && (
                     <button onClick={() => setExpanded(v => !v)}
                         className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
@@ -96,9 +102,7 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                 )}
             </div>
 
-            {/* Acciones */}
-            <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
-                style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+            <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
                 {!esFinal && (
                     <button onClick={() => onEditar(orden)}
                         className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E]">✏️</button>
@@ -141,10 +145,26 @@ export default function DespachoManager() {
     } = useOrdenes();
 
     const [filtrTecnico, setFiltrTecnico] = useState('');
+    const [estadoFiltro, setEstadoFiltro] = useState('');
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
-    const ordenesFiltradas = filtrTecnico
-        ? ordenes.filter(o => String(o.tecnicoId) === filtrTecnico)
-        : ordenes;
+    // Filtrar por estado y técnico
+    const ordenesFiltradas = useMemo(() => {
+        let items = ordenes;
+        if (filtrTecnico) items = items.filter(o => String(o.tecnicoId) === filtrTecnico);
+        if (estadoFiltro === 'FINAL') items = items.filter(o => ['COMPLETADA', 'CANCELADA'].includes(o.estado));
+        else if (estadoFiltro) items = items.filter(o => o.estado === estadoFiltro);
+        return items;
+    }, [ordenes, filtrTecnico, estadoFiltro]);
+
+    // Conteos por estado
+    const counts = useMemo(() => ({
+        '':          ordenes.length,
+        'PENDIENTE': ordenes.filter(o => o.estado === 'PENDIENTE').length,
+        'EN_CAMINO': ordenes.filter(o => o.estado === 'EN_CAMINO').length,
+        'EN_SITIO':  ordenes.filter(o => o.estado === 'EN_SITIO').length,
+        'FINAL':     ordenes.filter(o => ['COMPLETADA', 'CANCELADA'].includes(o.estado)).length,
+    }), [ordenes]);
 
     // Agrupar por técnico
     const grupos = ordenesFiltradas.reduce((acc, o) => {
@@ -154,19 +174,27 @@ export default function DespachoManager() {
         return acc;
     }, {});
 
-    const totalActivas = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado)).length;
-    const totalHoy     = ordenes.filter(o => o.fechaProgramada === new Date().toISOString().split('T')[0]).length;
+    const columns = ESTADO_TABS.map(t => ({
+        ...t, count: counts[t.id] ?? 0,
+    }));
+
+    const columnIds = ESTADO_TABS.map(t => t.id);
+    const swipeHandlers = useSwipeGesture(columnIds, estadoFiltro, setEstadoFiltro);
 
     return (
-        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]">
+        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]"
+            {...swipeHandlers}>
 
-            {/* Header sticky */}
+            {/* Header */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Despacho</h2>
+                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9] mb-2.5">Despacho</h2>
                     <div className="flex gap-1.5 items-center">
-                        <span className="text-[11px] font-bold text-[#A8A29E]">{totalActivas} activas · {totalHoy} hoy</span>
-                        <div className="flex-1" />
+                        <button onClick={() => setMostrarFiltros(v => !v)}
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            ⚙
+                        </button>
+                        <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{ordenesFiltradas.length} órdenes</span>
                         <button onClick={() => setModalCrear(true)}
                             className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
                             + Orden
@@ -175,63 +203,73 @@ export default function DespachoManager() {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-            {/* Filtros */}
-            <div className="flex gap-1.5 items-center flex-wrap mb-3">
-                <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
-                <span className="text-[10px] text-[#A8A29E]">a</span>
-                <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
-                <select value={filtrTecnico} onChange={e => setFiltrTecnico(e.target.value)}
-                    className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    <option value="">Todos los técnicos</option>
-                    {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-                </select>
+                {/* SwipeColumns — estados */}
+                <SwipeColumns columns={columns} activeId={estadoFiltro} onChangeColumn={setEstadoFiltro} />
+
+                {/* Filtros colapsables */}
+                {mostrarFiltros && (
+                    <div className="flex gap-1.5 items-center flex-wrap p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
+                            className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
+                        <span className="text-[10px] text-[#A8A29E]">a</span>
+                        <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
+                            className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
+                        <select value={filtrTecnico} onChange={e => setFiltrTecnico(e.target.value)}
+                            className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]">
+                            <option value="">Todos los técnicos</option>
+                            {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                        </select>
+                    </div>
+                )}
+
+                {/* Lista agrupada por técnico */}
+                {cargando ? (
+                    <div className="flex flex-col gap-2">
+                        {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
+                    </div>
+                ) : Object.keys(grupos).length === 0 ? (
+                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <p className="text-3xl mb-2">{ESTADO_TABS.find(t => t.id === estadoFiltro)?.icon || '📋'}</p>
+                        <p className="text-[13px] font-bold text-[#A8A29E]">
+                            Sin órdenes {estadoFiltro ? ESTADO_TABS.find(t => t.id === estadoFiltro)?.fullLabel?.toLowerCase() : ''}
+                        </p>
+                    </div>
+                ) : (
+                    Object.entries(grupos).map(([key, items]) => {
+                        const nombre = key.split('__')[1];
+                        const activas = items.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado)).length;
+                        return (
+                            <div key={key} className="mb-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-wider">
+                                        👤 {nombre}
+                                    </p>
+                                    {activas > 0 && (
+                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#D13A28] dark:bg-[#E8422F] text-white">
+                                            {activas} activa{activas > 1 ? 's' : ''}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    {items.map(o => (
+                                        <OrdenCard key={o.id} orden={o}
+                                            onEditar={abrirEditar}
+                                            onEliminar={eliminar}
+                                            onAvanzar={avanzarEstado} />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
             </div>
-
-            {/* Lista agrupada por técnico */}
-            {cargando ? (
-                <p className="text-center text-[#A8A29E] py-12">Cargando...</p>
-            ) : Object.keys(grupos).length === 0 ? (
-                <p className="text-center text-[#A8A29E] py-12">Sin órdenes en el período seleccionado</p>
-            ) : (
-                Object.entries(grupos).map(([key, items]) => {
-                    const nombre = key.split('__')[1];
-                    const activas = items.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado)).length;
-                    return (
-                        <div key={key} className="mb-6">
-                            <div className="flex items-center gap-2 mb-3">
-                                <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-wider">
-                                    👤 {nombre}
-                                </p>
-                                {activas > 0 && (
-                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#D13A28] dark:bg-[#E8422F] text-white">
-                                        {activas} activa{activas > 1 ? 's' : ''}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="space-y-3">
-                                {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o}
-                                        onEditar={abrirEditar}
-                                        onEliminar={eliminar}
-                                        onAvanzar={avanzarEstado} />
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })
-            )}
-
-            </div>{/* cierre max-w-6xl */}
 
             {/* Modal crear / editar */}
             {(modalCrear || ordenEditar) && (
                 <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
                     <div className="w-full max-w-lg bg-[#FFFFFF] dark:bg-[#242424] rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
-                        {/* Drag handle — indica scroll en mobile */}
                         <div className="md:hidden flex justify-center -mt-2 mb-4">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
@@ -241,9 +279,7 @@ export default function DespachoManager() {
                         <OrdenForm
                             orden={ordenEditar}
                             tecnicos={tecnicos}
-                            onGuardar={ordenEditar
-                                ? (f) => actualizar(ordenEditar.id, f)
-                                : crear}
+                            onGuardar={ordenEditar ? (f) => actualizar(ordenEditar.id, f) : crear}
                             onCancelar={cerrarModal} />
                     </div>
                 </div>

@@ -6,7 +6,11 @@ import { exportarGastosCSV, exportarBalanceCSV } from '../../utils/exportarCSV';
 import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnicos';
 import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
 import CierreCajaModal from './CierreCajaModal';
+import Paginacion from '../ui/Paginacion';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+const POR_PAGINA = 15;
 
 const COLORES = ['#D48800', '#D13A28', '#A8A29E', '#16A34A', '#8B5CF6', '#3B82F6', '#EC4899', '#F59E0B', '#6366F1', '#14B8A6'];
 
@@ -25,6 +29,7 @@ function TabBalance({ filtroMes, setFiltroMes }) {
     const { ocultar } = useMontos();
     const [stats,    setStats]    = useState({ facturacion: 0, costoRepuestos: 0, gastosVarios: 0, gananciaReal: 0, transacciones: [] });
     const [cargando, setCargando] = useState(false);
+    const [pagTx, setPagTx] = useState(1);
 
     const cargar = () => {
         setCargando(true);
@@ -34,10 +39,12 @@ function TabBalance({ filtroMes, setFiltroMes }) {
             .finally(() => setCargando(false));
     };
 
-    useEffect(() => { cargar(); }, [filtroMes]); // eslint-disable-line
+    useEffect(() => { cargar(); setPagTx(1); }, [filtroMes]); // eslint-disable-line
 
     const fmt = v => ocultar ? '••••' : `$${formatearPrecio(v)}`;
     const imp = stats.facturacion * 0.30;
+    const totalPagTx = Math.max(1, Math.ceil(stats.transacciones.length / POR_PAGINA));
+    const txPagina = stats.transacciones.slice((pagTx - 1) * POR_PAGINA, pagTx * POR_PAGINA);
     // Ganancia neta real = facturación − impuestos 30% − repuestos − gastos
     const gananciaNeta = stats.facturacion - imp - stats.costoRepuestos - stats.gastosVarios;
 
@@ -120,7 +127,7 @@ function TabBalance({ filtroMes, setFiltroMes }) {
                     <div className="px-5 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Operaciones del mes</p>
                     </div>
-                    {stats.transacciones.map((t, idx) => {
+                    {txPagina.map((t, idx) => {
                         const costo  = parseFloat(t.costo || 0);
                         const venta  = parseFloat(t.venta || 0);
                         const margen = venta > 0 ? Math.round((venta - costo) / venta * 100) : 0;
@@ -135,6 +142,11 @@ function TabBalance({ filtroMes, setFiltroMes }) {
                             </div>
                         );
                     })}
+                    {totalPagTx > 1 && (
+                        <div className="px-4 py-2">
+                            <Paginacion pagina={pagTx} totalPaginas={totalPagTx} irA={setPagTx} next={() => setPagTx(p => Math.min(p + 1, totalPagTx))} prev={() => setPagTx(p => Math.max(p - 1, 1))} />
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -265,6 +277,7 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
 function TabGastos({ filtroMes, setFiltroMes }) {
     const [gastos,   setGastos]   = useState([]);
     const [cargando, setCargando] = useState(false);
+    const [pagGastos, setPagGastos] = useState(1);
     const formVacio = { id: null, descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' };
     const [form, setForm] = useState(formVacio);
     const [confirmEliminarGasto, setConfirmEliminarGasto] = useState(null);
@@ -277,9 +290,11 @@ function TabGastos({ filtroMes, setFiltroMes }) {
             .finally(() => setCargando(false));
     };
 
-    useEffect(() => { cargar(); }, [filtroMes]); // eslint-disable-line
+    useEffect(() => { cargar(); setPagGastos(1); }, [filtroMes]); // eslint-disable-line
 
     const fmt = n => formatearPrecio(n);
+    const totalPagGastos = Math.max(1, Math.ceil(gastos.length / POR_PAGINA));
+    const gastosPagina = gastos.slice((pagGastos - 1) * POR_PAGINA, pagGastos * POR_PAGINA);
 
     const handleGuardar = async (e) => {
         e.preventDefault();
@@ -386,7 +401,7 @@ function TabGastos({ filtroMes, setFiltroMes }) {
                             Exportar CSV
                         </button>
                     </div>
-                    {gastos.map((g, i) => (
+                    {gastosPagina.map((g, i) => (
                         <div key={`g-${g.id}-${i}`} className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
                             <div className="flex-1 min-w-0">
                                 <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{g.descripcion}</p>
@@ -403,6 +418,11 @@ function TabGastos({ filtroMes, setFiltroMes }) {
                             </button>
                         </div>
                     ))}
+                    {totalPagGastos > 1 && (
+                        <div className="px-4 py-2">
+                            <Paginacion pagina={pagGastos} totalPaginas={totalPagGastos} irA={setPagGastos} next={() => setPagGastos(p => Math.min(p + 1, totalPagGastos))} prev={() => setPagGastos(p => Math.max(p - 1, 1))} />
+                        </div>
+                    )}
                     <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
                         <p className="text-[11px] font-black text-[#A8A29E] uppercase">Total</p>
                         <p className="text-[15px] font-black text-[#D48800] dark:text-[#F0A500]">
@@ -446,6 +466,7 @@ function TabInventario() {
     const { ocultar } = useMontos();
     const [repuestos, setRepuestos] = useState([]);
     const [cargando,  setCargando]  = useState(false);
+    const [pagInv, setPagInv] = useState(1);
 
     const cargar = () => {
         setCargando(true);
@@ -458,9 +479,12 @@ function TabInventario() {
     useEffect(() => { cargar(); }, []); // eslint-disable-line
 
     const enStock     = repuestos.filter(r => Number(r.stock) > 0);
+    const enStockOrdenado = [...enStock].sort((a, b) => (Number(b.costo || 0) * Number(b.stock)) - (Number(a.costo || 0) * Number(a.stock)));
     const totalCosto  = enStock.reduce((s, r) => s + Number(r.costo  || 0) * Number(r.stock), 0);
     const totalVenta  = enStock.reduce((s, r) => s + Number(r.precio || 0) * Number(r.stock), 0);
     const ganPotencial = totalVenta - totalCosto;
+    const totalPagInv = Math.max(1, Math.ceil(enStockOrdenado.length / POR_PAGINA));
+    const invPagina = enStockOrdenado.slice((pagInv - 1) * POR_PAGINA, pagInv * POR_PAGINA);
 
     const fmt = v => ocultar ? '••••' : `$${formatearPrecio(v)}`;
 
@@ -493,10 +517,8 @@ function TabInventario() {
                         </button>
                     </div>
 
-                    {/* Filas — ordenadas por valor al costo desc */}
-                    {[...enStock]
-                        .sort((a, b) => (Number(b.costo || 0) * Number(b.stock)) - (Number(a.costo || 0) * Number(a.stock)))
-                        .map((r, i, arr) => {
+                    {/* Filas paginadas */}
+                    {invPagina.map((r, i) => {
                             const costo = Number(r.costo || 0);
                             const precio = Number(r.precio || 0);
                             const valorCosto = costo * Number(r.stock);
@@ -506,7 +528,7 @@ function TabInventario() {
                             const stockBajo = r.stockMinimo && Number(r.stock) <= Number(r.stockMinimo);
                             return (
                                 <div key={r.id}
-                                    className={`px-4 py-3 flex items-center gap-3 ${i < arr.length - 1 ? 'border-b border-black/[0.04] dark:border-white/[0.04]' : ''} ${stockBajo ? 'bg-[#FEE2E2]/50 dark:bg-[#3B1111]/30' : ''}`}>
+                                    className={`px-4 py-3 flex items-center gap-3 ${i < invPagina.length - 1 ? 'border-b border-black/[0.04] dark:border-white/[0.04]' : ''} ${stockBajo ? 'bg-[#FEE2E2]/50 dark:bg-[#3B1111]/30' : ''}`}>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5">
                                             <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{r.nombre}</p>
@@ -527,8 +549,12 @@ function TabInventario() {
                                     </div>
                                 </div>
                             );
-                        })
-                    }
+                        })}
+                    {totalPagInv > 1 && (
+                        <div className="px-4 py-2">
+                            <Paginacion pagina={pagInv} totalPaginas={totalPagInv} irA={setPagInv} next={() => setPagInv(p => Math.min(p + 1, totalPagInv))} prev={() => setPagInv(p => Math.max(p - 1, 1))} />
+                        </div>
+                    )}
 
                     {/* Totales */}
                     <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
@@ -581,9 +607,11 @@ export default function DashboardFinanzas() {
     const [tab,       setTab]       = useState('balance');
     const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
     const [modalCierre, setModalCierre] = useState(false);
+    const tabIds = TABS.map(t => t.id);
+    const swipeHandlers = useSwipeGesture(tabIds, tab, setTab);
 
     return (
-        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]">
+        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]" {...swipeHandlers}>
             {/* Header sticky */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
