@@ -187,37 +187,68 @@ export default function DashboardCaja({ setVistaActual }) {
                             </div>
                         )}
 
-                        {/* Agenda del día */}
+                        {/* Agenda del día — separada por tipo */}
                         <div>
-                            <p className={sectionLabel}>Hoy ({data.agendaHoy.length})</p>
+                            <p className={sectionLabel}>Agenda de hoy ({data.agendaHoy.length})</p>
                             {data.agendaHoy.length === 0 ? (
                                 <div className={`${card} text-center py-8`}>
                                     <p className="text-2xl mb-1">📭</p>
-                                    <p className="text-[12px] font-bold text-[#A8A29E]">Sin servicios para hoy</p>
+                                    <p className="text-[12px] font-bold text-[#A8A29E]">Sin actividad para hoy</p>
                                 </div>
                             ) : (
-                                <div className="space-y-1.5">
-                                    {data.agendaHoy.map(s => {
-                                        const esPendiente = s.estado === 'PRESUPUESTO';
-                                        return (
-                                            <div key={s.id} onClick={() => setVistaActual('servicio-tecnico')}
-                                                className={`${card} flex items-center gap-3 px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow`}>
-                                                <div className={`w-2 h-2 rounded-full shrink-0 ${esPendiente ? 'bg-[#D48800]' : s.estado === 'REALIZADO' ? 'bg-[#16A34A]' : 'bg-[#A8A29E]'}`} />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                                                    <p className="text-[10px] text-[#A8A29E] truncate">
-                                                        {s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'} {s.sedeNombre}{s.usuarioNombre ? ` — ${s.usuarioNombre}` : ''}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right shrink-0">
-                                                    <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                                                    <span className={`text-[9px] font-bold ${esPendiente ? 'text-[#D48800]' : 'text-[#16A34A]'}`}>
-                                                        {esPendiente ? 'Pendiente' : 'Cobrado'}
-                                                    </span>
-                                                </div>
+                                <div className="space-y-3">
+                                    {/* Servicios técnicos */}
+                                    {data.agendaHoy.filter(s => s.servicioTipo === 'TECNICA').length > 0 && (
+                                        <div>
+                                            <p className="text-[9px] font-bold text-[#D13A28] dark:text-[#E8422F] uppercase tracking-wider mb-1.5 px-1">🔧 Servicios</p>
+                                            <div className="space-y-1">
+                                                {data.agendaHoy.filter(s => s.servicioTipo === 'TECNICA').map(s => {
+                                                    const esPendiente = s.estado === 'PRESUPUESTO';
+                                                    return (
+                                                        <div key={s.id} onClick={() => setVistaActual('servicio-tecnico')}
+                                                            className={`${card} flex items-center gap-3 px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]`}>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                                <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}{s.usuarioNombre ? ` — ${s.usuarioNombre}` : ''}</p>
+                                                            </div>
+                                                            <div className="text-right shrink-0">
+                                                                <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                                                                <span className={`text-[9px] font-bold ${esPendiente ? 'text-[#D48800]' : 'text-[#16A34A]'}`}>
+                                                                    {esPendiente ? 'Pendiente' : 'Cobrado'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
-                                        );
-                                    })}
+                                        </div>
+                                    )}
+                                    {/* Ventas / Entregas */}
+                                    {data.agendaHoy.filter(s => s.servicioTipo === 'VENTA').length > 0 && (
+                                        <div>
+                                            <p className="text-[9px] font-bold text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider mb-1.5 px-1">🛒 Ventas / Entregas</p>
+                                            <div className="space-y-1">
+                                                {data.agendaHoy.filter(s => s.servicioTipo === 'VENTA').map(s => {
+                                                    const esPendiente = s.estado === 'PRESUPUESTO';
+                                                    return (
+                                                        <div key={s.id} onClick={() => setVistaActual('venta')}
+                                                            className={`${card} flex items-center gap-3 px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] border-l-[#D48800] dark:border-l-[#F0A500]`}>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                                <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>
+                                                            </div>
+                                                            <div className="text-right shrink-0">
+                                                                <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                                                                <span className={`text-[9px] font-bold ${esPendiente ? 'text-[#D48800]' : 'text-[#16A34A]'}`}>
+                                                                    {esPendiente ? 'Pendiente' : 'Cobrado'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

@@ -219,7 +219,7 @@ export function useRepuestoManager() {
         irA, next, prev,
         modalAbierto, productoEdicion,
         expandido, busqueda, setBusqueda,
-        seleccionados, modoSeleccion, setModoSeleccion,
+        seleccionados, setSeleccionados, modoSeleccion, setModoSeleccion,
         modalPrecio, setModalPrecio,
         gananciamasiva, setGananciaMasiva,
         markupMasivo, setMarkupMasivo,

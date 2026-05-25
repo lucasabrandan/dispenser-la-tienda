@@ -19,7 +19,7 @@ export default function RepuestoManager() {
         pagina, totalPaginas, irA, next, prev,
         modalAbierto, productoEdicion,
         busqueda, setBusqueda,
-        seleccionados, modoSeleccion, setModoSeleccion,
+        seleccionados, setSeleccionados, modoSeleccion, setModoSeleccion,
         modalPrecio, setModalPrecio,
         gananciamasiva, setGananciaMasiva,
         markupMasivo, setMarkupMasivo,
@@ -33,6 +33,16 @@ export default function RepuestoManager() {
         cancelarSeleccion, toggleExpandido,
         abrirNuevo, abrirEditar, cerrarModal,
     } = useRepuestoManager();
+
+    // Long-press para selección masiva
+    const longPressRef = React.useRef(null);
+    const iniciarLP = (id) => {
+        longPressRef.current = setTimeout(() => {
+            setModoSeleccion(true);
+            setSeleccionados(new Set([id]));
+        }, 500);
+    };
+    const cancelarLP = () => { if (longPressRef.current) clearTimeout(longPressRef.current); };
 
     return (
         <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-32 font-sans transition-colors">
@@ -122,8 +132,10 @@ export default function RepuestoManager() {
                     </div>
                 ) : (
                     productosPagina.map(r => (
+                        <div key={r.id}
+                            onTouchStart={() => iniciarLP(r.id)} onTouchEnd={cancelarLP} onTouchMove={cancelarLP}
+                            onMouseDown={() => iniciarLP(r.id)} onMouseUp={cancelarLP} onMouseLeave={cancelarLP}>
                         <RepuestoCard
-                            key={r.id}
                             repuesto={r}
                             modoSeleccion={modoSeleccion}
                             estaSeleccionado={seleccionados.has(r.id)}
@@ -131,6 +143,7 @@ export default function RepuestoManager() {
                             onEliminar={eliminar}
                             onToggleSeleccion={toggleSeleccion}
                         />
+                        </div>
                     ))
                 )}
             </div>

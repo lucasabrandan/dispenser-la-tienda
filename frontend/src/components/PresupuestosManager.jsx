@@ -206,6 +206,16 @@ export default function PresupuestosManager() {
     const [ejecutadosIds, setEjecutadosIds] = useState(new Set());
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
+
+    // Long-press para selección masiva
+    const longPressRef = React.useRef(null);
+    const iniciarLongPress = (id) => {
+        longPressRef.current = setTimeout(() => {
+            setModoSeleccion(true);
+            setSeleccionados(new Set([id]));
+        }, 500);
+    };
+    const cancelarLongPress = () => { if (longPressRef.current) clearTimeout(longPressRef.current); };
     const [tipoFiltro, setTipoFiltro]             = useState('');
     const [modalCotizar, setModalCotizar]         = useState(false);
     const [presupuestoDespachar, setPresupuestoDespachar] = useState(null);
@@ -406,7 +416,10 @@ export default function PresupuestosManager() {
                 ) : (
                     <div className="flex flex-col gap-3">
                         {filtros.itemsPagina.map(s => (
-                            <PresupuestoCard key={s.id} s={s}
+                            <div key={s.id}
+                                onTouchStart={() => iniciarLongPress(s.id)} onTouchEnd={cancelarLongPress} onTouchMove={cancelarLongPress}
+                                onMouseDown={() => iniciarLongPress(s.id)} onMouseUp={cancelarLongPress} onMouseLeave={cancelarLongPress}>
+                            <PresupuestoCard s={s}
                                 calcularTotal={calcularTotal}
                                 onPDF={generarPDF}
                                 onRechazar={rechazar}
@@ -418,6 +431,7 @@ export default function PresupuestosManager() {
                                 seleccionado={seleccionados.has(s.id)}
                                 onToggleSelect={toggleSeleccion}
                             />
+                            </div>
                         ))}
                     </div>
                 )}
