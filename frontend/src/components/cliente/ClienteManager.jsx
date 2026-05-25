@@ -127,13 +127,13 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
-            {/* LISTA / GRID */}
-            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-5 xl:grid-cols-3">
+            {/* LISTA / GRID — cards colapsadas, el detalle se abre como overlay */}
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-3 xl:grid-cols-3">
                 {clientesPagina.map(cliente => (
                     <ClienteCard
                         key={cliente.id} cliente={cliente} sedes={sedes} equipos={equipos} servicios={servicios}
-                        isExpanded={expandedId === cliente.id}
-                        onToggleExpand={() => setExpandedId(expandedId === cliente.id ? null : cliente.id)}
+                        isExpanded={false}
+                        onToggleExpand={() => setExpandedId(cliente.id)}
                         onEditCliente={(c) => { setForm({ ...c, id: c.id }); setModalOpen('editar'); }}
                         onDeleteCliente={handleEliminarCliente}
                         onEditEquipo={(eq, c) => { setSelectedEquipo(eq); setSelectedCliente(c); setModalOpen('equipo'); }}
@@ -147,6 +147,45 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     />
                 ))}
             </div>
+
+            {/* Panel overlay del cliente expandido */}
+            {expandedId && (() => {
+                const cliente = clientes.find(c => c.id === expandedId);
+                if (!cliente) return null;
+                return (
+                    <>
+                        <div className="fixed inset-0 bg-black/50 z-[40]" onClick={() => setExpandedId(null)} />
+                        <div className="fixed inset-x-0 bottom-0 z-[41] max-h-[85vh] overflow-y-auto rounded-t-3xl bg-[#FFFFFF] dark:bg-[#242424] shadow-2xl md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[80vh] md:rounded-3xl">
+                            <div className="sticky top-0 z-10 bg-[#FFFFFF] dark:bg-[#242424] px-5 pt-4 pb-3 border-b border-black/[0.07] dark:border-white/[0.07]">
+                                <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] md:hidden" />
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[17px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{cliente.nombre}</h3>
+                                    <button onClick={() => setExpandedId(null)}
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">✕</button>
+                                </div>
+                            </div>
+                            <div className="p-5">
+                                <ClienteCard
+                                    cliente={cliente} sedes={sedes} equipos={equipos} servicios={servicios}
+                                    isExpanded={true}
+                                    onToggleExpand={() => setExpandedId(null)}
+                                    onEditCliente={(c) => { setExpandedId(null); setForm({ ...c, id: c.id }); setModalOpen('editar'); }}
+                                    onDeleteCliente={(id) => { setExpandedId(null); handleEliminarCliente(id); }}
+                                    onEditEquipo={(eq, c) => { setExpandedId(null); setSelectedEquipo(eq); setSelectedCliente(c); setModalOpen('equipo'); }}
+                                    onArchivarEquipo={handleArchivar}
+                                    onRestaurarEquipo={handleRestaurar}
+                                    onEliminarEquipoDefinitivo={handleEliminarDefinitivo}
+                                    onAddSede={(c) => { setExpandedId(null); setSelectedCliente(c); setModalOpen('sede'); }}
+                                    onAddEquipo={(c) => { setExpandedId(null); setSelectedCliente(c); setSelectedEquipo(null); setModalOpen('equipo'); }}
+                                    onNuevoServicio={onNuevoServicio}
+                                    onNuevaVenta={onNuevaVenta}
+                                    enModal={true}
+                                />
+                            </div>
+                        </div>
+                    </>
+                );
+            })()}
 
             <Paginacion pagina={paginaActual} totalPaginas={totalPaginas}
                 irA={irA} next={() => irA(paginaActual + 1)} prev={() => irA(paginaActual - 1)} />
