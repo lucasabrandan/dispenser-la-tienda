@@ -27,6 +27,7 @@ export default function CerrarTicketSheet({
     descuentoPorcentaje,
     onCobrar,     // async ({ firmaTecnico, firmaCliente, incluirFirmas }) → void
     onGuardar,    // async () → { ok, id, clienteId, clienteNombre, tecnicoId, fechaVisita } | null
+    onGenerarPDF, // async () → void (genera PDF del presupuesto)
     onCerrar,
 }) {
     const { esAdmin } = useAuth();
@@ -211,14 +212,23 @@ export default function CerrarTicketSheet({
                 {/* ═══ FLUJO A: Post-guardado → Despachar ═══ */}
                 {paso === 'presupuesto_ok' && (
                     <div className="p-6 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <span className="text-[24px]">✅</span>
-                            <div>
-                                <p className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">Presupuesto guardado</p>
-                                {savedResult?.id && (
-                                    <p className="text-[11px] text-[#A8A29E] mt-0.5">#{savedResult.id}</p>
-                                )}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="text-[24px]">✅</span>
+                                <div>
+                                    <p className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">Presupuesto guardado</p>
+                                    {savedResult?.id && (
+                                        <p className="text-[11px] text-[#A8A29E] mt-0.5">#{savedResult.id}</p>
+                                    )}
+                                </div>
                             </div>
+                            {onGenerarPDF && (
+                                <button onClick={onGenerarPDF}
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E]"
+                                    title="Generar PDF">
+                                    📄
+                                </button>
+                            )}
                         </div>
 
                         {!ordenCreada ? (

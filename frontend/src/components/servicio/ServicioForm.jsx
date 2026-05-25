@@ -196,6 +196,7 @@ export default function ServicioForm({
                     descuentoPorcentaje={descuentoPorcentaje}
                     onCobrar={handleCobrar}
                     onGuardar={handleGuardar}
+                    onGenerarPDF={dispararPDF}
                     onCerrar={() => setSheetVisible(false)}
                 />
             )}

@@ -348,11 +348,6 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         <M valor={totalFinal} className="text-3xl font-black text-white tracking-tighter block" />
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={dispararPDF}
-                            className="w-11 h-11 rounded-xl text-lg flex items-center justify-center active:scale-90 bg-[#2E2E2E]"
-                            title="Vista previa PDF (sin firmas)">
-                            📄
-                        </button>
                         <button onClick={() => {
                             if (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) {
                                 toast.error('⚠ Asigná un técnico antes de continuar', { duration: 3500 });
