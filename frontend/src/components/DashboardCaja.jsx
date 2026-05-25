@@ -21,6 +21,7 @@ export default function DashboardCaja({ setVistaActual }) {
     const [servicios, setServicios] = useState([]);
     const [ordenes, setOrdenes] = useState([]);
     const [alertasRadar, setAlertasRadar] = useState([]);
+    const [diaSel, setDiaSel] = useState(null);
 
     const cargar = async () => {
         setCargando(true);
@@ -74,15 +75,32 @@ export default function DashboardCaja({ setVistaActual }) {
             pendientesCount: pendientes.length,
             pendientesVal: pendientes.reduce((a, s) => a + calcTotal(s), 0),
             pptoVencidos, agendaHoy, ordenesActivas,
-            // Agenda semanal — próximos 7 días (sin hoy)
-            agendaSemanal: (() => {
+            // Planificador semanal — lun a sáb de la semana actual + siguiente
+            planificador: (() => {
+                const HORAS_DIA = 8; // 8am-16pm
+                const H_TECNICA = 2, H_VENTA = 1; // horas estimadas
+                const hoy = new Date();
+                const diaHoy = hoy.getDay(); // 0=dom
+                // Calcular lunes de esta semana
+                const lunes = new Date(hoy);
+                lunes.setDate(hoy.getDate() - ((diaHoy === 0 ? 7 : diaHoy) - 1));
                 const dias = [];
-                for (let i = 1; i <= 7; i++) {
-                    const d = new Date();
-                    d.setDate(d.getDate() + i);
+                for (let i = 0; i < 12; i++) { // 2 semanas de lun-sáb
+                    const d = new Date(lunes);
+                    d.setDate(lunes.getDate() + i);
+                    if (d.getDay() === 0) continue; // saltar domingos
                     const fechaStr = d.toISOString().split('T')[0];
                     const items = servicios.filter(s => s.fecha === fechaStr);
-                    if (items.length > 0) dias.push({ fecha: fechaStr, dia: d, items });
+                    const horasUsadas = items.reduce((a, s) => a + (s.servicioTipo === 'TECNICA' ? H_TECNICA : H_VENTA), 0);
+                    dias.push({
+                        fecha: fechaStr,
+                        dia: new Date(d),
+                        items,
+                        horasUsadas,
+                        horasTotal: HORAS_DIA,
+                        esHoy: fechaStr === hoyStr,
+                        esPasado: fechaStr < hoyStr,
+                    });
                 }
                 return dias;
             })(),
@@ -266,42 +284,90 @@ export default function DashboardCaja({ setVistaActual }) {
                         </div>
                     </div>
 
-                        {/* Agenda semanal — próximos días */}
-                        {data.agendaSemanal.length > 0 && (
-                            <div>
-                                <p className={sectionLabel}>Próximos días</p>
-                                <div className="space-y-2">
-                                    {data.agendaSemanal.map(({ fecha, dia, items }) => {
-                                        const label = dia.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
-                                        const tecnicas = items.filter(s => s.servicioTipo === 'TECNICA');
-                                        const ventas = items.filter(s => s.servicioTipo === 'VENTA');
-                                        return (
-                                            <div key={fecha} className={`${card} p-3`}>
-                                                <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] capitalize mb-1.5">{label}</p>
-                                                <div className="space-y-1">
-                                                    {tecnicas.map(s => (
-                                                        <div key={s.id} onClick={() => setVistaActual('servicio-tecnico')}
-                                                            className="flex items-center gap-2 cursor-pointer text-[10px]">
-                                                            <span className="text-[#D13A28]">🔧</span>
-                                                            <span className="text-[#1C1917] dark:text-[#F0EEE9] font-bold truncate flex-1">{s.clienteNombre}</span>
-                                                            <M valor={calcTotal(s)} className="font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0" />
-                                                        </div>
-                                                    ))}
-                                                    {ventas.map(s => (
-                                                        <div key={s.id} onClick={() => setVistaActual('venta')}
-                                                            className="flex items-center gap-2 cursor-pointer text-[10px]">
-                                                            <span className="text-[#D48800]">🛒</span>
-                                                            <span className="text-[#1C1917] dark:text-[#F0EEE9] font-bold truncate flex-1">{s.clienteNombre}</span>
-                                                            <M valor={calcTotal(s)} className="font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0" />
-                                                        </div>
-                                                    ))}
-                                                </div>
+                        {/* Planificador semanal */}
+                        <div>
+                            <p className={sectionLabel}>Semana</p>
+                            {/* Barra de capacidad por día */}
+                            <div className="flex gap-1 mb-3">
+                                {data.planificador.map(d => {
+                                    const pct = Math.min(d.horasUsadas / d.horasTotal, 1);
+                                    const color = d.esPasado ? 'bg-[#A8A29E]/30'
+                                        : pct === 0 ? 'bg-[#16A34A]'
+                                        : pct < 0.5 ? 'bg-[#16A34A]'
+                                        : pct < 0.75 ? 'bg-[#D48800]'
+                                        : 'bg-[#D13A28]';
+                                    return (
+                                        <button key={d.fecha} onClick={() => setDiaSel(d.fecha === diaSel ? null : d.fecha)}
+                                            className={`flex-1 rounded-lg p-1.5 text-center transition-all active:scale-95 ${
+                                                d.esHoy ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''
+                                            } ${d.fecha === diaSel ? 'bg-[#242424] dark:bg-[#F0EEE9]' : 'bg-white dark:bg-[#242424]'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
+                                            <p className={`text-[9px] font-bold uppercase ${d.fecha === diaSel ? 'text-white dark:text-[#1C1917]' : d.esPasado ? 'text-[#A8A29E]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                                {d.dia.toLocaleDateString('es-AR', { weekday: 'narrow' })}
+                                            </p>
+                                            <p className={`text-[10px] font-black ${d.fecha === diaSel ? 'text-white dark:text-[#1C1917]' : d.esPasado ? 'text-[#A8A29E]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                                {d.dia.getDate()}
+                                            </p>
+                                            {/* Mini barra */}
+                                            <div className="h-1 rounded-full bg-black/10 dark:bg-white/10 mt-1">
+                                                <div className={`h-full rounded-full ${d.esPasado ? 'bg-[#A8A29E]/40' : color}`}
+                                                    style={{ width: `${Math.max(pct * 100, d.items.length > 0 ? 15 : 0)}%` }} />
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                            <p className={`text-[8px] mt-0.5 ${d.fecha === diaSel ? 'text-white/70 dark:text-black/50' : 'text-[#A8A29E]'}`}>
+                                                {d.horasUsadas}/{d.horasTotal}h
+                                            </p>
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        )}
+
+                            {/* Detalle del día seleccionado */}
+                            {diaSel && (() => {
+                                const dia = data.planificador.find(d => d.fecha === diaSel);
+                                if (!dia) return null;
+                                const libres = dia.horasTotal - dia.horasUsadas;
+                                return (
+                                    <div className={`${card} p-3`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] capitalize">
+                                                {dia.dia.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' })}
+                                            </p>
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                libres <= 0 ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]'
+                                                : libres <= 2 ? 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'
+                                                : 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]'
+                                            }`}>
+                                                {libres <= 0 ? 'Completo' : `${libres}h libres`}
+                                            </span>
+                                        </div>
+                                        {dia.items.length === 0 ? (
+                                            <p className="text-[11px] text-[#A8A29E] text-center py-3">Día libre</p>
+                                        ) : (
+                                            <div className="space-y-1.5">
+                                                {dia.items.map(s => (
+                                                    <div key={s.id} className="flex items-center gap-2 text-[10px]">
+                                                        <span>{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                            {s.sedeDireccion && (
+                                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
+                                                                    target="_blank" rel="noopener noreferrer"
+                                                                    className="text-[9px] text-[#D13A28] dark:text-[#E8422F] truncate block"
+                                                                    onClick={e => e.stopPropagation()}>
+                                                                    📍 {s.sedeDireccion}
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-[9px] text-[#A8A29E] shrink-0">
+                                                            ~{s.servicioTipo === 'TECNICA' ? '2' : '1'}h
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+                        </div>
                     {/* === COLUMNA DERECHA (1/3) === */}
                     <div className="space-y-4">
 
