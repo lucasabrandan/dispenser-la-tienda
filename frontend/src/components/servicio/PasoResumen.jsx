@@ -203,53 +203,6 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                 </div>
             </div>
 
-            {/* ── Descuento compacto ────────────────────────────────────── */}
-            <div>
-                <div className="flex items-center gap-2">
-                    <Label>Descuento</Label>
-                    {ticketItems.length >= 5 && descuentoPorcentaje === 10 && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#D48800]/15 text-[#D48800] dark:text-[#F0A500]">
-                            Auto · {ticketItems.length} equipos
-                        </span>
-                    )}
-                </div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    <button
-                        onClick={() => { setDescuentoPorcentaje(0); setModoCustom(false); }}
-                        className={chipCls(descuentoPorcentaje === 0 && !modoCustom)}>
-                        Sin descuento
-                    </button>
-                    {QUICK_PCTS.map(p => (
-                        <button key={p}
-                            onClick={() => { setDescuentoPorcentaje(p); setModoCustom(false); }}
-                            className={chipCls(descuentoPorcentaje === p && !modoCustom)}>
-                            {p}%
-                        </button>
-                    ))}
-                    <button onClick={() => setModoCustom(true)}
-                        className={chipCls(modoCustom)}>
-                        Otro
-                    </button>
-                    {modoCustom && (
-                        <input
-                            type="number" min="0" max="100" autoFocus
-                            value={descuentoPorcentaje || ''}
-                            onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                            className="w-20 h-9 rounded-xl text-center font-black text-sm outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
-                        />
-                    )}
-                    {descuentoPorcentaje > 0 && (
-                        <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F] ml-1">
-                            -${descuentoMonto.toLocaleString('es-AR')}
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {/* ── Rentabilidad — solo admin ─────────────────────────────── */}
-            {esAdmin && <RentabilidadPanel resumen={resumen} />}
-
-
             {/* ── Planificación: fecha + duración + técnico ────────────── */}
             <div className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] space-y-3">
                 <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">Planificación</p>
@@ -334,16 +287,47 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
             {masOpciones && (
                 <div className="flex flex-col gap-4">
+                    {/* Descuento */}
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <Label>Descuento</Label>
+                            {ticketItems.length >= 5 && descuentoPorcentaje === 10 && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#D48800]/15 text-[#D48800] dark:text-[#F0A500]">
+                                    Auto · {ticketItems.length} equipos
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <button onClick={() => { setDescuentoPorcentaje(0); setModoCustom(false); }}
+                                className={chipCls(descuentoPorcentaje === 0 && !modoCustom)}>Sin descuento</button>
+                            {QUICK_PCTS.map(p => (
+                                <button key={p} onClick={() => { setDescuentoPorcentaje(p); setModoCustom(false); }}
+                                    className={chipCls(descuentoPorcentaje === p && !modoCustom)}>{p}%</button>
+                            ))}
+                            <button onClick={() => setModoCustom(true)} className={chipCls(modoCustom)}>Otro</button>
+                            {modoCustom && (
+                                <input type="number" min="0" max="100" autoFocus
+                                    value={descuentoPorcentaje || ''}
+                                    onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                                    className="w-20 h-9 rounded-xl text-center font-black text-sm outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20" />
+                            )}
+                            {descuentoPorcentaje > 0 && (
+                                <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F] ml-1">
+                                    -${descuentoMonto.toLocaleString('es-AR')}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Rentabilidad — solo admin */}
+                    {esAdmin && <RentabilidadPanel resumen={resumen} />}
+
                     {/* Observaciones */}
                     <DSCard>
                         <Label>Observaciones (opcional)</Label>
-                        <textarea
-                            value={leyenda}
-                            onChange={e => setLeyenda(e.target.value)}
+                        <textarea value={leyenda} onChange={e => setLeyenda(e.target.value)}
                             placeholder="Ej: Garantía 90 días sobre MO, 50% adelanto..."
-                            rows={3}
-                            className={inputCls}
-                        />
+                            rows={3} className={inputCls} />
                         <p className="text-[9px] mt-1.5 text-[#A8A29E]">Aparece al pie del PDF.</p>
                     </DSCard>
                 </div>

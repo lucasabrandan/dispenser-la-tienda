@@ -1,48 +1,36 @@
-import React, { useRef } from 'react';
+import React from 'react';
 
 /**
- * DateInput — input de fecha que muestra DD/MM/YYYY independiente del locale del SO.
- * Internamente guarda y devuelve formato ISO (YYYY-MM-DD).
- * Al tocar, abre el date picker nativo del browser.
+ * DateInput — input type="date" nativo (funciona en todos los browsers/mobile)
+ * con overlay visual que muestra DD/MM/AAAA en vez del formato del SO.
+ *
+ * Props: value (ISO YYYY-MM-DD), onChange (string ISO), className
  */
-export default function DateInput({ value, onChange, className = '', placeholder = 'DD/MM/AAAA', ...props }) {
-    const hiddenRef = useRef(null);
-
-    // Formatear YYYY-MM-DD → DD/MM/YYYY para mostrar
+export default function DateInput({ value, onChange, className = '', ...props }) {
     const formatear = (iso) => {
         if (!iso) return '';
         const [y, m, d] = iso.split('-');
-        if (!y || !m || !d) return iso;
+        if (!y || !m || !d) return '';
         return `${d}/${m}/${y}`;
-    };
-
-    const handleClick = () => {
-        // Abrir el date picker nativo
-        hiddenRef.current?.showPicker?.();
-        hiddenRef.current?.focus();
     };
 
     return (
         <div className="relative">
-            {/* Input visible: muestra DD/MM/YYYY */}
+            {/* Input nativo real — funcional, maneja el picker */}
             <input
-                type="text"
-                readOnly
-                value={formatear(value)}
-                onClick={handleClick}
-                placeholder={placeholder}
-                className={`cursor-pointer ${className}`}
-                {...props}
-            />
-            {/* Input nativo oculto: maneja el picker */}
-            <input
-                ref={hiddenRef}
                 type="date"
                 value={value || ''}
                 onChange={e => onChange(e.target.value)}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                tabIndex={-1}
+                className={`${className} text-transparent`}
+                style={{ colorScheme: 'dark' }}
+                {...props}
             />
+            {/* Overlay visual — muestra DD/MM/AAAA */}
+            <div className="absolute inset-0 flex items-center pointer-events-none px-3.5">
+                <span className={`text-[13px] font-medium ${value ? 'text-[#1C1917] dark:text-[#F0EEE9]' : 'text-[#A8A29E]'}`}>
+                    {value ? formatear(value) : 'DD/MM/AAAA'}
+                </span>
+            </div>
         </div>
     );
 }
