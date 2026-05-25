@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -52,8 +51,8 @@ public class AuthController {
     // GET /api/auth/mi-firma — devuelve la firma guardada del usuario logueado
     @GetMapping("/mi-firma")
     public ResponseEntity<java.util.Map<String, String>> getMiFirma(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return usuarioRepository.findByUsername(userDetails.getUsername())
+            @AuthenticationPrincipal String username) {
+        return usuarioRepository.findByUsername(username)
             .map(u -> ResponseEntity.ok(java.util.Map.of("firma", u.getFirma() != null ? u.getFirma() : "")))
             .orElse(ResponseEntity.notFound().build());
     }
@@ -61,9 +60,9 @@ public class AuthController {
     // PATCH /api/auth/mi-firma — cualquier usuario autenticado puede guardar su propia firma
     @PatchMapping("/mi-firma")
     public ResponseEntity<Void> guardarMiFirma(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal String username,
             @RequestBody java.util.Map<String, String> payload) {
-        usuarioRepository.findByUsername(userDetails.getUsername()).ifPresent(u -> {
+        usuarioRepository.findByUsername(username).ifPresent(u -> {
             u.setFirma(payload.get("firma"));
             usuarioRepository.save(u);
         });

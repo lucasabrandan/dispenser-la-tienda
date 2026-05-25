@@ -42,13 +42,14 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                 <input
                     type="date"
                     value={fechaVenta}
-                    max={hoy}
                     onChange={e => setFechaVenta(e.target.value)}
                     className={inputCls}
                 />
                 {fechaVenta !== hoy && (
                     <div className="flex justify-between mt-1.5">
-                        <span className="text-[10px] font-bold text-[#D48800]">Carga histórica</span>
+                        <span className={`text-[10px] font-bold ${fechaVenta < hoy ? 'text-[#D48800]' : 'text-blue-500'}`}>
+                            {fechaVenta < hoy ? 'Carga histórica' : 'Fecha futura'}
+                        </span>
                         <button onClick={() => setFechaVenta(hoy)} className="text-[10px] text-[#A8A29E] hover:text-[#D13A28]">
                             Usar hoy
                         </button>

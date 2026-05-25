@@ -80,7 +80,6 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                 <input
                     type="date"
                     value={fechaServicio}
-                    max={hoy}
                     onChange={e => setFechaServicio(e.target.value)}
                     className="
                         w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
@@ -94,7 +93,9 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                 />
                 {fechaServicio !== hoy && (
                     <div className="flex justify-between mt-1.5">
-                        <span className="text-[10px] font-bold text-amber-500">Carga histórica</span>
+                        <span className={`text-[10px] font-bold ${fechaServicio < hoy ? 'text-amber-500' : 'text-blue-500'}`}>
+                            {fechaServicio < hoy ? 'Carga histórica' : 'Fecha futura'}
+                        </span>
                         <button onClick={() => setFechaServicio(hoy)}
                             className="text-[10px] text-[#A8A29E] hover:text-[#D13A28]">
                             Usar hoy

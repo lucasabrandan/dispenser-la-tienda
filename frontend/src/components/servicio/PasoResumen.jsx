@@ -95,7 +95,6 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
         calcularGananciaRepuesto, calcularResumenGanancia,
         idEdicion, eliminarItem,
         tecnicoSeleccionado, setTecnicoSeleccionado,
-        fechaVisita, setFechaVisita,
     } = hook;
 
     const { esAdmin } = useAuth();
@@ -282,20 +281,6 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         }
                     </p>
 
-                    {/* Fecha estimada de visita — obligatoria para auto-despacho */}
-                    {tecnicoSeleccionado && (
-                        <div className="mt-3">
-                            <p className={`text-[10px] font-black uppercase tracking-wider mb-1.5 ${!fechaVisita ? 'text-[#D13A28] dark:text-[#E8422F]' : 'text-[#A8A29E]'}`}>
-                                Fecha estimada de visita {!fechaVisita && '⚠ Obligatoria'}
-                            </p>
-                            <input
-                                type="date"
-                                value={fechaVisita}
-                                onChange={e => setFechaVisita(e.target.value)}
-                                className={`${inputCls} ${!fechaVisita ? 'border-[#D13A28]/60 focus:border-[#D13A28] focus:ring-[#D13A28]/20' : ''}`}
-                            />
-                        </div>
-                    )}
                 </div>
             )}
 
@@ -346,10 +331,6 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         <button onClick={() => {
                             if (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) {
                                 toast.error('⚠ Asigná un técnico antes de continuar', { duration: 3500 });
-                                return;
-                            }
-                            if (esAdmin && tecnicoSeleccionado && !fechaVisita) {
-                                toast.error('⚠ Ingresá la fecha estimada de visita', { duration: 3500 });
                                 return;
                             }
                             onCerrarTicket();

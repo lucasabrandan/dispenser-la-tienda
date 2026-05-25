@@ -650,7 +650,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       const resClienteId     = clienteId;
       const resClienteNombre = nombreCliente;
       const resTecnicoId     = tecnicoSeleccionado?.id || null;
-      const resFechaVisita   = fechaVisita || null;
+      const resFechaVisita   = fechaVisita || fechaServicio || null;
 
       // Reset
       setTicketItems([]);
