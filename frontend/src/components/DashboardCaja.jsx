@@ -74,6 +74,18 @@ export default function DashboardCaja({ setVistaActual }) {
             pendientesCount: pendientes.length,
             pendientesVal: pendientes.reduce((a, s) => a + calcTotal(s), 0),
             pptoVencidos, agendaHoy, ordenesActivas,
+            // Agenda semanal — próximos 7 días (sin hoy)
+            agendaSemanal: (() => {
+                const dias = [];
+                for (let i = 1; i <= 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() + i);
+                    const fechaStr = d.toISOString().split('T')[0];
+                    const items = servicios.filter(s => s.fecha === fechaStr);
+                    if (items.length > 0) dias.push({ fecha: fechaStr, dia: d, items });
+                }
+                return dias;
+            })(),
         };
     }, [servicios, ordenes]);
 
@@ -254,6 +266,42 @@ export default function DashboardCaja({ setVistaActual }) {
                         </div>
                     </div>
 
+                        {/* Agenda semanal — próximos días */}
+                        {data.agendaSemanal.length > 0 && (
+                            <div>
+                                <p className={sectionLabel}>Próximos días</p>
+                                <div className="space-y-2">
+                                    {data.agendaSemanal.map(({ fecha, dia, items }) => {
+                                        const label = dia.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+                                        const tecnicas = items.filter(s => s.servicioTipo === 'TECNICA');
+                                        const ventas = items.filter(s => s.servicioTipo === 'VENTA');
+                                        return (
+                                            <div key={fecha} className={`${card} p-3`}>
+                                                <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] capitalize mb-1.5">{label}</p>
+                                                <div className="space-y-1">
+                                                    {tecnicas.map(s => (
+                                                        <div key={s.id} onClick={() => setVistaActual('servicio-tecnico')}
+                                                            className="flex items-center gap-2 cursor-pointer text-[10px]">
+                                                            <span className="text-[#D13A28]">🔧</span>
+                                                            <span className="text-[#1C1917] dark:text-[#F0EEE9] font-bold truncate flex-1">{s.clienteNombre}</span>
+                                                            <M valor={calcTotal(s)} className="font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0" />
+                                                        </div>
+                                                    ))}
+                                                    {ventas.map(s => (
+                                                        <div key={s.id} onClick={() => setVistaActual('venta')}
+                                                            className="flex items-center gap-2 cursor-pointer text-[10px]">
+                                                            <span className="text-[#D48800]">🛒</span>
+                                                            <span className="text-[#1C1917] dark:text-[#F0EEE9] font-bold truncate flex-1">{s.clienteNombre}</span>
+                                                            <M valor={calcTotal(s)} className="font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     {/* === COLUMNA DERECHA (1/3) === */}
                     <div className="space-y-4">
 
