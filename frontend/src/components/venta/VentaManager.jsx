@@ -37,6 +37,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     const [ventaDuplicar, setVentaDuplicar] = useState(null);
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [statsExpanded, setStatsExpanded] = useState(false);
+    const [menuOverflow, setMenuOverflow] = useState(false);
 
     // Auto-abrir modal cuando viene con cliente preseleccionado desde ClienteManager
     useEffect(() => {
@@ -78,10 +79,19 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
                             )}
                         </div>
-                        <button onClick={() => exportarVentasCSV(filtros.itemsFiltrados)} title="CSV"
-                            className="h-9 w-9 rounded-lg flex items-center justify-center text-[11px] font-bold bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 shrink-0">
-                            CSV
-                        </button>
+                        <div className="relative">
+                            <button onClick={() => setMenuOverflow(v => !v)}
+                                className="h-9 w-9 rounded-lg flex items-center justify-center text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">⋯</button>
+                            {menuOverflow && (<>
+                                <div className="fixed inset-0 z-10" onClick={() => setMenuOverflow(false)} />
+                                <div className="absolute right-0 top-11 z-20 w-44 rounded-xl bg-white dark:bg-[#242424] shadow-lg border border-black/[0.08] dark:border-white/[0.08] py-1">
+                                    <button onClick={() => { exportarVentasCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
+                                        className="w-full px-4 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E]">
+                                        📥 Exportar CSV
+                                    </button>
+                                </div>
+                            </>)}
+                        </div>
                         <button onClick={() => setModalCrear(true)}
                             className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D48800] dark:bg-[#F0A500] shrink-0">
                             + Venta
