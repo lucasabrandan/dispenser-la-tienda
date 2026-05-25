@@ -100,6 +100,9 @@ public class Servicio {
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
+    @Column(name = "duracion_minutos")
+    private Integer duracionMinutos;
+
     @Formula("(SELECT COALESCE(SUM(si.costo), 0) FROM servicio_items si WHERE si.servicio_id = id)")
     private BigDecimal total;
 
@@ -167,6 +170,9 @@ public class Servicio {
 
     public LocalDateTime getFechaModificacion() { return fechaModificacion; }
     public void setFechaModificacion(LocalDateTime fechaModificacion) { this.fechaModificacion = fechaModificacion; }
+
+    public Integer getDuracionMinutos() { return duracionMinutos; }
+    public void setDuracionMinutos(Integer duracionMinutos) { this.duracionMinutos = duracionMinutos; }
 
     public BigDecimal getTotal() { return total; }
 

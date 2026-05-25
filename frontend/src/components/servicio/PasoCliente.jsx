@@ -38,6 +38,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
         db, clienteId, setClienteId,
         itemActual, setItemActual,
         fechaServicio, setFechaServicio,
+        duracionMinutos, setDuracionMinutos,
         onClienteSeleccionado,
         setNombreClientePrellenado, setModalClienteAbierto,
         setNombreSedePrellenado, setModalSedeAbierto,
@@ -100,6 +101,24 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                         </button>
                     </div>
                 )}
+            </div>
+
+            {/* ── Duración estimada ─────────────────────────────────────── */}
+            <div>
+                <Label>Duración estimada (opcional)</Label>
+                <div className="flex gap-1.5 flex-wrap">
+                    {[60, 90, 120, 180, 240, 300].map(min => (
+                        <button key={min} type="button"
+                            onClick={() => setDuracionMinutos(duracionMinutos === min ? null : min)}
+                            className={`h-8 px-3 rounded-lg text-[11px] font-bold transition-all active:scale-95 ${
+                                duracionMinutos === min
+                                    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                            }`}>
+                            {min < 60 ? `${min}m` : `${min / 60}h`}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* ── Toggle tipo cliente — EXCLUYENTE ───────────────────────── */}

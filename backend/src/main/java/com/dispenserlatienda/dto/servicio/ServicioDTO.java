@@ -35,5 +35,6 @@ public record ServicioDTO(
         Boolean datosBancariosEnviados,
         Boolean esVisita,
         java.math.BigDecimal abonoVisita,
-        Long presupuestoVisitaId
+        Long presupuestoVisitaId,
+        Integer duracionMinutos
 ) {}

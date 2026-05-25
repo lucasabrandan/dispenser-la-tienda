@@ -91,7 +91,10 @@ export default function DashboardCaja({ setVistaActual }) {
                     if (d.getDay() === 0) continue; // saltar domingos
                     const fechaStr = d.toISOString().split('T')[0];
                     const items = servicios.filter(s => s.fecha === fechaStr);
-                    const horasUsadas = items.reduce((a, s) => a + (s.servicioTipo === 'TECNICA' ? H_TECNICA : H_VENTA), 0);
+                    const horasUsadas = items.reduce((a, s) => {
+                        if (s.duracionMinutos) return a + s.duracionMinutos / 60;
+                        return a + (s.servicioTipo === 'TECNICA' ? H_TECNICA : H_VENTA);
+                    }, 0);
                     dias.push({
                         fecha: fechaStr,
                         dia: new Date(d),
@@ -358,7 +361,7 @@ export default function DashboardCaja({ setVistaActual }) {
                                                             )}
                                                         </div>
                                                         <span className="text-[9px] text-[#A8A29E] shrink-0">
-                                                            ~{s.servicioTipo === 'TECNICA' ? '2' : '1'}h
+                                                            {s.duracionMinutos ? `${Math.round(s.duracionMinutos / 60 * 10) / 10}h` : `~${s.servicioTipo === 'TECNICA' ? '2' : '1'}h`}
                                                         </span>
                                                     </div>
                                                 ))}

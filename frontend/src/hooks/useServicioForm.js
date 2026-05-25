@@ -45,6 +45,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   const LEYENDA_DEFAULT = 'Garantía: 90 días sobre mano de obra · Repuestos según fabricante';
   const [leyenda, setLeyenda] = useState(LEYENDA_DEFAULT);
   const [fechaServicio, setFechaServicio] = useState(new Date().toISOString().split('T')[0]);
+  const [duracionMinutos, setDuracionMinutos] = useState(null);
 
   useEffect(() => {
     const cargar = async () => {
@@ -167,6 +168,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             // Pre-llenar fecha de visita para que no la pida de nuevo
             if (servicioParaEditar.usuarioId) setFechaVisita(fechaISO);
           }
+          if (servicioParaEditar.duracionMinutos) setDuracionMinutos(servicioParaEditar.duracionMinutos);
           // clienteId viene del backend ahora
           if (servicioParaEditar.clienteId) {
             setClienteId(servicioParaEditar.clienteId.toString());
@@ -608,6 +610,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         descuentoPorcentaje,
         totalConDescuento,
         observaciones: leyenda,
+        duracionMinutos: duracionMinutos || null,
         items: itemsConFotos.map(it => {
           const esFiltro = it.trabajo?.toUpperCase().includes('FILTRO') ||
             it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes('FILTRO'));
@@ -723,6 +726,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     calcularResumenGanancia,
     leyenda, setLeyenda,
     fechaServicio, setFechaServicio,
+    duracionMinutos, setDuracionMinutos,
     borradorDisponible,
     recuperarBorrador,
     descartarBorrador,

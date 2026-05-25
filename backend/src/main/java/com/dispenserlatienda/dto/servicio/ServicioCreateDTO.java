@@ -27,6 +27,7 @@ public class ServicioCreateDTO {
     private Boolean esVisita;
     private java.math.BigDecimal abonoVisita;
     private Long presupuestoVisitaId;
+    private Integer duracionMinutos;
 
     public ServicioCreateDTO() {}
 
@@ -67,4 +68,6 @@ public class ServicioCreateDTO {
     public void setAbonoVisita(java.math.BigDecimal abonoVisita) { this.abonoVisita = abonoVisita; }
     public Long getPresupuestoVisitaId() { return presupuestoVisitaId; }
     public void setPresupuestoVisitaId(Long presupuestoVisitaId) { this.presupuestoVisitaId = presupuestoVisitaId; }
+    public Integer getDuracionMinutos() { return duracionMinutos; }
+    public void setDuracionMinutos(Integer duracionMinutos) { this.duracionMinutos = duracionMinutos; }
 }
