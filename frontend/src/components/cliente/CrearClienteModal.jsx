@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { toTitleCase } from '../../utils/titleCase';
 
 /**
  * CrearClienteModal — versión simplificada para alta rápida desde el flujo de servicio.
@@ -41,11 +42,11 @@ export default function CrearClienteModal({
         try {
             const response = await api.post('/clientes', {
                 clienteTipo: 'PARTICULAR',
-                nombre: nombre.trim(),
+                nombre: toTitleCase(nombre),
                 telefono: telefono.trim() || null,
-                calle: direccion.trim() || 'Sin dirección',
+                calle: toTitleCase(direccion) || 'Sin dirección',
                 numero: '0',
-                localidad: localidad.trim() || 'Sin localidad',
+                localidad: toTitleCase(localidad) || 'Sin localidad',
                 provincia: 'Buenos Aires',
                 condicionIva: 'CONSUMIDOR_FINAL',
             });

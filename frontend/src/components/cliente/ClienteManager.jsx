@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useClienteData } from '../../hooks/useClienteData';
 import { useEquipoActions } from '../../hooks/useEquipoActions';
 import { filtrarClientesPorBusqueda } from '../../utils/clienteUtils';
+import { toTitleCase } from '../../utils/titleCase';
 import ClienteCard        from './ClienteCard';
 import ClienteForm        from './ClienteForm';
 import CrearClienteModal  from './CrearClienteModal';
@@ -48,11 +49,12 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
         try {
             await api.put(`/clientes/${form.id}`, {
                 ...form,
+                nombre:   toTitleCase(form.nombre),
                 clienteTipo:  form.clienteTipo  || 'PARTICULAR',
                 condicionIva: form.condicionIva || 'CONSUMIDOR_FINAL',
-                calle:    form.calle?.trim()    || 'Sin dirección',
+                calle:    toTitleCase(form.calle) || 'Sin dirección',
                 numero:   form.numero?.trim()   || '0',
-                localidad: form.localidad?.trim() || 'Sin localidad',
+                localidad: toTitleCase(form.localidad) || 'Sin localidad',
                 provincia: form.provincia?.trim() || 'Buenos Aires',
             });
             toast.success('Cliente actualizado', { id: loading });
@@ -105,8 +107,8 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
-            {/* GRID de clientes */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
+            {/* Lista mobile (1 col) / Grid desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {clientesPagina.map(cliente => (
                     <ClienteCard
                         key={cliente.id} cliente={cliente} sedes={sedes} equipos={equipos} servicios={servicios}

@@ -53,27 +53,27 @@ export default function ClienteCard({
                        : '';
     const iniciales = cliente.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 
-    // Vista colapsada (grid card)
+    // Vista colapsada
     if (!isExpanded) {
         return (
             <div onClick={onToggleExpand}
-                className="bg-[#FFFFFF] dark:bg-[#242424] rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] p-3 flex flex-col justify-between min-h-[85px]"
+                className="bg-[#FFFFFF] dark:bg-[#242424] rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-center gap-3"
                 style={{ borderLeft: borderColor !== 'transparent' ? `3px solid ${borderColor}` : undefined }}>
-                <div className="flex items-center justify-between mb-1">
-                    <span className="w-7 h-7 rounded-lg bg-[#D13A28] dark:bg-[#E8422F] flex items-center justify-center text-white font-black text-[10px] shrink-0">
-                        {iniciales}
-                    </span>
-                    <div className="flex items-center gap-1 shrink-0">
-                        {alertaSinServicio && <span className="w-1.5 h-1.5 rounded-full bg-[#D48800]" />}
-                        {tipoIcon && <span className="text-[11px]">{tipoIcon}</span>}
-                    </div>
+                <span className="w-9 h-9 rounded-lg bg-[#D13A28] dark:bg-[#E8422F] flex items-center justify-center text-white font-black text-[10px] shrink-0">
+                    {iniciales}
+                </span>
+                <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-tight truncate">
+                        {cliente.nombre}
+                    </p>
+                    <p className="text-[10px] text-[#A8A29E] mt-0.5 truncate">
+                        {ultimoServicio ? `Últ: ${formatFecha(ultimoServicio.fecha)}` : 'Sin servicios'}
+                    </p>
                 </div>
-                <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-tight line-clamp-2">
-                    {cliente.nombre}
-                </p>
-                <p className="text-[9px] text-[#A8A29E] mt-1 truncate">
-                    {ultimoServicio ? `Últ: ${formatFecha(ultimoServicio.fecha)}` : 'Sin servicios'}
-                </p>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    {alertaSinServicio && <span className="w-2 h-2 rounded-full bg-[#D48800]" />}
+                    {tipoIcon && <span className="text-[12px]">{tipoIcon}</span>}
+                </div>
             </div>
         );
     }
