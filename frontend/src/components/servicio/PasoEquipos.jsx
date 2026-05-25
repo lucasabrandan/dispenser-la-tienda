@@ -6,6 +6,7 @@ import { construirUrlFoto } from '../../utils/construirUrlFoto';
 import { useAuth } from '../../context/AuthContext';
 import RepuestoRapidoModal from '../repuesto/RepuestoRapidoModal';
 import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
+import CargaRapidaSheet from './CargaRapidaSheet';
 
 // Comprime la foto usando browser-image-compression (Web Worker) para no
 // bloquear el hilo principal ni crashear por OOM en Android.
@@ -149,6 +150,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const [mostrarFotos,   setMostrarFotos]     = useState(false);
     const [mostrarEquipo,  setMostrarEquipo]    = useState(false);
     const [formVisible,    setFormVisible]      = useState(true);
+    const [cargaRapida,    setCargaRapida]      = useState(false);
 
     // Si editarItem carga datos en itemActual, mostrar el form automáticamente
     // Solo si tiene serial o repuestos (no por costoExtra que se pre-llena)
@@ -253,10 +255,16 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
             {/* Formulario equipo actual — colapsable cuando ya hay equipos en el ticket */}
             {!formVisible && ticketItems.length > 0 ? (
-                <button type="button" onClick={() => setFormVisible(true)}
-                    className="w-full py-3.5 rounded-2xl font-black text-[12px] uppercase border-2 border-dashed border-[#D13A28]/40 dark:border-[#E8422F]/40 text-[#D13A28] dark:text-[#E8422F] bg-transparent active:scale-[0.98] transition-all">
-                    + Agregar otro equipo
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setFormVisible(true)}
+                        className="py-3.5 rounded-2xl font-black text-[12px] uppercase border-2 border-dashed border-[#D13A28]/40 dark:border-[#E8422F]/40 text-[#D13A28] dark:text-[#E8422F] bg-transparent active:scale-[0.98] transition-all">
+                        + Agregar equipo
+                    </button>
+                    <button type="button" onClick={() => setCargaRapida(true)}
+                        className="py-3.5 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D48800] dark:bg-[#F0A500] active:scale-[0.98] transition-all">
+                        ⚡ Carga rápida
+                    </button>
+                </div>
             ) : (
             <div className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                 <div className="flex items-center gap-2 mb-4">
@@ -498,6 +506,13 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
             )}
 
             <BackBtn onClick={onBack} />
+
+            {/* Carga rápida */}
+            <CargaRapidaSheet
+                isOpen={cargaRapida}
+                onClose={() => setCargaRapida(false)}
+                hook={hook}
+            />
 
             {/* Bottom sheet de repuestos */}
             <RepuestosBottomSheet
