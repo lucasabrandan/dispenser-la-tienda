@@ -5,6 +5,9 @@ import { useMontos } from '../../context/MontosContext';
 import { exportarGastosCSV, exportarBalanceCSV } from '../../utils/exportarCSV';
 import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnicos';
 import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+const COLORES = ['#D48800', '#D13A28', '#A8A29E', '#16A34A', '#8B5CF6', '#3B82F6', '#EC4899', '#F59E0B', '#6366F1', '#14B8A6'];
 
 const inputCls = `
     px-4 py-3 rounded-xl outline-none transition-all
@@ -79,6 +82,38 @@ function TabBalance({ filtroMes, setFiltroMes }) {
             </div>
 
             {/* Operaciones del mes */}
+            {/* Donut — distribución */}
+            {stats.facturacion > 0 && (
+                <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider mb-2">Distribución</p>
+                    <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                            <Pie
+                                data={[
+                                    { name: 'Ganancia', value: Math.max(gananciaNeta, 0) },
+                                    { name: 'Impuestos', value: imp },
+                                    { name: 'Repuestos', value: stats.costoRepuestos },
+                                    { name: 'Gastos', value: stats.gastosVarios },
+                                ].filter(d => d.value > 0)}
+                                cx="50%" cy="50%"
+                                innerRadius={55} outerRadius={80}
+                                paddingAngle={3}
+                                dataKey="value"
+                            >
+                                {['#16A34A', '#D13A28', '#A8A29E', '#D48800'].map((c, i) => (
+                                    <Cell key={i} fill={c} />
+                                ))}
+                            </Pie>
+                            <Tooltip formatter={(v) => `$${formatearPrecio(v)}`} />
+                            <Legend
+                                formatter={(v) => <span className="text-[10px] font-bold text-[#A8A29E]">{v}</span>}
+                                iconSize={8}
+                            />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+
             {stats.transacciones.length > 0 && (
                 <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                     <div className="px-5 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
@@ -163,6 +198,27 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
                     </div>
                 ))}
             </div>
+
+            {/* Gráfico comparativo */}
+            {datosFiltrados.length > 1 && (
+                <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider mb-2">Comparación</p>
+                    <ResponsiveContainer width="100%" height={180}>
+                        <BarChart data={datosFiltrados.map(d => ({
+                            nombre: d.tecnicoNombre.split(' ')[0],
+                            Facturado: Math.round(d.totalFacturado),
+                            'Su parte': Math.round(d.parteTecnico),
+                        }))}>
+                            <XAxis dataKey="nombre" tick={{ fontSize: 10, fill: '#A8A29E' }} />
+                            <YAxis tick={{ fontSize: 9, fill: '#A8A29E' }} width={50}
+                                tickFormatter={v => `$${formatearPrecioCompacto(v)}`} />
+                            <Tooltip formatter={(v) => `$${formatearPrecio(v)}`} />
+                            <Bar dataKey="Facturado" fill="#D48800" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="Su parte" fill="#16A34A" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
 
             {/* Tabla por técnico */}
             {datosFiltrados.length === 0 ? (
@@ -254,6 +310,31 @@ function TabGastos({ filtroMes, setFiltroMes }) {
                 <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
                     className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
             </div>
+
+            {/* Torta por categoría */}
+            {gastos.length > 0 && (() => {
+                const porCat = {};
+                gastos.forEach(g => {
+                    const cat = g.categoria || 'Sin categoría';
+                    porCat[cat] = (porCat[cat] || 0) + parseFloat(g.monto || 0);
+                });
+                const dataChart = Object.entries(porCat).map(([name, value]) => ({ name, value: Math.round(value) }))
+                    .sort((a, b) => b.value - a.value);
+                return (
+                    <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider mb-2">Distribución por categoría</p>
+                        <ResponsiveContainer width="100%" height={200}>
+                            <PieChart>
+                                <Pie data={dataChart} cx="50%" cy="50%" outerRadius={75} paddingAngle={2} dataKey="value">
+                                    {dataChart.map((_, i) => <Cell key={i} fill={COLORES[i % COLORES.length]} />)}
+                                </Pie>
+                                <Tooltip formatter={(v) => `$${formatearPrecio(v)}`} />
+                                <Legend formatter={(v) => <span className="text-[10px] font-bold text-[#A8A29E]">{v}</span>} iconSize={8} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                );
+            })()}
 
             {/* Formulario */}
             <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
