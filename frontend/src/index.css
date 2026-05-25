@@ -107,6 +107,22 @@ input, select, textarea {
   font-size: 16px !important;
 }
 
+/* =========================================
+   TECLADO MOBILE — scroll al input activo
+   ========================================= */
+/* Cuando el teclado aparece, ocultar barras fijas que tapan */
+@media (max-width: 767px) {
+  /* El input activo siempre se scrollea a la vista */
+  input:focus, textarea:focus, select:focus {
+    scroll-margin-bottom: 200px;
+  }
+
+  /* Ocultar la barra fija del total cuando el teclado está abierto */
+  body:has(input:focus, textarea:focus, select:focus) .fixed.bottom-0 {
+    display: none;
+  }
+}
+
 /* Ocultar spinners (flechas) de inputs numéricos */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
