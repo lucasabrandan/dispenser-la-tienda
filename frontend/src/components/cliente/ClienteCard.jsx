@@ -29,12 +29,12 @@ export default function ClienteCard({
     const [equipoHistorial, setEquipoHistorial] = useState(null);
     const [modalHistorial, setModalHistorial] = useState(false);
 
-    const sedesCli          = sedes.filter(s => s.clienteId === cliente.id);
+    const sedesCli          = sedes.filter(s => (s.clienteId || s.cliente?.id) === cliente.id);
     const eqCli             = equipos.filter(eq => sedesCli.map(s => s.id).includes(eq.sedeId));
     const equiposActivos    = eqCli.filter(eq => eq.activo !== false);
     const equiposArchivados = eqCli.filter(eq => eq.activo === false);
 
-    const serviciosCli   = [...servicios.filter(s => s.clienteId === cliente.id)]
+    const serviciosCli   = [...servicios.filter(s => (s.clienteId || s.cliente?.id) === cliente.id)]
         .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     const ultimoServicio = serviciosCli[0];
 
