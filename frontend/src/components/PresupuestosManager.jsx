@@ -470,6 +470,11 @@ export default function PresupuestosManager() {
                         await confirmarServicio(presupuestoEjecutar.id, estadoDestino, extras);
                         setPresupuestoEjecutar(null);
                     }}
+                    onEditarCompleto={() => {
+                        // Abrir el presupuesto en modo edición (redirigir a servicio técnico)
+                        toast('Editá el presupuesto desde Servicio Técnico', { icon: 'ℹ️' });
+                        setPresupuestoEjecutar(null);
+                    }}
                     onCerrar={() => setPresupuestoEjecutar(null)}
                 />
             )}
