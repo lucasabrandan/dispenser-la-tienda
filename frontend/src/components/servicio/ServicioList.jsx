@@ -173,15 +173,15 @@ export default function ServicioList({ onEditar }) {
                         </div>
                     )}
 
-                    {/* Filtro tipo */}
-                    <div className="flex gap-1.5">
-                        {TIPOS.map(t => (
+                    {/* Filtro tipo — barra segmentada */}
+                    <div className="flex items-center rounded-lg overflow-hidden shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        {TIPOS.map((t, i) => (
                             <button key={t.value} onClick={() => setTipoFiltro(t.value)}
-                                className={`h-8 px-3 rounded-lg text-[11px] font-bold uppercase transition-all active:scale-95 ${
+                                className={`flex-1 h-9 text-[11px] font-bold uppercase transition-all active:scale-[0.98] ${
                                     tipoFiltro === t.value
-                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                        : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
-                                }`}>
+                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white z-[1]'
+                                        : 'bg-white dark:bg-[#1C1C1C] text-[#A8A29E]'
+                                } ${i > 0 ? 'border-l border-black/[0.05] dark:border-white/[0.05]' : ''}`}>
                                 {t.label}
                             </button>
                         ))}

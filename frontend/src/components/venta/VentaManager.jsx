@@ -71,7 +71,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                         <div className="relative flex-1">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
-                                placeholder="Cliente, S/N, sede..."
+                                placeholder="Cliente, producto, sede..."
                                 className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
