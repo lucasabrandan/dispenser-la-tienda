@@ -22,6 +22,7 @@ export default function DashboardCaja({ setVistaActual }) {
     const [ordenes, setOrdenes] = useState([]);
     const [alertasRadar, setAlertasRadar] = useState([]);
     const [diaSel, setDiaSel] = useState(null);
+    const [semana2, setSemana2] = useState(false);
 
     const cargar = async () => {
         setCargando(true);
@@ -75,19 +76,17 @@ export default function DashboardCaja({ setVistaActual }) {
             pendientesCount: pendientes.length,
             pendientesVal: pendientes.reduce((a, s) => a + calcTotal(s), 0),
             pptoVencidos, agendaHoy, ordenesActivas,
-            // Planificador semanal — lun a sáb de la semana actual + siguiente
+            // Planificador — desde hoy, 12 días hábiles (lun-sáb)
             planificador: (() => {
-                const HORAS_DIA = 8; // 8am-16pm
-                const H_TECNICA = 2, H_VENTA = 1; // horas estimadas
+                const HORAS_DIA = 8;
+                const H_TECNICA = 2, H_VENTA = 1;
                 const hoy = new Date();
-                const diaHoy = hoy.getDay(); // 0=dom
-                // Calcular lunes de esta semana
-                const lunes = new Date(hoy);
-                lunes.setDate(hoy.getDate() - ((diaHoy === 0 ? 7 : diaHoy) - 1));
                 const dias = [];
-                for (let i = 0; i < 12; i++) { // 2 semanas de lun-sáb
-                    const d = new Date(lunes);
-                    d.setDate(lunes.getDate() + i);
+                let offset = 0;
+                while (dias.length < 12) {
+                    const d = new Date(hoy);
+                    d.setDate(hoy.getDate() + offset);
+                    offset++;
                     if (d.getDay() === 0) continue; // saltar domingos
                     const fechaStr = d.toISOString().split('T')[0];
                     const items = servicios.filter(s => s.fecha === fechaStr);
@@ -289,39 +288,72 @@ export default function DashboardCaja({ setVistaActual }) {
 
                         {/* Planificador semanal */}
                         <div>
-                            <p className={sectionLabel}>Semana</p>
-                            {/* Barra de capacidad por día */}
-                            <div className="flex gap-1 mb-3">
-                                {data.planificador.map(d => {
+                            <p className={sectionLabel}>Planificador</p>
+                            {/* Semana 1 — desde hoy, 6 días */}
+                            <div className="grid grid-cols-6 gap-1.5 mb-2">
+                                {data.planificador.slice(0, 6).map(d => {
                                     const pct = Math.min(d.horasUsadas / d.horasTotal, 1);
-                                    const color = d.esPasado ? 'bg-[#A8A29E]/30'
-                                        : pct === 0 ? 'bg-[#16A34A]'
-                                        : pct < 0.5 ? 'bg-[#16A34A]'
-                                        : pct < 0.75 ? 'bg-[#D48800]'
-                                        : 'bg-[#D13A28]';
+                                    const barColor = pct === 0 ? 'bg-[#16A34A]' : pct < 0.5 ? 'bg-[#16A34A]' : pct < 0.75 ? 'bg-[#D48800]' : 'bg-[#D13A28]';
+                                    const sel = d.fecha === diaSel;
                                     return (
-                                        <button key={d.fecha} onClick={() => setDiaSel(d.fecha === diaSel ? null : d.fecha)}
-                                            className={`flex-1 rounded-lg p-1.5 text-center transition-all active:scale-95 ${
+                                        <button key={d.fecha} onClick={() => setDiaSel(sel ? null : d.fecha)}
+                                            className={`rounded-lg p-2 text-center transition-all active:scale-95 ${
                                                 d.esHoy ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''
-                                            } ${d.fecha === diaSel ? 'bg-[#242424] dark:bg-[#F0EEE9]' : 'bg-white dark:bg-[#242424]'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
-                                            <p className={`text-[9px] font-bold uppercase ${d.fecha === diaSel ? 'text-white dark:text-[#1C1917]' : d.esPasado ? 'text-[#A8A29E]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
-                                                {d.dia.toLocaleDateString('es-AR', { weekday: 'narrow' })}
+                                            } ${sel ? 'bg-[#1C1917] dark:bg-[#F0EEE9]' : 'bg-white dark:bg-[#242424]'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
+                                            <p className={`text-[10px] font-bold uppercase ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#A8A29E]'}`}>
+                                                {d.dia.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
                                             </p>
-                                            <p className={`text-[10px] font-black ${d.fecha === diaSel ? 'text-white dark:text-[#1C1917]' : d.esPasado ? 'text-[#A8A29E]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                            <p className={`text-[14px] font-black ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
                                                 {d.dia.getDate()}
                                             </p>
-                                            {/* Mini barra */}
-                                            <div className="h-1 rounded-full bg-black/10 dark:bg-white/10 mt-1">
-                                                <div className={`h-full rounded-full ${d.esPasado ? 'bg-[#A8A29E]/40' : color}`}
-                                                    style={{ width: `${Math.max(pct * 100, d.items.length > 0 ? 15 : 0)}%` }} />
+                                            <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 mt-1.5">
+                                                <div className={`h-full rounded-full ${barColor}`}
+                                                    style={{ width: `${Math.max(pct * 100, d.items.length > 0 ? 20 : 0)}%` }} />
                                             </div>
-                                            <p className={`text-[8px] mt-0.5 ${d.fecha === diaSel ? 'text-white/70 dark:text-black/50' : 'text-[#A8A29E]'}`}>
-                                                {d.horasUsadas}/{d.horasTotal}h
+                                            <p className={`text-[9px] font-bold mt-1 ${sel ? 'text-white/70 dark:text-black/50' : 'text-[#A8A29E]'}`}>
+                                                {Math.round(d.horasUsadas)}/{d.horasTotal}h
                                             </p>
                                         </button>
                                     );
                                 })}
                             </div>
+
+                            {/* Semana 2 — colapsable */}
+                            {data.planificador.length > 6 && (
+                                <>
+                                    <button onClick={() => setSemana2(v => !v)}
+                                        className="w-full flex items-center justify-center gap-1 h-6 rounded-lg text-[9px] font-bold uppercase text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99] mb-2">
+                                        {semana2 ? '▲ Ocultar' : '▼ Semana siguiente'}
+                                    </button>
+                                    {semana2 && (
+                                        <div className="grid grid-cols-6 gap-1.5 mb-2">
+                                            {data.planificador.slice(6).map(d => {
+                                                const pct = Math.min(d.horasUsadas / d.horasTotal, 1);
+                                                const barColor = pct === 0 ? 'bg-[#16A34A]' : pct < 0.5 ? 'bg-[#16A34A]' : pct < 0.75 ? 'bg-[#D48800]' : 'bg-[#D13A28]';
+                                                const sel = d.fecha === diaSel;
+                                                return (
+                                                    <button key={d.fecha} onClick={() => setDiaSel(sel ? null : d.fecha)}
+                                                        className={`rounded-lg p-2 text-center transition-all active:scale-95 ${sel ? 'bg-[#1C1917] dark:bg-[#F0EEE9]' : 'bg-white dark:bg-[#242424]'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
+                                                        <p className={`text-[10px] font-bold uppercase ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#A8A29E]'}`}>
+                                                            {d.dia.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
+                                                        </p>
+                                                        <p className={`text-[14px] font-black ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                                            {d.dia.getDate()}
+                                                        </p>
+                                                        <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 mt-1.5">
+                                                            <div className={`h-full rounded-full ${barColor}`}
+                                                                style={{ width: `${Math.max(pct * 100, d.items.length > 0 ? 20 : 0)}%` }} />
+                                                        </div>
+                                                        <p className={`text-[9px] font-bold mt-1 ${sel ? 'text-white/70 dark:text-black/50' : 'text-[#A8A29E]'}`}>
+                                                            {Math.round(d.horasUsadas)}/{d.horasTotal}h
+                                                        </p>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
                             {/* Detalle del día seleccionado */}
                             {diaSel && (() => {
