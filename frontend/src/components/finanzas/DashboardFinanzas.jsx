@@ -5,6 +5,7 @@ import { useMontos } from '../../context/MontosContext';
 import { exportarGastosCSV, exportarBalanceCSV } from '../../utils/exportarCSV';
 import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnicos';
 import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
+import CierreCajaModal from './CierreCajaModal';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const COLORES = ['#D48800', '#D13A28', '#A8A29E', '#16A34A', '#8B5CF6', '#3B82F6', '#EC4899', '#F59E0B', '#6366F1', '#14B8A6'];
@@ -264,7 +265,8 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
 function TabGastos({ filtroMes, setFiltroMes }) {
     const [gastos,   setGastos]   = useState([]);
     const [cargando, setCargando] = useState(false);
-    const [form, setForm] = useState({ descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' });
+    const formVacio = { id: null, descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' };
+    const [form, setForm] = useState(formVacio);
     const [confirmEliminarGasto, setConfirmEliminarGasto] = useState(null);
 
     const cargar = () => {
@@ -279,16 +281,26 @@ function TabGastos({ filtroMes, setFiltroMes }) {
 
     const fmt = n => formatearPrecio(n);
 
-    const handleAgregar = async (e) => {
+    const handleGuardar = async (e) => {
         e.preventDefault();
         if (!form.descripcion.trim() || !form.monto || !form.categoria.trim())
             return toast.error('Completa todos los campos');
         try {
-            await api.post('/gastos', { ...form, monto: parseFloat(form.monto) });
-            toast.success('Gasto agregado');
-            setForm({ descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' });
+            const data = { descripcion: form.descripcion, monto: parseFloat(form.monto), fecha: form.fecha, categoria: form.categoria };
+            if (form.id) {
+                await api.put(`/gastos/${form.id}`, data);
+                toast.success('Gasto actualizado');
+            } else {
+                await api.post('/gastos', data);
+                toast.success('Gasto agregado');
+            }
+            setForm(formVacio);
             cargar();
-        } catch { toast.error('Error al agregar gasto'); }
+        } catch { toast.error('Error al guardar gasto'); }
+    };
+
+    const editarGasto = (g) => {
+        setForm({ id: g.id, descripcion: g.descripcion, monto: g.monto, fecha: g.fecha, categoria: g.categoria || '' });
     };
 
     const handleEliminar = (id) => setConfirmEliminarGasto(id);
@@ -338,8 +350,13 @@ function TabGastos({ filtroMes, setFiltroMes }) {
 
             {/* Formulario */}
             <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider mb-3">Agregar gasto</p>
-                <form onSubmit={handleAgregar} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase tracking-wider">{form.id ? 'Editar gasto' : 'Agregar gasto'}</p>
+                    {form.id && (
+                        <button onClick={() => setForm(formVacio)} className="text-[10px] font-bold text-[#D13A28] dark:text-[#E8422F]">Cancelar</button>
+                    )}
+                </div>
+                <form onSubmit={handleGuardar} className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="text"   placeholder="Descripción"  value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className={inputCls} />
                     <input type="number" placeholder="Monto" step="0.01" value={form.monto}  onChange={e => setForm({ ...form, monto: e.target.value })}       className={inputCls} />
                     <input type="date"                               value={form.fecha}       onChange={e => setForm({ ...form, fecha: e.target.value })}        className={inputCls} />
@@ -351,8 +368,8 @@ function TabGastos({ filtroMes, setFiltroMes }) {
                         ))}
                     </select>
                     <button type="submit" disabled={cargando}
-                        className="px-6 py-3 rounded-xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[11px] uppercase active:scale-95 transition-all md:col-span-4 disabled:opacity-50">
-                        Guardar gasto
+                        className="h-9 rounded-lg bg-[#D13A28] dark:bg-[#E8422F] text-white font-bold text-[11px] uppercase active:scale-95 md:col-span-4 disabled:opacity-50">
+                        {form.id ? 'Actualizar' : 'Guardar'}
                     </button>
                 </form>
             </div>
@@ -375,10 +392,14 @@ function TabGastos({ filtroMes, setFiltroMes }) {
                                 <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{g.descripcion}</p>
                                 <p className="text-[10px] font-bold text-[#A8A29E] uppercase">{g.fecha} · {g.categoria}</p>
                             </div>
-                            <p className="text-[13px] font-black text-[#D13A28] dark:text-[#E8422F] shrink-0">${fmt(g.monto)}</p>
+                            <p className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F] shrink-0">${fmt(g.monto)}</p>
+                            <button onClick={() => editarGasto(g)}
+                                className="text-[10px] font-bold text-[#A8A29E] hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors shrink-0">
+                                ✏️
+                            </button>
                             <button onClick={() => handleEliminar(g.id)}
-                                className="text-[10px] font-black text-[#A8A29E] hover:text-[#D13A28] dark:hover:text-[#E8422F] transition-colors shrink-0 uppercase">
-                                Eliminar
+                                className="text-[10px] font-bold text-[#A8A29E] hover:text-[#D13A28] dark:hover:text-[#E8422F] transition-colors shrink-0">
+                                🗑️
                             </button>
                         </div>
                     ))}
@@ -476,23 +497,33 @@ function TabInventario() {
                     {[...enStock]
                         .sort((a, b) => (Number(b.costo || 0) * Number(b.stock)) - (Number(a.costo || 0) * Number(a.stock)))
                         .map((r, i, arr) => {
-                            const valorCosto = Number(r.costo  || 0) * Number(r.stock);
-                            const valorVenta = Number(r.precio || 0) * Number(r.stock);
+                            const costo = Number(r.costo || 0);
+                            const precio = Number(r.precio || 0);
+                            const valorCosto = costo * Number(r.stock);
+                            const valorVenta = precio * Number(r.stock);
                             const ganancia   = valorVenta - valorCosto;
+                            const margen = precio > 0 ? Math.round((precio - costo) / precio * 100) : 0;
+                            const stockBajo = r.stockMinimo && Number(r.stock) <= Number(r.stockMinimo);
                             return (
                                 <div key={r.id}
-                                    className={`px-5 py-3 flex items-center gap-3 ${i < arr.length - 1 ? 'border-b border-black/[0.05] dark:border-white/[0.05]' : ''}`}>
+                                    className={`px-4 py-3 flex items-center gap-3 ${i < arr.length - 1 ? 'border-b border-black/[0.04] dark:border-white/[0.04]' : ''} ${stockBajo ? 'bg-[#FEE2E2]/50 dark:bg-[#3B1111]/30' : ''}`}>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{r.nombre}</p>
+                                        <div className="flex items-center gap-1.5">
+                                            <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{r.nombre}</p>
+                                            {stockBajo && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171] shrink-0">BAJO</span>}
+                                        </div>
                                         <p className="text-[10px] text-[#A8A29E]">
                                             {r.stock} unid.
-                                            {r.costo  ? ` · costo ${ocultar ? '••••' : `$${formatearPrecio(r.costo)}`}` : ''}
-                                            {r.precio ? ` · venta ${ocultar ? '••••' : `$${formatearPrecio(r.precio)}`}` : ''}
+                                            {costo ? ` · costo ${ocultar ? '••••' : `$${formatearPrecio(costo)}`}` : ''}
+                                            {precio ? ` · venta ${ocultar ? '••••' : `$${formatearPrecio(precio)}`}` : ''}
                                         </p>
                                     </div>
+                                    {margen > 0 && (
+                                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500] shrink-0">{margen}%</span>
+                                    )}
                                     <div className="text-right shrink-0">
-                                        <p className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500]">{fmt(ganancia)}</p>
-                                        <p className="text-[10px] text-[#A8A29E]">{fmt(valorCosto)} invertido</p>
+                                        <p className="text-[12px] font-black text-[#D48800] dark:text-[#F0A500]">{fmt(ganancia)}</p>
+                                        <p className="text-[9px] text-[#A8A29E]">{fmt(valorCosto)} inv.</p>
                                     </div>
                                 </div>
                             );
@@ -549,13 +580,28 @@ const TABS = [
 export default function DashboardFinanzas() {
     const [tab,       setTab]       = useState('balance');
     const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
+    const [modalCierre, setModalCierre] = useState(false);
 
     return (
         <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]">
             {/* Header sticky */}
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</h2>
+                    <div className="hidden md:flex items-center justify-between">
+                        <h2 className="text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Finanzas</h2>
+                        <button onClick={() => setModalCierre(true)}
+                            className="h-8 px-3 rounded-lg font-bold text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                            Cierre de caja
+                        </button>
+                    </div>
+                    {/* Tabs + botón cierre mobile */}
+                    <div className="flex gap-2 items-center md:hidden mb-1">
+                        <div className="flex-1" />
+                        <button onClick={() => setModalCierre(true)}
+                            className="h-7 px-2.5 rounded-lg font-bold text-[10px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 shrink-0">
+                            Cierre
+                        </button>
+                    </div>
                     {/* Tabs */}
                     <div className="flex gap-1 bg-[#EFEDEA] dark:bg-[#1C1C1C] p-1 rounded-lg">
                         {TABS.map(t => (
@@ -578,6 +624,13 @@ export default function DashboardFinanzas() {
             {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
             {tab === 'inventario' && <TabInventario />}
             </div>
+
+            {modalCierre && (
+                <CierreCajaModal
+                    onClose={() => setModalCierre(false)}
+                    onArchivar={() => setModalCierre(false)}
+                />
+            )}
         </div>
     );
 }

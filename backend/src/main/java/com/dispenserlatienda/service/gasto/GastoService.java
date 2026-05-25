@@ -57,6 +57,17 @@ public class GastoService {
     }
 
     @Transactional
+    public GastoDTO actualizar(Long id, GastoCreateDTO dto) {
+        Gasto gasto = gastoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Gasto no encontrado con ID: " + id));
+        gasto.setDescripcion(dto.descripcion());
+        gasto.setMonto(dto.monto());
+        gasto.setFecha(dto.fecha());
+        gasto.setCategoria(dto.categoria());
+        return mapToDTO(gastoRepository.save(gasto));
+    }
+
+    @Transactional
     public void eliminar(Long id) {
         if (!gastoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Gasto no encontrado con ID: " + id);

@@ -53,6 +53,12 @@ public class GastoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(gastoService.crear(dto));
     }
 
+    // PUT: Actualizar gasto
+    @PutMapping("/{id}")
+    public ResponseEntity<GastoDTO> actualizar(@PathVariable Long id, @Valid @RequestBody GastoCreateDTO dto) {
+        return ResponseEntity.ok(gastoService.actualizar(id, dto));
+    }
+
     // DELETE: Eliminar gasto
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
