@@ -4,6 +4,7 @@ import OrdenForm from './OrdenForm';
 import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { toast } from 'react-hot-toast';
+import DateInput from '../ui/DateInput';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-[#E8E5E0] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
@@ -211,10 +212,10 @@ export default function DespachoManager() {
                 {/* Filtros colapsables */}
                 {mostrarFiltros && (
                     <div className="flex gap-1.5 items-center flex-wrap p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
+                        <DateInput value={desde} onChange={setDesde}
                             className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
                         <span className="text-[10px] text-[#A8A29E]">a</span>
-                        <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
+                        <DateInput value={hasta} onChange={setHasta}
                             className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
                         <select value={filtrTecnico} onChange={e => setFiltrTecnico(e.target.value)}
                             className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]">

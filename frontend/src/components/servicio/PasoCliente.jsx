@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, buildSelectStyles } from './ServicioUI';
+import DateInput from '../ui/DateInput';
 
 // ── Componentes locales con Tailwind arbitrary values ─────────────────────
 function DSInput({ label, ...props }) {
@@ -77,19 +78,10 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
             {/* ── Fecha ──────────────────────────────────────────────────── */}
             <div>
                 <Label>Fecha del servicio</Label>
-                <input
-                    type="date"
+                <DateInput
                     value={fechaServicio}
-                    onChange={e => setFechaServicio(e.target.value)}
-                    className="
-                        w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-                        bg-[#E8E5E0] dark:bg-[#2E2E2E]
-                        text-[#1C1917] dark:text-[#F0EEE9]
-                        border border-black/10 dark:border-white/10
-                        focus:border-[#D13A28] dark:focus:border-[#E8422F]
-                        focus:ring-2 focus:ring-[#D13A28]/20
-                        transition-all
-                    "
+                    onChange={setFechaServicio}
+                    className="w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/10 transition-all"
                 />
                 {fechaServicio !== hoy && (
                     <div className="flex justify-between mt-1.5">

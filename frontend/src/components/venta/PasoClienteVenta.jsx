@@ -1,6 +1,7 @@
 import React from 'react';
 import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, buildSelectStyles } from '../servicio/ServicioUI';
+import DateInput from '../ui/DateInput';
 
 const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucumán','Salta','Neuquén'];
 
@@ -39,10 +40,9 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
             {/* ── Fecha ── */}
             <div>
                 <Label>Fecha de venta</Label>
-                <input
-                    type="date"
+                <DateInput
                     value={fechaVenta}
-                    onChange={e => setFechaVenta(e.target.value)}
+                    onChange={setFechaVenta}
                     className={inputCls}
                 />
                 {fechaVenta !== hoy && (

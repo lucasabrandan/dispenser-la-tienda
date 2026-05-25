@@ -3,6 +3,7 @@ import Select from 'react-select';
 import api from '../../services/api';
 import { buildSelectStyles } from '../servicio/ServicioUI';
 import { useTheme } from '../../hooks/useTheme';
+import DateInput from '../ui/DateInput';
 
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
@@ -234,9 +235,9 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
             <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-1">
                     <label className={labelCls}>Fecha *</label>
-                    <input type="date" value={form.fechaProgramada}
-                        onChange={e => set('fechaProgramada', e.target.value)}
-                        required className={inputCls} />
+                    <DateInput value={form.fechaProgramada}
+                        onChange={v => set('fechaProgramada', v)}
+                        className={inputCls} />
                 </div>
                 <div>
                     <label className={labelCls}>Hora est.</label>

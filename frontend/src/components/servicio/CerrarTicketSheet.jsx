@@ -3,6 +3,7 @@ import FirmaPad from '../ui/FirmaPad';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import DateInput from '../ui/DateInput';
 
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
@@ -245,7 +246,7 @@ export default function CerrarTicketSheet({
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className={labelCls}>Fecha *</label>
-                                        <input type="date" value={dispFecha} onChange={e => setDispFecha(e.target.value)} className={inputCls} />
+                                        <DateInput value={dispFecha} onChange={setDispFecha} className={inputCls} />
                                     </div>
                                     <div>
                                         <label className={labelCls}>Hora est.</label>

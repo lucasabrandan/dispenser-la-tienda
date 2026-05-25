@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import DateInput from '../ui/DateInput';
 
 const PRIORIDADES = [
     { value: 'NORMAL',  label: 'Normal'  },
@@ -183,8 +184,8 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className={LABEL}>Fecha programada</label>
-                                            <input type="date" value={form.fechaProgramada}
-                                                onChange={e => set('fechaProgramada', e.target.value)}
+                                            <DateInput value={form.fechaProgramada}
+                                                onChange={v => set('fechaProgramada', v)}
                                                 className={INPUT} />
                                         </div>
                                         <div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import DateInput from '../ui/DateInput';
 
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
@@ -103,7 +104,7 @@ export default function ModalDespachoRapido({ presupuesto, onCreada, onCerrar })
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className={labelCls}>Fecha *</label>
-                            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className={inputCls} />
+                            <DateInput value={fecha} onChange={setFecha} className={inputCls} />
                         </div>
                         <div>
                             <label className={labelCls}>Hora est.</label>

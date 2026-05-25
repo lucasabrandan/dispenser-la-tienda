@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
 import { generarPDFCierreCaja } from '../../utils/pdf/cierreCaja';
+import DateInput from '../ui/DateInput';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -154,9 +155,9 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                     </div>
                     {periodo === 'custom' && (
                         <div className="flex gap-2">
-                            <input type="date" value={desde} onChange={e => setDesde(e.target.value)}
+                            <DateInput value={desde} onChange={setDesde}
                                 className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
-                            <input type="date" value={hasta} onChange={e => setHasta(e.target.value)}
+                            <DateInput value={hasta} onChange={setHasta}
                                 className="flex-1 h-9 px-3 rounded-xl text-[12px] border border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                         </div>
                     )}

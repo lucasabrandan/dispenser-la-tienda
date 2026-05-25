@@ -14,6 +14,7 @@ import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 import EjecutarAdminSheet from '../servicio/EjecutarAdminSheet';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
+import DateInput from '../ui/DateInput';
 
 
 function M({ valor, className = '' }) {
@@ -363,12 +364,12 @@ export default function ServicioManager({
                             ))}
                         </div>
                         <div className="flex gap-2 items-center">
-                            <input type="date" value={filtros.desde}
-                                onChange={e => filtros.aplicarRango(e.target.value, filtros.hasta)}
+                            <DateInput value={filtros.desde}
+                                onChange={v => filtros.aplicarRango(v, filtros.hasta)}
                                 className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
                             <span className="text-[10px] text-[#A8A29E]">a</span>
-                            <input type="date" value={filtros.hasta}
-                                onChange={e => filtros.aplicarRango(filtros.desde, e.target.value)}
+                            <DateInput value={filtros.hasta}
+                                onChange={v => filtros.aplicarRango(filtros.desde, v)}
                                 className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
                         </div>
                         {esAdmin && tecnicos.length > 0 && (
