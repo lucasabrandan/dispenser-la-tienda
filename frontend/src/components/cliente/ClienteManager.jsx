@@ -127,8 +127,8 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
-            {/* LISTA / GRID — cards colapsadas, el detalle se abre como overlay */}
-            <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-3 xl:grid-cols-3">
+            {/* GRID de clientes */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
                 {clientesPagina.map(cliente => (
                     <ClienteCard
                         key={cliente.id} cliente={cliente} sedes={sedes} equipos={equipos} servicios={servicios}

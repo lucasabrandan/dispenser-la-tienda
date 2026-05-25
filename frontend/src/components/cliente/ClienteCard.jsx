@@ -40,35 +40,61 @@ export default function ClienteCard({
     // Dirección formateada
     const direccion = [cliente.calle, cliente.numero, cliente.localidad].filter(Boolean).join(' ');
 
-    // Vista colapsada (para el grid)
+    // Tipo de cliente por servicios: dorado=servicio, rojo=venta
+    const tieneTecnica = serviciosCli.some(s => s.servicioTipo === 'TECNICA');
+    const tieneVenta   = serviciosCli.some(s => s.servicioTipo === 'VENTA');
+    const borderColor  = tieneTecnica && tieneVenta ? '#A8A29E'
+                       : tieneTecnica ? '#D48800'
+                       : tieneVenta   ? '#D13A28'
+                       : 'transparent';
+    const tipoIcon     = tieneTecnica && tieneVenta ? '🔧🛒'
+                       : tieneTecnica ? '🔧'
+                       : tieneVenta   ? '🛒'
+                       : '';
+    const iniciales = cliente.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+
+    // Vista colapsada (grid card)
     if (!isExpanded) {
         return (
-            <button onClick={onToggleExpand}
-                className="w-full bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl border border-black/[0.07] dark:border-white/[0.07] p-3.5 text-left active:scale-[0.98] transition-all">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 shrink-0 bg-[#D13A28] dark:bg-[#E8422F] rounded-xl flex items-center justify-center">
-                        <span className="text-white font-black text-[12px]">
-                            {cliente.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()}
-                        </span>
+            <div onClick={onToggleExpand}
+                className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07]"
+                style={{ borderLeft: borderColor !== 'transparent' ? `3px solid ${borderColor}` : undefined }}>
+                {/* Avatar + tipo */}
+                <div className="flex items-center justify-between px-3 pt-3">
+                    <div className="w-9 h-9 shrink-0 bg-[#D13A28] dark:bg-[#E8422F] rounded-lg flex items-center justify-center">
+                        <span className="text-white font-black text-[11px]">{iniciales}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">{cliente.nombre}</p>
-                            {esEmpresa && (
-                                <span className="shrink-0 text-[7px] font-black px-1.5 py-0.5 rounded bg-[#D48800]/15 text-[#D48800] dark:text-[#F0A500]">EMP</span>
-                            )}
-                        </div>
-                        <p className="text-[10px] text-[#A8A29E] mt-0.5 truncate">
-                            {cliente.localidad}
-                            {ultimoServicio ? ` · Últ: ${formatFecha(ultimoServicio.fecha)}` : ''}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                        {alertaSinServicio && <span className="w-2 h-2 rounded-full bg-[#D48800]" />}
-                        <span className="text-[9px] font-black text-[#A8A29E]">{eqCli.length} eq</span>
+                    <div className="flex items-center gap-1.5">
+                        {alertaSinServicio && <span className="w-2 h-2 rounded-full bg-[#D48800]" title={`${diasSinAtender}d`} />}
+                        {tipoIcon && <span className="text-[10px]">{tipoIcon}</span>}
                     </div>
                 </div>
-            </button>
+                {/* Info */}
+                <div className="px-3 pt-2 pb-2.5">
+                    <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-tight line-clamp-2 min-h-[32px]">
+                        {cliente.nombre}
+                    </p>
+                    <p className="text-[10px] text-[#A8A29E] mt-1 truncate">
+                        {cliente.localidad || 'Sin localidad'}
+                        {eqCli.length > 0 ? ` · ${eqCli.length} eq` : ''}
+                    </p>
+                </div>
+                {/* Acceso rápido */}
+                <div className="flex border-t border-black/[0.05] dark:border-white/[0.05]">
+                    {cliente.telefono && (
+                        <button onClick={e => { e.stopPropagation(); abrirWhatsApp(cliente.telefono, cliente.nombre); }}
+                            className="flex-1 py-2 text-center text-[10px] font-black text-[#25D366] active:bg-[#25D366]/10 transition-colors">
+                            💬
+                        </button>
+                    )}
+                    {onNuevoServicio && (
+                        <button onClick={e => { e.stopPropagation(); onNuevoServicio(cliente); }}
+                            className="flex-1 py-2 text-center text-[10px] font-black text-[#D48800] dark:text-[#F0A500] active:bg-[#D48800]/10 transition-colors border-l border-black/[0.05] dark:border-white/[0.05]">
+                            🔧
+                        </button>
+                    )}
+                </div>
+            </div>
         );
     }
 
