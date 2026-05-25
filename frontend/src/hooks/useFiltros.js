@@ -10,7 +10,7 @@ const finMes    = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
  * Recibe un array de items con campo `fecha` (YYYY-MM-DD) y `estado` opcional.
  * Devuelve los items filtrados y paginados + helpers para los controles.
  */
-export function useFiltros(items = [], { porPagina = 10, campoFecha = 'fecha', campoEstado = 'estado', campoBusqueda = null, campoBusquedaFn = null } = {}) {
+export function useFiltros(items = [], { porPagina = 15, campoFecha = 'fecha', campoEstado = 'estado', campoBusqueda = null, campoBusquedaFn = null } = {}) {
 
     const [pagina,       setPagina]       = useState(1);
     const [busqueda,     setBusqueda]     = useState('');
