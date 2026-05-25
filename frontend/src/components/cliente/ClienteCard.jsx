@@ -57,42 +57,20 @@ export default function ClienteCard({
     if (!isExpanded) {
         return (
             <div onClick={onToggleExpand}
-                className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07]"
+                className="bg-[#FFFFFF] dark:bg-[#242424] rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] p-3 flex flex-col justify-between min-h-[80px]"
                 style={{ borderLeft: borderColor !== 'transparent' ? `3px solid ${borderColor}` : undefined }}>
-                {/* Avatar + tipo */}
-                <div className="flex items-center justify-between px-3 pt-3">
-                    <div className="w-9 h-9 shrink-0 bg-[#D13A28] dark:bg-[#E8422F] rounded-lg flex items-center justify-center">
-                        <span className="text-white font-black text-[11px]">{iniciales}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        {alertaSinServicio && <span className="w-2 h-2 rounded-full bg-[#D48800]" title={`${diasSinAtender}d`} />}
-                        {tipoIcon && <span className="text-[10px]">{tipoIcon}</span>}
-                    </div>
-                </div>
-                {/* Info */}
-                <div className="px-3 pt-2 pb-2.5">
-                    <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-tight line-clamp-2 min-h-[32px]">
-                        {cliente.nombre}
-                    </p>
-                    <p className="text-[10px] text-[#A8A29E] mt-1 truncate">
-                        {cliente.localidad || 'Sin localidad'}
+                <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-tight line-clamp-2">
+                    {cliente.nombre}
+                </p>
+                <div className="flex items-center justify-between mt-2">
+                    <p className="text-[10px] text-[#A8A29E] truncate flex-1">
+                        {cliente.localidad || '—'}
                         {eqCli.length > 0 ? ` · ${eqCli.length} eq` : ''}
                     </p>
-                </div>
-                {/* Acceso rápido */}
-                <div className="flex border-t border-black/[0.05] dark:border-white/[0.05]">
-                    {cliente.telefono && (
-                        <button onClick={e => { e.stopPropagation(); abrirWhatsApp(cliente.telefono, cliente.nombre); }}
-                            className="flex-1 py-2 text-center text-[10px] font-black text-[#25D366] active:bg-[#25D366]/10 transition-colors">
-                            💬
-                        </button>
-                    )}
-                    {onNuevoServicio && (
-                        <button onClick={e => { e.stopPropagation(); onNuevoServicio(cliente); }}
-                            className="flex-1 py-2 text-center text-[10px] font-black text-[#D48800] dark:text-[#F0A500] active:bg-[#D48800]/10 transition-colors border-l border-black/[0.05] dark:border-white/[0.05]">
-                            🔧
-                        </button>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0 ml-1">
+                        {alertaSinServicio && <span className="w-1.5 h-1.5 rounded-full bg-[#D48800]" />}
+                        {tipoIcon && <span className="text-[11px]">{tipoIcon}</span>}
+                    </div>
                 </div>
             </div>
         );
