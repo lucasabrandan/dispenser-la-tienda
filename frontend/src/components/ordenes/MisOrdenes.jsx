@@ -4,6 +4,8 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
+import SwipeColumns from '../ui/SwipeColumns';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-[#E8E5E0] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
@@ -37,7 +39,6 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
         <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}>
             <div className="p-4">
-                {/* Prioridad + título + hora */}
                 <div className="flex items-start gap-2 mb-2">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -53,19 +54,16 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                     </div>
                 </div>
 
-                {/* Cliente — solo visible mientras la orden está activa */}
                 {!esFinal && orden.clienteNombre && (
                     <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] font-bold">🏢 {orden.clienteNombre}</p>
                 )}
 
-                {/* Monto estimado + forma de pago — solo visible mientras la orden está activa */}
                 {!esFinal && orden.montoEstimado && (
                     <p className="text-[12px] font-black text-[#D48800] dark:text-[#F0A500] mt-0.5">
                         💰 ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}
                     </p>
                 )}
 
-                {/* Dirección con link a Maps — solo visible mientras la orden está activa */}
                 {!esFinal && orden.direccion && (
                     <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
                         target="_blank" rel="noreferrer"
@@ -75,7 +73,6 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                     </a>
                 )}
 
-                {/* Instrucciones — solo visibles mientras la orden está activa */}
                 {!esFinal && orden.descripcion && (
                     <>
                         <button onClick={() => setExpandido(v => !v)}
@@ -91,7 +88,6 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                     </>
                 )}
 
-                {/* Nota guardada */}
                 {orden.notasTecnico && (
                     <p className="mt-2 text-[11px] text-[#16A34A] dark:text-[#4ADE80]">
                         📝 {orden.notasTecnico}
@@ -99,12 +95,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                 )}
             </div>
 
-            {/* Barra acciones */}
             {!esFinal && sig && (
-                <div className="flex flex-col gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]"
-                    style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-
-                    {/* EN_SITIO sin presupuesto: forzar Registrar trabajo */}
+                <div className="flex flex-col gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
                     {orden.estado === 'EN_SITIO' && !orden.presupuestoId ? (
                         <>
                             <button onClick={() => onRegistrarTrabajo(orden)}
@@ -126,7 +118,6 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                             </p>
                         </>
                     ) : (
-                        /* PENDIENTE → EN_CAMINO → EN_SITIO: avance lineal */
                         <button onClick={() => onAvanzar(orden.id, sig.estado)}
                             className={`w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all ${sig.color}`}>
                             {sig.label}
@@ -145,7 +136,6 @@ function MesCard({ d, fmt, labelMes }) {
     return (
         <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
             style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
-            {/* Header colapsable */}
             <button onClick={() => setAbierto(v => !v)}
                 className="w-full flex items-center justify-between px-4 py-3 active:bg-[#EFEDEA] dark:active:bg-[#1C1C1C] transition-colors">
                 <div className="flex items-center gap-2">
@@ -163,35 +153,31 @@ function MesCard({ d, fmt, labelMes }) {
                     <span className="text-[10px] text-[#A8A29E]">{abierto ? '▲' : '▼'}</span>
                 </div>
             </button>
-
-            {/* Desglose expandido */}
             {abierto && (
-                <>
-                    <div className="px-4 pb-3 space-y-1.5 border-t border-black/[0.06] dark:border-white/[0.06] pt-3">
-                        <div className="flex justify-between text-[11px]">
-                            <span className="text-[#57534E] dark:text-[#9E9A94]">Facturado</span>
-                            <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${fmt(d.totalFacturado)}</span>
-                        </div>
-                        <div className="flex justify-between text-[11px]">
-                            <span className="text-[#A8A29E]">− Impuestos (30%)</span>
-                            <span className="text-[#D13A28] dark:text-[#E8422F]">−${fmt(d.totalImpuestos)}</span>
-                        </div>
-                        {parseFloat(d.totalRepuestos || 0) > 0 && (
-                            <div className="flex justify-between text-[11px]">
-                                <span className="text-[#A8A29E]">− Repuestos</span>
-                                <span className="text-[#D13A28] dark:text-[#E8422F]">−${fmt(d.totalRepuestos)}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between text-[11px] pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
-                            <span className="text-[#57534E] dark:text-[#9E9A94]">Ganancia neta</span>
-                            <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${fmt(d.gananciaNet)}</span>
-                        </div>
-                        <div className="flex justify-between text-[11px] font-black">
-                            <span className="text-[#D48800] dark:text-[#F0A500]">Tu parte (50%)</span>
-                            <span className="text-[#D48800] dark:text-[#F0A500]">${fmt(d.totalTecnico)}</span>
-                        </div>
+                <div className="px-4 pb-3 space-y-1.5 border-t border-black/[0.06] dark:border-white/[0.06] pt-3">
+                    <div className="flex justify-between text-[11px]">
+                        <span className="text-[#57534E] dark:text-[#9E9A94]">Facturado</span>
+                        <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${fmt(d.totalFacturado)}</span>
                     </div>
-                </>
+                    <div className="flex justify-between text-[11px]">
+                        <span className="text-[#A8A29E]">− Impuestos (30%)</span>
+                        <span className="text-[#D13A28] dark:text-[#E8422F]">−${fmt(d.totalImpuestos)}</span>
+                    </div>
+                    {parseFloat(d.totalRepuestos || 0) > 0 && (
+                        <div className="flex justify-between text-[11px]">
+                            <span className="text-[#A8A29E]">− Repuestos</span>
+                            <span className="text-[#D13A28] dark:text-[#E8422F]">−${fmt(d.totalRepuestos)}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between text-[11px] pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
+                        <span className="text-[#57534E] dark:text-[#9E9A94]">Ganancia neta</span>
+                        <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${fmt(d.gananciaNet)}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px] font-black">
+                        <span className="text-[#D48800] dark:text-[#F0A500]">Tu parte (50%)</span>
+                        <span className="text-[#D48800] dark:text-[#F0A500]">${fmt(d.totalTecnico)}</span>
+                    </div>
+                </div>
             )}
         </div>
     );
@@ -200,7 +186,7 @@ function MesCard({ d, fmt, labelMes }) {
 function RendimientoTab({ tecnicoId }) {
     const [datos,    setDatos]    = useState([]);
     const [cargando, setCargando] = useState(false);
-    const [tick,     setTick]     = useState(0); // para forzar recarga
+    const [tick,     setTick]     = useState(0);
 
     const cargar = () => {
         if (!tecnicoId) return;
@@ -218,7 +204,7 @@ function RendimientoTab({ tecnicoId }) {
     if (datos.length === 0) return (
         <div className="text-center py-12 space-y-3">
             <p className="text-[#A8A29E]">Sin trabajos registrados aún</p>
-                <button onClick={() => setTick(t => t + 1)}
+            <button onClick={() => setTick(t => t + 1)}
                 className="text-[11px] font-bold text-[#D13A28] dark:text-[#E8422F] px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">
                 Recargar
             </button>
@@ -231,7 +217,6 @@ function RendimientoTab({ tecnicoId }) {
         return `${MESES_ES[parseInt(m)]} ${y}`;
     };
 
-    // Totales acumulados
     const totalFact     = datos.reduce((s, d) => s + parseFloat(d.totalFacturado || 0), 0);
     const totalImp      = datos.reduce((s, d) => s + parseFloat(d.totalImpuestos  || 0), 0);
     const totalReps     = datos.reduce((s, d) => s + parseFloat(d.totalRepuestos  || 0), 0);
@@ -241,25 +226,21 @@ function RendimientoTab({ tecnicoId }) {
 
     return (
         <div className="space-y-4">
-            {/* Botón recargar */}
             <div className="flex justify-end">
                 <button onClick={() => setTick(t => t + 1)}
                     className="text-[11px] font-bold text-[#A8A29E] px-3 py-1.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] active:scale-95 transition-all">
                     ↻ Recargar
                 </button>
             </div>
-            {/* ── Acumulado total — protagonista ── */}
             <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
                 style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
                 <div className="p-4">
                     <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-1">
                         Total acumulado · {totalTrabajos} {totalTrabajos === 1 ? 'trabajo' : 'trabajos'}
                     </p>
-                    {/* Tu parte — grande */}
                     <p className="text-[42px] font-black text-[#D48800] dark:text-[#F0A500] leading-none mb-3">
                         ${fmt(totalTecni)}
                     </p>
-                    {/* Desglose compacto */}
                     <div className="space-y-1">
                         <div className="flex justify-between text-[11px]">
                             <span className="text-[#A8A29E]">Facturado</span>
@@ -288,7 +269,6 @@ function RendimientoTab({ tecnicoId }) {
                 </div>
             </div>
 
-            {/* ── Desglose por mes (colapsable) ── */}
             <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest px-1">
                 Por mes · tocá para ver detalle
             </p>
@@ -299,11 +279,16 @@ function RendimientoTab({ tecnicoId }) {
     );
 }
 
+const TAB_DEFS = [
+    { id: 'activas',     label: 'Activas',     fullLabel: 'Activas',     color: '#D13A28', icon: '📌' },
+    { id: 'historial',   label: 'Completadas', fullLabel: 'Completadas', color: '#16A34A', icon: '✅' },
+    { id: 'rendimiento', label: 'Rendimiento', fullLabel: 'Rendimiento', color: '#D48800', icon: '📊' },
+];
+
 export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado, recargar } = useOrdenes({ tecnicoId });
     const [tab, setTab] = useState('activas');
 
-    // Historial (completadas) — se carga del endpoint dedicado, no del array activas
     const [historial,        setHistorial]        = useState([]);
     const [cargandoHistorial, setCargandoHistorial] = useState(false);
 
@@ -321,11 +306,8 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         cargarHistorial();
     }, [tab, cargarHistorial]);
 
-    // Estado para abrir EjecutarOrdenSheet directamente (órdenes con presupuesto vinculado)
     const [servicioEjecutando, setServicioEjecutando] = useState(null);
     const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);
-
-    // Estado para abrir ModalRegistrarTrabajo (órdenes sin presupuesto)
     const [ordenRegistrando, setOrdenRegistrando] = useState(null);
 
     const handleEjecutar = async (orden) => {
@@ -339,7 +321,6 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     };
 
     const handleConfirmado = async () => {
-        // Avanzar la orden a COMPLETADA — sincroniza servicio a COMPLETADO (falta cobro)
         if (ordenEjecutandoId) {
             try {
                 await api.patch(`/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' });
@@ -353,14 +334,12 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         setOrdenEjecutandoId(null);
         if (recargar) recargar();
         setHistorial([]);
-        // Ir directo al tab rendimiento para que el técnico vea sus ganancias
         setTab('rendimiento');
     };
 
     const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
     const lista   = tab === 'activas' ? activas : historial;
 
-    // Agrupar activas/completadas por fecha
     const porFecha = lista.reduce((acc, o) => {
         const k = o.fechaProgramada;
         if (!acc[k]) acc[k] = [];
@@ -369,68 +348,67 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     }, {});
 
     const hoy = new Date().toISOString().split('T')[0];
-
     const formatFecha = (f) => {
         if (f === hoy) return 'Hoy';
         const d = new Date(f + 'T00:00:00');
         return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
     };
 
-    const TABS = [
-        { id: 'activas',      label: `Activas (${activas.length})` },
-        { id: 'historial',    label: `Completadas (${historial.length})` },
-        { id: 'rendimiento',  label: '📊 Rendimiento' },
-    ];
+    // SwipeColumns
+    const columns = TAB_DEFS.map(t => ({
+        ...t,
+        count: t.id === 'activas' ? activas.length : t.id === 'historial' ? historial.length : null,
+    }));
+
+    const tabIds = TAB_DEFS.map(t => t.id);
+    const swipeHandlers = useSwipeGesture(tabIds, tab, setTab);
 
     return (
         <>
-        <div className="p-4 max-w-2xl mx-auto">
-            {/* Header */}
-            <div className="mb-5">
-                <h1 className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Mis Órdenes</h1>
-                <p className="text-[11px] text-[#A8A29E]">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
-            </div>
+        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]" {...swipeHandlers}>
+            <div className="max-w-2xl mx-auto px-4 pt-4">
+                {/* Header */}
+                <div className="mb-4">
+                    <h1 className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Mis Órdenes</h1>
+                    <p className="text-[11px] text-[#A8A29E]">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
+                </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-                {TABS.map(t => (
-                    <button key={t.id} onClick={() => setTab(t.id)}
-                        className={`shrink-0 px-4 py-2 rounded-xl font-bold text-[12px] transition-all active:scale-95 ${
-                            tab === t.id
-                                ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                : 'bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]'
-                        }`}>
-                        {t.label}
-                    </button>
-                ))}
-            </div>
+                {/* SwipeColumns */}
+                <div className="mb-4">
+                    <SwipeColumns columns={columns} activeId={tab} onChangeColumn={setTab} />
+                </div>
 
-            {/* Contenido de cada tab */}
-            {tab === 'rendimiento' ? (
-                <RendimientoTab tecnicoId={tecnicoId} />
-            ) : (tab === 'activas' ? cargando : cargandoHistorial) ? (
-                <p className="text-center text-[#A8A29E] py-12">Cargando...</p>
-            ) : lista.length === 0 ? (
-                <p className="text-center text-[#A8A29E] py-12">
-                    {tab === 'activas' ? '🎉 Sin órdenes pendientes' : 'Sin historial aún'}
-                </p>
-            ) : (
-                Object.entries(porFecha).map(([fecha, items]) => (
-                    <div key={fecha} className="mb-6">
-                        <p className="text-[11px] font-black text-[#A8A29E] uppercase tracking-wider mb-3 capitalize">
-                            {formatFecha(fecha)}
-                        </p>
-                        <div className="space-y-3">
-                            {items.map(o => (
-                                <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} />
-                            ))}
-                        </div>
+                {/* Contenido */}
+                {tab === 'rendimiento' ? (
+                    <RendimientoTab tecnicoId={tecnicoId} />
+                ) : (tab === 'activas' ? cargando : cargandoHistorial) ? (
+                    <div className="flex flex-col gap-2">
+                        {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
                     </div>
-                ))
-            )}
+                ) : lista.length === 0 ? (
+                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <p className="text-3xl mb-2">{tab === 'activas' ? '🎉' : '📋'}</p>
+                        <p className="text-[13px] font-bold text-[#A8A29E]">
+                            {tab === 'activas' ? 'Sin órdenes pendientes' : 'Sin historial aún'}
+                        </p>
+                    </div>
+                ) : (
+                    Object.entries(porFecha).map(([fecha, items]) => (
+                        <div key={fecha} className="mb-5">
+                            <p className="text-[11px] font-black text-[#A8A29E] uppercase tracking-wider mb-2 capitalize">
+                                {formatFecha(fecha)}
+                            </p>
+                            <div className="space-y-2">
+                                {items.map(o => (
+                                    <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} />
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
 
-        {/* Modal para registrar trabajo en órdenes sin presupuesto */}
         {ordenRegistrando && (
             <ModalRegistrarTrabajo
                 orden={ordenRegistrando}
@@ -440,7 +418,6 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
             />
         )}
 
-        {/* Overlay EjecutarOrdenSheet para órdenes con presupuesto vinculado */}
         {servicioEjecutando && (
             <EjecutarOrdenSheet
                 servicio={servicioEjecutando}
