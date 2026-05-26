@@ -3,6 +3,7 @@ import CreatableSelect from 'react-select/creatable';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'react-hot-toast';
 import { buildSelectStyles } from './ServicioUI';
+import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
 
 async function comprimirFoto(file) {
     try {
@@ -41,6 +42,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
     const [fotoAntes, setFotoAntes]       = useState(null);
     const [fotoDespues, setFotoDespues]   = useState(null);
     const [guardando, setGuardando]       = useState(false);
+    const [sheetRepuestos, setSheetRepuestos] = useState(false);
     const [count, setCount]               = useState(0);
     const refCamaraAntes   = useRef(null);
     const refGaleriaAntes  = useRef(null);
@@ -267,20 +269,27 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                                 className="flex-1 bg-transparent text-white text-xl font-black outline-none" />
                         </div>
 
-                        {/* Repuestos (copiados) */}
-                        {repuestos.length > 0 && (
-                            <div className="rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] p-3">
-                                <p className="text-[9px] font-black text-[#A8A29E] uppercase mb-1.5">
-                                    Repuestos <span className="text-[#D48800]">(copiados)</span>
-                                </p>
-                                {repuestos.map((r, i) => (
-                                    <div key={i} className="flex justify-between text-[11px] py-0.5">
-                                        <span className="text-[#57534E] dark:text-[#9E9A94]">{r.cantidad}x {r.nombre}</span>
-                                        <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${Math.round(r.subtotal).toLocaleString('es-AR')}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        {/* Repuestos */}
+                        <div>
+                            <button type="button" onClick={() => setSheetRepuestos(true)}
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                                <span>{repuestos.length > 0
+                                    ? `📦 ${repuestos.length} repuesto${repuestos.length > 1 ? 's' : ''}`
+                                    : '📦 Repuestos'
+                                } {repuestos.length > 0 ? '(copiados)' : ''}</span>
+                                <span className="text-[10px]">✏</span>
+                            </button>
+                            {repuestos.length > 0 && (
+                                <div className="mt-1.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] overflow-hidden">
+                                    {repuestos.map((r, i) => (
+                                        <div key={i} className="flex justify-between text-[11px] px-3 py-1.5 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
+                                            <span className="text-[#57534E] dark:text-[#9E9A94]">{r.cantidad}x {r.nombre}</span>
+                                            <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${Math.round(r.subtotal).toLocaleString('es-AR')}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Footer fijo */}
@@ -300,6 +309,14 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                     </div>
                 </div>
             </div>
+            {/* Sheet de repuestos */}
+            <RepuestosBottomSheet
+                isOpen={sheetRepuestos}
+                onClose={() => setSheetRepuestos(false)}
+                repuestos={db.repuestos || []}
+                seleccionados={repuestos}
+                onChange={setRepuestos}
+            />
         </>
     );
 }
