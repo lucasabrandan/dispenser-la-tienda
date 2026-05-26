@@ -10,6 +10,7 @@ import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import ModalCotizacionVolumen from './presupuesto/ModalCotizacionVolumen';
 import ModalDespacharPresupuesto from './presupuesto/ModalDespacharPresupuesto';
 import EjecutarAdminSheet from './servicio/EjecutarAdminSheet';
+import ServicioForm from './servicio/ServicioForm';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 
 function M({ valor, className = '' }) {
@@ -28,7 +29,7 @@ function IconBtn({ onClick, title, children, cls = '' }) {
 }
 
 // ─── Card de presupuesto ─────────────────────────────────────────────────────
-function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, onArchivar, onEjecutar, onDespachar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
+function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, onArchivar, onEjecutar, onDespachar, onEditar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
     const [expandido, setExpandido] = useState(false);
     const [menuAbierto, setMenuAbierto] = useState(false);
     const total    = calcularTotal(s);
@@ -136,6 +137,9 @@ function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, onArchivar, onEj
             {/* Barra de acciones */}
             <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
                 <IconBtn onClick={() => onPDF(s)} title="PDF" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+                {onEditar && (
+                    <IconBtn onClick={() => onEditar(s)} title="Editar" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✏️</IconBtn>
+                )}
 
                 {/* Menú overflow */}
                 <div className="relative">
@@ -220,6 +224,7 @@ export default function PresupuestosManager() {
     const [modalCotizar, setModalCotizar]         = useState(false);
     const [presupuestoDespachar, setPresupuestoDespachar] = useState(null);
     const [presupuestoEjecutar, setPresupuestoEjecutar] = useState(null);
+    const [presupuestoEditar, setPresupuestoEditar]     = useState(null);
 
     useEffect(() => { cargar(); }, []); // eslint-disable-line
 
@@ -436,6 +441,7 @@ export default function PresupuestosManager() {
                                 onArchivar={archivar}
                                 onEjecutar={(serv) => setPresupuestoEjecutar(serv)}
                                 onDespachar={setPresupuestoDespachar}
+                                onEditar={esAdmin ? setPresupuestoEditar : null}
                                 ejecutado={ejecutadosIds.has(s.id)}
                                 modoSeleccion={modoSeleccion}
                                 seleccionado={seleccionados.has(s.id)}
@@ -471,12 +477,35 @@ export default function PresupuestosManager() {
                         setPresupuestoEjecutar(null);
                     }}
                     onEditarCompleto={() => {
-                        // Abrir el presupuesto en modo edición (redirigir a servicio técnico)
-                        toast('Editá el presupuesto desde Servicio Técnico', { icon: 'ℹ️' });
+                        const s = presupuestoEjecutar;
                         setPresupuestoEjecutar(null);
+                        setPresupuestoEditar(s);
                     }}
                     onCerrar={() => setPresupuestoEjecutar(null)}
                 />
+            )}
+
+            {/* Modal de edición */}
+            {presupuestoEditar && (
+                <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/50">
+                    <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-[#FFFFFF] dark:bg-[#141414]">
+                        <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-[#FFFFFF] dark:bg-[#141414]">
+                            <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
+                        </div>
+                        <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
+                            <div>
+                                <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">✏️ Editar Presupuesto</h3>
+                                <p className="text-[11px] text-[#A8A29E] mt-0.5">#{presupuestoEditar.id} · {presupuestoEditar.clienteNombre}</p>
+                            </div>
+                            <button onClick={() => setPresupuestoEditar(null)}
+                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">✕</button>
+                        </div>
+                        <ServicioForm
+                            servicioParaEditar={presupuestoEditar}
+                            onSaved={() => { setPresupuestoEditar(null); cargar(); }}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );

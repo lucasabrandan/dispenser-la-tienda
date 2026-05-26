@@ -44,6 +44,8 @@ export default function ServicioForm({
     const [paso, setPaso]               = useState(0);
     const [nombreLibre, setNombreLibre] = useState('');
     const [sheetVisible, setSheetVisible] = useState(false);
+    // Snapshot para PDF post-guardado (finalizar vacía ticketItems)
+    const snapshotRef = useRef(null);
     hook._setNombreLibre = setNombreLibre;
 
     // Cuando se recupera un borrador, avanzar al paso correcto
@@ -67,22 +69,29 @@ export default function ServicioForm({
     const clienteObj  = db.clientes?.find(c => c.id?.toString() === clienteId);
 
     // Genera PDF de previsualización (sin firmas — botón 📄 de la barra)
+    // Si ticketItems está vacío (post-guardado), usa la snapshot guardada antes del reset
     const dispararPDF = async () => {
-        const sedeObj = db.sedes?.find(s => s.id === itemActual.sedeId);
-        const { totalConDescuento } = calcularResumenGanancia();
+        const items = ticketItems.length > 0 ? ticketItems : snapshotRef.current?.ticketItems;
+        if (!items || items.length === 0) {
+            toast.error('No hay datos para el PDF');
+            return;
+        }
+        const snap = snapshotRef.current || {};
+        const sedeObj = db.sedes?.find(s => s.id === (itemActual.sedeId || snap.sedeId));
+        const totalFinal = ticketItems.length > 0 ? calcularResumenGanancia().totalConDescuento : snap.totalConDescuento;
         try {
             await generarRemitoPDFPremium({
                 esPresupuesto:           !estaBloqueado,
-                servicioId:              idEdicion || null,
-                nroDocumentoExistente:   idEdicion ? (localStorage.getItem(`pdf_nro_${idEdicion}`) || null) : null,
-                cliente:                 clienteObj || { nombre: nombreLibre || 'Particular' },
-                sede:                    sedeObj || { nombreSede: 'Mostrador' },
+                servicioId:              idEdicion || snap.servicioId || null,
+                nroDocumentoExistente:   (idEdicion || snap.servicioId) ? (localStorage.getItem(`pdf_nro_${idEdicion || snap.servicioId}`) || null) : null,
+                cliente:                 clienteObj || snap.cliente || { nombre: nombreLibre || 'Particular' },
+                sede:                    sedeObj || snap.sede || { nombreSede: 'Mostrador' },
                 tecnico:                 tecnicoNombre,
-                ticketItems,
-                descuentoPorcentaje,
-                totalFinal:              totalConDescuento,
-                fechaServicio,
-                leyenda,
+                ticketItems:             items,
+                descuentoPorcentaje:     ticketItems.length > 0 ? descuentoPorcentaje : (snap.descuentoPorcentaje || 0),
+                totalFinal,
+                fechaServicio:           fechaServicio || snap.fechaServicio,
+                leyenda:                 leyenda || snap.leyenda || '',
                 firmaTecnico:            null,
                 firmaCliente:            null,
             });
@@ -94,21 +103,27 @@ export default function ServicioForm({
 
     // Genera PDF con firmas (llamado desde CerrarTicketSheet al cobrar)
     const dispararPDFConFirmas = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {
-        const sedeObj = db.sedes?.find(s => s.id === itemActual.sedeId);
-        const { totalConDescuento } = calcularResumenGanancia();
+        const items = ticketItems.length > 0 ? ticketItems : snapshotRef.current?.ticketItems;
+        if (!items || items.length === 0) {
+            toast.error('No hay datos para el PDF');
+            return;
+        }
+        const snap = snapshotRef.current || {};
+        const sedeObj = db.sedes?.find(s => s.id === (itemActual.sedeId || snap.sedeId));
+        const totalFinal = ticketItems.length > 0 ? calcularResumenGanancia().totalConDescuento : snap.totalConDescuento;
         try {
             await generarRemitoPDFPremium({
                 esPresupuesto:           false,
-                servicioId:              idEdicion || null,
-                nroDocumentoExistente:   idEdicion ? (localStorage.getItem(`pdf_nro_${idEdicion}`) || null) : null,
-                cliente:                 clienteObj || { nombre: nombreLibre || 'Particular' },
-                sede:                    sedeObj || { nombreSede: 'Mostrador' },
+                servicioId:              idEdicion || snap.servicioId || null,
+                nroDocumentoExistente:   (idEdicion || snap.servicioId) ? (localStorage.getItem(`pdf_nro_${idEdicion || snap.servicioId}`) || null) : null,
+                cliente:                 clienteObj || snap.cliente || { nombre: nombreLibre || 'Particular' },
+                sede:                    sedeObj || snap.sede || { nombreSede: 'Mostrador' },
                 tecnico:                 tecnicoNombre,
-                ticketItems,
-                descuentoPorcentaje,
-                totalFinal:              totalConDescuento,
-                fechaServicio,
-                leyenda,
+                ticketItems:             items,
+                descuentoPorcentaje:     ticketItems.length > 0 ? descuentoPorcentaje : (snap.descuentoPorcentaje || 0),
+                totalFinal,
+                fechaServicio:           fechaServicio || snap.fechaServicio,
+                leyenda:                 leyenda || snap.leyenda || '',
                 firmaTecnico,
                 firmaCliente,
                 incluirFirmas,
@@ -125,8 +140,22 @@ export default function ServicioForm({
 
     // Cobrar ahora: guarda como REALIZADO, genera PDF con firmas
     const handleCobrar = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {
+        // Snapshot ANTES del reset
+        const sedeObj = db.sedes?.find(s => s.id === itemActual.sedeId);
+        snapshotRef.current = {
+            ticketItems: [...ticketItems],
+            sedeId: itemActual.sedeId,
+            sede: sedeObj || { nombreSede: 'Mostrador' },
+            cliente: clienteObj || { nombre: nombreLibre || 'Particular' },
+            descuentoPorcentaje,
+            totalConDescuento: calcularResumenGanancia().totalConDescuento,
+            fechaServicio,
+            leyenda,
+            servicioId: idEdicion || null,
+        };
         const result = await finalizar(true, buildOverrides());
         if (result?.ok) {
+            snapshotRef.current.servicioId = result.id;
             await dispararPDFConFirmas({ firmaTecnico, firmaCliente, incluirFirmas });
             if (onSaved) onSaved();
         }
@@ -134,9 +163,25 @@ export default function ServicioForm({
 
     // Guardar presupuesto: guarda como PRESUPUESTO, devuelve datos para despacho
     const handleGuardar = async () => {
+        // Snapshot ANTES del reset para que dispararPDF pueda usarla
+        const sedeObj = db.sedes?.find(s => s.id === itemActual.sedeId);
+        snapshotRef.current = {
+            ticketItems: [...ticketItems],
+            sedeId: itemActual.sedeId,
+            sede: sedeObj || { nombreSede: 'Mostrador' },
+            cliente: clienteObj || { nombre: nombreLibre || 'Particular' },
+            descuentoPorcentaje,
+            totalConDescuento: calcularResumenGanancia().totalConDescuento,
+            fechaServicio,
+            leyenda,
+            servicioId: idEdicion || null,
+        };
         const result = await finalizar(false, buildOverrides());
-        if (result?.ok && onSaved) onSaved();
-        return result; // CerrarTicketSheet usa { id, clienteId, clienteNombre }
+        if (result?.ok) {
+            snapshotRef.current.servicioId = result.id;
+            if (onSaved) onSaved();
+        }
+        return result;
     };
 
     return (
