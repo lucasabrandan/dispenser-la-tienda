@@ -240,39 +240,40 @@ export default function ServicioCard({
                     </IconBtn>
                     {menuAbierto && (
                         <>
-                            <div className="fixed inset-0 z-[100]" onClick={() => setMenuAbierto(false)} />
-                            <div className="absolute left-0 bottom-full mb-1 z-[101] w-48 rounded-xl shadow-2xl border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] overflow-hidden">
+                            <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuAbierto(false)} />
+                            <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
+                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
                                 <button onClick={() => { onGenerarPDF(servicio, { sinPrecios: true }); setMenuAbierto(false); }}
-                                    className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                     📋 PDF sin precios
                                 </button>
                                 {esPpto && onEditar && (
                                     <button onClick={() => { onEditar(servicio); setMenuAbierto(false); }}
-                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                         ✏️ Editar
                                     </button>
                                 )}
                                 {onDuplicar && (
                                     <button onClick={() => { onDuplicar(servicio); setMenuAbierto(false); }}
-                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                         ⧉ Duplicar
                                     </button>
                                 )}
                                 {!esArch && (
                                     <button onClick={() => { onArchivar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                         🗄️ Archivar
                                     </button>
                                 )}
                                 {esPpto && (
                                     <button onClick={() => { onRechazar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#EFEDEA] dark:hover:bg-[#3E3E3E] transition-colors">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] rounded-xl">
                                         ✗ Rechazar
                                     </button>
                                 )}
                                 {onEliminar && (
                                     <button onClick={() => { onEliminar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-3 py-2.5 text-left text-[12px] font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#FEE2E2] dark:hover:bg-[#3B1111] transition-colors">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] rounded-xl">
                                         🗑️ Eliminar
                                     </button>
                                 )}
