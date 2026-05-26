@@ -170,13 +170,13 @@ export function useRepuestoManager() {
                     fd.append('porcentajeMarkup', m);
                     fd.append('porcentajeImpuestos', i);
                     const costo = parseFloat(producto.costo) || 0;
-                    const precioEfectivo = costo * (1 + g / 100);
-                    const lista = precioEfectivo * (1 + m / 100);
+                    const precioBase = costo * (1 + g / 100);
+                    const precioFinal = precioBase * (1 + m / 100);
                     const costoBlanco = costo * 1.21;
-                    const facturado = costoBlanco * (1 + g / 100) * (1 + i / 100);
+                    const facturado = costoBlanco * (1 + g / 100) * (1 + m / 100) * (1 + i / 100);
                     const netoCliente = facturado / 1.21;
-                    fd.append('precio', precioEfectivo);
-                    fd.append('precioLista', lista);
+                    fd.append('precio', precioFinal);
+                    fd.append('precioLista', precioFinal);
                     fd.append('costoBlanco', costoBlanco);
                     fd.append('precioFacturado', facturado);
                     fd.append('precioNetoCliente', netoCliente);
