@@ -50,7 +50,7 @@ async function comprimirFoto(file) {
 
 const INITIAL_FORM = {
     id: null, sku: '', nombre: '', descripcion: '',
-    costo: '', porcentajeGanancia: '', precio: '',
+    costo: '', porcentajeGanancia: '', porcentajeMarkup: '', precio: '',
     costoBlanco: '', porcentajeImpuestos: '30',
     precioFacturado: '', precioNetoCliente: '',
     precioCantidad: '', cantidadMinima: '',
@@ -62,10 +62,12 @@ const INITIAL_FORM = {
 function calcularPrecios(f) {
     const costo  = parseFloat(f.costo) || 0;
     const margen = parseFloat(f.porcentajeGanancia) || 0;
+    const markup = parseFloat(f.porcentajeMarkup) || 0;
     const imp    = parseFloat(f.porcentajeImpuestos) || 0;
 
-    // Negro: costo + ganancia
-    const precioNegro = costo > 0 ? costo * (1 + margen / 100) : 0;
+    // Negro: costo + ganancia + markup
+    const precioBase = costo > 0 ? costo * (1 + margen / 100) : 0;
+    const precioNegro = precioBase > 0 ? precioBase * (1 + markup / 100) : 0;
 
     // Blanco: costo × 1.21 (auto si no fue editado manualmente)
     const costoB = parseFloat(f.costoBlanco) || (costo > 0 ? costo * 1.21 : 0);
@@ -172,6 +174,7 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
             if (form.descripcion)              fd.append('descripcion', form.descripcion);
             if (form.costo !== '')             fd.append('costo', parseFloat(form.costo) || 0);
             if (form.porcentajeGanancia !== '') fd.append('porcentajeGanancia', parseFloat(form.porcentajeGanancia) || 0);
+            if (form.porcentajeMarkup !== '')  fd.append('porcentajeMarkup', parseFloat(form.porcentajeMarkup) || 0);
             fd.append('precio', parseFloat(form.precio) || 0);
             fd.append('stock',  parseInt(form.stock) || 0);
 
@@ -358,6 +361,15 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                                 <input
                                     type="text" inputMode="decimal" value={form.porcentajeGanancia}
                                     onChange={e => cambiarFinanciero('porcentajeGanancia', e.target.value)}
+                                    placeholder="0"
+                                    className={inputBase}
+                                />
+                            </div>
+                            <div>
+                                <label className={`${labelBase} text-[#D48800] dark:text-[#F0A500]`}>Markup %</label>
+                                <input
+                                    type="text" inputMode="decimal" value={form.porcentajeMarkup}
+                                    onChange={e => cambiarFinanciero('porcentajeMarkup', e.target.value)}
                                     placeholder="0"
                                     className={inputBase}
                                 />
