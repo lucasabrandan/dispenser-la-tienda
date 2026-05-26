@@ -383,13 +383,16 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     setTicketItems(nueva);
   };
 
-  const agregarAlTicket = async () => {
+  const agregarAlTicket = async (overrides) => {
     if (estaBloqueado) return;
 
-    const tieneSerial      = itemActual.equipoSerial?.trim();
-    const tieneDescripcion = itemActual.trabajo?.trim();
-    const tieneRepuestos   = itemActual.repuestosUsados?.length > 0;
-    const tieneMO          = (parseFloat(itemActual.costoExtra) || 0) > 0;
+    // Si se pasan overrides (ej: CargaRapidaSheet), mergear con itemActual
+    const item = overrides ? { ...itemActual, ...overrides } : itemActual;
+
+    const tieneSerial      = item.equipoSerial?.trim();
+    const tieneDescripcion = item.trabajo?.trim();
+    const tieneRepuestos   = item.repuestosUsados?.length > 0;
+    const tieneMO          = (parseFloat(item.costoExtra) || 0) > 0;
 
     if (!tieneDescripcion && !tieneRepuestos && !tieneMO) {
       toast.error('Completá al menos la descripción del trabajo o agregá un repuesto');
@@ -397,11 +400,11 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     }
 
     // Guardar equipo nuevo en la BD silenciosamente si fue creado al vuelo
-    if (itemActual.esNuevoEquipo && tieneSerial) {
+    if (item.esNuevoEquipo && tieneSerial) {
       const yaExiste = db.equipos?.some(e => e.numeroSerie === tieneSerial);
       if (!yaExiste) {
         // Resolver sedeId: elegida > única sede > auto-crear Principal con dirección del cliente > Mostrador
-        let sedeIdEquipo = itemActual.sedeId || null;
+        let sedeIdEquipo = item.sedeId || null;
         if (!sedeIdEquipo) {
           const sedesCliente = clienteId ? db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId) : [];
           if (sedesCliente.length === 1) {
@@ -420,8 +423,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         try {
           const res = await api.post('/equipos', {
             numeroSerie: tieneSerial,
-            modelo:      itemActual.modeloEquipo    || null,
-            ubicacion:   itemActual.ubicacionEquipo || null,
+            modelo:      item.modeloEquipo    || null,
+            ubicacion:   item.ubicacionEquipo || null,
             sedeId:      sedeIdEquipo || null,
           });
           setDb(prev => ({ ...prev, equipos: [...(prev.equipos || []), res.data] }));
@@ -432,12 +435,11 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     }
 
     // Si el equipo ya existe y el usuario cambió modelo o ubicación, actualizar en la BD
-    // para que futuros PDFs recuperen la info correctamente desde el historial
-    if (!itemActual.esNuevoEquipo && tieneSerial) {
+    if (!item.esNuevoEquipo && tieneSerial) {
       const equipoDB = db.equipos?.find(e => e.numeroSerie === tieneSerial);
       if (equipoDB?.id) {
-        const modeloOk  = itemActual.modeloEquipo?.trim();
-        const ubicOk    = itemActual.ubicacionEquipo?.trim();
+        const modeloOk  = item.modeloEquipo?.trim();
+        const ubicOk    = item.ubicacionEquipo?.trim();
         const diferente = (modeloOk && modeloOk !== equipoDB.modelo) ||
                           (ubicOk   && ubicOk   !== equipoDB.ubicacion);
         if (diferente) {
@@ -462,17 +464,17 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       }
     }
 
-    const extra  = Math.max(0, parseFloat(itemActual.costoExtra) || 0);
-    const totalR = itemActual.repuestosUsados.reduce((a, b) => a + b.subtotal, 0);
+    const extra  = Math.max(0, parseFloat(item.costoExtra) || 0);
+    const totalR = item.repuestosUsados.reduce((a, b) => a + b.subtotal, 0);
     const nuevoRenglon = {
-      ...itemActual,
+      ...item,
       equipoSerial:   tieneSerial || 'SIN-SN',
       costoExtra:     extra,
       totalCalculado: extra + totalR,
       resumenTexto:   tieneSerial
         ? `${tieneDescripcion || ''} | MO: $${extra}`
-        : `VENTA: ${itemActual.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`,
-      esVisita:       itemActual.esVisita || false,
+        : `VENTA: ${item.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`,
+      esVisita:       item.esVisita || false,
     };
     setTicketItems(prev => [...prev, nuevoRenglon]);
     // Calcular precioCliente default para pre-llenar el proximo item

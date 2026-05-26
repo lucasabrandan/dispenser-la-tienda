@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import CreatableSelect from 'react-select/creatable';
 import imageCompression from 'browser-image-compression';
 import { toast } from 'react-hot-toast';
+import { buildSelectStyles } from './ServicioUI';
 
 async function comprimirFoto(file) {
     try {
@@ -27,19 +29,46 @@ function fileADataUrl(file) {
 export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgregado }) {
     const {
         ticketItems, itemActual, setItemActual, agregarAlTicket,
+        db, clienteId,
     } = hook;
 
     const [serial, setSerial]         = useState('');
+    const [esNuevo, setEsNuevo]       = useState(true);
     const [ubicacion, setUbicacion]   = useState('');
     const [trabajo, setTrabajo]       = useState('');
     const [costoExtra, setCostoExtra] = useState('');
     const [repuestos, setRepuestos]   = useState([]);
-    const [foto, setFoto]             = useState(null);
-    const [guardando, setGuardando]   = useState(false);
-    const [count, setCount]           = useState(0);
-    const refCamara  = useRef(null);
-    const refGaleria = useRef(null);
+    const [fotoAntes, setFotoAntes]       = useState(null);
+    const [fotoDespues, setFotoDespues]   = useState(null);
+    const [guardando, setGuardando]       = useState(false);
+    const [count, setCount]               = useState(0);
+    const refCamaraAntes   = useRef(null);
+    const refGaleriaAntes  = useRef(null);
+    const refCamaraDespues = useRef(null);
+    const refGaleriaDespues = useRef(null);
     const serialRef  = useRef(null);
+
+    // Equipos del cliente para el selector
+    const equiposInventario = useMemo(() => {
+        if (!clienteId || !db.sedes?.length || !db.equipos?.length) return [];
+        const ids = db.sedes.filter(s => s.cliente?.id?.toString() === clienteId).map(s => s.id);
+        return db.equipos.filter(e => ids.includes(e.sedeId));
+    }, [clienteId, db.sedes, db.equipos]);
+
+    // Seriales ya cargados en el ticket (para no repetir)
+    const serialesEnTicket = useMemo(() => new Set(ticketItems.map(t => t.equipoSerial)), [ticketItems]);
+
+    const opcionesSerial = useMemo(() =>
+        equiposInventario
+            .filter(e => !serialesEnTicket.has(e.numeroSerie))
+            .map(e => ({
+                value: e.numeroSerie,
+                label: `${e.numeroSerie}${e.modelo ? ` — ${e.modelo}` : ''}${e.ubicacion ? ` (${e.ubicacion})` : ''}`,
+                equipo: e,
+            }))
+    , [equiposInventario, serialesEnTicket]);
+
+    const selectStyles = useMemo(() => buildSelectStyles(document.documentElement.classList.contains('dark')), []);
 
     // Al abrir, copiar datos del último equipo cargado
     useEffect(() => {
@@ -52,18 +81,20 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
         }
         setCount(0);
         setSerial('');
+        setEsNuevo(true);
         setUbicacion('');
-        setFoto(null);
+        setFotoAntes(null);
+        setFotoDespues(null);
         setTimeout(() => serialRef.current?.focus(), 300);
     }, [isOpen]); // eslint-disable-line
 
-    const handleFoto = async (e) => {
+    const handleFoto = (setter) => async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
         e.target.value = '';
         const compressed = await comprimirFoto(file);
         const dataUrl = await fileADataUrl(compressed);
-        if (dataUrl) setFoto(dataUrl);
+        if (dataUrl) setter(dataUrl);
     };
 
     const handleGuardar = async () => {
@@ -73,33 +104,28 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
         }
         setGuardando(true);
 
-        // Setear itemActual con los datos y llamar agregarAlTicket
-        setItemActual(prev => ({
-            ...prev,
+        // Pasar overrides directamente — evita race condition con setItemActual
+        await agregarAlTicket({
             equipoSerial: serial.trim() || 'SIN-SN',
             ubicacionEquipo: ubicacion.trim(),
             trabajo: trabajo.trim(),
             costoExtra: parseFloat(costoExtra) || 0,
             repuestosUsados: repuestos,
-            fotoAntes: foto,
-            fotoDespues: null,
-            esNuevoEquipo: true,
+            fotoAntes: fotoAntes,
+            fotoDespues: fotoDespues,
+            esNuevoEquipo: esNuevo,
             modeloEquipo: '',
-        }));
+        });
 
-        // Esperar a que el state se actualice y luego agregar
-        setTimeout(async () => {
-            await agregarAlTicket();
-            setCount(c => c + 1);
-            // Limpiar solo lo que cambia por equipo
-            setSerial('');
-            setUbicacion('');
-            setFoto(null);
-            setGuardando(false);
-            if (onEquipoAgregado) onEquipoAgregado();
-            // Focus al serial para el siguiente
-            setTimeout(() => serialRef.current?.focus(), 100);
-        }, 50);
+        setCount(c => c + 1);
+        setSerial('');
+        setEsNuevo(true);
+        setUbicacion('');
+        setFotoAntes(null);
+        setFotoDespues(null);
+        setGuardando(false);
+        if (onEquipoAgregado) onEquipoAgregado();
+        setTimeout(() => serialRef.current?.focus(), 100);
     };
 
     const totalCargado = ticketItems.reduce((a, b) => a + (b.totalCalculado || 0), 0);
@@ -129,34 +155,92 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
 
                     <div className="px-5 py-4 space-y-3">
 
-                        {/* Foto */}
-                        <div className="flex gap-2">
-                            <div className="flex-1 h-20 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07] flex items-center justify-center overflow-hidden">
-                                {foto
-                                    ? <img src={foto} className="w-full h-full object-cover" alt="Foto" />
-                                    : <span className="text-2xl opacity-30">📷</span>
-                                }
+                        {/* Fotos Antes / Después */}
+                        <div className="grid grid-cols-2 gap-2">
+                            {/* Antes */}
+                            <div>
+                                <label className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Antes</label>
+                                <div className="h-20 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07] flex items-center justify-center overflow-hidden relative">
+                                    {fotoAntes
+                                        ? <>
+                                            <img src={fotoAntes} className="w-full h-full object-cover" alt="Antes" />
+                                            <button onClick={() => setFotoAntes(null)}
+                                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-[10px] flex items-center justify-center">✕</button>
+                                          </>
+                                        : <span className="text-2xl opacity-30">📷</span>
+                                    }
+                                </div>
+                                <div className="flex gap-1 mt-1">
+                                    <button onClick={() => refCamaraAntes.current?.click()}
+                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                        📷
+                                    </button>
+                                    <button onClick={() => refGaleriaAntes.current?.click()}
+                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95">
+                                        🖼️
+                                    </button>
+                                </div>
+                                <input ref={refCamaraAntes} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFoto(setFotoAntes)} />
+                                <input ref={refGaleriaAntes} type="file" accept="image/*" className="hidden" onChange={handleFoto(setFotoAntes)} />
                             </div>
-                            <div className="flex flex-col gap-1.5">
-                                <button onClick={() => refCamara.current?.click()}
-                                    className="flex-1 px-3 rounded-xl text-[10px] font-black uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
-                                    📷 Cámara
-                                </button>
-                                <button onClick={() => refGaleria.current?.click()}
-                                    className="flex-1 px-3 rounded-xl text-[10px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95">
-                                    🖼️ Galería
-                                </button>
+                            {/* Después */}
+                            <div>
+                                <label className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Después</label>
+                                <div className="h-20 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07] flex items-center justify-center overflow-hidden relative">
+                                    {fotoDespues
+                                        ? <>
+                                            <img src={fotoDespues} className="w-full h-full object-cover" alt="Después" />
+                                            <button onClick={() => setFotoDespues(null)}
+                                                className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-[10px] flex items-center justify-center">✕</button>
+                                          </>
+                                        : <span className="text-2xl opacity-30">📷</span>
+                                    }
+                                </div>
+                                <div className="flex gap-1 mt-1">
+                                    <button onClick={() => refCamaraDespues.current?.click()}
+                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                        📷
+                                    </button>
+                                    <button onClick={() => refGaleriaDespues.current?.click()}
+                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95">
+                                        🖼️
+                                    </button>
+                                </div>
+                                <input ref={refCamaraDespues} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFoto(setFotoDespues)} />
+                                <input ref={refGaleriaDespues} type="file" accept="image/*" className="hidden" onChange={handleFoto(setFotoDespues)} />
                             </div>
-                            <input ref={refCamara} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFoto} />
-                            <input ref={refGaleria} type="file" accept="image/*" className="hidden" onChange={handleFoto} />
                         </div>
 
-                        {/* Serial */}
+                        {/* Serial — selector con equipos del cliente */}
                         <div>
-                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Serial *</label>
-                            <input ref={serialRef} value={serial} onChange={e => setSerial(e.target.value)}
-                                placeholder="Número de serie del equipo"
-                                className={inputCls} />
+                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">
+                                Equipo *
+                                {opcionesSerial.length > 0 && <span className="text-[#D48800] ml-1">({opcionesSerial.length} disponibles)</span>}
+                            </label>
+                            <CreatableSelect
+                                ref={serialRef}
+                                styles={selectStyles}
+                                menuPosition="fixed"
+                                menuPlacement="auto"
+                                menuPortalTarget={document.body}
+                                options={opcionesSerial}
+                                value={serial ? { label: serial, value: serial } : null}
+                                onChange={s => {
+                                    if (!s) { setSerial(''); setUbicacion(''); setEsNuevo(true); return; }
+                                    const eq = s.equipo || db.equipos?.find(e => e.numeroSerie === s.value);
+                                    setSerial(s.value);
+                                    setEsNuevo(false);
+                                    if (eq?.ubicacion) setUbicacion(eq.ubicacion);
+                                }}
+                                onCreateOption={val => {
+                                    setSerial(val);
+                                    setEsNuevo(true);
+                                }}
+                                isClearable
+                                placeholder="Buscar equipo o escribir S/N..."
+                                noOptionsMessage={() => 'Escribí el S/N manualmente'}
+                                formatCreateLabel={v => `Nuevo: ${v}`}
+                            />
                         </div>
 
                         {/* Ubicación */}
