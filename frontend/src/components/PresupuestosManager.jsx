@@ -269,6 +269,8 @@ export default function PresupuestosManager() {
     const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
 
     const generarPDF = useCallback(async (s, { sinPrecios = false } = {}) => {
+        const loading = toast.loading('Generando PDF…');
+        try {
         await generarRemitoPDFPremium({
             tipo:         s.servicioTipo === 'VENTA' ? 'PRESUPUESTO_VENTA' : undefined,
             esPresupuesto: true,
@@ -291,6 +293,11 @@ export default function PresupuestosManager() {
             incluirFirmas: false,
             sinPrecios,
         });
+        toast.success('PDF generado', { id: loading });
+        } catch (e) {
+            console.error('Error generando PDF:', e);
+            toast.error('Error al generar el PDF', { id: loading });
+        }
     }, []);
 
     const toggleSeleccion = (id) => {

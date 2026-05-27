@@ -3,6 +3,7 @@
  */
 import jsPDF     from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toast } from 'react-hot-toast';
 import { C, M, T, CONTENT_W, HEADER_H, getEmpresa } from './theme.js';
 import { dibujarHeader, dibujarFooter }               from './layout.js';
 import { checkSalto }                                 from './helpers.js';
@@ -10,7 +11,7 @@ import { checkSalto }                                 from './helpers.js';
 const PCT_IMPUESTOS = 30;
 
 function fmtMonto(v) {
-    return `$ ${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
+    return `$ ${Math.round(parseFloat(v) || 0).toLocaleString('es-AR')}`;
 }
 
 function fmtFecha(iso) {
@@ -28,6 +29,8 @@ function liquidacion(total, repuestos) {
 
 export function generarPDFCierreCaja({ servicios, porTecnico, totalGeneral, moGeneral, repuestosGeneral = 0, desde, hasta }) {
     if (!servicios || servicios.length === 0) return;
+    const loading = toast.loading('Generando PDF…');
+    try {
 
     const doc     = new jsPDF();
     const pageW   = doc.internal.pageSize.getWidth();
@@ -275,7 +278,7 @@ export function generarPDFCierreCaja({ servicios, porTecnico, totalGeneral, moGe
     }
 
     // ── Listado detallado ─────────────────────────────────────────────────────
-    const calcTotal = s => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
+    const calcTotal = s => s.items?.reduce((a, i) => a + (parseFloat(i.costo) || 0), 0) || 0;
     y = checkSalto(doc, y, 30);
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
@@ -324,4 +327,9 @@ export function generarPDFCierreCaja({ servicios, porTecnico, totalGeneral, moGe
 
     const fecha = hoy.replace(/\//g, '-');
     doc.save(`CierreCaja_${fecha}_${rango.replace(/\//g, '-').replace(/ /g, '')}.pdf`);
+    toast.success('PDF generado', { id: loading });
+    } catch (e) {
+        console.error('Error generando PDF cierre:', e);
+        toast.error('Error al generar el PDF', { id: loading });
+    }
 }

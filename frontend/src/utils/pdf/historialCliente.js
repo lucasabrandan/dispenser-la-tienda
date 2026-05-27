@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { toast } from 'react-hot-toast';
 import { C, LOGO_URL, M, T, CONTENT_W, PAGE_H, FOOTER_SAFE, getEmpresa } from './theme.js';
 
 const fmt = v => `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
@@ -37,6 +38,8 @@ function checkSalto(doc, y, necesita) {
 }
 
 export function generarPDFHistorialCliente({ cliente, servicios }) {
+    const loading = toast.loading('Generando PDF…');
+    try {
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -231,4 +234,9 @@ export function generarPDFHistorialCliente({ cliente, servicios }) {
     }
 
     doc.save(`historial_${(cliente.nombre || 'cliente').replace(/\s+/g, '_')}.pdf`);
+    toast.success('PDF generado', { id: loading });
+    } catch (e) {
+        console.error('Error generando PDF historial:', e);
+        toast.error('Error al generar el PDF', { id: loading });
+    }
 }

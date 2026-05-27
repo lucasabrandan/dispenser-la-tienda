@@ -248,7 +248,6 @@ export function useServicioManager() {
                 trabajo:         it.trabajo         || it.trabajoRealizado || '',
                 esVisita:        it.esVisita || it.trabajoTipo === 'VISITA' || false,
             }));
-            toast.dismiss(loading);
             // Para ventas presupuesto → tipo explícito para usar condiciones comerciales
             const esVenta = servicio.servicioTipo === 'VENTA';
             await generarRemitoPDFPremium({
@@ -279,6 +278,7 @@ export function useServicioManager() {
                 incluirFirmas:       incluirFirmas,
                 sinPrecios,
             });
+            toast.success('PDF generado', { id: loading });
         } catch (e) {
             console.error('Error generando PDF:', e);
             toast.error('Error al generar PDF', { id: loading });

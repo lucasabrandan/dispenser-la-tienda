@@ -27,7 +27,7 @@ import {
     dibujarCondicionesCompactas,
     dibujarRegistroFotografico,
 } from './bloques.js';
-import { cargarFoto, checkSalto, sanitizarTexto, fitEnCaja } from './helpers.js';
+import { cargarFoto, checkSalto, sanitizarTexto, fitEnCaja, resetFotosConError, getFotosConError } from './helpers.js';
 import { dibujarPaginaEvidencia } from './fotos.js';
 
 // ── Helpers de detección / labels ─────────────────────────────────────────────
@@ -1553,6 +1553,7 @@ export const generarPDF = async ({
     if (!cliente || ticketItems.length === 0) {
         return toast.error('Datos insuficientes para generar el PDF.');
     }
+    resetFotosConError();
 
     const tipoDetectado = detectarTipo({ tipo, esPresupuesto, ticketItems, esTecnicoForzado });
     const esMulti       = ticketItems.length > 1;
@@ -1659,5 +1660,11 @@ export const generarPDF = async ({
         window.open(doc.output('datauristring'), '_blank');
     } else {
         doc.save(fileName);
+    }
+
+    // Avisar si alguna foto no se pudo cargar
+    const fotosErr = getFotosConError();
+    if (fotosErr > 0) {
+        toast.error(`⚠ ${fotosErr} foto${fotosErr > 1 ? 's' : ''} no se ${fotosErr > 1 ? 'pudieron' : 'pudo'} incluir en el PDF`, { duration: 5000 });
     }
 };

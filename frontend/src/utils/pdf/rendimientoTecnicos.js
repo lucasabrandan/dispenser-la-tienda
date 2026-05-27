@@ -3,6 +3,7 @@
  */
 import jsPDF    from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toast } from 'react-hot-toast';
 import { C, M, CONTENT_W, T } from './theme.js';
 import { dibujarHeaderCompacto, dibujarFooter } from './layout.js';
 
@@ -20,7 +21,8 @@ function labelMes(periodo) {
 
 export function generarPDFRendimientoTecnicos({ datos, periodo }) {
     if (!datos || datos.length === 0) return;
-
+    const loading = toast.loading('Generando PDF…');
+    try {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageW = 210;
 
@@ -91,4 +93,9 @@ export function generarPDFRendimientoTecnicos({ datos, periodo }) {
 
     const nombreArchivo = `rendimiento-tecnicos-${periodo || 'mes'}.pdf`;
     doc.save(nombreArchivo);
+    toast.success('PDF generado', { id: loading });
+    } catch (e) {
+        console.error('Error generando PDF rendimiento:', e);
+        toast.error('Error al generar el PDF', { id: loading });
+    }
 }

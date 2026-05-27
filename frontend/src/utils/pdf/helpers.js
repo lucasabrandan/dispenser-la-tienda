@@ -8,6 +8,11 @@
 const API_BASE     = (process.env.REACT_APP_API_URL || '').replace(/\/api$/, '');
 const UPLOADS_BASE = `${API_BASE}/api/uploads`;
 
+// Contador de fotos que fallaron al cargar (reseteado por cada generación de PDF)
+let _fotosConError = 0;
+export function resetFotosConError() { _fotosConError = 0; }
+export function getFotosConError()   { return _fotosConError; }
+
 // ── Texto ─────────────────────────────────────────────────────────────────────
 
 // Elimina patrones internos del sistema que no deben verse en el PDF
@@ -130,7 +135,7 @@ export async function cargarFoto(src) {
                     resolve({ data: canvas.toDataURL('image/jpeg', 0.82), format: 'JPEG', w, h });
                 } catch { resolve(null); }
             };
-            img.onerror = () => resolve(null);
+            img.onerror = () => { _fotosConError++; resolve(null); };
             img.src = src;
         });
     }
@@ -146,9 +151,9 @@ export async function cargarFoto(src) {
                 ? src.split('/').pop()
                 : src;
             const res = await fetch(`${UPLOADS_BASE}/${filename}`);
-            if (!res.ok) return null;
+            if (!res.ok) { _fotosConError++; return null; }
             blob = await res.blob();
-        } catch { return null; }
+        } catch { _fotosConError++; return null; }
     }
 
     if (!blob) return null;
