@@ -39,6 +39,7 @@ export default function ServicioForm({
         finalizar, refrescarDatos, onClienteSeleccionado,
         calcularResumenGanancia, estaBloqueado,
         borradorDisponible, recuperarBorrador, descartarBorrador,
+        duracionMinutos,
     } = hook;
 
     const [paso, setPaso]               = useState(0);
@@ -70,6 +71,7 @@ export default function ServicioForm({
 
     // Genera PDF de previsualización (sin firmas — botón 📄 de la barra)
     // Si ticketItems está vacío (post-guardado), usa la snapshot guardada antes del reset
+    const [generandoPDF, setGenerandoPDF] = useState(false);
     const dispararPDF = async () => {
         const items = ticketItems.length > 0 ? ticketItems : snapshotRef.current?.ticketItems;
         if (!items || items.length === 0) {
@@ -79,6 +81,8 @@ export default function ServicioForm({
         const snap = snapshotRef.current || {};
         const sedeObj = db.sedes?.find(s => s.id === (itemActual.sedeId || snap.sedeId));
         const totalFinal = ticketItems.length > 0 ? calcularResumenGanancia().totalConDescuento : snap.totalConDescuento;
+        setGenerandoPDF(true);
+        const loading = toast.loading('Generando PDF…');
         try {
             await generarRemitoPDFPremium({
                 esPresupuesto:           !estaBloqueado,
@@ -95,9 +99,12 @@ export default function ServicioForm({
                 firmaTecnico:            null,
                 firmaCliente:            null,
             });
+            toast.success('PDF generado', { id: loading });
         } catch (e) {
             console.error('Error generando PDF:', e);
-            toast.error('Error al generar el PDF');
+            toast.error('Error al generar el PDF', { id: loading });
+        } finally {
+            setGenerandoPDF(false);
         }
     };
 
@@ -151,6 +158,7 @@ export default function ServicioForm({
             totalConDescuento: calcularResumenGanancia().totalConDescuento,
             fechaServicio,
             leyenda,
+            duracionMinutos,
             servicioId: idEdicion || null,
         };
         const result = await finalizar(true, buildOverrides());
@@ -174,6 +182,7 @@ export default function ServicioForm({
             totalConDescuento: calcularResumenGanancia().totalConDescuento,
             fechaServicio,
             leyenda,
+            duracionMinutos,
             servicioId: idEdicion || null,
         };
         const result = await finalizar(false, buildOverrides());
