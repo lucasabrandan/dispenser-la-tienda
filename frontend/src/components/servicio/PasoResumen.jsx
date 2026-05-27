@@ -114,14 +114,15 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
     }, [esAdmin]);
 
     // Auto-descuento 10% a partir de 5 equipos (reversible)
-    const [descuentoAutoAplicado, setDescuentoAutoAplicado] = useState(false);
+    // No aplica en edición (idEdicion) ni ejecución (modoEjecucion) para no pisar descuento existente
+    const [descuentoAutoAplicado, setDescuentoAutoAplicado] = useState(!!idEdicion || modoEjecucion);
     useEffect(() => {
+        if (idEdicion || modoEjecucion) return; // No auto-aplicar en edición
         if (ticketItems.length >= 5 && descuentoPorcentaje === 0 && !descuentoAutoAplicado) {
             setDescuentoPorcentaje(10);
             setDescuentoAutoAplicado(true);
             toast.success(`10% de descuento aplicado (${ticketItems.length} equipos)`);
         } else if (ticketItems.length < 5 && descuentoAutoAplicado && descuentoPorcentaje === 10) {
-            // Reversar si quitaron equipos y bajan de 5
             setDescuentoPorcentaje(0);
             setDescuentoAutoAplicado(false);
             toast('Descuento 10% removido (menos de 5 equipos)', { icon: 'ℹ️' });
@@ -348,14 +349,16 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         <M valor={totalFinal} className="text-3xl font-black text-white tracking-tighter block" />
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={() => {
-                            if (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) {
-                                toast.error('⚠ Asigná un técnico antes de continuar', { duration: 3500 });
-                                return;
-                            }
-                            onCerrarTicket();
-                        }}
-                            className="h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                        <button
+                            disabled={esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado}
+                            onClick={() => {
+                                if (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) {
+                                    toast.error('⚠ Asigná un técnico antes de continuar', { duration: 3500 });
+                                    return;
+                                }
+                                onCerrarTicket();
+                            }}
+                            className={`h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 ${esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado ? 'opacity-40 cursor-not-allowed bg-[#A8A29E]' : 'bg-[#D13A28] dark:bg-[#E8422F]'}`}>
                             {modoEjecucion ? 'Cerrar trabajo →' : 'Cerrar ticket →'}
                         </button>
                     </div>

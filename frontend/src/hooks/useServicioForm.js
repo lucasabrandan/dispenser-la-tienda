@@ -472,7 +472,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       costoExtra:     extra,
       totalCalculado: extra + totalR,
       resumenTexto:   tieneSerial
-        ? `${tieneDescripcion || ''} | MO: $${extra}`
+        ? [tieneDescripcion, extra > 0 ? `MO: $${extra}` : null].filter(Boolean).join(' | ')
         : `VENTA: ${item.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`,
       esVisita:       item.esVisita || false,
     };
@@ -596,11 +596,17 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       // Subir fotos nuevas (data URL) al backend antes de construir el DTO.
       // Las fotos ya guardadas (filename string sin 'data:') no se vuelven a subir.
       const esNueva = s => typeof s === 'string' && s.startsWith('data:');
-      const itemsConFotos = await Promise.all(ticketItems.map(async it => ({
-        ...it,
-        fotoAntesFilename:   await subirFoto(esNueva(it.fotoAntes)   ? it.fotoAntes   : null),
-        fotoDespuesFilename: await subirFoto(esNueva(it.fotoDespues) ? it.fotoDespues : null),
-      })));
+      let fotosConError = 0;
+      const itemsConFotos = await Promise.all(ticketItems.map(async it => {
+        const fotoAntesFilename   = await subirFoto(esNueva(it.fotoAntes)   ? it.fotoAntes   : null);
+        const fotoDespuesFilename = await subirFoto(esNueva(it.fotoDespues) ? it.fotoDespues : null);
+        if (esNueva(it.fotoAntes)   && !fotoAntesFilename)   fotosConError++;
+        if (esNueva(it.fotoDespues) && !fotoDespuesFilename) fotosConError++;
+        return { ...it, fotoAntesFilename, fotoDespuesFilename };
+      }));
+      if (fotosConError > 0) {
+        toast.error(`⚠ ${fotosConError} foto${fotosConError > 1 ? 's' : ''} no se ${fotosConError > 1 ? 'pudieron' : 'pudo'} subir`, { duration: 5000 });
+      }
 
       const servicioData = {
         sedeId:             parseInt(sedeIdFinal),
