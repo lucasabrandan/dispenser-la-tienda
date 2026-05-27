@@ -225,6 +225,26 @@ export default function DashboardCaja({ setVistaActual }) {
         </div>
     );
 
+    // Agrupar servicios de agenda por técnico
+    const agendaPorTecnico = (() => {
+        const grupos = {};
+        data.agendaHoy.forEach(s => {
+            const tec = s.items?.[0]?.tecnico || s.usuarioNombre || 'Sin asignar';
+            if (!grupos[tec]) grupos[tec] = [];
+            grupos[tec].push(s);
+        });
+        return Object.entries(grupos);
+    })();
+
+    const TECNICO_AGENDA_COLORS = [
+        { bg: 'bg-[#D13A28]/8 dark:bg-[#E8422F]/10', text: 'text-[#D13A28] dark:text-[#E8422F]', avatar: 'bg-[#D13A28] dark:bg-[#E8422F]', bar: 'bg-[#D13A28] dark:bg-[#E8422F]' },
+        { bg: 'bg-[#2563EB]/8 dark:bg-[#3B82F6]/10', text: 'text-[#2563EB] dark:text-[#3B82F6]', avatar: 'bg-[#2563EB] dark:bg-[#3B82F6]', bar: 'bg-[#2563EB] dark:bg-[#3B82F6]' },
+        { bg: 'bg-[#D48800]/8 dark:bg-[#F0A500]/10', text: 'text-[#D48800] dark:text-[#F0A500]', avatar: 'bg-[#D48800] dark:bg-[#F0A500]', bar: 'bg-[#D48800] dark:bg-[#F0A500]' },
+        { bg: 'bg-[#16A34A]/8 dark:bg-[#22C55E]/10', text: 'text-[#16A34A] dark:text-[#22C55E]', avatar: 'bg-[#16A34A] dark:bg-[#22C55E]', bar: 'bg-[#16A34A] dark:bg-[#22C55E]' },
+    ];
+    const MAX_TRABAJOS = 5;
+    const getIniciales = (n) => n.split(' ').filter(Boolean).map(p => p[0]).join('').toUpperCase().slice(0, 2);
+
     // Bloque agenda reutilizable
     const AgendaBlock = () => (
         <div>
@@ -236,26 +256,60 @@ export default function DashboardCaja({ setVistaActual }) {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {data.agendaHoy.filter(s => s.servicioTipo === 'TECNICA').length > 0 && (
-                        <div>
-                            <p className="text-[9px] font-bold text-[#D13A28] dark:text-[#E8422F] uppercase tracking-wider mb-1.5 px-1">🔧 Servicios</p>
-                            <div className="space-y-1.5">
-                                {data.agendaHoy.filter(s => s.servicioTipo === 'TECNICA').map(s => (
-                                    <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('servicio-tecnico')} tipo="tecnica" />
-                                ))}
+                    {agendaPorTecnico.map(([tecNombre, tecServicios], idx) => {
+                        const color = TECNICO_AGENDA_COLORS[idx % TECNICO_AGENDA_COLORS.length];
+                        const totalTec = tecServicios.reduce((sum, s) => sum + (calcTotal(s) || 0), 0);
+                        const servicios = tecServicios.filter(s => s.servicioTipo === 'TECNICA');
+                        const ventas = tecServicios.filter(s => s.servicioTipo === 'VENTA');
+                        return (
+                            <div key={tecNombre} className="space-y-1.5">
+                                {/* Header técnico */}
+                                <div className={`px-3 py-2.5 rounded-xl ${color.bg}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${color.avatar}`}>
+                                            <span className="text-[14px] font-black text-white leading-none">{getIniciales(tecNombre)}</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`text-[17px] font-black tracking-tight leading-tight ${color.text}`}>
+                                                {tecNombre}
+                                            </p>
+                                            <p className="text-[10px] font-bold text-[#A8A29E]">
+                                                {tecServicios.length} trabajo{tecServicios.length !== 1 ? 's' : ''} hoy
+                                            </p>
+                                        </div>
+                                        <M valor={totalTec} className={`text-[15px] font-black shrink-0 ${color.text}`} />
+                                    </div>
+                                    {/* Barra de carga */}
+                                    <div className="mt-2 h-1.5 rounded-full bg-black/[0.06] dark:bg-white/[0.06] overflow-hidden">
+                                        <div className={`h-full rounded-full transition-all ${color.bar} ${tecServicios.length >= MAX_TRABAJOS ? 'opacity-100' : 'opacity-70'}`}
+                                             style={{ width: `${Math.min((tecServicios.length / MAX_TRABAJOS) * 100, 100)}%` }} />
+                                    </div>
+                                </div>
+                                {/* Servicios técnicos */}
+                                {servicios.length > 0 && (
+                                    <div className="ml-3">
+                                        <p className="text-[9px] font-bold text-[#D13A28] dark:text-[#E8422F] uppercase tracking-wider mb-1 px-1">🔧 Servicios</p>
+                                        <div className="space-y-1.5">
+                                            {servicios.map(s => (
+                                                <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('servicio-tecnico')} tipo="tecnica" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Ventas */}
+                                {ventas.length > 0 && (
+                                    <div className="ml-3">
+                                        <p className="text-[9px] font-bold text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider mb-1 px-1">🛒 Ventas / Entregas</p>
+                                        <div className="space-y-1.5">
+                                            {ventas.map(s => (
+                                                <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('venta')} tipo="venta" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    )}
-                    {data.agendaHoy.filter(s => s.servicioTipo === 'VENTA').length > 0 && (
-                        <div>
-                            <p className="text-[9px] font-bold text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider mb-1.5 px-1">🛒 Ventas / Entregas</p>
-                            <div className="space-y-1.5">
-                                {data.agendaHoy.filter(s => s.servicioTipo === 'VENTA').map(s => (
-                                    <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('venta')} tipo="venta" />
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -483,7 +537,7 @@ function AgendaCard({ s, calcTotal, onClick, tipo }) {
             <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                     <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                    <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}{s.items?.[0]?.tecnico ? ` — ${s.items[0].tecnico}` : ''}</p>
+                    <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>
                 </div>
                 <div className="text-right shrink-0">
                     <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
