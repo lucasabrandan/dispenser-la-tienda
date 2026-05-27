@@ -176,15 +176,17 @@ export default function CerrarTicketSheet({
     const panelCls = 'w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#FFFFFF] dark:bg-[#242424] rounded-t-[2rem] shadow-2xl';
 
     return (
-        <div className={sheetCls} onClick={paso === 'confirmar' ? onCerrar : undefined}>
-            <div className={panelCls} onClick={e => e.stopPropagation()}>
+        <div className={sheetCls}
+            onMouseDown={e => { if (paso === 'confirmar' && e.target === e.currentTarget) onCerrar(); }}
+            onTouchEnd={e => { if (paso === 'confirmar' && e.target === e.currentTarget) onCerrar(); }}>
+            <div className={panelCls} onMouseDown={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
 
                 {/* Handle */}
                 <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
 
                 {/* ═══ FLUJO A: CREAR NUEVO → Confirmar presupuesto ═══ */}
                 {paso === 'confirmar' && (
-                    <div className="p-6 space-y-4">
+                    <div className="p-6 pb-8 space-y-4">
                         <div>
                             <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-0.5">Total presupuesto</p>
                             <p className="text-[32px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9]">
