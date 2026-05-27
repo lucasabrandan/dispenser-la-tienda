@@ -385,7 +385,7 @@ async function generarSingleTecnico(doc, {
 
 async function generarSinglePresupuesto(doc, {
     item, cliente, sede, y, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, descuentoPorcentaje, incluirFirmas = true, sinPrecios = false,
+    firmaCliente, firmaTecnico, descuentoPorcentaje, incluirFirmas = true, sinPrecios = false, fechaVisita = null,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -563,11 +563,13 @@ async function generarSinglePresupuesto(doc, {
         const [dSP, mSP, aSP] = fecha.split('/').map(Number);
         const validezSP = new Date(aSP, mSP - 1, dSP + 7);
 
-        // Caja total + validez integrada (ahorra 6mm)
+        // Caja total + validez + fecha visita integrada
+        const tieneFechaVisita = fechaVisita && fechaVisita.trim();
+        const cajaH = tieneFechaVisita ? 21 : 16;
         doc.setFillColor(...C.goldLight);
         doc.setDrawColor(...C.gold);
         doc.setLineWidth(0.3);
-        doc.roundedRect(M, presupTableEndY, CONTENT_W, 16, 1.5, 1.5, 'FD');
+        doc.roundedRect(M, presupTableEndY, CONTENT_W, cajaH, 1.5, 1.5, 'FD');
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.gold);
@@ -580,7 +582,15 @@ async function generarSinglePresupuesto(doc, {
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
         doc.text(`Válido hasta: ${validezSP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 3, presupTableEndY + 13);
-        presupTableEndY += 20;
+        // Fecha estimativa de visita
+        if (tieneFechaVisita) {
+            const [aV, mV, dV] = fechaVisita.split('-');
+            const fechaVisitaStr = dV && mV ? `${dV}/${mV}${aV ? '/' + aV : ''}` : fechaVisita;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.navy);
+            doc.text(`Fecha estimativa de visita: ${fechaVisitaStr}`, M + 3, presupTableEndY + 17.5);
+        }
+        presupTableEndY += cajaH + 4;
     }
     y = presupTableEndY;
 
@@ -832,7 +842,7 @@ async function generarMultiTecnico(doc, {
 
 async function generarMultiPresupuesto(doc, {
     ticketItems, cliente, sede, fecha, nroDoc, tecnico, y: yInicial,
-    firmaCliente, firmaTecnico, incluirFirmas = true, descuentoPorcentaje, leyenda, sinPrecios = false,
+    firmaCliente, firmaTecnico, incluirFirmas = true, descuentoPorcentaje, leyenda, sinPrecios = false, fechaVisita = null,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -991,11 +1001,13 @@ async function generarMultiPresupuesto(doc, {
         const [dMP, mMP, aMP] = fecha.split('/').map(Number);
         const validezMP = new Date(aMP, mMP - 1, dMP + 7);
 
-        // Total final + validez integrada
+        // Total final + validez + fecha visita integrada
+        const tieneFechaVisitaMP = fechaVisita && fechaVisita.trim();
+        const cajaHMP = tieneFechaVisitaMP ? 21 : 16;
         doc.setFillColor(...C.goldLight);
         doc.setDrawColor(...C.gold);
         doc.setLineWidth(0.3);
-        doc.roundedRect(M, y, CONTENT_W, 16, 2, 2, 'FD');
+        doc.roundedRect(M, y, CONTENT_W, cajaHMP, 2, 2, 'FD');
         doc.setFontSize(T.xs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.gold);
@@ -1007,7 +1019,14 @@ async function generarMultiPresupuesto(doc, {
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
         doc.text(`Válido hasta: ${validezMP.toLocaleDateString('es-AR')}  (7 días corridos)`, M + 4, y + 13);
-        y += 20;
+        if (tieneFechaVisitaMP) {
+            const [aV, mV, dV] = fechaVisita.split('-');
+            const fechaVisitaStr = dV && mV ? `${dV}/${mV}${aV ? '/' + aV : ''}` : fechaVisita;
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.navy);
+            doc.text(`Fecha estimativa de visita: ${fechaVisitaStr}`, M + 4, y + 17.5);
+        }
+        y += cajaHMP + 4;
     }
 
     // Condiciones compactas (presupuesto no lleva QR ni firmas)
@@ -1529,6 +1548,7 @@ export const generarPDF = async ({
     incluirFirmas      = true,
     aclaracionCliente  = '',
     sinPrecios         = false,
+    fechaVisita        = null,
 }) => {
     if (!cliente || ticketItems.length === 0) {
         return toast.error('Datos insuficientes para generar el PDF.');
@@ -1576,7 +1596,7 @@ export const generarPDF = async ({
         firmaTecnico:  incluirFirmas ? firmaTecnico  : null,
         incluirFirmas, aclaracionCliente,
         descuentoPorcentaje, garantiaTexto,
-        proximoMantenimiento, leyenda, sinPrecios,
+        proximoMantenimiento, leyenda, sinPrecios, fechaVisita,
     };
 
     if (tipoDetectado === 'COMPROBANTE') {

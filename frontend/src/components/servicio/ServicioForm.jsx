@@ -39,7 +39,7 @@ export default function ServicioForm({
         finalizar, refrescarDatos, onClienteSeleccionado,
         calcularResumenGanancia, estaBloqueado,
         borradorDisponible, recuperarBorrador, descartarBorrador,
-        duracionMinutos,
+        duracionMinutos, fechaVisita,
     } = hook;
 
     const [paso, setPaso]               = useState(0);
@@ -96,6 +96,7 @@ export default function ServicioForm({
                 totalFinal,
                 fechaServicio:           fechaServicio || snap.fechaServicio,
                 leyenda:                 leyenda || snap.leyenda || '',
+                fechaVisita:             fechaVisita || snap.fechaVisita || null,
                 firmaTecnico:            null,
                 firmaCliente:            null,
             });
@@ -131,6 +132,7 @@ export default function ServicioForm({
                 totalFinal,
                 fechaServicio:           fechaServicio || snap.fechaServicio,
                 leyenda:                 leyenda || snap.leyenda || '',
+                fechaVisita:             fechaVisita || snap.fechaVisita || null,
                 firmaTecnico,
                 firmaCliente,
                 incluirFirmas,
@@ -159,6 +161,7 @@ export default function ServicioForm({
             fechaServicio,
             leyenda,
             duracionMinutos,
+            fechaVisita,
             servicioId: idEdicion || null,
         };
         const result = await finalizar(true, buildOverrides());
@@ -183,6 +186,7 @@ export default function ServicioForm({
             fechaServicio,
             leyenda,
             duracionMinutos,
+            fechaVisita,
             servicioId: idEdicion || null,
         };
         const result = await finalizar(false, buildOverrides());
