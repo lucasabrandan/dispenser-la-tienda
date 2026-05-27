@@ -173,7 +173,7 @@ export default function CerrarTicketSheet({
     };
 
     const sheetCls = 'fixed inset-0 z-[200] flex items-end justify-center bg-black/60 backdrop-blur-sm';
-    const panelCls = 'w-full max-w-lg bg-[#FFFFFF] dark:bg-[#242424] rounded-t-[2rem] shadow-2xl overflow-hidden';
+    const panelCls = 'w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#FFFFFF] dark:bg-[#242424] rounded-t-[2rem] shadow-2xl';
 
     return (
         <div className={sheetCls} onClick={paso === 'confirmar' ? onCerrar : undefined}>

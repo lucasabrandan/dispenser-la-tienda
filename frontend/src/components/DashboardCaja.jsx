@@ -178,45 +178,74 @@ export default function DashboardCaja({ setVistaActual }) {
                         {dia.items.length === 0 ? (
                             <p className="text-[11px] text-[#A8A29E] text-center py-3">Día libre</p>
                         ) : (
-                            <div className="space-y-2">
-                                {dia.items.map(s => {
-                                    const horas = s.duracionMinutos ? `${Math.round(s.duracionMinutos / 60 * 10) / 10}h` : `~${s.servicioTipo === 'TECNICA' ? '2' : '1'}h`;
-                                    const esPendiente = s.estado === 'PRESUPUESTO';
-                                    return (
-                                        <div key={s.id} className="rounded-lg p-2.5 bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
-                                            <div className="flex items-start gap-2">
-                                                <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                                                        <span className={`text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]' : 'bg-[#16A34A]/10 text-[#16A34A]'}`}>
-                                                            {esPendiente ? 'Pendiente' : s.estado?.replace('_', ' ')}
-                                                        </span>
+                            <div className="space-y-3">
+                                {(() => {
+                                    // Agrupar por técnico
+                                    const grupos = {};
+                                    dia.items.forEach(s => {
+                                        const tec = s.items?.[0]?.tecnico || s.usuarioNombre || 'Sin asignar';
+                                        if (!grupos[tec]) grupos[tec] = [];
+                                        grupos[tec].push(s);
+                                    });
+                                    return Object.entries(grupos).map(([tecNombre, tecItems]) => {
+                                        const color = ESTADO_COLORS[estadoPredominante(tecItems)] || DEFAULT_COLOR;
+                                        const totalTec = tecItems.reduce((sum, s) => sum + (calcTotal(s) || 0), 0);
+                                        return (
+                                            <div key={tecNombre} className="space-y-1.5">
+                                                {/* Header técnico */}
+                                                <div className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg ${color.bg}`}>
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${color.avatar}`}>
+                                                        <span className="text-[12px] font-black text-white leading-none">{getIniciales(tecNombre)}</span>
                                                     </div>
-                                                    {s.sedeNombre && <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>}
-                                                    {s.sedeDireccion && (
-                                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
-                                                            target="_blank" rel="noopener noreferrer"
-                                                            className="text-[10px] text-[#D13A28] dark:text-[#E8422F] truncate block mt-0.5 active:opacity-70"
-                                                            onClick={e => e.stopPropagation()}>
-                                                            📍 {s.sedeDireccion}
-                                                        </a>
-                                                    )}
-                                                    {s.items?.[0]?.trabajoRealizado && (
-                                                        <p className="text-[10px] text-[#A8A29E] mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
-                                                    )}
-                                                    <div className="flex items-center gap-3 mt-1.5">
-                                                        <span className="text-[9px] font-bold text-[#A8A29E]">⏱ {horas}</span>
-                                                        {s.items?.[0]?.tecnico && (
-                                                            <span className="text-[9px] font-bold text-[#A8A29E]">👤 {s.items[0].tecnico}</span>
-                                                        )}
-                                                        <M valor={calcTotal(s)} className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-auto" />
-                                                    </div>
+                                                    <p className={`text-[15px] font-black tracking-tight leading-tight flex-1 ${color.text}`}>
+                                                        {tecNombre}
+                                                    </p>
+                                                    <span className="text-[9px] font-bold text-[#A8A29E]">{tecItems.length} trabajo{tecItems.length !== 1 ? 's' : ''}</span>
+                                                    <M valor={totalTec} className={`text-[13px] font-black shrink-0 ${color.text}`} />
                                                 </div>
+                                                {/* Cards del técnico */}
+                                                {tecItems.map(s => {
+                                                    const horas = s.duracionMinutos ? `${Math.round(s.duracionMinutos / 60 * 10) / 10}h` : `~${s.servicioTipo === 'TECNICA' ? '2' : '1'}h`;
+                                                    const esPendiente = s.estado === 'PRESUPUESTO';
+                                                    return (
+                                                        <div key={s.id}
+                                                            onClick={() => setVistaActual(s.servicioTipo === 'TECNICA' ? 'servicio-tecnico' : 'venta')}
+                                                            className="rounded-lg p-2.5 ml-2 bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform border-l-[3px]"
+                                                            style={{ borderLeftColor: ESTADO_BORDER[s.estado] || '#A8A29E' }}>
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                                        <span className={`text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]' : 'bg-[#16A34A]/10 text-[#16A34A]'}`}>
+                                                                            {esPendiente ? 'Pendiente' : s.estado?.replace('_', ' ')}
+                                                                        </span>
+                                                                    </div>
+                                                                    {s.sedeNombre && <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>}
+                                                                    {s.sedeDireccion && (
+                                                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
+                                                                            target="_blank" rel="noopener noreferrer"
+                                                                            className="text-[10px] text-[#D13A28] dark:text-[#E8422F] truncate block mt-0.5 active:opacity-70"
+                                                                            onClick={e => e.stopPropagation()}>
+                                                                            📍 {s.sedeDireccion}
+                                                                        </a>
+                                                                    )}
+                                                                    {s.items?.[0]?.trabajoRealizado && (
+                                                                        <p className="text-[10px] text-[#A8A29E] mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
+                                                                    )}
+                                                                    <div className="flex items-center gap-3 mt-1.5">
+                                                                        <span className="text-[9px] font-bold text-[#A8A29E]">⏱ {horas}</span>
+                                                                        <M valor={calcTotal(s)} className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-auto" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    });
+                                })()}
                             </div>
                         )}
                     </div>
@@ -236,14 +265,30 @@ export default function DashboardCaja({ setVistaActual }) {
         return Object.entries(grupos);
     })();
 
-    const TECNICO_AGENDA_COLORS = [
-        { bg: 'bg-[#D13A28]/8 dark:bg-[#E8422F]/10', text: 'text-[#D13A28] dark:text-[#E8422F]', avatar: 'bg-[#D13A28] dark:bg-[#E8422F]', bar: 'bg-[#D13A28] dark:bg-[#E8422F]' },
-        { bg: 'bg-[#2563EB]/8 dark:bg-[#3B82F6]/10', text: 'text-[#2563EB] dark:text-[#3B82F6]', avatar: 'bg-[#2563EB] dark:bg-[#3B82F6]', bar: 'bg-[#2563EB] dark:bg-[#3B82F6]' },
-        { bg: 'bg-[#D48800]/8 dark:bg-[#F0A500]/10', text: 'text-[#D48800] dark:text-[#F0A500]', avatar: 'bg-[#D48800] dark:bg-[#F0A500]', bar: 'bg-[#D48800] dark:bg-[#F0A500]' },
-        { bg: 'bg-[#16A34A]/8 dark:bg-[#22C55E]/10', text: 'text-[#16A34A] dark:text-[#22C55E]', avatar: 'bg-[#16A34A] dark:bg-[#22C55E]', bar: 'bg-[#16A34A] dark:bg-[#22C55E]' },
-    ];
+    // Colores por estado para header técnico (estado predominante)
+    const ESTADO_COLORS = {
+        PRESUPUESTO:           { bg: 'bg-[#D48800]/10 dark:bg-[#F0A500]/10', text: 'text-[#D48800] dark:text-[#F0A500]', avatar: 'bg-[#D48800] dark:bg-[#F0A500]', bar: 'bg-[#D48800] dark:bg-[#F0A500]' },
+        COMPLETADO:            { bg: 'bg-[#3B82F6]/10 dark:bg-[#3B82F6]/10', text: 'text-[#3B82F6] dark:text-[#60A5FA]', avatar: 'bg-[#3B82F6] dark:bg-[#60A5FA]', bar: 'bg-[#3B82F6] dark:bg-[#60A5FA]' },
+        PENDIENTE_FACTURACION: { bg: 'bg-[#8B5CF6]/10 dark:bg-[#8B5CF6]/10', text: 'text-[#8B5CF6] dark:text-[#A78BFA]', avatar: 'bg-[#8B5CF6] dark:bg-[#A78BFA]', bar: 'bg-[#8B5CF6] dark:bg-[#A78BFA]' },
+        COBRADO:               { bg: 'bg-[#16A34A]/10 dark:bg-[#22C55E]/10', text: 'text-[#16A34A] dark:text-[#22C55E]', avatar: 'bg-[#16A34A] dark:bg-[#22C55E]', bar: 'bg-[#16A34A] dark:bg-[#22C55E]' },
+        REALIZADO:             { bg: 'bg-[#16A34A]/10 dark:bg-[#22C55E]/10', text: 'text-[#16A34A] dark:text-[#22C55E]', avatar: 'bg-[#16A34A] dark:bg-[#22C55E]', bar: 'bg-[#16A34A] dark:bg-[#22C55E]' },
+        RECHAZADO:             { bg: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10', text: 'text-[#D13A28] dark:text-[#E8422F]', avatar: 'bg-[#D13A28] dark:bg-[#E8422F]', bar: 'bg-[#D13A28] dark:bg-[#E8422F]' },
+        ARCHIVADO:             { bg: 'bg-[#A8A29E]/10 dark:bg-[#A8A29E]/10', text: 'text-[#A8A29E]', avatar: 'bg-[#A8A29E]', bar: 'bg-[#A8A29E]' },
+    };
+    const ESTADO_BORDER = {
+        PRESUPUESTO: '#D48800', COMPLETADO: '#3B82F6', PENDIENTE_FACTURACION: '#8B5CF6',
+        FACTURADO: '#6366F1', COBRADO: '#16A34A', REALIZADO: '#16A34A', RECHAZADO: '#D13A28', ARCHIVADO: '#A8A29E',
+    };
+    const DEFAULT_COLOR = ESTADO_COLORS.PRESUPUESTO;
     const MAX_TRABAJOS = 5;
     const getIniciales = (n) => n.split(' ').filter(Boolean).map(p => p[0]).join('').toUpperCase().slice(0, 2);
+
+    // Estado predominante de un grupo de servicios
+    function estadoPredominante(items) {
+        const conteo = {};
+        items.forEach(s => { conteo[s.estado] = (conteo[s.estado] || 0) + 1; });
+        return Object.entries(conteo).sort((a, b) => b[1] - a[1])[0]?.[0] || 'PRESUPUESTO';
+    }
 
     // Bloque agenda reutilizable
     const AgendaBlock = () => (
@@ -256,8 +301,8 @@ export default function DashboardCaja({ setVistaActual }) {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {agendaPorTecnico.map(([tecNombre, tecServicios], idx) => {
-                        const color = TECNICO_AGENDA_COLORS[idx % TECNICO_AGENDA_COLORS.length];
+                    {agendaPorTecnico.map(([tecNombre, tecServicios]) => {
+                        const color = ESTADO_COLORS[estadoPredominante(tecServicios)] || DEFAULT_COLOR;
                         const totalTec = tecServicios.reduce((sum, s) => sum + (calcTotal(s) || 0), 0);
                         const servicios = tecServicios.filter(s => s.servicioTipo === 'TECNICA');
                         const ventas = tecServicios.filter(s => s.servicioTipo === 'VENTA');
@@ -291,7 +336,7 @@ export default function DashboardCaja({ setVistaActual }) {
                                         <p className="text-[9px] font-bold text-[#D13A28] dark:text-[#E8422F] uppercase tracking-wider mb-1 px-1">🔧 Servicios</p>
                                         <div className="space-y-1.5">
                                             {servicios.map(s => (
-                                                <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('servicio-tecnico')} tipo="tecnica" />
+                                                <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('servicio-tecnico')} />
                                             ))}
                                         </div>
                                     </div>
@@ -302,7 +347,7 @@ export default function DashboardCaja({ setVistaActual }) {
                                         <p className="text-[9px] font-bold text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider mb-1 px-1">🛒 Ventas / Entregas</p>
                                         <div className="space-y-1.5">
                                             {ventas.map(s => (
-                                                <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('venta')} tipo="venta" />
+                                                <AgendaCard key={s.id} s={s} calcTotal={calcTotal} onClick={() => setVistaActual('venta')} />
                                             ))}
                                         </div>
                                     </div>
@@ -522,18 +567,24 @@ export default function DashboardCaja({ setVistaActual }) {
 }
 
 // Sub-componente para las cards de agenda
-function AgendaCard({ s, calcTotal, onClick, tipo }) {
+const AGENDA_ESTADO_BORDER = {
+    PRESUPUESTO: '#D48800', COMPLETADO: '#3B82F6', PENDIENTE_FACTURACION: '#8B5CF6',
+    FACTURADO: '#6366F1', COBRADO: '#16A34A', REALIZADO: '#16A34A', RECHAZADO: '#D13A28', ARCHIVADO: '#A8A29E',
+};
+const AGENDA_ESTADO_LABEL = {
+    PRESUPUESTO: 'Pendiente', COMPLETADO: 'Realizado', PENDIENTE_FACTURACION: 'Por cobrar',
+    FACTURADO: 'Facturado', COBRADO: 'Cobrado', REALIZADO: 'Cobrado', RECHAZADO: 'Rechazado', ARCHIVADO: 'Archivado',
+};
+
+function AgendaCard({ s, calcTotal, onClick }) {
+    const borderHex = AGENDA_ESTADO_BORDER[s.estado] || '#A8A29E';
+    const estadoLabel = AGENDA_ESTADO_LABEL[s.estado] || s.estado;
     const esPendiente = s.estado === 'PRESUPUESTO';
-    const borderColor = tipo === 'tecnica'
-        ? 'border-l-[#D13A28] dark:border-l-[#E8422F]'
-        : 'border-l-[#D48800] dark:border-l-[#F0A500]';
-    const linkColor = tipo === 'tecnica'
-        ? 'text-[#D13A28] dark:text-[#E8422F]'
-        : 'text-[#D48800] dark:text-[#F0A500]';
 
     return (
         <div onClick={onClick}
-            className={`rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px] ${borderColor}`}>
+            className="rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px]"
+            style={{ borderLeftColor: borderHex }}>
             <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                     <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
@@ -541,15 +592,16 @@ function AgendaCard({ s, calcTotal, onClick, tipo }) {
                 </div>
                 <div className="text-right shrink-0">
                     <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
-                    <span className={`text-[9px] font-bold ${esPendiente ? 'text-[#D48800]' : 'text-[#16A34A]'}`}>
-                        {esPendiente ? 'Pendiente' : 'Cobrado'}
+                    <span className="text-[9px] font-bold" style={{ color: borderHex }}>
+                        {estadoLabel}
                     </span>
                 </div>
             </div>
             {s.sedeDireccion && (
                 <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
                     target="_blank" rel="noopener noreferrer"
-                    className={`text-[10px] ${linkColor} truncate block mt-1 active:opacity-70`}
+                    className="text-[10px] truncate block mt-1 active:opacity-70"
+                    style={{ color: borderHex }}
                     onClick={e => e.stopPropagation()}>
                     📍 {s.sedeDireccion}
                 </a>
