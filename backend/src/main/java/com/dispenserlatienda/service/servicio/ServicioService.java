@@ -479,16 +479,6 @@ public class ServicioService {
     }
 
     @Transactional
-    public ServicioDTO cambiarEstado(Long id, String nuevoEstado) {
-        return cambiarEstado(id, nuevoEstado, null, null, null);
-    }
-
-    @Transactional
-    public ServicioDTO cambiarEstado(Long id, String nuevoEstado, String modalidadCobro, BigDecimal montoFinal) {
-        return cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal, null);
-    }
-
-    @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado, String modalidadCobro, BigDecimal montoFinal, String observaciones) {
         Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
 

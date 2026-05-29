@@ -10,18 +10,3 @@ export function construirUrlFoto(nombreArchivo) {
     return `${API_URL}/uploads/${nombreArchivo}`;
 }
 
-export async function fotoUrlABase64(filename) {
-    const url = construirUrlFoto(filename);
-    if (!url) return null;
-    try {
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        const blob = await res.blob();
-        return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror  = () => resolve(null);
-            reader.readAsDataURL(blob);
-        });
-    } catch { return null; }
-}

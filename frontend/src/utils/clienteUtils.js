@@ -32,34 +32,3 @@ export const filtrarClientesPorBusqueda = (clientes, sedes, equipos, busqueda) =
     });
 };
 
-// Aplica el filtro de chip rápido sobre la lista ya filtrada por texto
-export const aplicarFiltroChip = (clientes, sedes, equipos, servicios, chip) => {
-    if (!chip) return clientes;
-    const hoy = new Date();
-    return clientes.filter(c => {
-        if (chip === 'empresa') return (c.clienteTipo || c.tipo) === 'EMPRESA';
-
-        if (chip === 'sin-servicio') {
-            const serviciosCli = servicios.filter(s => s.clienteId === c.id);
-            if (serviciosCli.length === 0) return true;
-            const ultimo = [...serviciosCli].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
-            const dias = Math.floor((hoy - new Date(ultimo.fecha)) / (1000 * 60 * 60 * 24));
-            return dias > 90;
-        }
-
-        if (chip === 'con-archivados') {
-            const sedesIds = sedes.filter(s => s.clienteId === c.id).map(s => s.id);
-            return equipos.some(eq => sedesIds.includes(eq.sedeId) && eq.activo === false);
-        }
-
-        return true;
-    });
-};
-
-// Días transcurridos desde la última fecha de servicio del cliente
-export const diasSinServicio = (servicios, clienteId) => {
-    const serviciosCli = servicios.filter(s => s.clienteId === clienteId);
-    if (serviciosCli.length === 0) return null;
-    const ultimo = [...serviciosCli].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
-    return Math.floor((new Date() - new Date(ultimo.fecha)) / (1000 * 60 * 60 * 24));
-};
