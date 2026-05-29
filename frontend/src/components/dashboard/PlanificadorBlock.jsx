@@ -1,0 +1,149 @@
+import React, { useState } from 'react';
+import { M } from '../servicio/ServicioUI';
+import { ESTADO_COLORS, ESTADO_BORDER, DEFAULT_COLOR, calcTotal, getIniciales, estadoPredominante } from './estadoConstants';
+
+const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
+
+function DiaBtn({ d, diaSel, onSelect }) {
+    const pct = Math.min(d.horasUsadas / d.horasTotal, 1);
+    const barColor = pct === 0 ? 'bg-[#16A34A]' : pct < 0.5 ? 'bg-[#16A34A]' : pct < 0.75 ? 'bg-[#D48800]' : 'bg-[#D13A28]';
+    const sel = d.fecha === diaSel;
+    return (
+        <button onClick={() => onSelect(sel ? null : d.fecha)}
+            className={`rounded-lg p-2 text-center transition-all active:scale-95 ${
+                d.esHoy ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''
+            } ${sel ? 'bg-[#1C1917] dark:bg-[#F0EEE9]' : 'bg-white dark:bg-[#242424]'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
+            <p className={`text-[10px] font-bold uppercase ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#A8A29E]'}`}>
+                {d.dia.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
+            </p>
+            <p className={`text-[14px] font-black ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                {d.dia.getDate()}
+            </p>
+            <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 mt-1.5">
+                <div className={`h-full rounded-full ${barColor}`}
+                    style={{ width: `${Math.max(pct * 100, d.items.length > 0 ? 20 : 0)}%` }} />
+            </div>
+            <p className={`text-[9px] font-bold mt-1 ${sel ? 'text-white/70 dark:text-black/50' : 'text-[#A8A29E]'}`}>
+                {Math.round(d.horasUsadas)}/{d.horasTotal}h
+            </p>
+        </button>
+    );
+}
+
+export default function PlanificadorBlock({ planificador, setVistaActual }) {
+    const [diaSel, setDiaSel] = useState(null);
+    const [semana2, setSemana2] = useState(false);
+
+    return (
+        <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-2">Planificador</p>
+            <div className="grid grid-cols-6 gap-1.5 mb-2">
+                {planificador.slice(0, 6).map(d => <DiaBtn key={d.fecha} d={d} diaSel={diaSel} onSelect={setDiaSel} />)}
+            </div>
+            {planificador.length > 6 && (
+                <>
+                    <button onClick={() => setSemana2(v => !v)}
+                        className="w-full flex items-center justify-center gap-1 h-6 rounded-lg text-[9px] font-bold uppercase text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99] mb-2">
+                        {semana2 ? '▲ Ocultar' : '▼ Semana siguiente'}
+                    </button>
+                    {semana2 && (
+                        <div className="grid grid-cols-6 gap-1.5 mb-2">
+                            {planificador.slice(6).map(d => <DiaBtn key={d.fecha} d={d} diaSel={diaSel} onSelect={setDiaSel} />)}
+                        </div>
+                    )}
+                </>
+            )}
+            {diaSel && (() => {
+                const dia = planificador.find(d => d.fecha === diaSel);
+                if (!dia) return null;
+                const libres = dia.horasTotal - dia.horasUsadas;
+                return (
+                    <div className={`${card} p-3 mt-2`}>
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] capitalize">
+                                {dia.dia.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' })}
+                            </p>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                libres <= 0 ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]'
+                                : libres <= 2 ? 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'
+                                : 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]'
+                            }`}>
+                                {libres <= 0 ? 'Completo' : `${Math.round(libres)}h libres`}
+                            </span>
+                        </div>
+                        {dia.items.length === 0 ? (
+                            <p className="text-[11px] text-[#A8A29E] text-center py-3">Día libre</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {(() => {
+                                    const grupos = {};
+                                    dia.items.forEach(s => {
+                                        const tec = s.items?.[0]?.tecnico || s.usuarioNombre || 'Sin asignar';
+                                        if (!grupos[tec]) grupos[tec] = [];
+                                        grupos[tec].push(s);
+                                    });
+                                    return Object.entries(grupos).map(([tecNombre, tecItems]) => {
+                                        const color = ESTADO_COLORS[estadoPredominante(tecItems)] || DEFAULT_COLOR;
+                                        const totalTec = tecItems.reduce((sum, s) => sum + (calcTotal(s) || 0), 0);
+                                        return (
+                                            <div key={tecNombre} className="space-y-1.5">
+                                                <div className={`flex items-center gap-2.5 px-2 py-1.5 rounded-lg ${color.bg}`}>
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${color.avatar}`}>
+                                                        <span className="text-[12px] font-black text-white leading-none">{getIniciales(tecNombre)}</span>
+                                                    </div>
+                                                    <p className={`text-[15px] font-black tracking-tight leading-tight flex-1 ${color.text}`}>
+                                                        {tecNombre}
+                                                    </p>
+                                                    <span className="text-[9px] font-bold text-[#A8A29E]">{tecItems.length} trabajo{tecItems.length !== 1 ? 's' : ''}</span>
+                                                    <M valor={totalTec} className={`text-[13px] font-black shrink-0 ${color.text}`} />
+                                                </div>
+                                                {tecItems.map(s => {
+                                                    const horas = s.duracionMinutos ? `${Math.round(s.duracionMinutos / 60 * 10) / 10}h` : `~${s.servicioTipo === 'TECNICA' ? '2' : '1'}h`;
+                                                    const esPendiente = s.estado === 'PRESUPUESTO';
+                                                    return (
+                                                        <div key={s.id}
+                                                            onClick={() => setVistaActual(s.servicioTipo === 'TECNICA' ? 'servicio-tecnico' : 'venta')}
+                                                            className="rounded-lg p-2.5 ml-2 bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform border-l-[3px]"
+                                                            style={{ borderLeftColor: ESTADO_BORDER[s.estado] || '#A8A29E' }}>
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
+                                                                        <span className={`text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]' : 'bg-[#16A34A]/10 text-[#16A34A]'}`}>
+                                                                            {esPendiente ? 'Pendiente' : s.estado?.replace('_', ' ')}
+                                                                        </span>
+                                                                    </div>
+                                                                    {s.sedeNombre && <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>}
+                                                                    {s.sedeDireccion && (
+                                                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
+                                                                            target="_blank" rel="noopener noreferrer"
+                                                                            className="text-[10px] text-[#D13A28] dark:text-[#E8422F] truncate block mt-0.5 active:opacity-70"
+                                                                            onClick={e => e.stopPropagation()}>
+                                                                            📍 {s.sedeDireccion}
+                                                                        </a>
+                                                                    )}
+                                                                    {s.items?.[0]?.trabajoRealizado && (
+                                                                        <p className="text-[10px] text-[#A8A29E] mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
+                                                                    )}
+                                                                    <div className="flex items-center gap-3 mt-1.5">
+                                                                        <span className="text-[9px] font-bold text-[#A8A29E]">⏱ {horas}</span>
+                                                                        <M valor={calcTotal(s)} className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-auto" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    });
+                                })()}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
+        </div>
+    );
+}
