@@ -24,7 +24,7 @@ export function registrarProductosVendidos(productos) {
             data[key].precio = p.precio; // actualizar precio
         });
         localStorage.setItem(FREQ_KEY, JSON.stringify(data));
-    } catch { /* silenciar */ }
+    } catch (err) { console.warn('Productos: error guardando frecuentes', err); }
 }
 
 export default function PasoProductosVenta({ hook, onNext, onBack }) {

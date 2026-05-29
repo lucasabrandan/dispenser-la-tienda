@@ -165,8 +165,8 @@ export default function ServicioCard({
                 {/* Fila 4: chips serie + ubicación */}
                 {(seriales.length > 0 || ubicInfo) && (
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
-                        {seriales.slice(0, 2).map((s, i) => (
-                            <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
+                        {seriales.slice(0, 2).map((s) => (
+                            <span key={s} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
                                 {s}
                             </span>
                         ))}
@@ -196,7 +196,7 @@ export default function ServicioCard({
 
                 {/* Detalle expandido por equipo */}
                 {expandido && items.map((it, i) => (
-                    <div key={i} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05]">
+                    <div key={`${it.equipoSerial || 'item'}-${i}`} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05]">
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
                                 <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>

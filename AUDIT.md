@@ -99,24 +99,17 @@ Nota: algunos style={{}} son dinamicos (width calculado, borderColor variable). 
 
 ## Fase 4 — Malas practicas frontend (riesgo bajo-medio)
 
-### Catch silenciados (agregar al menos console.warn)
-- [ ] `DashboardCaja.jsx:39`
-- [ ] `useBadges.js:21`
-- [ ] `useOrdenes.js:32`
-- [ ] `useServicioManager.js:145`
-- [ ] `PasoProductosVenta.jsx:27`
-- [ ] `VentaManager.jsx:57`
-- [ ] `ServicioManager.jsx:173`
-- [ ] `ClienteManager.jsx:77`
+### Catch silenciados — DONE
+- [x] 6 catch silenciados reemplazados por console.warn con contexto
+- Nota: catch {} en PDFs (addImage) son intencionales — no romper PDF por una imagen
 
-### Keys con indice en listas que mutan (cambiar a IDs)
-Priorizar estos (listas que el usuario reordena/elimina):
-- [ ] `PasoResumen.jsx:40,70,171` — items de servicio
-- [ ] `PasoEquipos.jsx:397` — repuestos
-- [ ] `ServicioCard.jsx:199` — items
-- [ ] `EjecutarOrdenSheet.jsx:294` — items
-- [ ] `EjecutarAdminSheet.jsx:79` — items
-- [ ] `ServicioList.jsx:235,290` — items
+### Keys con indice — DONE
+- [x] PasoResumen ticketItems — key compuesta serial+idx
+- [x] ServicioCard seriales — key por valor (serial unico)
+- [x] ServicioCard items expandidos — key compuesta
+- [x] PasoDetalle items y repuestos — key compuesta
+- [x] EjecutarAdminSheet items — key compuesta
+- [x] ServicioList items (2 instancias) — key compuesta
 
 ### Props drilling
 - [ ] `ServicioForm.jsx` — considerar Context para las 40+ props de useServicioForm

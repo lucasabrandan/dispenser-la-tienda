@@ -169,7 +169,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                 <Label>Equipos en el ticket</Label>
                 <div className="flex flex-col gap-2">
                     {ticketItems.map((it, idx) => (
-                        <div key={idx} className="rounded-2xl overflow-hidden bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <div key={`${it.equipoSerial || 'eq'}-${idx}`} className="rounded-2xl overflow-hidden bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                             <div className="p-4 flex justify-between items-start">
                                 <div className="flex-1 min-w-0 pr-3">
                                     <p className="font-black text-[13px] text-[#D13A28] dark:text-[#E8422F]">

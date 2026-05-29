@@ -30,7 +30,7 @@ export default function DashboardCaja({ setVistaActual }) {
             setServicios(sRes.data.content || sRes.data || []);
             if (oRes) setOrdenes(oRes.data || []);
             if (rRes) setAlertasRadar(rRes.data || []);
-        } catch { /* silenciar */ } finally { setCargando(false); }
+        } catch (err) { console.warn('Dashboard: error cargando datos', err); } finally { setCargando(false); }
     };
 
     useEffect(() => { cargar(); }, []);

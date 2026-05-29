@@ -18,7 +18,7 @@ export function useBadges() {
                 ]);
                 setPendientes(svc.data.pendientesCount || 0);
                 setOrdenesActivas(ord.data.count || 0);
-            } catch { /* silenciar */ }
+            } catch (err) { console.warn('Badges: error cargando conteos', err); }
         };
         cargar();
         const interval = setInterval(cargar, 60_000);

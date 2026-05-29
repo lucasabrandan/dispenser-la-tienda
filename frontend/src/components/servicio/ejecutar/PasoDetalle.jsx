@@ -16,7 +16,7 @@ export default function PasoDetalle({
                     Equipos y trabajo asignado
                 </p>
                 {servicio.items?.map((it, i) => (
-                    <div key={i} className="p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.06]">
+                    <div key={`${it.equipoSerial || 'item'}-${i}`} className="p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.06]">
                         <div className="flex items-start justify-between gap-2 mb-1">
                             <p className="text-[13px] font-black text-[#D13A28] dark:text-[#E8422F]">
                                 {it.equipoSerial}
@@ -36,7 +36,7 @@ export default function PasoDetalle({
                         {it.repuestosUsados?.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-black/[0.06]">
                                 {it.repuestosUsados.map((r, ri) => (
-                                    <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                    <span key={r.nombre || ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
                                         {r.cantidad}x {r.nombre}
                                     </span>
                                 ))}

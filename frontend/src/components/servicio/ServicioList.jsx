@@ -232,7 +232,7 @@ export default function ServicioList({ onEditar }) {
                                         {s.items?.length > 0 && s.servicioTipo === 'TECNICA' && (
                                             <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
                                                 {s.items.slice(0, 2).map((it, idx) => (
-                                                    <p key={idx} className="text-[10px] text-[#A8A29E] truncate">· {it.equipoSerial} — {it.trabajoRealizado}</p>
+                                                    <p key={`${it.equipoSerial || 'it'}-${idx}`} className="text-[10px] text-[#A8A29E] truncate">· {it.equipoSerial} — {it.trabajoRealizado}</p>
                                                 ))}
                                                 {s.items.length > 2 && <p className="text-[10px] text-[#A8A29E]">+{s.items.length - 2} más</p>}
                                             </div>
@@ -287,7 +287,7 @@ export default function ServicioList({ onEditar }) {
                         <p className="text-[11px] text-[#A8A29E] mb-4">#{modalDetalle.id} · {modalDetalle.fecha}</p>
                         <div className="max-h-[50vh] overflow-y-auto space-y-2 mb-4">
                             {modalDetalle.items.map((it, idx) => (
-                                <div key={idx} className="p-3.5 rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.04] dark:border-white/[0.04]">
+                                <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.04] dark:border-white/[0.04]">
                                     <div className="flex justify-between mb-1">
                                         <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
                                         {esAdmin && <M valor={Number(it.costo)} className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]" />}

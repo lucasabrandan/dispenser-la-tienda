@@ -97,7 +97,7 @@ export default function ServicioManager({
             const counts = {};
             TABS.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
             setTabCounts(counts);
-        } catch { /* silenciar */ }
+        } catch (err) { console.warn('Servicios: error cargando conteos tabs', err); }
     }, []);
 
     useEffect(() => { fetchTabCounts(); }, [fetchTabCounts]);

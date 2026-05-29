@@ -76,7 +76,7 @@ export default function EjecutarAdminSheet({ servicio, calcularTotal, onConfirma
                         <div className="space-y-2">
                             <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">Resumen del trabajo</p>
                             {items.map((it, i) => (
-                                <div key={i} className="p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
+                                <div key={`${it.equipoSerial || 'item'}-${i}`} className="p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                                     <div className="flex justify-between items-start mb-1">
                                         <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial || 'Sin equipo'}</span>
                                         <M valor={Number(it.costo || 0)} className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0 ml-2" />

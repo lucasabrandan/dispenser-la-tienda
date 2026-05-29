@@ -54,7 +54,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
             const counts = {};
             TABS.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
             setTabCounts(counts);
-        } catch { /* silenciar */ }
+        } catch (err) { console.warn('Ventas: error cargando conteos tabs', err); }
     }, []);
 
     useEffect(() => { fetchTabCounts(); }, [fetchTabCounts]);

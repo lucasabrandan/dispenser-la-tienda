@@ -29,7 +29,7 @@ export function useOrdenes({ tecnicoId = null } = {}) {
         try {
             const res = await api.get('/ordenes/tecnicos');
             setTecnicos(res.data);
-        } catch { /* silenciar */ }
+        } catch (err) { console.warn('Ordenes: error cargando tecnicos', err); }
     }, []);
 
     const cargar = useCallback(async () => {
