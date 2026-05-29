@@ -2,6 +2,7 @@ import React from 'react';
 import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, buildSelectStyles } from '../servicio/ServicioUI';
 import DateInput from '../ui/DateInput';
+import { getTodayISO } from '../../utils/dateUtils';
 
 const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucumán','Salta','Neuquén'];
 
@@ -29,7 +30,7 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
 
     const isDark = document.documentElement.classList.contains('dark');
     const selectStyles = buildSelectStyles(isDark);
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getTodayISO();
 
     // Rápido: siempre puede avanzar. Con cliente: necesita clienteId
     const puedeAvanzar = modoRapido ? true : !!clienteId;

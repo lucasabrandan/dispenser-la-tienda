@@ -3,6 +3,7 @@ import FirmaPad from '../ui/FirmaPad';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import { getTodayISO } from '../../utils/dateUtils';
 import DateInput from '../ui/DateInput';
 
 const PRIORIDADES = [
@@ -70,7 +71,7 @@ export default function CerrarTicketSheet({
             api.get('/admin/usuarios')
                 .then(r => setTecnicos((r.data || []).filter(u => u.activo)))
                 .catch(() => {});
-            setDispFecha(new Date().toISOString().split('T')[0]);
+            setDispFecha(getTodayISO());
         }
     }, [esAdmin, modoEjecucion]);
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { formatDateISO } from '../utils/dateUtils';
 
 // Rango por defecto: lunes de esta semana hasta domingo
 function rangoSemanaActual() {
@@ -11,8 +12,7 @@ function rangoSemanaActual() {
     lunes.setDate(hoy.getDate() + diffLunes);
     const domingo = new Date(lunes);
     domingo.setDate(lunes.getDate() + 6);
-    const fmt = (d) => d.toISOString().split('T')[0];
-    return { desde: fmt(lunes), hasta: fmt(domingo) };
+    return { desde: formatDateISO(lunes), hasta: formatDateISO(domingo) };
 }
 
 export function useOrdenes({ tecnicoId = null } = {}) {

@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
+import { inicioMes, finMes } from '../utils/dateUtils';
 
 const hoy = () => new Date();
-const inicioMes = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
-const finMes    = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 
 /**
  * useFiltros + usePaginacion — hook reutilizable

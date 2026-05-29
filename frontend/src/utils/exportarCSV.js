@@ -2,6 +2,7 @@
  * Utilidad de exportación CSV.
  * Genera y descarga un archivo .csv desde un array de objetos.
  */
+import { getTodayISO } from './dateUtils';
 
 /** Escapa un valor para CSV (maneja comas, comillas y saltos de línea) */
 function escapar(val) {
@@ -67,7 +68,7 @@ export function exportarServiciosCSV(servicios) {
         { label: 'Total Servicio ($)', valor: f => f._total },
     ];
 
-    const fecha = new Date().toISOString().split('T')[0];
+    const fecha = getTodayISO();
     exportarCSV(filas, columnas, `servicios_${fecha}.csv`);
 }
 
@@ -98,7 +99,7 @@ export function exportarVentasCSV(ventas) {
         { label: 'Total Venta ($)', valor: f => f._total },
     ];
 
-    const fecha = new Date().toISOString().split('T')[0];
+    const fecha = getTodayISO();
     exportarCSV(filas, columnas, `ventas_${fecha}.csv`);
 }
 
@@ -152,6 +153,6 @@ export function exportarGastosCSV(gastos, mes) {
         { label: 'Monto ($)',    valor: f => f.monto },
     ];
 
-    const sufijo = mes ? `_${mes}` : `_${new Date().toISOString().split('T')[0]}`;
+    const sufijo = mes ? `_${mes}` : `_${getTodayISO()}`;
     exportarCSV(gastos, columnas, `gastos${sufijo}.csv`);
 }

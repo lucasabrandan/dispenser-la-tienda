@@ -3,38 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
-
-// Convierte el período rápido (MES, MES_ANT, etc.) a fechas ISO para el backend
-function resolverFechas(periodoRapido, mesSelector, desde, hasta) {
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-
-    if (periodoRapido === 'TODO') return { desde: '', hasta: '' };
-    if (periodoRapido === 'MES') {
-        const ini = new Date(now.getFullYear(), now.getMonth(), 1);
-        const fin = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        return { desde: fmt(ini), hasta: fmt(fin) };
-    }
-    if (periodoRapido === 'MES_ANT') {
-        const ini = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const fin = new Date(now.getFullYear(), now.getMonth(), 0);
-        return { desde: fmt(ini), hasta: fmt(fin) };
-    }
-    if (periodoRapido === 'ANO') {
-        return { desde: `${now.getFullYear()}-01-01`, hasta: `${now.getFullYear()}-12-31` };
-    }
-    if (periodoRapido === 'CUSTOM') {
-        if (mesSelector) {
-            const [y, m] = mesSelector.split('-').map(Number);
-            const ini = new Date(y, m - 1, 1);
-            const fin = new Date(y, m, 0);
-            return { desde: fmt(ini), hasta: fmt(fin) };
-        }
-        return { desde, hasta };
-    }
-    return { desde: '', hasta: '' };
-}
+import { resolverFechas } from '../utils/dateUtils';
 
 /**
  * useServicioManager

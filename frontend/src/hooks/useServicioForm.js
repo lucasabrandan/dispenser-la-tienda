@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { getTodayISO, formatDateISO } from '../utils/dateUtils';
 
 const DRAFT_KEY = 'servicio_borrador';
 
@@ -44,7 +45,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   const [fechaVisita, setFechaVisita] = useState(''); // fecha estimada de visita para auto-despacho
   const LEYENDA_DEFAULT = 'Garantía: 90 días sobre mano de obra · Repuestos según fabricante';
   const [leyenda, setLeyenda] = useState(LEYENDA_DEFAULT);
-  const [fechaServicio, setFechaServicio] = useState(new Date().toISOString().split('T')[0]);
+  const [fechaServicio, setFechaServicio] = useState(getTodayISO());
   const [duracionMinutos, setDuracionMinutos] = useState(null);
 
   useEffect(() => {
@@ -635,7 +636,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             trabajoTipo:      it.esVisita ? 'VISITA' : (tieneEquipo ? (esFiltro ? 'CAMBIO_FILTRO' : 'REPARACION') : 'VENTA'),
             repuestosUsados:  it.repuestosUsados || [],
             garantiaHasta:    confirmarTrabajo && tieneEquipo
-              ? new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3))).toISOString().split('T')[0]
+              ? formatDateISO(new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3))))
               : null,
             // Prioridad: filename de subida nueva > filename existente del backend
             // Las data URLs no se mandan al backend (ya se subieron arriba)
@@ -669,7 +670,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       setIdEdicion(null);
       setDescuentoPorcentaje(0);
       setLeyenda(LEYENDA_DEFAULT);
-      setFechaServicio(new Date().toISOString().split('T')[0]);
+      setFechaServicio(getTodayISO());
       setFechaVisita('');
       setItemActual({ sedeId: '', sedeNombre: '', equipoSerial: '', trabajo: '', costoExtra: '', repuestosUsados: [] });
       return { ok: true, id: savedId, clienteId: resClienteId, clienteNombre: resClienteNombre, tecnicoId: resTecnicoId, fechaVisita: resFechaVisita };

@@ -42,12 +42,13 @@ Cada item tiene prioridad y riesgo para decidir orden de ejecucion.
 ## Fase 2 — Duplicacion (riesgo bajo)
 
 ### Crear `src/utils/dateUtils.js`
-- [ ] Extraer `resolverFechas()` (3 implementaciones distintas en useServicioManager, useVentaManager, useFiltros)
-- [ ] Extraer `getTodayISO()` — `new Date().toISOString().split('T')[0]` repetido en 12 archivos
-- [ ] Exportar `inicioMes()`, `finMes()` desde ahi
+- [x] Extraer `resolverFechas()` — unificado de useServicioManager, useVentaManager. useFiltros usa inicioMes/finMes.
+- [x] Extraer `getTodayISO()` + `formatDateISO()` — reemplazado en 21 ocurrencias, 0 restantes
+- [x] Exportar `inicioMes()`, `finMes()` — usados por useFiltros
 
 ### Crear `src/utils/errorHandler.js`
-- [ ] Extraer `getErrorMessage(error)` — normaliza `err.response?.data?.mensaje || err.message` (40 archivos)
+- [x] Creado `getErrorMessage(error, fallback)` — soporta camposInvalidos + mensaje + err.message
+- [ ] Adoptar en los 8 archivos que usan el patron manual (gradual, bajo riesgo)
 
 ### Usar lo que ya existe
 - [ ] Reemplazar `document.documentElement.classList.contains('dark')` por `useTheme()` (8 archivos, 14 ocurrencias)

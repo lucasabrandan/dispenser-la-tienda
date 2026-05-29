@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
 import { generarPDFCierreCaja } from '../../utils/pdf/cierreCaja';
 import DateInput from '../ui/DateInput';
+import { getTodayISO, formatDateISO } from '../../utils/dateUtils';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -11,7 +12,7 @@ function M({ valor, className = '' }) {
     return <span className={className}>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
 }
 
-const hoyISO = () => new Date().toISOString().split('T')[0];
+const hoyISO = () => getTodayISO();
 const inicioMesISO = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
@@ -31,7 +32,7 @@ function resolverRango(periodo) {
     if (periodo === 'semana') {
         const d = new Date();
         d.setDate(d.getDate() - 6);
-        return { desde: d.toISOString().split('T')[0], hasta: hoy };
+        return { desde: formatDateISO(d), hasta: hoy };
     }
     return null;
 }

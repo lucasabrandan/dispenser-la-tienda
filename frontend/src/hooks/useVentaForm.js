@@ -3,6 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import { registrarProductosVendidos } from '../components/venta/PasoProductosVenta';
+import { getTodayISO } from '../utils/dateUtils';
 
 export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar = null) {
     const [clientes,  setClientes]  = useState([]);
@@ -21,7 +22,7 @@ export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar =
     const [repuestoElegido, setRepuestoElegido] = useState(null);
     const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(ventaParaEditar?.descuentoPorcentaje || 0);
     const [costoEnvio, setCostoEnvio] = useState('');
-    const [fechaVenta, setFechaVenta] = useState(ventaParaEditar?.fecha || new Date().toISOString().split('T')[0]);
+    const [fechaVenta, setFechaVenta] = useState(ventaParaEditar?.fecha || getTodayISO());
     const [leyenda, setLeyenda] = useState(ventaParaEditar?.observaciones || '');
     const [modalClienteAbierto, setModalClienteAbierto] = useState(false);
     const [nombreClientePrellenado, setNombreClientePrellenado] = useState('');

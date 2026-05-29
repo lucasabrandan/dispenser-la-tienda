@@ -3,6 +3,7 @@ import { useMontos } from '../context/MontosContext';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import CierreCajaModal from './finanzas/CierreCajaModal';
+import { getTodayISO, formatDateISO } from '../utils/dateUtils';
 
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
@@ -41,7 +42,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
     useEffect(() => { cargar(); }, []);
 
-    const hoyStr = new Date().toISOString().split('T')[0];
+    const hoyStr = getTodayISO();
     const mesStr = hoyStr.substring(0, 7);
     const hoyLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -87,7 +88,7 @@ export default function DashboardCaja({ setVistaActual }) {
                     d.setDate(hoy.getDate() + offset);
                     offset++;
                     if (d.getDay() === 0) continue;
-                    const fechaStr = d.toISOString().split('T')[0];
+                    const fechaStr = formatDateISO(d);
                     const items = servicios.filter(s => s.fecha === fechaStr);
                     const horasUsadas = items.reduce((a, s) => {
                         if (s.duracionMinutos) return a + s.duracionMinutos / 60;

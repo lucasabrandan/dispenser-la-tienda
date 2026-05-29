@@ -3,6 +3,7 @@ import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
+import { getTodayISO } from '../../utils/dateUtils';
 import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
 import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
@@ -347,7 +348,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         return acc;
     }, {});
 
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getTodayISO();
     const formatFecha = (f) => {
         if (f === hoy) return 'Hoy';
         const d = new Date(f + 'T00:00:00');

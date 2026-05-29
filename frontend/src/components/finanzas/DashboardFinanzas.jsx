@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
 import { exportarGastosCSV, exportarBalanceCSV } from '../../utils/exportarCSV';
+import { getTodayISO } from '../../utils/dateUtils';
 import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnicos';
 import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
 import CierreCajaModal from './CierreCajaModal';
@@ -279,7 +280,7 @@ function TabGastos({ filtroMes, setFiltroMes }) {
     const [gastos,   setGastos]   = useState([]);
     const [cargando, setCargando] = useState(false);
     const [pagGastos, setPagGastos] = useState(1);
-    const formVacio = { id: null, descripcion: '', monto: '', fecha: new Date().toISOString().split('T')[0], categoria: '' };
+    const formVacio = { id: null, descripcion: '', monto: '', fecha: getTodayISO(), categoria: '' };
     const [form, setForm] = useState(formVacio);
     const [confirmEliminarGasto, setConfirmEliminarGasto] = useState(null);
 

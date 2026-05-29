@@ -3,6 +3,7 @@ import { Label, BackBtn, M, DSCard } from './ServicioUI';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
+import { getTodayISO } from '../../utils/dateUtils';
 import DateInput from '../ui/DateInput';
 
 const QUICK_PCTS = [5, 10];
@@ -216,12 +217,12 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         onChange={setFechaServicio}
                         className={inputCls}
                     />
-                    {fechaServicio && fechaServicio !== new Date().toISOString().split('T')[0] && (
+                    {fechaServicio && fechaServicio !== getTodayISO() && (
                         <div className="flex justify-between mt-1">
-                            <span className={`text-[10px] font-bold ${fechaServicio < new Date().toISOString().split('T')[0] ? 'text-amber-500' : 'text-blue-500'}`}>
-                                {fechaServicio < new Date().toISOString().split('T')[0] ? 'Carga histórica' : 'Fecha futura'}
+                            <span className={`text-[10px] font-bold ${fechaServicio < getTodayISO() ? 'text-amber-500' : 'text-blue-500'}`}>
+                                {fechaServicio < getTodayISO() ? 'Carga histórica' : 'Fecha futura'}
                             </span>
-                            <button onClick={() => setFechaServicio(new Date().toISOString().split('T')[0])}
+                            <button onClick={() => setFechaServicio(getTodayISO())}
                                 className="text-[10px] text-[#A8A29E] hover:text-[#D13A28]">
                                 Usar hoy
                             </button>
