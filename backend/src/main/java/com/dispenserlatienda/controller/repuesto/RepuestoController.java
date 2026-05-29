@@ -13,17 +13,18 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 
-/**
- * RepuestoController
- * Gestiona repuestos con soporte para fotos y cálculo de precios
- */
 @RestController
 @RequestMapping("/api/repuestos")
 @Validated
 public class RepuestoController {
+
+    private static final Logger log = LoggerFactory.getLogger(RepuestoController.class);
 
     private final RepuestoRepository repuestoRepository;
     private final FileStorageService fileStorageService;
@@ -104,7 +105,7 @@ public class RepuestoController {
             return ResponseEntity.status(HttpStatus.CREATED).body(guardado);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error creando repuesto: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -187,7 +188,7 @@ public class RepuestoController {
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error editando repuesto {}: {}", id, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -203,7 +204,7 @@ public class RepuestoController {
                 if (repuesto.getFotoUrl3() != null) fileStorageService.eliminarArchivo(repuesto.getFotoUrl3());
                 repuestoRepository.deleteById(id);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Error eliminando fotos del repuesto {}: {}", id, e.getMessage(), e);
             }
         });
     }

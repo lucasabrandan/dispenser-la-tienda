@@ -127,13 +127,17 @@ Nota: algunos style={{}} son dinamicos (width calculado, borderColor variable). 
 - [ ] Agregar `@EntityGraph` en `ServicioRepository` para eager-load usuario/cliente/sede
 - [ ] Revisar VentaRepository lazy loading
 
-### Inyeccion de dependencias
-- [ ] `FileController.java` — cambiar @Autowired fields a constructor injection
-- [ ] `FileStorageService.java` — idem
+### Inyeccion de dependencias — DONE
+- [x] `FileController.java` — constructor injection + SLF4J logger
+- [x] `FileStorageService.java` — constructor injection + SLF4J logger
 
-### Logging
-- [ ] Reemplazar `e.printStackTrace()` por SLF4J logger (11 ocurrencias en RepuestoController, ServicioService, FileController)
-- [ ] Reemplazar `System.out.println` en FileController por logger
+### Logging — DONE
+- [x] RepuestoController: 3 printStackTrace → log.error
+- [x] ServicioService: 3 printStackTrace + 4 catch ignored → log.warn
+- [x] FileController: 2 System.out.println → log.error
+- [x] FileStorageService: 1 System.out.println → log.info
+- [x] R2StorageService: 3 System.out.println → log.info/warn
+- 0 printStackTrace y 0 System.out.println en services/controllers
 
 ### Validacion
 - [ ] Agregar @Valid en endpoints que reciben @RequestBody sin validar

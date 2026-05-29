@@ -1,6 +1,7 @@
 package com.dispenserlatienda.service.servicio;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,11 +13,17 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    @Value("${storage.location}")
-    private String storageLocation;
+    private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
 
-    @Autowired
-    private R2StorageService r2;
+    private final String storageLocation;
+    private final R2StorageService r2;
+
+    public FileStorageService(
+            @Value("${storage.location}") String storageLocation,
+            R2StorageService r2) {
+        this.storageLocation = storageLocation;
+        this.r2 = r2;
+    }
 
     public String guardarArchivo(MultipartFile archivo) throws IOException {
         String nombreArchivo = UUID.randomUUID().toString() + "_" + archivo.getOriginalFilename();
@@ -29,14 +36,12 @@ public class FileStorageService {
     public void eliminarArchivo(String nombreArchivo) throws IOException {
         if (nombreArchivo == null || nombreArchivo.isEmpty()) return;
 
-        // Eliminar de R2
         r2.eliminar(nombreArchivo);
 
-        // Eliminar del disco local si todavía existe (archivos viejos)
         Path filePath = Paths.get(storageLocation, nombreArchivo);
         if (Files.exists(filePath)) {
             Files.delete(filePath);
-            System.out.println("✅ Disco: archivo eliminado → " + nombreArchivo);
+            log.info("Disco: archivo eliminado → {}", nombreArchivo);
         }
     }
 }

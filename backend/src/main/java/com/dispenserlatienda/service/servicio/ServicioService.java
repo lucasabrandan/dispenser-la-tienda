@@ -32,6 +32,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.data.jpa.domain.Specification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -43,6 +45,7 @@ import java.util.List;
 // Implementa paginación para el listado de servicios
 @Service
 public class ServicioService {
+    private static final Logger log = LoggerFactory.getLogger(ServicioService.class);
     private final ServicioRepository servicioRepository;
     private final SedeRepository sedeRepository;
     private final UsuarioRepository usuarioRepository;
@@ -232,7 +235,7 @@ public class ServicioService {
                         }
                         repuestos = repuestos.add(val);
                     }
-                } catch (JsonProcessingException ignored) {}
+                } catch (JsonProcessingException e) { log.warn("Error parseando JSON repuestos: {}", e.getMessage()); }
             }
 
             porMes.merge(ym, new BigDecimal[]{ facturado, repuestos },
@@ -313,7 +316,7 @@ public class ServicioService {
                                 val = new BigDecimal(precio.toString()).multiply(new BigDecimal(cant.toString()));
                             repuestos = repuestos.add(val);
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) { log.warn("Error procesando item: {}", e.getMessage()); }
                 }
             }
 
@@ -402,7 +405,7 @@ public class ServicioService {
         if (dto.getModalidadCobro() != null && !dto.getModalidadCobro().isEmpty()) {
             try {
                 servicio.setModalidadCobro(ModalidadCobro.valueOf(dto.getModalidadCobro()));
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException e) { log.warn("Valor invalido: {}", e.getMessage()); }
         }
         if (dto.getMontoFinal() != null) servicio.setMontoFinal(dto.getMontoFinal());
         if (dto.getEsVisita() != null) servicio.setEsVisita(dto.getEsVisita());
@@ -463,7 +466,7 @@ public class ServicioService {
                 if (itemDto.repuestosUsados() != null) {
                     nuevoItem.setRepuestosUsados(objectMapper.writeValueAsString(itemDto.repuestosUsados()));
                 }
-            } catch (JsonProcessingException e) { e.printStackTrace(); }
+            } catch (JsonProcessingException e) { log.warn("Error serializando JSON: {}", e.getMessage()); }
 
             servicio.addItem(nuevoItem);
         }
@@ -492,7 +495,7 @@ public class ServicioService {
 
         // Modalidad de cobro
         if (modalidadCobro != null && !modalidadCobro.isEmpty()) {
-            try { s.setModalidadCobro(ModalidadCobro.valueOf(modalidadCobro)); } catch (IllegalArgumentException ignored) {}
+            try { s.setModalidadCobro(ModalidadCobro.valueOf(modalidadCobro)); } catch (IllegalArgumentException e) { log.warn("Valor invalido: {}", e.getMessage()); }
         }
         if (montoFinal != null) s.setMontoFinal(montoFinal);
         if (observaciones != null) s.setObservaciones(observaciones);
@@ -523,7 +526,7 @@ public class ServicioService {
                     listaRepuestos = objectMapper.readValue(i.getRepuestosUsados(),
                             new TypeReference<List<RepuestoUsadoDTO>>(){});
                 }
-            } catch (JsonProcessingException e) { e.printStackTrace(); }
+            } catch (JsonProcessingException e) { log.warn("Error serializando JSON: {}", e.getMessage()); }
 
             String garantiaStr = (i.getGarantiaHasta() != null) ? i.getGarantiaHasta().toString() : null;
 
@@ -631,7 +634,7 @@ public class ServicioService {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.warn("Error calculando estadisticas: {}", e.getMessage());
                 }
 
                 costoRepuestos = costoRepuestos.add(costosRepuestos);

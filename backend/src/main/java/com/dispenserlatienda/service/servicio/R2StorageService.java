@@ -1,5 +1,7 @@
 package com.dispenserlatienda.service.servicio;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -15,6 +17,8 @@ import java.net.URI;
 
 @Service
 public class R2StorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(R2StorageService.class);
 
     @Value("${r2.access-key-id}")
     private String accessKeyId;
@@ -52,7 +56,7 @@ public class R2StorageService {
                             .build(),
                     RequestBody.fromBytes(contenido)
             );
-            System.out.println("✅ R2: archivo subido → " + filename);
+            log.info("R2: archivo subido → {}", filename);
             return filename;
         }
     }
@@ -64,9 +68,9 @@ public class R2StorageService {
                     .bucket(bucket)
                     .key(filename)
                     .build());
-            System.out.println("✅ R2: archivo eliminado → " + filename);
+            log.info("R2: archivo eliminado → {}", filename);
         } catch (Exception e) {
-            System.out.println("⚠️ R2: no se pudo eliminar " + filename + ": " + e.getMessage());
+            log.warn("R2: no se pudo eliminar {}: {}", filename, e.getMessage());
         }
     }
 
@@ -74,7 +78,6 @@ public class R2StorageService {
         return publicUrl + "/" + filename;
     }
 
-    // Descarga los bytes del archivo desde R2 (sin redirigir al cliente)
     public byte[] descargar(String filename) {
         try (S3Client s3 = buildClient()) {
             return s3.getObjectAsBytes(
