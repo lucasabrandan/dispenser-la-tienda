@@ -18,11 +18,9 @@ export function StepBar({ paso, total }) {
         <div className="flex gap-1.5 mb-4">
             {Array.from({ length: total }).map((_, i) => (
                 <div key={i}
-                    className="flex-1 h-1 rounded-full transition-all duration-300"
-                    style={{
-                        background: i <= paso ? '#D13A28' : '#E8E5E0',
-                        opacity: i < paso ? 0.45 : 1,
-                    }}
+                    className={`flex-1 h-1 rounded-full transition-all duration-300 ${
+                        i <= paso ? 'bg-[#D13A28]' : 'bg-[#E8E5E0]'
+                    } ${i < paso ? 'opacity-45' : ''}`}
                 />
             ))}
         </div>

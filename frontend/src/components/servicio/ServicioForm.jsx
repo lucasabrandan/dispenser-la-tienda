@@ -198,7 +198,7 @@ export default function ServicioForm({
     };
 
     return (
-        <div className="font-sans transition-colors bg-[#FFFFFF] dark:bg-[#141414]" style={{ minHeight: '100%' }}>
+        <div className="font-sans transition-colors bg-[#FFFFFF] dark:bg-[#141414] min-h-full">
 
             {/* Banner borrador */}
             {borradorDisponible && !servicioParaEditar && (
@@ -220,8 +220,7 @@ export default function ServicioForm({
             )}
 
             {estaBloqueado && (
-                <div className="mx-5 mt-4 p-3 rounded-xl text-center font-bold text-[13px]"
-                     style={{ background: 'var(--danger-bg)', color: 'var(--danger-tx)' }}>
+                <div className="mx-5 mt-4 p-3 rounded-xl text-center font-bold text-[13px] bg-red-50 dark:bg-red-900/30 text-[#D13A28] dark:text-red-300">
                     🔒 Registro cobrado — solo lectura
                 </div>
             )}

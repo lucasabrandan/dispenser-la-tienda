@@ -4,6 +4,7 @@ import imageCompression from 'browser-image-compression';
 import { toast } from 'react-hot-toast';
 import { buildSelectStyles } from './ServicioUI';
 import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
+import { useTheme } from '../../hooks/useTheme';
 
 async function comprimirFoto(file) {
     try {
@@ -70,7 +71,8 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
             }))
     , [equiposInventario, serialesEnTicket]);
 
-    const selectStyles = useMemo(() => buildSelectStyles(document.documentElement.classList.contains('dark')), []);
+    const { isDark } = useTheme();
+    const selectStyles = useMemo(() => buildSelectStyles(isDark), [isDark]);
 
     // Al abrir, copiar datos del último equipo cargado
     useEffect(() => {

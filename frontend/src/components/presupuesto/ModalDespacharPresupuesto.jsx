@@ -216,8 +216,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
 
                                     {/* Qué verá el técnico — preview */}
                                     {form.tecnicoId && form.fechaProgramada && (
-                                        <div className="p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]"
-                                            style={{ border: '0.5px solid rgba(0,0,0,0.06)' }}>
+                                        <div className="p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border-[0.5px] border-black/[0.06]">
                                             <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-widest mb-1.5">
                                                 Preview · aparecerá en Mis Órdenes
                                             </p>

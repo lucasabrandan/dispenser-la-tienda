@@ -125,7 +125,7 @@ function TabBalance({ filtroMes, setFiltroMes }) {
             )}
 
             {stats.transacciones.length > 0 && (
-                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden border-[0.5px] border-black/[0.07]">
                     <div className="px-5 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Operaciones del mes</p>
                     </div>
@@ -207,7 +207,7 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
                     { label: 'Facturado',         valor: fmt(totFact),   gold: false },
                     { label: 'A pagar técnicos',  valor: fmt(totParte),  gold: true  },
                 ].map(({ label, valor, gold }) => (
-                    <div key={label} className="rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] p-3 text-center" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div key={label} className="rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] p-3 text-center border-[0.5px] border-black/[0.07]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">{label}</p>
                         <p className={`text-[16px] font-black ${gold ? 'text-[#D48800] dark:text-[#F0A500]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>{valor}</p>
                     </div>
@@ -239,7 +239,7 @@ function TabTecnicos({ filtroMes, setFiltroMes }) {
             {datosFiltrados.length === 0 ? (
                 <p className="text-center text-[#A8A29E] py-12">Sin trabajos para este período</p>
             ) : (
-                <div className="rounded-2xl overflow-x-auto bg-[#FFFFFF] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="rounded-2xl overflow-x-auto bg-[#FFFFFF] dark:bg-[#242424] border-[0.5px] border-black/[0.07]">
                     <div className="min-w-[480px]">
                         <div className="grid grid-cols-[minmax(120px,1fr)_60px_90px_90px_90px] px-4 py-2 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                             {['Técnico','Trab.','Facturado','Repuestos','Su parte'].map(h => (
@@ -395,7 +395,7 @@ function TabGastos({ filtroMes, setFiltroMes }) {
             {gastos.length === 0 ? (
                 <p className="text-center text-[#A8A29E] py-8 font-bold text-sm uppercase">No hay gastos este mes</p>
             ) : (
-                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden border-[0.5px] border-black/[0.07]">
                     <div className="flex items-center justify-between px-5 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Gastos del mes</p>
                         <button onClick={() => exportarGastosCSV(gastos, filtroMes)}
@@ -502,12 +502,12 @@ function TabInventario() {
             </div>
 
             {enStock.length === 0 ? (
-                <div className="text-center py-12 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424]" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="text-center py-12 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border-[0.5px] border-black/[0.07]">
                     <p className="text-[#A8A29E] font-bold text-sm">Sin stock registrado</p>
                     <p className="text-[11px] text-[#A8A29E] mt-1">Usá el botón 📦 en la sección Repuestos para cargar stock</p>
                 </div>
             ) : (
-                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden" style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl overflow-hidden border-[0.5px] border-black/[0.07]">
                     {/* Cabecera */}
                     <div className="flex items-center justify-between px-5 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C]">
                         <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">

@@ -3,6 +3,7 @@ import Select from 'react-select';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import { generarPDFCotizacion } from '../../utils/generadorPDFCotizacion';
+import { useTheme } from '../../hooks/useTheme';
 
 function buildSelectStyles(isDark) {
     const bg      = isDark ? '#2E2E2E' : '#E8E5E0';
@@ -30,12 +31,7 @@ const INPUT = `w-full p-3 rounded-xl outline-none transition-all
 const LABEL = 'block text-[10px] font-black text-[#A8A29E] uppercase mb-1.5 tracking-widest';
 
 export default function ModalCotizacionVolumen({ onCerrar }) {
-    const [isDark, setIsDark] = React.useState(() => document.documentElement.classList.contains('dark'));
-    React.useEffect(() => {
-        const obs = new MutationObserver(() => setIsDark(document.documentElement.classList.contains('dark')));
-        obs.observe(document.documentElement, { attributeFilter: ['class'] });
-        return () => obs.disconnect();
-    }, []);
+    const { isDark } = useTheme();
 
     const [clientes,   setClientes]   = useState([]);
     const [repuestos,  setRepuestos]  = useState([]);
@@ -352,7 +348,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex gap-2 px-6 py-4 shrink-0" style={{ borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
+                    <div className="flex gap-2 px-6 py-4 shrink-0 border-t-[0.5px] border-black/[0.07]">
                         <button onClick={onCerrar}
                             className="flex-1 py-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
                             Cancelar

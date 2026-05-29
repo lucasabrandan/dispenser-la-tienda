@@ -37,7 +37,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
     const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
 
     return (
-        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
+        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] border-[0.5px] border-black/[0.07]"
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}>
             <div className="p-4">
                 <div className="flex items-start gap-2 mb-2">
@@ -135,8 +135,8 @@ const MESES_ES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'S
 function MesCard({ d, fmt, labelMes }) {
     const [abierto, setAbierto] = useState(false);
     return (
-        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
-            style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] border-[0.5px] border-black/[0.07]"
+            >
             <button onClick={() => setAbierto(v => !v)}
                 className="w-full flex items-center justify-between px-4 py-3 active:bg-[#EFEDEA] dark:active:bg-[#1C1C1C] transition-colors">
                 <div className="flex items-center gap-2">
@@ -233,8 +233,8 @@ function RendimientoTab({ tecnicoId }) {
                     ↻ Recargar
                 </button>
             </div>
-            <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
-                style={{ border: '0.5px solid rgba(0,0,0,0.07)' }}>
+            <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] border-[0.5px] border-black/[0.07]"
+                >
                 <div className="p-4">
                     <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-1">
                         Total acumulado · {totalTrabajos} {totalTrabajos === 1 ? 'trabajo' : 'trabajos'}

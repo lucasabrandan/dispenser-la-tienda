@@ -44,8 +44,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
 
     return (
         <div
-            className="fixed inset-0 z-[3000] flex items-end"
-            style={{ background: 'rgba(0,0,0,0.6)' }}
+            className="fixed inset-0 z-[3000] flex items-end bg-black/60"
             onClick={onClose}
         >
             <div

@@ -188,13 +188,11 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
 
     return (
         <div
-            className="fixed inset-0 z-[3000] flex items-end"
-            style={{ background: 'rgba(0,0,0,0.6)' }}
+            className="fixed inset-0 z-[3000] flex items-end bg-black/60"
             onClick={onClose}
         >
             <div
-                className="w-full rounded-t-3xl flex flex-col bg-[#FFFFFF] dark:bg-[#1C1C1C]"
-                style={{ maxHeight: '88vh', border: '0.5px solid rgba(255,255,255,0.08)' }}
+                className="w-full rounded-t-3xl flex flex-col bg-[#FFFFFF] dark:bg-[#1C1C1C] max-h-[88vh] border-[0.5px] border-white/[0.08]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}

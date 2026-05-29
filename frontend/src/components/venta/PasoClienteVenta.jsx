@@ -3,6 +3,7 @@ import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, buildSelectStyles } from '../servicio/ServicioUI';
 import DateInput from '../ui/DateInput';
 import { getTodayISO } from '../../utils/dateUtils';
+import { useTheme } from '../../hooks/useTheme';
 
 const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucumán','Salta','Neuquén'];
 
@@ -28,7 +29,7 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
         setNombreClientePrellenado, setModalClienteAbierto,
     } = hook;
 
-    const isDark = document.documentElement.classList.contains('dark');
+    const { isDark } = useTheme();
     const selectStyles = buildSelectStyles(isDark);
     const hoy = getTodayISO();
 
