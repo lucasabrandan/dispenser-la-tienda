@@ -154,28 +154,39 @@ Priorizar estos (listas que el usuario reordena/elimina):
 
 ## Fase 6 — Splitear archivos grandes (riesgo medio)
 
-### Completados:
+### Componentes React atomizados:
 - [x] `DashboardFinanzas.jsx` (667 → 68) — 5 archivos: TabBalance, TabTecnicos, TabGastos, TabInventario, StatCard
 - [x] `DashboardCaja.jsx` (616 → 230) — 5 archivos: PlanificadorBlock, AgendaBlock, AgendaCard, AlertasBlock, estadoConstants
 - [x] `EjecutarOrdenSheet.jsx` (625 → 223) — 4 archivos: PasoDetalle, PasoFirmas, PasoCobro, PasoResumenEjecutar
 - [x] `RepuestoModal.jsx` (591 → 185) — 3 archivos: FotosUploader, SeccionesPrecios, comprimirFoto util
 - [x] `PasoEquipos.jsx` (542 → 274) — 3 archivos: FotoUpload, TicketItemsList, CalculadoraMO
 - [x] `ServicioManager.jsx` (648 → 546) — 2 archivos: CobroSheet, DetalleSheet
+- [x] `PresupuestosManager.jsx` (518 → 349) — 1 archivo: PresupuestoCard
+
+### PDFs atomizados:
+- [x] `pdf/index.js` (1670 → 118) — 4 archivos: generarTecnico, generarPresupuesto, generarVenta, pdfShared
+- [x] `pdf/bloques.js` (1044 → 6 re-export) — 5 archivos: clienteEquipo, tablaStats, firmasChecklist, fotosQR, condiciones
 
 ### Pendientes:
-- [ ] `pdf/index.js` (1670 lineas) — dividir por tipo de PDF
-- [ ] `pdf/bloques.js` (1044 lineas) — dividir por seccion
-- [ ] `useServicioForm.js` (746 lineas) — evaluar si se puede dividir
-- [ ] `PresupuestosManager.jsx` (518 lineas) — evaluar extraccion
+- [ ] `useServicioForm.js` (746 lineas) — evaluar si se puede dividir (estado muy interdependiente)
 - [ ] `ServicioService.java` (678 lineas) — backend: extraer calculos y mapping
-Extraer: ServicioCalculationService (stats/rendimiento), ServicioMappingService (mapToDTO/buildSpec)
 
 ---
 
-## Notas
+## Resumen de progreso (sesion 2026-05-29)
 
-- Priorizar fases 1-2 primero: son gratis y limpian mucho
-- Fase 3-4 son cosmeticas pero mejoran consistencia
-- Fase 5-6 requieren testing manual post-cambio
-- NO hacer todo de golpe — un commit por fase
-- Testear happy path despues de cada fase
+### Completado:
+- Fase 1: codigo muerto — DONE (-1168 lineas)
+- Fase 2: duplicacion (dateUtils, errorHandler) — DONE
+- Fase 3: useTheme + inline styles — DONE (38→17 style={{}}, 17 restantes son dinamicos legitimos)
+- Fase 6: atomizacion — DONE (9 archivos monoliticos → 40+ archivos focalizados)
+  - 8 componentes React atomizados
+  - 2 archivos PDF atomizados (index.js + bloques.js)
+  - Total: ~6900 lineas de monolitos divididas
+
+### Pendiente:
+- Fase 4: malas practicas frontend (catch silenciados, keys con indice, props drilling)
+- Fase 5: backend (RepuestoService, @EntityGraph, logging, validacion)
+- useServicioForm.js (746 lineas) y ServicioService.java (678 lineas)
+- Adoptar errorHandler.js en los 8 archivos con patron manual
+- Colores fuera del sistema de diseno (6 archivos)
