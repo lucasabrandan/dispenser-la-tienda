@@ -316,7 +316,7 @@ public class ServicioService {
                                 val = new BigDecimal(precio.toString()).multiply(new BigDecimal(cant.toString()));
                             repuestos = repuestos.add(val);
                         }
-                    } catch (Exception e) { log.warn("Error procesando item: {}", e.getMessage()); }
+                    } catch (Exception ex) { log.warn("Error procesando item: {}", ex.getMessage()); }
                 }
             }
 
