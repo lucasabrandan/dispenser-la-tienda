@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useServicioManager } from '../../hooks/useServicioManager';
-import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
 import { getUsuarios } from '../../services/api';
@@ -13,15 +12,10 @@ import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
 import EjecutarAdminSheet from '../servicio/EjecutarAdminSheet';
+import CobroSheet from '../servicio/CobroSheet';
+import DetalleSheet from '../servicio/DetalleSheet';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import DateInput from '../ui/DateInput';
-
-
-function M({ valor, className = '' }) {
-    const { montosVisibles } = useMontos();
-    if (!montosVisibles) return <span className={className}>••••••</span>;
-    return <span className={className}>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
-}
 
 const TABS = [
     { id: 'PRESUPUESTO',           label: 'Presupuestos', short: 'Ppto',     color: '#D48800', icon: '💰' },
@@ -40,73 +34,6 @@ const PERIODOS = [
 const ESTADO_API_MAP = {
     COBRADO: 'COBRADO,REALIZADO',
 };
-
-// Sheet para que admin defina modalidad de cobro
-function CobroSheet({ servicio, calcularTotal, onConfirmar, onCerrar }) {
-    const [modalidad, setModalidad] = useState(servicio.modalidadCobro || '');
-    const [montoFinal, setMontoFinal] = useState(servicio.montoFinal || calcularTotal(servicio));
-    const [procesando, setProcesando] = useState(false);
-    const total = calcularTotal(servicio);
-
-    const opciones = [
-        { id: 'EFECTIVO_SIN_FACTURA', label: 'Efectivo sin factura', desc: 'Cobrado en mano, sin ARCA', color: '#16A34A', destino: 'COBRADO' },
-        { id: 'CON_FACTURA',          label: 'Con factura',          desc: 'Facturar + enviar datos bancarios', color: '#8B5CF6', destino: 'PENDIENTE_FACTURACION' },
-    ];
-
-    const handleConfirmar = async () => {
-        if (!modalidad) return;
-        setProcesando(true);
-        const opt = opciones.find(o => o.id === modalidad);
-        await onConfirmar(opt?.destino || 'COBRADO', { modalidadCobro: modalidad, montoFinal: Number(montoFinal) || total });
-        setProcesando(false);
-    };
-
-    return (
-        <>
-            <div className="fixed inset-0 bg-black/60 z-[1999] backdrop-blur-sm" onClick={onCerrar} />
-            <div className="fixed inset-x-0 bottom-0 z-[2000] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md">
-                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-t-3xl md:rounded-3xl p-5 shadow-2xl border-t border-black/[0.07]">
-                    <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E] md:hidden" />
-                    <div className="mb-4">
-                        <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Definir cobro</h3>
-                        <p className="text-[11px] text-[#A8A29E] mt-0.5">{servicio.clienteNombre} · #{servicio.id}</p>
-                    </div>
-                    <div className="mb-4 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
-                        <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest block mb-1">Monto final a cobrar</label>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$</span>
-                            <input type="number" value={montoFinal} onChange={e => setMontoFinal(e.target.value)}
-                                className="flex-1 bg-transparent text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
-                        </div>
-                        {Number(montoFinal) !== total && (
-                            <p className="text-[10px] text-[#A8A29E] mt-1">Presupuesto original: ${Math.round(total).toLocaleString('es-AR')}</p>
-                        )}
-                    </div>
-                    <div className="space-y-2 mb-5">
-                        {opciones.map(o => (
-                            <button key={o.id} onClick={() => setModalidad(o.id)}
-                                className={`w-full p-3.5 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-[#EFEDEA] dark:bg-[#1C1C1C]'}`}
-                                style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}>
-                                <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{o.label}</p>
-                                <p className="text-[10px] text-[#A8A29E] mt-0.5">{o.desc}</p>
-                            </button>
-                        ))}
-                    </div>
-                    <div className="flex gap-2">
-                        <button onClick={onCerrar}
-                            className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
-                            Cancelar
-                        </button>
-                        <button onClick={handleConfirmar} disabled={!modalidad || procesando}
-                            className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 disabled:opacity-50">
-                            {procesando ? 'Procesando...' : modalidad === 'EFECTIVO_SIN_FACTURA' ? 'Marcar cobrado' : 'Enviar a facturar'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
-}
 
 export default function ServicioManager({
     clienteInicial = null, onClienteConsumido,
@@ -529,36 +456,7 @@ export default function ServicioManager({
             )}
 
             {modalDetalle && (
-                <div className="fixed inset-0 z-[2000] flex items-end bg-black/50"
-                    onClick={() => setModalDetalle(null)}>
-                    <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-[#FFFFFF] dark:bg-[#242424]"
-                        onClick={e => e.stopPropagation()}>
-                        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
-                        <h3 className="text-[16px] font-black mb-1 text-[#1C1917] dark:text-[#F0EEE9]">{modalDetalle.clienteNombre}</h3>
-                        <p className="text-[11px] text-[#A8A29E] mb-4">📍 {modalDetalle.sedeNombre} · {modalDetalle.fecha}</p>
-                        <div className="overflow-y-auto flex-1 mb-4 space-y-3">
-                            {modalDetalle.items?.map((it, idx) => (
-                                <div key={idx} className="p-4 rounded-2xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
-                                    <div className="flex justify-between mb-1">
-                                        <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
-                                        <M valor={Number(it.costo || 0)} className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]" />
-                                    </div>
-                                    <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] mb-2">{it.trabajoRealizado}</p>
-                                    {it.repuestosUsados?.length > 0 && (
-                                        <p className="text-[10px] text-[#A8A29E] pt-2 border-t border-black/[0.05] dark:border-white/[0.05]">
-                                            <span className="font-bold">Repuestos: </span>
-                                            {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <button onClick={() => setModalDetalle(null)}
-                            className="w-full py-3.5 rounded-2xl font-bold text-sm text-white active:scale-95 bg-[#1C1917] dark:bg-[#F0EEE9] dark:text-[#1C1917]">
-                            Cerrar
-                        </button>
-                    </div>
-                </div>
+                <DetalleSheet servicio={modalDetalle} onCerrar={() => setModalDetalle(null)} />
             )}
 
             {modalFirmas && (
