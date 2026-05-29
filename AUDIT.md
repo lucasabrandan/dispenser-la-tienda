@@ -154,24 +154,20 @@ Priorizar estos (listas que el usuario reordena/elimina):
 
 ## Fase 6 — Splitear archivos grandes (riesgo medio)
 
-Archivos >400 lineas que se beneficiarian de division:
+### Completados:
+- [x] `DashboardFinanzas.jsx` (667 → 68) — 5 archivos: TabBalance, TabTecnicos, TabGastos, TabInventario, StatCard
+- [x] `DashboardCaja.jsx` (616 → 230) — 5 archivos: PlanificadorBlock, AgendaBlock, AgendaCard, AlertasBlock, estadoConstants
+- [x] `EjecutarOrdenSheet.jsx` (625 → 223) — 4 archivos: PasoDetalle, PasoFirmas, PasoCobro, PasoResumenEjecutar
+- [x] `RepuestoModal.jsx` (591 → 185) — 3 archivos: FotosUploader, SeccionesPrecios, comprimirFoto util
+- [x] `PasoEquipos.jsx` (542 → 274) — 3 archivos: FotoUpload, TicketItemsList, CalculadoraMO
+- [x] `ServicioManager.jsx` (648 → 546) — 2 archivos: CobroSheet, DetalleSheet
 
-### `pdf/index.js` (1670 lineas)
-Dividir en archivos por tipo de PDF (ya parcialmente hecho con pdf/cierreCaja.js, pdf/historialCliente.js)
-
-### `DashboardFinanzas.jsx` (665 lineas)
-Extraer: TabBalance, TabGastos, TabInventario, StatCard
-
-### `EjecutarOrdenSheet.jsx` (625 lineas)
-Extraer: FotosSection, RepuestosSection, DiagnosticoSection
-
-### `DashboardCaja.jsx` (614 lineas)
-Extraer: SectionStats, SectionCajaDiaria, SectionPipeline
-
-### `RepuestoModal.jsx` (591 lineas)
-Extraer: PricingSection, ImagenSection, FormFields
-
-### `ServicioService.java` (678 lineas) — backend
+### Pendientes:
+- [ ] `pdf/index.js` (1670 lineas) — dividir por tipo de PDF
+- [ ] `pdf/bloques.js` (1044 lineas) — dividir por seccion
+- [ ] `useServicioForm.js` (746 lineas) — evaluar si se puede dividir
+- [ ] `PresupuestosManager.jsx` (518 lineas) — evaluar extraccion
+- [ ] `ServicioService.java` (678 lineas) — backend: extraer calculos y mapping
 Extraer: ServicioCalculationService (stats/rendimiento), ServicioMappingService (mapToDTO/buildSpec)
 
 ---
