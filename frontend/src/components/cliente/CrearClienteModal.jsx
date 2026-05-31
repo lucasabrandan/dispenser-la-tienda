@@ -36,6 +36,8 @@ export default function CrearClienteModal({
     const handleGuardar = async (e) => {
         e.preventDefault();
         if (!nombre.trim()) { toast.error('El nombre es obligatorio'); return; }
+        if (!direccion.trim()) { toast.error('La dirección es obligatoria'); return; }
+        if (!localidad.trim()) { toast.error('La localidad es obligatoria'); return; }
 
         setCargando(true);
         const t = toast.loading('Creando cliente...');
@@ -116,7 +118,7 @@ export default function CrearClienteModal({
 
                         {/* Dirección */}
                         <div>
-                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Dirección</label>
+                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Dirección *</label>
                             <input
                                 value={direccion}
                                 onChange={e => setDireccion(e.target.value)}
@@ -127,7 +129,7 @@ export default function CrearClienteModal({
 
                         {/* Localidad */}
                         <div>
-                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Localidad</label>
+                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Localidad *</label>
                             <input
                                 value={localidad}
                                 onChange={e => setLocalidad(e.target.value)}

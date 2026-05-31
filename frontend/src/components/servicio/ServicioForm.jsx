@@ -44,10 +44,12 @@ export default function ServicioForm({
 
     const [paso, setPaso]               = useState(0);
     const [nombreLibre, setNombreLibre] = useState('');
+    const [direccionLibre, setDireccionLibre] = useState(null);
     const [sheetVisible, setSheetVisible] = useState(false);
     // Snapshot para PDF post-guardado (finalizar vacía ticketItems)
     const snapshotRef = useRef(null);
     hook._setNombreLibre = setNombreLibre;
+    hook._setDireccionLibre = setDireccionLibre;
 
     // Cuando se recupera un borrador, avanzar al paso correcto
     const prevBorrador = useRef(borradorDisponible);
@@ -143,9 +145,14 @@ export default function ServicioForm({
         }
     };
 
-    const buildOverrides = () => !clienteId && nombreLibre.trim()
-        ? { clienteNombre: nombreLibre.trim() }
-        : {};
+    const buildOverrides = () => {
+        if (!clienteId && nombreLibre.trim()) {
+            const o = { clienteNombre: nombreLibre.trim() };
+            if (direccionLibre?.calle?.trim()) o.direccionLibre = direccionLibre;
+            return o;
+        }
+        return {};
+    };
 
     // Cobrar ahora: guarda como REALIZADO, genera PDF con firmas
     const handleCobrar = async ({ firmaTecnico, firmaCliente, incluirFirmas = true }) => {

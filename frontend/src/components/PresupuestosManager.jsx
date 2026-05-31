@@ -16,6 +16,13 @@ import { M } from './servicio/ServicioUI';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+function buildGoogleMapsRouteUrl(direcciones) {
+    const validas = direcciones.filter(d => d && d !== 'Sin dirección' && d !== 'Mostrador');
+    if (validas.length === 0) return null;
+    const encoded = validas.map(d => encodeURIComponent(d));
+    return `https://www.google.com/maps/dir/${encoded.join('/')}`;
+}
+
 function parseFechaSort(f) {
     if (!f) return 0;
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
@@ -135,6 +142,13 @@ export default function PresupuestosManager() {
         setSeleccionados(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
     };
 
+    const abrirRuta = (items) => {
+        const dirs = items.map(s => s.sedeDireccion).filter(Boolean);
+        const url = buildGoogleMapsRouteUrl(dirs);
+        if (!url) { toast.error('Ningún presupuesto tiene dirección cargada'); return; }
+        window.open(url, '_blank');
+    };
+
     const ejecutarMasivaArchivar = async () => {
         if (!window.confirm(`¿Archivar ${seleccionados.size} presupuesto${seleccionados.size !== 1 ? 's' : ''}?`)) return;
         const t = toast.loading('Archivando...');
@@ -230,10 +244,15 @@ export default function PresupuestosManager() {
                     onChangeColumn={(id) => { setTipoFiltro(id); setModoSeleccion(false); setSeleccionados(new Set()); }}
                 />
 
-                {/* Stats resumen — monto total pendiente */}
-                <div className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    <span className="text-[11px] font-bold text-[#A8A29E]">Pendiente total</span>
+                {/* Stats resumen — monto total pendiente + ver ruta */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <span className="text-[11px] font-bold text-[#A8A29E] flex-1 text-center">Pendiente total</span>
                     <M valor={stats.total} className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500]" />
+                    <button onClick={() => abrirRuta(presupuestosFiltradosTipo)}
+                        title="Ver ruta en Google Maps"
+                        className="ml-1 h-7 px-2.5 rounded-lg font-bold text-[10px] uppercase text-white bg-[#1A73E8] active:scale-95 transition-all shrink-0">
+                        Ver ruta
+                    </button>
                 </div>
 
                 {/* Selección masiva */}
@@ -242,12 +261,16 @@ export default function PresupuestosManager() {
                         <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
-                        {seleccionados.size > 0 && (
+                        {seleccionados.size > 0 && (<>
+                            <button onClick={() => abrirRuta(presupuestosFiltradosTipo.filter(p => seleccionados.has(p.id)))}
+                                className="h-7 px-3 rounded-lg font-bold text-[10px] text-white bg-[#1A73E8] active:scale-95">
+                                Ver ruta
+                            </button>
                             <button onClick={ejecutarMasivaArchivar}
                                 className="h-7 px-3 rounded-lg font-bold text-[10px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                 Archivar
                             </button>
-                        )}
+                        </>)}
                         <button onClick={() => { setModoSeleccion(false); setSeleccionados(new Set()); }}
                             className="h-7 px-3 rounded-lg font-bold text-[10px] text-[#A8A29E] active:scale-95">
                             Cancelar

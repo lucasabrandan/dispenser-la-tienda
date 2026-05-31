@@ -18,12 +18,13 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
         onClienteSeleccionado,
         setNombreClientePrellenado, setModalClienteAbierto,
         setNombreSedePrellenado, setModalSedeAbierto,
-        _setNombreLibre,
+        _setNombreLibre, _setDireccionLibre,
     } = hook;
 
     // Default "registrado" porque es lo más común
     const [modo, setModo]               = useState(clienteId ? 'registrado' : 'registrado');
     const [nombreLibre, setNombreLibre] = useState('');
+    const [dirLibre, setDirLibre]       = useState({ calle: '', numero: '', piso: '', depto: '', localidad: '' });
 
     useEffect(() => {
         if (clienteId && modo === 'nuevo') setModo('registrado');
@@ -32,10 +33,15 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
     const clienteObj   = db.clientes?.find(c => c.id?.toString() === clienteId);
     const sedesCliente = db.sedes?.filter(s => s.cliente?.id?.toString() === clienteId) || [];
 
-    const puedeAvanzar = modo === 'registrado' ? !!clienteId : nombreLibre.trim().length >= 2;
+    const puedeAvanzar = modo === 'registrado'
+        ? !!clienteId
+        : nombreLibre.trim().length >= 2 && dirLibre.calle.trim().length >= 2 && dirLibre.localidad.trim().length >= 2;
 
     const handleNext = () => {
-        if (modo === 'nuevo' && nombreLibre.trim()) _setNombreLibre?.(nombreLibre);
+        if (modo === 'nuevo' && nombreLibre.trim()) {
+            _setNombreLibre?.(nombreLibre);
+            _setDireccionLibre?.(dirLibre);
+        }
         onNext();
     };
 
@@ -134,7 +140,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
             ) : (
                 <div className="flex flex-col gap-3">
                     <div>
-                        <Label>Nombre del cliente</Label>
+                        <Label>Nombre del cliente *</Label>
                         <input
                             type="text"
                             value={nombreLibre}
@@ -144,6 +150,41 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                             className="w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/10 placeholder-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] focus:ring-2 focus:ring-[#D13A28]/20 transition-all"
                         />
                     </div>
+
+                    {/* Dirección del cliente */}
+                    <div className="rounded-xl p-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10 space-y-2.5">
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Dirección</p>
+                        <div className="grid grid-cols-[1fr_80px] gap-2">
+                            <div>
+                                <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Calle *</label>
+                                <input value={dirLibre.calle} onChange={e => setDirLibre(p => ({ ...p, calle: e.target.value }))}
+                                    placeholder="Av. Rivadavia" className="w-full px-3 py-2 rounded-lg text-[12px] font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.06] dark:border-white/[0.06] placeholder:text-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Nro</label>
+                                <input value={dirLibre.numero} onChange={e => setDirLibre(p => ({ ...p, numero: e.target.value }))}
+                                    placeholder="5000" className="w-full px-3 py-2 rounded-lg text-[12px] font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.06] dark:border-white/[0.06] placeholder:text-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div>
+                                <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Piso</label>
+                                <input value={dirLibre.piso} onChange={e => setDirLibre(p => ({ ...p, piso: e.target.value }))}
+                                    placeholder="3" className="w-full px-3 py-2 rounded-lg text-[12px] font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.06] dark:border-white/[0.06] placeholder:text-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Depto</label>
+                                <input value={dirLibre.depto} onChange={e => setDirLibre(p => ({ ...p, depto: e.target.value }))}
+                                    placeholder="B" className="w-full px-3 py-2 rounded-lg text-[12px] font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.06] dark:border-white/[0.06] placeholder:text-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Localidad / Barrio *</label>
+                            <input value={dirLibre.localidad} onChange={e => setDirLibre(p => ({ ...p, localidad: e.target.value }))}
+                                placeholder="Caballito, CABA" className="w-full px-3 py-2 rounded-lg text-[12px] font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.06] dark:border-white/[0.06] placeholder:text-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                        </div>
+                    </div>
+
                     <button onClick={() => setModo('registrado')}
                         className="text-[11px] font-bold text-[#A8A29E] active:scale-95 transition-all self-start">
                         ¿Ya existe? <span className="text-[#D13A28] dark:text-[#E8422F]">Buscar en lista</span>
