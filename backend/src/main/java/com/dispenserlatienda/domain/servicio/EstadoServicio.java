@@ -14,7 +14,6 @@ public enum EstadoServicio {
     COBRADO,
     // Legacy: mantener compatibilidad con datos existentes
     REALIZADO,
-    RECHAZADO,
     CANCELADO,
     ARCHIVADO
 }

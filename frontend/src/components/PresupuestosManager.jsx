@@ -101,7 +101,6 @@ export default function PresupuestosManager() {
         await patchEstado(id, estadoDestino, labels[estadoDestino] || 'Actualizado', extras);
     };
 
-    const rechazar  = (id) => { if (!window.confirm('¿Rechazar este presupuesto?')) return; patchEstado(id, 'RECHAZADO', 'Rechazado'); };
     const archivar  = (id) => { if (!window.confirm('¿Archivar este presupuesto?')) return; patchEstado(id, 'ARCHIVADO', 'Archivado'); };
 
     const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
@@ -297,7 +296,6 @@ export default function PresupuestosManager() {
                             <PresupuestoCard s={s}
                                 calcularTotal={calcularTotal}
                                 onPDF={generarPDF}
-                                onRechazar={rechazar}
                                 onArchivar={archivar}
                                 onEjecutar={(serv) => setPresupuestoEjecutar(serv)}
                                 onDespachar={setPresupuestoDespachar}

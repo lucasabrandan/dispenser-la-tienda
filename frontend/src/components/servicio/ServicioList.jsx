@@ -23,7 +23,7 @@ function M({ valor, prefix = '$', className = '' }) {
 const ESTADOS_HISTORIAL = [
     { value: 'PRESUPUESTO', label: 'Pendiente' },
     { value: 'REALIZADO',   label: 'Realizado' },
-    { value: 'RECHAZADO',   label: 'Rechazado' },
+    { value: 'ARCHIVADO',   label: 'Archivado' },
 ];
 
 const TIPOS = [
@@ -34,7 +34,7 @@ const TIPOS = [
 
 const badgeTipo = (s) => {
     if (s.estado === 'PRESUPUESTO') return { label: 'Pendiente', cls: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]' };
-    if (s.estado === 'RECHAZADO')   return { label: 'Rechazado', cls: 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]' };
+    if (s.estado === 'ARCHIVADO')   return { label: 'Archivado', cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' };
     if (s.servicioTipo === 'TECNICA') return { label: 'Técnica', cls: 'bg-[#FDECEA] text-[#B02E1E] dark:bg-[#2E100C] dark:text-[#F5796C]' };
     return { label: 'Venta', cls: 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]' };
 };

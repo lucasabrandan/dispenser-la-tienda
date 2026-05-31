@@ -11,13 +11,12 @@ function formatFecha(f) {
 function badgeEstado(estado) {
     if (estado === 'REALIZADO')   return 'bg-[#16A34A]/15 text-[#16A34A]';
     if (estado === 'PRESUPUESTO') return 'bg-[#D48800]/15 text-[#D48800]';
-    if (estado === 'RECHAZADO')   return 'bg-[#D13A28]/15 text-[#D13A28]';
     return 'bg-[#E8E5E0] text-[#57534E]';
 }
 function labelEstado(estado) {
     if (estado === 'REALIZADO')   return 'Realizado';
     if (estado === 'PRESUPUESTO') return 'Presupuesto';
-    if (estado === 'RECHAZADO')   return 'Rechazado';
+    if (estado === 'ARCHIVADO')   return 'Archivado';
     return estado;
 }
 

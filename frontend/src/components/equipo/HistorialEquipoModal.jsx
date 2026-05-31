@@ -5,7 +5,7 @@ function Badge({ estado }) {
     const map = {
         REALIZADO:   { label: 'Realizado',  cls: 'bg-[#16A34A]/10 text-[#16A34A]' },
         PRESUPUESTO: { label: 'Pendiente',  cls: 'bg-[#D48800]/10 text-[#D48800]' },
-        RECHAZADO:   { label: 'Rechazado',  cls: 'bg-[#D13A28]/10 text-[#D13A28]' },
+        ARCHIVADO:   { label: 'Archivado',  cls: 'bg-[#A8A29E]/10 text-[#A8A29E]' },
     };
     const { label, cls } = map[estado] || { label: estado, cls: 'bg-[#E8E5E0] text-[#57534E]' };
     return (

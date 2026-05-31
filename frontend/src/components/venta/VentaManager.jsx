@@ -12,7 +12,7 @@ import api from '../../services/api';
 const TABS = [
     { id: 'PRESUPUESTO', label: 'Pendientes', short: 'Pend.',   color: '#D48800', icon: '💰' },
     { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#16A34A', icon: '✅' },
-    { id: 'RECHAZADO',   label: 'Rechazadas', short: 'Rech.',   color: '#D13A28', icon: '✗' },
+    { id: 'ARCHIVADO',   label: 'Archivadas', short: 'Arch.',   color: '#A8A29E', icon: '🗄️' },
 ];
 
 const ESTADO_API_MAP = {

@@ -10,7 +10,7 @@ function IconBtn({ onClick, title, children, cls = '' }) {
     );
 }
 
-export default function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, onArchivar, onEjecutar, onDespachar, onEditar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
+export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, onEjecutar, onDespachar, onEditar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
     const [expandido, setExpandido] = useState(false);
     const [menuAbierto, setMenuAbierto] = useState(false);
     const total    = calcularTotal(s);
@@ -134,10 +134,6 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onRechazar, o
                                 <button onClick={() => { onArchivar(s.id); setMenuAbierto(false); }}
                                     className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                     🗄️ Archivar
-                                </button>
-                                <button onClick={() => { onRechazar(s.id); setMenuAbierto(false); }}
-                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] rounded-xl">
-                                    ✗ Rechazar
                                 </button>
                             </div>
                         </>

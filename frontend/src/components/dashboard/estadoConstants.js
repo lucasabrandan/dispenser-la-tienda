@@ -5,18 +5,17 @@ export const ESTADO_COLORS = {
     PENDIENTE_FACTURACION: { bg: 'bg-[#8B5CF6]/10 dark:bg-[#8B5CF6]/10', text: 'text-[#8B5CF6] dark:text-[#A78BFA]', avatar: 'bg-[#8B5CF6] dark:bg-[#A78BFA]', bar: 'bg-[#8B5CF6] dark:bg-[#A78BFA]' },
     COBRADO:               { bg: 'bg-[#16A34A]/10 dark:bg-[#22C55E]/10', text: 'text-[#16A34A] dark:text-[#22C55E]', avatar: 'bg-[#16A34A] dark:bg-[#22C55E]', bar: 'bg-[#16A34A] dark:bg-[#22C55E]' },
     REALIZADO:             { bg: 'bg-[#16A34A]/10 dark:bg-[#22C55E]/10', text: 'text-[#16A34A] dark:text-[#22C55E]', avatar: 'bg-[#16A34A] dark:bg-[#22C55E]', bar: 'bg-[#16A34A] dark:bg-[#22C55E]' },
-    RECHAZADO:             { bg: 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10', text: 'text-[#D13A28] dark:text-[#E8422F]', avatar: 'bg-[#D13A28] dark:bg-[#E8422F]', bar: 'bg-[#D13A28] dark:bg-[#E8422F]' },
     ARCHIVADO:             { bg: 'bg-[#A8A29E]/10 dark:bg-[#A8A29E]/10', text: 'text-[#A8A29E]', avatar: 'bg-[#A8A29E]', bar: 'bg-[#A8A29E]' },
 };
 
 export const ESTADO_BORDER = {
     PRESUPUESTO: '#D48800', COMPLETADO: '#3B82F6', PENDIENTE_FACTURACION: '#8B5CF6',
-    FACTURADO: '#6366F1', COBRADO: '#16A34A', REALIZADO: '#16A34A', RECHAZADO: '#D13A28', ARCHIVADO: '#A8A29E',
+    FACTURADO: '#6366F1', COBRADO: '#16A34A', REALIZADO: '#16A34A', ARCHIVADO: '#A8A29E',
 };
 
 export const ESTADO_LABEL = {
     PRESUPUESTO: 'Pendiente', COMPLETADO: 'Realizado', PENDIENTE_FACTURACION: 'Por cobrar',
-    FACTURADO: 'Facturado', COBRADO: 'Cobrado', REALIZADO: 'Cobrado', RECHAZADO: 'Rechazado', ARCHIVADO: 'Archivado',
+    FACTURADO: 'Facturado', COBRADO: 'Cobrado', REALIZADO: 'Cobrado', ARCHIVADO: 'Archivado',
 };
 
 export const DEFAULT_COLOR = ESTADO_COLORS.PRESUPUESTO;

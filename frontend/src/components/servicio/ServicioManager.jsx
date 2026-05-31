@@ -50,7 +50,7 @@ export default function ServicioManager({
         modalFirmas, setModalFirmas,
         confirmarFirmasYGenerarPDF,
         cargarServicios,
-        confirmarServicio, rechazarServicio,
+        confirmarServicio,
         archivarServicio, accionMasiva, eliminarServicio,
         generarPDF, calcularTotal, abrirEditar, cerrarModal,
         filtros, usuarioId, setUsuarioId,
@@ -385,7 +385,6 @@ export default function ServicioManager({
                                 onEjecutar={abrirEjecutar}
                                 onCobrar={confirmarConRefresh}
                                 onDuplicar={esAdmin ? duplicarServicio : null}
-                                onRechazar={rechazarServicio}
                                 onArchivar={archivarServicio}
                                 onEliminar={esAdmin ? (id) => setConfirmEliminar({ ids: [id], modo: 'uno' }) : null}
                                 onGenerarPDF={generarPDF}

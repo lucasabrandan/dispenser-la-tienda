@@ -14,7 +14,6 @@ const BADGE = {
     FACTURADO:             { label: 'Facturado',       cls: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
     COBRADO:               { label: 'Cobrado',         cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
     REALIZADO:             { label: 'Anterior',        cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
-    RECHAZADO:             { label: 'Rechazado',       cls: 'bg-[var(--danger-bg)]  text-[var(--danger-tx)]'  },
     ARCHIVADO:             { label: 'Archivado',       cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' },
 };
 
@@ -31,7 +30,6 @@ const BORDER = {
     FACTURADO:             '#6366F1',
     COBRADO:               '#16A34A',
     REALIZADO:             '#16A34A',
-    RECHAZADO:             '#D13A28',
     ARCHIVADO:             '#A8A29E',
 };
 
@@ -47,7 +45,7 @@ function IconBtn({ onClick, title, children, cls = '' }) {
 export default function ServicioCard({
     servicio, modoSeleccion, seleccionado,
     onToggleSelect, onEditar, onEjecutar, onCobrar, onDuplicar,
-    onRechazar, onArchivar, onEliminar, onGenerarPDF, onDetalle, calcularTotal,
+    onArchivar, onEliminar, onGenerarPDF, onDetalle, calcularTotal,
     onAbrirCobro,
 }) {
     const [expandido, setExpandido] = useState(false);
@@ -263,12 +261,6 @@ export default function ServicioCard({
                                     <button onClick={() => { onArchivar(servicio.id); setMenuAbierto(false); }}
                                         className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                         🗄️ Archivar
-                                    </button>
-                                )}
-                                {esPpto && (
-                                    <button onClick={() => { onRechazar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] rounded-xl">
-                                        ✗ Rechazar
                                     </button>
                                 )}
                                 {onEliminar && (

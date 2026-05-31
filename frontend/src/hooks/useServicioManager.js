@@ -81,7 +81,7 @@ export function useServicioManager() {
             // Tabs compuestos: mapear a estados reales del backend
             const estadoMap = {
                 COBRADO:   'COBRADO,REALIZADO',
-                HISTORIAL: 'COMPLETADO,RECHAZADO,CANCELADO,ARCHIVADO',
+                HISTORIAL: 'COMPLETADO,CANCELADO,ARCHIVADO',
             };
             if (estado !== 'TODOS')  params.estado = estadoMap[estado] || estado;
             if (busquedaApi)         params.busqueda  = busquedaApi;
@@ -135,16 +135,6 @@ export function useServicioManager() {
         } catch { toast.error('Error al actualizar', { id: loading }); }
     };
 
-    const rechazarServicio = async (id) => {
-        if (!window.confirm('¿Rechazar este presupuesto?')) return;
-        const loading = toast.loading('Rechazando...');
-        try {
-            await api.patch(`/servicios/${id}/estado`, { estado: 'RECHAZADO' });
-            toast.success('Presupuesto rechazado', { id: loading });
-            cargarServicios(); cargarStats();
-        } catch { toast.error('Error al rechazar', { id: loading }); }
-    };
-
     const eliminarServicio = async (id) => {
         try {
             await api.delete(`/servicios/${id}`);
@@ -178,7 +168,7 @@ export function useServicioManager() {
     const esPresupuesto = (s) => (s.estado || '').toUpperCase() === 'PRESUPUESTO';
     const sinFirmaDirecto = (s) => {
         const est = (s.estado || '').toUpperCase();
-        return est === 'PRESUPUESTO' || est === 'ARCHIVADO' || est === 'RECHAZADO';
+        return est === 'PRESUPUESTO' || est === 'ARCHIVADO';
     };
 
     const generarPDF = (servicio, { sinPrecios = false } = {}) => {
@@ -297,7 +287,7 @@ export function useServicioManager() {
         modalFirmas, setModalFirmas,
         confirmarFirmasYGenerarPDF,
         cargarServicios: () => { cargarServicios(); cargarStats(); },
-        confirmarServicio, rechazarServicio,
+        confirmarServicio,
         eliminarServicio, archivarServicio, accionMasiva, generarPDF,
         calcularTotal, abrirEditar, cerrarModal,
         setFiltroTab,
