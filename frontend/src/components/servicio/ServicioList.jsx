@@ -81,13 +81,12 @@ export default function ServicioList({ onEditar }) {
 
     const eliminarMasivo = async () => {
         const ids = [...seleccionadas];
+        const loading = toast.loading(`Eliminando ${ids.length}...`);
         let ok = 0;
         for (const id of ids) {
-            try {
-                await api.delete(`/servicios/${id}`);
-                ok++;
-            } catch { /* error individual */ }
+            try { await api.delete(`/servicios/${id}`); ok++; } catch { /* silencioso */ }
         }
+        toast.dismiss(loading);
         if (ok > 0) toast.success(`${ok} registro${ok > 1 ? 's' : ''} eliminado${ok > 1 ? 's' : ''}`);
         salirSeleccion();
         cargarServicios();

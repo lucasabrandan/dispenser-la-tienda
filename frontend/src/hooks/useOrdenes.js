@@ -84,6 +84,9 @@ export function useOrdenes({ tecnicoId = null } = {}) {
         } catch { toast.error('Error al eliminar'); }
     };
 
+    // Eliminar sin confirm ni recarga (para uso masivo)
+    const eliminarDireto = (id) => api.delete(`/ordenes/${id}`);
+
     const avanzarEstado = async (id, estado, notasTecnico = '') => {
         const loading = toast.loading('Actualizando...');
         try {
@@ -101,7 +104,7 @@ export function useOrdenes({ tecnicoId = null } = {}) {
         desde, setDesde, hasta, setHasta,
         modalCrear, setModalCrear,
         ordenEditar, abrirEditar, cerrarModal,
-        crear, actualizar, eliminar, avanzarEstado,
+        crear, actualizar, eliminar, eliminarDireto, avanzarEstado,
         recargar: cargar,
     };
 }

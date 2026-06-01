@@ -154,7 +154,8 @@ export default function DespachoManager() {
         desde, setDesde, hasta, setHasta,
         modalCrear, setModalCrear,
         ordenEditar, abrirEditar, cerrarModal,
-        crear, actualizar, eliminar, avanzarEstado,
+        crear, actualizar, eliminar, eliminarDireto, avanzarEstado,
+        recargar,
     } = useOrdenes();
 
     const [filtrTecnico, setFiltrTecnico] = useState('');
@@ -184,12 +185,15 @@ export default function DespachoManager() {
 
     const eliminarMasivo = async () => {
         const ids = [...seleccionadas];
+        const loading = toast.loading(`Eliminando ${ids.length}...`);
         let ok = 0;
         for (const id of ids) {
-            try { await eliminar(id); ok++; } catch { /* individual toast ya maneja */ }
+            try { await eliminarDireto(id); ok++; } catch { /* silencioso */ }
         }
+        toast.dismiss(loading);
         if (ok > 0) toast.success(`${ok} orden${ok > 1 ? 'es' : ''} eliminada${ok > 1 ? 's' : ''}`);
         salirSeleccion();
+        recargar();
     };
 
     // Filtrar por estado y técnico
