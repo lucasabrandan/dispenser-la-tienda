@@ -20,6 +20,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
         setNombreSedePrellenado, setModalSedeAbierto,
         modoCliente: modo, setModoCliente: setModo,
         nombreLibre, setNombreLibre,
+        telefonoLibre, setTelefonoLibre,
         dirLibre, setDirLibre,
     } = hook;
 
@@ -124,10 +125,10 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                         </>
                     )}
 
-                    {/* Link para cliente nuevo */}
+                    {/* Link para cliente nuevo rápido */}
                     <button onClick={() => { setModo('nuevo'); setClienteId(null); }}
                         className="text-[11px] font-bold text-[#A8A29E] active:scale-95 transition-all self-start">
-                        ¿Cliente nuevo? <span className="text-[#D13A28] dark:text-[#E8422F]">Crear sin cuenta</span>
+                        ¿Cliente nuevo? <span className="text-[#D13A28] dark:text-[#E8422F]">Alta rápida</span>
                     </button>
                 </div>
             ) : (
@@ -140,6 +141,17 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                             autoFocus
                             onChange={e => setNombreLibre(e.target.value)}
                             placeholder="Ej: Juan García, Empresa SA..."
+                            className="w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/10 placeholder-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] focus:ring-2 focus:ring-[#D13A28]/20 transition-all"
+                        />
+                    </div>
+
+                    <div>
+                        <Label>Teléfono</Label>
+                        <input
+                            type="tel"
+                            value={telefonoLibre}
+                            onChange={e => setTelefonoLibre(e.target.value)}
+                            placeholder="Ej: 1136919360"
                             className="w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/10 placeholder-[#A8A29E] focus:border-[#D13A28] dark:focus:border-[#E8422F] focus:ring-2 focus:ring-[#D13A28]/20 transition-all"
                         />
                     </div>

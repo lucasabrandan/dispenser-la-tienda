@@ -47,6 +47,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   // Estado del PasoCliente — persistido acá para que no se pierda al cambiar de paso
   const [modoCliente, setModoCliente] = useState('registrado');
   const [nombreLibre, setNombreLibre] = useState('');
+  const [telefonoLibre, setTelefonoLibre] = useState('');
   const [dirLibre, setDirLibre] = useState({ calle: '', numero: '', piso: '', depto: '', localidad: '' });
   const [fechaVisita, setFechaVisita] = useState(''); // fecha estimada de visita para auto-despacho
   const LEYENDA_DEFAULT = 'Garantía: 90 días sobre mano de obra · Repuestos según fabricante';
@@ -551,52 +552,47 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       let sedeIdFinal, nombreSedeF;
 
       if (!clienteId) {
-        // Cliente nuevo sin cuenta — si tiene dirección, crear cliente + sede reales
+        // Cliente nuevo rápido — dirección obligatoria, siempre crea cliente + sede
         const dir = overrides.direccionLibre;
-        if (dir?.calle?.trim()) {
-          try {
-            const dirStr = [dir.calle, dir.numero].filter(Boolean).join(' ')
-              + (dir.localidad ? `, ${dir.localidad}` : '');
-            const { data: nuevoCliente } = await api.post('/clientes', {
-              clienteTipo: 'PARTICULAR',
-              nombre: toTitleCase(overrides.clienteNombre || 'Particular'),
-              calle: toTitleCase(dir.calle),
-              numero: dir.numero || '0',
-              piso: dir.piso || null,
-              depto: dir.depto || null,
-              localidad: toTitleCase(dir.localidad),
-              provincia: 'Buenos Aires',
-              direccion: dirStr,
-              condicionIva: 'CONSUMIDOR_FINAL',
-            });
-            const { data: nuevaSede } = await api.post('/sedes', {
-              clienteId: nuevoCliente.id,
-              nombreSede: 'Principal',
-              calle: toTitleCase(dir.calle),
-              numero: dir.numero || '0',
-              piso: dir.piso || null,
-              depto: dir.depto || null,
-              localidad: toTitleCase(dir.localidad),
-              provincia: 'Buenos Aires',
-              direccion: dirStr,
-            });
-            setDb(prev => ({
-              ...prev,
-              clientes: [...(prev.clientes || []), nuevoCliente],
-              sedes: [...(prev.sedes || []), nuevaSede],
-            }));
-            sedeIdFinal = nuevaSede.id;
-            nombreSedeF = nuevaSede.nombreSede;
-            overrides.clienteNombre = nuevoCliente.nombre;
-          } catch (err) {
-            console.error('Error auto-creando cliente/sede:', err);
-            // Fallback a Mostrador
-            sedeIdFinal = sedeMostrador?.id || db.sedes?.[0]?.id;
-            nombreSedeF = sedeMostrador?.nombreSede || 'Mostrador';
-          }
-        } else {
-          sedeIdFinal  = overrides.sedeId || sedeMostrador?.id || db.sedes?.[0]?.id;
-          nombreSedeF  = overrides.sedeNombre || sedeMostrador?.nombreSede || 'Mostrador';
+        try {
+          const dirStr = [dir.calle, dir.numero].filter(Boolean).join(' ')
+            + (dir.localidad ? `, ${dir.localidad}` : '');
+          const { data: nuevoCliente } = await api.post('/clientes', {
+            clienteTipo: 'PARTICULAR',
+            nombre: toTitleCase(overrides.clienteNombre || 'Particular'),
+            telefono: overrides.telefono || null,
+            calle: toTitleCase(dir.calle),
+            numero: dir.numero || '0',
+            piso: dir.piso || null,
+            depto: dir.depto || null,
+            localidad: toTitleCase(dir.localidad),
+            provincia: 'Buenos Aires',
+            direccion: dirStr,
+            condicionIva: 'CONSUMIDOR_FINAL',
+          });
+          const { data: nuevaSede } = await api.post('/sedes', {
+            clienteId: nuevoCliente.id,
+            nombreSede: 'Principal',
+            calle: toTitleCase(dir.calle),
+            numero: dir.numero || '0',
+            piso: dir.piso || null,
+            depto: dir.depto || null,
+            localidad: toTitleCase(dir.localidad),
+            provincia: 'Buenos Aires',
+            direccion: dirStr,
+          });
+          setDb(prev => ({
+            ...prev,
+            clientes: [...(prev.clientes || []), nuevoCliente],
+            sedes: [...(prev.sedes || []), nuevaSede],
+          }));
+          sedeIdFinal = nuevaSede.id;
+          nombreSedeF = nuevaSede.nombreSede;
+          overrides.clienteNombre = nuevoCliente.nombre;
+        } catch (err) {
+          console.error('Error auto-creando cliente/sede:', err);
+          toast.error('No se pudo crear el cliente — revisá los datos');
+          return false;
         }
       } else {
         // Cliente registrado → sede elegida > única sede > auto-crear Principal > Mostrador
@@ -795,6 +791,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     configGlobal,
     modoCliente, setModoCliente,
     nombreLibre, setNombreLibre,
+    telefonoLibre, setTelefonoLibre,
     dirLibre, setDirLibre,
   };
 }

@@ -145,9 +145,11 @@ export default function ServicioForm({
 
     const buildOverrides = () => {
         if (!clienteId && nombreLibre.trim()) {
-            const o = { clienteNombre: nombreLibre.trim() };
-            if (direccionLibre?.calle?.trim()) o.direccionLibre = direccionLibre;
-            return o;
+            return {
+                clienteNombre: nombreLibre.trim(),
+                telefono: hook.telefonoLibre?.trim() || null,
+                direccionLibre,
+            };
         }
         return {};
     };
