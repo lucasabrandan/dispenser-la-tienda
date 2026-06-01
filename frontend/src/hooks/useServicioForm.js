@@ -43,6 +43,11 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
 
   const [repuestoElegido, setRepuestoElegido] = useState(null);
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState(null); // { id, nombre } — solo admin
+
+  // Estado del PasoCliente — persistido acá para que no se pierda al cambiar de paso
+  const [modoCliente, setModoCliente] = useState('registrado');
+  const [nombreLibre, setNombreLibre] = useState('');
+  const [dirLibre, setDirLibre] = useState({ calle: '', numero: '', piso: '', depto: '', localidad: '' });
   const [fechaVisita, setFechaVisita] = useState(''); // fecha estimada de visita para auto-despacho
   const LEYENDA_DEFAULT = 'Garantía: 90 días sobre mano de obra · Repuestos según fabricante';
   const [leyenda, setLeyenda] = useState(LEYENDA_DEFAULT);
@@ -788,5 +793,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     recuperarBorrador,
     descartarBorrador,
     configGlobal,
+    modoCliente, setModoCliente,
+    nombreLibre, setNombreLibre,
+    dirLibre, setDirLibre,
   };
 }

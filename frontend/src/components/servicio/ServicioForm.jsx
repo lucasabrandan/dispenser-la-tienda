@@ -43,13 +43,11 @@ export default function ServicioForm({
     } = hook;
 
     const [paso, setPaso]               = useState(0);
-    const [nombreLibre, setNombreLibre] = useState('');
-    const [direccionLibre, setDireccionLibre] = useState(null);
     const [sheetVisible, setSheetVisible] = useState(false);
     // Snapshot para PDF post-guardado (finalizar vacía ticketItems)
     const snapshotRef = useRef(null);
-    hook._setNombreLibre = setNombreLibre;
-    hook._setDireccionLibre = setDireccionLibre;
+    // nombreLibre y dirLibre ahora viven en el hook para persistir entre pasos
+    const { nombreLibre, dirLibre: direccionLibre } = hook;
 
     // Cuando se recupera un borrador, avanzar al paso correcto
     const prevBorrador = useRef(borradorDisponible);

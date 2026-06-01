@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, buildSelectStyles } from './ServicioUI';
 import DateInput from '../ui/DateInput';
@@ -18,13 +18,10 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
         onClienteSeleccionado,
         setNombreClientePrellenado, setModalClienteAbierto,
         setNombreSedePrellenado, setModalSedeAbierto,
-        _setNombreLibre, _setDireccionLibre,
+        modoCliente: modo, setModoCliente: setModo,
+        nombreLibre, setNombreLibre,
+        dirLibre, setDirLibre,
     } = hook;
-
-    // Default "registrado" porque es lo más común
-    const [modo, setModo]               = useState(clienteId ? 'registrado' : 'registrado');
-    const [nombreLibre, setNombreLibre] = useState('');
-    const [dirLibre, setDirLibre]       = useState({ calle: '', numero: '', piso: '', depto: '', localidad: '' });
 
     useEffect(() => {
         if (clienteId && modo === 'nuevo') setModo('registrado');
@@ -38,10 +35,6 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
         : nombreLibre.trim().length >= 2 && dirLibre.calle.trim().length >= 2 && dirLibre.localidad.trim().length >= 2;
 
     const handleNext = () => {
-        if (modo === 'nuevo' && nombreLibre.trim()) {
-            _setNombreLibre?.(nombreLibre);
-            _setDireccionLibre?.(dirLibre);
-        }
         onNext();
     };
 
