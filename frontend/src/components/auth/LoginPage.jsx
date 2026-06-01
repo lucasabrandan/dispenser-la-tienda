@@ -16,7 +16,7 @@ export default function LoginPage() {
         setCargando(true);
         try {
             const { data } = await api.post('/auth/login', form);
-            login(data.token, { id: data.id, username: data.username, nombre: data.nombre, rol: data.rol, firma: data.firma });
+            login(data.token, { id: data.id, username: data.username, nombre: data.nombre, rol: data.rol, firma: data.firma, sueldoObjetivo: data.sueldoObjetivo });
         } catch (err) {
             const msg = err.response?.status === 401
                 ? 'Usuario o contraseña incorrectos'

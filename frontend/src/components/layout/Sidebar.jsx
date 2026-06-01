@@ -20,6 +20,7 @@ const MENU_OPERACIONES_TECNICO = [
     { id: 'mi-agenda',        icon: '📅', nombre: 'Mi Agenda'        },
     { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Tecnico' },
     { id: 'historial',        icon: '📋', nombre: 'Historial'        },
+    { id: 'mi-sueldo',        icon: '💰', nombre: 'Mi Sueldo'        },
 ];
 
 const MENU_GESTION = [

@@ -23,6 +23,7 @@ import UsuariosManager    from './components/usuarios/UsuariosManager';
 import DespachoManager    from './components/ordenes/DespachoManager';
 import MisOrdenes         from './components/ordenes/MisOrdenes';
 import MiAgenda           from './components/ordenes/MiAgenda';
+import MiSueldo           from './components/finanzas/MiSueldo';
 
 function AppInterna() {
     const { autenticado, esAdmin, usuario } = useAuth();
@@ -93,6 +94,8 @@ function AppInterna() {
                 return <MisOrdenes tecnicoId={usuario?.id} onEjecutarOrden={ejecutarOrden} />;
             case 'mi-agenda':
                 return <MiAgenda tecnicoId={usuario?.id} />;
+            case 'mi-sueldo':
+                return <MiSueldo />;
             default:
                 return (
                     <div className="flex items-center justify-center h-64 text-[#A8A29E] font-black text-sm uppercase tracking-widest">

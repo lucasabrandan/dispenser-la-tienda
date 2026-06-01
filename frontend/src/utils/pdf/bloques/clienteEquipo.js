@@ -2,6 +2,20 @@
 import { C, M, T, CONTENT_W } from '../theme.js';
 import { fitEnCaja } from '../helpers.js';
 
+// Traducir enum CondicionIva del backend a texto legible
+const CONDICION_IVA_LABELS = {
+    RESPONSABLE_INSCRIPTO:  'Responsable Inscripto',
+    MONOTRIBUTO:            'Monotributo',
+    EXENTO:                 'IVA Exento',
+    NO_RESPONSABLE:         'IVA No Responsable',
+    CONSUMIDOR_FINAL:       'Consumidor Final',
+    SUJETO_NO_CATEGORIZADO: 'Sujeto No Categorizado',
+};
+const formatCondFiscal = (val) => {
+    if (!val) return null;
+    return CONDICION_IVA_LABELS[val] || val.replace(/_/g, ' ');
+};
+
 export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, idx = 0, y, pageW, fotoEquipo = null, diagnostico = null, tituloDiag = 'DIAGNÓSTICO / SOLICITUD', conBullet = false }) {
     const tieneDiag = !!(diagnostico && diagnostico.trim());
 
@@ -27,7 +41,7 @@ export function dibujarBloqueClienteEquipo(doc, { cliente, sede, item = null, id
     const RIGHT_X = M + LEFT_W + 4;
 
     // Pre-calcular datos para altura dinámica (sin espacio vacío excesivo)
-    const condFiscal = cliente?.condicionFiscal || cliente?.condicionIva || null;
+    const condFiscal = formatCondFiscal(cliente?.condicionFiscal || cliente?.condicionIva);
     const datosCliente = [
         cliente?.telefono   ? `Tel: ${cliente.telefono}`            : null,
         sede?.nombreSede    ? `Sede: ${sede.nombreSede}`             : null,

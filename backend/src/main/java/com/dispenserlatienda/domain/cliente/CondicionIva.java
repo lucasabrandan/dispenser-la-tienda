@@ -8,8 +8,10 @@ import com.dispenserlatienda.config.CondicionIvaDeserializer;
 public enum CondicionIva {
     RESPONSABLE_INSCRIPTO("Responsable Inscripto"),
     MONOTRIBUTO("Monotributo"),
-    NO_RESPONSABLE("No Responsable"),
-    CONSUMIDOR_FINAL("Consumidor Final");
+    EXENTO("IVA Exento"),
+    NO_RESPONSABLE("IVA No Responsable"),
+    CONSUMIDOR_FINAL("Consumidor Final"),
+    SUJETO_NO_CATEGORIZADO("Sujeto No Categorizado");
 
     private final String descripcion;
 

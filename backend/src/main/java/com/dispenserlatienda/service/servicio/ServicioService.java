@@ -3,7 +3,9 @@ import com.dispenserlatienda.domain.equipo.Equipo;
 import com.dispenserlatienda.domain.gasto.Gasto;
 import com.dispenserlatienda.domain.sede.Sede;
 import com.dispenserlatienda.dto.servicio.EstadisticasMensualDTO;
+import com.dispenserlatienda.dto.servicio.SueldoProgressDTO;
 import com.dispenserlatienda.dto.servicio.TecnicoRendimientoDTO;
+import com.dispenserlatienda.repository.venta.VentaRepository;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -52,17 +54,19 @@ public class ServicioService {
     private final EquipoRepository equipoRepository;
     private final GastoRepository gastoRepository;
     private final ConfiguracionGlobalRepository configRepo;
+    private final VentaRepository ventaRepository;
     private final ObjectMapper objectMapper;
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
                            UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
                            GastoRepository gastoRepository, ConfiguracionGlobalRepository configRepo,
-                           ObjectMapper objectMapper) {
+                           VentaRepository ventaRepository, ObjectMapper objectMapper) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
         this.equipoRepository = equipoRepository;
         this.gastoRepository = gastoRepository;
         this.configRepo = configRepo;
+        this.ventaRepository = ventaRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -668,5 +672,174 @@ public class ServicioService {
                 gananciaReal,
                 transacciones
         );
+    }
+
+    // Calcular progreso de sueldo para un usuario en un mes dado
+    // Admin (isAdmin=true): servicios propios 100%, servicios de otros 50% (parte empresa), + ventas
+    // Técnico (isAdmin=false): su parte = 50% de sus servicios cobrados
+    @Transactional(readOnly = true)
+    public SueldoProgressDTO calcularProgresoSueldo(Long usuarioId, String mesParam, boolean isAdmin) {
+        final BigDecimal PCT_IMPUESTOS = BigDecimal.valueOf(30);
+        final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        BigDecimal sueldoObjetivo = usuario.getSueldoObjetivo() != null ? usuario.getSueldoObjetivo() : BigDecimal.ZERO;
+
+        YearMonth mesActual = (mesParam != null && !mesParam.isBlank()) ? YearMonth.parse(mesParam) : YearMonth.now();
+
+        // Calcular un mes específico
+        BigDecimal[] desglose = calcularMesSueldo(usuarioId, mesActual, PCT_IMPUESTOS, RM, isAdmin);
+        BigDecimal ingresoServPropios = desglose[0];
+        int cantServPropios = desglose[1].intValue();
+        BigDecimal ingresoServTecnicos = desglose[2];
+        int cantServTecnicos = desglose[3].intValue();
+
+        // Ventas del mes (ganancia real = totalIngreso - subtotalCosto)
+        LocalDate inicioMes = mesActual.atDay(1);
+        LocalDate finMes = mesActual.atEndOfMonth();
+        BigDecimal ingresoVentas = ventaRepository.sumGananciaByPeriodo(inicioMes, finMes);
+        ingresoVentas = ingresoVentas != null ? ingresoVentas : BigDecimal.ZERO;
+        long cantVentas = ventaRepository.countByPeriodo(inicioMes, finMes);
+
+        BigDecimal totalAcumulado;
+        if (isAdmin) {
+            totalAcumulado = ingresoServPropios.add(ingresoServTecnicos).add(ingresoVentas);
+        } else {
+            totalAcumulado = ingresoServPropios; // técnico solo ve su parte
+        }
+
+        BigDecimal faltante = sueldoObjetivo.subtract(totalAcumulado).max(BigDecimal.ZERO);
+        double porcentaje = sueldoObjetivo.compareTo(BigDecimal.ZERO) > 0
+                ? totalAcumulado.divide(sueldoObjetivo, 4, RM).multiply(BigDecimal.valueOf(100)).doubleValue()
+                : 0;
+
+        // Resultado empresa (solo admin): acumulado - sueldo admin - gastos
+        BigDecimal gastosOp = BigDecimal.ZERO;
+        BigDecimal resultadoEmpresa = BigDecimal.ZERO;
+        if (isAdmin) {
+            List<Gasto> gastosMes = gastoRepository.findByFechaBetween(inicioMes, finMes);
+            gastosOp = gastosMes.stream().map(Gasto::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
+            resultadoEmpresa = totalAcumulado.subtract(sueldoObjetivo).subtract(gastosOp);
+        }
+
+        // Evolución: últimos 6 meses
+        List<SueldoProgressDTO.MesResumen> evolucion = new ArrayList<>();
+        for (int i = 5; i >= 0; i--) {
+            YearMonth ym = mesActual.minusMonths(i);
+            BigDecimal[] ev = calcularMesSueldo(usuarioId, ym, PCT_IMPUESTOS, RM, isAdmin);
+            BigDecimal acumEv;
+            if (isAdmin) {
+                LocalDate ini = ym.atDay(1);
+                LocalDate fin = ym.atEndOfMonth();
+                BigDecimal ventasEv = ventaRepository.sumGananciaByPeriodo(ini, fin);
+                ventasEv = ventasEv != null ? ventasEv : BigDecimal.ZERO;
+                acumEv = ev[0].add(ev[2]).add(ventasEv);
+                List<Gasto> gastosEv = gastoRepository.findByFechaBetween(ini, fin);
+                BigDecimal gastosEvT = gastosEv.stream().map(Gasto::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal resEv = acumEv.subtract(sueldoObjetivo).subtract(gastosEvT);
+                evolucion.add(new SueldoProgressDTO.MesResumen(ym.toString(), acumEv, sueldoObjetivo, resEv,
+                        ev[1].intValue() + ev[3].intValue()));
+            } else {
+                acumEv = ev[0];
+                evolucion.add(new SueldoProgressDTO.MesResumen(ym.toString(), acumEv, sueldoObjetivo, BigDecimal.ZERO,
+                        ev[1].intValue()));
+            }
+        }
+
+        return new SueldoProgressDTO(
+                mesActual.toString(), usuarioId, usuario.getNombre(), sueldoObjetivo,
+                ingresoServPropios, cantServPropios,
+                ingresoServTecnicos, cantServTecnicos,
+                ingresoVentas, (int) cantVentas,
+                totalAcumulado, faltante, porcentaje,
+                resultadoEmpresa, gastosOp,
+                evolucion
+        );
+    }
+
+    // Calcula ingresos de un mes para sueldo
+    // Retorna [ingresoServPropios, cantPropios, ingresoServTecnicos, cantTecnicos]
+    private BigDecimal[] calcularMesSueldo(Long usuarioId, YearMonth ym,
+                                            BigDecimal pctImp, java.math.RoundingMode rm, boolean isAdmin) {
+        String desde = ym.atDay(1).toString();
+        String hasta = ym.atEndOfMonth().toString();
+
+        // Servicios propios (cobrados, asignados a este usuario)
+        List<Servicio> propiosCobrados = servicioRepository.findAll(
+                buildSpec(null, "COBRADO", null, desde, hasta, usuarioId, null));
+        List<Servicio> propiosLegacy = servicioRepository.findAll(
+                buildSpec(null, "REALIZADO", null, desde, hasta, usuarioId, null));
+        List<Servicio> propios = new ArrayList<>(propiosCobrados);
+        propios.addAll(propiosLegacy);
+
+        BigDecimal ingresoPropios = BigDecimal.ZERO;
+        for (Servicio s : propios) {
+            BigDecimal ganNeta = calcularGananciaNetaServicio(s, pctImp, rm);
+            if (isAdmin) {
+                ingresoPropios = ingresoPropios.add(ganNeta); // 100% para admin
+            } else {
+                ingresoPropios = ingresoPropios.add(ganNeta.divide(BigDecimal.valueOf(2), 2, rm)); // 50% para técnico
+            }
+        }
+
+        // Servicios de otros técnicos (solo admin recibe 50%)
+        BigDecimal ingresoTecnicos = BigDecimal.ZERO;
+        int cantTecnicos = 0;
+        if (isAdmin) {
+            List<Servicio> todosCobrados = servicioRepository.findAll(
+                    buildSpec(null, "COBRADO", null, desde, hasta, null, null));
+            List<Servicio> todosLegacy = servicioRepository.findAll(
+                    buildSpec(null, "REALIZADO", null, desde, hasta, null, null));
+            List<Servicio> todos = new ArrayList<>(todosCobrados);
+            todos.addAll(todosLegacy);
+
+            for (Servicio s : todos) {
+                if (s.getUsuario() != null && !s.getUsuario().getId().equals(usuarioId)) {
+                    BigDecimal ganNeta = calcularGananciaNetaServicio(s, pctImp, rm);
+                    ingresoTecnicos = ingresoTecnicos.add(ganNeta.divide(BigDecimal.valueOf(2), 2, rm));
+                    cantTecnicos++;
+                }
+            }
+        }
+
+        return new BigDecimal[]{
+                ingresoPropios, BigDecimal.valueOf(propios.size()),
+                ingresoTecnicos, BigDecimal.valueOf(cantTecnicos)
+        };
+    }
+
+    // Ganancia neta de un servicio: facturado - 30% imp - repuestos
+    private BigDecimal calcularGananciaNetaServicio(Servicio s, BigDecimal pctImp, java.math.RoundingMode rm) {
+        BigDecimal facturado = s.getItems().stream()
+                .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal descPct = s.getDescuentoPorcentaje();
+        if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, rm));
+            facturado = facturado.multiply(factor).setScale(2, rm);
+        }
+
+        BigDecimal repuestos = BigDecimal.ZERO;
+        for (ServicioItem item : s.getItems()) {
+            String json = item.getRepuestosUsados();
+            if (json == null || json.isBlank()) continue;
+            try {
+                List<java.util.Map<String, Object>> lista = objectMapper.readValue(json, new TypeReference<>() {});
+                for (java.util.Map<String, Object> r : lista) {
+                    Object sub = r.get("subtotal");
+                    Object precio = r.get("precio");
+                    Object cant = r.get("cantidad");
+                    BigDecimal val = BigDecimal.ZERO;
+                    if (sub != null) val = new BigDecimal(sub.toString());
+                    else if (precio != null && cant != null)
+                        val = new BigDecimal(precio.toString()).multiply(new BigDecimal(cant.toString()));
+                    repuestos = repuestos.add(val);
+                }
+            } catch (JsonProcessingException e) { log.warn("Error parseando JSON repuestos: {}", e.getMessage()); }
+        }
+
+        BigDecimal imp = facturado.multiply(pctImp).divide(BigDecimal.valueOf(100), 2, rm);
+        return facturado.subtract(imp).subtract(repuestos).max(BigDecimal.ZERO);
     }
 }

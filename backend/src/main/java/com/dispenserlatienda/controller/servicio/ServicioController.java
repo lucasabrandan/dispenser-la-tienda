@@ -4,6 +4,7 @@ import com.dispenserlatienda.dto.servicio.EstadisticasMensualDTO;
 import com.dispenserlatienda.dto.servicio.ServicioCreateDTO;
 import com.dispenserlatienda.dto.servicio.ServicioDTO;
 import com.dispenserlatienda.dto.servicio.ServicioResumenDTO;
+import com.dispenserlatienda.dto.servicio.SueldoProgressDTO;
 import com.dispenserlatienda.dto.servicio.TecnicoRendimientoDTO;
 import com.dispenserlatienda.dto.servicio.TecnicoResumenMesDTO;
 import java.util.List;
@@ -127,5 +128,14 @@ public class ServicioController {
             @RequestParam(required = false) String mes,
             @RequestParam(required = false) Long tecnicoId) {
         return ResponseEntity.ok(servicioService.rendimientoMesActual(mes, tecnicoId));
+    }
+
+    // GET: Progreso de sueldo mensual — admin ve todo, técnico ve su parte
+    @GetMapping("/stats/sueldo")
+    public ResponseEntity<SueldoProgressDTO> progresoSueldo(
+            @RequestParam Long usuarioId,
+            @RequestParam(required = false) String mes,
+            @RequestParam(defaultValue = "false") boolean isAdmin) {
+        return ResponseEntity.ok(servicioService.calcularProgresoSueldo(usuarioId, mes, isAdmin));
     }
 }

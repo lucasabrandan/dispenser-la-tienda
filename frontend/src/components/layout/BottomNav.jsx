@@ -16,6 +16,7 @@ const NAV_TECNICO = [
     { id: 'mi-agenda',        nombre: 'Agenda',   icon: '📅' },
     { id: 'servicio-tecnico', nombre: 'Tecnico',  icon: '🔧' },
     { id: 'historial',        nombre: 'Historial',icon: '📋' },
+    { id: 'mi-sueldo',        nombre: 'Sueldo',   icon: '💰' },
 ];
 
 // Secciones accesibles desde "Más"

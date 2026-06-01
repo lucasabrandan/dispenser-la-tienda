@@ -31,7 +31,7 @@ public class UsuarioAdminController {
     @GetMapping
     public List<UsuarioDTO> listar() {
         return usuarioRepository.findAll().stream()
-                .map(u -> new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma()))
+                .map(u -> new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo()))
                 .toList();
     }
 
@@ -50,7 +50,7 @@ public class UsuarioAdminController {
         nuevo.setWhatsapp(dto.whatsapp());
         usuarioRepository.save(nuevo);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo(), nuevo.getTelefono(), nuevo.getWhatsapp(), nuevo.getFirma()));
+                .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo(), nuevo.getTelefono(), nuevo.getWhatsapp(), nuevo.getFirma(), nuevo.getSueldoObjetivo()));
     }
 
     @PutMapping("/{id}")
@@ -63,7 +63,7 @@ public class UsuarioAdminController {
         u.setTelefono(dto.telefono());
         u.setWhatsapp(dto.whatsapp());
         usuarioRepository.save(u);
-        return new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma());
+        return new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo());
     }
 
     @PutMapping("/{id}/firma")
@@ -80,6 +80,16 @@ public class UsuarioAdminController {
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         u.setPasswordHash(passwordEncoder.encode(dto.nuevaPassword()));
+        usuarioRepository.save(u);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/sueldo-objetivo")
+    public ResponseEntity<Void> actualizarSueldoObjetivo(@PathVariable Long id, @RequestBody java.util.Map<String, Object> body) {
+        Usuario u = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        Object val = body.get("sueldoObjetivo");
+        u.setSueldoObjetivo(val != null ? new java.math.BigDecimal(val.toString()) : null);
         usuarioRepository.save(u);
         return ResponseEntity.noContent().build();
     }

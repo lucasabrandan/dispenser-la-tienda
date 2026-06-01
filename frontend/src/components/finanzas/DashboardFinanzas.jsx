@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CierreCajaModal from './CierreCajaModal';
 import TabBalance from './TabBalance';
+import TabSueldo from './TabSueldo';
 import TabTecnicos from './TabTecnicos';
 import TabGastos from './TabGastos';
 import TabInventario from './TabInventario';
@@ -8,6 +9,7 @@ import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 const TABS = [
     { id: 'balance',    label: 'Balance'    },
+    { id: 'sueldo',     label: 'Sueldo'     },
     { id: 'tecnicos',   label: 'Técnicos'   },
     { id: 'gastos',     label: 'Gastos'     },
     { id: 'inventario', label: 'Inventario' },
@@ -55,6 +57,7 @@ export default function DashboardFinanzas() {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
                 {tab === 'balance'    && <TabBalance    filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
+                {tab === 'sueldo'     && <TabSueldo     filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
                 {tab === 'tecnicos'   && <TabTecnicos   filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
                 {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
                 {tab === 'inventario' && <TabInventario />}

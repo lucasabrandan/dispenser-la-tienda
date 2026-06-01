@@ -1,5 +1,7 @@
 package com.dispenserlatienda.dto.auth;
 
+import java.math.BigDecimal;
+
 public record LoginResponseDTO(
     Long id,
     String token,
@@ -8,5 +10,6 @@ public record LoginResponseDTO(
     String rol,
     String telefono,
     String whatsapp,
-    String firma
+    String firma,
+    BigDecimal sueldoObjetivo
 ) {}

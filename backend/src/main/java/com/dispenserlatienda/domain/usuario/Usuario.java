@@ -1,6 +1,7 @@
 package com.dispenserlatienda.domain.usuario;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "usuario", uniqueConstraints = {
@@ -36,6 +37,9 @@ public class Usuario {
 
     @Column(columnDefinition = "TEXT")
     private String firma;
+
+    @Column(name = "sueldo_objetivo")
+    private BigDecimal sueldoObjetivo;
 
     protected Usuario() {
     }
@@ -83,4 +87,6 @@ public class Usuario {
     public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
     public String getFirma() { return firma; }
     public void setFirma(String firma) { this.firma = firma; }
+    public BigDecimal getSueldoObjetivo() { return sueldoObjetivo; }
+    public void setSueldoObjetivo(BigDecimal sueldoObjetivo) { this.sueldoObjetivo = sueldoObjetivo; }
 }

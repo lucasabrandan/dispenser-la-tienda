@@ -50,6 +50,8 @@ public class SecurityConfig {
                 // Solo ADMIN: finanzas sensibles
                 .requestMatchers("/api/gastos/**").hasRole("ADMIN")
                 .requestMatchers("/api/ventas/stats/**").hasRole("ADMIN")
+                // Sueldo accesible para todos (cada user ve el suyo)
+                .requestMatchers("/api/servicios/stats/sueldo").authenticated()
                 .requestMatchers("/api/servicios/stats/**").hasRole("ADMIN")
                 .requestMatchers("/api/ventas/**").hasRole("ADMIN")
 

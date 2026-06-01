@@ -44,7 +44,8 @@ public class AuthController {
             usuario.getRol().name(),
             usuario.getTelefono(),
             usuario.getWhatsapp(),
-            usuario.getFirma()
+            usuario.getFirma(),
+            usuario.getSueldoObjetivo()
         ));
     }
 
@@ -64,6 +65,19 @@ public class AuthController {
             @RequestBody java.util.Map<String, String> payload) {
         usuarioRepository.findByUsername(username).ifPresent(u -> {
             u.setFirma(payload.get("firma"));
+            usuarioRepository.save(u);
+        });
+        return ResponseEntity.noContent().build();
+    }
+
+    // PATCH /api/auth/mi-sueldo-objetivo — cualquier usuario puede cambiar su propio sueldo objetivo
+    @PatchMapping("/mi-sueldo-objetivo")
+    public ResponseEntity<Void> guardarMiSueldoObjetivo(
+            @AuthenticationPrincipal String username,
+            @RequestBody java.util.Map<String, Object> payload) {
+        usuarioRepository.findByUsername(username).ifPresent(u -> {
+            Object val = payload.get("sueldoObjetivo");
+            u.setSueldoObjetivo(val != null ? new java.math.BigDecimal(val.toString()) : null);
             usuarioRepository.save(u);
         });
         return ResponseEntity.noContent().build();

@@ -86,7 +86,9 @@ export default function ClienteForm({ form, setForm, onSubmit, onClose }) {
                                 <option value="CONSUMIDOR_FINAL">Consumidor Final</option>
                                 <option value="MONOTRIBUTO">Monotributo</option>
                                 <option value="RESPONSABLE_INSCRIPTO">Responsable Inscripto</option>
-                                <option value="NO_RESPONSABLE">No Responsable</option>
+                                <option value="EXENTO">IVA Exento</option>
+                                <option value="NO_RESPONSABLE">IVA No Responsable</option>
+                                <option value="SUJETO_NO_CATEGORIZADO">Sujeto No Categorizado</option>
                             </select>
                         </div>
 
