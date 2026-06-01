@@ -15,7 +15,10 @@ export default function CrearClienteModal({
 }) {
     const [nombre, setNombre]       = useState('');
     const [telefono, setTelefono]   = useState('');
-    const [direccion, setDireccion] = useState('');
+    const [calle, setCalle]         = useState('');
+    const [numero, setNumero]       = useState('');
+    const [piso, setPiso]           = useState('');
+    const [depto, setDepto]         = useState('');
     const [localidad, setLocalidad] = useState('');
     const [cargando, setCargando]   = useState(false);
 
@@ -29,28 +32,48 @@ export default function CrearClienteModal({
     const resetear = () => {
         setNombre('');
         setTelefono('');
-        setDireccion('');
+        setCalle('');
+        setNumero('');
+        setPiso('');
+        setDepto('');
         setLocalidad('');
     };
 
     const handleGuardar = async (e) => {
         e.preventDefault();
         if (!nombre.trim()) { toast.error('El nombre es obligatorio'); return; }
-        if (!direccion.trim()) { toast.error('La dirección es obligatoria'); return; }
+        if (!calle.trim()) { toast.error('La calle es obligatoria'); return; }
         if (!localidad.trim()) { toast.error('La localidad es obligatoria'); return; }
 
         setCargando(true);
         const t = toast.loading('Creando cliente...');
         try {
+            const dirStr = [calle, numero].filter(Boolean).join(' ')
+                + (localidad ? `, ${localidad}` : '');
             const response = await api.post('/clientes', {
                 clienteTipo: 'PARTICULAR',
                 nombre: toTitleCase(nombre),
                 telefono: telefono.trim() || null,
-                calle: toTitleCase(direccion) || 'Sin dirección',
-                numero: '0',
-                localidad: toTitleCase(localidad) || 'Sin localidad',
+                calle: toTitleCase(calle),
+                numero: numero || '0',
+                piso: piso || null,
+                depto: depto || null,
+                localidad: toTitleCase(localidad),
                 provincia: 'Buenos Aires',
+                direccion: dirStr,
                 condicionIva: 'CONSUMIDOR_FINAL',
+            });
+            // Crear sede "Principal" automáticamente
+            await api.post('/sedes', {
+                clienteId: response.data.id,
+                nombreSede: 'Principal',
+                calle: toTitleCase(calle),
+                numero: numero || '0',
+                piso: piso || null,
+                depto: depto || null,
+                localidad: toTitleCase(localidad),
+                provincia: 'Buenos Aires',
+                direccion: dirStr,
             });
             toast.success(`Cliente "${nombre.trim()}" creado`, { id: t });
             if (onClienteCreado) onClienteCreado(response.data);
@@ -117,25 +140,37 @@ export default function CrearClienteModal({
                         </div>
 
                         {/* Dirección */}
-                        <div>
-                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Dirección *</label>
-                            <input
-                                value={direccion}
-                                onChange={e => setDireccion(e.target.value)}
-                                placeholder="Ej: Av. Córdoba 3400"
-                                className={inputCls}
-                            />
-                        </div>
-
-                        {/* Localidad */}
-                        <div>
-                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Localidad *</label>
-                            <input
-                                value={localidad}
-                                onChange={e => setLocalidad(e.target.value)}
-                                placeholder="Ej: CABA, Avellaneda..."
-                                className={inputCls}
-                            />
+                        <div className="rounded-xl p-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/[0.06] dark:border-white/[0.06] space-y-2.5">
+                            <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider">Dirección</p>
+                            <div className="grid grid-cols-[1fr_80px] gap-2">
+                                <div>
+                                    <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Calle *</label>
+                                    <input value={calle} onChange={e => setCalle(e.target.value)}
+                                        placeholder="Av. Rivadavia" className={inputCls} />
+                                </div>
+                                <div>
+                                    <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Nro</label>
+                                    <input value={numero} onChange={e => setNumero(e.target.value)}
+                                        placeholder="5000" className={inputCls} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Piso</label>
+                                    <input value={piso} onChange={e => setPiso(e.target.value)}
+                                        placeholder="3" className={inputCls} />
+                                </div>
+                                <div>
+                                    <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Depto</label>
+                                    <input value={depto} onChange={e => setDepto(e.target.value)}
+                                        placeholder="B" className={inputCls} />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-[9px] font-bold text-[#A8A29E] uppercase block mb-0.5">Localidad *</label>
+                                <input value={localidad} onChange={e => setLocalidad(e.target.value)}
+                                    placeholder="Caballito, CABA" className={inputCls} />
+                            </div>
                         </div>
 
                         {/* Botones */}
