@@ -14,11 +14,12 @@ const PRIORIDAD_COLOR = {
 };
 
 const ESTADO_COLOR = {
-    PENDIENTE:  { dot: '#A8A29E', label: 'Pendiente'  },
-    EN_CAMINO:  { dot: '#3B82F6', label: 'En camino'  },
-    EN_SITIO:   { dot: '#D48800', label: 'En sitio'   },
-    COMPLETADA: { dot: '#16A34A', label: 'Completada' },
-    CANCELADA:  { dot: '#D13A28', label: 'Cancelada'  },
+    PENDIENTE:   { dot: '#A8A29E', label: 'Pendiente'    },
+    EN_CAMINO:   { dot: '#3B82F6', label: 'En camino'    },
+    EN_SITIO:    { dot: '#D48800', label: 'En sitio'     },
+    COMPLETADA:  { dot: '#16A34A', label: 'Completada'   },
+    CANCELADA:   { dot: '#D13A28', label: 'Cancelada'    },
+    NO_ATENDIDO: { dot: '#DC2626', label: 'No atendido'  },
 };
 
 const ESTADO_TABS = [
@@ -34,7 +35,8 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
     const [confirmElim, setConfirmElim] = useState(false);
     const pr = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
     const es = ESTADO_COLOR[orden.estado] || ESTADO_COLOR.PENDIENTE;
-    const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
+    const esFinal = ['COMPLETADA', 'CANCELADA'].includes(orden.estado);
+    const esNoAtendido = orden.estado === 'NO_ATENDIDO';
 
     return (
         <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
@@ -81,6 +83,11 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                 {orden.presupuestoId && (
                     <p className="text-[10px] font-bold text-[#D48800] dark:text-[#F0A500] mt-0.5">
                         📋 Presupuesto #{orden.presupuestoId} vinculado
+                    </p>
+                )}
+                {esNoAtendido && (
+                    <p className="text-[11px] font-black text-[#DC2626] mt-1">
+                        El tecnico reporto que no fue atendido. Reprograma o cancela.
                     </p>
                 )}
 
@@ -150,7 +157,7 @@ export default function DespachoManager() {
     const ordenesFiltradas = useMemo(() => {
         let items = ordenes;
         if (filtrTecnico) items = items.filter(o => String(o.tecnicoId) === filtrTecnico);
-        if (estadoFiltro === 'FINAL') items = items.filter(o => ['COMPLETADA', 'CANCELADA'].includes(o.estado));
+        if (estadoFiltro === 'FINAL') items = items.filter(o => ['COMPLETADA', 'CANCELADA', 'NO_ATENDIDO'].includes(o.estado));
         else if (estadoFiltro) items = items.filter(o => o.estado === estadoFiltro);
         return items;
     }, [ordenes, filtrTecnico, estadoFiltro]);
@@ -161,7 +168,7 @@ export default function DespachoManager() {
         'PENDIENTE': ordenes.filter(o => o.estado === 'PENDIENTE').length,
         'EN_CAMINO': ordenes.filter(o => o.estado === 'EN_CAMINO').length,
         'EN_SITIO':  ordenes.filter(o => o.estado === 'EN_SITIO').length,
-        'FINAL':     ordenes.filter(o => ['COMPLETADA', 'CANCELADA'].includes(o.estado)).length,
+        'FINAL':     ordenes.filter(o => ['COMPLETADA', 'CANCELADA', 'NO_ATENDIDO'].includes(o.estado)).length,
     }), [ordenes]);
 
     // Agrupar por técnico
@@ -237,7 +244,7 @@ export default function DespachoManager() {
                 ) : (
                     Object.entries(grupos).map(([key, items]) => {
                         const nombre = key.split('__')[1];
-                        const activas = items.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado)).length;
+                        const activas = items.filter(o => !['COMPLETADA','CANCELADA','NO_ATENDIDO'].includes(o.estado)).length;
                         return (
                             <div key={key} className="mb-4">
                                 <div className="flex items-center gap-2 mb-2">

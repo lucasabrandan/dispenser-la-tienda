@@ -16,8 +16,9 @@ const MENU_OPERACIONES_ADMIN = [
 ];
 
 const MENU_OPERACIONES_TECNICO = [
-    { id: 'mis-ordenes',      icon: '📌', nombre: 'Mis Órdenes'      },
-    { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Técnico' },
+    { id: 'mis-ordenes',      icon: '📌', nombre: 'Mis Ordenes'      },
+    { id: 'mi-agenda',        icon: '📅', nombre: 'Mi Agenda'        },
+    { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Tecnico' },
     { id: 'historial',        icon: '📋', nombre: 'Historial'        },
 ];
 

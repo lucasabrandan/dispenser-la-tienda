@@ -12,8 +12,9 @@ const NAV_ADMIN = [
 ];
 
 const NAV_TECNICO = [
-    { id: 'mis-ordenes',      nombre: 'Órdenes',  icon: '📌' },
-    { id: 'servicio-tecnico', nombre: 'Técnico',  icon: '🔧' },
+    { id: 'mis-ordenes',      nombre: 'Ordenes',  icon: '📌' },
+    { id: 'mi-agenda',        nombre: 'Agenda',   icon: '📅' },
+    { id: 'servicio-tecnico', nombre: 'Tecnico',  icon: '🔧' },
     { id: 'historial',        nombre: 'Historial',icon: '📋' },
 ];
 

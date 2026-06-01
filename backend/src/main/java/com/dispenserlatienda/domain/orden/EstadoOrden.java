@@ -5,5 +5,6 @@ public enum EstadoOrden {
     EN_CAMINO,
     EN_SITIO,
     COMPLETADA,
-    CANCELADA
+    CANCELADA,
+    NO_ATENDIDO
 }

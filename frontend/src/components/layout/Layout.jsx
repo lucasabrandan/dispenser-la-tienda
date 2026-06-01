@@ -18,7 +18,8 @@ const NOMBRES_SECCION = {
     'radar':            'Radar',
     'finanzas':         'Finanzas',
     'usuarios':         'Usuarios',
-    'mis-ordenes':      'Mis Órdenes',
+    'mis-ordenes':      'Mis Ordenes',
+    'mi-agenda':        'Mi Agenda',
 };
 
 export default function Layout({ children, vistaActual, setVistaActual }) {

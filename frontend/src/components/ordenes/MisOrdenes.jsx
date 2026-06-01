@@ -16,11 +16,12 @@ const PRIORIDAD_COLOR = {
 };
 
 const BORDER_COLOR = {
-    PENDIENTE:  '#A8A29E',
-    EN_CAMINO:  '#3B82F6',
-    EN_SITIO:   '#D48800',
-    COMPLETADA: '#16A34A',
-    CANCELADA:  '#D13A28',
+    PENDIENTE:   '#A8A29E',
+    EN_CAMINO:   '#3B82F6',
+    EN_SITIO:    '#D48800',
+    COMPLETADA:  '#16A34A',
+    CANCELADA:   '#D13A28',
+    NO_ATENDIDO: '#DC2626',
 };
 
 const SIGUIENTE_ESTADO = {
@@ -29,7 +30,7 @@ const SIGUIENTE_ESTADO = {
     EN_SITIO:   { estado: 'COMPLETADA', label: '✓ Completar', color: 'bg-[#16A34A]' },
 };
 
-function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
+function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido }) {
     const [expandido, setExpandido] = useState(false);
 
     const pr  = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
@@ -122,6 +123,12 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo }) {
                         <button onClick={() => onAvanzar(orden.id, sig.estado)}
                             className={`w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all ${sig.color}`}>
                             {sig.label}
+                        </button>
+                    )}
+                    {(orden.estado === 'EN_CAMINO' || orden.estado === 'EN_SITIO') && (
+                        <button onClick={() => onNoAtendido(orden)}
+                            className="w-full py-2 rounded-xl font-bold text-[11px] text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95 transition-all">
+                            No atendido
                         </button>
                     )}
                 </div>
@@ -302,14 +309,30 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
             .finally(() => setCargandoHistorial(false));
     }, [tecnicoId]);
 
-    useEffect(() => {
-        if (tab !== 'historial') return;
-        cargarHistorial();
-    }, [tab, cargarHistorial]);
+    // Cargar historial al montar (resumen del dia) y al cambiar a tab historial
+    useEffect(() => { cargarHistorial(); }, [cargarHistorial]);
 
     const [servicioEjecutando, setServicioEjecutando] = useState(null);
     const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);
     const [ordenRegistrando, setOrdenRegistrando] = useState(null);
+    const [noAtendidoOrden, setNoAtendidoOrden] = useState(null);
+    const [notaNoAtendido, setNotaNoAtendido] = useState('');
+
+    const handleNoAtendido = async () => {
+        if (!noAtendidoOrden) return;
+        try {
+            await api.patch(`/ordenes/${noAtendidoOrden.id}/estado`, {
+                estado: 'NO_ATENDIDO',
+                notasTecnico: notaNoAtendido.trim() || 'No atendido',
+            });
+            toast.success('Orden devuelta al admin');
+            setNoAtendidoOrden(null);
+            setNotaNoAtendido('');
+            if (recargar) recargar();
+        } catch {
+            toast.error('Error al reportar');
+        }
+    };
 
     const handleEjecutar = async (orden) => {
         try {
@@ -334,12 +357,19 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         setServicioEjecutando(null);
         setOrdenEjecutandoId(null);
         if (recargar) recargar();
-        setHistorial([]);
+        cargarHistorial();
         setTab('rendimiento');
     };
 
-    const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA'].includes(o.estado));
+    const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA','NO_ATENDIDO'].includes(o.estado));
     const lista   = tab === 'activas' ? activas : historial;
+
+    // Resumen del dia
+    const ordenesHoy = activas.filter(o => o.fechaProgramada === getTodayISO());
+    const completadasHoy = historial.filter(o => o.estado === 'COMPLETADA' && o.fechaProgramada === getTodayISO());
+    const proxima = ordenesHoy
+        .filter(o => o.horaEstimada)
+        .sort((a, b) => (a.horaEstimada || '').localeCompare(b.horaEstimada || ''))[0];
 
     const porFecha = lista.reduce((acc, o) => {
         const k = o.fechaProgramada;
@@ -379,6 +409,31 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                     <SwipeColumns columns={columns} activeId={tab} onChangeColumn={setTab} />
                 </div>
 
+                {/* Resumen del dia */}
+                {tab === 'activas' && ordenesHoy.length > 0 && (
+                    <div className="mb-4 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="text-center">
+                                    <p className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">{ordenesHoy.length}</p>
+                                    <p className="text-[9px] font-black text-[#A8A29E] uppercase">hoy</p>
+                                </div>
+                                <div className="w-px h-8 bg-black/[0.07] dark:bg-white/[0.07]" />
+                                <div className="text-center">
+                                    <p className="text-[20px] font-black text-[#16A34A] leading-none">{completadasHoy.length}</p>
+                                    <p className="text-[9px] font-black text-[#A8A29E] uppercase">listas</p>
+                                </div>
+                            </div>
+                            {proxima && (
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black text-[#A8A29E] uppercase">Proxima</p>
+                                    <p className="text-[18px] font-black text-[#D48800] dark:text-[#F0A500] leading-none">{proxima.horaEstimada}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Contenido */}
                 {tab === 'rendimiento' ? (
                     <RendimientoTab tecnicoId={tecnicoId} />
@@ -401,7 +456,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             </p>
                             <div className="space-y-2">
                                 {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} />
+                                    <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} />
                                 ))}
                             </div>
                         </div>
@@ -409,6 +464,33 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 )}
             </div>
         </div>
+
+        {noAtendidoOrden && (
+            <div className="fixed inset-0 z-[3000] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+                onClick={() => setNoAtendidoOrden(null)}>
+                <div className="w-full max-w-md bg-[#FFFFFF] dark:bg-[#242424] rounded-t-3xl shadow-2xl p-5 space-y-4"
+                    onClick={e => e.stopPropagation()}>
+                    <div className="w-10 h-1 rounded-full mx-auto bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                    <div>
+                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-1">No atendido</p>
+                        <p className="text-[14px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{noAtendidoOrden.titulo}</p>
+                    </div>
+                    <textarea value={notaNoAtendido} onChange={e => setNotaNoAtendido(e.target.value)}
+                        rows={3} placeholder="Motivo (ej: no habia nadie, cerrado, no atendia el telefono...)"
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none resize-none placeholder:text-[#A8A29E]" />
+                    <div className="flex gap-2">
+                        <button onClick={() => setNoAtendidoOrden(null)}
+                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                            Cancelar
+                        </button>
+                        <button onClick={handleNoAtendido}
+                            className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-[#DC2626] active:scale-95 transition-all">
+                            Confirmar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {ordenRegistrando && (
             <ModalRegistrarTrabajo

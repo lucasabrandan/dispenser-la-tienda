@@ -99,6 +99,12 @@ public class OrdenVisitaService {
         o.setFormaPago(dto.formaPago());
         o.setPresupuestoId(dto.presupuestoId());
 
+        // Si estaba NO_ATENDIDO, reprogramar la vuelve a PENDIENTE
+        if (o.getEstado() == EstadoOrden.NO_ATENDIDO) {
+            o.setEstado(EstadoOrden.PENDIENTE);
+            o.setFechaCompletada(null);
+        }
+
         return toDTO(repo.save(o));
     }
 
@@ -118,7 +124,7 @@ public class OrdenVisitaService {
 
     // ── Técnico: listar mis órdenes activas ────────────────────────────────────
     public List<OrdenVisitaDTO> listarPorTecnico(Long tecnicoId) {
-        List<EstadoOrden> excluidos = List.of(EstadoOrden.COMPLETADA, EstadoOrden.CANCELADA);
+        List<EstadoOrden> excluidos = List.of(EstadoOrden.COMPLETADA, EstadoOrden.CANCELADA, EstadoOrden.NO_ATENDIDO);
         return repo.findActivasByTecnico(tecnicoId, excluidos)
             .stream().map(this::toDTO).collect(Collectors.toList());
     }
@@ -149,6 +155,10 @@ public class OrdenVisitaService {
         if (nuevoEstado == EstadoOrden.COMPLETADA) {
             o.setFechaCompletada(LocalDateTime.now());
             sincronizarConServicios(o);
+        }
+        // NO_ATENDIDO: vuelve al admin para reprogramar, no genera servicio
+        if (nuevoEstado == EstadoOrden.NO_ATENDIDO) {
+            o.setFechaCompletada(null);
         }
 
         return toDTO(repo.save(o));
