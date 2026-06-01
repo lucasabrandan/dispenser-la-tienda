@@ -620,7 +620,8 @@ public class ServicioService {
 
         for (Servicio servicio : serviciosMes) {
             for (ServicioItem item : servicio.getItems()) {
-                BigDecimal venta = item.getCosto()
+                BigDecimal costoBase = item.getCosto() != null ? item.getCosto() : BigDecimal.ZERO;
+                BigDecimal venta = costoBase
                         .add(item.getCostoExtra() != null ? item.getCostoExtra() : BigDecimal.ZERO)
                         .subtract(item.getDescuento() != null ? item.getDescuento() : BigDecimal.ZERO);
 
@@ -659,7 +660,7 @@ public class ServicioService {
         // Obtener gastos del mes y sumarlos
         List<Gasto> gastosMes = gastoRepository.findByFechaBetween(inicioMes, finMes);
         BigDecimal gastosVarios = gastosMes.stream()
-                .map(Gasto::getMonto)
+                .map(g -> g.getMonto() != null ? g.getMonto() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal gananciaReal = facturacion.subtract(costoRepuestos).subtract(gastosVarios);
@@ -719,7 +720,7 @@ public class ServicioService {
         BigDecimal resultadoEmpresa = BigDecimal.ZERO;
         if (isAdmin) {
             List<Gasto> gastosMes = gastoRepository.findByFechaBetween(inicioMes, finMes);
-            gastosOp = gastosMes.stream().map(Gasto::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
+            gastosOp = gastosMes.stream().map(g -> g.getMonto() != null ? g.getMonto() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
             resultadoEmpresa = totalAcumulado.subtract(sueldoObjetivo).subtract(gastosOp);
         }
 
@@ -736,7 +737,7 @@ public class ServicioService {
                 ventasEv = ventasEv != null ? ventasEv : BigDecimal.ZERO;
                 acumEv = ev[0].add(ev[2]).add(ventasEv);
                 List<Gasto> gastosEv = gastoRepository.findByFechaBetween(ini, fin);
-                BigDecimal gastosEvT = gastosEv.stream().map(Gasto::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal gastosEvT = gastosEv.stream().map(g -> g.getMonto() != null ? g.getMonto() : BigDecimal.ZERO).reduce(BigDecimal.ZERO, BigDecimal::add);
                 BigDecimal resEv = acumEv.subtract(sueldoObjetivo).subtract(gastosEvT);
                 evolucion.add(new SueldoProgressDTO.MesResumen(ym.toString(), acumEv, sueldoObjetivo, resEv,
                         ev[1].intValue() + ev[3].intValue()));

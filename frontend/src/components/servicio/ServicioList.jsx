@@ -63,6 +63,35 @@ export default function ServicioList({ onEditar }) {
     const [modalDetalle, setModalDetalle] = useState(null);
     const [tipoFiltro, setTipoFiltro]     = useState('TODOS');
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [seleccionando, setSeleccionando] = useState(false);
+    const [seleccionadas, setSeleccionadas] = useState(new Set());
+    const [confirmMasivo, setConfirmMasivo] = useState(false);
+
+    const toggleSel = (id) => setSeleccionadas(prev => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+    });
+
+    const salirSeleccion = () => {
+        setSeleccionando(false);
+        setSeleccionadas(new Set());
+        setConfirmMasivo(false);
+    };
+
+    const eliminarMasivo = async () => {
+        const ids = [...seleccionadas];
+        let ok = 0;
+        for (const id of ids) {
+            try {
+                await api.delete(`/servicios/${id}`);
+                ok++;
+            } catch { /* error individual */ }
+        }
+        if (ok > 0) toast.success(`${ok} registro${ok > 1 ? 's' : ''} eliminado${ok > 1 ? 's' : ''}`);
+        salirSeleccion();
+        cargarServicios();
+    };
 
     useEffect(() => { cargarServicios(); }, []); // eslint-disable-line
 
@@ -154,15 +183,30 @@ export default function ServicioList({ onEditar }) {
             <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
                     <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Historial</h2>
-                    {/* Búsqueda */}
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
-                        <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
-                            placeholder="Cliente, S/N, ubicación, sede..."
-                            className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
-                        {filtros.busqueda && (
-                            <button onClick={() => filtros.setBusqueda('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
+                    {/* Búsqueda + seleccionar */}
+                    <div className="flex gap-1.5 items-center">
+                        <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
+                                placeholder="Cliente, S/N, ubicación, sede..."
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                            {filtros.busqueda && (
+                                <button onClick={() => filtros.setBusqueda('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
+                            )}
+                        </div>
+                        {esAdmin && (
+                            seleccionando ? (
+                                <button onClick={salirSeleccion}
+                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase shrink-0 active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                    Cancelar
+                                </button>
+                            ) : (
+                                <button onClick={() => { setSeleccionando(true); setSeleccionadas(new Set()); }}
+                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase shrink-0 active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                    Seleccionar
+                                </button>
+                            )
                         )}
                     </div>
                 </div>
@@ -214,10 +258,17 @@ export default function ServicioList({ onEditar }) {
                                 : 'border-l-[3px] border-l-[#16A34A]';
 
                             return (
-                                <div key={s.id} className={`${card} ${borderColor}`}>
+                                <div key={s.id}
+                                    className={`${card} ${borderColor} transition-all ${seleccionando && seleccionadas.has(s.id) ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''}`}
+                                    onClick={seleccionando ? () => toggleSel(s.id) : undefined}>
                                     <div className="p-3.5">
                                         <div className="flex justify-between items-start mb-1">
                                             <div className="flex items-center gap-1.5">
+                                                {seleccionando && (
+                                                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${seleccionadas.has(s.id) ? 'bg-[#D13A28] dark:bg-[#E8422F] border-[#D13A28] dark:border-[#E8422F]' : 'border-[#A8A29E] bg-transparent'}`}>
+                                                        {seleccionadas.has(s.id) && <span className="text-white text-[10px] font-black">✓</span>}
+                                                    </div>
+                                                )}
                                                 <span className="text-[10px] text-[#A8A29E] font-bold">#{s.id}</span>
                                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ${badge.cls}`}>{badge.label}</span>
                                             </div>
@@ -245,27 +296,29 @@ export default function ServicioList({ onEditar }) {
                                     </div>
 
                                     {/* Acciones */}
-                                    <div className="flex items-center gap-1.5 px-3.5 py-2 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
-                                        {esAdmin && esPendiente && (
-                                            <Accion onClick={() => onEditar?.(s)} icon="✏️" label="Editar"
+                                    {!seleccionando && (
+                                        <div className="flex items-center gap-1.5 px-3.5 py-2 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
+                                            {esAdmin && esPendiente && (
+                                                <Accion onClick={() => onEditar?.(s)} icon="✏️" label="Editar"
+                                                    className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                            )}
+                                            <Accion onClick={() => setModalDetalle(s)} icon="👁️" label="Detalle"
                                                 className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                                        )}
-                                        <Accion onClick={() => setModalDetalle(s)} icon="👁️" label="Detalle"
-                                            className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                                        <Accion onClick={() => generarPDFHistorial(s)} icon="📄" label="PDF"
-                                            className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                                        <div className="flex-1" />
-                                        {esPendiente && (
-                                            <button onClick={() => aprobarPresupuesto(s.id)}
-                                                className="h-7 px-3 rounded-lg font-bold text-[10px] text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
-                                                Cobrar
-                                            </button>
-                                        )}
-                                        {esAdmin && (
-                                            <Accion onClick={() => eliminarServicio(s.id)} icon="🗑️" label=""
-                                                className="text-[#D13A28]/60 dark:text-[#E8422F]/60 hover:bg-[#FEE2E2] dark:hover:bg-[#3B1111]" />
-                                        )}
-                                    </div>
+                                            <Accion onClick={() => generarPDFHistorial(s)} icon="📄" label="PDF"
+                                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                            <div className="flex-1" />
+                                            {esPendiente && (
+                                                <button onClick={() => aprobarPresupuesto(s.id)}
+                                                    className="h-7 px-3 rounded-lg font-bold text-[10px] text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                                                    Cobrar
+                                                </button>
+                                            )}
+                                            {esAdmin && (
+                                                <Accion onClick={() => eliminarServicio(s.id)} icon="🗑️" label=""
+                                                    className="text-[#D13A28]/60 dark:text-[#E8422F]/60 hover:bg-[#FEE2E2] dark:hover:bg-[#3B1111]" />
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -274,6 +327,41 @@ export default function ServicioList({ onEditar }) {
                     <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
                 </div>
             </div>
+
+            {/* Barra masiva */}
+            {seleccionando && (
+                <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
+                    <div className="max-w-lg mx-auto flex items-center gap-2 p-3 rounded-2xl bg-white dark:bg-[#242424] shadow-lg border border-black/[0.07] dark:border-white/[0.07]">
+                        <button onClick={() => {
+                            const ids = filtros.itemsPagina.map(s => s.id);
+                            const todasSel = ids.every(id => seleccionadas.has(id));
+                            setSeleccionadas(todasSel ? new Set() : new Set(ids));
+                        }}
+                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            {filtros.itemsPagina.length > 0 && filtros.itemsPagina.every(s => seleccionadas.has(s.id)) ? 'Deseleccionar' : 'Toda la pág.'}
+                        </button>
+                        <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
+                        {!confirmMasivo ? (
+                            <button onClick={() => seleccionadas.size > 0 && setConfirmMasivo(true)}
+                                disabled={seleccionadas.size === 0}
+                                className={`h-9 px-4 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                                Eliminar ({seleccionadas.size})
+                            </button>
+                        ) : (
+                            <div className="flex gap-1.5">
+                                <button onClick={() => setConfirmMasivo(false)}
+                                    className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    No
+                                </button>
+                                <button onClick={eliminarMasivo}
+                                    className="h-9 px-4 rounded-xl font-bold text-[11px] bg-[#D13A28] dark:bg-[#E8422F] text-white active:scale-95">
+                                    Confirmar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Modal detalle */}
             {modalDetalle && (

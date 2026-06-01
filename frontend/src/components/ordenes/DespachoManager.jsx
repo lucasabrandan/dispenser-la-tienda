@@ -30,7 +30,7 @@ const ESTADO_TABS = [
     { id: 'FINAL',      label: 'Finalizadas', fullLabel: 'Finalizadas', color: '#16A34A', icon: '✅' },
 ];
 
-function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
+function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, seleccionada, onToggleSel }) {
     const [expanded, setExpanded] = useState(false);
     const [confirmElim, setConfirmElim] = useState(false);
     const pr = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
@@ -39,10 +39,16 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
     const esNoAtendido = orden.estado === 'NO_ATENDIDO';
 
     return (
-        <div className="rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424]"
-            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${es.dot}` }}>
+        <div className={`rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] transition-all ${seleccionando && seleccionada ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''}`}
+            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${es.dot}` }}
+            onClick={seleccionando ? () => onToggleSel(orden.id) : undefined}>
             <div className="p-4">
                 <div className="flex items-start gap-2 mb-2">
+                    {seleccionando && (
+                        <div className={`w-5 h-5 mt-0.5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${seleccionada ? 'bg-[#D13A28] dark:bg-[#E8422F] border-[#D13A28] dark:border-[#E8422F]' : 'border-[#A8A29E] bg-transparent'}`}>
+                            {seleccionada && <span className="text-white text-[10px] font-black">✓</span>}
+                        </div>
+                    )}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
@@ -110,32 +116,34 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar }) {
                 )}
             </div>
 
-            <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
-                {!esFinal && (
-                    <button onClick={() => onEditar(orden)}
-                        className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
-                        ✏️ Editar
-                    </button>
-                )}
-                <div className="flex-1" />
-                {!confirmElim ? (
-                    <button onClick={() => setConfirmElim(true)}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]">
-                        🗑
-                    </button>
-                ) : (
-                    <>
-                        <button onClick={() => setConfirmElim(false)}
+            {!seleccionando && (
+                <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
+                    {!esFinal && (
+                        <button onClick={() => onEditar(orden)}
                             className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
-                            No
+                            ✏️ Editar
                         </button>
-                        <button onClick={() => { setConfirmElim(false); onEliminar(orden.id); }}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#D13A28] dark:bg-[#E8422F] text-white active:scale-95">
-                            Sí, eliminar
+                    )}
+                    <div className="flex-1" />
+                    {!confirmElim ? (
+                        <button onClick={() => setConfirmElim(true)}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]">
+                            🗑
                         </button>
-                    </>
-                )}
-            </div>
+                    ) : (
+                        <>
+                            <button onClick={() => setConfirmElim(false)}
+                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                No
+                            </button>
+                            <button onClick={() => { setConfirmElim(false); onEliminar(orden.id); }}
+                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#D13A28] dark:bg-[#E8422F] text-white active:scale-95">
+                                Sí, eliminar
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
@@ -152,6 +160,37 @@ export default function DespachoManager() {
     const [filtrTecnico, setFiltrTecnico] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState('');
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [seleccionando, setSeleccionando] = useState(false);
+    const [seleccionadas, setSeleccionadas] = useState(new Set());
+    const [confirmMasivo, setConfirmMasivo] = useState(false);
+
+    const toggleSel = (id) => setSeleccionadas(prev => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+    });
+
+    const toggleTodas = () => {
+        const ids = ordenesFiltradas.map(o => o.id);
+        const todasSel = ids.every(id => seleccionadas.has(id));
+        setSeleccionadas(todasSel ? new Set() : new Set(ids));
+    };
+
+    const salirSeleccion = () => {
+        setSeleccionando(false);
+        setSeleccionadas(new Set());
+        setConfirmMasivo(false);
+    };
+
+    const eliminarMasivo = async () => {
+        const ids = [...seleccionadas];
+        let ok = 0;
+        for (const id of ids) {
+            try { await eliminar(id); ok++; } catch { /* individual toast ya maneja */ }
+        }
+        if (ok > 0) toast.success(`${ok} orden${ok > 1 ? 'es' : ''} eliminada${ok > 1 ? 's' : ''}`);
+        salirSeleccion();
+    };
 
     // Filtrar por estado y técnico
     const ordenesFiltradas = useMemo(() => {
@@ -200,10 +239,23 @@ export default function DespachoManager() {
                             ⚙
                         </button>
                         <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{ordenesFiltradas.length} órdenes</span>
-                        <button onClick={() => setModalCrear(true)}
-                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
-                            + Orden
-                        </button>
+                        {seleccionando ? (
+                            <button onClick={salirSeleccion}
+                                className="h-9 px-4 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                Cancelar
+                            </button>
+                        ) : (
+                            <>
+                                <button onClick={() => { setSeleccionando(true); setSeleccionadas(new Set()); }}
+                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                    Seleccionar
+                                </button>
+                                <button onClick={() => setModalCrear(true)}
+                                    className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                                    + Orden
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -244,7 +296,7 @@ export default function DespachoManager() {
                 ) : (
                     Object.entries(grupos).map(([key, items]) => {
                         const nombre = key.split('__')[1];
-                        const activas = items.filter(o => !['COMPLETADA','CANCELADA','NO_ATENDIDO'].includes(o.estado)).length;
+                        const activas = items.length;
                         return (
                             <div key={key} className="mb-4">
                                 <div className="flex items-center gap-2 mb-2">
@@ -262,7 +314,10 @@ export default function DespachoManager() {
                                         <OrdenCard key={o.id} orden={o}
                                             onEditar={abrirEditar}
                                             onEliminar={eliminar}
-                                            onAvanzar={avanzarEstado} />
+                                            onAvanzar={avanzarEstado}
+                                            seleccionando={seleccionando}
+                                            seleccionada={seleccionadas.has(o.id)}
+                                            onToggleSel={toggleSel} />
                                     ))}
                                 </div>
                             </div>
@@ -270,6 +325,37 @@ export default function DespachoManager() {
                     })
                 )}
             </div>
+
+            {/* Barra masiva */}
+            {seleccionando && (
+                <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
+                    <div className="max-w-lg mx-auto flex items-center gap-2 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] shadow-lg border border-black/[0.07] dark:border-white/[0.07]">
+                        <button onClick={toggleTodas}
+                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            {ordenesFiltradas.length > 0 && ordenesFiltradas.every(o => seleccionadas.has(o.id)) ? 'Deseleccionar' : 'Todas'}
+                        </button>
+                        <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
+                        {!confirmMasivo ? (
+                            <button onClick={() => seleccionadas.size > 0 && setConfirmMasivo(true)}
+                                disabled={seleccionadas.size === 0}
+                                className={`h-9 px-4 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                                Eliminar ({seleccionadas.size})
+                            </button>
+                        ) : (
+                            <div className="flex gap-1.5">
+                                <button onClick={() => setConfirmMasivo(false)}
+                                    className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    No
+                                </button>
+                                <button onClick={eliminarMasivo}
+                                    className="h-9 px-4 rounded-xl font-bold text-[11px] bg-[#D13A28] dark:bg-[#E8422F] text-white active:scale-95">
+                                    Confirmar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Modal crear / editar */}
             {(modalCrear || ordenEditar) && (
