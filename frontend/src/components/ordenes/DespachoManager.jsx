@@ -218,6 +218,14 @@ export default function DespachoManager() {
         return acc;
     }, {});
 
+    // Conteo de activas por técnico (desde ordenes sin filtrar, siempre pendientes/en curso)
+    const activasPorTecnico = useMemo(() => ordenes.reduce((acc, o) => {
+        if (!['COMPLETADA', 'CANCELADA', 'NO_ATENDIDO'].includes(o.estado)) {
+            acc[o.tecnicoId] = (acc[o.tecnicoId] || 0) + 1;
+        }
+        return acc;
+    }, {}), [ordenes]);
+
     const columns = ESTADO_TABS.map(t => ({
         ...t, count: counts[t.id] ?? 0,
     }));
@@ -295,8 +303,8 @@ export default function DespachoManager() {
                     </div>
                 ) : (
                     Object.entries(grupos).map(([key, items]) => {
-                        const nombre = key.split('__')[1];
-                        const activas = items.length;
+                        const [tecId, nombre] = key.split('__');
+                        const activas = activasPorTecnico[tecId] || 0;
                         return (
                             <div key={key} className="mb-4">
                                 <div className="flex items-center gap-2 mb-2">
