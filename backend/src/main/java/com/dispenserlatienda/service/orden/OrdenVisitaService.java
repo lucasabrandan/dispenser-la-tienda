@@ -18,7 +18,9 @@ import com.dispenserlatienda.repository.orden.OrdenVisitaRepository;
 import com.dispenserlatienda.repository.sede.SedeRepository;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
+import com.dispenserlatienda.domain.notificacion.TipoNotificacion;
 import com.dispenserlatienda.service.common.WhatsAppService;
+import com.dispenserlatienda.service.notificacion.NotificacionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,17 +37,20 @@ public class OrdenVisitaService {
     private final OrdenVisitaRepository repo;
     private final UsuarioRepository     usuarioRepo;
     private final WhatsAppService       whatsApp;
+    private final NotificacionService   notificacionService;
     private final ServicioRepository    servicioRepository;
     private final SedeRepository        sedeRepository;
 
     public OrdenVisitaService(OrdenVisitaRepository repo,
                               UsuarioRepository usuarioRepo,
                               WhatsAppService whatsApp,
+                              NotificacionService notificacionService,
                               ServicioRepository servicioRepository,
                               SedeRepository sedeRepository) {
         this.repo              = repo;
         this.usuarioRepo       = usuarioRepo;
         this.whatsApp          = whatsApp;
+        this.notificacionService = notificacionService;
         this.servicioRepository = servicioRepository;
         this.sedeRepository    = sedeRepository;
     }
@@ -73,6 +78,13 @@ public class OrdenVisitaService {
 
         OrdenVisitaDTO saved = toDTO(repo.save(o));
         notificarTecnico(tecnico, saved);
+        // Notificacion in-app al tecnico
+        notificacionService.notificar(
+            TipoNotificacion.ORDEN_ASIGNADA, tecnico.getId(), null,
+            saved.titulo(),
+            (saved.clienteNombre() != null ? saved.clienteNombre() : "") +
+            (saved.fechaProgramada() != null ? " · " + saved.fechaProgramada().format(DateTimeFormatter.ofPattern("dd/MM")) : ""),
+            saved.id(), true);
         return saved;
     }
 
@@ -161,7 +173,38 @@ public class OrdenVisitaService {
             o.setFechaCompletada(null);
         }
 
-        return toDTO(repo.save(o));
+        OrdenVisitaDTO resultado = toDTO(repo.save(o));
+        // Notificar admins cuando un tecnico cambia estado
+        notificarCambioEstado(o, nuevoEstado);
+        return resultado;
+    }
+
+    // Notifica a todos los admins sobre cambios de estado del tecnico
+    private void notificarCambioEstado(OrdenVisita o, EstadoOrden estado) {
+        TipoNotificacion tipo = switch (estado) {
+            case EN_CAMINO    -> TipoNotificacion.ORDEN_EN_CAMINO;
+            case EN_SITIO     -> TipoNotificacion.ORDEN_EN_SITIO;
+            case COMPLETADA   -> TipoNotificacion.ORDEN_COMPLETADA;
+            case NO_ATENDIDO  -> TipoNotificacion.ORDEN_NO_ATENDIDO;
+            default           -> null;
+        };
+        if (tipo == null) return;
+
+        Long tecnicoId = o.getTecnico().getId();
+        String tecnicoNombre = o.getTecnico().getNombre();
+        String detalle = o.getClienteNombre() != null ? o.getClienteNombre() : "";
+        if (o.getNotasTecnico() != null && !o.getNotasTecnico().isBlank()) {
+            detalle += " — " + o.getNotasTecnico();
+        }
+
+        // Enviar a todos los admins
+        List<Usuario> admins = usuarioRepo.findAll().stream()
+            .filter(u -> u.getRol() == RolUsuario.ADMIN && u.isActivo())
+            .collect(Collectors.toList());
+        for (Usuario admin : admins) {
+            notificacionService.notificar(tipo, admin.getId(), tecnicoId,
+                o.getTitulo(), detalle, o.getId(), true);
+        }
     }
 
     // ── Cascade al completar una orden ────────────────────────────────────────

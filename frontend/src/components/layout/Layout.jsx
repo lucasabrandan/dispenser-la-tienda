@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import logo from '../../assets/logo-dispenser.svg';
 import Sidebar from './Sidebar';
 import Drawer from './Drawer';
 import BottomNav from './BottomNav';
+import NotificacionesPanel, { NotifBell } from './NotificacionesPanel';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
+import api from '../../services/api';
 
 const NOMBRES_SECCION = {
     'caja':             'Panel',
@@ -25,8 +27,23 @@ const NOMBRES_SECCION = {
 export default function Layout({ children, vistaActual, setVistaActual }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [sidebarColapsado, setSidebarColapsado] = useState(false);
+    const [notifAbierto, setNotifAbierto] = useState(false);
+    const [notifCount, setNotifCount] = useState(0);
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
+
+    const pollNotifs = useCallback(async () => {
+        try {
+            const res = await api.get('/notificaciones/count');
+            setNotifCount(res.data?.count || 0);
+        } catch { /* silencio */ }
+    }, []);
+
+    useEffect(() => {
+        pollNotifs();
+        const interval = setInterval(pollNotifs, 30000);
+        return () => clearInterval(interval);
+    }, [pollNotifs]);
 
     return (
         <div className="min-h-screen flex flex-col md:flex-row transition-colors duration-300 antialiased bg-[#F5F3F1] dark:bg-[#141414]">
@@ -69,6 +86,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                                 </svg>
                             )}
                         </button>
+                        <NotifBell count={notifCount} onClick={() => { setNotifAbierto(true); setNotifCount(0); }} />
                         <button
                             onClick={toggleTheme}
                             className={`w-9 h-9 flex items-center justify-center rounded-xl transition-colors ${
@@ -99,6 +117,9 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             {/* BOTTOM NAV MOBILE */}
             <BottomNav vistaActual={vistaActual} setVistaActual={setVistaActual}
                 onMoreClick={() => setDrawerOpen(true)} />
+
+            {/* PANEL NOTIFICACIONES */}
+            <NotificacionesPanel abierto={notifAbierto} onCerrar={() => { setNotifAbierto(false); pollNotifs(); }} />
         </div>
     );
 }
