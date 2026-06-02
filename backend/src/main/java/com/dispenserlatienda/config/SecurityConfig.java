@@ -47,6 +47,9 @@ public class SecurityConfig {
                 // Solo ADMIN: radar de mantenimiento
                 .requestMatchers("/api/radar/**").hasRole("ADMIN")
 
+                // Solo ADMIN: agenda global de todos los tecnicos
+                .requestMatchers("/api/notas-agenda/all").hasRole("ADMIN")
+
                 // Solo ADMIN: finanzas sensibles
                 .requestMatchers("/api/gastos/**").hasRole("ADMIN")
                 .requestMatchers("/api/ventas/stats/**").hasRole("ADMIN")

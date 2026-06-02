@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMontos } from '../../context/MontosContext';
+import { useAuth } from '../../context/AuthContext';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -42,6 +43,27 @@ function IconBtn({ onClick, title, children, cls = '' }) {
     );
 }
 
+// Calcula ganancia desde los datos del servicio guardado
+function calcGanancia(servicio) {
+    const items = servicio.items || [];
+    let totalVenta = 0, totalCosto = 0, totalMO = 0;
+    items.forEach(it => {
+        const mo = Number(it.costoExtra) || 0;
+        totalMO += mo;
+        totalVenta += Number(it.costo) || 0;
+        (it.repuestosUsados || []).forEach(r => {
+            const qty = Number(r.cantidad) || 1;
+            const costoUnit = Number(r.costo) || 0;
+            totalCosto += costoUnit * qty;
+        });
+    });
+    const desc = Number(servicio.descuentoPorcentaje) || 0;
+    const ventaConDesc = desc > 0 ? totalVenta * (1 - desc / 100) : totalVenta;
+    const ganancia = ventaConDesc - totalCosto;
+    const margen = ventaConDesc > 0 ? ((ganancia / ventaConDesc) * 100).toFixed(1) : 0;
+    return { totalVenta: ventaConDesc, totalCosto, totalMO, ganancia, margen };
+}
+
 export default function ServicioCard({
     servicio, modoSeleccion, seleccionado,
     onToggleSelect, onEditar, onEjecutar, onCobrar, onDuplicar,
@@ -50,6 +72,8 @@ export default function ServicioCard({
 }) {
     const [expandido, setExpandido] = useState(false);
     const [menuAbierto, setMenuAbierto] = useState(false);
+    const [verRentab, setVerRentab] = useState(false);
+    const { esAdmin } = useAuth();
 
     const badge    = BADGE[servicio.estado] || { label: servicio.estado, cls: '' };
     const total    = calcularTotal(servicio);
@@ -220,6 +244,46 @@ export default function ServicioCard({
                         )}
                     </div>
                 ))}
+
+                {/* Desglose de ganancia — solo admin */}
+                {esAdmin && items.length > 0 && (() => {
+                    const g = calcGanancia(servicio);
+                    if (g.ganancia <= 0 && g.totalCosto <= 0) return null;
+                    return (
+                        <>
+                            <button onClick={() => setVerRentab(v => !v)}
+                                className="mt-2 flex items-center gap-1.5 py-1.5 transition-all active:scale-[0.99]">
+                                <span className={`w-1.5 h-1.5 rounded-full transition-colors ${verRentab ? 'bg-[#2A9D5C] dark:bg-[#5DD68F]' : 'bg-[#A8A29E]'}`} />
+                                <span className="text-[10px] font-semibold text-[#A8A29E]">
+                                    {verRentab ? 'Ocultar rentabilidad' : 'Ver rentabilidad'}
+                                </span>
+                            </button>
+                            {verRentab && (
+                                <div className="mt-1 rounded-xl p-3 bg-[#FFF4D6]/60 dark:bg-[#0D2E1C] border border-[#A8855A]/20 dark:border-[#2A9D5C]/20">
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {[
+                                            { label: 'Venta',    val: g.totalVenta },
+                                            { label: 'Costo rep.', val: g.totalCosto },
+                                            { label: 'Ganancia', val: g.ganancia, green: true },
+                                            { label: 'Margen',   pct: g.margen, green: true },
+                                        ].map((item, idx) => (
+                                            <div key={idx}>
+                                                <p className="text-[8px] uppercase tracking-wide font-bold text-[#A8855A] dark:text-[#5C5954] mb-0.5">{item.label}</p>
+                                                {item.pct !== undefined
+                                                    ? <p className="text-[12px] font-black text-[#5C3D00] dark:text-[#5DD68F]">{item.pct}%</p>
+                                                    : <M valor={Math.round(item.val)} className={`text-[12px] font-black ${item.green ? 'text-[#5C3D00] dark:text-[#5DD68F]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`} />
+                                                }
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {g.totalMO > 0 && (
+                                        <p className="text-[9px] text-[#A8A29E] mt-1.5">MO incluida: ${Math.round(g.totalMO).toLocaleString('es-AR')}</p>
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    );
+                })()}
             </div>
 
             {/* Barra de acciones — compacta con menu overflow */}
