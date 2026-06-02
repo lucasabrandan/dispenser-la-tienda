@@ -28,6 +28,7 @@ public class ServicioCreateDTO {
     private java.math.BigDecimal abonoVisita;
     private Long presupuestoVisitaId;
     private Integer duracionMinutos;
+    private Boolean aceptaTerminos;
 
     public ServicioCreateDTO() {}
 
@@ -70,4 +71,6 @@ public class ServicioCreateDTO {
     public void setPresupuestoVisitaId(Long presupuestoVisitaId) { this.presupuestoVisitaId = presupuestoVisitaId; }
     public Integer getDuracionMinutos() { return duracionMinutos; }
     public void setDuracionMinutos(Integer duracionMinutos) { this.duracionMinutos = duracionMinutos; }
+    public Boolean getAceptaTerminos() { return aceptaTerminos; }
+    public void setAceptaTerminos(Boolean aceptaTerminos) { this.aceptaTerminos = aceptaTerminos; }
 }

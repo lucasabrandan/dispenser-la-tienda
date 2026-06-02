@@ -103,6 +103,9 @@ public class Servicio {
     @Column(name = "duracion_minutos")
     private Integer duracionMinutos;
 
+    @Column(name = "acepta_terminos")
+    private Boolean aceptaTerminos;
+
     @Formula("(SELECT COALESCE(SUM(si.costo), 0) FROM servicio_items si WHERE si.servicio_id = id)")
     private BigDecimal total;
 
@@ -208,4 +211,7 @@ public class Servicio {
 
     public Long getPresupuestoVisitaId() { return presupuestoVisitaId; }
     public void setPresupuestoVisitaId(Long presupuestoVisitaId) { this.presupuestoVisitaId = presupuestoVisitaId; }
+
+    public Boolean getAceptaTerminos() { return aceptaTerminos; }
+    public void setAceptaTerminos(Boolean aceptaTerminos) { this.aceptaTerminos = aceptaTerminos; }
 }

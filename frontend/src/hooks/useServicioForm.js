@@ -54,6 +54,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   const [leyenda, setLeyenda] = useState(LEYENDA_DEFAULT);
   const [fechaServicio, setFechaServicio] = useState(getTodayISO());
   const [duracionMinutos, setDuracionMinutos] = useState(null);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
   useEffect(() => {
     const cargar = async () => {
@@ -669,6 +670,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         totalConDescuento,
         observaciones: leyenda,
         duracionMinutos: duracionMinutos || null,
+        aceptaTerminos: aceptaTerminos || false,
         items: itemsConFotos.map(it => {
           const esFiltro = it.trabajo?.toUpperCase().includes('FILTRO') ||
             it.repuestosUsados?.some(r => r.nombre.toUpperCase().includes('FILTRO'));
@@ -785,6 +787,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     leyenda, setLeyenda,
     fechaServicio, setFechaServicio,
     duracionMinutos, setDuracionMinutos,
+    aceptaTerminos, setAceptaTerminos,
     borradorDisponible,
     recuperarBorrador,
     descartarBorrador,

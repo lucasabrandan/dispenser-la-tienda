@@ -99,6 +99,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
         tecnicoSeleccionado, setTecnicoSeleccionado,
         fechaServicio, setFechaServicio,
         duracionMinutos, setDuracionMinutos,
+        aceptaTerminos, setAceptaTerminos,
     } = hook;
 
     const { esAdmin } = useAuth();
@@ -323,6 +324,24 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
                     {/* Rentabilidad — solo admin */}
                     {esAdmin && <RentabilidadPanel resumen={resumen} />}
+
+                    {/* T&C */}
+                    <div className="flex items-start gap-3 py-2">
+                        <button onClick={() => setAceptaTerminos(!aceptaTerminos)}
+                            className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all active:scale-90 ${
+                                aceptaTerminos ? 'bg-[#16A34A] border-[#16A34A]' : 'border-[#A8A29E]'
+                            }`}>
+                            {aceptaTerminos && <span className="text-white text-[9px] font-black">✓</span>}
+                        </button>
+                        <div>
+                            <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] leading-tight">
+                                Cliente acepta terminos y condiciones
+                            </p>
+                            <p className="text-[10px] text-[#A8A29E] mt-0.5 leading-snug">
+                                Validez, garantia y condiciones del presupuesto. Se incluyen en el PDF.
+                            </p>
+                        </div>
+                    </div>
 
                     {/* Observaciones */}
                     <DSCard>

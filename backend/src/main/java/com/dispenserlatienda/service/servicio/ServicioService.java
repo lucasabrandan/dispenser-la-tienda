@@ -399,6 +399,7 @@ public class ServicioService {
         servicio.setDescuentoPorcentaje(dto.getDescuentoPorcentaje());
         servicio.setObservaciones(dto.getObservaciones());
         servicio.setDuracionMinutos(dto.getDuracionMinutos());
+        servicio.setAceptaTerminos(dto.getAceptaTerminos());
         if (dto.getPresupuestoOrigenId() != null) {
             servicio.setPresupuestoOrigenId(dto.getPresupuestoOrigenId());
         }
@@ -591,7 +592,8 @@ public class ServicioService {
                 s.getEsVisita(),
                 s.getAbonoVisita(),
                 s.getPresupuestoVisitaId(),
-                s.getDuracionMinutos()
+                s.getDuracionMinutos(),
+                s.getAceptaTerminos()
         );
     }
 
