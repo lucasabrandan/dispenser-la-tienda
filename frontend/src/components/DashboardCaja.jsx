@@ -16,6 +16,7 @@ export default function DashboardCaja({ setVistaActual }) {
     const [cargando, setCargando] = useState(true);
     const [servicios, setServicios] = useState([]);
     const [ordenes, setOrdenes] = useState([]);
+    const [notasAgenda, setNotasAgenda] = useState([]);
     const [alertasRadar, setAlertasRadar] = useState([]);
 
     const cargar = async () => {
@@ -25,11 +26,16 @@ export default function DashboardCaja({ setVistaActual }) {
             if (esAdmin) {
                 calls.push(api.get('/ordenes'));
                 calls.push(api.get('/radar/alertas').catch(() => ({ data: [] })));
+                const desde = formatDateISO(new Date());
+                const h = new Date(); h.setDate(h.getDate() + 20);
+                const hasta = formatDateISO(h);
+                calls.push(api.get(`/notas-agenda/all?desde=${desde}&hasta=${hasta}`).catch(() => ({ data: [] })));
             }
-            const [sRes, oRes, rRes] = await Promise.all(calls);
+            const [sRes, oRes, rRes, nRes] = await Promise.all(calls);
             setServicios(sRes.data.content || sRes.data || []);
             if (oRes) setOrdenes(oRes.data || []);
             if (rRes) setAlertasRadar(rRes.data || []);
+            if (nRes) setNotasAgenda(nRes.data || []);
         } catch (err) { console.warn('Dashboard: error cargando datos', err); } finally { setCargando(false); }
     };
 
@@ -69,16 +75,18 @@ export default function DashboardCaja({ setVistaActual }) {
             offset++;
             if (d.getDay() === 0) continue;
             const fechaStr = formatDateISO(d);
-            const items = servicios.filter(s => s.fecha === fechaStr);
+            const items = servicios.filter(s => s.fecha === fechaStr && !['ARCHIVADO','CANCELADO'].includes(s.estado));
             const horasUsadas = items.reduce((a, s) => {
                 if (s.duracionMinutos) return a + s.duracionMinutos / 60;
                 return a + (s.servicioTipo === 'TECNICA' ? H_TECNICA : H_VENTA);
             }, 0);
+            const notasDia = notasAgenda.filter(n => n.fecha === fechaStr);
             dias.push({
                 fecha: fechaStr, dia: new Date(d), items, horasUsadas,
                 horasTotal: HORAS_DIA,
                 esHoy: fechaStr === hoyStr,
                 esPasado: fechaStr < hoyStr,
+                notas: notasDia,
             });
         }
 
@@ -93,7 +101,7 @@ export default function DashboardCaja({ setVistaActual }) {
             pendientesVal: pendientes.reduce((a, s) => a + calcTotal(s), 0),
             pptoVencidos, agendaHoy, ordenesActivas, planificador: dias,
         };
-    }, [servicios, ordenes]);
+    }, [servicios, ordenes, notasAgenda]);
 
     const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
 

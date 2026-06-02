@@ -12,4 +12,6 @@ public interface NotaAgendaRepository extends JpaRepository<NotaAgenda, Long> {
         Long tecnicoId, LocalDate desde, LocalDate hasta);
 
     List<NotaAgenda> findByTecnicoIdOrderByFechaAscHoraEstimadaAsc(Long tecnicoId);
+
+    List<NotaAgenda> findByFechaBetweenOrderByFechaAscHoraEstimadaAsc(LocalDate desde, LocalDate hasta);
 }

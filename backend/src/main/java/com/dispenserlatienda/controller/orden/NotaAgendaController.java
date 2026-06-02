@@ -20,6 +20,13 @@ public class NotaAgendaController {
         this.service = service;
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<NotaAgendaDTO>> listarTodas(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(service.listarTodas(desde, hasta));
+    }
+
     @GetMapping("/{tecnicoId}")
     public ResponseEntity<List<NotaAgendaDTO>> listar(
             @PathVariable Long tecnicoId,

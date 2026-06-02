@@ -55,6 +55,11 @@ public class NotaAgendaService {
         return toDTO(repo.save(n));
     }
 
+    public List<NotaAgendaDTO> listarTodas(LocalDate desde, LocalDate hasta) {
+        return repo.findByFechaBetweenOrderByFechaAscHoraEstimadaAsc(desde, hasta)
+            .stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
     @Transactional
     public void eliminar(Long id) {
         repo.deleteById(id);
@@ -64,6 +69,7 @@ public class NotaAgendaService {
         return new NotaAgendaDTO(
             n.getId(),
             n.getTecnico().getId(),
+            n.getTecnico().getNombre(),
             n.getFecha(),
             n.getHoraEstimada(),
             n.getTitulo(),

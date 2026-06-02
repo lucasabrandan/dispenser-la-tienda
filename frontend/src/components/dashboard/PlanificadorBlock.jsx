@@ -23,9 +23,14 @@ function DiaBtn({ d, diaSel, onSelect }) {
                 <div className={`h-full rounded-full ${barColor}`}
                     style={{ width: `${Math.max(pct * 100, d.items.length > 0 ? 20 : 0)}%` }} />
             </div>
-            <p className={`text-[9px] font-bold mt-1 ${sel ? 'text-white/70 dark:text-black/50' : 'text-[#A8A29E]'}`}>
-                {Math.round(d.horasUsadas)}/{d.horasTotal}h
-            </p>
+            <div className="flex items-center justify-center gap-1 mt-1">
+                <p className={`text-[9px] font-bold ${sel ? 'text-white/70 dark:text-black/50' : 'text-[#A8A29E]'}`}>
+                    {Math.round(d.horasUsadas)}/{d.horasTotal}h
+                </p>
+                {d.notas?.length > 0 && (
+                    <span className={`w-1.5 h-1.5 rounded-full ${sel ? 'bg-[#F0A500]' : 'bg-[#D48800] dark:bg-[#F0A500]'}`} />
+                )}
+            </div>
         </button>
     );
 }
@@ -71,10 +76,11 @@ export default function PlanificadorBlock({ planificador, setVistaActual }) {
                                 {libres <= 0 ? 'Completo' : `${Math.round(libres)}h libres`}
                             </span>
                         </div>
-                        {dia.items.length === 0 ? (
-                            <p className="text-[11px] text-[#A8A29E] text-center py-3">Día libre</p>
+                        {dia.items.length === 0 && (!dia.notas || dia.notas.length === 0) ? (
+                            <p className="text-[11px] text-[#A8A29E] text-center py-3">Dia libre</p>
                         ) : (
                             <div className="space-y-3">
+                                {/* Servicios agrupados por tecnico */}
                                 {(() => {
                                     const grupos = {};
                                     dia.items.forEach(s => {
@@ -138,6 +144,61 @@ export default function PlanificadorBlock({ planificador, setVistaActual }) {
                                             </div>
                                         );
                                     });
+                                })()}
+
+                                {/* Notas de agenda de tecnicos (solo admin ve esto) */}
+                                {dia.notas?.length > 0 && (() => {
+                                    const gruposNotas = {};
+                                    dia.notas.forEach(n => {
+                                        const tec = n.tecnicoNombre || 'Sin asignar';
+                                        if (!gruposNotas[tec]) gruposNotas[tec] = [];
+                                        gruposNotas[tec].push(n);
+                                    });
+                                    return (
+                                        <>
+                                            <p className="text-[9px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider px-1 pt-1">Agenda de tecnicos</p>
+                                            {Object.entries(gruposNotas).map(([tecNombre, tecNotas]) => (
+                                                <div key={`notas-${tecNombre}`} className="space-y-1.5">
+                                                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-[#D48800]/10 dark:bg-[#F0A500]/10">
+                                                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-[#D48800] dark:bg-[#F0A500]">
+                                                            <span className="text-[10px] font-black text-white leading-none">{getIniciales(tecNombre)}</span>
+                                                        </div>
+                                                        <p className="text-[12px] font-black text-[#D48800] dark:text-[#F0A500] flex-1">{tecNombre}</p>
+                                                        <span className="text-[9px] font-bold text-[#A8A29E]">{tecNotas.length} nota{tecNotas.length !== 1 ? 's' : ''}</span>
+                                                    </div>
+                                                    {tecNotas.map(n => (
+                                                        <div key={`nota-${n.id}`}
+                                                            className={`rounded-lg p-2.5 ml-2 border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] ${
+                                                                n.completada
+                                                                    ? 'bg-[#EFEDEA] dark:bg-[#1C1C1C] opacity-50'
+                                                                    : 'bg-[#F5F3F1] dark:bg-[#1C1C1C]'
+                                                            }`}
+                                                            style={{ borderLeftColor: n.completada ? '#16A34A' : '#D48800' }}>
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="mt-0.5 text-[12px]">📝</span>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <p className={`text-[11px] font-bold truncate ${n.completada ? 'line-through text-[#A8A29E]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                                                            {n.titulo}
+                                                                        </p>
+                                                                        {n.horaEstimada && (
+                                                                            <span className="text-[9px] font-bold text-[#A8A29E] shrink-0">{n.horaEstimada}</span>
+                                                                        )}
+                                                                    </div>
+                                                                    {n.descripcion && (
+                                                                        <p className="text-[10px] text-[#A8A29E] mt-0.5 line-clamp-2">{n.descripcion}</p>
+                                                                    )}
+                                                                    {n.direccion && (
+                                                                        <p className="text-[10px] text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 truncate">📍 {n.direccion}</p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </>
+                                    );
                                 })()}
                             </div>
                         )}
