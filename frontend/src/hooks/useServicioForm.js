@@ -64,7 +64,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           api.get('/sedes?page=0&size=500'),
           api.get('/equipos?page=0&size=500'),
           api.get('/repuestos?page=0&size=500'),
-          api.get('/configuracion').catch(() => ({ data: { manoDeObraBase: 60000, porcentajeImpuestos: 30, porcentajeIVA: 21 } })),
+          api.get('/configuracion').catch(() => ({ data: { manoDeObraBase: 72600, porcentajeImpuestos: 30, porcentajeIVA: 21 } })),
         ]);
         setDb({
           clientes:  c.data.content || c.data,
@@ -75,13 +75,10 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         // Guardar config para calcular precioCliente default
         const conf = cfg.data;
         setConfigGlobal(conf);
-        // Pre-llenar mano de obra con precioCliente si es creacion nueva
+        // Pre-llenar mano de obra con precio con IVA (moBase ya incluye IVA)
         if (!servicioParaEditar && !presupuestoOrigen && !ordenOrigen) {
-          const moBase = Number(conf.manoDeObraBase) || 60000;
-          const pctImp = Number(conf.porcentajeImpuestos) || 30;
-          const pctIVA = Number(conf.porcentajeIVA) || 21;
-          const precioCliente = Math.round(moBase / ((1 + pctIVA / 100) * (1 - pctImp / 100)));
-          setItemActual(prev => ({ ...prev, costoExtra: precioCliente }));
+          const moBase = Number(conf.manoDeObraBase) || 72600;
+          setItemActual(prev => ({ ...prev, costoExtra: moBase }));
         }
 
         if (ordenOrigen) {
@@ -486,11 +483,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       esVisita:       item.esVisita || false,
     };
     setTicketItems(prev => [...prev, nuevoRenglon]);
-    // Calcular precioCliente default para pre-llenar el proximo item
-    const moBase = Number(configGlobal?.manoDeObraBase) || 60000;
-    const pctImp = Number(configGlobal?.porcentajeImpuestos) || 30;
-    const pctIVA = Number(configGlobal?.porcentajeIVA) || 21;
-    const defaultMO = Math.round(moBase / ((1 + pctIVA / 100) * (1 - pctImp / 100)));
+    // Pre-llenar con moBase (ya incluye IVA)
+    const defaultMO = Number(configGlobal?.manoDeObraBase) || 72600;
     setItemActual(prev => ({
       ...prev,
       equipoSerial: '', trabajo: '', costoExtra: defaultMO,

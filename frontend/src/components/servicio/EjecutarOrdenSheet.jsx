@@ -44,33 +44,35 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
             .catch(() => {});
         api.get('/configuracion')
             .then(r => setConfig(r.data))
-            .catch(() => setConfig({ manoDeObraBase: 60000, porcentajeImpuestos: 30, descuentoEfectivo: 10, porcentajeIVA: 21 }));
+            .catch(() => setConfig({ manoDeObraBase: 72600, porcentajeImpuestos: 30, descuentoEfectivo: 10, porcentajeIVA: 21 }));
     }, []);
 
     const pricing = useMemo(() => {
         if (!config) return null;
-        const moBase = Number(config.manoDeObraBase) || 60000;
+        const moBase = Number(config.manoDeObraBase) || 72600;
         const pctImp = Number(config.porcentajeImpuestos) || 30;
         const pctIVA = Number(config.porcentajeIVA) || 21;
         const esVisita = servicio.esVisita || false;
-        const factor = (1 + pctIVA / 100) * (1 - pctImp / 100);
-        const precioCliente = Math.round(moBase / factor);
-        const parteTecnico = Math.round(moBase / 2);
-        const visitaPrecio = Math.round((moBase / 2) / factor);
+        // moBase ya incluye IVA
+        const precioCliente = moBase;
+        const sinIVA = Math.round(moBase / (1 + pctIVA / 100));
+        const parteTecnico = Math.round(sinIVA / 2);
+        const visitaPrecio = Math.round(moBase / 2);
         const repuestosOriginales = (servicio.items || []).reduce((s, it) =>
             s + (it.repuestosUsados || []).reduce((a, r) => a + (Number(r.precio || 0) * Number(r.cantidad || 1)), 0), 0);
         const repuestosNuevos = repuestosAgregados.reduce((s, r) => s + (parseFloat(r.precio) || 0) * (r.cantidad || 1), 0);
         const totalRepuestos = repuestosOriginales + repuestosNuevos;
         const extraNeto = Number(costoMOExtra || 0);
-        const precioConExtra = Math.round((moBase + extraNeto) / factor);
+        const precioConExtra = moBase + Math.round(extraNeto * (1 + pctIVA / 100));
         return {
             moBase, precioCliente, parteTecnico, pctImp, pctIVA,
             esVisita, visitaPrecio,
             repuestosOriginales, repuestosNuevos, totalRepuestos, precioConExtra,
-            totalEfectivo: esVisita ? visitaPrecio : (precioConExtra + totalRepuestos),
-            totalFacturado: esVisita
-                ? Math.round(visitaPrecio * (1 + pctIVA / 100))
-                : Math.round((precioConExtra + totalRepuestos) * (1 + pctIVA / 100)),
+            // Con factura = precio con IVA, efectivo = sin IVA (-21%)
+            totalEfectivo: esVisita
+                ? Math.round(visitaPrecio / (1 + pctIVA / 100))
+                : Math.round((precioConExtra + totalRepuestos) / (1 + pctIVA / 100)),
+            totalFacturado: esVisita ? visitaPrecio : (precioConExtra + totalRepuestos),
         };
     }, [config, servicio, repuestosAgregados, costoMOExtra]);
 

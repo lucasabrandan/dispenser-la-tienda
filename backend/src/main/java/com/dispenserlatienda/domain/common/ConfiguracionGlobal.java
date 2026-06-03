@@ -9,9 +9,9 @@ public class ConfiguracionGlobal {
     @Id
     private Long id = 1L;
 
-    // Precio base de mano de obra por máquina ($60.000)
+    // Precio base de mano de obra por máquina CON IVA ($72.600)
     @Column(name = "mano_de_obra_base", nullable = false)
-    private BigDecimal manoDeObraBase = new BigDecimal("60000");
+    private BigDecimal manoDeObraBase = new BigDecimal("72600");
 
     // Porcentaje de impuestos para reparación facturada (30% → $78.000)
     @Column(name = "porcentaje_impuestos", nullable = false)

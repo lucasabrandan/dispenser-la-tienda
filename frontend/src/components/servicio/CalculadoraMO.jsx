@@ -1,19 +1,19 @@
 import React, { useState, useMemo } from 'react';
 
-export default function CalculadoraMO({ desglose, esVisita, factor, pctIVA, itemActual, setItemActual }) {
+export default function CalculadoraMO({ desglose, esVisita, pctIVA, itemActual, setItemActual }) {
     const [abierto, setAbierto] = useState(false);
     const [modoReverso, setModoReverso] = useState(false);
     const [gananciaDeseada, setGananciaDeseada] = useState('');
     const divisor = esVisita ? 1 : 2;
 
+    // Reverso: "quiero ganar X" -> calcula precio con IVA
     const reverso = useMemo(() => {
         const deseada = parseFloat(gananciaDeseada) || 0;
         if (deseada <= 0) return null;
         const netoTotal = deseada * divisor;
-        const precioCliente = Math.round(netoTotal / factor);
-        const conIVA = Math.round(precioCliente * (1 + pctIVA / 100));
-        return { precioCliente, conIVA, netoTotal };
-    }, [gananciaDeseada, factor, pctIVA, divisor]);
+        const precioConIVA = Math.round(netoTotal * (1 + pctIVA / 100));
+        return { precioConIVA, netoTotal };
+    }, [gananciaDeseada, pctIVA, divisor]);
 
     if (desglose.precioCliente <= 0) return null;
 
@@ -29,12 +29,12 @@ export default function CalculadoraMO({ desglose, esVisita, factor, pctIVA, item
                     <div className="p-3 rounded-xl bg-[#FFFFFF]/50 dark:bg-[#242424]/50 space-y-1.5">
                         <p className="text-[9px] font-black text-[#A8A29E] uppercase mb-1">Al cliente</p>
                         <div className="flex justify-between text-[11px]">
-                            <span className="text-[#57534E] dark:text-[#9E9A94]">Efectivo</span>
-                            <span className="font-black text-[#16A34A]">${desglose.precioCliente.toLocaleString('es-AR')}</span>
+                            <span className="text-[#57534E] dark:text-[#9E9A94]">Con factura (IVA inc.)</span>
+                            <span className="font-black text-[#8B5CF6]">${desglose.facturaCliente.toLocaleString('es-AR')}</span>
                         </div>
                         <div className="flex justify-between text-[11px]">
-                            <span className="text-[#57534E] dark:text-[#9E9A94]">Con factura</span>
-                            <span className="font-black text-[#8B5CF6]">${desglose.facturaCliente.toLocaleString('es-AR')}</span>
+                            <span className="text-[#57534E] dark:text-[#9E9A94]">Efectivo sin factura</span>
+                            <span className="font-black text-[#16A34A]">${desglose.efectivoTotal.toLocaleString('es-AR')} <span className="text-[9px] opacity-60">(-21%)</span></span>
                         </div>
                     </div>
                     <div className="p-3 rounded-xl bg-[#D48800]/10 space-y-1.5">
@@ -66,13 +66,13 @@ export default function CalculadoraMO({ desglose, esVisita, factor, pctIVA, item
                             {reverso && (
                                 <div className="p-2.5 rounded-xl bg-[#D48800]/10 space-y-1">
                                     <div className="flex justify-between text-[11px]">
-                                        <span className="text-[#D48800]">Al cliente:</span>
-                                        <span className="font-black text-[#D48800]">${reverso.precioCliente.toLocaleString('es-AR')}</span>
+                                        <span className="text-[#D48800]">Al cliente (con IVA):</span>
+                                        <span className="font-black text-[#D48800]">${reverso.precioConIVA.toLocaleString('es-AR')}</span>
                                     </div>
                                     <button type="button"
-                                        onClick={() => { setItemActual({ ...itemActual, costoExtra: reverso.precioCliente }); setModoReverso(false); setGananciaDeseada(''); }}
+                                        onClick={() => { setItemActual({ ...itemActual, costoExtra: reverso.precioConIVA }); setModoReverso(false); setGananciaDeseada(''); }}
                                         className="w-full mt-1 py-2 rounded-lg text-[11px] font-black uppercase text-white bg-[#D48800] active:scale-95">
-                                        Usar ${reverso.precioCliente.toLocaleString('es-AR')}
+                                        Usar ${reverso.precioConIVA.toLocaleString('es-AR')}
                                     </button>
                                 </div>
                             )}

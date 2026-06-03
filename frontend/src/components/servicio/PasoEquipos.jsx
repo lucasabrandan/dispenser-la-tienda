@@ -19,12 +19,12 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
         configGlobal, editarItem, eliminarItem,
     } = hook;
 
-    const moBase = Number(configGlobal?.manoDeObraBase) || 60000;
+    const moBase = Number(configGlobal?.manoDeObraBase) || 72600;
     const pctImp = Number(configGlobal?.porcentajeImpuestos) || 30;
     const pctIVA = Number(configGlobal?.porcentajeIVA) || 21;
-    const factor = (1 + pctIVA / 100) * (1 - pctImp / 100);
-    const precioReparacion = Math.round(moBase / factor);
-    const precioVisita = Math.round((moBase / 2) / factor);
+    // moBase ya incluye IVA
+    const precioReparacion = moBase;
+    const precioVisita = Math.round(moBase / 2);
     const [tipoMO, setTipoMO] = useState('REPARACION');
     const { esAdmin } = useAuth();
     const [mostrarFotos, setMostrarFotos] = useState(false);
@@ -45,13 +45,13 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const esVisitaActual = tipoMO === 'VISITA';
     const divisor = esVisitaActual ? 1 : 2;
     const desglose = useMemo(() => {
-        const precioCliente = parseFloat(itemActual.costoExtra) || 0;
-        const conIVA = Math.round(precioCliente * (1 + pctIVA / 100));
-        const netoFactura = Math.round(conIVA * (1 - pctImp / 100));
+        const precioConIVA = parseFloat(itemActual.costoExtra) || 0;
+        const sinIVA = Math.round(precioConIVA / (1 + pctIVA / 100));
+        const netoFactura = Math.round(precioConIVA * (1 - pctImp / 100));
         return {
-            precioCliente, efectivoTotal: precioCliente,
-            efectivoCada: Math.round(precioCliente / divisor),
-            facturaCliente: conIVA, facturaNeto: netoFactura,
+            precioCliente: precioConIVA, efectivoTotal: sinIVA,
+            efectivoCada: Math.round(sinIVA / divisor),
+            facturaCliente: precioConIVA, facturaNeto: netoFactura,
             facturaCada: Math.round(netoFactura / divisor),
         };
     }, [itemActual.costoExtra, pctIVA, pctImp, divisor]);
@@ -148,7 +148,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             </button>
                         </div>
                         <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black text-[#5C5954] uppercase tracking-widest">MO $</span>
+                            <span className="text-[10px] font-black text-[#5C5954] uppercase tracking-widest">MO $ <span className="text-[8px] text-[#A8A29E] normal-case">(con IVA)</span></span>
                             <input type="number" min="0"
                                 value={itemActual.costoExtra}
                                 onChange={e => setItemActual({ ...itemActual, costoExtra: e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0) })}
@@ -241,7 +241,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         {/* Calculadora admin */}
                         {esAdmin && (
                             <CalculadoraMO desglose={desglose} esVisita={esVisitaActual}
-                                factor={factor} pctIVA={pctIVA}
+                                pctIVA={pctIVA}
                                 itemActual={itemActual} setItemActual={setItemActual} />
                         )}
                     </div>

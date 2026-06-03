@@ -40,7 +40,7 @@ export default function PasoCobro({
                 {!pricing.esVisita && costoMOExtra > 0 && (
                     <div className="flex justify-between text-[12px]">
                         <span className="text-[#57534E] dark:text-[#9E9A94]">Ajuste MO extra</span>
-                        <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">+{fmt(Math.round(costoMOExtra / ((1 + pricing.pctIVA / 100) * (1 - pricing.pctImp / 100))))}</span>
+                        <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">+{fmt(Math.round(costoMOExtra * (1 + pricing.pctIVA / 100)))}</span>
                     </div>
                 )}
             </div>
@@ -64,8 +64,8 @@ export default function PasoCobro({
             {/* Opciones */}
             <div className="space-y-2">
                 {[
-                    { id: 'EFECTIVO_SIN_FACTURA', label: 'Efectivo sin factura', sub: 'Sin impuestos · Cobras en mano', monto: pricing.totalEfectivo, color: 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/5 dark:bg-[#E8422F]/5', montoColor: 'text-[#D13A28] dark:text-[#E8422F]' },
-                    { id: 'CON_FACTURA', label: 'Con factura', sub: `+${pricing.pctIVA}% IVA · Admin gestiona cobro`, monto: pricing.totalFacturado, color: 'border-[#D48800] dark:border-[#F0A500] bg-[#D48800]/5 dark:bg-[#F0A500]/5', montoColor: 'text-[#D48800] dark:text-[#F0A500]' },
+                    { id: 'EFECTIVO_SIN_FACTURA', label: 'Efectivo sin factura', sub: `Descuento ${pricing.pctIVA}% · Cobras en mano`, monto: pricing.totalEfectivo, color: 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/5 dark:bg-[#E8422F]/5', montoColor: 'text-[#D13A28] dark:text-[#E8422F]' },
+                    { id: 'CON_FACTURA', label: 'Con factura (IVA inc.)', sub: 'Admin gestiona cobro', monto: pricing.totalFacturado, color: 'border-[#D48800] dark:border-[#F0A500] bg-[#D48800]/5 dark:bg-[#F0A500]/5', montoColor: 'text-[#D48800] dark:text-[#F0A500]' },
                     { id: 'PENDIENTE', label: 'Definir despues', sub: 'El admin decide la modalidad', monto: null, color: 'border-[#A8A29E] bg-[#A8A29E]/5', montoColor: '' },
                 ].map(opt => (
                     <button key={opt.id} onClick={() => setModalidadCobro(opt.id)}
