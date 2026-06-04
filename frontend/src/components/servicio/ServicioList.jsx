@@ -157,7 +157,7 @@ export default function ServicioList({ onEditar }) {
     const totalVentas  = servicios.filter(s => s.servicioTipo === 'VENTA' && s.estado !== 'PRESUPUESTO').reduce((a, s) => a + calcularCosto(s), 0);
     const totalTecnica = servicios.filter(s => s.servicioTipo === 'TECNICA' && s.estado !== 'PRESUPUESTO').reduce((a, s) => a + calcularCosto(s), 0);
 
-    const generarPDFHistorial = (s) => {
+    const generarPDFHistorial = (s, { sinPrecios = false } = {}) => {
         const esPendiente = s.estado === 'PRESUPUESTO';
         const items = (s.items || []).map(it => ({ ...it, totalCalculado: it.costo }));
         generarRemitoPDFPremium({
@@ -172,7 +172,21 @@ export default function ServicioList({ onEditar }) {
             fechaServicio: s.fecha,
             descuentoPorcentaje: s.descuentoPorcentaje || 0,
             leyenda: s.observaciones || s.leyenda || '',
+            sinPrecios,
         });
+    };
+
+    // Genera PDFs sin precios para todos los seleccionados
+    const pdfMasivoSinPrecios = async () => {
+        const ids = [...seleccionadas];
+        const items = servicios.filter(s => ids.includes(s.id));
+        if (items.length === 0) return;
+        const loading = toast.loading(`Generando ${items.length} PDF${items.length > 1 ? 's' : ''}...`);
+        for (const s of items) {
+            await generarPDFHistorial(s, { sinPrecios: true });
+        }
+        toast.dismiss(loading);
+        toast.success(`${items.length} PDF${items.length > 1 ? 's' : ''} generado${items.length > 1 ? 's' : ''}`);
     };
 
     return (
@@ -305,6 +319,8 @@ export default function ServicioList({ onEditar }) {
                                                 className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
                                             <Accion onClick={() => generarPDFHistorial(s)} icon="📄" label="PDF"
                                                 className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                            <Accion onClick={() => generarPDFHistorial(s, { sinPrecios: true })} icon="📋" label="Sin $"
+                                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
                                             <div className="flex-1" />
                                             {esPendiente && (
                                                 <button onClick={() => aprobarPresupuesto(s.id)}
@@ -341,11 +357,18 @@ export default function ServicioList({ onEditar }) {
                         </button>
                         <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
                         {!confirmMasivo ? (
+                            <>
+                            <button onClick={pdfMasivoSinPrecios}
+                                disabled={seleccionadas.size === 0}
+                                className={`h-9 px-3 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-[#D48800] dark:bg-[#F0A500] text-white' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                                📋 Sin $
+                            </button>
                             <button onClick={() => seleccionadas.size > 0 && setConfirmMasivo(true)}
                                 disabled={seleccionadas.size === 0}
                                 className={`h-9 px-4 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
                                 Eliminar ({seleccionadas.size})
                             </button>
+                            </>
                         ) : (
                             <div className="flex gap-1.5">
                                 <button onClick={() => setConfirmMasivo(false)}

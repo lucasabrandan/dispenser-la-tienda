@@ -1,20 +1,21 @@
 import logoUrl from '../../assets/logo-dispenser.png';
 
 export const C = {
-    navy:       [13,  43,  91 ],
-    navyLight:  [30,  65,  120],
-    red:        [217, 30,  24 ],
-    redLight:   [254, 242, 242],
+    // Paleta alineada al logo: negro elegante + rojo acento + dorado detalles
+    navy:       [42,  42,  46 ],   // Charcoal premium — headers tabla, títulos, cajas
+    navyLight:  [70,  70,  75 ],   // Charcoal claro
+    red:        [193, 42,  30 ],   // Rojo marca — línea divisora, acentos puntuales
+    redLight:   [254, 243, 241],
     white:      [255, 255, 255],
-    grayBg:     [245, 246, 248],
-    grayText:   [75,  85,  99 ],
-    grayBorder: [209, 213, 219],
-    grayZebra:  [249, 250, 251],
-    grayLight:  [248, 249, 250],
-    dark:       [17,  24,  39 ],
+    grayBg:     [246, 246, 247],
+    grayText:   [85,  85,  90 ],
+    grayBorder: [210, 210, 215],
+    grayZebra:  [240, 240, 242],
+    grayLight:  [248, 248, 249],
+    dark:       [38,  38,  38 ],   // Texto principal
     green:      [31,  157, 85 ],
     greenLight: [240, 253, 244],
-    gold:       [180, 120, 0  ],
+    gold:       [180, 120, 0  ],   // Solo para detalles pequeños
     goldLight:  [255, 248, 230],
 };
 
@@ -27,7 +28,7 @@ export const CONTENT_W  = PAGE_W - M * 2;
 
 export const HEADER_H = {
     normal:  52,
-    compact: 32,
+    compact: 36,
 };
 
 export const T = {

@@ -66,12 +66,16 @@ export const generarPDF = async ({
     dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico: tecnico || null, nroDoc });
     let y = HEADER_H.compact + 8;
 
+    // Solo mostrar sección firmas si hay firma real (no cuadros vacíos)
+    const firmasReales = !!(firmaCliente || firmaTecnico);
+    const incluirFirmasFinal = incluirFirmas && firmasReales;
+
     // Dispatch por tipo
     const commonArgs = {
         cliente, sede, tecnico, fecha, nroDoc,
-        firmaCliente:  incluirFirmas ? firmaCliente  : null,
-        firmaTecnico:  incluirFirmas ? firmaTecnico  : null,
-        incluirFirmas, aclaracionCliente,
+        firmaCliente:  incluirFirmasFinal ? firmaCliente  : null,
+        firmaTecnico:  incluirFirmasFinal ? firmaTecnico  : null,
+        incluirFirmas: incluirFirmasFinal, aclaracionCliente,
         descuentoPorcentaje, garantiaTexto,
         proximoMantenimiento, leyenda, sinPrecios, fechaVisita,
     };

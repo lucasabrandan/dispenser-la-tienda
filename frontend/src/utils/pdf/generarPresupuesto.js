@@ -40,7 +40,8 @@ export async function generarSinglePresupuesto(doc, {
         }
     } else {
         y = checkSalto(doc, y, 36);
-        y = dibujarBloqueEquipoYTrabajo(doc, { item, trabajo: diagnostico, y, pageW, fotoAntes });
+        // No pasar fotoAntes aquí — la foto se muestra una sola vez en la sección dedicada abajo
+        y = dibujarBloqueEquipoYTrabajo(doc, { item, trabajo: diagnostico, y, pageW, fotoAntes: null });
     }
 
     // Tabla de precios
@@ -166,7 +167,7 @@ export async function generarSinglePresupuesto(doc, {
         }) : undefined,
     });
 
-    let presupTableEndY = doc.lastAutoTable.finalY + 3;
+    let presupTableEndY = doc.lastAutoTable.finalY + 8;
 
     if (!sinPrecios) {
         const totalPresupLabel = sinItems ? 'A coordinar con el cliente' : total.toLocaleString('es-AR');
@@ -177,12 +178,12 @@ export async function generarSinglePresupuesto(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 3, presupTableEndY + 4.5);
-            doc.text(`$ ${totalBruto.toLocaleString('es-AR')}`, pageW - M - 2, presupTableEndY + 4.5, { align: 'right' });
+            doc.text(`$ ${totalBruto.toLocaleString('es-AR')}`, pageW - M - 4, presupTableEndY + 4.5, { align: 'right' });
             presupTableEndY += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
             doc.text(`Descuento ${pct}%`, M + 3, presupTableEndY + 4.5);
-            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 2, presupTableEndY + 4.5, { align: 'right' });
+            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 4, presupTableEndY + 4.5, { align: 'right' });
             presupTableEndY += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -197,17 +198,17 @@ export async function generarSinglePresupuesto(doc, {
         // Caja total + validez + fecha visita integrada
         const tieneFechaVisita = fechaVisita && fechaVisita.trim();
         const cajaH = tieneFechaVisita ? 21 : 16;
-        doc.setFillColor(...C.goldLight);
-        doc.setDrawColor(...C.gold);
+        doc.setFillColor(...C.grayBg);
+        doc.setDrawColor(...C.navy);
         doc.setLineWidth(0.3);
         doc.roundedRect(M, presupTableEndY, CONTENT_W, cajaH, 1.5, 1.5, 'FD');
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.gold);
+        doc.setTextColor(...C.navy);
         doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 3, presupTableEndY + 5);
         doc.setFontSize(sinItems ? T.xs : T.md);
         doc.setTextColor(...C.navy);
-        doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 2, presupTableEndY + 9.5, { align: 'right' });
+        doc.text(sinItems ? totalPresupLabel : `$ ${totalPresupLabel}`, pageW - M - 4, presupTableEndY + 9.5, { align: 'right' });
         // Validez dentro de la caja
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'italic');
@@ -230,33 +231,9 @@ export async function generarSinglePresupuesto(doc, {
     const espacioRestante = pageHSP - 25 - y; // 25mm margen inferior
     const necesitaCondiciones = 14; // condiciones compactas
 
-    if (tieneEquipoReal && (fotoAntes || fotoDespues)) {
-        // Usar fotos compactas si no hay espacio suficiente para normales + condiciones
+    if (fotoAntes || fotoDespues) {
         const compacto = espacioRestante < (84 + necesitaCondiciones);
         y = dibujarRegistroFotografico(doc, { y, fotoA: fotoAntes, fotoD: fotoDespues, esPresupuesto: true, compacto });
-    } else if (!tieneEquipoReal && (fotoAntes || fotoDespues)) {
-        const fotoEv = fotoAntes || fotoDespues;
-        const esHz = fotoEv.w && fotoEv.h && fotoEv.w > fotoEv.h;
-        const compacto = espacioRestante < (84 + necesitaCondiciones);
-        const bw = esHz ? (compacto ? 74 : 88) : (compacto ? 42 : 56);
-        const bh = esHz ? (compacto ? 56 : 66) : (compacto ? 56 : 74);
-        y = checkSalto(doc, y, bh + 13);
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text('FOTOGRAFÍA DEL EQUIPO', M, y);
-        y += 5;
-        const { w: fW, h: fH } = fitEnCaja(fotoEv.w, fotoEv.h, bw, bh);
-        const offX = (bw - fW) / 2;
-        const offY = (bh - fH) / 2;
-        const xCentro = M + (CONTENT_W - bw) / 2;
-        doc.setFillColor(220, 220, 225);
-        doc.roundedRect(xCentro + 1.5, y + 1.5, bw, bh, 2, 2, 'F');
-        try { doc.addImage(fotoEv.data, fotoEv.format, xCentro + offX, y + offY, fW, fH); } catch {}
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(xCentro, y, bw, bh, 2, 2, 'S');
-        y += bh + 8;
     }
 
     // Condiciones compactas — siempre en la misma página que el contenido
@@ -294,6 +271,9 @@ export async function generarMultiPresupuesto(doc, {
         y = dibujarBloqueSolicitud(doc, { texto: trabajoComun, y, pageW });
     }
 
+    // Detectar si algún equipo tiene repuestos
+    const hayRepuestosP = ticketItems.some(it => (it.repuestosUsados || []).length > 0);
+
     // Construir filas de la tabla
     const bodyRows = [];
     ticketItems.forEach((item, idx) => {
@@ -305,23 +285,21 @@ export async function generarMultiPresupuesto(doc, {
         const piso   = item.equipoPiso    || null;
         const sector = item.equipoSector  || null;
 
-        const linPisoSec = [piso ? `Piso: ${piso}` : null, sector ? `Sec: ${sector}` : null].filter(Boolean).join(' · ');
-        const equipoCell = [
-            `${idx + 1}. ${[marca, modelo].filter(Boolean).join(' ')}`,
+        // Equipo: cada dato en su renglón, solo si existe
+        const equipoLines = [
+            [marca, modelo].filter(Boolean).join(' '),
             serial ? `S/N: ${serial}` : null,
             ubic   ? `Ubic: ${ubic}` : null,
-            linPisoSec || null,
-        ].filter(Boolean).join('\n');
+            piso   ? `Piso: ${piso}` : null,
+            sector ? `Sector: ${sector}` : null,
+        ].filter(Boolean);
+        const equipoCell = equipoLines.join('\n');
 
-        // Trabajo (mano de obra con precio)
-        const mo   = parseFloat(item.costoExtra) || 0;
+        // Trabajo estimado (sin MO$ — ya está en IMPORTE)
         const desc = (item.trabajo || item.trabajoRealizado || '').trim();
-        const partesMO = [];
-        if (desc) partesMO.push(desc);
-        if (!sinPrecios && mo > 0) partesMO.push(`MO: $${mo.toLocaleString('es-AR')}`);
-        const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
+        const trabajoCell = desc || '—';
 
-        // Repuestos con precio
+        // Repuestos: solo si la columna existe
         const reps = item.repuestosUsados || [];
         const repCell = reps.length > 0
             ? reps.map(r => {
@@ -331,21 +309,15 @@ export async function generarMultiPresupuesto(doc, {
               }).join('\n')
             : '—';
 
-        if (sinPrecios) {
-            if (trabajoComun) {
-                bodyRows.push([equipoCell, repCell]);
-            } else {
-                bodyRows.push([equipoCell, trabajoCell, repCell]);
-            }
-        } else {
+        // Construir fila: N° badge + equipo + [trabajo] + [repuestos] + [importe]
+        const row = [String(idx + 1), equipoCell];
+        if (!trabajoComun) row.push(trabajoCell);
+        if (hayRepuestosP) row.push(repCell);
+        if (!sinPrecios) {
             const sub = parseFloat(item.totalCalculado || item.costo || 0);
-            const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
-            if (trabajoComun) {
-                bodyRows.push([equipoCell, repCell, importeCell]);
-            } else {
-                bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
-            }
+            row.push(sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar');
         }
+        bodyRows.push(row);
     });
 
     const tipoLabelTabla = 'PRESUPUESTO — MÚLTIPLES EQUIPOS';
@@ -357,20 +329,22 @@ export async function generarMultiPresupuesto(doc, {
     doc.text('DETALLE DE EQUIPOS Y CONCEPTOS', M, y);
     y += 5;
 
-    const headCols  = sinPrecios
-        ? (trabajoComun
-            ? [['EQUIPO', 'REPUESTOS ESTIMADOS']]
-            : [['EQUIPO', 'TRABAJO ESTIMADO', 'REPUESTOS ESTIMADOS']])
-        : (trabajoComun
-            ? [['EQUIPO', 'REPUESTOS ESTIMADOS', 'IMPORTE']]
-            : [['EQUIPO', 'TRABAJO ESTIMADO', 'REPUESTOS ESTIMADOS', 'IMPORTE']]);
-    const colStyles = sinPrecios
-        ? (trabajoComun
-            ? { 0: { cellWidth: 60, fontStyle: 'bold' }, 1: { cellWidth: 'auto' } }
-            : { 0: { cellWidth: 50, fontStyle: 'bold' }, 1: { cellWidth: 45 }, 2: { cellWidth: 'auto' } })
-        : (trabajoComun
-            ? { 0: { cellWidth: 55, fontStyle: 'bold' }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy } }
-            : { 0: { cellWidth: 45, fontStyle: 'bold' }, 1: { cellWidth: 35 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy } });
+    // Cabecera: N° + columnas dinámicas
+    const colsP = ['N°', 'EQUIPO'];
+    if (!trabajoComun) colsP.push('TRABAJO ESTIMADO');
+    if (hayRepuestosP) colsP.push('REPUESTOS ESTIMADOS');
+    if (!sinPrecios) colsP.push('IMPORTE');
+    const headCols = [colsP];
+
+    // Anchos: col 0 = N° (9mm), resto adaptativo
+    const colStylesP = { 0: { cellWidth: 9, halign: 'center', valign: 'middle' } };
+    const lastIdxP = colsP.length - 1;
+    if (!sinPrecios) {
+        colStylesP[lastIdxP] = { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy };
+    }
+    // Equipo siempre bold
+    const restColsP = colsP.length - 1;
+    colStylesP[1] = { cellWidth: restColsP <= 2 ? 60 : (restColsP <= 3 ? 48 : 42), fontStyle: 'bold' };
 
     autoTable(doc, {
         startY: y,
@@ -379,15 +353,15 @@ export async function generarMultiPresupuesto(doc, {
         theme: 'grid',
         headStyles: {
             fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
-            fontSize: T.xxs, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+            fontSize: T.xs, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+            halign: 'center',
         },
         bodyStyles: {
-            fontSize: T.xs, textColor: C.dark, valign: 'top',
-            cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+            fontSize: T.sm, textColor: C.dark, valign: 'top', halign: 'left',
+            cellPadding: { top: 3.5, bottom: 3.5, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
-        columnStyles: colStyles,
-        // Dejar espacio para el header compacto en páginas siguientes
+        columnStyles: colStylesP,
         margin: { left: M, right: M, top: HEADER_H.compact + 8 },
         didDrawPage: (data) => {
             if (data.pageNumber > 1) {
@@ -397,10 +371,23 @@ export async function generarMultiPresupuesto(doc, {
         didParseCell: data => {
             if (data.section !== 'body') return;
             if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
+            // N° badge: fondo charcoal, texto blanco, centrado
+            if (data.column.index === 0) {
+                data.cell.styles.fillColor = C.navy;
+                data.cell.styles.textColor = C.white;
+                data.cell.styles.fontStyle = 'bold';
+                data.cell.styles.fontSize = T.sm;
+                data.cell.styles.halign = 'center';
+                data.cell.styles.valign = 'middle';
+            }
+            if (data.column.index === 1) data.cell.styles.fontStyle = 'bold';
         },
     });
 
-    y = doc.lastAutoTable.finalY + 4;
+    y = doc.lastAutoTable.finalY + 8;
+
+    // Asegurar espacio para total + footer (mínimo 30mm)
+    y = checkSalto(doc, y, 30);
 
     if (!sinPrecios) {
         // Desglose subtotal → descuento → total
@@ -409,12 +396,12 @@ export async function generarMultiPresupuesto(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 4, y + 4.5);
-            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
             doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
-            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -429,17 +416,17 @@ export async function generarMultiPresupuesto(doc, {
         // Total final + validez + fecha visita integrada
         const tieneFechaVisitaMP = fechaVisita && fechaVisita.trim();
         const cajaHMP = tieneFechaVisitaMP ? 21 : 16;
-        doc.setFillColor(...C.goldLight);
-        doc.setDrawColor(...C.gold);
+        doc.setFillColor(...C.grayBg);
+        doc.setDrawColor(...C.navy);
         doc.setLineWidth(0.3);
         doc.roundedRect(M, y, CONTENT_W, cajaHMP, 2, 2, 'FD');
         doc.setFontSize(T.xs);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.gold);
+        doc.setTextColor(...C.navy);
         doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 5);
         doc.setFontSize(T.xl);
         doc.setTextColor(...C.navy);
-        doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 2, y + 9.5, { align: 'right' });
+        doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 4, y + 9.5, { align: 'right' });
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);

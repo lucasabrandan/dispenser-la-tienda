@@ -110,7 +110,7 @@ export function dibujarTablaDetalle(doc, {
         },
     });
 
-    y = doc.lastAutoTable.finalY + 3;
+    y = doc.lastAutoTable.finalY + 8;
 
     // Fila total
     if (total !== null && !sinPrecios) {

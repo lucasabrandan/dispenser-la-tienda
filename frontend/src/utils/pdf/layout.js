@@ -115,33 +115,35 @@ export function dibujarHeader(doc, { tipoLabel, fecha, tecnico = null, nroDoc = 
     doc.text(tipoLabel.toUpperCase(), M, HEADER_H.normal + 5);
 }
 
-// ── HEADER COMPACTO (páginas siguientes) ──────────────────────────────────────
+// ── HEADER COMPACTO (todas las páginas) ──────────────────────────────────────
 export function dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico = null, nroDoc = null }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
 
+    // Logo grande — presencia de marca
     if (LOGO_URL) {
-        try { doc.addImage(LOGO_URL, 'PNG', M, 3, 22, 9); } catch {}
+        try { doc.addImage(LOGO_URL, 'PNG', M, 3, 32, 13); } catch {}
     }
 
-    doc.setFontSize(T.xs);
+    // Nombre empresa — bold, grande
+    const textX = M + 35;
+    doc.setFontSize(9);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.dark);
-    doc.text(empresa.nombre, M + 25, 7);
+    doc.text(empresa.nombre, textX, 8);
 
-    doc.setFontSize(T.label);
+    // Eslogan
+    doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
-    doc.text(empresa.eslogan, M + 25, 12);
+    doc.text(empresa.eslogan, textX, 13);
 
-    const contactLine = [
-        empresa.telefono ? `Tel: ${empresa.telefono}` : null,
-        empresa.whatsapp ? `WA: ${empresa.whatsapp}`  : null,
-        empresa.web,
-        empresa.email,
-    ].filter(Boolean).join('  ·  ');
-    doc.text(contactLine, M + 25, 17);
+    // Contacto
+    const contactLine = [empresa.web, empresa.email].filter(Boolean).join('  ·  ');
+    doc.setFontSize(T.label);
+    doc.text(contactLine, textX, 17.5);
 
+    // Info derecha — fecha + nroDoc + técnico
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
@@ -158,17 +160,19 @@ export function dibujarHeaderCompacto(doc, { tipoLabel, fecha, tecnico = null, n
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
-        doc.text(`Téc: ${tecnico}`, pageW - M, 19, { align: 'right' });
+        doc.text(`Téc: ${tecnico}`, pageW - M, 18.5, { align: 'right' });
     }
 
+    // Línea roja marca — más gruesa, más presencia
     doc.setDrawColor(...C.red);
-    doc.setLineWidth(0.6);
-    doc.line(M, HEADER_H.compact - 2, pageW - M, HEADER_H.compact - 2);
+    doc.setLineWidth(1.2);
+    doc.line(M, HEADER_H.compact - 3, pageW - M, HEADER_H.compact - 3);
 
-    doc.setFontSize(T.sm);
+    // Título del documento
+    doc.setFontSize(T.sm + 0.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.navy);
-    doc.text(tipoLabel.toUpperCase(), M, HEADER_H.compact + 3);
+    doc.text(tipoLabel.toUpperCase(), M, HEADER_H.compact + 2);
 }
 
 // ── HEADER MINI (página de fotos — solo título + nroDoc + línea) ──────────────
@@ -198,24 +202,25 @@ export function dibujarFooter(doc, { pagina = null, totalPaginas = null, textoCe
     const pageH   = doc.internal.pageSize.getHeight();
     const empresa = getEmpresa();
 
-    doc.setDrawColor(...C.grayBorder);
-    doc.setLineWidth(0.25);
-    doc.line(M, pageH - 14, pageW - M, pageH - 14);
+    // Línea roja sutil (consistente con header)
+    doc.setDrawColor(...C.red);
+    doc.setLineWidth(0.5);
+    doc.line(M, pageH - 15, pageW - M, pageH - 15);
 
-    // Fila 1: "Gracias por confiar en nosotros ★★★★★" o texto central
+    // Fila 1: mensaje o texto central
     if (textoCentral) {
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
-        doc.text(textoCentral, pageW / 2, pageH - 9, { align: 'center' });
+        doc.text(textoCentral, pageW / 2, pageH - 10, { align: 'center' });
     } else {
         doc.setFontSize(T.xs);
         doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.dark);
-        doc.text('Gracias por confiar en nosotros', pageW / 2, pageH - 9, { align: 'center' });
+        doc.setTextColor(...C.navy);
+        doc.text('Gracias por confiar en nosotros', pageW / 2, pageH - 10, { align: 'center' });
     }
 
-    // Fila 2: redes centradas + paginación derecha
+    // Fila 2: web + redes centradas
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(...C.grayText);
@@ -224,16 +229,14 @@ export function dibujarFooter(doc, { pagina = null, totalPaginas = null, textoCe
         empresa.email,
         empresa.instagram ? `IG: ${empresa.instagram}` : null,
         empresa.tiktok ? `TikTok: ${empresa.tiktok}` : null,
-    ].filter(Boolean).join('  ·  ');
-    // Centrar redes; si hay paginación, compensar levemente
-    const centroX = pagina && totalPaginas ? (M + pageW - M) / 2 : pageW / 2;
-    doc.text(contacto, centroX, pageH - 4, { align: 'center' });
+    ].filter(Boolean).join('    ·    ');
+    doc.text(contacto, pageW / 2, pageH - 5, { align: 'center' });
 
     // Paginación derecha
     if (pagina && totalPaginas) {
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
-        doc.text(`${pagina} / ${totalPaginas}`, pageW - M, pageH - 4, { align: 'right' });
+        doc.text(`${pagina} / ${totalPaginas}`, pageW - M, pageH - 5, { align: 'right' });
     }
 }

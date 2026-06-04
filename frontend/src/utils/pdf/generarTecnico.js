@@ -42,9 +42,10 @@ export async function generarSingleTecnico(doc, {
         }
     } else {
         y = checkSalto(doc, y, 36);
+        // No pasar foto aquí — se muestra una sola vez en registro fotográfico abajo
         y = dibujarBloqueEquipoYTrabajo(doc, {
             item, trabajo: diagDetalle, y, pageW,
-            fotoAntes: (fotoA && fotoD) ? fotoA : null,
+            fotoAntes: null,
             tituloTrabajo: '• TRABAJO REALIZADO',
             barraColor: C.navy,
         });
@@ -168,7 +169,7 @@ export async function generarSingleTecnico(doc, {
         }) : undefined,
     });
 
-    let tableEndY = doc.lastAutoTable.finalY + 3;
+    let tableEndY = doc.lastAutoTable.finalY + 8;
 
     if (!sinPrecios) {
         // Desglose subtotal → descuento → total
@@ -182,12 +183,12 @@ export async function generarSingleTecnico(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 3, tableEndY + 4.5);
-            doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 4.5, { align: 'right' });
+            doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - M - 4, tableEndY + 4.5, { align: 'right' });
             tableEndY += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
             doc.text(`Descuento ${pct}%`, M + 3, tableEndY + 4.5);
-            doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M - 2, tableEndY + 4.5, { align: 'right' });
+            doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M - 4, tableEndY + 4.5, { align: 'right' });
             tableEndY += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -205,7 +206,7 @@ export async function generarSingleTecnico(doc, {
         doc.text('TOTAL DEL SERVICIO', M + 3, tableEndY + 5.5);
         doc.setFontSize(sinItems ? T.xs : T.md);
         doc.setTextColor(...C.navy);
-        doc.text(totalLabel, pageW - M - 2, tableEndY + 10, { align: 'right' });
+        doc.text(totalLabel, pageW - M - 4, tableEndY + 10, { align: 'right' });
         tableEndY += 18;
     }
     y = tableEndY;
@@ -350,6 +351,9 @@ export async function generarMultiTecnico(doc, {
     doc.text('DETALLE TÉCNICO POR EQUIPOS', M, y);
     y += 5;
 
+    // Detectar si algún equipo tiene repuestos para decidir columnas
+    const hayRepuestos = ticketItems.some(it => (it.repuestosUsados || []).length > 0);
+
     const bodyRows = [];
 
     ticketItems.forEach((item, idx) => {
@@ -361,23 +365,21 @@ export async function generarMultiTecnico(doc, {
         const piso    = item.equipoPiso    || null;
         const sector  = item.equipoSector  || null;
 
-        const linPisoSec = [piso ? `Piso: ${piso}` : null, sector ? `Sec: ${sector}` : null].filter(Boolean).join(' · ');
-        const equipoCell = [
-            `${idx + 1}. ${[marca, modelo].filter(Boolean).join(' ')}`,
+        // Equipo: cada dato en su renglón, solo si existe
+        const equipoLines = [
+            [marca, modelo].filter(Boolean).join(' '),
             serial ? `S/N: ${serial}` : null,
             ubic   ? `Ubic: ${ubic}` : null,
-            linPisoSec || null,
-        ].filter(Boolean).join('\n');
+            piso   ? `Piso: ${piso}` : null,
+            sector ? `Sector: ${sector}` : null,
+        ].filter(Boolean);
+        const equipoCell = equipoLines.join('\n');
 
-        // Trabajo (mano de obra)
-        const mo   = parseFloat(item.costoExtra) || 0;
+        // Trabajo realizado (sin MO$ — ya está en IMPORTE)
         const desc = (item.trabajo || item.trabajoRealizado || '').trim();
-        const partesMO = [];
-        if (desc) partesMO.push(desc);
-        if (!sinPrecios && mo > 0) partesMO.push(`MO: $${mo.toLocaleString('es-AR')}`);
-        const trabajoCell = partesMO.length > 0 ? partesMO.join('\n') : '—';
+        const trabajoCell = desc || '—';
 
-        // Repuestos: una línea por ítem
+        // Repuestos: solo si la columna existe
         const reps = item.repuestosUsados || [];
         const repCell = reps.length > 0
             ? reps.map(r => {
@@ -387,18 +389,33 @@ export async function generarMultiTecnico(doc, {
               }).join('\n')
             : '—';
 
-        if (sinPrecios) {
-            bodyRows.push([equipoCell, trabajoCell, repCell]);
-        } else {
+        // Construir fila: N° badge + equipo + trabajo + [repuestos] + [importe]
+        const row = [String(idx + 1), equipoCell, trabajoCell];
+        if (hayRepuestos) row.push(repCell);
+        if (!sinPrecios) {
             const sub = parseFloat(item.totalCalculado || item.costo || 0);
-            const importeCell = sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar';
-            bodyRows.push([equipoCell, trabajoCell, repCell, importeCell]);
+            row.push(sub > 0 ? `$ ${sub.toLocaleString('es-AR')}` : 'A coordinar');
         }
+        bodyRows.push(row);
     });
 
-    const headMT = sinPrecios
-        ? [['EQUIPO', 'TRABAJO INCLUIDO', 'REPUESTOS INCLUIDOS']]
-        : [['EQUIPO', 'TRABAJO INCLUIDO', 'REPUESTOS INCLUIDOS', 'IMPORTE']];
+    // Cabecera: N° + columnas dinámicas
+    const headCols = ['N°', 'EQUIPO', 'TRABAJO REALIZADO'];
+    if (hayRepuestos) headCols.push('REPUESTOS');
+    if (!sinPrecios) headCols.push('IMPORTE');
+    const headMT = [headCols];
+
+    // Anchos: col 0 = N° (9mm), resto adaptativo
+    const colStylesMT = { 0: { cellWidth: 9, halign: 'center', valign: 'middle' } };
+    const restCols = headCols.length - 1; // sin N°
+    const lastIdx = headCols.length - 1;
+    if (!sinPrecios) {
+        colStylesMT[lastIdx] = { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy };
+    }
+    // Equipo siempre bold
+    colStylesMT[1] = { cellWidth: restCols <= 2 ? 60 : (restCols <= 3 ? 50 : 42), fontStyle: 'bold' };
+    // Trabajo
+    if (restCols >= 3) colStylesMT[2] = { cellWidth: hayRepuestos && !sinPrecios ? 37 : 'auto' };
 
     autoTable(doc, {
         startY: y,
@@ -407,23 +424,15 @@ export async function generarMultiTecnico(doc, {
         theme: 'grid',
         headStyles: {
             fillColor: C.navy, textColor: C.white, fontStyle: 'bold',
-            fontSize: T.xxs, cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+            fontSize: T.xs, cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+            halign: 'center',
         },
         bodyStyles: {
-            fontSize: T.xs, textColor: C.dark, valign: 'top',
-            cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+            fontSize: T.sm, textColor: C.dark, valign: 'top', halign: 'left',
+            cellPadding: { top: 3.5, bottom: 3.5, left: 3, right: 3 },
             lineColor: C.grayBorder, lineWidth: 0.15,
         },
-        columnStyles: sinPrecios ? {
-            0: { cellWidth: 50, fontStyle: 'bold' },
-            1: { cellWidth: 50 },
-            2: { cellWidth: 'auto' },
-        } : {
-            0: { cellWidth: 42, fontStyle: 'bold' },
-            1: { cellWidth: 37 },
-            2: { cellWidth: 'auto' },
-            3: { cellWidth: 28, halign: 'right', fontStyle: 'bold', textColor: C.navy },
-        },
+        columnStyles: colStylesMT,
         margin: { left: M, right: M, top: HEADER_H.compact + 8 },
         didDrawPage: (data) => {
             if (data.pageNumber > 1) {
@@ -433,10 +442,23 @@ export async function generarMultiTecnico(doc, {
         didParseCell: data => {
             if (data.section !== 'body') return;
             if (data.row.index % 2 === 0) data.cell.styles.fillColor = C.grayZebra;
+            // N° badge: fondo charcoal, texto blanco, centrado
+            if (data.column.index === 0) {
+                data.cell.styles.fillColor = C.navy;
+                data.cell.styles.textColor = C.white;
+                data.cell.styles.fontStyle = 'bold';
+                data.cell.styles.fontSize = T.sm;
+                data.cell.styles.halign = 'center';
+                data.cell.styles.valign = 'middle';
+            }
+            if (data.column.index === 1) data.cell.styles.fontStyle = 'bold';
         },
     });
 
-    y = doc.lastAutoTable.finalY + 4;
+    y = doc.lastAutoTable.finalY + 8;
+
+    // Asegurar espacio para total + footer (mínimo 30mm)
+    y = checkSalto(doc, y, 30);
 
     if (!sinPrecios) {
         // Desglose subtotal → descuento → total
@@ -449,12 +471,12 @@ export async function generarMultiTecnico(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 4, y + 4.5);
-            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
             doc.text(`Descuento ${pctM}%`, M + 4, y + 4.5);
-            doc.text(`- $ ${descuentoM.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            doc.text(`- $ ${descuentoM.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -472,7 +494,7 @@ export async function generarMultiTecnico(doc, {
         doc.text('TOTAL FACTURADO', M + 4, y + 5.5);
         doc.setFontSize(T.xl);
         doc.setTextColor(...C.navy);
-        doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
+        doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M - 4, y + 10, { align: 'right' });
         y += 18;
     }
 

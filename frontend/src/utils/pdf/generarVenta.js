@@ -238,12 +238,12 @@ export async function generarPresupuestoVenta(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 4, y + 4.5);
-            doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            doc.text(`$ ${subtotalBruto.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
             doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
-            doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -266,7 +266,7 @@ export async function generarPresupuestoVenta(doc, {
         doc.text('TOTAL ESTIMADO', M + 4, y + 5);
         doc.setFontSize(T.xl);
         doc.setTextColor(...C.navy);
-        doc.text(`$ ${totalPV.toLocaleString('es-AR')}`, pageW - M, y + 9.5, { align: 'right' });
+        doc.text(`$ ${totalPV.toLocaleString('es-AR')}`, pageW - M - 4, y + 9.5, { align: 'right' });
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);
@@ -438,12 +438,12 @@ export async function generarComprobante(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 4, y + 4.5);
-            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
             doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
-            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M, y + 4.5, { align: 'right' });
+            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -462,7 +462,7 @@ export async function generarComprobante(doc, {
         doc.text('TOTAL', M + 4, y + 5.5);
         doc.setFontSize(T.xl);
         doc.setTextColor(...C.navy);
-        doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M, y + 10, { align: 'right' });
+        doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 4, y + 10, { align: 'right' });
         y += 18;
     }
 
