@@ -266,10 +266,6 @@ export async function generarPDFCotizacion({
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.dark);
             doc.text(`$${unit.toLocaleString('es-AR')}`, colUnit, textY);
-            doc.setFontSize(T.xxs);
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(...C.grayText);
-            doc.text('/u', colUnit + doc.getTextWidth(`$${unit.toLocaleString('es-AR')}`) + 1, textY);
 
             // Subtotal
             const maxSub = Math.max(...prod.filas.map(f => Number(f.cantidad) * Number(f.precioUnitario)));
@@ -293,9 +289,11 @@ export async function generarPDFCotizacion({
             const fMax = [...prod.filas].sort((a, b) => Number(b.cantidad) - Number(a.cantidad))[0];
             const p1   = Number(f1.precioUnitario)  || 0;
             const pMax = Number(fMax.precioUnitario) || 0;
-            if (p1 > pMax && pMax > 0) {
+            const cantMax = Number(fMax.cantidad) || 0;
+            if (p1 > pMax && pMax > 0 && cantMax > 0) {
                 y = checkNewPage(y, 14);
-                const ahorro = Math.round(((p1 - pMax) / p1) * 100);
+                const ahorroUnit  = p1 - pMax;
+                const ahorroTotal = ahorroUnit * cantMax;
                 const boxH = multi ? 8 : 10;
                 doc.setFillColor(255, 248, 220);
                 doc.setDrawColor(...C.gold);
@@ -305,7 +303,7 @@ export async function generarPDFCotizacion({
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(...C.gold);
                 doc.text(
-                    `Comprando ${Number(fMax.cantidad).toLocaleString('es-AR')} unidades ahorras un ${ahorro}% por unidad`,
+                    `Llevando ${cantMax.toLocaleString('es-AR')} unid. ahorras $${ahorroTotal.toLocaleString('es-AR')} ($${ahorroUnit.toLocaleString('es-AR')}/u vs precio lista)`,
                     pageW / 2, y + (boxH * 0.6), { align: 'center' }
                 );
                 y += boxH + gapSec;
