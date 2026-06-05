@@ -125,23 +125,33 @@ export async function generarPDFCotizacion({
             y = checkNewPage(y, Math.min(espacioProducto, bottomLimit - 20));
         }
 
-        // ── Bloque producto ─────────────────────────────────────────────────
-        const fotoX   = pageW - M - FOTO_SZ;
-        const textW   = foto ? fotoX - M - 4 : CONTENT_W;
+        // ── Bloque producto — foto a la izquierda, texto a la derecha ──────
+        const textX   = foto ? M + FOTO_SZ + 4 : M;
+        const textW   = foto ? CONTENT_W - FOTO_SZ - 4 : CONTENT_W;
         const yProd   = y;
+
+        // Foto a la izquierda
+        if (foto) {
+            try {
+                doc.addImage(foto.data, foto.format, M, yProd, FOTO_SZ, FOTO_SZ);
+                doc.setDrawColor(...C.grayBorder);
+                doc.setLineWidth(0.2);
+                doc.rect(M, yProd, FOTO_SZ, FOTO_SZ, 'S');
+            } catch {}
+        }
 
         // Numero de producto (solo multi)
         if (multi) {
             doc.setFontSize(T.label);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
-            doc.text(`PRODUCTO ${pi + 1} DE ${productos.length}`, M, y);
+            doc.text(`PRODUCTO ${pi + 1} DE ${productos.length}`, textX, y);
             y += 4;
         } else {
             doc.setFontSize(T.label);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.navy);
-            doc.text('• PRODUCTO', M, y);
+            doc.text('• PRODUCTO', textX, y);
             y += 5;
         }
 
@@ -150,7 +160,7 @@ export async function generarPDFCotizacion({
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.dark);
         const nameLines = doc.splitTextToSize(prod.productoNombre || '—', textW);
-        doc.text(nameLines.slice(0, 2), M, y);
+        doc.text(nameLines.slice(0, 2), textX, y);
         y += nameLines.slice(0, 2).length * (multi ? 4.5 : 5.5);
 
         // SKU
@@ -158,29 +168,19 @@ export async function generarPDFCotizacion({
             doc.setFontSize(T.xxs);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
-            doc.text(`SKU: ${prod.productoCodigo}`, M, y);
+            doc.text(`SKU: ${prod.productoCodigo}`, textX, y);
             y += 4;
         }
 
-        // Descripcion (max 2 lineas en multi, 3 en single)
+        // Descripcion pegada al producto
         if (prod.productoDescripcion?.trim()) {
             doc.setFontSize(T.xxs);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             const maxDesc = multi ? 2 : 3;
             const descLines = doc.splitTextToSize(prod.productoDescripcion, textW);
-            doc.text(descLines.slice(0, maxDesc), M, y);
+            doc.text(descLines.slice(0, maxDesc), textX, y);
             y += descLines.slice(0, maxDesc).length * 3.5;
-        }
-
-        // Foto a la derecha
-        if (foto) {
-            try {
-                doc.addImage(foto.data, foto.format, fotoX, yProd, FOTO_SZ, FOTO_SZ);
-                doc.setDrawColor(...C.grayBorder);
-                doc.setLineWidth(0.2);
-                doc.rect(fotoX, yProd, FOTO_SZ, FOTO_SZ, 'S');
-            } catch {}
         }
 
         // Asegurar y debajo de la foto
