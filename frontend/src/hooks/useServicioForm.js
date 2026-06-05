@@ -81,6 +81,20 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           setItemActual(prev => ({ ...prev, costoExtra: moBase }));
         }
 
+        // Enriquece repuestos del backend con costo/porcentajeGanancia desde el catálogo local
+        const repuestosDB = r.data.content || r.data;
+        const enriquecerRepuestos = (repuestos) =>
+          (repuestos || []).map(rep => {
+            if (rep.costo > 0 || rep.porcentajeGanancia > 0) return rep;
+            const catalogo = repuestosDB.find(x => x.id === rep.id);
+            if (!catalogo) return rep;
+            return {
+              ...rep,
+              costo:              parseFloat(catalogo.costo) || 0,
+              porcentajeGanancia: parseFloat(catalogo.porcentajeGanancia) || 0,
+            };
+          });
+
         if (ordenOrigen) {
           setEsPresupuesto(false);
           if (ordenOrigen.descripcion) setLeyenda(ordenOrigen.descripcion);
@@ -103,7 +117,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
                   costoExtra:        Math.max(0, Number(it.costoExtra) || 0),
                   totalCalculado:    Math.max(0, Number(it.costo)),
                   totalSinDescuento: Math.max(0, Number(it.costo)),
-                  repuestosUsados:   it.repuestosUsados || [],
+                  repuestosUsados:   enriquecerRepuestos(it.repuestosUsados),
                   resumenTexto:      it.trabajoRealizado || '',
                   fotoAntes:         null,
                   fotoDespues:       null,
@@ -129,7 +143,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
               costoExtra:        Math.max(0, Number(it.costoExtra) || 0),
               totalCalculado:    Math.max(0, Number(it.costo)),
               totalSinDescuento: Math.max(0, Number(it.costo)),
-              repuestosUsados:   it.repuestosUsados || [],
+              repuestosUsados:   enriquecerRepuestos(it.repuestosUsados),
               resumenTexto:      it.trabajoRealizado || '',
               fotoAntes:         null,
               fotoDespues:       null,
@@ -150,7 +164,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
               costoExtra:        Math.max(0, Number(it.costoExtra) || 0),
               totalCalculado:    Math.max(0, Number(it.costo)),
               totalSinDescuento: Math.max(0, Number(it.costo)),
-              repuestosUsados:   it.repuestosUsados || [],
+              repuestosUsados:   enriquecerRepuestos(it.repuestosUsados),
               resumenTexto:      it.trabajoRealizado,
               fotoAntes:         it.fotoAntes   || null,
               fotoDespues:       it.fotoDespues || null,
