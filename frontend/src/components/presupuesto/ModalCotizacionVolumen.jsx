@@ -229,7 +229,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                     </div>
 
                     {/* Scroll body */}
-                    <div className="overflow-y-auto flex-1 px-6 pb-2 space-y-4">
+                    <div className="overflow-y-auto flex-1 px-6 pb-4 space-y-4">
                         {cargando ? (
                             <div className="py-8 text-center text-[#A8A29E] text-sm">Cargando...</div>
                         ) : (
@@ -436,7 +436,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex gap-2 px-6 py-4 shrink-0 border-t-[0.5px] border-black/[0.07]">
+                    <div className="flex gap-2 px-6 py-4 shrink-0 border-t border-black/[0.07] dark:border-white/[0.07] bg-[#FFFFFF] dark:bg-[#242424] rounded-b-[2rem]">
                         <button onClick={onCerrar}
                             className="flex-1 py-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
                             Cancelar
