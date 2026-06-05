@@ -104,16 +104,19 @@ export async function generarPDFCotizacion({
         const prod = productos[pi];
         const foto = fotos[pi];
 
+        // Estimar espacio total del producto: info (~45) + tabla header (9) + filas (12 cada) + ahorro (16)
+        const espacioProducto = 45 + 9 + prod.filas.length * 12 + 20;
+
         // Separador entre productos
         if (pi > 0) {
-            y = checkNewPage(y, 60);
+            y = checkNewPage(y, Math.min(espacioProducto + 10, bottomLimit - 20));
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.3);
             doc.line(M, y, pageW - M, y);
             y += 6;
         }
 
-        y = checkNewPage(y, 50);
+        y = checkNewPage(y, Math.min(espacioProducto, bottomLimit - 20));
 
         // ── Bloque producto ─────────────────────────────────────────────────
         const FOTO_SZ = 30;
