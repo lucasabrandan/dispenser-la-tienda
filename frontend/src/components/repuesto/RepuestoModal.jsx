@@ -62,14 +62,17 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
     };
 
     const cambiarFinanciero = (campo, valor) => {
-        const nuevoForm = { ...form, [campo]: sanitizarNumero(valor) };
+        const valorLimpio = sanitizarNumero(valor);
+        const nuevoForm = { ...form, [campo]: valorLimpio };
         if (campo === 'costoBlanco') setCostoBlancoManual(valor !== '');
         if (campo === 'costo' && !costoBlancoManual) {
             const c = parseFloat(valor) || 0;
             nuevoForm.costoBlanco = c > 0 ? (c * 1.21).toFixed(2) : '';
         }
         const precios = calcularPrecios(nuevoForm);
-        if (costoBlancoManual && campo !== 'costoBlanco' && campo !== 'costo') delete precios.costoBlanco;
+        // No pisar el campo que el usuario esta tipeando con .toFixed(2)
+        delete precios[campo];
+        if (costoBlancoManual && campo !== 'costo') delete precios.costoBlanco;
         setForm({ ...nuevoForm, ...precios });
     };
 
