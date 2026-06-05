@@ -127,7 +127,7 @@ export async function generarPDFCotizacion({
     const colCant = M;
     const colDesc = M + 48;
     const colUnit = M + 95;
-    const colSub  = pageW - M;
+    const colSub  = pageW - M - 4;
     const rowH    = 12;
     const headerH = 9;
 

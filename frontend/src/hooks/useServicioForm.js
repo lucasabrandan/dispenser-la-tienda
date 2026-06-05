@@ -191,6 +191,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   // Se salta el primer render (mount) para no borrar un draft existente con estado vacío.
   useEffect(() => {
     if (servicioParaEditar) return;
+    if (borradorDisponible) return; // No pisar el draft mientras el banner está visible
     if (!autoSaveReady.current) { autoSaveReady.current = true; return; }
 
     const hayContenido = ticketItems.length > 0
@@ -208,7 +209,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         ts: Date.now(),
       }));
     } catch { /* localStorage lleno — ignorar */ }
-  }, [ticketItems, itemActual, clienteId, fechaServicio, descuentoPorcentaje, leyenda]);
+  }, [ticketItems, itemActual, clienteId, fechaServicio, descuentoPorcentaje, leyenda, borradorDisponible]);
 
   const recuperarBorrador = () => {
     try {
