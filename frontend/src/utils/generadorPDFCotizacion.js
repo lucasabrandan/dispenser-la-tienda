@@ -6,14 +6,13 @@ import { cargarFoto } from './pdf/helpers.js';
 /**
  * generarPDFCotizacion
  * Cotizacion de precios escalonados por volumen — soporta multi-producto.
- * Recibe `productos` (array) o los campos legacy de producto unico para compatibilidad.
+ * Layout compacto: 2-3 productos caben en 1 pagina.
  */
 export async function generarPDFCotizacion({
     clienteNombre       = '',
     clienteTelefono     = '',
-    // Multi-producto
     productos           = [],
-    // Legacy (producto unico) — se convierte a array internamente
+    // Legacy (producto unico)
     productoNombre,
     productoCodigo,
     productoDescripcion,
@@ -22,7 +21,7 @@ export async function generarPDFCotizacion({
     validezDias         = '7',
     notas               = '',
 }) {
-    // Compatibilidad: si se pasaron campos legacy, armar array de 1
+    // Compatibilidad legacy
     if (productos.length === 0 && productoNombre) {
         productos = [{
             productoNombre,
@@ -33,6 +32,7 @@ export async function generarPDFCotizacion({
         }];
     }
 
+    const multi  = productos.length > 1;
     const doc    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageW  = doc.internal.pageSize.getWidth();
     const fecha  = procesarFecha(new Date().toISOString());
@@ -42,12 +42,10 @@ export async function generarPDFCotizacion({
     let pagina = 1;
     const totalPaginas = () => doc.internal.getNumberOfPages();
 
-    // Carga todas las fotos en paralelo
     const fotos = await Promise.all(
         productos.map(p => cargarFoto(p.fotoUrl || null))
     );
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
     const checkNewPage = (y, needed = 30) => {
         if (y + needed > bottomLimit) {
             dibujarFooter(doc, { pagina, totalPaginas: totalPaginas(), textoCentral: '' });
@@ -58,9 +56,15 @@ export async function generarPDFCotizacion({
         return y;
     };
 
+    // ── Medidas compactas vs normales ───────────────────────────────────────
+    const FOTO_SZ = multi ? 22 : 30;
+    const rowH    = multi ? 9  : 12;
+    const headerH = multi ? 7  : 9;
+    const gapSec  = multi ? 4  : 8;   // espacio entre secciones
+
     // ── Header ──────────────────────────────────────────────────────────────
     dibujarHeader(doc, {
-        tipoLabel: productos.length > 1
+        tipoLabel: multi
             ? `COTIZACION DE PRECIOS · ${productos.length} PRODUCTOS`
             : 'COTIZACION DE PRECIOS POR VOLUMEN',
         fecha,
@@ -68,10 +72,10 @@ export async function generarPDFCotizacion({
         estado: 'PRESUPUESTO',
     });
 
-    let y = HEADER_H.normal + 10;
+    let y = HEADER_H.normal + 8;
 
     // ── Bloque "Para:" ──────────────────────────────────────────────────────
-    const paraH = clienteTelefono ? 18 : 13;
+    const paraH = clienteTelefono ? 16 : 12;
     doc.setFillColor(...C.grayLight);
     doc.setDrawColor(...C.grayBorder);
     doc.setLineWidth(0.2);
@@ -83,87 +87,90 @@ export async function generarPDFCotizacion({
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.grayText);
-    doc.text('PARA:', M + 4, y + 5);
+    doc.text('PARA:', M + 4, y + 4.5);
 
     doc.setFontSize(T.md);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...C.dark);
-    doc.text(clienteNombre || '—', M + 4, y + 11);
+    doc.text(clienteNombre || '—', M + 4, y + 10);
 
     if (clienteTelefono) {
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
-        doc.text(`Tel: ${clienteTelefono}`, M + 4, y + 16);
+        doc.text(`Tel: ${clienteTelefono}`, M + 4, y + 14.5);
     }
 
-    y += paraH + 8;
+    y += paraH + gapSec;
 
     // ── Iterar productos ────────────────────────────────────────────────────
     for (let pi = 0; pi < productos.length; pi++) {
         const prod = productos[pi];
         const foto = fotos[pi];
 
-        // Estimar espacio total del producto: info (~45) + tabla header (9) + filas (12 cada) + ahorro (16)
-        const espacioProducto = 45 + 9 + prod.filas.length * 12 + 20;
+        // Estimar espacio: info (~30 compacto) + tabla header + filas + ahorro
+        const infoH = (foto ? FOTO_SZ : 18) + 8;
+        const tablaH = headerH + prod.filas.length * rowH + 4;
+        const ahorroH = prod.filas.length >= 2 ? 14 : 0;
+        const espacioProducto = infoH + tablaH + ahorroH;
 
         // Separador entre productos
         if (pi > 0) {
-            y = checkNewPage(y, Math.min(espacioProducto + 10, bottomLimit - 20));
+            y = checkNewPage(y, Math.min(espacioProducto + 6, bottomLimit - 20));
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.3);
             doc.line(M, y, pageW - M, y);
-            y += 6;
+            y += 4;
+        } else {
+            y = checkNewPage(y, Math.min(espacioProducto, bottomLimit - 20));
         }
 
-        y = checkNewPage(y, Math.min(espacioProducto, bottomLimit - 20));
-
         // ── Bloque producto ─────────────────────────────────────────────────
-        const FOTO_SZ = 30;
         const fotoX   = pageW - M - FOTO_SZ;
-        const textW   = foto ? fotoX - M - 5 : CONTENT_W;
+        const textW   = foto ? fotoX - M - 4 : CONTENT_W;
         const yProd   = y;
 
-        // Numero de producto (solo si hay mas de 1)
-        if (productos.length > 1) {
+        // Numero de producto (solo multi)
+        if (multi) {
             doc.setFontSize(T.label);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
             doc.text(`PRODUCTO ${pi + 1} DE ${productos.length}`, M, y);
             y += 4;
+        } else {
+            doc.setFontSize(T.label);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...C.navy);
+            doc.text('• PRODUCTO', M, y);
+            y += 5;
         }
 
-        doc.setFontSize(T.label);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text(productos.length > 1 ? '' : '• PRODUCTO', M, y);
-        if (productos.length <= 1) y += 5;
-
         // Nombre
-        doc.setFontSize(T.lg);
+        doc.setFontSize(multi ? T.md : T.lg);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.dark);
         const nameLines = doc.splitTextToSize(prod.productoNombre || '—', textW);
         doc.text(nameLines.slice(0, 2), M, y);
-        y += nameLines.slice(0, 2).length * 5.5;
+        y += nameLines.slice(0, 2).length * (multi ? 4.5 : 5.5);
 
         // SKU
         if (prod.productoCodigo) {
-            doc.setFontSize(T.xs);
+            doc.setFontSize(T.xxs);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
             doc.text(`SKU: ${prod.productoCodigo}`, M, y);
-            y += 5;
+            y += 4;
         }
 
-        // Descripcion
+        // Descripcion (max 2 lineas en multi, 3 en single)
         if (prod.productoDescripcion?.trim()) {
-            doc.setFontSize(T.xs);
+            doc.setFontSize(T.xxs);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
+            const maxDesc = multi ? 2 : 3;
             const descLines = doc.splitTextToSize(prod.productoDescripcion, textW);
-            doc.text(descLines.slice(0, 3), M, y);
-            y += descLines.slice(0, 3).length * 4.5;
+            doc.text(descLines.slice(0, maxDesc), M, y);
+            y += descLines.slice(0, maxDesc).length * 3.5;
         }
 
         // Foto a la derecha
@@ -176,36 +183,33 @@ export async function generarPDFCotizacion({
             } catch {}
         }
 
-        // Asegurar y este debajo de la foto
+        // Asegurar y debajo de la foto
         if (y < yProd + (foto ? FOTO_SZ : 0)) y = yProd + (foto ? FOTO_SZ : 0);
-        y += 8;
+        y += gapSec;
 
-        // ── Tabla de precios escalonados ─────────────────────────────────────
-        y = checkNewPage(y, 20 + prod.filas.length * 12);
-
+        // ── Tabla de precios ────────────────────────────────────────────────
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.navy);
         doc.text('• ESCALA DE PRECIOS', M, y);
-        y += 5;
+        y += 4;
 
         const colCant = M;
         const colDesc = M + 48;
         const colUnit = M + 95;
         const colSub  = pageW - M - 4;
-        const rowH    = 12;
-        const headerH = 9;
 
         // Header tabla
         doc.setFillColor(...C.navy);
-        doc.roundedRect(M, y, CONTENT_W, headerH, 2, 2, 'F');
+        doc.roundedRect(M, y, CONTENT_W, headerH, 1.5, 1.5, 'F');
         doc.setFontSize(T.xxs);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.white);
-        doc.text('CANTIDAD',     colCant + 4, y + 6);
-        doc.text('DESCUENTO',    colDesc,     y + 6);
-        doc.text('PRECIO UNIT.', colUnit,     y + 6);
-        doc.text('SUBTOTAL',     colSub,      y + 6, { align: 'right' });
+        const hTextY = y + (headerH * 0.65);
+        doc.text('CANTIDAD',     colCant + 4, hTextY);
+        doc.text('DESCUENTO',    colDesc,     hTextY);
+        doc.text('PRECIO UNIT.', colUnit,     hTextY);
+        doc.text('SUBTOTAL',     colSub,      hTextY, { align: 'right' });
         y += headerH;
 
         prod.filas.forEach((fila, idx) => {
@@ -222,54 +226,58 @@ export async function generarPDFCotizacion({
             doc.setLineWidth(0.15);
             doc.rect(M, y, CONTENT_W, rowH, 'FD');
 
+            const textY = y + (rowH * 0.6);
+
             // Cantidad
             doc.setFontSize(T.sm);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.dark);
-            doc.text(cant.toLocaleString('es-AR'), colCant + 4, y + 7.5);
+            doc.text(cant.toLocaleString('es-AR'), colCant + 4, textY);
             if (cant > 1) {
                 doc.setFontSize(T.xxs);
                 doc.setFont(undefined, 'normal');
                 doc.setTextColor(...C.grayText);
-                doc.text('unid.', colCant + 4 + doc.getTextWidth(cant.toLocaleString('es-AR')) + 2, y + 7.5);
+                doc.text('unid.', colCant + 4 + doc.getTextWidth(cant.toLocaleString('es-AR')) + 2, textY);
             }
 
             // Descuento
             if (pct !== null && pct > 0) {
                 const badgeTxt = `-${pct}%`;
-                const badgeW   = doc.getStringUnitWidth(badgeTxt) * 9 / doc.internal.scaleFactor + 6;
+                const badgeW   = doc.getStringUnitWidth(badgeTxt) * 8 / doc.internal.scaleFactor + 5;
+                const badgeH   = multi ? 5 : 6;
+                const badgeY   = y + (rowH - badgeH) / 2;
                 doc.setFillColor(255, 248, 220);
                 doc.setDrawColor(...C.gold);
                 doc.setLineWidth(0.4);
-                doc.roundedRect(colDesc, y + 3, badgeW, 6, 1.5, 1.5, 'FD');
-                doc.setFontSize(9);
+                doc.roundedRect(colDesc, badgeY, badgeW, badgeH, 1.5, 1.5, 'FD');
+                doc.setFontSize(multi ? 7.5 : 9);
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(...C.gold);
-                doc.text(badgeTxt, colDesc + badgeW / 2, y + 7.5, { align: 'center' });
+                doc.text(badgeTxt, colDesc + badgeW / 2, textY, { align: 'center' });
             } else {
                 doc.setFontSize(T.xs);
                 doc.setFont(undefined, 'normal');
                 doc.setTextColor(...C.grayText);
-                doc.text('—', colDesc, y + 7.5);
+                doc.text('—', colDesc, textY);
             }
 
             // Precio unitario
             doc.setFontSize(T.sm);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.dark);
-            doc.text(`$${unit.toLocaleString('es-AR')}`, colUnit, y + 7.5);
+            doc.text(`$${unit.toLocaleString('es-AR')}`, colUnit, textY);
             doc.setFontSize(T.xxs);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
-            doc.text('/u', colUnit + doc.getTextWidth(`$${unit.toLocaleString('es-AR')}`) + 1, y + 7.5);
+            doc.text('/u', colUnit + doc.getTextWidth(`$${unit.toLocaleString('es-AR')}`) + 1, textY);
 
             // Subtotal
             const maxSub = Math.max(...prod.filas.map(f => Number(f.cantidad) * Number(f.precioUnitario)));
             const esMax  = sub === maxSub && prod.filas.length > 1;
-            doc.setFontSize(T.md);
+            doc.setFontSize(multi ? T.sm : T.md);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...(esMax ? C.gold : C.navy));
-            doc.text(`$${sub.toLocaleString('es-AR')}`, colSub, y + 8, { align: 'right' });
+            doc.text(`$${sub.toLocaleString('es-AR')}`, colSub, textY + 0.5, { align: 'right' });
 
             y += rowH;
         });
@@ -277,7 +285,7 @@ export async function generarPDFCotizacion({
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.2);
         doc.line(M, y, pageW - M, y);
-        y += 8;
+        y += gapSec;
 
         // ── Nota de ahorro ──────────────────────────────────────────────────
         if (prod.filas.length >= 2) {
@@ -286,26 +294,27 @@ export async function generarPDFCotizacion({
             const p1   = Number(f1.precioUnitario)  || 0;
             const pMax = Number(fMax.precioUnitario) || 0;
             if (p1 > pMax && pMax > 0) {
-                y = checkNewPage(y, 16);
+                y = checkNewPage(y, 14);
                 const ahorro = Math.round(((p1 - pMax) / p1) * 100);
+                const boxH = multi ? 8 : 10;
                 doc.setFillColor(255, 248, 220);
                 doc.setDrawColor(...C.gold);
                 doc.setLineWidth(0.4);
-                doc.roundedRect(M, y, CONTENT_W, 10, 2, 2, 'FD');
-                doc.setFontSize(T.xs);
+                doc.roundedRect(M, y, CONTENT_W, boxH, 2, 2, 'FD');
+                doc.setFontSize(T.xxs);
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(...C.gold);
                 doc.text(
                     `Comprando ${Number(fMax.cantidad).toLocaleString('es-AR')} unidades ahorras un ${ahorro}% por unidad`,
-                    pageW / 2, y + 6.5, { align: 'center' }
+                    pageW / 2, y + (boxH * 0.6), { align: 'center' }
                 );
-                y += 16;
+                y += boxH + gapSec;
             }
         }
     }
 
     // ── Validez ─────────────────────────────────────────────────────────────
-    y = checkNewPage(y, 10);
+    y = checkNewPage(y, 8);
     doc.setFontSize(T.xxs);
     doc.setFont(undefined, 'italic');
     doc.setTextColor(...C.grayText);
@@ -313,7 +322,7 @@ export async function generarPDFCotizacion({
         `Valido por ${validezDias} dia${validezDias !== '1' ? 's' : ''} desde la fecha de emision`,
         pageW - M, y, { align: 'right' }
     );
-    y += 8;
+    y += 6;
 
     // ── Notas adicionales ───────────────────────────────────────────────────
     if (notas?.trim()) {
