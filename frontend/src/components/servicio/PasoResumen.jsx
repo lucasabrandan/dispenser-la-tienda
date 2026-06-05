@@ -309,7 +309,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                             ))}
                             <button onClick={() => setModoCustom(true)} className={chipCls(modoCustom)}>Otro</button>
                             {modoCustom && (
-                                <input type="number" min="0" max="100" autoFocus
+                                <input type="text" inputMode="decimal" autoFocus
                                     value={descuentoPorcentaje || ''}
                                     onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
                                     className="w-20 h-9 rounded-xl text-center font-black text-sm outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20" />

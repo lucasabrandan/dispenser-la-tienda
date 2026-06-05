@@ -189,8 +189,8 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     </div>
                     <div>
                         <label className={labelCls}>Costo *</label>
-                        <input type="number" value={costo} onChange={e => setCosto(e.target.value)}
-                            placeholder="0" min="0" className={inputCls} />
+                        <input type="text" inputMode="decimal" value={costo} onChange={e => setCosto(e.target.value)}
+                            placeholder="0" className={inputCls} />
                     </div>
                 </div>
 
@@ -220,7 +220,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                                     <span className="flex-1 text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">
                                         {repuesto.nombre}
                                     </span>
-                                    <input type="number" value={cantidad} min={1}
+                                    <input type="text" inputMode="numeric" value={cantidad}
                                         onChange={e => cambiarCantidad(repuesto.id, Number(e.target.value))}
                                         className="w-14 px-2 py-1 rounded-lg text-[12px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none text-center" />
                                     <button onClick={() => quitarRepuesto(repuesto.id)}

@@ -58,7 +58,7 @@ export default function CalculadoraMO({ desglose, esVisita, pctIVA, itemActual, 
                                 <span className="text-[11px] text-[#57534E] dark:text-[#9E9A94] whitespace-nowrap">Quiero {esVisita ? '' : 'c/u '}mínimo:</span>
                                 <div className="flex items-center gap-1 flex-1">
                                     <span className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$</span>
-                                    <input type="number" min="0" value={gananciaDeseada}
+                                    <input type="text" inputMode="decimal" value={gananciaDeseada}
                                         onChange={e => setGananciaDeseada(e.target.value)} placeholder="30000"
                                         className="flex-1 px-2 py-1.5 rounded-lg text-[13px] font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.08] dark:border-white/[0.08]" />
                                 </div>

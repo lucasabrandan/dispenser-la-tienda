@@ -51,7 +51,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                 <Label>Descuento (%)</Label>
                 <div className="flex items-center gap-3 mb-3">
                     <input
-                        type="number" min="0" max="100"
+                        type="text" inputMode="decimal"
                         value={descuentoPorcentaje}
                         onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
                         className="w-20 h-12 rounded-xl text-center font-black text-2xl outline-none bg-[#E8E5E0] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/[0.08] focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"

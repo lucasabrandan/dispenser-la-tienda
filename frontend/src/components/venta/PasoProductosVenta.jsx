@@ -133,8 +133,8 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                     className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90"
                                 >−</button>
                                 <input
-                                    type="number"
-                                    min="1"
+                                    type="text"
+                                    inputMode="numeric"
                                     value={p.cantidad}
                                     onFocus={e => e.target.select()}
                                     onChange={e => {
@@ -192,7 +192,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                 <div className="flex items-center gap-3">
                     <span className="text-xl">🚚</span>
                     <input
-                        type="number" min="0" value={costoEnvio}
+                        type="text" inputMode="decimal" value={costoEnvio}
                         onChange={e => setCostoEnvio(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0))}
                         onFocus={e => e.target.select()}
                         placeholder="0"

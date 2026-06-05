@@ -173,8 +173,8 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                                         className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90 transition-all"
                                     >−</button>
                                     <input
-                                        type="number"
-                                        min="0"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={stock}
                                         onFocus={e => e.target.select()}
                                         onChange={e => setDirecto(r, e.target.value)}

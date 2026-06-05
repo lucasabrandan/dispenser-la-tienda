@@ -215,7 +215,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
             <div className="grid grid-cols-2 gap-3">
                 <div>
                     <label className={labelCls}>Monto estimado</label>
-                    <input type="number" min="0" step="100"
+                    <input type="text" inputMode="decimal"
                         value={form.montoEstimado}
                         onChange={e => set('montoEstimado', e.target.value)}
                         placeholder="0"

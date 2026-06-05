@@ -267,7 +267,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                         {/* MO (copiado) */}
                         <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[#1C1917] dark:bg-[#0F0F0F]">
                             <span className="text-[10px] font-black text-[#5C5954] uppercase">MO $</span>
-                            <input type="number" value={costoExtra} onChange={e => setCostoExtra(e.target.value)}
+                            <input type="text" inputMode="decimal" value={costoExtra} onChange={e => setCostoExtra(e.target.value)}
                                 className="flex-1 bg-transparent text-white text-xl font-black outline-none" />
                         </div>
 

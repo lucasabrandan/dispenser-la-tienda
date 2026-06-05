@@ -51,7 +51,7 @@ export default function PasoCobro({
                     <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-2">Ajustar mano de obra (solo subir)</p>
                     <div className="flex items-center gap-2">
                         <span className="text-[12px] text-[#57534E] dark:text-[#9E9A94]">Extra:</span>
-                        <input type="number" min="0" step="1000"
+                        <input type="text" inputMode="decimal"
                             value={costoMOExtra || ''}
                             onChange={e => setCostoMOExtra(Math.max(0, Number(e.target.value) || 0))}
                             placeholder="0"

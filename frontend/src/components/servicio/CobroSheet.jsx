@@ -33,7 +33,7 @@ export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCer
                         <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest block mb-1">Monto final a cobrar</label>
                         <div className="flex items-center gap-2">
                             <span className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$</span>
-                            <input type="number" value={montoFinal} onChange={e => setMontoFinal(e.target.value)}
+                            <input type="text" inputMode="decimal" value={montoFinal} onChange={e => setMontoFinal(e.target.value)}
                                 className="flex-1 bg-transparent text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] outline-none" />
                         </div>
                         {Number(montoFinal) !== total && (

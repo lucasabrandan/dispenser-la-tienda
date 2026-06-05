@@ -353,7 +353,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                                                 return (
                                                                     <div key={filaIdx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-start">
                                                                         <input
-                                                                            type="number" min="1"
+                                                                            type="text" inputMode="numeric"
                                                                             placeholder="Ej: 300"
                                                                             value={fila.cantidad}
                                                                             onChange={e => actualizarCantidad(prodIdx, filaIdx, e.target.value)}
@@ -362,7 +362,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                                                         <div className="flex flex-col gap-1">
                                                                             <div className="relative">
                                                                                 <input
-                                                                                    type="number" min="0" max="100"
+                                                                                    type="text" inputMode="decimal"
                                                                                     placeholder="0"
                                                                                     value={fila.descuentoPct}
                                                                                     onChange={e => actualizarDescuento(prodIdx, filaIdx, e.target.value)}
@@ -373,7 +373,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                                                             <div className="relative">
                                                                                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A8A29E] text-[11px] pointer-events-none font-bold">$</span>
                                                                                 <input
-                                                                                    type="number" min="0"
+                                                                                    type="text" inputMode="decimal"
                                                                                     placeholder="Precio"
                                                                                     value={fila.precioUnitario}
                                                                                     onChange={e => actualizarPrecio(prodIdx, filaIdx, e.target.value)}
@@ -420,7 +420,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                 {/* Validez */}
                                 <div>
                                     <label className={LABEL}>Validez (dias)</label>
-                                    <input className={INPUT} type="number" min="1" value={validezDias}
+                                    <input className={INPUT} type="text" inputMode="numeric" value={validezDias}
                                         onChange={e => setValidezDias(e.target.value)} />
                                 </div>
 

@@ -136,7 +136,7 @@ export default function EjecutarAdminSheet({ servicio, calcularTotal, onConfirma
                                 <div className="flex items-center gap-2">
                                     <span className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">$</span>
                                     <input
-                                        type="number"
+                                        type="text" inputMode="decimal"
                                         value={montoEditado !== null ? montoEditado : montoAuto}
                                         onChange={e => setMontoEditado(e.target.value)}
                                         className="flex-1 bg-transparent text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] outline-none"

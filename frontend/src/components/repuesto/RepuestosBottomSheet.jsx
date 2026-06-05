@@ -70,8 +70,8 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
                             className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90 transition-all"
                         >−</button>
                         <input
-                            type="number"
-                            min="1"
+                            type="text"
+                            inputMode="numeric"
                             value={inputVal}
                             onFocus={e => e.target.select()}
                             onChange={e => {

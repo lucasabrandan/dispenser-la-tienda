@@ -149,7 +149,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         </div>
                         <div className="flex items-center gap-3">
                             <span className="text-[10px] font-black text-[#5C5954] uppercase tracking-widest">MO $ <span className="text-[8px] text-[#A8A29E] normal-case">(con IVA)</span></span>
-                            <input type="number" min="0"
+                            <input type="text" inputMode="decimal"
                                 value={itemActual.costoExtra}
                                 onChange={e => setItemActual({ ...itemActual, costoExtra: e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0) })}
                                 onFocus={e => e.target.select()} placeholder="0"

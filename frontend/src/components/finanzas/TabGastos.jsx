@@ -117,7 +117,7 @@ export default function TabGastos({ filtroMes, setFiltroMes }) {
                 </div>
                 <form onSubmit={handleGuardar} className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="text"   placeholder="Descripción"  value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className={inputCls} />
-                    <input type="number" placeholder="Monto" step="0.01" value={form.monto}  onChange={e => setForm({ ...form, monto: e.target.value })}       className={inputCls} />
+                    <input type="text" inputMode="decimal" placeholder="Monto" value={form.monto}  onChange={e => setForm({ ...form, monto: e.target.value })}       className={inputCls} />
                     <DateInput value={form.fecha} onChange={v => setForm({ ...form, fecha: v })} className={inputCls} />
                     <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })}
                         className={inputCls}>
