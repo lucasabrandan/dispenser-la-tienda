@@ -18,6 +18,7 @@ function buildSelectStyles(isDark) {
         placeholder:  (b)    => ({ ...b, color: muted, fontSize: 13 }),
         input:        (b)    => ({ ...b, color: text }),
         indicatorSep: ()     => ({ display: 'none' }),
+        menuPortal:   (b)    => ({ ...b, zIndex: 1100 }),
     };
 }
 
@@ -73,8 +74,10 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                 fotoUrl: r.fotoUrl || '',
                 precio: calcPrecioLista(r),
             })));
-        }).catch(() => toast.error('Error al cargar datos'))
-          .finally(() => setCargando(false));
+        }).catch(err => {
+            console.error('Error cargando datos cotización:', err);
+            toast.error('Error al cargar datos');
+        }).finally(() => setCargando(false));
     }, []);
 
     function calcPrecioLista(r) {
