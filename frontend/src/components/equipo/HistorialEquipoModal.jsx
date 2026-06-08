@@ -28,7 +28,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
     const historial = useMemo(() => {
         return servicios
             .filter(s => s.items?.some(it => it.equipoSerial === equipo.numeroSerie))
-            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || (b.id || 0) - (a.id || 0));
     }, [servicios, equipo.numeroSerie]);
 
     // Stats acumuladas (solo servicios REALIZADOS)

@@ -29,7 +29,7 @@ export default function ClienteCard({
     const equiposActivos = eqCli.filter(eq => eq.activo !== false);
 
     const serviciosCli   = [...servicios.filter(s => (s.clienteId || s.cliente?.id) === cliente.id)]
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || (b.id || 0) - (a.id || 0));
     const ultimoServicio = serviciosCli[0];
     const diasSinAtender = ultimoServicio
         ? Math.floor((new Date() - new Date(ultimoServicio.fecha)) / (1000 * 60 * 60 * 24))
