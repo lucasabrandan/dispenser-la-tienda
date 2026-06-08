@@ -271,8 +271,8 @@ export async function generarMultiPresupuesto(doc, {
         y = dibujarBloqueSolicitud(doc, { texto: trabajoComun, y, pageW });
     }
 
-    // Detectar si algún equipo tiene repuestos
-    const hayRepuestosP = ticketItems.some(it => (it.repuestosUsados || []).length > 0);
+    // Detectar si algún equipo tiene repuestos o M/O
+    const hayRepuestosP = ticketItems.some(it => (it.repuestosUsados || []).length > 0 || parseFloat(it.costoExtra || 0) > 0);
 
     // Construir filas de la tabla
     const bodyRows = [];
@@ -299,15 +299,22 @@ export async function generarMultiPresupuesto(doc, {
         const desc = (item.trabajo || item.trabajoRealizado || '').trim();
         const trabajoCell = desc || '—';
 
-        // Repuestos: solo si la columna existe
+        // Repuestos + M/O: armar celda con desglose
+        const mo = parseFloat(item.costoExtra || 0);
         const reps = item.repuestosUsados || [];
-        const repCell = reps.length > 0
-            ? reps.map(r => {
-                if (sinPrecios) return `· ${r.nombre} (x${r.cantidad})`;
+        const lineas = [];
+        if (mo > 0 && !sinPrecios) {
+            const moLabel = item.esVisita ? 'M/O Visita' : 'M/O Reparación';
+            lineas.push(`· ${moLabel} — $${mo.toLocaleString('es-AR')}`);
+        }
+        reps.forEach(r => {
+            if (sinPrecios) { lineas.push(`· ${r.nombre} (x${r.cantidad})`); }
+            else {
                 const sub = parseFloat(r.subtotal ?? r.precio * r.cantidad ?? 0);
-                return `· ${r.nombre} (x${r.cantidad}) — $${sub.toLocaleString('es-AR')}`;
-              }).join('\n')
-            : '—';
+                lineas.push(`· ${r.nombre} (x${r.cantidad}) — $${sub.toLocaleString('es-AR')}`);
+            }
+        });
+        const repCell = lineas.length > 0 ? lineas.join('\n') : '—';
 
         // Construir fila: N° badge + equipo + [trabajo] + [repuestos] + [importe]
         const row = [String(idx + 1), equipoCell];
@@ -332,7 +339,7 @@ export async function generarMultiPresupuesto(doc, {
     // Cabecera: N° + columnas dinámicas
     const colsP = ['N°', 'EQUIPO'];
     if (!trabajoComun) colsP.push('TRABAJO ESTIMADO');
-    if (hayRepuestosP) colsP.push('REPUESTOS ESTIMADOS');
+    if (hayRepuestosP) colsP.push('CONCEPTOS');
     if (!sinPrecios) colsP.push('IMPORTE');
     const headCols = [colsP];
 
