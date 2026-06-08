@@ -11,7 +11,7 @@ import CalculadoraMO from './CalculadoraMO';
 
 export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const {
-        db, setDb, clienteId, ticketItems,
+        db, setDb, clienteId, ticketItems, setTicketItems,
         itemActual, setItemActual,
         actualizarCantidad, quitarRepuesto,
         agregarAlTicket, calcularGananciaRepuesto,
@@ -93,7 +93,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
     return (
         <div className="flex flex-col gap-4 px-5 pb-6">
-            <TicketItemsList ticketItems={ticketItems} editarItem={editarItem} eliminarItem={eliminarItem} />
+            <TicketItemsList ticketItems={ticketItems} editarItem={editarItem} eliminarItem={eliminarItem} onReorder={setTicketItems} />
 
             {!formVisible && ticketItems.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2">

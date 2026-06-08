@@ -2,39 +2,77 @@ import { C, M, T, CONTENT_W } from './theme.js';
 import { cargarFoto, fitEnCaja } from './helpers.js';
 import { dibujarHeaderMini } from './layout.js';
 
-// Header mini: 15mm, margen inferior: 20mm → 262mm útiles
 const Y_INI_FOTOS = 17;
 
-// Tamaños normales (≤4 equipos): 3 por página, 1 equipo por fila
-const FOTO_V_W = 56, FOTO_V_H = 74;  // portrait
-const FOTO_H_W = 88, FOTO_H_H = 66;  // landscape
+// Resolución por tier para optimizar peso del PDF
+const TIER_QUALITY = {
+    1: { maxPx: 900, quality: 0.82 },
+    2: { maxPx: 700, quality: 0.78 },
+    3: { maxPx: 600, quality: 0.75 },
+};
 
-// Tamaños compactos (>4 equipos): grid 4 columnas
-const FOTO_V_W_C = 42, FOTO_V_H_C = 56;  // portrait compacto
-const FOTO_H_W_C = 74, FOTO_H_H_C = 56;  // landscape compacto
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-// Grid: 4 columnas, fotos apiladas verticalmente
-const GRID_COLS = 4;
-const GRID_GAP  = 3;  // mm entre columnas
-const GRID_COL_W = (CONTENT_W - (GRID_COLS - 1) * GRID_GAP) / GRID_COLS; // ~43mm
-const GRID_FOTO_H = 30; // altura de cada foto en grid
-
-function esHorizontal(foto) {
-    return foto && foto.w && foto.h && foto.w > foto.h;
+function equipoLabel(item) {
+    return [
+        item.modeloEquipo || item.equipoModelo || null,
+        item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? item.equipoSerial : null,
+    ].filter(Boolean).join(' · ') || 'Equipo';
 }
 
-function boxDims(foto, compacto) {
-    if (compacto) {
-        return esHorizontal(foto)
-            ? { bw: FOTO_H_W_C, bh: FOTO_H_H_C }
-            : { bw: FOTO_V_W_C, bh: FOTO_V_H_C };
+function equipoUbic(item) {
+    return item.ubicacionEquipo || item.equipoUbicacion || '';
+}
+
+// Cover con crop desde el centro: escala para llenar la celda y recorta lo que sobra
+function dibujarFotoEnCelda(doc, foto, x, y, bw, bh) {
+    if (!foto) {
+        doc.setFillColor(248, 248, 249);
+        doc.rect(x, y, bw, bh, 'F');
+        doc.setFontSize(5);
+        doc.setTextColor(...C.grayText);
+        doc.text('Sin foto', x + bw / 2, y + bh / 2, { align: 'center' });
+        return;
     }
-    return esHorizontal(foto)
-        ? { bw: FOTO_H_W, bh: FOTO_H_H }
-        : { bw: FOTO_V_W, bh: FOTO_V_H };
+    const imgW = foto.w || bw;
+    const imgH = foto.h || bh;
+    // Escalar al ratio mayor para que cubra toda la celda
+    const ratio = Math.max(bw / imgW, bh / imgH);
+    const drawW = imgW * ratio;
+    const drawH = imgH * ratio;
+    // Centrar (lo que sobra se recorta con clip)
+    const drawX = x + (bw - drawW) / 2;
+    const drawY = y + (bh - drawH) / 2;
+
+    doc.internal.write('q'); // save graphics state
+    // Definir rectángulo de recorte
+    const k = doc.internal.scaleFactor;
+    const pageH = doc.internal.pageSize.getHeight();
+    doc.internal.write(
+        `${(x * k).toFixed(2)} ${((pageH - y - bh) * k).toFixed(2)} ${(bw * k).toFixed(2)} ${(bh * k).toFixed(2)} re W n`
+    );
+    try { doc.addImage(foto.data, foto.format, drawX, drawY, drawW, drawH); } catch {}
+    doc.internal.write('Q'); // restore graphics state
 }
 
-// ── EVIDENCIA INLINE (columna derecha, 1 equipo) ──────────────────────────────
+async function cargarFotosEnLotes(ticketItems, soloAntes, tier = 1, tamLote = 5) {
+    const { maxPx, quality } = TIER_QUALITY[tier] || TIER_QUALITY[1];
+    const resultado = [];
+    for (let i = 0; i < ticketItems.length; i += tamLote) {
+        const lote = ticketItems.slice(i, i + tamLote);
+        const res = await Promise.all(
+            lote.map(async it => ({
+                item: it,
+                fotoA: await cargarFoto(it.fotoAntes, maxPx, quality),
+                fotoD: soloAntes ? null : await cargarFoto(it.fotoDespues, maxPx, quality),
+            }))
+        );
+        resultado.push(...res);
+    }
+    return resultado;
+}
+
+// ── EVIDENCIA INLINE (columna derecha, 1 equipo) ────────────────────────────
 export async function dibujarEvidenciaInline(doc, { x, y, w, fotoA, fotoD, titulo = 'EVIDENCIA DEL SERVICIO' }) {
     doc.setFontSize(T.label);
     doc.setFont(undefined, 'bold');
@@ -42,8 +80,8 @@ export async function dibujarEvidenciaInline(doc, { x, y, w, fotoA, fotoD, titul
     doc.text(titulo, x, y);
     y += 6;
 
-    const inlineW = Math.min(w, FOTO_V_W);
-    const inlineH = FOTO_V_H;
+    const inlineW = Math.min(w, 56);
+    const inlineH = 74;
     const fotos = [
         { data: fotoA, label: 'ESTADO INICIAL' },
         { data: fotoD, label: 'ESTADO FINAL'   },
@@ -67,266 +105,176 @@ export async function dibujarEvidenciaInline(doc, { x, y, w, fotoA, fotoD, titul
         doc.text(label, x + inlineW / 2, y, { align: 'center' });
         y += 3;
 
-        const { w: fW, h: fH } = fitEnCaja(data?.w, data?.h, inlineW, inlineH);
-        const offX = (inlineW - fW) / 2;
-
-        doc.setFillColor(220, 220, 225);
-        doc.roundedRect(x + offX + 1.5, y + 1.5, fW, fH, 2, 2, 'F');
-        try { doc.addImage(data.data, data.format, x + offX, y, fW, fH); } catch {}
-        doc.setDrawColor(...C.grayBorder);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(x + offX, y, fW, fH, 2, 2, 'S');
-        y += fH + 6;
+        doc.setFillColor(245, 245, 247);
+        doc.roundedRect(x, y, inlineW, inlineH, 1.5, 1.5, 'F');
+        if (data) {
+            const { w: fW, h: fH } = fitEnCaja(data.w, data.h, inlineW, inlineH);
+            const offX = (inlineW - fW) / 2;
+            const offY = (inlineH - fH) / 2;
+            try { doc.addImage(data.data, data.format, x + offX, y + offY, fW, fH); } catch {}
+            doc.setDrawColor(...C.grayBorder);
+            doc.setLineWidth(0.15);
+            doc.roundedRect(x + offX, y + offY, fW, fH, 1.5, 1.5, 'S');
+        }
+        y += inlineH + 6;
     });
 
     return y;
 }
 
-// Carga fotos en lotes para no saturar memoria
-async function cargarFotosEnLotes(ticketItems, soloAntes, tamLote = 5) {
-    const resultado = [];
-    for (let i = 0; i < ticketItems.length; i += tamLote) {
-        const lote = ticketItems.slice(i, i + tamLote);
-        const res = await Promise.all(
-            lote.map(async it => ({
-                item: it,
-                fotoA: await cargarFoto(it.fotoAntes),
-                fotoD: soloAntes ? null : await cargarFoto(it.fotoDespues),
-            }))
-        );
-        resultado.push(...res);
+// ── Tabla header — se repite en cada página ─────────────────────────────────
+function dibujarTablaHeader(doc, y, colDefs, soloUnaFoto) {
+    const headerH = 7;
+    // Fondo header
+    doc.setFillColor(...C.navy);
+    doc.rect(M, y, CONTENT_W, headerH, 'F');
+    // Texto header
+    doc.setFontSize(7);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('#', colDefs.num.x + colDefs.num.w / 2, y + headerH / 2 + 1.8, { align: 'center' });
+    doc.text('EQUIPO', colDefs.equipo.x + 2, y + headerH / 2 + 1.8);
+    if (soloUnaFoto) {
+        doc.text('EVIDENCIA', colDefs.fotoA.x + (colDefs.fotoA.w + colDefs.fotoD.w) / 2, y + headerH / 2 + 1.8, { align: 'center' });
+    } else {
+        doc.text('ESTADO INICIAL', colDefs.fotoA.x + colDefs.fotoA.w / 2, y + headerH / 2 + 1.8, { align: 'center' });
+        doc.text('ESTADO FINAL', colDefs.fotoD.x + colDefs.fotoD.w / 2, y + headerH / 2 + 1.8, { align: 'center' });
     }
-    return resultado;
+    return y + headerH;
 }
 
-// ── PÁGINA(S) DE EVIDENCIA COMPLETA (multi-equipo) ───────────────────────────
+// ── PÁGINA(S) DE EVIDENCIA — FORMATO TABLA ──────────────────────────────────
 export async function dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {
     tipoLabel = 'EVIDENCIA FOTOGRÁFICA',
     subtitulo = 'ANTES Y DESPUÉS',
     soloAntes = false,
     esPresupuesto = false,
-    yActual = null, // si se pasa, intenta dibujar inline sin nueva página
+    yActual = null,
 } = {}) {
     const pageH = doc.internal.pageSize.getHeight();
+    const Y_LIM = pageH - 18;
 
-    // Presupuesto: cargar AMBAS fotos (son fotos del cliente, no antes/después)
     const cargaSoloAntes = soloAntes && !esPresupuesto;
-    const fotosItems = await cargarFotosEnLotes(ticketItems, cargaSoloAntes, 5);
-
+    const totalItems = ticketItems.filter(it => it.fotoAntes || it.fotoDespues).length;
+    const tier = totalItems <= 4 ? 1 : totalItems <= 20 ? 2 : 3;
+    const fotosItems = await cargarFotosEnLotes(ticketItems, cargaSoloAntes, tier, 5);
     const conFotos = fotosItems.filter(x => x.fotoA || x.fotoD);
     if (conFotos.length === 0) return;
 
-    // Modo compacto: >4 equipos con fotos → grid de 4 columnas
-    const compacto = conFotos.length > 4;
-
-    const Y_LIM = pageH - 18;
-
-    // ── Intentar dibujar inline si cabe ────────────────────────────────────
-    let y;
-    // ¿Pocas fotos con 1 sola foto por equipo? → layout lado a lado (compacto inline)
+    // ¿Todos tienen solo 1 foto?
     const soloUnaFoto = conFotos.every(({ fotoA, fotoD }) => !(fotoA && fotoD));
-    const puedenLadoALado = !compacto && soloUnaFoto && conFotos.length <= 4;
-    const INLINE_FOTO_H = 50; // altura reducida para inline
-    const espacioInline = puedenLadoALado
-        ? 12 + INLINE_FOTO_H + 10 // 1 fila lado a lado
-        : compacto ? 999
-        : conFotos.reduce((h, { fotoA, fotoD }) => {
-            const maxH = Math.max(fotoA ? FOTO_V_H : 0, fotoD ? FOTO_V_H : 0);
-            return h + maxH + 10 + (fotoA && fotoD ? 3 : 0);
-        }, 12);
 
-    if (yActual && yActual + espacioInline < Y_LIM) {
-        // Cabe en la página actual — dibujar inline
-        y = yActual;
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...C.navy);
-        doc.text(tipoLabel.toUpperCase(), M, y);
-        y += 4;
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text(subtitulo, M, y);
-        y += 5;
+    // ── Definir columnas de la tabla ─────────────────────────────────────
+    const numW = 7;
+    const equipoW = tier === 1 ? 38 : tier === 2 ? 32 : 28;
+    const fotosW = CONTENT_W - numW - equipoW;
+    const fotoAW = soloUnaFoto ? fotosW : fotosW / 2;
+    const fotoDW = soloUnaFoto ? 0 : fotosW / 2;
 
-        if (puedenLadoALado) {
-            // Dibujar fotos lado a lado en una fila
-            const colW = (CONTENT_W - (conFotos.length - 1) * 4) / conFotos.length;
-            conFotos.forEach(({ item, fotoA, fotoD }, idx) => {
-                const foto = fotoA || fotoD;
-                const x = M + idx * (colW + 4);
-                // Label equipo
-                const parts = [
-                    item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? `S/N: ${item.equipoSerial}` : null,
-                    item.modeloEquipo || item.equipoModelo || null,
-                ].filter(Boolean);
-                doc.setFontSize(T.label);
-                doc.setFont(undefined, 'bold');
-                doc.setTextColor(...C.navy);
-                const lbl = doc.splitTextToSize(parts.join(' · ') || 'Equipo', colW);
-                doc.text(lbl[0], x + colW / 2, y, { align: 'center' });
-                // Foto inline
-                const fotoW = Math.min(colW, INLINE_FOTO_H * 0.75);
-                const fx = x + (colW - fotoW) / 2;
-                const fy = y + 4;
-                doc.setFillColor(220, 220, 225);
-                doc.roundedRect(fx + 1, fy + 1, fotoW, INLINE_FOTO_H, 1.5, 1.5, 'F');
-                if (foto) {
-                    const { w: fW, h: fH } = fitEnCaja(foto.w, foto.h, fotoW, INLINE_FOTO_H);
-                    const offX = (fotoW - fW) / 2;
-                    const offY = (INLINE_FOTO_H - fH) / 2;
-                    try { doc.addImage(foto.data, foto.format, fx + offX, fy + offY, fW, fH); } catch {}
-                    doc.setDrawColor(...C.grayBorder);
-                    doc.setLineWidth(0.15);
-                    doc.roundedRect(fx + offX, fy + offY, fW, fH, 1.5, 1.5, 'S');
-                }
-            });
-            y += INLINE_FOTO_H + 10;
-            return; // terminó inline, no seguir con el flujo normal
-        }
-    } else {
-        // Nueva página con header mini
-        doc.addPage();
-        dibujarHeaderMini(doc, { tipoLabel, nroDoc });
-        doc.setFontSize(T.xxs);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...C.grayText);
-        doc.text(subtitulo, M, Y_INI_FOTOS + 1);
-        y = Y_INI_FOTOS + 5;
-    }
-
-    // Dibuja una foto respetando proporción real dentro de su caja fija
-    const dibujarFoto = (foto, x, fy, bw, bh) => {
-        const { w: fW, h: fH } = fitEnCaja(foto?.w, foto?.h, bw, bh);
-        const offX = (bw - fW) / 2;
-        const offY = (bh - fH) / 2;
-        doc.setFillColor(220, 220, 225);
-        doc.roundedRect(x + 1, fy + 1, bw, bh, 1.5, 1.5, 'F');
-        if (foto) {
-            try { doc.addImage(foto.data, foto.format, x + offX, fy + offY, fW, fH); } catch {}
-            doc.setDrawColor(...C.grayBorder);
-            doc.setLineWidth(0.15);
-            doc.roundedRect(x + offX, fy + offY, fW, fH, 1.5, 1.5, 'S');
-        } else {
-            doc.setFillColor(...C.grayBg);
-            doc.roundedRect(x, fy, bw, bh, 1.5, 1.5, 'F');
-            doc.setFontSize(T.label);
-            doc.setTextColor(...C.grayText);
-            doc.text('Sin foto', x + bw / 2, fy + bh / 2, { align: 'center' });
-        }
+    const colDefs = {
+        num:    { x: M, w: numW },
+        equipo: { x: M + numW, w: equipoW },
+        fotoA:  { x: M + numW + equipoW, w: fotoAW },
+        fotoD:  { x: M + numW + equipoW + fotoAW, w: fotoDW },
     };
 
-    if (compacto) {
-        // ── GRID 4 COLUMNAS — cada equipo en card con fondo ─────────────────
-        const CARD_PAD = 2.5; // padding interno de la card
-        for (let i = 0; i < conFotos.length; i += GRID_COLS) {
-            const fila = conFotos.slice(i, i + GRID_COLS);
-            const tieneDos = fila.some(({ fotoA, fotoD }) => fotoA && fotoD);
-            // Altura interna: label(8) + fotos + labels antes/después
-            const innerH = 8 + GRID_FOTO_H * (tieneDos ? 2 : 1) + (tieneDos ? 8 : 0);
-            const cardH  = innerH + CARD_PAD * 2;
-            const blockH = cardH + 3; // gap entre filas
+    // Altura de cada fila según tier
+    const rowH = tier === 1 ? 55 : tier === 2 ? 48 : 46;
+    const lineW = 0.2;
 
-            if (y + blockH > Y_LIM) {
-                doc.addPage();
-                dibujarHeaderMini(doc, { tipoLabel, nroDoc });
-                y = Y_INI_FOTOS + 2;
-            }
+    // ── Primera página ───────────────────────────────────────────────────
+    doc.addPage();
+    dibujarHeaderMini(doc, { tipoLabel, nroDoc });
+    let y = Y_INI_FOTOS + 2;
+    y = dibujarTablaHeader(doc, y, colDefs, soloUnaFoto);
 
-            fila.forEach(({ item, fotoA, fotoD }, col) => {
-                const x = M + col * (GRID_COL_W + GRID_GAP);
-
-                // Card de fondo para agrupar visualmente
-                doc.setFillColor(...C.grayBg);
-                doc.setDrawColor(...C.grayBorder);
-                doc.setLineWidth(0.15);
-                doc.roundedRect(x - CARD_PAD, y, GRID_COL_W + CARD_PAD * 2, cardH, 1.5, 1.5, 'FD');
-
-                let fy = y + CARD_PAD;
-
-                // Etiqueta equipo
-                const parts = [
-                    item.modeloEquipo || item.equipoModelo || null,
-                    item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? item.equipoSerial : null,
-                ].filter(Boolean);
-                const eqLabel = parts.join(' · ') || 'Equipo';
-                const ubicLabel = item.ubicacionEquipo || item.equipoUbicacion || '';
-
-                doc.setFontSize(5);
-                doc.setFont(undefined, 'bold');
-                doc.setTextColor(...C.navy);
-                const labelLines = doc.splitTextToSize(eqLabel, GRID_COL_W);
-                doc.text(labelLines[0], x, fy + 3);
-                if (ubicLabel) {
-                    doc.setFontSize(4.5);
-                    doc.setFont(undefined, 'normal');
-                    doc.setTextColor(...C.grayText);
-                    const ubicLines = doc.splitTextToSize(ubicLabel, GRID_COL_W);
-                    doc.text(ubicLines[0], x, fy + 6);
-                }
-                fy += 8;
-
-                // Fotos apiladas con etiqueta antes/después
-                if (fotoA) {
-                    if (fotoD) { doc.setFontSize(4); doc.setFont(undefined, 'bold'); doc.setTextColor(...C.grayText); doc.text('ANTES', x + GRID_COL_W / 2, fy, { align: 'center' }); fy += 3; }
-                    dibujarFoto(fotoA, x, fy, GRID_COL_W, GRID_FOTO_H);
-                    fy += GRID_FOTO_H + 2;
-                }
-                if (fotoD) {
-                    doc.setFontSize(4); doc.setFont(undefined, 'bold'); doc.setTextColor(...C.grayText); doc.text('DESPUÉS', x + GRID_COL_W / 2, fy, { align: 'center' }); fy += 3;
-                    dibujarFoto(fotoD, x, fy, GRID_COL_W, GRID_FOTO_H);
-                }
-            });
-
-            y += blockH;
+    // ── Filas ────────────────────────────────────────────────────────────
+    conFotos.forEach(({ item, fotoA, fotoD }, idx) => {
+        // Salto de página
+        if (y + rowH > Y_LIM) {
+            doc.addPage();
+            dibujarHeaderMini(doc, { tipoLabel, nroDoc });
+            y = Y_INI_FOTOS + 2;
+            y = dibujarTablaHeader(doc, y, colDefs, soloUnaFoto);
         }
-    } else {
-        // ── MODO NORMAL: 1 equipo por fila (≤4 equipos) ─────────────────────
-        const GAP = 6;
-        for (const { item, fotoA, fotoD } of conFotos) {
-            const boxA = boxDims(fotoA, false);
-            const boxD = boxDims(fotoD, false);
-            const maxH = Math.max(boxA.bh, boxD.bh);
-            const tieneAmbas = fotoA && fotoD;
-            const blockH = maxH + 4 + (tieneAmbas ? 3 : 0) + GAP;
 
-            if (y + blockH > Y_LIM) {
-                doc.addPage();
-                dibujarHeaderMini(doc, { tipoLabel, nroDoc });
-                y = Y_INI_FOTOS + 2;
-            }
+        // Fondo zebra
+        if (idx % 2 === 0) {
+            doc.setFillColor(...C.grayZebra);
+            doc.rect(M, y, CONTENT_W, rowH, 'F');
+        }
 
-            const eqLabel = [
-                item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? `S/N: ${item.equipoSerial}` : null,
-                item.modeloEquipo || item.equipoModelo || null,
-                item.ubicacionEquipo || item.equipoUbicacion || null,
-            ].filter(Boolean).join('  ·  ') || 'Equipo';
+        // Número
+        doc.setFontSize(T.sm);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...C.navy);
+        doc.text(String(idx + 1), colDefs.num.x + colDefs.num.w / 2, y + rowH / 2 + 2, { align: 'center' });
 
-            doc.setFontSize(T.xxs);
+        // Datos equipo
+        const eqX = colDefs.equipo.x + 2;
+        const eqMaxW = colDefs.equipo.w - 4;
+        const serial = item.equipoSerial && !['SIN-SN','MOSTRADOR'].includes(item.equipoSerial) ? item.equipoSerial : '';
+        const modelo = item.modeloEquipo || item.equipoModelo || '';
+        const ubic = equipoUbic(item);
+
+        let ey = y + 4;
+        if (serial) {
+            doc.setFontSize(tier === 3 ? 7 : 7.5);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.navy);
-            doc.text(eqLabel, M, y);
-            y += 4;
-
-            if (fotoA && fotoD) {
-                const totalW = boxA.bw + 6 + boxD.bw;
-                const xBase  = M + (CONTENT_W - totalW) / 2;
-                // Labels ANTES / DESPUÉS centrados sobre cada foto
-                doc.setFontSize(T.label);
-                doc.setFont(undefined, 'bold');
-                doc.setTextColor(...C.grayText);
-                doc.text('ANTES', xBase + boxA.bw / 2, y, { align: 'center' });
-                doc.text('DESPUÉS', xBase + boxA.bw + 6 + boxD.bw / 2, y, { align: 'center' });
-                y += 3;
-                dibujarFoto(fotoA, xBase, y, boxA.bw, boxA.bh);
-                dibujarFoto(fotoD, xBase + boxA.bw + 6, y, boxD.bw, boxD.bh);
-            } else {
-                const foto = fotoA || fotoD;
-                const box  = boxDims(foto, false);
-                const xCentro = M + (CONTENT_W - box.bw) / 2;
-                dibujarFoto(foto, xCentro, y, box.bw, box.bh);
-            }
-            y += maxH + GAP;
+            const serialLines = doc.splitTextToSize(serial, eqMaxW);
+            serialLines.slice(0, 2).forEach((line, li) => {
+                doc.text(line, eqX, ey + 3.5 + li * 3.5);
+            });
+            ey += 3.5 + Math.min(serialLines.length, 2) * 3.5;
         }
-    }
+        if (modelo) {
+            doc.setFontSize(tier === 3 ? 5.5 : 6);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.dark);
+            const modeloLines = doc.splitTextToSize(modelo, eqMaxW);
+            modeloLines.slice(0, 2).forEach((line, li) => {
+                doc.text(line, eqX, ey + 2.5 + li * 3);
+            });
+            ey += 2 + Math.min(modeloLines.length, 2) * 3;
+        }
+        if (ubic) {
+            doc.setFontSize(tier === 3 ? 5 : 5.5);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(...C.grayText);
+            const ubicLines = doc.splitTextToSize(ubic, eqMaxW);
+            ubicLines.slice(0, 2).forEach((line, li) => {
+                doc.text(line, eqX, ey + 2.5 + li * 3);
+            });
+        }
+
+        // Foto antes
+        const fotoPad = 1;
+        dibujarFotoEnCelda(doc, fotoA, colDefs.fotoA.x + fotoPad, y + fotoPad,
+            (soloUnaFoto ? fotoAW + fotoDW : fotoAW) - fotoPad * 2, rowH - fotoPad * 2);
+
+        // Foto después
+        if (!soloUnaFoto) {
+            dibujarFotoEnCelda(doc, fotoD, colDefs.fotoD.x + fotoPad, y + fotoPad,
+                fotoDW - fotoPad * 2, rowH - fotoPad * 2);
+        }
+
+        // Líneas de celda
+        doc.setDrawColor(...C.grayBorder);
+        doc.setLineWidth(lineW);
+        // Horizontal inferior
+        doc.line(M, y + rowH, M + CONTENT_W, y + rowH);
+        // Verticales
+        doc.line(colDefs.equipo.x, y, colDefs.equipo.x, y + rowH);
+        doc.line(colDefs.fotoA.x, y, colDefs.fotoA.x, y + rowH);
+        if (!soloUnaFoto) {
+            doc.line(colDefs.fotoD.x, y, colDefs.fotoD.x, y + rowH);
+        }
+        // Borde derecho
+        doc.line(M + CONTENT_W, y, M + CONTENT_W, y + rowH);
+        // Borde izquierdo
+        doc.line(M, y, M, y + rowH);
+
+        y += rowH;
+    });
 }

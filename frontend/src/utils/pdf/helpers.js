@@ -75,31 +75,35 @@ export function buildMetaLinea(doc, modelo, serial, ubicacion, garantia, maxW, f
 // ── Fotos ─────────────────────────────────────────────────────────────────────
 
 // Resolución máxima para fotos en PDF (reduce tamaño y memoria significativamente)
-const PDF_MAX_W = 1200;
-const PDF_MAX_H = 900;
+// Por defecto 800px — suficiente para fotos grandes (tier 1, ~70mm a 150dpi ≈ 413px)
+const PDF_MAX_DEFAULT = 900;
 
-function resolverDimensiones(nw, nh) {
-    let w = nw || PDF_MAX_W;
-    let h = nh || PDF_MAX_H;
-    if (w > PDF_MAX_W) { h = Math.round(h * PDF_MAX_W / w); w = PDF_MAX_W; }
-    if (h > PDF_MAX_H) { w = Math.round(w * PDF_MAX_H / h); h = PDF_MAX_H; }
+function resolverDimensiones(nw, nh, maxPx = PDF_MAX_DEFAULT) {
+    let w = nw || maxPx;
+    let h = nh || maxPx;
+    const mayor = Math.max(w, h);
+    if (mayor > maxPx) {
+        const ratio = maxPx / mayor;
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+    }
     return { w, h };
 }
 
 // Convierte cualquier blob/File a JPEG via canvas (soporta WebP, HEIC, etc.)
-// Limita la resolución a PDF_MAX_W × PDF_MAX_H para no saturar memoria
-async function blobAJpeg(blob) {
+// maxPx controla la resolución máxima del lado mayor, quality la compresión JPEG
+async function blobAJpeg(blob, maxPx = PDF_MAX_DEFAULT, quality = 0.75) {
     return new Promise(resolve => {
         const url = URL.createObjectURL(blob);
         const img = new Image();
         img.onload = () => {
             try {
-                const { w, h } = resolverDimensiones(img.naturalWidth, img.naturalHeight);
+                const { w, h } = resolverDimensiones(img.naturalWidth, img.naturalHeight, maxPx);
                 const canvas = document.createElement('canvas');
                 canvas.width  = w;
                 canvas.height = h;
                 canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
                 URL.revokeObjectURL(url);
                 resolve({ dataUrl, w, h });
             } catch { URL.revokeObjectURL(url); resolve(null); }
@@ -116,7 +120,9 @@ export function fitEnCaja(imgW, imgH, maxW, maxH) {
     return { w: imgW * ratio, h: imgH * ratio };
 }
 
-export async function cargarFoto(src) {
+// maxPx: resolución máxima del lado mayor (default 800)
+// quality: compresión JPEG 0-1 (default 0.75)
+export async function cargarFoto(src, maxPx = PDF_MAX_DEFAULT, quality = 0.75) {
     if (!src) return null;
 
     // Data URL → cargar directo en canvas sin pasar por fetch/blob.
@@ -127,12 +133,12 @@ export async function cargarFoto(src) {
             const img = new Image();
             img.onload = () => {
                 try {
-                    const { w, h } = resolverDimensiones(img.naturalWidth, img.naturalHeight);
+                    const { w, h } = resolverDimensiones(img.naturalWidth, img.naturalHeight, maxPx);
                     const canvas = document.createElement('canvas');
                     canvas.width  = w;
                     canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve({ data: canvas.toDataURL('image/jpeg', 0.82), format: 'JPEG', w, h });
+                    resolve({ data: canvas.toDataURL('image/jpeg', quality), format: 'JPEG', w, h });
                 } catch { resolve(null); }
             };
             img.onerror = () => { _fotosConError++; resolve(null); };
@@ -159,7 +165,7 @@ export async function cargarFoto(src) {
     if (!blob) return null;
 
     // Convertir siempre a JPEG via canvas (jsPDF no soporta WebP/HEIC/etc.)
-    const result = await blobAJpeg(blob);
+    const result = await blobAJpeg(blob, maxPx, quality);
     if (!result) return null;
     return { data: result.dataUrl, format: 'JPEG', w: result.w, h: result.h };
 }

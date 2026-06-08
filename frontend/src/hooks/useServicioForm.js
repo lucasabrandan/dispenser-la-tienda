@@ -41,6 +41,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     fotoAntes: null, fotoDespues: null,
   });
 
+  const [editingIdx, setEditingIdx] = useState(null); // índice original al editar un item
   const [repuestoElegido, setRepuestoElegido] = useState(null);
   const [tecnicoSeleccionado, setTecnicoSeleccionado] = useState(null); // { id, nombre } — solo admin
 
@@ -392,6 +393,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   const editarItem = idx => {
     if (estaBloqueado) return;
     setItemActual(ticketItems[idx]);
+    setEditingIdx(idx);
     const nueva = [...ticketItems];
     nueva.splice(idx, 1);
     setTicketItems(nueva);
@@ -497,7 +499,16 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         : `VENTA: ${item.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}`,
       esVisita:       item.esVisita || false,
     };
-    setTicketItems(prev => [...prev, nuevoRenglon]);
+    if (editingIdx !== null) {
+      setTicketItems(prev => {
+        const copia = [...prev];
+        copia.splice(editingIdx, 0, nuevoRenglon);
+        return copia;
+      });
+      setEditingIdx(null);
+    } else {
+      setTicketItems(prev => [...prev, nuevoRenglon]);
+    }
     // Pre-llenar con moBase (ya incluye IVA)
     const defaultMO = Number(configGlobal?.manoDeObraBase) || 72600;
     setItemActual(prev => ({
@@ -723,6 +734,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
 
       // Reset
       setTicketItems([]);
+      setEditingIdx(null);
       setClienteId(null);
       setIdEdicion(null);
       setDescuentoPorcentaje(0);
