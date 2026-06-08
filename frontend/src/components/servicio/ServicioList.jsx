@@ -102,7 +102,7 @@ export default function ServicioList({ onEditar }) {
                 let data = res.data.content || res.data || [];
                 if (!Array.isArray(data)) data = [];
                 if (!esAdmin) data = data.filter(s => s.estado !== 'PRESUPUESTO');
-                setServicios(data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha)));
+                setServicios(data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha) || (b.id || 0) - (a.id || 0)));
             })
             .catch(() => toast.error('Error al conectar con el historial'));
     };

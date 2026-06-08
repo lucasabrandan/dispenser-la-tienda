@@ -75,7 +75,7 @@ export default function PresupuestosManager() {
             ]);
             const data = resPresu.data.content || resPresu.data || [];
             setPresupuestos(Array.isArray(data)
-                ? data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha))
+                ? data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha) || (b.id || 0) - (a.id || 0))
                 : []);
             const todos = resEjec.data.content || resEjec.data || [];
             setEjecutadosIds(new Set(todos.filter(s => s.presupuestoOrigenId).map(s => s.presupuestoOrigenId)));
@@ -167,7 +167,7 @@ export default function PresupuestosManager() {
 
     const presupuestosFiltradosTipo = useMemo(() => {
         const items = tipoFiltro ? presupuestosConNro.filter(p => p.servicioTipo === tipoFiltro) : presupuestosConNro;
-        return [...items].sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha));
+        return [...items].sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha) || (b.id || 0) - (a.id || 0));
     }, [presupuestosConNro, tipoFiltro]);
 
     const filtros = useFiltros(presupuestosFiltradosTipo, {
