@@ -17,7 +17,7 @@ public class Equipo extends BaseEntity {
     private String marca;
     private String modelo;
 
-    @Column(name = "numero_serie", nullable = false)
+    @Column(name = "numero_serie", nullable = false, unique = true)
     private String numeroSerie;
 
     private String ubicacion;

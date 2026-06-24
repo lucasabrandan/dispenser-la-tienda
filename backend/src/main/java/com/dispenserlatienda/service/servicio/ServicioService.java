@@ -432,7 +432,7 @@ public class ServicioService {
                 tipoDetectado = ServicioTipo.TECNICA;
             }
 
-            Equipo equipo = equipoRepository.findByNumeroSerie(itemDto.equipoSerial()).orElse(null);
+            Equipo equipo = equipoRepository.findFirstByNumeroSerie(itemDto.equipoSerial()).orElse(null);
 
             LocalDate fechaGarantia = null;
             if (itemDto.garantiaHasta() != null && !itemDto.garantiaHasta().isBlank()) {

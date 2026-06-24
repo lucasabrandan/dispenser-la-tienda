@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface EquipoRepository extends JpaRepository<Equipo, Long> {
-    Optional<Equipo> findByNumeroSerie(String numeroSerie);
+    Optional<Equipo> findFirstByNumeroSerie(String numeroSerie);
     boolean existsByNumeroSerie(String numeroSerie);
     boolean existsBySedeId(Long sedeId);  // ← AGREGADO
 

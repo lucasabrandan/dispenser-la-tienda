@@ -122,7 +122,7 @@ public class ImportacionService {
         // Equipo: buscar por serial o crear
         Equipo equipo;
         if (!equipoSerial.isEmpty()) {
-            equipo = equipoRepo.findByNumeroSerie(equipoSerial)
+            equipo = equipoRepo.findFirstByNumeroSerie(equipoSerial)
                 .orElseGet(() -> equipoRepo.save(
                     new Equipo(sede, null, equipoModelo.isEmpty() ? "Dispenser" : equipoModelo,
                                equipoSerial, null, null, null, null)
