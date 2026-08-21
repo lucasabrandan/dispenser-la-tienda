@@ -330,9 +330,15 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   const consultarAntecedentes = async serial => {
     if (!serial || serial === 'MOSTRADOR') { setHistorialEquipo(null); return; }
     try {
-      const res = await api.get(`/servicios?equipoSerial=${serial}`);
-      if (res.data?.length > 0) {
-        const ultimo = res.data[0];
+      // El endpoint /servicios no tiene filtro "equipoSerial" — el filtro real es
+      // "busqueda" (busca por N/S, cliente, sede, etc. via LIKE), y devuelve un
+      // Page (con .content), no un array directo. Filtramos por coincidencia exacta
+      // de serie porque "busqueda" matchea por substring.
+      const res = await api.get(`/servicios?busqueda=${encodeURIComponent(serial)}&sort=fechaServicio,desc&size=50`);
+      const lista = res.data?.content || res.data || [];
+      const coincidencias = lista.filter(s => s.items?.some(i => i.equipoSerial === serial));
+      if (coincidencias.length > 0) {
+        const ultimo = coincidencias[0];
         const itemGarantia = ultimo.items?.find(i => i.equipoSerial === serial && i.garantiaHasta);
         const garantiaInfo = itemGarantia ? estadoGarantia(itemGarantia.garantiaHasta) : null;
         setHistorialEquipo({ ...ultimo, garantiaInfo });
