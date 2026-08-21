@@ -187,6 +187,17 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                     <div className="p-2.5 rounded-xl bg-[#FFF4D6] dark:bg-[#2A1E00] border border-[#D48800]/30">
                                         <p className="text-[10px] font-bold text-[#D48800] dark:text-[#F0A500]">Último servicio</p>
                                         <p className="text-[10px] text-[#57534E] dark:text-[#9E9A94]">{historialEquipo.fecha} — {historialEquipo.items?.[0]?.trabajoRealizado}</p>
+                                        {historialEquipo.garantiaInfo && (
+                                            historialEquipo.garantiaInfo.vigente ? (
+                                                <p className="text-[10px] font-black mt-1 text-[#16A34A] dark:text-[#4ADE80]">
+                                                    🛡️ Garantía vigente · {historialEquipo.garantiaInfo.dias} día{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'} restante{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'}
+                                                </p>
+                                            ) : (
+                                                <p className="text-[10px] font-black mt-1 text-[#D13A28] dark:text-[#E8422F]">
+                                                    ⏳ Garantía vencida hace {Math.abs(historialEquipo.garantiaInfo.dias)} día{Math.abs(historialEquipo.garantiaInfo.dias) === 1 ? '' : 's'}
+                                                </p>
+                                            )
+                                        )}
                                     </div>
                                 )}
                                 <input className={inputClass} value={itemActual.modeloEquipo || ''}

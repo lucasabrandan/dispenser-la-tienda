@@ -66,6 +66,7 @@ public class RepuestoController {
             @RequestParam(value = "cantidadMinima", required = false) Integer cantidadMinima,
             @RequestParam(value = "porcentajeCuotas3", required = false) BigDecimal porcentajeCuotas3,
             @RequestParam(value = "porcentajeCuotas6", required = false) BigDecimal porcentajeCuotas6,
+            @RequestParam(value = "costosRealesJson", required = false) String costosRealesJson,
             @RequestParam(value = "stock", required = false, defaultValue = "0") Integer stock,
             @RequestParam(value = "foto", required = false) MultipartFile foto,
             @RequestParam(value = "foto2", required = false) MultipartFile foto2,
@@ -89,6 +90,7 @@ public class RepuestoController {
             repuesto.setCantidadMinima(cantidadMinima);
             repuesto.setPorcentajeCuotas3(porcentajeCuotas3);
             repuesto.setPorcentajeCuotas6(porcentajeCuotas6);
+            repuesto.setCostosRealesJson(costosRealesJson);
             repuesto.setStock(stock < 0 ? 0 : stock);
 
             if (foto != null && !foto.isEmpty()) {
@@ -130,6 +132,7 @@ public class RepuestoController {
             @RequestParam(value = "cantidadMinima", required = false) Integer cantidadMinima,
             @RequestParam(value = "porcentajeCuotas3", required = false) BigDecimal porcentajeCuotas3,
             @RequestParam(value = "porcentajeCuotas6", required = false) BigDecimal porcentajeCuotas6,
+            @RequestParam(value = "costosRealesJson", required = false) String costosRealesJson,
             @RequestParam(value = "stock", required = false) Integer stock,
             @RequestParam(value = "foto", required = false) MultipartFile foto,
             @RequestParam(value = "foto2", required = false) MultipartFile foto2,
@@ -159,6 +162,7 @@ public class RepuestoController {
             repuesto.setCantidadMinima(cantidadMinima);
             repuesto.setPorcentajeCuotas3(porcentajeCuotas3);
             repuesto.setPorcentajeCuotas6(porcentajeCuotas6);
+            if (costosRealesJson != null) repuesto.setCostosRealesJson(costosRealesJson);
             if (stock != null) repuesto.setStock(stock < 0 ? 0 : stock);
 
             // Foto principal

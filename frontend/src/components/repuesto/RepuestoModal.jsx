@@ -8,11 +8,15 @@ import SeccionesPrecios from './SeccionesPrecios';
 const INITIAL_FORM = {
     id: null, sku: '', nombre: '', descripcion: '',
     costo: '', porcentajeGanancia: '', porcentajeMarkup: '', precio: '',
-    costoBlanco: '', porcentajeImpuestos: '30',
+    costoBlanco: '', porcentajeImpuestos: '0',
     precioFacturado: '', precioNetoCliente: '',
     precioCantidad: '', cantidadMinima: '',
     porcentajeCuotas3: '', porcentajeCuotas6: '',
-    stock: '', fotoUrl: '', fotoUrl2: '', fotoUrl3: ''
+    stock: '', fotoUrl: '', fotoUrl2: '', fotoUrl3: '',
+    costosReales: [
+        { nombre: 'IIBB (Buenos Aires)', porcentaje: '3.5', activo: true },
+        { nombre: 'Comisión tarjeta', porcentaje: '3.5', activo: false },
+    ],
 };
 
 function calcularPrecios(f) {
@@ -20,14 +24,25 @@ function calcularPrecios(f) {
     const margen = parseFloat(f.porcentajeGanancia) || 0;
     const markup = parseFloat(f.porcentajeMarkup) || 0;
     const imp    = parseFloat(f.porcentajeImpuestos) || 0;
-    const precioBase = costo > 0 ? costo * (1 + margen / 100) : 0;
+
+    // Efectivo: costo + tu ganancia + un markup opcional (ej. recargo por tarjeta/cuotas).
+    const precioBase  = costo > 0 ? costo * (1 + margen / 100) : 0;
     const precioNegro = precioBase > 0 ? precioBase * (1 + markup / 100) : 0;
-    const costoB = parseFloat(f.costoBlanco) || (costo > 0 ? costo * 1.21 : 0);
-    const precioFact = costoB > 0 ? costoB * (1 + margen / 100) * (1 + imp / 100) : 0;
-    const netoCliente = precioFact > 0 ? precioFact / 1.21 : 0;
+
+    // Costo blanco es solo informativo (costo + 21% IVA) — ya NO participa del cálculo
+    // del precio facturado, para no aplicar la ganancia dos veces.
+    const costoB = costo > 0 ? costo * 1.21 : 0;
+
+    // Facturado: partimos del precio efectivo (que ya tiene tu ganancia adentro) y lo
+    // "engordamos" lo justo para que, después de que el Impuestos% (IVA+IIBB+cheques)
+    // se coma su parte, te siga quedando en el bolsillo la MISMA ganancia que en efectivo.
+    // No se vuelve a aplicar el margen — solo se compensa el costo extra de facturar.
+    const netoCliente = precioNegro > 0 && imp < 100 ? precioNegro / (1 - imp / 100) : 0;
+    const precioFact  = netoCliente > 0 ? netoCliente * 1.21 : 0;
+
     return {
         precio:            precioNegro > 0 ? precioNegro.toFixed(2) : '',
-        costoBlanco:       costoB > 0 ? costoB.toFixed(2) : f.costoBlanco,
+        costoBlanco:       costoB > 0 ? costoB.toFixed(2) : '',
         precioFacturado:   precioFact > 0 ? precioFact.toFixed(2) : '',
         precioNetoCliente: netoCliente > 0 ? netoCliente.toFixed(2) : '',
     };
@@ -39,15 +54,19 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
     const [fotoFiles, setFotoFiles] = useState([null, null, null]);
     const [fotoPreviews, setFotoPreviews] = useState(['', '', '']);
     const [seccionAbierta, setSeccionAbierta] = useState('basico');
-    const [costoBlancoManual, setCostoBlancoManual] = useState(false);
 
     useEffect(() => {
         if (repuestoEdicion) {
-            setForm({ ...INITIAL_FORM, ...repuestoEdicion, porcentajeImpuestos: repuestoEdicion.porcentajeImpuestos ?? '30' });
-            setCostoBlancoManual(!!repuestoEdicion.costoBlanco);
+            let costosReales = INITIAL_FORM.costosReales;
+            if (repuestoEdicion.costosRealesJson) {
+                try {
+                    const parseado = JSON.parse(repuestoEdicion.costosRealesJson);
+                    if (Array.isArray(parseado) && parseado.length > 0) costosReales = parseado;
+                } catch (e) { /* JSON invalido, se usa el default */ }
+            }
+            setForm({ ...INITIAL_FORM, ...repuestoEdicion, porcentajeImpuestos: repuestoEdicion.porcentajeImpuestos ?? '0', costosReales });
         } else {
             setForm(INITIAL_FORM);
-            setCostoBlancoManual(false);
         }
         setFotoFiles([null, null, null]);
         setFotoPreviews(['', '', '']);
@@ -64,16 +83,29 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
     const cambiarFinanciero = (campo, valor) => {
         const valorLimpio = sanitizarNumero(valor);
         const nuevoForm = { ...form, [campo]: valorLimpio };
-        if (campo === 'costoBlanco') setCostoBlancoManual(valor !== '');
-        if (campo === 'costo' && !costoBlancoManual) {
-            const c = parseFloat(valor) || 0;
-            nuevoForm.costoBlanco = c > 0 ? (c * 1.21).toFixed(2) : '';
-        }
         const precios = calcularPrecios(nuevoForm);
         // No pisar el campo que el usuario esta tipeando con .toFixed(2)
         delete precios[campo];
-        if (costoBlancoManual && campo !== 'costo') delete precios.costoBlanco;
         setForm({ ...nuevoForm, ...precios });
+    };
+
+    // Costos reales (IIBB, tarjeta, etc.) que bajan tu ganancia pero NO se le cobran al
+    // cliente — son informativos, no afectan el precio. No se guardan con el producto.
+    const cambiarCostoReal = (idx, campo, valor) => {
+        const nuevos = form.costosReales.map((c, i) =>
+            i === idx ? { ...c, [campo]: campo === 'porcentaje' ? sanitizarNumero(valor) : valor } : c
+        );
+        setForm({ ...form, costosReales: nuevos });
+    };
+    const toggleCostoReal = (idx) => {
+        const nuevos = form.costosReales.map((c, i) => i === idx ? { ...c, activo: !c.activo } : c);
+        setForm({ ...form, costosReales: nuevos });
+    };
+    const agregarCostoReal = () => {
+        setForm({ ...form, costosReales: [...form.costosReales, { nombre: '', porcentaje: '', activo: true }] });
+    };
+    const quitarCostoReal = (idx) => {
+        setForm({ ...form, costosReales: form.costosReales.filter((_, i) => i !== idx) });
     };
 
     const manejarFoto = async (e, index = 0) => {
@@ -111,6 +143,7 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
             if (form.cantidadMinima !== '') fd.append('cantidadMinima', parseInt(form.cantidadMinima) || 0);
             if (form.porcentajeCuotas3 !== '') fd.append('porcentajeCuotas3', parseFloat(form.porcentajeCuotas3) || 0);
             if (form.porcentajeCuotas6 !== '') fd.append('porcentajeCuotas6', parseFloat(form.porcentajeCuotas6) || 0);
+            fd.append('costosRealesJson', JSON.stringify(form.costosReales || []));
             if (fotoFiles[0]) fd.append('foto', fotoFiles[0]);
             if (fotoFiles[1]) fd.append('foto2', fotoFiles[1]);
             if (fotoFiles[2]) fd.append('foto3', fotoFiles[2]);
@@ -169,6 +202,8 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                     <SeccionesPrecios
                         form={form} seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta}
                         cambiarFinanciero={cambiarFinanciero} sanitizarNumero={sanitizarNumero} setForm={setForm}
+                        cambiarCostoReal={cambiarCostoReal} toggleCostoReal={toggleCostoReal}
+                        agregarCostoReal={agregarCostoReal} quitarCostoReal={quitarCostoReal}
                     />
 
                     <div className="flex gap-3 mt-1">

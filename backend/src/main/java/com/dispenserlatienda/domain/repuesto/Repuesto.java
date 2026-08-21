@@ -53,6 +53,11 @@ public class Repuesto {
     @Column(columnDefinition = "TEXT")
     private String imagen;
 
+    // JSON: [{nombre,porcentaje,activo}] - costos reales (IIBB, tarjeta, etc.) que bajan
+    // la ganancia real pero NO afectan el precio que se le muestra al cliente.
+    @Column(columnDefinition = "TEXT")
+    private String costosRealesJson;
+
     public Repuesto() {}
 
     public Repuesto(String nombre, BigDecimal precio, Integer stock) {
@@ -144,4 +149,7 @@ public class Repuesto {
 
     public String getImagen() { return imagen; }
     public void setImagen(String imagen) { this.imagen = imagen; }
+
+    public String getCostosRealesJson() { return costosRealesJson; }
+    public void setCostosRealesJson(String costosRealesJson) { this.costosRealesJson = costosRealesJson; }
 }

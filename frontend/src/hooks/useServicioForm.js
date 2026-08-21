@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
-import { getTodayISO, formatDateISO } from '../utils/dateUtils';
+import { getTodayISO, formatDateISO, estadoGarantia } from '../utils/dateUtils';
 import { toTitleCase } from '../utils/titleCase';
 
 const DRAFT_KEY = 'servicio_borrador';
@@ -333,10 +333,16 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       const res = await api.get(`/servicios?equipoSerial=${serial}`);
       if (res.data?.length > 0) {
         const ultimo = res.data[0];
-        setHistorialEquipo(ultimo);
         const itemGarantia = ultimo.items?.find(i => i.equipoSerial === serial && i.garantiaHasta);
-        if (itemGarantia && new Date(itemGarantia.garantiaHasta) > new Date()) {
-          toast.success(`🛡️ GARANTÍA HASTA: ${itemGarantia.garantiaHasta}`, { duration: 6000 });
+        const garantiaInfo = itemGarantia ? estadoGarantia(itemGarantia.garantiaHasta) : null;
+        setHistorialEquipo({ ...ultimo, garantiaInfo });
+        if (garantiaInfo) {
+          const dias = Math.abs(garantiaInfo.dias);
+          if (garantiaInfo.vigente) {
+            toast.success(`🛡️ Garantía vigente: quedan ${dias} día${dias === 1 ? '' : 's'} (hasta ${garantiaInfo.hasta})`, { duration: 6000 });
+          } else {
+            toast(`⏳ Garantía vencida hace ${dias} día${dias === 1 ? '' : 's'} (venció ${garantiaInfo.hasta})`, { duration: 6000 });
+          }
         }
       } else {
         setHistorialEquipo(null);

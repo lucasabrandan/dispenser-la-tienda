@@ -15,6 +15,19 @@ export const inicioMes = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
 // Ultimo dia del mes de una fecha
 export const finMes = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 
+// Estado de garantía respecto de hoy, a partir de una fecha "hasta" (YYYY-MM-DD).
+// dias >= 0 y vigente = true  → días que quedan de garantía
+// dias <  0 y vigente = false → días que pasaron desde que venció
+export function estadoGarantia(fechaHastaISO) {
+    if (!fechaHastaISO) return null;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const hasta = new Date(fechaHastaISO);
+    hasta.setHours(0, 0, 0, 0);
+    const dias = Math.round((hasta - hoy) / 86400000);
+    return { dias, vigente: dias >= 0, hasta: fechaHastaISO };
+}
+
 // Convierte periodo rapido (MES, MES_ANT, ANO, CUSTOM, TODO) a rango {desde, hasta}
 export function resolverFechas(periodoRapido, mesSelector, desde, hasta) {
     const now = new Date();
