@@ -9,6 +9,7 @@ import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import { useMontos } from '../../context/MontosContext';
+import { estadoGarantia } from '../../utils/dateUtils';
 
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
@@ -295,9 +296,19 @@ export default function ServicioList({ onEditar }) {
 
                                         {s.items?.length > 0 && s.servicioTipo === 'TECNICA' && (
                                             <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
-                                                {s.items.slice(0, 2).map((it, idx) => (
-                                                    <p key={`${it.equipoSerial || 'it'}-${idx}`} className="text-[10px] text-[#A8A29E] truncate">· {it.equipoSerial} — {it.trabajoRealizado}</p>
-                                                ))}
+                                                {s.items.slice(0, 2).map((it, idx) => {
+                                                    const g = it.garantiaHasta ? estadoGarantia(it.garantiaHasta) : null;
+                                                    return (
+                                                        <p key={`${it.equipoSerial || 'it'}-${idx}`} className="text-[10px] text-[#A8A29E] truncate">
+                                                            · {it.equipoSerial} — {it.trabajoRealizado}
+                                                            {g && (
+                                                                <span className={`ml-1.5 font-bold ${g.vigente ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>
+                                                                    {g.vigente ? `· 🛡️ ${g.dias}d` : `· ⏳ vencida hace ${Math.abs(g.dias)}d`}
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                    );
+                                                })}
                                                 {s.items.length > 2 && <p className="text-[10px] text-[#A8A29E]">+{s.items.length - 2} más</p>}
                                             </div>
                                         )}
@@ -396,13 +407,22 @@ export default function ServicioList({ onEditar }) {
                         </h3>
                         <p className="text-[11px] text-[#A8A29E] mb-4">#{modalDetalle.id} · {modalDetalle.fecha}</p>
                         <div className="max-h-[50vh] overflow-y-auto space-y-2 mb-4">
-                            {modalDetalle.items.map((it, idx) => (
+                            {modalDetalle.items.map((it, idx) => {
+                                const g = it.garantiaHasta ? estadoGarantia(it.garantiaHasta) : null;
+                                return (
                                 <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.04] dark:border-white/[0.04]">
                                     <div className="flex justify-between mb-1">
                                         <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
                                         {esAdmin && <M valor={Number(it.costo)} className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]" />}
                                     </div>
                                     <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] leading-snug mb-2">{it.trabajoRealizado}</p>
+                                    {g && (
+                                        <p className={`text-[11px] font-black mb-2 ${g.vigente ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>
+                                            {g.vigente
+                                                ? `🛡️ Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
+                                                : `⏳ Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
+                                        </p>
+                                    )}
                                     {it.repuestosUsados?.length > 0 && (
                                         <p className="text-[10px] text-[#A8A29E] pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
                                             <span className="font-bold">Repuestos: </span>
@@ -410,7 +430,8 @@ export default function ServicioList({ onEditar }) {
                                         </p>
                                     )}
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                         <button onClick={() => setModalDetalle(null)}
                             className="w-full py-3 rounded-xl font-bold text-sm text-white active:scale-95 bg-[#1C1917] dark:bg-[#F0EEE9] dark:text-[#1C1917]">
