@@ -434,10 +434,13 @@ public class ServicioService {
 
             Equipo equipo = equipoRepository.findFirstByNumeroSerie(itemDto.equipoSerial()).orElse(null);
 
-            LocalDate fechaGarantia = null;
-            if (itemDto.garantiaHasta() != null && !itemDto.garantiaHasta().isBlank()) {
-                fechaGarantia = LocalDate.parse(itemDto.garantiaHasta());
-            }
+            // Garantia: 3 meses desde la fecha del servicio, para todo item con equipo real (no MOSTRADOR),
+            // una vez que el servicio queda REALIZADO. Se calcula siempre en el backend para que aplique
+            // sin importar si el servicio se cerro directo ("Cobrar ahora") o via aprobacion de presupuesto.
+            boolean tieneEquipoItem = itemDto.equipoSerial() != null && !itemDto.equipoSerial().equalsIgnoreCase("MOSTRADOR");
+            LocalDate fechaGarantia = (servicio.getEstado() == EstadoServicio.REALIZADO && tieneEquipoItem)
+                    ? servicio.getFechaServicio().plusMonths(3)
+                    : null;
 
             BigDecimal costoBlindado = itemDto.costo().max(BigDecimal.ZERO);
             BigDecimal extraBlindado = (itemDto.costoExtra() != null) ? itemDto.costoExtra().max(BigDecimal.ZERO) : BigDecimal.ZERO;
@@ -518,6 +521,18 @@ public class ServicioService {
         }
         if (estado == EstadoServicio.COBRADO && s.getFechaCobro() == null) {
             s.setFechaCobro(LocalDateTime.now());
+        }
+
+        // Garantia: si el servicio pasa a REALIZADO por esta via (ej. aprobar presupuesto desde la lista,
+        // sin pasar por "Cobrar ahora"), completar la garantia de 3 meses en los items que tengan equipo
+        // y todavia no la tengan cargada. Asi el calculo queda igual sin importar el camino usado.
+        if (estado == EstadoServicio.REALIZADO) {
+            LocalDate fechaGarantia = (s.getFechaServicio() != null ? s.getFechaServicio() : LocalDate.now()).plusMonths(3);
+            for (ServicioItem item : s.getItems()) {
+                if (item.getEquipo() != null && item.getGarantiaHasta() == null) {
+                    item.setGarantiaHasta(fechaGarantia);
+                }
+            }
         }
 
         return mapToDTO(servicioRepository.save(s));
