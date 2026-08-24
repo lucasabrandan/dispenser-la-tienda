@@ -225,7 +225,7 @@ export default function ServicioManager({
                                 value={filtros.busqueda}
                                 onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, S/N, ubicación..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
                                 autoFocus={mostrarBusqueda}
                             />
                             {filtros.busqueda && (
@@ -253,11 +253,11 @@ export default function ServicioManager({
                                     <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
                                         <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
                                         <button onClick={() => { exportarServiciosCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-[14px] md:text-[13px] font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
                                             📥 Exportar CSV
                                         </button>
                                         <button onClick={() => { setModalImportar(true); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-[14px] md:text-[13px] font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
                                             📤 Importar históricos
                                         </button>
                                     </div>
@@ -267,7 +267,7 @@ export default function ServicioManager({
 
                         {esAdmin && (
                             <button onClick={() => setModalCrear(true)}
-                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase items-center transition-all active:scale-95 bg-brand-red shrink-0">
+                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label text-white uppercase items-center transition-all active:scale-95 bg-brand-red shrink-0">
                                 + Nuevo
                             </button>
                         )}
@@ -288,45 +288,45 @@ export default function ServicioManager({
                         <FiltrosPanel hook={filtros} estados={[]} conBusqueda={false} conRango />
                         {esAdmin && tecnicos.length > 0 && (
                             <select value={usuarioId} onChange={e => setUsuarioId(e.target.value)}
-                                className="w-full h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]">
+                                className="w-full h-8 px-2 rounded-lg text-label font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]">
                                 <option value="">Todos los técnicos</option>
                                 {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                             </select>
                         )}
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-muted uppercase shrink-0">Orden</span>
+                            <span className="text-label font-bold text-muted uppercase shrink-0">Orden</span>
                             <select value={ordenServicio} onChange={e => setOrdenServicio(e.target.value)}
-                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]">
+                                className="flex-1 h-8 px-2 rounded-lg text-label font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]">
                                 <option value="fechaServicio,desc">Más reciente primero</option>
                                 <option value="fechaServicio,asc">Más antiguo primero</option>
                                 <option value="total,desc">Mayor monto primero</option>
                                 <option value="total,asc">Menor monto primero</option>
                             </select>
                         </div>
-                        <p className="text-[10px] text-center text-muted font-bold">{filtros.totalItems} resultados</p>
+                        <p className="text-caption text-center text-muted font-bold">{filtros.totalItems} resultados</p>
                     </div>
                 )}
 
                 {/* ═══ SELECCIÓN MASIVA ═══ */}
                 {modoSeleccion && (
                     <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <span className="text-[11px] font-bold text-ink flex-1">
+                        <span className="text-caption font-bold text-ink flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
                         {seleccionados.size > 0 && tabActual !== 'ARCHIVADO' && (
                             <button onClick={() => setConfirmMasivo('ARCHIVADO')}
-                                className="h-7 px-3 rounded-lg font-bold text-[10px] bg-chip text-secondary active:scale-95">
+                                className="h-7 px-3 rounded-lg font-bold text-label bg-chip text-secondary active:scale-95">
                                 Archivar
                             </button>
                         )}
                         {seleccionados.size > 0 && esAdmin && (
                             <button onClick={() => setConfirmEliminar({ ids: [...seleccionados], modo: 'masivo' })}
-                                className="h-7 px-3 rounded-lg font-bold text-[10px] text-brand-red active:scale-95">
+                                className="h-7 px-3 rounded-lg font-bold text-label text-brand-red active:scale-95">
                                 Eliminar
                             </button>
                         )}
                         <button onClick={() => { setModoSeleccion(false); setSeleccionados(new Set()); }}
-                            className="h-7 px-3 rounded-lg font-bold text-[10px] text-muted active:scale-95">
+                            className="h-7 px-3 rounded-lg font-bold text-label text-muted active:scale-95">
                             Cancelar
                         </button>
                     </div>
@@ -342,8 +342,8 @@ export default function ServicioManager({
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <p className="text-3xl mb-2">{TABS.find(t => t.id === tabActual)?.icon || '📋'}</p>
-                        <p className="text-[13px] font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'resultados'}</p>
-                        <p className="text-[11px] text-muted mt-1">Deslizá para ver otros estados</p>
+                        <p className="text-body font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'resultados'}</p>
+                        <p className="text-caption text-muted mt-1">Deslizá para ver otros estados</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-2">
@@ -401,7 +401,7 @@ export default function ServicioManager({
                                 <h3 className="text-[15px] font-black text-ink">
                                     {servicioEjecutar ? '🔧 Ejecutar Trabajo' : servicioDuplicar ? '⧉ Duplicar Presupuesto' : servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
                                 </h3>
-                                <p className="text-[11px] text-muted mt-0.5">
+                                <p className="text-caption text-muted mt-0.5">
                                     {servicioEjecutar
                                         ? `Ppto #${servicioEjecutar.id} · modificá y confirmá`
                                         : servicioDuplicar

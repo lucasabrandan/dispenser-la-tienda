@@ -29,7 +29,7 @@ const INPUT = `w-full p-3 rounded-xl outline-none transition-all
     focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
     placeholder:text-muted`;
 
-const LABEL = 'block text-[10px] font-black text-muted uppercase mb-1.5 tracking-widest';
+const LABEL = 'block text-label font-black text-muted uppercase mb-1.5 tracking-widest';
 
 // Producto vacío para agregar al array
 const crearProductoVacio = () => ({
@@ -218,7 +218,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                             <h3 className="text-lg font-black text-ink uppercase leading-none">
                                 Cotizacion por volumen
                             </h3>
-                            <p className="text-[10px] font-bold text-muted mt-1">
+                            <p className="text-caption font-bold text-muted mt-1">
                                 {productos.length === 1 ? 'Precios escalonados por cantidad' : `${productos.length} productos`}
                             </p>
                         </div>
@@ -275,21 +275,21 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                         <button onClick={() => toggleProducto(prodIdx)}
                                             className="w-full flex items-center justify-between px-4 py-3 active:scale-[0.99] transition-all">
                                             <div className="flex items-center gap-2 min-w-0">
-                                                <span className="w-6 h-6 rounded-lg bg-brand-red text-white text-[10px] font-black flex items-center justify-center shrink-0">
+                                                <span className="w-6 h-6 rounded-lg bg-brand-red text-white text-label font-black flex items-center justify-center shrink-0">
                                                     {prodIdx + 1}
                                                 </span>
-                                                <span className="text-[13px] font-black text-ink truncate">
+                                                <span className="text-body font-black text-ink truncate">
                                                     {prod.productoOpt?.label || 'Seleccionar producto'}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1.5 shrink-0">
                                                 {productos.length > 1 && (
                                                     <span onClick={(e) => { e.stopPropagation(); quitarProducto(prodIdx); }}
-                                                        className="w-6 h-6 rounded-lg flex items-center justify-center text-muted hover:text-[#D13A28] text-[11px] transition-all">
+                                                        className="w-6 h-6 rounded-lg flex items-center justify-center text-muted hover:text-[#D13A28] text-label transition-all">
                                                         ✕
                                                     </span>
                                                 )}
-                                                <span className={`text-[10px] text-muted transition-transform duration-200 ${prod.abierto ? 'rotate-180' : ''}`}>
+                                                <span className={`text-label text-muted transition-transform duration-200 ${prod.abierto ? 'rotate-180' : ''}`}>
                                                     ▾
                                                 </span>
                                             </div>
@@ -320,10 +320,10 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                                     {prod.productoOpt && (
                                                         <div className="mt-2 px-3 py-2.5 rounded-xl bg-card border border-black/[0.05] dark:border-white/[0.05]">
                                                             <div className="flex items-center justify-between mb-1">
-                                                                <span className="text-[9px] font-black text-muted uppercase tracking-wider">Precio lista</span>
-                                                                {prod.productoOpt.sku && <span className="text-[9px] font-black text-brand-red">{prod.productoOpt.sku}</span>}
+                                                                <span className="text-label font-black text-muted uppercase tracking-wider">Precio lista</span>
+                                                                {prod.productoOpt.sku && <span className="text-label font-black text-brand-red">{prod.productoOpt.sku}</span>}
                                                             </div>
-                                                            <p className="text-[13px] font-black text-ink">
+                                                            <p className="text-body font-black text-ink">
                                                                 ${precioLista(prod).toLocaleString('es-AR')}
                                                             </p>
                                                         </div>
@@ -336,14 +336,14 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                                         <div className="flex items-center justify-between mb-2">
                                                             <label className={LABEL + ' mb-0'}>Escala de precios</label>
                                                             <button onClick={() => agregarFila(prodIdx)}
-                                                                className="text-[11px] font-black text-brand-red uppercase tracking-wide hover:opacity-70 transition-all">
+                                                                className="text-label font-black text-brand-red uppercase tracking-wide hover:opacity-70 transition-all">
                                                                 + Fila
                                                             </button>
                                                         </div>
 
                                                         <div className="grid grid-cols-[1fr_1fr_auto] gap-2 mb-1.5 px-1">
-                                                            <span className="text-[9px] font-black text-muted uppercase">Cantidad</span>
-                                                            <span className="text-[9px] font-black text-muted uppercase">Desc. · Precio</span>
+                                                            <span className="text-label font-black text-muted uppercase">Cantidad</span>
+                                                            <span className="text-label font-black text-muted uppercase">Desc. · Precio</span>
                                                             <span className="w-7" />
                                                         </div>
 
@@ -371,13 +371,13 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                                                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted font-black text-sm pointer-events-none">%</span>
                                                                             </div>
                                                                             <div className="relative">
-                                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted text-[11px] pointer-events-none font-bold">$</span>
+                                                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted text-caption pointer-events-none font-bold">$</span>
                                                                                 <input
                                                                                     type="text" inputMode="decimal"
                                                                                     placeholder="Precio"
                                                                                     value={fila.precioUnitario}
                                                                                     onChange={e => actualizarPrecio(prodIdx, filaIdx, e.target.value)}
-                                                                                    className="w-full pl-6 pr-2 py-1.5 rounded-lg text-[11px] font-bold outline-none
+                                                                                    className="w-full pl-6 pr-2 py-1.5 rounded-lg text-caption font-bold outline-none
                                                                                         bg-card
                                                                                         text-muted dark:text-[#9E9A94]
                                                                                         border border-black/[0.05] dark:border-white/[0.05]
@@ -394,7 +394,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                                                         </button>
 
                                                                         {fila.cantidad && fila.precioUnitario && (
-                                                                            <div className="col-span-3 text-right text-[11px] text-muted -mt-1 pr-10">
+                                                                            <div className="col-span-3 text-right text-caption text-muted -mt-1 pr-10">
                                                                                 Subtotal: <span className="font-black text-ink">
                                                                                     ${sub.toLocaleString('es-AR')}
                                                                                 </span>
@@ -413,7 +413,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
 
                                 {/* Boton agregar producto */}
                                 <button onClick={() => setProductos(prev => [...prev, crearProductoVacio()])}
-                                    className="w-full py-3 rounded-2xl border-2 border-dashed border-[#D13A28]/30 dark:border-[#E8422F]/30 text-[12px] font-black text-brand-red uppercase tracking-wide hover:bg-[#D13A28]/5 transition-all active:scale-[0.98]">
+                                    className="w-full py-3 rounded-2xl border-2 border-dashed border-[#D13A28]/30 dark:border-[#E8422F]/30 text-label font-black text-brand-red uppercase tracking-wide hover:bg-[#D13A28]/5 transition-all active:scale-[0.98]">
                                     + Agregar otro producto
                                 </button>
 
@@ -438,11 +438,11 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                     {/* Footer */}
                     <div className="flex gap-2 px-6 py-4 shrink-0 border-t border-black/[0.07] dark:border-white/[0.07] bg-card rounded-b-[2rem]">
                         <button onClick={onCerrar}
-                            className="flex-1 py-3 bg-chip text-ink rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            className="flex-1 py-3 bg-chip text-ink rounded-xl font-black text-label uppercase hover:opacity-80 transition-all active:scale-95">
                             Cancelar
                         </button>
                         <button onClick={generarPDF}
-                            className="flex-[2] py-3 bg-brand-red text-white rounded-xl font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95">
+                            className="flex-[2] py-3 bg-brand-red text-white rounded-xl font-black text-label uppercase hover:opacity-90 transition-all active:scale-95">
                             Generar PDF
                         </button>
                     </div>
