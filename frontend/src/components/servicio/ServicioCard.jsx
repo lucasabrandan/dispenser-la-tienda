@@ -11,6 +11,7 @@ function M({ valor, className = '' }) {
 
 const BADGE = {
     PRESUPUESTO:           { label: 'Pendiente',       cls: 'bg-[var(--warning-bg)] text-[var(--warning-tx)]' },
+    EN_PROGRESO:           { label: 'En curso',        cls: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' },
     COMPLETADO:            { label: 'Realizado',       cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
     PENDIENTE_FACTURACION: { label: 'Por cobrar',      cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
     FACTURADO:             { label: 'Facturado',       cls: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
@@ -27,6 +28,7 @@ const MODALIDAD_LABELS = {
 
 const BORDER = {
     PRESUPUESTO:           '#D48800',
+    EN_PROGRESO:           '#0891B2',
     COMPLETADO:            '#3B82F6',
     PENDIENTE_FACTURACION: '#8B5CF6',
     FACTURADO:             '#6366F1',

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import OrdenForm from './OrdenForm';
-import KanbanBoard from './KanbanBoard';
 import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { toast } from 'react-hot-toast';
@@ -162,7 +161,6 @@ export default function DespachoManager() {
     const [filtrTecnico, setFiltrTecnico] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState('');
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
-    const [vistaKanban, setVistaKanban] = useState(false);
     const [seleccionando, setSeleccionando] = useState(false);
     const [seleccionadas, setSeleccionadas] = useState(new Set());
     const [confirmMasivo, setConfirmMasivo] = useState(false);
@@ -252,11 +250,6 @@ export default function DespachoManager() {
                             className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
                             ⚙
                         </button>
-                        <button onClick={() => setVistaKanban(v => !v)}
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${vistaKanban ? 'bg-[#3B82F6] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}
-                            title={vistaKanban ? 'Vista lista' : 'Vista kanban'}>
-                            {vistaKanban ? '\u2630' : '\u25A6'}
-                        </button>
                         <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{ordenesFiltradas.length} ordenes</span>
                         {seleccionando ? (
                             <button onClick={salirSeleccion}
@@ -281,8 +274,8 @@ export default function DespachoManager() {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-                {/* SwipeColumns — estados (solo en vista lista) */}
-                {!vistaKanban && <SwipeColumns columns={columns} activeId={estadoFiltro} onChangeColumn={setEstadoFiltro} />}
+                {/* SwipeColumns — estados */}
+                <SwipeColumns columns={columns} activeId={estadoFiltro} onChangeColumn={setEstadoFiltro} />
 
                 {/* Filtros colapsables */}
                 {mostrarFiltros && (
@@ -300,13 +293,8 @@ export default function DespachoManager() {
                     </div>
                 )}
 
-                {/* Vista Kanban */}
-                {vistaKanban && !cargando && (
-                    <KanbanBoard ordenes={ordenes} filtroTecnico={filtrTecnico} onEditar={abrirEditar} />
-                )}
-
                 {/* Lista agrupada por técnico */}
-                {!vistaKanban && (cargando ? (
+                {cargando ? (
                     <div className="flex flex-col gap-2">
                         {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
                     </div>
@@ -347,7 +335,7 @@ export default function DespachoManager() {
                             </div>
                         );
                     })
-                ))}
+                )}
             </div>
 
             {/* Barra masiva */}

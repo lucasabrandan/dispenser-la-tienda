@@ -330,12 +330,6 @@ export default function ServicioManager({
                         <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
-                        {seleccionados.size > 0 && tabActual === 'PRESUPUESTO' && (
-                            <button onClick={() => ejecutarMasiva('APROBADO')}
-                                className="h-7 px-3 rounded-lg font-bold text-[10px] text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
-                                Aprobar
-                            </button>
-                        )}
                         {seleccionados.size > 0 && (
                             <button onClick={() => ejecutarMasiva('ARCHIVADO')}
                                 className="h-7 px-3 rounded-lg font-bold text-[10px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
