@@ -74,6 +74,12 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
         if (!modalidad) { toast.error('Elegi la modalidad de cobro'); return; }
 
         setGuardando(true);
+
+        // Dos llamadas separadas a proposito (crear el servicio, despues cerrar la
+        // orden): si la primera falla no se creo nada, se puede reintentar tranquilo.
+        // Si la primera anda bien y la segunda falla, el servicio YA existe — hay que
+        // avisar eso puntualmente y cerrar el modal, para que Marcos no reintente y
+        // termine duplicando el trabajo.
         try {
             const modalidadSel = MODALIDADES.find(m => m.id === modalidad);
             const repuestosUsados = seleccionados.map(s => ({
@@ -99,44 +105,53 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                 } catch { /* foto no critica */ }
             }
 
-            await api.post('/servicios', {
-                clienteNombre: orden.clienteNombre || '',
-                sedeId:        Number(sedeId),
-                sedeNombre:    sedeNombre || sedeSel?.nombre || '',
-                usuarioId:     tecnicoId,
-                servicioTipo:  'TECNICA',
-                estado:        modalidadSel.destino,
-                modalidadCobro: modalidad === 'PENDIENTE' ? null : modalidad,
-                montoFinal:    Number(costo),
-                fecha:         getTodayISO(),
-                ordenId:       orden.id,
-                observaciones: observaciones.trim() || null,
-                items: [{
-                    equipoSerial:     serial.trim() || 'S/N',
-                    tecnico:          String(tecnicoId),
-                    trabajoTipo:      'REPARACION',
-                    metodoPago,
-                    trabajoRealizado: descripcion,
-                    costo:            Number(costo),
-                    repuestosUsados,
-                    fotoDespues:      fotoUrl,
-                }],
-            });
+            try {
+                await api.post('/servicios', {
+                    clienteNombre: orden.clienteNombre || '',
+                    sedeId:        Number(sedeId),
+                    sedeNombre:    sedeNombre || sedeSel?.nombre || '',
+                    usuarioId:     tecnicoId,
+                    servicioTipo:  'TECNICA',
+                    estado:        modalidadSel.destino,
+                    modalidadCobro: modalidad === 'PENDIENTE' ? null : modalidad,
+                    montoFinal:    Number(costo),
+                    fecha:         getTodayISO(),
+                    ordenId:       orden.id,
+                    observaciones: observaciones.trim() || null,
+                    items: [{
+                        equipoSerial:     serial.trim() || 'S/N',
+                        tecnico:          String(tecnicoId),
+                        trabajoTipo:      'REPARACION',
+                        metodoPago,
+                        trabajoRealizado: descripcion,
+                        costo:            Number(costo),
+                        repuestosUsados,
+                        fotoDespues:      fotoUrl,
+                    }],
+                });
+            } catch {
+                toast.error('No se pudo registrar el trabajo. Probá de nuevo.');
+                setGuardando(false);
+                return;
+            }
 
-            // Notas para el admin: combinar observaciones + descripcion
-            const nota = observaciones.trim()
-                ? `${descripcion.trim()} | Obs: ${observaciones.trim()}`
-                : descripcion.trim();
+            // A partir de aca el servicio ya quedo creado — pase lo que pase con el
+            // cierre de la orden, no hay que dejar reintentar desde este modal.
+            try {
+                const nota = observaciones.trim()
+                    ? `${descripcion.trim()} | Obs: ${observaciones.trim()}`
+                    : descripcion.trim();
 
-            await api.patch(`/ordenes/${orden.id}/estado`, {
-                estado:       'COMPLETADA',
-                notasTecnico: nota,
-            });
+                await api.patch(`/ordenes/${orden.id}/estado`, {
+                    estado:       'COMPLETADA',
+                    notasTecnico: nota,
+                });
+                toast.success('Trabajo registrado');
+            } catch {
+                toast.error('El trabajo se guardó, pero no se pudo cerrar la orden. Avisale al admin para que la cierre — no lo vuelvas a cargar.', { duration: 8000 });
+            }
 
-            toast.success('Trabajo registrado');
             onGuardado();
-        } catch {
-            toast.error('No se pudo registrar el trabajo');
         } finally {
             setGuardando(false);
         }
