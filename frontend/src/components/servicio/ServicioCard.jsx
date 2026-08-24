@@ -117,38 +117,38 @@ export default function ServicioCard({
                             onClick={() => onToggleSelect(servicio.id)}
                             className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all ${seleccionado ? 'bg-[#D13A28] border-[#D13A28]' : 'border-[#E8E5E0] dark:border-[#3E3E3E]'}`}
                         >
-                            {seleccionado && <span className="text-white text-[9px] font-black">✓</span>}
+                            {seleccionado && <span className="text-white text-label font-black">✓</span>}
                         </button>
                     )}
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <span className={`text-[11px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${badge.cls}`}>
+                        <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${badge.cls}`}>
                             {badge.label}
                         </span>
                         {esPpto && diasPendiente > 0 && (
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${antiguedadCritica ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]' : 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'}`}>
+                            <span className={`text-label font-bold px-1.5 py-0.5 rounded-md shrink-0 ${antiguedadCritica ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]' : 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'}`}>
                                 {diasPendiente}d
                             </span>
                         )}
-                        <span className="text-[11px] font-bold text-muted shrink-0">#{servicio.id}</span>
+                        <span className="text-caption font-bold text-muted shrink-0">#{servicio.id}</span>
                         {servicio.nroDocumento && (
-                            <span className="text-[9px] text-muted truncate">{servicio.nroDocumento}</span>
+                            <span className="text-label text-muted truncate">{servicio.nroDocumento}</span>
                         )}
                     </div>
                     <div className="text-right shrink-0">
-                        <M valor={total} className="text-[17px] font-black leading-none text-ink block" />
-                        <p className="text-[10px] text-muted mt-0.5">{servicio.fecha}</p>
+                        <M valor={total} className="text-body-lg font-black leading-none text-ink block" />
+                        <p className="text-caption text-muted mt-0.5">{servicio.fecha}</p>
                     </div>
                 </div>
 
                 {/* Fila 2: cliente */}
-                <p className="font-black text-[16px] leading-tight text-ink mb-0.5">
+                <p className="font-black text-body leading-tight text-ink mb-0.5">
                     {servicio.clienteNombre}
                 </p>
 
                 {/* Fila 3: sede + técnico (una sola línea, corta con … si no entra) + modalidad cobro */}
                 <div className="flex items-center gap-2">
                     {(servicio.sedeNombre || servicio.usuarioNombre) && (
-                        <p className="flex-1 min-w-0 truncate text-[12px] text-muted">
+                        <p className="flex-1 min-w-0 truncate text-caption text-muted">
                             {[
                                 servicio.sedeNombre    && `📍 ${servicio.sedeNombre}`,
                                 servicio.usuarioNombre && `👤 ${servicio.usuarioNombre}`,
@@ -156,7 +156,7 @@ export default function ServicioCard({
                         </p>
                     )}
                     {servicio.modalidadCobro && (
-                        <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md ${servicio.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]' : servicio.modalidadCobro === 'CON_FACTURA' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]'}`}>
+                        <span className={`shrink-0 text-label font-bold px-1.5 py-0.5 rounded-md ${servicio.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]' : servicio.modalidadCobro === 'CON_FACTURA' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]'}`}>
                             {MODALIDAD_LABELS[servicio.modalidadCobro] || servicio.modalidadCobro}
                         </span>
                     )}
@@ -166,27 +166,27 @@ export default function ServicioCard({
                 {(servicio.fechaCompletado || servicio.fechaFacturacion || servicio.fechaCobro || servicio.montoFinal) && (
                     <div className="flex flex-wrap gap-1.5 mt-1">
                         {servicio.montoFinal && Number(servicio.montoFinal) !== total && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
+                            <span className="text-label font-bold px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
                                 Final: ${Math.round(Number(servicio.montoFinal)).toLocaleString('es-AR')}
                             </span>
                         )}
                         {servicio.fechaCompletado && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
                                 Hecho {servicio.fechaCompletado.slice(0, 10)}
                             </span>
                         )}
                         {servicio.fechaFacturacion && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
                                 Fact. {servicio.fechaFacturacion.slice(0, 10)}
                             </span>
                         )}
                         {servicio.fechaCobro && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
                                 Cobrado {servicio.fechaCobro.slice(0, 10)}
                             </span>
                         )}
                         {servicio.datosBancariosEnviados && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
                                 Datos enviados
                             </span>
                         )}
@@ -197,17 +197,17 @@ export default function ServicioCard({
                 {(seriales.length > 0 || ubicInfo) && (
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {seriales.slice(0, 2).map((s) => (
-                            <span key={s} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-panel text-secondary">
+                            <span key={s} className="text-label font-bold px-2 py-0.5 rounded-lg bg-panel text-secondary">
                                 {s}
                             </span>
                         ))}
                         {seriales.length > 2 && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-panel text-muted">
+                            <span className="text-label font-bold px-2 py-0.5 rounded-lg bg-panel text-muted">
                                 +{seriales.length - 2}
                             </span>
                         )}
                         {ubicInfo && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-lg bg-panel text-muted">
+                            <span className="text-label px-2 py-0.5 rounded-lg bg-panel text-muted">
                                 {ubicInfo}
                             </span>
                         )}
@@ -218,10 +218,10 @@ export default function ServicioCard({
                 {items.length > 0 && (
                     <button
                         onClick={() => setExpandido(v => !v)}
-                        className="mt-2 w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all active:scale-[0.98] bg-panel text-secondary"
+                        className="mt-2 w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-label font-bold transition-all active:scale-[0.98] bg-panel text-secondary"
                     >
                         <span>Detalle trabajo · {items.length} equipo{items.length > 1 ? 's' : ''}</span>
-                        <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
+                        <span className="text-label">{expandido ? '▲' : '▼'}</span>
                     </button>
                 )}
 
@@ -230,20 +230,20 @@ export default function ServicioCard({
                     <div key={`${it.equipoSerial || 'item'}-${i}`} className="mt-2 p-3 rounded-xl bg-panel border border-black/[0.05]">
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
-                                <span className="text-[13px] font-black text-brand-red">{it.equipoSerial}</span>
+                                <span className="text-body font-black text-brand-red">{it.equipoSerial}</span>
                                 {(it.equipoUbicacion || it.equipoPiso || it.equipoSector) && (
-                                    <p className="text-[10px] text-muted mt-0.5 truncate">
+                                    <p className="text-caption text-muted mt-0.5 truncate">
                                         {[it.equipoUbicacion, it.equipoPiso && `Piso ${it.equipoPiso}`, it.equipoSector].filter(Boolean).join(' · ')}
                                     </p>
                                 )}
                             </div>
-                            <M valor={Number(it.costo || 0)} className="text-[12px] font-black text-ink shrink-0 ml-2" />
+                            <M valor={Number(it.costo || 0)} className="text-body font-black text-ink shrink-0 ml-2" />
                         </div>
-                        <p className="text-[13px] text-secondary leading-snug">{it.trabajoRealizado}</p>
+                        <p className="text-body text-secondary leading-snug">{it.trabajoRealizado}</p>
                         {it.garantiaHasta && (() => {
                             const g = estadoGarantia(it.garantiaHasta);
                             return (
-                                <p className={`text-[11px] font-black mt-1 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
+                                <p className={`text-caption font-black mt-1 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
                                     {g.vigente
                                         ? `🛡️ Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
                                         : `⏳ Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
@@ -254,7 +254,7 @@ export default function ServicioCard({
                             <div className="mt-1.5 pt-1.5 border-t border-black/[0.05] dark:border-white/[0.05]">
                                 <div className="flex flex-wrap gap-1 mt-1">
                                     {it.repuestosUsados.map((r, ri) => (
-                                        <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-chip text-secondary">
+                                        <span key={ri} className="text-label px-1.5 py-0.5 rounded bg-chip text-secondary">
                                             {r.cantidad}× {r.nombre}
                                         </span>
                                     ))}
@@ -273,7 +273,7 @@ export default function ServicioCard({
                             <button onClick={() => setVerRentab(v => !v)}
                                 className="mt-2 flex items-center gap-1.5 py-1.5 transition-all active:scale-[0.99]">
                                 <span className={`w-1.5 h-1.5 rounded-full transition-colors ${verRentab ? 'bg-[#2A9D5C] dark:bg-[#5DD68F]' : 'bg-muted'}`} />
-                                <span className="text-[10px] font-semibold text-muted">
+                                <span className="text-label font-semibold text-muted">
                                     {verRentab ? 'Ocultar rentabilidad' : 'Ver rentabilidad'}
                                 </span>
                             </button>
@@ -287,16 +287,16 @@ export default function ServicioCard({
                                             { label: 'Margen',   pct: g.margen, green: true },
                                         ].map((item, idx) => (
                                             <div key={idx}>
-                                                <p className="text-[9px] uppercase tracking-wide font-bold text-[#A8855A] dark:text-[#5C5954] mb-0.5">{item.label}</p>
+                                                <p className="text-label uppercase tracking-wide font-bold text-[#A8855A] dark:text-[#5C5954] mb-0.5">{item.label}</p>
                                                 {item.pct !== undefined
-                                                    ? <p className="text-[12px] font-black text-[#5C3D00] dark:text-[#5DD68F]">{item.pct}%</p>
-                                                    : <M valor={Math.round(item.val)} className={`text-[12px] font-black ${item.green ? 'text-[#5C3D00] dark:text-[#5DD68F]' : 'text-ink'}`} />
+                                                    ? <p className="text-body font-black text-[#5C3D00] dark:text-[#5DD68F]">{item.pct}%</p>
+                                                    : <M valor={Math.round(item.val)} className={`text-body font-black ${item.green ? 'text-[#5C3D00] dark:text-[#5DD68F]' : 'text-ink'}`} />
                                                 }
                                             </div>
                                         ))}
                                     </div>
                                     {g.totalMO > 0 && (
-                                        <p className="text-[9px] text-muted mt-1.5">MO incluida: ${Math.round(g.totalMO).toLocaleString('es-AR')}</p>
+                                        <p className="text-caption text-muted mt-1.5">MO incluida: ${Math.round(g.totalMO).toLocaleString('es-AR')}</p>
                                     )}
                                 </div>
                             )}
@@ -325,30 +325,30 @@ export default function ServicioCard({
                             <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
                                 <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
                                 <button onClick={() => { onGenerarPDF(servicio, { sinPrecios: true }); setMenuAbierto(false); }}
-                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                    className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                     📋 PDF sin precios
                                 </button>
                                 {esPpto && onEditar && (
                                     <button onClick={() => { onEditar(servicio); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         ✏️ Editar
                                     </button>
                                 )}
                                 {onDuplicar && (
                                     <button onClick={() => { onDuplicar(servicio); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         ⧉ Duplicar
                                     </button>
                                 )}
                                 {!esArch && (
                                     <button onClick={() => { onArchivar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         🗄️ Archivar
                                     </button>
                                 )}
                                 {onEliminar && (
                                     <button onClick={() => { onEliminar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
                                         🗑️ Eliminar
                                     </button>
                                 )}
@@ -362,25 +362,25 @@ export default function ServicioCard({
                 {/* Derecha: accion principal del estado */}
                 {esPpto && (
                     <button onClick={() => onEjecutar(servicio)}
-                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-brand-amber">
+                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-brand-amber">
                         Ejecutar
                     </button>
                 )}
                 {esComp && (
                     <button onClick={() => onAbrirCobro ? onAbrirCobro(servicio) : onCobrar(servicio.id, 'COBRADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-brand-red">
+                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-brand-red">
                         Definir cobro
                     </button>
                 )}
                 {esPendFact && (
                     <button onClick={() => onCobrar(servicio.id, 'FACTURADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#6366F1]">
+                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-[#6366F1]">
                         Factura enviada
                     </button>
                 )}
                 {esFact && (
                     <button onClick={() => onCobrar(servicio.id, 'COBRADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#16A34A]">
+                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-[#16A34A]">
                         Cobrado
                     </button>
                 )}

@@ -157,7 +157,7 @@ export default function UsuariosManager() {
                     <div className="flex gap-1.5 items-center">
                         {['TODOS', 'ADMIN', 'TECNICO'].map(rol => (
                             <button key={rol} onClick={() => setFiltroRol(rol)}
-                                className={`h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${
+                                className={`h-8 px-3 rounded-lg font-bold text-label uppercase transition-all active:scale-95 ${
                                     filtroRol === rol
                                         ? 'bg-brand-red text-white'
                                         : 'bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
@@ -167,7 +167,7 @@ export default function UsuariosManager() {
                         ))}
                         <div className="flex-1" />
                         <button onClick={abrirCrear}
-                            className="h-8 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-brand-red">
+                            className="h-8 px-4 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red">
                             + Nuevo
                         </button>
                     </div>
@@ -179,14 +179,14 @@ export default function UsuariosManager() {
                 {/* CONFIGURACIÓN DE EMPRESA — solo ADMIN */}
                 {usuarioActual?.rol === 'ADMIN' && (
                     <div className="rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07] p-4 space-y-3">
-                        <p className="text-[11px] font-bold text-muted uppercase tracking-wider">Configuración de empresa</p>
+                        <p className="text-label font-bold text-muted uppercase tracking-wider">Configuración de empresa</p>
                         <div>
-                            <label className="text-[10px] font-bold text-muted uppercase tracking-wider">
+                            <label className="text-label font-bold text-muted uppercase tracking-wider">
                                 Condiciones del presupuesto (texto que aparece al pie del PDF)
                             </label>
                             <div className="mt-1 flex gap-2">
                                 <textarea
-                                    className="flex-1 h-16 px-3 py-2 rounded-xl text-[12px] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none resize-none"
+                                    className="flex-1 h-16 px-3 py-2 rounded-xl text-body bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none resize-none"
                                     value={condicionesPDF}
                                     onChange={e => setCondicionesPDF(e.target.value)}
                                     placeholder="Garantía 90 días mano de obra · Repuestos según fabricante..."
@@ -200,7 +200,7 @@ export default function UsuariosManager() {
                                     {condGuardado ? '✓' : 'Guardar'}
                                 </button>
                             </div>
-                            <p className="text-[10px] text-muted mt-1">
+                            <p className="text-caption text-muted mt-1">
                                 Se muestra en presupuestos y órdenes de servicio.
                             </p>
                         </div>
@@ -231,17 +231,17 @@ export default function UsuariosManager() {
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <p className="font-black text-[14px] text-ink">{u.nombre}</p>
-                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase ${ROL_COLOR[u.rol]}`}>
+                                            <p className="font-black text-body-lg text-ink">{u.nombre}</p>
+                                            <span className={`text-label font-bold px-2 py-0.5 rounded-md uppercase ${ROL_COLOR[u.rol]}`}>
                                                 {ROL_LABEL[u.rol]}
                                             </span>
                                             {!u.activo && (
-                                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-md uppercase bg-muted/20 text-muted">
+                                                <span className="text-label font-bold px-2 py-0.5 rounded-md uppercase bg-muted/20 text-muted">
                                                     Inactivo
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-[11px] text-muted mt-0.5">@{u.username}{u.telefono ? `  ·  ${u.telefono}` : ''}</p>
+                                        <p className="text-caption text-muted mt-0.5">@{u.username}{u.telefono ? `  ·  ${u.telefono}` : ''}</p>
                                     </div>
                                     {/* Acciones */}
                                     <div className="flex gap-2 shrink-0">
@@ -285,9 +285,9 @@ export default function UsuariosManager() {
 
                         <div className="space-y-3">
                             <div>
-                                <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Nombre completo</label>
+                                <label className="text-label font-bold text-muted uppercase tracking-wider">Nombre completo</label>
                                 <input
-                                    className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={form.nombre}
                                     onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                                     placeholder="Ej: Juan Pérez"
@@ -296,20 +296,20 @@ export default function UsuariosManager() {
                             {modal === 'crear' && (
                                 <>
                                     <div>
-                                        <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Usuario (login)</label>
+                                        <label className="text-label font-bold text-muted uppercase tracking-wider">Usuario (login)</label>
                                         <input
-                                            className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                            className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                             value={form.username}
                                             onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
                                             placeholder="Ej: juan"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Contraseña</label>
+                                        <label className="text-label font-bold text-muted uppercase tracking-wider">Contraseña</label>
                                         <div className="relative mt-1">
                                             <input
                                                 type={verClave ? 'text' : 'password'}
-                                                className="w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                                className="w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                                 value={form.password}
                                                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                                                 placeholder="Mínimo 6 caracteres"
@@ -321,11 +321,11 @@ export default function UsuariosManager() {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Confirmar contraseña</label>
+                                        <label className="text-label font-bold text-muted uppercase tracking-wider">Confirmar contraseña</label>
                                         <div className="relative mt-1">
                                             <input
                                                 type={verClaveConfirm ? 'text' : 'password'}
-                                                className={`w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink outline-none border ${
+                                                className={`w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink outline-none border ${
                                                     form.passwordConfirm && form.password !== form.passwordConfirm
                                                         ? 'border-brand-red'
                                                         : 'border-black/[0.08] dark:border-white/[0.08]'
@@ -344,18 +344,18 @@ export default function UsuariosManager() {
                             )}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Teléfono</label>
+                                    <label className="text-label font-bold text-muted uppercase tracking-wider">Teléfono</label>
                                     <input
-                                        className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                         value={form.telefono}
                                         onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
                                         placeholder="(011) XXXX-XXXX"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider">WhatsApp</label>
+                                    <label className="text-label font-bold text-muted uppercase tracking-wider">WhatsApp</label>
                                     <input
-                                        className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                         value={form.whatsapp}
                                         onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))}
                                         placeholder="11 XXXX-XXXX"
@@ -363,9 +363,9 @@ export default function UsuariosManager() {
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Rol</label>
+                                <label className="text-label font-bold text-muted uppercase tracking-wider">Rol</label>
                                 <select
-                                    className="mt-1 w-full h-10 px-3 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={form.rol}
                                     onChange={e => setForm(f => ({ ...f, rol: e.target.value }))}
                                 >
@@ -397,7 +397,7 @@ export default function UsuariosManager() {
                         <h3 className="text-[16px] font-black text-ink">
                             Eliminar usuario
                         </h3>
-                        <p className="text-[13px] text-[#57534E] dark:text-[#A8A29E]">
+                        <p className="text-body text-[#57534E] dark:text-[#A8A29E]">
                             ¿Seguro que querés eliminar a <span className="font-bold text-ink">{confirmEliminar.nombre}</span>? Esta acción no se puede deshacer.
                         </p>
                         <div className="flex gap-3">
@@ -422,11 +422,11 @@ export default function UsuariosManager() {
                             Cambiar clave: {modalPass.nombre}
                         </h3>
                         <div>
-                            <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Nueva contraseña</label>
+                            <label className="text-label font-bold text-muted uppercase tracking-wider">Nueva contraseña</label>
                             <div className="relative mt-1">
                                 <input
                                     type={verNuevaClave ? 'text' : 'password'}
-                                    className="w-full h-10 px-3 pr-9 rounded-xl text-[13px] font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={nuevaClave}
                                     onChange={e => setNuevaClave(e.target.value)}
                                     placeholder="Mínimo 6 caracteres"

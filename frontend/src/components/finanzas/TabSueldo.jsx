@@ -96,10 +96,10 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
             {/* Controles */}
             <div className="flex gap-2 flex-wrap items-center">
                 <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                    className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 {esAdmin && usuarios.length > 1 && (
                     <select value={selectedUserId || ''} onChange={e => setSelectedUserId(e.target.value ? Number(e.target.value) : null)}
-                        className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <option value="">Mi sueldo</option>
                         {usuarios.filter(u => u.id !== usuario?.id).map(u => (
                             <option key={u.id} value={u.id}>{u.nombre}</option>
@@ -111,12 +111,12 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
             {/* Meta de sueldo */}
             <div className="rounded-2xl bg-white dark:bg-[#242424] p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] font-black text-muted uppercase tracking-wider">
+                    <p className="text-label font-black text-muted uppercase tracking-wider">
                         Sueldo objetivo — {data.usuarioNombre}
                     </p>
                     {(esAdmin || uid === usuario?.id) && (
                         <button onClick={() => setEditandoMeta(!editandoMeta)}
-                            className="text-[10px] font-bold text-brand-amber active:scale-95">
+                            className="text-label font-bold text-brand-amber active:scale-95">
                             {editandoMeta ? 'Cancelar' : 'Editar'}
                         </button>
                     )}
@@ -124,12 +124,12 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
 
                 {editandoMeta ? (
                     <div className="flex gap-2 items-center">
-                        <span className="text-[14px] font-black text-muted">$</span>
+                        <span className="text-body-lg font-black text-muted">$</span>
                         <input type="text" inputMode="decimal" value={metaInput} onChange={e => setMetaInput(e.target.value)}
                             placeholder="1200000"
-                            className="flex-1 h-9 px-3 rounded-lg text-[14px] font-bold outline-none bg-[#F5F3F1] dark:bg-[#2E2E2E] text-ink border border-black/[0.05] dark:border-white/[0.05]" />
+                            className="flex-1 h-9 px-3 rounded-lg text-body-lg font-bold outline-none bg-[#F5F3F1] dark:bg-[#2E2E2E] text-ink border border-black/[0.05] dark:border-white/[0.05]" />
                         <button onClick={guardarMeta}
-                            className="h-9 px-4 rounded-lg font-bold text-[11px] uppercase text-white bg-brand-red active:scale-95">
+                            className="h-9 px-4 rounded-lg font-bold text-label uppercase text-white bg-brand-red active:scale-95">
                             Guardar
                         </button>
                     </div>
@@ -145,15 +145,15 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                                         }`}
                                         style={{ width: `${Math.min(porcentaje, 100)}%` }}
                                     />
-                                    <p className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white drop-shadow">
+                                    <p className="absolute inset-0 flex items-center justify-center text-label font-black text-white drop-shadow">
                                         {ocultar ? '••••' : `${Math.round(porcentaje)}%`}
                                     </p>
                                 </div>
                                 <div className="flex justify-between items-baseline">
-                                    <p className="text-[18px] font-black text-ink">{fmt(acumulado)}</p>
-                                    <p className="text-[12px] font-bold text-muted">de {fmt(objetivo)}</p>
+                                    <p className="text-body-lg font-black text-ink">{fmt(acumulado)}</p>
+                                    <p className="text-caption font-bold text-muted">de {fmt(objetivo)}</p>
                                 </div>
-                                <p className={`text-[11px] font-bold mt-1 ${superoMeta
+                                <p className={`text-caption font-bold mt-1 ${superoMeta
                                         ? 'text-[#16A34A]'
                                         : 'text-brand-amber'
                                     }`}>
@@ -164,7 +164,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                                 </p>
                             </>
                         ) : (
-                            <p className="text-[12px] text-muted text-center py-3">
+                            <p className="text-caption text-muted text-center py-3">
                                 No hay meta configurada. Toca "Editar" para definir tu sueldo objetivo.
                             </p>
                         )}
@@ -174,7 +174,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
 
             {/* Desglose de ingresos */}
             <div className="rounded-2xl bg-white dark:bg-[#242424] p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
-                <p className="text-[10px] font-black text-muted uppercase tracking-wider mb-3">Desglose del mes</p>
+                <p className="text-label font-black text-muted uppercase tracking-wider mb-3">Desglose del mes</p>
                 {[
                     verEmpresa && { label: `Servicios propios (${data.cantServiciosPropios})`, valor: data.ingresoServiciosPropios, sub: '100% ganancia neta' },
                     verEmpresa && { label: `Servicios técnicos (${data.cantServiciosTecnicos})`, valor: data.ingresoServiciosTecnicos, sub: '50% parte empresa' },
@@ -183,15 +183,15 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                 ].filter(Boolean).map(({ label, valor, sub }) => (
                     <div key={label} className="flex items-center justify-between py-2 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
                         <div>
-                            <p className="text-[12px] font-bold text-ink">{label}</p>
-                            <p className="text-[9px] font-bold text-muted uppercase">{sub}</p>
+                            <p className="text-body font-bold text-ink">{label}</p>
+                            <p className="text-label font-bold text-muted uppercase">{sub}</p>
                         </div>
-                        <p className="text-[14px] font-black text-brand-amber">{fmt(valor)}</p>
+                        <p className="text-body-lg font-black text-brand-amber">{fmt(valor)}</p>
                     </div>
                 ))}
                 <div className="flex justify-between items-center pt-3 mt-1">
-                    <p className="text-[13px] font-black text-ink">= Total acumulado</p>
-                    <p className="text-[18px] font-black text-brand-amber">{fmt(acumulado)}</p>
+                    <p className="text-body font-black text-ink">= Total acumulado</p>
+                    <p className="text-body-lg font-black text-brand-amber">{fmt(acumulado)}</p>
                 </div>
             </div>
 
@@ -201,20 +201,20 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                         ? 'bg-[#16A34A]/5 border-[#16A34A]/20'
                         : 'bg-[#D13A28]/5 border-[#D13A28]/20'
                     }`}>
-                    <p className="text-[10px] font-black text-muted uppercase tracking-wider mb-3">Resultado empresa</p>
+                    <p className="text-label font-black text-muted uppercase tracking-wider mb-3">Resultado empresa</p>
                     {[
                         { label: 'Total acumulado',   valor: acumulado,                   signo: '' },
                         { label: 'Tu sueldo',         valor: objetivo,                    signo: '−' },
                         { label: 'Gastos operativos', valor: Number(data.gastosOperativos || 0), signo: '−' },
                     ].map(({ label, valor, signo }) => (
                         <div key={label} className="flex justify-between items-center py-1.5 border-b border-black/[0.04] dark:border-white/[0.04]">
-                            <p className="text-[11px] font-bold text-muted">{signo} {label}</p>
-                            <p className="text-[12px] font-black text-ink">{fmt(valor)}</p>
+                            <p className="text-caption font-bold text-muted">{signo} {label}</p>
+                            <p className="text-body font-black text-ink">{fmt(valor)}</p>
                         </div>
                     ))}
                     <div className="flex justify-between items-center pt-2 mt-1">
-                        <p className="text-[13px] font-black text-ink">= Balance empresa</p>
-                        <p className={`text-[18px] font-black ${Number(data.resultadoEmpresa) >= 0
+                        <p className="text-body font-black text-ink">= Balance empresa</p>
+                        <p className={`text-body-lg font-black ${Number(data.resultadoEmpresa) >= 0
                                 ? 'text-[#16A34A]'
                                 : 'text-brand-red'
                             }`}>
@@ -227,7 +227,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
             {/* Evolución mensual */}
             {chartData.length > 1 && (
                 <div className="rounded-2xl bg-white dark:bg-[#242424] p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
-                    <p className="text-[10px] font-black text-muted uppercase tracking-wider mb-3">Evolución mensual</p>
+                    <p className="text-label font-black text-muted uppercase tracking-wider mb-3">Evolución mensual</p>
                     <ResponsiveContainer width="100%" height={200}>
                         <BarChart data={chartData}>
                             <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#A8A29E' }} />
@@ -258,7 +258,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                     <div className="min-w-[400px]">
                         <div className={`grid px-4 py-2 bg-panel ${verEmpresa ? 'grid-cols-[1fr_80px_80px_80px_50px]' : 'grid-cols-[1fr_90px_90px_50px]'}`}>
                             {['Mes', 'Acumulado', verEmpresa && 'Empresa', 'Meta', 'Trab.'].filter(Boolean).map(h => (
-                                <p key={h} className="text-[10px] font-black text-muted uppercase tracking-wider text-center first:text-left">{h}</p>
+                                <p key={h} className="text-label font-black text-muted uppercase tracking-wider text-center first:text-left">{h}</p>
                             ))}
                         </div>
                         {(data.evolucion || []).map((e, i) => {
@@ -269,17 +269,17 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                             return (
                                 <div key={e.mes}
                                     className={`grid px-4 py-3 items-center ${verEmpresa ? 'grid-cols-[1fr_80px_80px_80px_50px]' : 'grid-cols-[1fr_90px_90px_50px]'} ${i < data.evolucion.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
-                                    <p className="text-[12px] font-black text-ink">{mesLabel}</p>
-                                    <p className={`text-[12px] font-black text-right ${ok ? 'text-[#16A34A]' : 'text-brand-amber'}`}>
+                                    <p className="text-body font-black text-ink">{mesLabel}</p>
+                                    <p className={`text-body font-black text-right ${ok ? 'text-[#16A34A]' : 'text-brand-amber'}`}>
                                         {fmtCompacto(acum)}
                                     </p>
                                     {verEmpresa && (
-                                        <p className={`text-[12px] font-black text-right ${Number(e.resultadoEmpresa) >= 0 ? 'text-[#16A34A]' : 'text-brand-red'}`}>
+                                        <p className={`text-body font-black text-right ${Number(e.resultadoEmpresa) >= 0 ? 'text-[#16A34A]' : 'text-brand-red'}`}>
                                             {fmtCompacto(e.resultadoEmpresa)}
                                         </p>
                                     )}
-                                    <p className="text-[11px] font-bold text-muted text-right">{fmtCompacto(obj)}</p>
-                                    <p className="text-[11px] font-bold text-muted text-center">{e.totalTrabajos}</p>
+                                    <p className="text-caption font-bold text-muted text-right">{fmtCompacto(obj)}</p>
+                                    <p className="text-caption font-bold text-muted text-center">{e.totalTrabajos}</p>
                                 </div>
                             );
                         })}
@@ -287,7 +287,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                 </div>
             )}
 
-            <p className="text-[10px] text-muted text-center pb-2">
+            <p className="text-caption text-muted text-center pb-2">
                 {verEmpresa
                     ? 'Tu sueldo = servicios propios (100%) + parte empresa técnicos (50%) + ventas. Resultado = acumulado − sueldo − gastos.'
                     : 'Tu parte = 50% de ganancia neta (facturado − 30% imp − repuestos) de tus servicios cobrados.'

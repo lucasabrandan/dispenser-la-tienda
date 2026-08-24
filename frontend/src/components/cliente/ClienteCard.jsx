@@ -59,20 +59,20 @@ export default function ClienteCard({
             <div onClick={onToggleExpand}
                 className="bg-card rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-center gap-3"
                 style={{ borderLeft: borderColor !== 'transparent' ? `3px solid ${borderColor}` : undefined }}>
-                <span className="w-9 h-9 rounded-lg bg-brand-red flex items-center justify-center text-white font-black text-[10px] shrink-0">
+                <span className="w-9 h-9 rounded-lg bg-brand-red flex items-center justify-center text-white font-black text-label shrink-0">
                     {iniciales}
                 </span>
                 <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-black text-ink leading-tight truncate">
+                    <p className="text-body font-black text-ink leading-tight truncate">
                         {cliente.nombre}
                     </p>
-                    <p className="text-[10px] text-muted mt-0.5 truncate">
+                    <p className="text-caption text-muted mt-0.5 truncate">
                         {ultimoServicio ? `Últ: ${formatFecha(ultimoServicio.fecha)}` : 'Sin servicios'}
                     </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                     {alertaSinServicio && <span className="w-2 h-2 rounded-full bg-[#D48800]" />}
-                    {tipoIcon && <span className="text-[12px]">{tipoIcon}</span>}
+                    {tipoIcon && <span className="text-label">{tipoIcon}</span>}
                 </div>
             </div>
         );
@@ -88,9 +88,9 @@ export default function ClienteCard({
                     <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`}
                         target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-2 px-3 py-2 rounded-xl bg-panel active:opacity-70 transition-opacity">
-                        <span className="text-[12px]">📍</span>
-                        <span className="text-[12px] font-bold text-ink flex-1 truncate">{direccion}</span>
-                        <span className="text-[10px] text-muted">↗</span>
+                        <span className="text-caption">📍</span>
+                        <span className="text-caption font-bold text-ink flex-1 truncate">{direccion}</span>
+                        <span className="text-label text-muted">↗</span>
                     </a>
                 )}
 
@@ -98,19 +98,19 @@ export default function ClienteCard({
                 <div className="flex gap-2">
                     {cliente.telefono && (
                         <button onClick={() => abrirWhatsApp(cliente.telefono, cliente.nombre)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] text-white rounded-xl font-black text-[11px] active:scale-95 transition-all">
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] text-white rounded-xl font-black text-label active:scale-95 transition-all">
                             💬 WA
                         </button>
                     )}
                     {onNuevoServicio && (
                         <button onClick={() => onNuevoServicio(cliente)}
-                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-brand-red text-white rounded-xl font-black text-[11px] active:scale-95 transition-all">
+                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-brand-red text-white rounded-xl font-black text-label active:scale-95 transition-all">
                             🔧 Servicio
                         </button>
                     )}
                     {onNuevaVenta && (
                         <button onClick={() => onNuevaVenta(cliente)}
-                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-brand-amber text-white rounded-xl font-black text-[11px] active:scale-95 transition-all">
+                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-brand-amber text-white rounded-xl font-black text-label active:scale-95 transition-all">
                             🛒 Venta
                         </button>
                     )}
@@ -124,19 +124,19 @@ export default function ClienteCard({
                                 <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
                                     <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
                                     <button onClick={() => { onEditCliente(cliente); setMenuCliente(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         ✏️ Editar cliente
                                     </button>
                                     <button onClick={() => { setModalHistorial(true); setMenuCliente(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         📋 Ver historial
                                     </button>
                                     <button onClick={() => { abrirMaps(cliente); setMenuCliente(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         📍 Ver en mapa
                                     </button>
                                     <button onClick={() => { setConfirmEliminar('cliente'); setMenuCliente(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
                                         🗑 Eliminar cliente
                                     </button>
                                 </div>
@@ -152,14 +152,14 @@ export default function ClienteCard({
                         return (
                             <div key={sede.id} className="rounded-xl bg-panel overflow-hidden">
                                 <div className="flex items-center justify-between px-3 py-2">
-                                    <p className="text-[11px] font-black text-ink">
+                                    <p className="text-caption font-black text-ink">
                                         🏠 {sede.nombreSede}
                                         {eqSede.length > 0 && (
                                             <span className="text-muted font-bold ml-1.5">{eqSede.length} eq</span>
                                         )}
                                     </p>
                                     <button onClick={() => onAddEquipo(cliente)}
-                                        className="text-[9px] font-black text-brand-red active:scale-95">
+                                        className="text-label font-black text-brand-red active:scale-95">
                                         + EQUIPO
                                     </button>
                                 </div>
@@ -168,32 +168,32 @@ export default function ClienteCard({
                                         {eqSede.map(eq => (
                                             <div key={eq.id} className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-[11px] font-bold text-ink truncate">
+                                                    <p className="text-caption font-bold text-ink truncate">
                                                         {eq.modelo || 'Equipo'} <span className="text-muted">· {eq.numeroSerie}</span>
                                                     </p>
                                                     {eq.ubicacion && (
-                                                        <p className="text-[9px] text-muted truncate">{eq.ubicacion}</p>
+                                                        <p className="text-caption text-muted truncate">{eq.ubicacion}</p>
                                                     )}
                                                 </div>
                                                 <div className="relative">
                                                     <button onClick={() => setMenuEquipo(menuEquipo === eq.id ? null : eq.id)}
-                                                        className="w-7 h-7 rounded-lg flex items-center justify-center text-muted active:scale-90 text-[10px]">⋯</button>
+                                                        className="w-7 h-7 rounded-lg flex items-center justify-center text-muted active:scale-90 text-label">⋯</button>
                                                     {menuEquipo === eq.id && (
                                                         <>
                                                             <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuEquipo(null)} />
                                                             <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
                                                                 <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
-                                                                <p className="px-5 py-2 text-[12px] font-black text-muted truncate">{eq.modelo || eq.numeroSerie}</p>
+                                                                <p className="px-5 py-2 text-label font-black text-muted truncate">{eq.modelo || eq.numeroSerie}</p>
                                                                 <button onClick={() => { setEquipoHistorial(eq); setMenuEquipo(null); }}
-                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                                                     📋 Historial
                                                                 </button>
                                                                 <button onClick={() => { onEditEquipo(eq, cliente); setMenuEquipo(null); }}
-                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
+                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                                                     ✏️ Editar
                                                                 </button>
                                                                 <button onClick={() => { setConfirmEliminar(eq.id); setMenuEquipo(null); }}
-                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
+                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
                                                                     🗑 Eliminar
                                                                 </button>
                                                             </div>
@@ -209,7 +209,7 @@ export default function ClienteCard({
                     })}
 
                     <button onClick={() => onAddSede(cliente)}
-                        className="w-full py-2.5 rounded-xl text-[11px] font-bold text-muted border border-dashed border-muted/30 active:scale-[0.98] transition-all">
+                        className="w-full py-2.5 rounded-xl text-label font-bold text-muted border border-dashed border-muted/30 active:scale-[0.98] transition-all">
                         + Agregar sede
                     </button>
                 </div>
@@ -218,10 +218,10 @@ export default function ClienteCard({
                 {serviciosCli.length > 0 && (
                     <button onClick={() => setModalHistorial(true)}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-panel active:opacity-70 transition-opacity">
-                        <span className="text-[10px] font-black text-brand-amber">
+                        <span className="text-caption font-black text-brand-amber">
                             📋 {serviciosCli.length} servicio{serviciosCli.length !== 1 ? 's' : ''} · último {formatFecha(ultimoServicio?.fecha)}
                         </span>
-                        <span className="text-[10px] text-muted">Ver →</span>
+                        <span className="text-label text-muted">Ver →</span>
                     </button>
                 )}
             </div>
@@ -233,13 +233,13 @@ export default function ClienteCard({
                     <div className="fixed inset-0 flex items-center justify-center z-[200] p-4">
                         <div className="bg-card rounded-3xl w-full max-w-sm shadow-2xl p-6">
                             <p className="text-center text-[28px] mb-3">⚠️</p>
-                            <h3 className="text-center text-[15px] font-black text-ink mb-2">
+                            <h3 className="text-center text-body-lg font-black text-ink mb-2">
                                 {confirmEliminar === 'cliente' ? 'Eliminar cliente' : 'Eliminar equipo'}
                             </h3>
-                            <p className="text-center text-[11px] text-muted mb-5">Esta acción no se puede deshacer</p>
+                            <p className="text-center text-caption text-muted mb-5">Esta acción no se puede deshacer</p>
                             <div className="flex gap-2">
                                 <button onClick={() => setConfirmEliminar(null)}
-                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-chip text-secondary active:scale-95">
+                                    className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95">
                                     Cancelar
                                 </button>
                                 <button onClick={() => {
@@ -247,7 +247,7 @@ export default function ClienteCard({
                                     else onEliminarEquipoDefinitivo(confirmEliminar);
                                     setConfirmEliminar(null);
                                 }}
-                                    className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-brand-red active:scale-95">
+                                    className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95">
                                     Sí, eliminar
                                 </button>
                             </div>
