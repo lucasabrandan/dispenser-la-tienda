@@ -10,6 +10,7 @@ import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import { useMontos } from '../../context/MontosContext';
 import { estadoGarantia, mesKeyDeFecha, formatMesLargo } from '../../utils/dateUtils';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
@@ -72,6 +73,7 @@ export default function ServicioList({ onEditar }) {
     const [seleccionadas, setSeleccionadas] = useState(new Set());
     const [confirmMasivo, setConfirmMasivo] = useState(false);
     const [menuAbiertoId, setMenuAbiertoId] = useState(null);
+    const [confirmEliminarId, setConfirmEliminarId] = useState(null);
 
     const toggleSel = (id) => setSeleccionadas(prev => {
         const next = new Set(prev);
@@ -113,8 +115,9 @@ export default function ServicioList({ onEditar }) {
             .catch(() => toast.error('Error al conectar con el historial'));
     };
 
+    // La confirmación la muestra el ConfirmDialog compartido (ver más abajo),
+    // no window.confirm() nativo del navegador.
     const eliminarServicio = async (id) => {
-        if (!window.confirm('¿Eliminar permanentemente?')) return;
         try {
             await api.delete(`/servicios/${id}`);
             toast.success('Registro borrado');
@@ -354,7 +357,7 @@ export default function ServicioList({ onEditar }) {
                                                                     </button>
                                                                 )}
                                                                 {esAdmin && (
-                                                                    <button onClick={() => { eliminarServicio(s.id); setMenuAbiertoId(null); }}
+                                                                    <button onClick={() => { setConfirmEliminarId(s.id); setMenuAbiertoId(null); }}
                                                                         className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] dark:active:bg-[#3B1111] rounded-xl">
                                                                         🗑️ Eliminar
                                                                     </button>
@@ -460,6 +463,16 @@ export default function ServicioList({ onEditar }) {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {confirmEliminarId && (
+                <ConfirmDialog
+                    titulo="Eliminar permanentemente"
+                    mensaje="Esta acción no se puede deshacer."
+                    textoConfirmar="Sí, eliminar"
+                    onCancelar={() => setConfirmEliminarId(null)}
+                    onConfirmar={() => { eliminarServicio(confirmEliminarId); setConfirmEliminarId(null); }}
+                />
             )}
         </div>
     );

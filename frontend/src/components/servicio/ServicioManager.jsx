@@ -8,6 +8,7 @@ import ServicioForm from '../servicio/ServicioForm';
 import ServicioCard from '../servicio/ServicioCard';
 import SwipeColumns from '../ui/SwipeColumns';
 import Paginacion from '../ui/Paginacion';
+import FiltrosPanel from '../ui/FiltrosPanel';
 import ModalFirmasPDF from '../ui/ModalFirmasPDF';
 import ImportadorServiciosModal from '../servicio/ImportadorServiciosModal';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
@@ -15,7 +16,7 @@ import EjecutarAdminSheet from '../servicio/EjecutarAdminSheet';
 import CobroSheet from '../servicio/CobroSheet';
 import DetalleSheet from '../servicio/DetalleSheet';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
-import DateInput from '../ui/DateInput';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 // "Presupuestos" (estado PRESUPUESTO) ya no es un tab acá — es la pantalla dedicada del
 // sidebar (con Cotizar / Ver ruta), para no mostrar la misma data pendiente en dos lugares.
@@ -25,13 +26,6 @@ const TABS = [
     { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', icon: '📄' },
     { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', icon: '✅' },
     { id: 'ARCHIVADO',             label: 'Archivados',   short: 'Arch.',    color: '#A8A29E', icon: '🗄️' },
-];
-
-const PERIODOS = [
-    { id: 'MES',     label: 'Este mes'  },
-    { id: 'MES_ANT', label: 'Mes ant.'  },
-    { id: 'ANO',     label: 'Este año'  },
-    { id: 'TODO',    label: 'Todo'      },
 ];
 
 const ESTADO_API_MAP = {
@@ -65,6 +59,8 @@ export default function ServicioManager({
     const [servicioDuplicar, setServicioDuplicar]   = useState(null);
     const [modalImportar, setModalImportar]         = useState(false);
     const [confirmEliminar, setConfirmEliminar]     = useState(null);
+    const [confirmArchivar, setConfirmArchivar]     = useState(null); // id de servicio, o null
+    const [confirmMasivo, setConfirmMasivo]         = useState(null); // 'ARCHIVADO', o null
     const [servicioCobro, setServicioCobro]         = useState(null);
     const [tecnicos, setTecnicos]                   = useState([]);
     const [modoSeleccion, setModoSeleccion]         = useState(false);
@@ -142,6 +138,7 @@ export default function ServicioManager({
     };
 
     const ejecutarMasiva = async (accion) => {
+        setConfirmMasivo(null);
         await accionMasiva([...seleccionados], accion);
         setSeleccionados(new Set());
         setModoSeleccion(false);
@@ -286,24 +283,9 @@ export default function ServicioManager({
                 {/* ═══ FILTROS COLAPSABLES ═══ */}
                 {mostrarFiltros && (
                     <div className="space-y-2 p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-                            {PERIODOS.map(p => (
-                                <button key={p.id}
-                                    onClick={() => filtros.aplicarRapido(p.id)}
-                                    className={`shrink-0 h-8 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 ${filtros.periodoRapido === p.id ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]'}`}>
-                                    {p.label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex gap-2 items-center">
-                            <DateInput value={filtros.desde}
-                                onChange={v => filtros.aplicarRango(v, filtros.hasta)}
-                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
-                            <span className="text-[10px] text-[#A8A29E]">a</span>
-                            <DateInput value={filtros.hasta}
-                                onChange={v => filtros.aplicarRango(filtros.desde, v)}
-                                className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
-                        </div>
+                        {/* Período + rango — mismo componente que ya usan Historial y
+                            Presupuestos, en vez de reimplementarlo acá aparte. */}
+                        <FiltrosPanel hook={filtros} estados={[]} conBusqueda={false} conRango />
                         {esAdmin && tecnicos.length > 0 && (
                             <select value={usuarioId} onChange={e => setUsuarioId(e.target.value)}
                                 className="w-full h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]">
@@ -332,7 +314,7 @@ export default function ServicioManager({
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
                         {seleccionados.size > 0 && tabActual !== 'ARCHIVADO' && (
-                            <button onClick={() => ejecutarMasiva('ARCHIVADO')}
+                            <button onClick={() => setConfirmMasivo('ARCHIVADO')}
                                 className="h-7 px-3 rounded-lg font-bold text-[10px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                 Archivar
                             </button>
@@ -382,7 +364,7 @@ export default function ServicioManager({
                                 onEjecutar={abrirEjecutar}
                                 onCobrar={confirmarConRefresh}
                                 onDuplicar={esAdmin ? duplicarServicio : null}
-                                onArchivar={archivarServicio}
+                                onArchivar={setConfirmArchivar}
                                 onEliminar={esAdmin ? (id) => setConfirmEliminar({ ids: [id], modo: 'uno' }) : null}
                                 onGenerarPDF={generarPDF}
                                 onDetalle={setModalDetalle}
@@ -500,42 +482,43 @@ export default function ServicioManager({
             )}
 
             {confirmEliminar && (
-                <>
-                    <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
-                    <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
-                        <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
-                            <div className="text-center mb-5">
-                                <p className="text-[36px] mb-2">⚠️</p>
-                                <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">
-                                    Eliminar {confirmEliminar.ids.length > 1 ? `${confirmEliminar.ids.length} servicios` : 'servicio'}
-                                </h3>
-                            </div>
-                            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-[#D13A28]/20 mb-4 space-y-1.5">
-                                <p className="text-[11px] font-black text-[#D13A28] uppercase tracking-wide">Esta acción no se puede deshacer</p>
-                                <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] leading-snug">
-                                    Se eliminarán permanentemente el servicio, todos sus ítems, repuestos usados y registros asociados.
-                                </p>
-                            </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => setConfirmEliminar(null)}
-                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
-                                    Cancelar
-                                </button>
-                                <button onClick={async () => {
-                                    const ids = confirmEliminar.ids;
-                                    setConfirmEliminar(null);
-                                    setSeleccionados(new Set());
-                                    setModoSeleccion(false);
-                                    await Promise.all(ids.map(id => eliminarServicio(id)));
-                                    fetchTabCounts();
-                                }}
-                                    className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
-                                    Sí, eliminar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </>
+                <ConfirmDialog
+                    titulo={`Eliminar ${confirmEliminar.ids.length > 1 ? `${confirmEliminar.ids.length} servicios` : 'servicio'}`}
+                    mensaje="Esta acción no se puede deshacer. Se eliminarán permanentemente el servicio, todos sus ítems, repuestos usados y registros asociados."
+                    textoConfirmar="Sí, eliminar"
+                    onCancelar={() => setConfirmEliminar(null)}
+                    onConfirmar={async () => {
+                        const ids = confirmEliminar.ids;
+                        setConfirmEliminar(null);
+                        setSeleccionados(new Set());
+                        setModoSeleccion(false);
+                        await Promise.all(ids.map(id => eliminarServicio(id)));
+                        fetchTabCounts();
+                    }}
+                />
+            )}
+
+            {confirmArchivar && (
+                <ConfirmDialog
+                    titulo="Archivar servicio"
+                    mensaje="Quedará en la pestaña Archivados."
+                    textoConfirmar="Sí, archivar"
+                    onCancelar={() => setConfirmArchivar(null)}
+                    onConfirmar={async () => {
+                        const id = confirmArchivar;
+                        setConfirmArchivar(null);
+                        await archivarServicio(id);
+                    }}
+                />
+            )}
+
+            {confirmMasivo && (
+                <ConfirmDialog
+                    titulo={`Archivar ${seleccionados.size} servicio${seleccionados.size !== 1 ? 's' : ''}`}
+                    textoConfirmar="Sí, archivar"
+                    onCancelar={() => setConfirmMasivo(null)}
+                    onConfirmar={() => ejecutarMasiva(confirmMasivo)}
+                />
             )}
         </div>
     );

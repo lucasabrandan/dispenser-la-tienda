@@ -143,8 +143,10 @@ export function useServicioManager() {
         } catch { toast.error('Error al eliminar'); }
     };
 
+    // La confirmación ("¿archivar?") ahora la muestra el componente que llama
+    // a esto, con el ConfirmDialog compartido — antes usaba window.confirm()
+    // nativo del navegador, inconsistente con el resto de la app.
     const archivarServicio = async (id) => {
-        if (!window.confirm('¿Archivar este servicio? Quedará en la pestaña Archivados.')) return;
         const loading = toast.loading('Archivando...');
         try {
             await api.patch(`/servicios/${id}/estado`, { estado: 'ARCHIVADO' });
@@ -153,9 +155,9 @@ export function useServicioManager() {
         } catch { toast.error('Error al archivar', { id: loading }); }
     };
 
+    // Idem archivarServicio: la confirmación se muestra afuera, con el
+    // ConfirmDialog compartido, antes de llamar a esta función.
     const accionMasiva = async (ids, accion) => {
-        const texto = accion === 'ARCHIVADO' ? 'archivar' : 'cobrar';
-        if (!window.confirm(`¿${texto.charAt(0).toUpperCase() + texto.slice(1)} ${ids.length} servicio${ids.length > 1 ? 's' : ''}?`)) return;
         const loading = toast.loading(`Procesando ${ids.length} servicios...`);
         try {
             await Promise.all(ids.map(id => api.patch(`/servicios/${id}/estado`, { estado: accion })));

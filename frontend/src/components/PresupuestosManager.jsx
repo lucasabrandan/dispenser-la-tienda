@@ -17,6 +17,7 @@ import PresupuestoCard from './presupuesto/PresupuestoCard';
 import { M } from './servicio/ServicioUI';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { mesKeyDeFecha, formatMesLargo } from '../utils/dateUtils';
+import ConfirmDialog from './ui/ConfirmDialog';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function buildGoogleMapsRouteUrl(direcciones) {
@@ -68,6 +69,8 @@ export default function PresupuestosManager() {
     const [presupuestoEjecutar, setPresupuestoEjecutar] = useState(null);
     const [presupuestoIniciar, setPresupuestoIniciar]   = useState(null);
     const [presupuestoEditar, setPresupuestoEditar]     = useState(null);
+    const [confirmArchivarId, setConfirmArchivarId]     = useState(null); // id, o null
+    const [confirmMasivoArchivar, setConfirmMasivoArchivar] = useState(false);
 
     useEffect(() => { cargar(); }, []); // eslint-disable-line
 
@@ -105,7 +108,8 @@ export default function PresupuestosManager() {
         await patchEstado(id, estadoDestino, labels[estadoDestino] || 'Actualizado', extras);
     };
 
-    const archivar  = (id) => { if (!window.confirm('¿Archivar este presupuesto?')) return; patchEstado(id, 'ARCHIVADO', 'Archivado'); };
+    // La confirmación la muestra el ConfirmDialog compartido (ver más abajo).
+    const archivar = (id) => { patchEstado(id, 'ARCHIVADO', 'Archivado'); };
 
     const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
 
@@ -153,7 +157,7 @@ export default function PresupuestosManager() {
     };
 
     const ejecutarMasivaArchivar = async () => {
-        if (!window.confirm(`¿Archivar ${seleccionados.size} presupuesto${seleccionados.size !== 1 ? 's' : ''}?`)) return;
+        setConfirmMasivoArchivar(false);
         const t = toast.loading('Archivando...');
         try {
             await Promise.all([...seleccionados].map(id => api.patch(`/servicios/${id}/estado`, { estado: 'ARCHIVADO' })));
@@ -285,7 +289,7 @@ export default function PresupuestosManager() {
                                 className="h-7 px-3 rounded-lg font-bold text-[10px] text-white bg-[#1A73E8] active:scale-95">
                                 Ver ruta
                             </button>
-                            <button onClick={ejecutarMasivaArchivar}
+                            <button onClick={() => setConfirmMasivoArchivar(true)}
                                 className="h-7 px-3 rounded-lg font-bold text-[10px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                 Archivar
                             </button>
@@ -326,7 +330,7 @@ export default function PresupuestosManager() {
                             <PresupuestoCard s={s}
                                 calcularTotal={calcularTotal}
                                 onPDF={generarPDF}
-                                onArchivar={archivar}
+                                onArchivar={setConfirmArchivarId}
                                 onIniciar={(serv) => serv.servicioTipo === 'TECNICA' ? setPresupuestoIniciar(serv) : setPresupuestoEjecutar(serv)}
                                 onEditar={esAdmin ? setPresupuestoEditar : null}
                                 modoSeleccion={modoSeleccion}
@@ -403,6 +407,24 @@ export default function PresupuestosManager() {
                         />
                     </div>
                 </div>
+            )}
+
+            {confirmArchivarId && (
+                <ConfirmDialog
+                    titulo="Archivar presupuesto"
+                    textoConfirmar="Sí, archivar"
+                    onCancelar={() => setConfirmArchivarId(null)}
+                    onConfirmar={() => { archivar(confirmArchivarId); setConfirmArchivarId(null); }}
+                />
+            )}
+
+            {confirmMasivoArchivar && (
+                <ConfirmDialog
+                    titulo={`Archivar ${seleccionados.size} presupuesto${seleccionados.size !== 1 ? 's' : ''}`}
+                    textoConfirmar="Sí, archivar"
+                    onCancelar={() => setConfirmMasivoArchivar(false)}
+                    onConfirmar={ejecutarMasivaArchivar}
+                />
             )}
         </div>
     );
