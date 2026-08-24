@@ -24,6 +24,7 @@ const TABS = [
     { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar', color: '#8B5CF6', icon: '📋' },
     { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', icon: '📄' },
     { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', icon: '✅' },
+    { id: 'ARCHIVADO',             label: 'Archivados',   short: 'Arch.',    color: '#A8A29E', icon: '🗄️' },
 ];
 
 const PERIODOS = [
@@ -330,7 +331,7 @@ export default function ServicioManager({
                         <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
-                        {seleccionados.size > 0 && (
+                        {seleccionados.size > 0 && tabActual !== 'ARCHIVADO' && (
                             <button onClick={() => ejecutarMasiva('ARCHIVADO')}
                                 className="h-7 px-3 rounded-lg font-bold text-[10px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                                 Archivar
