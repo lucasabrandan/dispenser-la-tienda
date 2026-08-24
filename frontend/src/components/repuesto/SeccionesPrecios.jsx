@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const inputBase = "w-full mt-1 p-3 rounded-xl text-sm font-bold outline-none transition-all border bg-chip border-black/[0.07] dark:border-white/[0.07] text-ink focus:ring-2 focus:ring-[#D13A28]/20";
 const readonlyBase = "w-full mt-1 p-3 rounded-xl text-sm font-black outline-none border";
-const labelBase = "text-[10px] font-black uppercase tracking-wide";
+const labelBase = "text-label font-black uppercase tracking-wide";
 
 const fmt = (v) => {
     const n = parseFloat(v);
@@ -78,7 +78,7 @@ export default function SeccionesPrecios({
         <>
             {/* Precio negro */}
             <Seccion id="basico" titulo="Precio Efectivo (negro)" icono="💵" color="green" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
-                <p className="text-[10px] text-muted font-bold mb-2">
+                <p className="text-caption text-muted font-bold mb-2">
                     Lo que cobrás si el cliente paga en efectivo o transferencia, sin factura.
                 </p>
                 <div className="grid grid-cols-3 gap-3">
@@ -106,10 +106,10 @@ export default function SeccionesPrecios({
                 </div>
                 {precioNegro > 0 && costoN > 0 && (
                     <div className="mt-2 bg-emerald-100/30 dark:bg-emerald-900/10 rounded-xl p-2">
-                        <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                        <p className="text-body font-bold text-emerald-700 dark:text-emerald-400">
                             Ganancia: $ {Math.round(precioNegro - costoN).toLocaleString('es-AR')} por unidad
                         </p>
-                        <p className="text-[9px] text-muted font-bold mt-0.5">
+                        <p className="text-label text-muted font-bold mt-0.5">
                             Costo × (1 + Ganancia%) × (1 + Markup%). El Markup% es un extra opcional (ej. recargo tarjeta) — dejalo en 0 si no lo usás.
                         </p>
                     </div>
@@ -121,17 +121,17 @@ export default function SeccionesPrecios({
                     <input type="text" inputMode="decimal" value={precioMercadoInput}
                         onChange={e => setPrecioMercadoInput(sanitizarNumero(e.target.value))}
                         placeholder="Precio que viste en el mercado" className={inputBase} />
-                    <p className="text-[9px] text-muted font-bold mt-0.5">
+                    <p className="text-label text-muted font-bold mt-0.5">
                         No se guarda con el producto — es solo para calcular al toque.
                     </p>
                     {precioMercado > 0 && costoN > 0 && (
                         <div className="mt-2 bg-sky-100/30 dark:bg-sky-900/10 rounded-xl p-2 space-y-1">
-                            <p className="text-[11px] font-bold text-sky-700 dark:text-sky-400">
+                            <p className="text-body font-bold text-sky-700 dark:text-sky-400">
                                 A ese precio ganarías: $ {Math.round(gananciaMercadoMonto).toLocaleString('es-AR')} por unidad ({gananciaMercadoPct.toFixed(0)}% sobre costo)
                             </p>
                             <button type="button"
                                 onClick={() => cambiarFinanciero('porcentajeGanancia', gananciaMercadoPct.toFixed(2))}
-                                className="text-[10px] font-black text-sky-600 dark:text-sky-400 underline">
+                                className="text-label font-black text-sky-600 dark:text-sky-400 underline">
                                 Usar esta Ganancia % arriba
                             </button>
                         </div>
@@ -141,7 +141,7 @@ export default function SeccionesPrecios({
 
             {/* Precio facturado */}
             <Seccion id="facturado" titulo="Precio Facturado (blanco)" icono="🧾" color="blue" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
-                <p className="text-[10px] text-muted font-bold mb-2">
+                <p className="text-caption text-muted font-bold mb-2">
                     Lo que hay que cobrar CON factura para que, después de pagar impuestos, te quede en el
                     bolsillo la misma ganancia que en efectivo — no es un precio con más ganancia, es el
                     mismo margen "engordado" para cubrir el costo extra de facturar.
@@ -152,13 +152,13 @@ export default function SeccionesPrecios({
                         <div className={`${readonlyBase} bg-chip border-black/[0.07] dark:border-white/[0.07] text-[#57534E] dark:text-[#A8A29E]`}>
                             {fmt(form.costoBlanco)}
                         </div>
-                        <p className="text-[9px] text-muted font-bold mt-0.5">Informativo: Costo + 21% IVA. No afecta el cálculo de abajo.</p>
+                        <p className="text-label text-muted font-bold mt-0.5">Informativo: Costo + 21% IVA. No afecta el cálculo de abajo.</p>
                     </div>
                     <div>
                         <label className={`${labelBase} text-muted`}>Impuestos %</label>
                         <input type="text" inputMode="decimal" value={form.porcentajeImpuestos}
                             onChange={e => cambiarFinanciero('porcentajeImpuestos', e.target.value)} placeholder="0" className={inputBase} />
-                        <p className="text-[9px] text-muted font-bold mt-0.5">Extra de IIBB/cheques que el mercado te deje trasladar (normalmente 0 — el 21% de IVA ya se suma aparte, abajo)</p>
+                        <p className="text-label text-muted font-bold mt-0.5">Extra de IIBB/cheques que el mercado te deje trasladar (normalmente 0 — el 21% de IVA ya se suma aparte, abajo)</p>
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -177,13 +177,13 @@ export default function SeccionesPrecios({
                 </div>
                 {precioFact > 0 && (
                     <div className="mt-2 bg-blue-100/30 dark:bg-blue-900/10 rounded-xl p-2 space-y-0.5">
-                        <p className="text-[11px] font-bold text-blue-700 dark:text-blue-400">
+                        <p className="text-body font-bold text-blue-700 dark:text-blue-400">
                             {fmt(form.precioNetoCliente)} + 21% IVA = {fmt(form.precioFacturado)}
                         </p>
-                        <p className="text-[10px] text-muted font-bold">
+                        <p className="text-caption text-muted font-bold">
                             Tu ganancia (igual que en efectivo): $ {Math.round(precioNegro - costoN).toLocaleString('es-AR')} por unidad
                         </p>
-                        <p className="text-[10px] text-muted font-bold">
+                        <p className="text-caption text-muted font-bold">
                             Extra que cubre impuestos: $ {Math.round(netoCliente - precioNegro).toLocaleString('es-AR')} — no es ganancia tuya
                         </p>
                     </div>
@@ -209,16 +209,16 @@ export default function SeccionesPrecios({
                         </div>
                     ))}
                     <button type="button" onClick={agregarCostoReal}
-                        className="text-[10px] font-black text-brand-amber underline mt-0.5">
+                        className="text-label font-black text-brand-amber underline mt-0.5">
                         + Agregar costo
                     </button>
-                    <p className="text-[9px] text-muted font-bold mt-1.5">
+                    <p className="text-label text-muted font-bold mt-1.5">
                         Destildá o borrá los que no apliquen a esta venta (ej. si el cliente no paga con tarjeta).
                         No se guardan con el producto — se resetean cada vez que abrís el formulario.
                     </p>
                     {precioFact > 0 && costoN > 0 && (
                         <div className="mt-2 bg-indigo-100/30 dark:bg-indigo-900/10 rounded-xl p-2">
-                            <p className="text-[12px] font-black text-indigo-700 dark:text-indigo-400">
+                            <p className="text-body font-black text-indigo-700 dark:text-indigo-400">
                                 Ganancia neta real: $ {Math.round((precioNegro - costoN) - (totalCostosRealesPct / 100) * precioFact).toLocaleString('es-AR')} por unidad
                             </p>
                         </div>
@@ -228,7 +228,7 @@ export default function SeccionesPrecios({
 
             {/* Precio por cantidad */}
             <Seccion id="cantidad" titulo="Precio por Cantidad" icono="📦" color="amber" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
-                <p className="text-[10px] text-muted font-bold mb-2">
+                <p className="text-caption text-muted font-bold mb-2">
                     Precio especial si compran varias unidades juntas (mayorista) — vos elegís cuánto ceder de ganancia.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -247,11 +247,11 @@ export default function SeccionesPrecios({
                 </div>
                 {precioCant > 0 && costoN > 0 && (
                     <div className="mt-2 bg-amber-100/30 dark:bg-amber-900/10 rounded-xl p-2 space-y-0.5">
-                        <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                        <p className="text-body font-bold text-amber-700 dark:text-amber-400">
                             Ganancia minima: $ {Math.round(precioCant - costoN).toLocaleString('es-AR')} por unidad
                         </p>
                         {precioNegro > 0 && (
-                            <p className="text-[10px] text-muted font-bold">
+                            <p className="text-caption text-muted font-bold">
                                 Descuento: {Math.round((1 - precioCant / precioNegro) * 100)}% vs precio efectivo
                             </p>
                         )}
@@ -268,7 +268,7 @@ export default function SeccionesPrecios({
                             onChange={e => setForm({ ...form, porcentajeCuotas3: sanitizarNumero(e.target.value) })}
                             placeholder="Ej: 15" className={inputBase} />
                         {precioCuotas3 > 0 && (
-                            <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-1">
+                            <p className="text-body text-purple-600 dark:text-purple-400 font-bold mt-1">
                                 3x $ {Math.round(precioCuotas3 / 3).toLocaleString('es-AR')} = {fmt(precioCuotas3)}
                             </p>
                         )}
@@ -279,20 +279,20 @@ export default function SeccionesPrecios({
                             onChange={e => setForm({ ...form, porcentajeCuotas6: sanitizarNumero(e.target.value) })}
                             placeholder="Ej: 30" className={inputBase} />
                         {precioCuotas6 > 0 && (
-                            <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-1">
+                            <p className="text-body text-purple-600 dark:text-purple-400 font-bold mt-1">
                                 6x $ {Math.round(precioCuotas6 / 6).toLocaleString('es-AR')} = {fmt(precioCuotas6)}
                             </p>
                         )}
                     </div>
                 </div>
-                <p className="text-[10px] text-muted font-bold mt-2">
+                <p className="text-caption text-muted font-bold mt-2">
                     Se calcula sobre el precio facturado. Deja vacio lo que no uses.
                 </p>
             </Seccion>
 
             {/* Presupuesto rápido por cantidad */}
             <Seccion id="presupuesto" titulo="Presupuesto Rápido (por cantidad)" icono="🧮" color="teal" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
-                <p className="text-[10px] text-muted font-bold mb-2">
+                <p className="text-caption text-muted font-bold mb-2">
                     Poné una cantidad de unidades y mirá cuánto te queda en total — ya descontados los costos reales (IIBB, tarjeta) si elegís "Facturado".
                 </p>
                 <div className="grid grid-cols-2 gap-3 mb-2">
@@ -306,11 +306,11 @@ export default function SeccionesPrecios({
                         <label className={`${labelBase} text-muted`}>Base de cálculo</label>
                         <div className="flex gap-1.5 mt-1">
                             <button type="button" onClick={() => setBaseBudget('efectivo')}
-                                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${baseBudget === 'efectivo' ? 'bg-emerald-500 text-white' : 'bg-chip text-muted'}`}>
+                                className={`flex-1 py-3 rounded-xl text-label font-black uppercase transition-all ${baseBudget === 'efectivo' ? 'bg-emerald-500 text-white' : 'bg-chip text-muted'}`}>
                                 Efectivo
                             </button>
                             <button type="button" onClick={() => setBaseBudget('facturado')}
-                                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${baseBudget === 'facturado' ? 'bg-blue-500 text-white' : 'bg-chip text-muted'}`}>
+                                className={`flex-1 py-3 rounded-xl text-label font-black uppercase transition-all ${baseBudget === 'facturado' ? 'bg-blue-500 text-white' : 'bg-chip text-muted'}`}>
                                 Facturado
                             </button>
                         </div>
@@ -321,24 +321,24 @@ export default function SeccionesPrecios({
                     <div className="space-y-2">
                         <div className="grid grid-cols-3 gap-2">
                             <div className="bg-chip rounded-xl p-2">
-                                <p className="text-[9px] font-black text-muted uppercase">Costo total</p>
+                                <p className="text-label font-black text-muted uppercase">Costo total</p>
                                 <p className="text-sm font-black text-ink">{fmt(totalCostoPres)}</p>
                             </div>
                             <div className="bg-teal-100/40 dark:bg-teal-900/15 rounded-xl p-2">
-                                <p className="text-[9px] font-black text-muted uppercase">Precio total</p>
+                                <p className="text-label font-black text-muted uppercase">Precio total</p>
                                 <p className="text-sm font-black text-teal-700 dark:text-teal-400">{fmt(totalPrecioPres)}</p>
                             </div>
                             <div className="bg-teal-100/40 dark:bg-teal-900/15 rounded-xl p-2">
-                                <p className="text-[9px] font-black text-muted uppercase">Ganancia bruta</p>
+                                <p className="text-label font-black text-muted uppercase">Ganancia bruta</p>
                                 <p className="text-sm font-black text-teal-700 dark:text-teal-400">{fmt(totalGananciaBrutaPres)}</p>
                             </div>
                         </div>
 
                         {baseBudget === 'facturado' && lineasCostosPres.length > 0 && (
                             <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] rounded-xl p-2.5">
-                                <p className="text-[9px] font-black text-muted uppercase mb-1.5">Desguace por costos reales ({cantPres} unid.)</p>
+                                <p className="text-label font-black text-muted uppercase mb-1.5">Desguace por costos reales ({cantPres} unid.)</p>
                                 {lineasCostosPres.map((l, idx) => (
-                                    <div key={idx} className="flex justify-between text-[11px] font-bold text-[#57534E] dark:text-[#A8A29E] py-0.5">
+                                    <div key={idx} className="flex justify-between text-body font-bold text-[#57534E] dark:text-[#A8A29E] py-0.5">
                                         <span>{l.nombre}</span>
                                         <span>− {fmt(l.monto)}</span>
                                     </div>
@@ -347,47 +347,47 @@ export default function SeccionesPrecios({
                         )}
 
                         <div className="bg-indigo-100/40 dark:bg-indigo-900/15 rounded-xl p-2.5">
-                            <p className="text-[9px] font-black text-muted uppercase">Ganancia neta real total</p>
+                            <p className="text-label font-black text-muted uppercase">Ganancia neta real total</p>
                             <p className="text-base font-black text-indigo-700 dark:text-indigo-400">{fmt(totalGananciaNetaPres)}</p>
                             {baseBudget === 'efectivo' && (
-                                <p className="text-[9px] text-muted font-bold mt-0.5">En efectivo no hay costos reales de facturación que descontar.</p>
+                                <p className="text-label text-muted font-bold mt-0.5">En efectivo no hay costos reales de facturación que descontar.</p>
                             )}
                         </div>
                     </div>
                 ) : (
-                    <p className="text-[10px] text-muted font-bold">Cargá costo y ganancia arriba, y una cantidad, para ver el total.</p>
+                    <p className="text-caption text-muted font-bold">Cargá costo y ganancia arriba, y una cantidad, para ver el total.</p>
                 )}
             </Seccion>
 
             {/* Resumen */}
             {(precioNegro > 0 || precioFact > 0) && (
                 <div className="bg-ink/10 rounded-2xl p-3">
-                    <p className="text-[9px] font-black text-muted uppercase mb-2">Resumen de precios</p>
+                    <p className="text-label font-black text-muted uppercase mb-2">Resumen de precios</p>
                     <div className="grid grid-cols-2 gap-2">
                         {precioNegro > 0 && (
                             <div>
-                                <p className="text-[9px] font-black text-muted uppercase">Efectivo</p>
+                                <p className="text-label font-black text-muted uppercase">Efectivo</p>
                                 <p className="text-base font-black text-emerald-400">{fmt(form.precio)}</p>
-                                <p className="text-[9px] text-emerald-400/60">Ganas {fmt(precioNegro - costoN)}</p>
+                                <p className="text-label text-emerald-400/60">Ganas {fmt(precioNegro - costoN)}</p>
                             </div>
                         )}
                         {netoCliente > 0 && (
                             <div>
-                                <p className="text-[9px] font-black text-muted uppercase">Al cliente</p>
+                                <p className="text-label font-black text-muted uppercase">Al cliente</p>
                                 <p className="text-base font-black text-blue-400">{fmt(form.precioNetoCliente)}</p>
-                                <p className="text-[9px] text-blue-400/60">+ IVA = {fmt(form.precioFacturado)}</p>
+                                <p className="text-label text-blue-400/60">+ IVA = {fmt(form.precioFacturado)}</p>
                             </div>
                         )}
                         {precioCant > 0 && (
                             <div>
-                                <p className="text-[9px] font-black text-muted uppercase">x Cantidad</p>
+                                <p className="text-label font-black text-muted uppercase">x Cantidad</p>
                                 <p className="text-base font-black text-amber-400">{fmt(form.precioCantidad)}</p>
-                                <p className="text-[9px] text-amber-400/60">Ganas min {fmt(precioCant - costoN)}</p>
+                                <p className="text-label text-amber-400/60">Ganas min {fmt(precioCant - costoN)}</p>
                             </div>
                         )}
                         {precioCuotas3 > 0 && (
                             <div>
-                                <p className="text-[9px] font-black text-muted uppercase">3 cuotas</p>
+                                <p className="text-label font-black text-muted uppercase">3 cuotas</p>
                                 <p className="text-base font-black text-purple-400">3x {fmt(precioCuotas3 / 3)}</p>
                             </div>
                         )}
