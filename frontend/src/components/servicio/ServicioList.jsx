@@ -51,12 +51,16 @@ function parseFechaSort(f) {
 
 const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] overflow-hidden';
 
-const Accion = ({ onClick, icon, label, className = '' }) => (
-    <button onClick={onClick}
-        className={`inline-flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-bold transition-all active:scale-95 ${className}`}>
-        {icon} <span className="hidden sm:inline">{label}</span>
-    </button>
-);
+// Icono compacto + menú "⋯" para lo secundario — mismo patrón que ya usan
+// PresupuestoCard/ServicioCard, para no tener 5 botones sueltos compitiendo.
+function IconBtn({ onClick, title, children, cls = '' }) {
+    return (
+        <button onClick={onClick} title={title}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 shrink-0 ${cls}`}>
+            {children}
+        </button>
+    );
+}
 
 export default function ServicioList({ onEditar }) {
     const { usuario, esAdmin } = useAuth();
@@ -67,6 +71,7 @@ export default function ServicioList({ onEditar }) {
     const [seleccionando, setSeleccionando] = useState(false);
     const [seleccionadas, setSeleccionadas] = useState(new Set());
     const [confirmMasivo, setConfirmMasivo] = useState(false);
+    const [menuAbiertoId, setMenuAbiertoId] = useState(null);
 
     const toggleSel = (id) => setSeleccionadas(prev => {
         const next = new Set(prev);
@@ -320,24 +325,44 @@ export default function ServicioList({ onEditar }) {
                                         )}
                                     </div>
 
-                                    {/* Acciones */}
+                                    {/* Acciones — 2 rápidas + "⋯" para el resto, en vez de todo suelto en fila */}
                                     {!seleccionando && (
-                                        <div className="flex items-center gap-1.5 px-3.5 py-2 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
-                                            {esAdmin && esPendiente && (
-                                                <Accion onClick={() => onEditar?.(s)} icon="✏️" label="Editar"
-                                                    className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                                            )}
-                                            <Accion onClick={() => setModalDetalle(s)} icon="👁️" label="Detalle"
-                                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                                            <Accion onClick={() => generarPDFHistorial(s)} icon="📄" label="PDF"
-                                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                                            <Accion onClick={() => generarPDFHistorial(s, { sinPrecios: true })} icon="📋" label="Sin $"
-                                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
-                                            <div className="flex-1" />
-                                            {esAdmin && (
-                                                <Accion onClick={() => eliminarServicio(s.id)} icon="🗑️" label=""
-                                                    className="text-[#D13A28]/60 dark:text-[#E8422F]/60 hover:bg-[#FEE2E2] dark:hover:bg-[#3B1111]" />
-                                            )}
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
+                                            <IconBtn onClick={() => setModalDetalle(s)} title="Ver detalle"
+                                                cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
+                                            <IconBtn onClick={() => generarPDFHistorial(s)} title="PDF"
+                                                cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+
+                                            <div className="relative">
+                                                    <IconBtn onClick={() => setMenuAbiertoId(v => v === s.id ? null : s.id)} title="Más acciones"
+                                                        cls={menuAbiertoId === s.id ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}>
+                                                        ⋯
+                                                    </IconBtn>
+                                                    {menuAbiertoId === s.id && (
+                                                        <>
+                                                            <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuAbiertoId(null)} />
+                                                            <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
+                                                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                                                                <button onClick={() => { generarPDFHistorial(s, { sinPrecios: true }); setMenuAbiertoId(null); }}
+                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
+                                                                    📋 PDF sin precios
+                                                                </button>
+                                                                {esAdmin && esPendiente && (
+                                                                    <button onClick={() => { onEditar?.(s); setMenuAbiertoId(null); }}
+                                                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
+                                                                        ✏️ Editar
+                                                                    </button>
+                                                                )}
+                                                                {esAdmin && (
+                                                                    <button onClick={() => { eliminarServicio(s.id); setMenuAbiertoId(null); }}
+                                                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] dark:active:bg-[#3B1111] rounded-xl">
+                                                                        🗑️ Eliminar
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
                                         </div>
                                     )}
                                 </div>
