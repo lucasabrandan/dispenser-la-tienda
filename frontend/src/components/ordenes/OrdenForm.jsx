@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
+import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import { buildSelectStyles } from '../servicio/ServicioUI';
 import { useTheme } from '../../hooks/useTheme';
@@ -94,6 +95,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!form.fechaProgramada) { toast.error('Ingresá la fecha'); return; }
         onGuardar({
             ...form,
             tecnicoId:     Number(form.tecnicoId),
@@ -237,6 +239,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                     <label className={labelCls}>Fecha *</label>
                     <DateInput value={form.fechaProgramada}
                         onChange={v => set('fechaProgramada', v)}
+                        required
                         className={inputCls} />
                 </div>
                 <div>
