@@ -3,13 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
-// (mismo criterio que Sidebar.jsx en desktop).
-const MENU_SERVICIO_DRAWER = [
+// (mismo criterio que Sidebar.jsx en desktop). Presupuestos e Historial quedan
+// juntos, aparte de cualquier dominio: un "presupuesto" puede ser de Servicio
+// o de Venta, así que meterlo bajo "🔧 Servicio" prometía algo que no era.
+const MENU_TRANSVERSAL_DRAWER = [
     { id: 'presupuestos', nombre: 'Presupuestos', icon: '💰' },
-];
-// Historial queda aparte: mezcla registros de servicio y de venta, no es de un solo dominio.
-const MENU_HISTORIAL_DRAWER = [
-    { id: 'historial', nombre: 'Historial', icon: '📋' },
+    { id: 'historial',    nombre: 'Historial',    icon: '📋' },
 ];
 const MENU_GESTION_DRAWER = [
     { id: 'clientes',  nombre: 'Clientes',  icon: '👥' },
@@ -18,7 +17,7 @@ const MENU_GESTION_DRAWER = [
     { id: 'finanzas',  nombre: 'Finanzas',  icon: '💹' },
     { id: 'usuarios',  nombre: 'Usuarios',  icon: '🔐' },
 ];
-const MENU_ITEMS = [...MENU_SERVICIO_DRAWER, ...MENU_HISTORIAL_DRAWER, ...MENU_GESTION_DRAWER];
+const MENU_ITEMS = [...MENU_TRANSVERSAL_DRAWER, ...MENU_GESTION_DRAWER];
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
     const { usuario, logout } = useAuth();
@@ -65,8 +64,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 {/* Items */}
                 <div className="p-3 space-y-4 overflow-y-auto">
                     {[
-                        { label: '🔧 Servicio', items: MENU_SERVICIO_DRAWER },
-                        { label: null,          items: MENU_HISTORIAL_DRAWER },
+                        { label: null,          items: MENU_TRANSVERSAL_DRAWER },
                         { label: '⚙️ Gestión',  items: MENU_GESTION_DRAWER },
                     ].map((grupo, gi) => (
                         <div key={gi} className="space-y-0.5">

@@ -41,6 +41,8 @@ const TIPO_TABS = [
     { id: 'VENTA',   label: 'Ventas',    fullLabel: 'Ventas',    color: '#D48800', icon: '🛒' },
 ];
 
+const PERIODO_LABELS = { MES: 'Este mes', MES_ANT: 'Mes ant.', ANO: 'Este año', TODO: 'Todo' };
+
 // ─── Componente principal ────────────────────────────────────────────────────
 export default function PresupuestosManager() {
     const { esAdmin, usuario } = useAuth();
@@ -49,6 +51,7 @@ export default function PresupuestosManager() {
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
     const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
+    const [mostrarPeriodo, setMostrarPeriodo]   = useState(false);
 
     // Long-press para selección masiva
     const longPressRef = React.useRef(null);
@@ -200,6 +203,11 @@ export default function PresupuestosManager() {
         count: t.id === '' ? stats.count : t.id === 'TECNICA' ? stats.servicios : stats.ventas,
     }));
 
+    // Label del chip de período — mes elegido a mano tiene prioridad sobre el rápido
+    const periodoLabel = filtros.mesSelector
+        ? formatMesLargo(filtros.mesSelector)
+        : (PERIODO_LABELS[filtros.periodoRapido] || 'Período');
+
     return (
         <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors"
             {...swipeHandlers}>
@@ -227,6 +235,13 @@ export default function PresupuestosManager() {
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
                             )}
                         </div>
+                        {/* Período — chip que despliega FiltrosPanel; arranca colapsado en "Este mes" */}
+                        <button onClick={() => setMostrarPeriodo(v => !v)}
+                            className={`${mostrarBusqueda ? 'hidden md:flex' : 'flex'} h-9 px-2.5 rounded-lg items-center gap-1 shrink-0 active:scale-95 shadow-sm border text-[11px] font-bold whitespace-nowrap ${
+                                mostrarPeriodo ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white border-transparent' : 'bg-white dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] border-black/[0.05] dark:border-white/[0.05]'
+                            }`}>
+                            📅 {periodoLabel} {mostrarPeriodo ? '▴' : '▾'}
+                        </button>
                         <button onClick={() => setModalCotizar(true)}
                             className="h-9 px-3 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D48800] dark:bg-[#F0A500] shrink-0">
                             Cotizar
@@ -244,19 +259,20 @@ export default function PresupuestosManager() {
                     onChangeColumn={(id) => { setTipoFiltro(id); setModoSeleccion(false); setSeleccionados(new Set()); }}
                 />
 
-                {/* ═══ PERÍODO — arranca en "Este mes" para no mezclar todo el historico ═══ */}
-                <FiltrosPanel hook={filtros} conBusqueda={false} conRango />
-
-                {/* Stats resumen — monto total pendiente + ver ruta */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    <span className="text-[11px] font-bold text-[#A8A29E] flex-1 text-center">Pendiente total</span>
-                    <M valor={stats.total} className="text-[13px] font-black text-[#D48800] dark:text-[#F0A500]" />
+                {/* Subline — pendiente + ver ruta, discreto (reemplaza la barra de stats) */}
+                <div className="flex items-center gap-2 px-1">
+                    <span className="text-[11px] font-semibold text-[#A8A29E]">Pendiente</span>
+                    <M valor={stats.total} className="text-[12px] font-black text-[#D48800] dark:text-[#F0A500]" />
                     <button onClick={() => abrirRuta(presupuestosFiltradosTipo)}
-                        title="Ver ruta en Google Maps"
-                        className="ml-1 h-7 px-2.5 rounded-lg font-bold text-[10px] uppercase text-white bg-[#1A73E8] active:scale-95 transition-all shrink-0">
+                        className="ml-auto text-[10px] font-bold text-[#1A73E8] underline underline-offset-2 active:opacity-70">
                         Ver ruta
                     </button>
                 </div>
+
+                {/* ═══ PERÍODO — colapsado por defecto, se abre desde el chip del header ═══ */}
+                {mostrarPeriodo && (
+                    <FiltrosPanel hook={filtros} conBusqueda={false} conRango />
+                )}
 
                 {/* Selección masiva */}
                 {modoSeleccion && (

@@ -12,15 +12,18 @@ const MENU_PANEL = [
 ];
 const MENU_SERVICIO = [
     { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Técnico' },
-    { id: 'presupuestos',     icon: '💰', nombre: 'Presupuestos'     },
     { id: 'despacho',         icon: '📌', nombre: 'Despacho'         },
 ];
 const MENU_VENTAS = [
     { id: 'venta', icon: '🛒', nombre: 'Venta / Insumos' },
 ];
-// Historial queda aparte: mezcla registros de servicio y de venta, no es de un solo dominio.
-const MENU_HISTORIAL = [
-    { id: 'historial', icon: '📋', nombre: 'Historial' },
+// Presupuestos e Historial quedan aparte de los grupos por dominio: un
+// "presupuesto" puede ser de Servicio o de Venta, así que agruparlo bajo
+// "🔧 Servicio" prometía algo que la pantalla no era — ahí adentro se
+// vuelve a separar por tipo, quedaba redundante con el propio menú.
+const MENU_TRANSVERSAL = [
+    { id: 'presupuestos', icon: '💰', nombre: 'Presupuestos' },
+    { id: 'historial',    icon: '📋', nombre: 'Historial'    },
 ];
 
 const MENU_OPERACIONES_TECNICO = [
@@ -132,7 +135,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                             </div>
                         </div>
                         <div className="space-y-1">
-                            {MENU_HISTORIAL.map(item => <MenuItem key={item.id} item={item} />)}
+                            {MENU_TRANSVERSAL.map(item => <MenuItem key={item.id} item={item} />)}
                         </div>
                     </div>
                 ) : (
