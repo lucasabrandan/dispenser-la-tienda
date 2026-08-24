@@ -5,6 +5,7 @@ import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { toast } from 'react-hot-toast';
 import DateInput from '../ui/DateInput';
+import { formatFechaCorta } from '../../utils/dateUtils';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-[#E8E5E0] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
@@ -72,7 +73,7 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                     </div>
                     <div className="text-right shrink-0">
                         <p className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{orden.horaEstimada || '—'}</p>
-                        <p className="text-[10px] text-[#A8A29E]">{orden.fechaProgramada}</p>
+                        <p className="text-[10px] text-[#A8A29E]">{formatFechaCorta(orden.fechaProgramada)}</p>
                     </div>
                 </div>
 

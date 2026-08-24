@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { M } from '../servicio/ServicioUI';
+import { formatFechaCorta } from '../../utils/dateUtils';
 
 function IconBtn({ onClick, title, children, cls = '' }) {
     return (
@@ -41,7 +42,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                     </div>
                     <div className="text-right shrink-0">
                         <M valor={total} className="text-[17px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block" />
-                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{s.fecha}</p>
+                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{formatFechaCorta(s.fecha)}</p>
                     </div>
                 </div>
 

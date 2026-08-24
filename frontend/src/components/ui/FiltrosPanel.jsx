@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import DateInput from './DateInput';
+import { MESES_ES } from '../../utils/dateUtils';
 
-const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 function formatMes(ym) {
     if (!ym) return '';
     const [y, m] = ym.split('-');
-    return `${MESES[parseInt(m) - 1]} ${y}`;
+    return `${MESES_ES[parseInt(m)]} ${y}`;
 }
 
 // Barra segmentada unida

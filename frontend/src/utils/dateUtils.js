@@ -3,11 +3,36 @@
 const pad = (n) => String(n).padStart(2, '0');
 const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
+// Nombres de mes en español, 1-indexado (posición 0 vacía a propósito
+// para poder escribir MESES_ES[mes] con mes 1-12 sin restar 1 cada vez).
+// Antes había 5 copias sueltas de este mismo array en distintos archivos.
+export const MESES_ES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
 // Retorna hoy en formato YYYY-MM-DD
 export const getTodayISO = () => fmt(new Date());
 
 // Formatea cualquier Date a YYYY-MM-DD
 export const formatDateISO = (d) => fmt(d);
+
+// Fecha ISO (YYYY-MM-DD) a "DD/MM" — para espacios chicos (tarjetas), sin
+// pasar por Date() para no arrastrar corrimientos de huso horario.
+export function formatFechaCorta(fechaISO) {
+    if (!fechaISO) return '';
+    const [, m, d] = fechaISO.split('-');
+    if (!m || !d) return fechaISO;
+    return `${d}/${m}`;
+}
+
+// Lunes de la semana que contiene "fecha" (Date), a las 00:00. Antes esta
+// misma cuenta vivía copiada por separado en WeekDatePicker.jsx y MiAgenda.jsx.
+export function lunesDeLaSemana(fecha) {
+    const d = new Date(fecha);
+    const dow = d.getDay(); // 0=domingo, 1=lunes...
+    const offset = dow === 0 ? -6 : 1 - dow;
+    d.setDate(d.getDate() + offset);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
 
 // Primer dia del mes de una fecha
 export const inicioMes = (d) => new Date(d.getFullYear(), d.getMonth(), 1);

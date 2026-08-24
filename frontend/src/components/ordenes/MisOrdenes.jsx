@@ -3,7 +3,7 @@ import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
-import { getTodayISO } from '../../utils/dateUtils';
+import { getTodayISO, MESES_ES } from '../../utils/dateUtils';
 import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
 import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
@@ -138,8 +138,6 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
         </div>
     );
 }
-
-const MESES_ES = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 function MesCard({ d, fmt, labelMes }) {
     const [abierto, setAbierto] = useState(false);

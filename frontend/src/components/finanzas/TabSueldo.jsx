@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useMontos } from '../../context/MontosContext';
 import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
+import { MESES_ES } from '../../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 
 export default function TabSueldo({ filtroMes, setFiltroMes }) {
@@ -73,9 +74,8 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
     // Datos para evolución
     const chartData = (data.evolucion || []).map(e => {
         const mesLabel = e.mes.substring(5); // MM de YYYY-MM
-        const meses = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
         return {
-            mes: meses[parseInt(mesLabel)] || mesLabel,
+            mes: MESES_ES[parseInt(mesLabel)] || mesLabel,
             Acumulado: Math.round(Number(e.acumulado || 0)),
             Objetivo: Math.round(Number(e.objetivo || 0)),
             Resultado: Math.round(Number(e.resultadoEmpresa || 0)),
@@ -257,8 +257,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                             const acum = Number(e.acumulado || 0);
                             const obj = Number(e.objetivo || 0);
                             const ok = obj > 0 && acum >= obj;
-                            const meses = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                            const mesLabel = meses[parseInt(e.mes.substring(5))] + ' ' + e.mes.substring(0, 4);
+                            const mesLabel = MESES_ES[parseInt(e.mes.substring(5))] + ' ' + e.mes.substring(0, 4);
                             return (
                                 <div key={e.mes}
                                     className={`grid px-4 py-3 items-center ${verEmpresa ? 'grid-cols-[1fr_80px_80px_80px_50px]' : 'grid-cols-[1fr_90px_90px_50px]'} ${i < data.evolucion.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
