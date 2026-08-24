@@ -7,10 +7,18 @@ import FotoUpload from '../servicio/FotoUpload';
 const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
 const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
 
+// Mismas 3 opciones y mismo destino que EjecutarAdminSheet — un solo vocabulario
+// de "modalidad de cobro" en toda la app, no uno por pantalla.
+const MODALIDADES = [
+    { id: 'EFECTIVO_SIN_FACTURA', label: 'Efectivo sin factura', desc: 'Cobrado en mano, sin ARCA', color: '#16A34A', destino: 'COBRADO' },
+    { id: 'CON_FACTURA',          label: 'Con factura',          desc: 'Facturar + enviar datos bancarios', color: '#8B5CF6', destino: 'PENDIENTE_FACTURACION' },
+    { id: 'PENDIENTE',            label: 'Definir despues',      desc: 'Queda como realizado, cobro pendiente', color: '#A8A29E', destino: 'COMPLETADO' },
+];
+
 /**
  * ModalRegistrarTrabajo — full-screen sheet
  * Permite al tecnico registrar trabajo realizado en una orden sin presupuesto vinculado.
- * Crea un Servicio REALIZADO y marca la orden como COMPLETADA.
+ * Crea un Servicio (tipo TECNICA) con la modalidad de cobro elegida y marca la orden como COMPLETADA.
  */
 export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, onCerrar }) {
     const [repuestosDisp,  setRepuestosDisp]  = useState([]);
@@ -21,6 +29,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
     const [observaciones,  setObservaciones]  = useState('');
     const [costo,          setCosto]          = useState('');
     const [metodoPago,     setMetodoPago]     = useState('EFECTIVO');
+    const [modalidad,      setModalidad]      = useState('');
     const [serial,         setSerial]         = useState('');
     const [fotoEvidencia,  setFotoEvidencia]  = useState(null);
     const [seleccionados,  setSeleccionados]  = useState([]);
@@ -62,9 +71,11 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
         if (!sedeId) { toast.error('Selecciona la sede'); return; }
         if (!descripcion.trim()) { toast.error('Describi el trabajo realizado'); return; }
         if (!costo || Number(costo) <= 0) { toast.error('Ingresa el costo del servicio'); return; }
+        if (!modalidad) { toast.error('Elegi la modalidad de cobro'); return; }
 
         setGuardando(true);
         try {
+            const modalidadSel = MODALIDADES.find(m => m.id === modalidad);
             const repuestosUsados = seleccionados.map(s => ({
                 id:       s.repuesto.id,
                 nombre:   s.repuesto.nombre,
@@ -93,8 +104,10 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                 sedeId:        Number(sedeId),
                 sedeNombre:    sedeNombre || sedeSel?.nombre || '',
                 usuarioId:     tecnicoId,
-                servicioTipo:  'REPARACION',
-                estado:        'REALIZADO',
+                servicioTipo:  'TECNICA',
+                estado:        modalidadSel.destino,
+                modalidadCobro: modalidad === 'PENDIENTE' ? null : modalidad,
+                montoFinal:    Number(costo),
                 fecha:         getTodayISO(),
                 ordenId:       orden.id,
                 observaciones: observaciones.trim() || null,
@@ -203,6 +216,21 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     </select>
                 </div>
 
+                {/* Modalidad de cobro — misma pregunta que le hace el admin a un presupuesto */}
+                <div>
+                    <label className={labelCls}>Modalidad de cobro *</label>
+                    <div className="space-y-2">
+                        {MODALIDADES.map(o => (
+                            <button key={o.id} type="button" onClick={() => setModalidad(o.id)}
+                                className={`w-full p-3 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-[#EFEDEA] dark:bg-[#1C1C1C]'}`}
+                                style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}>
+                                <p className="text-[12.5px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{o.label}</p>
+                                <p className="text-[10px] text-[#A8A29E] mt-0.5">{o.desc}</p>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Repuestos */}
                 <div>
                     <label className={labelCls}>Repuestos usados (opcional)</label>
@@ -256,7 +284,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
                     Cancelar
                 </button>
-                <button onClick={handleGuardar} disabled={guardando || !sedeId || !descripcion.trim() || !costo}
+                <button onClick={handleGuardar} disabled={guardando || !sedeId || !descripcion.trim() || !costo || !modalidad}
                     className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F] disabled:opacity-40">
                     {guardando ? 'Guardando...' : 'Registrar trabajo'}
                 </button>
