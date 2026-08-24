@@ -4,25 +4,52 @@
 
 /* =========================================
     VARIABLES DE MARCA (Light & Dark)
+    Estos son los colores que la app YA usa en
+    todos lados (hardcodeados como hex sueltos en
+    cada componente) — acá quedan centralizados.
    ========================================= */
 :root {
-  --brand-red: #EF4444;
-  --brand-yellow: #F1C40F;
-  --bg-main: #F8FAFC;      /* Gris muy clarito (Slate-50) */
-  --bg-card: #FFFFFF;
-  --border-color: #E2E8F0;
-  --text-primary: #0F172A; /* Azul casi negro */
-  --text-secondary: #64748B;
-  --status-success: #10B981;
+  /* Marca */
+  --color-brand-red: #D13A28;
+  --color-brand-green: #16A34A;
+  --color-brand-amber: #D48800;
+
+  /* Texto y fondos base */
+  --color-ink: #1C1917;
+  --color-muted: #A8A29E;
+  --color-bg-page: #F5F3F1;
+  --color-bg-card: #FFFFFF;
+
+  /* Estados — fondo / texto (badges de estado, prioridad, etc.) */
+  --warning-bg: #FEF3C7;
+  --warning-tx: #92400E;
+  --success-bg: #DCFCE7;
+  --success-tx: #16A34A;
+  --danger-bg:  #FEE2E2;
+  --danger-tx:  #D13A28;
+  --info-bg:    #F3E8FF;
+  --info-tx:    #7E22CE;
 }
 
 /* Cuando se activa el modo oscuro (.dark en el HTML) */
 .dark {
-  --bg-main: #0F172A;      /* Azul oscuro (Slate-900) */
-  --bg-card: #1E293B;      /* Azul intermedio (Slate-800) */
-  --border-color: #334155;
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
+  --color-brand-red: #E8422F;
+  --color-brand-green: #4ADE80;
+  --color-brand-amber: #F0A500;
+
+  --color-ink: #F0EEE9;
+  --color-muted: #A8A29E;
+  --color-bg-page: #141414;
+  --color-bg-card: #242424;
+
+  --warning-bg: #2E2207;
+  --warning-tx: #FBBF24;
+  --success-bg: #0F2A1A;
+  --success-tx: #4ADE80;
+  --danger-bg:  #2E100C;
+  --danger-tx:  #E8422F;
+  --info-bg:    #2E1065;
+  --info-tx:    #C084FC;
 }
 
 /* =========================================
@@ -37,7 +64,7 @@ body {
   margin: 0;
   padding: 0;
   @apply bg-slate-50 dark:bg-slate-900 transition-colors duration-300;
-  color: var(--text-primary);
+  color: var(--color-ink);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
 }
