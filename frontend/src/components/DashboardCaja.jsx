@@ -165,8 +165,8 @@ export default function DashboardCaja({ setVistaActual }) {
                             <span className="text-[12px] font-black">Nueva Venta</span>
                         </button>
                     </div>
-                    <PlanificadorBlock planificador={data.planificador} setVistaActual={setVistaActual} />
-                    <AgendaBlock agendaHoy={data.agendaHoy} setVistaActual={setVistaActual} />
+                    <PlanificadorBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
+                    <AgendaBlock agendaHoy={data.agendaHoy} setVistaActual={setVistaActual} cargando={cargando} />
                     <StatsBlock />
                     <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
                     {data.pendientesCount > 0 && (
@@ -221,8 +221,8 @@ export default function DashboardCaja({ setVistaActual }) {
                     </div>
                     <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                        <PlanificadorBlock planificador={data.planificador} setVistaActual={setVistaActual} />
-                        <AgendaBlock agendaHoy={data.agendaHoy} setVistaActual={setVistaActual} />
+                        <PlanificadorBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
+                        <AgendaBlock agendaHoy={data.agendaHoy} setVistaActual={setVistaActual} cargando={cargando} />
                     </div>
                 </div>
             </div>

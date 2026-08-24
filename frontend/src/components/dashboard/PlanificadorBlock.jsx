@@ -35,9 +35,22 @@ function DiaBtn({ d, diaSel, onSelect }) {
     );
 }
 
-export default function PlanificadorBlock({ planificador, setVistaActual }) {
+export default function PlanificadorBlock({ planificador, setVistaActual, cargando }) {
     const [diaSel, setDiaSel] = useState(null);
     const [semana2, setSemana2] = useState(false);
+
+    // Mientras carga, no mostrar los dias en 0hs — se confunde con un dia
+    // de verdad libre. Mismo criterio que ya usa MiAgenda.jsx.
+    if (cargando) {
+        return (
+            <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-2">Planificador</p>
+                <div className="grid grid-cols-6 gap-1.5">
+                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-14 rounded-lg animate-pulse bg-white dark:bg-[#242424] border border-black/[0.05] dark:border-white/[0.05]" />)}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>

@@ -5,7 +5,20 @@ import { ESTADO_COLORS, DEFAULT_COLOR, MAX_TRABAJOS, calcTotal, getIniciales, es
 
 const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
 
-export default function AgendaBlock({ agendaHoy, setVistaActual }) {
+export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
+    // Mientras carga, no mostrar "sin actividad" — se confunde con que
+    // de verdad no hay nada. Mismo criterio que ya usa MiAgenda.jsx.
+    if (cargando) {
+        return (
+            <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-2">Agenda de hoy</p>
+                <div className="space-y-1.5">
+                    {[1, 2].map(i => <div key={i} className={`${card} h-16 animate-pulse`} />)}
+                </div>
+            </div>
+        );
+    }
+
     // Agrupar por tecnico
     const agendaPorTecnico = (() => {
         const grupos = {};
