@@ -68,7 +68,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                     className={`relative h-11 w-11 mx-auto rounded-2xl cursor-pointer flex items-center justify-center text-xl transition-all duration-200 active:scale-95 ${baseBtn}`}>
                     {item.icon}
                     {badge && (
-                        <span className="absolute top-0.5 right-0.5 text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full bg-brand-red text-white leading-none">
+                        <span className="absolute top-0.5 right-0.5 text-label font-black w-4 h-4 flex items-center justify-center rounded-full bg-brand-red text-white leading-none">
                             {badge}
                         </span>
                     )}
@@ -78,10 +78,10 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
 
         return (
             <div onClick={() => setVistaActual(item.id)}
-                className={`px-5 py-3.5 rounded-2xl cursor-pointer text-[13px] transition-all duration-200 flex items-center gap-3 whitespace-nowrap active:scale-95 ${baseBtn}`}>
+                className={`px-5 py-3.5 rounded-2xl cursor-pointer text-body transition-all duration-200 flex items-center gap-3 whitespace-nowrap active:scale-95 ${baseBtn}`}>
                 <span>{item.icon} {item.nombre}</span>
                 {badge && (
-                    <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${activa ? 'bg-white/30 text-white' : 'bg-brand-red text-white'}`}>
+                    <span className={`ml-auto text-label font-black px-1.5 py-0.5 rounded-full leading-none ${activa ? 'bg-white/30 text-white' : 'bg-brand-red text-white'}`}>
                         {badge}
                     </span>
                 )}
@@ -99,7 +99,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                 {!colapsado && (
                     <div className="cursor-pointer" onClick={() => setVistaActual('caja')}>
                         <img src={logo} alt="Logo" className="w-full max-w-[180px] mx-auto block drop-shadow-sm dark:brightness-110" />
-                        <p className="text-[9px] font-black text-muted mt-3 tracking-[0.2em] uppercase text-center">Sistema de Logística</p>
+                        <p className="text-label font-black text-muted mt-3 tracking-[0.2em] uppercase text-center">Sistema de Logística</p>
                     </div>
                 )}
                 {colapsado && (
@@ -118,18 +118,18 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
             <nav className={`flex-1 overflow-y-auto py-5 space-y-6 ${colapsado ? 'px-1.5' : 'px-4'}`}>
                 {esAdmin ? (
                     <div className="space-y-4">
-                        {!colapsado && <p className="text-[9px] font-black text-muted uppercase tracking-[0.2em] mb-3 px-2">Operaciones</p>}
+                        {!colapsado && <p className="text-label font-black text-muted uppercase tracking-[0.2em] mb-3 px-2">Operaciones</p>}
                         <div className="space-y-1">
                             {MENU_PANEL.map(item => <MenuItem key={item.id} item={item} />)}
                         </div>
                         <div>
-                            {!colapsado && <p className="text-[9px] font-bold text-muted/70 uppercase tracking-[0.15em] mb-2 px-2">🔧 Servicio</p>}
+                            {!colapsado && <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-2 px-2">🔧 Servicio</p>}
                             <div className="space-y-1">
                                 {MENU_SERVICIO.map(item => <MenuItem key={item.id} item={item} />)}
                             </div>
                         </div>
                         <div>
-                            {!colapsado && <p className="text-[9px] font-bold text-muted/70 uppercase tracking-[0.15em] mb-2 px-2">🛒 Ventas</p>}
+                            {!colapsado && <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-2 px-2">🛒 Ventas</p>}
                             <div className="space-y-1">
                                 {MENU_VENTAS.map(item => <MenuItem key={item.id} item={item} />)}
                             </div>
@@ -140,7 +140,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                     </div>
                 ) : (
                     <div>
-                        {!colapsado && <p className="text-[9px] font-black text-muted uppercase tracking-[0.2em] mb-3 px-2">Operaciones</p>}
+                        {!colapsado && <p className="text-label font-black text-muted uppercase tracking-[0.2em] mb-3 px-2">Operaciones</p>}
                         <div className="space-y-1">
                             {menuOperaciones.map(item => <MenuItem key={item.id} item={item} />)}
                         </div>
@@ -148,7 +148,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                 )}
                 {esAdmin && (
                     <div>
-                        {!colapsado && <p className="text-[9px] font-black text-muted uppercase tracking-[0.2em] mb-3 px-2">Gestión</p>}
+                        {!colapsado && <p className="text-label font-black text-muted uppercase tracking-[0.2em] mb-3 px-2">Gestión</p>}
                         <div className="space-y-1">
                             {MENU_GESTION.map(item => <MenuItem key={item.id} item={item} />)}
                         </div>
@@ -161,13 +161,13 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                 {!colapsado && (
                     <div className="flex items-center justify-between mb-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-black text-ink truncate">{usuario?.nombre}</p>
-                            <p className="text-[9px] font-bold text-muted uppercase tracking-wider">
+                            <p className="text-body font-black text-ink truncate">{usuario?.nombre}</p>
+                            <p className="text-label font-bold text-muted uppercase tracking-wider">
                                 {usuario?.rol === 'ADMIN' ? 'Administrador' : 'Técnico'}
                             </p>
                         </div>
                         <button onClick={logout} title="Cerrar sesión"
-                            className="ml-2 px-2 py-1.5 rounded-lg text-[10px] font-black text-brand-red hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all whitespace-nowrap">
+                            className="ml-2 px-2 py-1.5 rounded-lg text-label font-black text-brand-red hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all whitespace-nowrap">
                             Salir
                         </button>
                     </div>
@@ -175,8 +175,8 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                 <div className={`flex items-center ${colapsado ? 'flex-col gap-1' : 'justify-between'}`}>
                     {!colapsado && (
                         <div>
-                            <span className="text-[9px] text-muted font-black uppercase tracking-widest block">v1.0</span>
-                            <span className="text-[8px] text-muted block">dispenserlatienda.com.ar</span>
+                            <span className="text-label text-muted font-black uppercase tracking-widest block">v1.0</span>
+                            <span className="text-caption text-muted block">dispenserlatienda.com.ar</span>
                         </div>
                     )}
                     <div className={`flex items-center ${colapsado ? 'flex-col gap-1' : 'gap-1'}`}>

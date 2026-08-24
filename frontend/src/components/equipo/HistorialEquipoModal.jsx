@@ -9,7 +9,7 @@ function Badge({ estado }) {
     };
     const { label, cls } = map[estado] || { label: estado, cls: 'bg-[#E8E5E0] text-[#57534E]' };
     return (
-        <span className={`text-[8px] font-black px-2 py-0.5 rounded-lg uppercase ${cls}`}>
+        <span className={`text-label font-black px-2 py-0.5 rounded-lg uppercase ${cls}`}>
             {label}
         </span>
     );
@@ -60,15 +60,15 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                 <div className="px-5 pb-4 pt-2 border-b border-black/[0.07] dark:border-white/[0.07] shrink-0">
                     <div className="flex items-start justify-between gap-3">
                         <div>
-                            <p className="text-[9px] font-black text-muted uppercase mb-1">Historial del Dispenser</p>
+                            <p className="text-label font-black text-muted uppercase mb-1">Historial del Dispenser</p>
                             <h3 className="text-[18px] font-black text-ink uppercase leading-none">
                                 {equipo.marca} {equipo.modelo}
                             </h3>
-                            <p className="text-[11px] font-bold text-brand-red mt-0.5">
+                            <p className="text-caption font-bold text-brand-red mt-0.5">
                                 S/N: {equipo.numeroSerie}
                             </p>
                             {equipo.ubicacion && (
-                                <p className="text-[9px] font-bold text-muted mt-0.5 uppercase">📍 {equipo.ubicacion}</p>
+                                <p className="text-label font-bold text-muted mt-0.5 uppercase">📍 {equipo.ubicacion}</p>
                             )}
                         </div>
                         <button
@@ -82,18 +82,18 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                     {/* Stats rápidas */}
                     <div className="grid grid-cols-3 gap-2 mt-4">
                         <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
-                            <p className="text-[18px] font-black text-brand-red leading-none">{historial.length}</p>
-                            <p className="text-[8px] font-black text-muted uppercase mt-0.5">Servicios</p>
+                            <p className="text-body-lg font-black text-brand-red leading-none">{historial.length}</p>
+                            <p className="text-label font-black text-muted uppercase mt-0.5">Servicios</p>
                         </div>
                         <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
-                            <p className="text-[18px] font-black text-brand-amber leading-none">${fmt(totalGastado)}</p>
-                            <p className="text-[8px] font-black text-muted uppercase mt-0.5">Total facturado</p>
+                            <p className="text-body-lg font-black text-brand-amber leading-none">${fmt(totalGastado)}</p>
+                            <p className="text-label font-black text-muted uppercase mt-0.5">Total facturado</p>
                         </div>
                         <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
-                            <p className="text-[18px] font-black text-ink leading-none">
+                            <p className="text-body-lg font-black text-ink leading-none">
                                 {diasSinAtender !== null ? diasSinAtender : '—'}
                             </p>
-                            <p className="text-[8px] font-black text-muted uppercase mt-0.5">Días sin service</p>
+                            <p className="text-label font-black text-muted uppercase mt-0.5">Días sin service</p>
                         </div>
                     </div>
                 </div>
@@ -134,19 +134,19 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                         <div className="flex items-center gap-2">
                                                             <Badge estado={s.estado} />
                                                             {esPrimero && (
-                                                                <span className="text-[7px] font-black bg-[#D13A28]/10 text-brand-red px-1.5 py-0.5 rounded uppercase">
+                                                                <span className="text-label font-black bg-[#D13A28]/10 text-brand-red px-1.5 py-0.5 rounded uppercase">
                                                                     Último
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-[10px] font-bold text-muted">
+                                                        <p className="text-caption font-bold text-muted">
                                                             {formatFecha(s.fecha)}
                                                         </p>
                                                     </div>
 
                                                     {/* Trabajo realizado */}
                                                     {item?.trabajoRealizado && (
-                                                        <p className="text-[12px] font-bold text-ink mb-2 leading-snug">
+                                                        <p className="text-body font-bold text-ink mb-2 leading-snug">
                                                             {item.trabajoRealizado}
                                                         </p>
                                                     )}
@@ -155,7 +155,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                     {repuestos.length > 0 && (
                                                         <div className="flex flex-wrap gap-1 mb-2">
                                                             {repuestos.map((r, i) => (
-                                                                <span key={i} className="text-[8px] font-black px-2 py-0.5 rounded-lg bg-chip text-secondary uppercase">
+                                                                <span key={i} className="text-label font-black px-2 py-0.5 rounded-lg bg-chip text-secondary uppercase">
                                                                     {r.cantidad}× {r.nombre}
                                                                 </span>
                                                             ))}
@@ -166,12 +166,12 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                     <div className="flex justify-between items-center pt-2 border-t border-black/[0.06] dark:border-white/[0.06]">
                                                         <div className="flex items-center gap-3">
                                                             {Number(item?.costoExtra || 0) > 0 && (
-                                                                <span className="text-[9px] font-bold text-muted">
+                                                                <span className="text-caption font-bold text-muted">
                                                                     MO: <span className="text-brand-amber font-black">${fmt(item.costoExtra)}</span>
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <span className="text-[14px] font-black text-ink">
+                                                        <span className="text-body-lg font-black text-ink">
                                                             ${fmt(item?.costo || 0)}
                                                         </span>
                                                     </div>

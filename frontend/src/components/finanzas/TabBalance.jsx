@@ -36,12 +36,12 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
         <div className="space-y-4">
             <div className="flex gap-2 items-center">
                 <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 <button onClick={() => exportarBalanceCSV(stats, filtroMes)}
-                    className="h-8 px-3 rounded-lg text-[10px] font-bold uppercase bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                    className="h-8 px-3 rounded-lg text-label font-bold uppercase bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                     CSV
                 </button>
-                {cargando && <span className="text-[10px] text-muted animate-pulse">Cargando...</span>}
+                {cargando && <span className="text-caption text-muted animate-pulse">Cargando...</span>}
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -52,7 +52,7 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
             </div>
 
             <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                <p className="text-[10px] font-bold text-muted uppercase tracking-wider mb-3">Desglose del mes</p>
+                <p className="text-label font-bold text-muted uppercase tracking-wider mb-3">Desglose del mes</p>
                 {[
                     { label: 'Facturación bruta',            valor: stats.facturacion,    color: 'text-brand-amber' },
                     { label: '− Impuestos (30%)',            valor: imp,                  color: 'text-brand-red' },
@@ -60,19 +60,19 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
                     { label: '− Gastos operacionales',       valor: stats.gastosVarios,   color: 'text-brand-red' },
                 ].map(({ label, valor, color }) => (
                     <div key={label} className="flex justify-between items-center py-1.5 border-b border-black/[0.04] dark:border-white/[0.04]">
-                        <p className="text-[11px] font-bold text-muted">{label}</p>
-                        <p className={`text-[12px] font-black ${color}`}>{fmt(valor)}</p>
+                        <p className="text-caption font-bold text-muted">{label}</p>
+                        <p className={`text-body font-black ${color}`}>{fmt(valor)}</p>
                     </div>
                 ))}
                 <div className="flex justify-between items-center pt-2 mt-1">
-                    <p className="text-[13px] font-black text-ink">= Ganancia neta</p>
+                    <p className="text-body-lg font-black text-ink">= Ganancia neta</p>
                     <p className="text-[18px] font-black text-brand-amber">{fmt(gananciaNeta)}</p>
                 </div>
             </div>
 
             {stats.facturacion > 0 && (
                 <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    <p className="text-[10px] font-bold text-muted uppercase tracking-wider mb-2">Distribución</p>
+                    <p className="text-label font-bold text-muted uppercase tracking-wider mb-2">Distribución</p>
                     <ResponsiveContainer width="100%" height={200}>
                         <PieChart>
                             <Pie
@@ -93,7 +93,7 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
                             </Pie>
                             <Tooltip formatter={(v) => `$${formatearPrecio(v)}`} />
                             <Legend
-                                formatter={(v) => <span className="text-[10px] font-bold text-muted">{v}</span>}
+                                formatter={(v) => <span className="text-label font-bold text-muted">{v}</span>}
                                 iconSize={8}
                             />
                         </PieChart>
@@ -104,7 +104,7 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
             {stats.transacciones.length > 0 && (
                 <div className="bg-card rounded-2xl overflow-hidden border-[0.5px] border-black/[0.07]">
                     <div className="px-5 py-3 bg-panel">
-                        <p className="text-[10px] font-black text-muted uppercase tracking-wider">Operaciones del mes</p>
+                        <p className="text-label font-black text-muted uppercase tracking-wider">Operaciones del mes</p>
                     </div>
                     {txPagina.map((t, idx) => {
                         const costo  = parseFloat(t.costo || 0);
@@ -113,11 +113,11 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
                         return (
                             <div key={`tx-${t.id}-${idx}`} className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[12px] font-black text-ink truncate">{t.concepto}</p>
-                                    <p className="text-[10px] font-bold text-muted uppercase">{t.fecha} · {t.tipo}</p>
+                                    <p className="text-body font-black text-ink truncate">{t.concepto}</p>
+                                    <p className="text-caption font-bold text-muted uppercase">{t.fecha} · {t.tipo}</p>
                                 </div>
-                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500] shrink-0">{margen}%</span>
-                                <p className="text-[13px] font-black text-ink shrink-0">{fmt(venta - costo)}</p>
+                                <span className="text-label font-black px-2 py-0.5 rounded-full bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500] shrink-0">{margen}%</span>
+                                <p className="text-body font-black text-ink shrink-0">{fmt(venta - costo)}</p>
                             </div>
                         );
                     })}
