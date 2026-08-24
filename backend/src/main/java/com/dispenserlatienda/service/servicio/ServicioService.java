@@ -489,6 +489,16 @@ public class ServicioService {
         return mapToDTO(saved);
     }
 
+    // Estados donde el trabajo tecnico ya se considera hecho (dispara el calculo de garantia).
+    // Cubre tanto el estado legacy REALIZADO como los pasos del flujo moderno de Despacho.
+    private static boolean esEstadoTrabajoTerminado(EstadoServicio e) {
+        return e == EstadoServicio.REALIZADO
+                || e == EstadoServicio.COMPLETADO
+                || e == EstadoServicio.PENDIENTE_FACTURACION
+                || e == EstadoServicio.FACTURADO
+                || e == EstadoServicio.COBRADO;
+    }
+
     @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado, String modalidadCobro, BigDecimal montoFinal, String observaciones) {
         Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
@@ -523,10 +533,12 @@ public class ServicioService {
             s.setFechaCobro(LocalDateTime.now());
         }
 
-        // Garantia: si el servicio pasa a REALIZADO por esta via (ej. aprobar presupuesto desde la lista,
-        // sin pasar por "Cobrar ahora"), completar la garantia de 3 meses en los items que tengan equipo
-        // y todavia no la tengan cargada. Asi el calculo queda igual sin importar el camino usado.
-        if (estado == EstadoServicio.REALIZADO) {
+        // Garantia: si el servicio pasa a un estado de "trabajo terminado" por esta via (aprobar presupuesto,
+        // completar orden, facturar, cobrar, etc. — todo el flujo de Despacho pasa por aca ademas del REALIZADO
+        // legacy), completar la garantia de 3 meses en los items que tengan equipo y todavia no la tengan cargada.
+        // Queda anclada a la fecha del servicio (no a la fecha del cobro) y es idempotente: si ya se cargo en un
+        // paso anterior de este mismo flujo (ej. al pasar a COMPLETADO), los pasos siguientes no la pisan.
+        if (esEstadoTrabajoTerminado(estado)) {
             LocalDate fechaGarantia = (s.getFechaServicio() != null ? s.getFechaServicio() : LocalDate.now()).plusMonths(3);
             for (ServicioItem item : s.getItems()) {
                 if (item.getEquipo() != null && item.getGarantiaHasta() == null) {
