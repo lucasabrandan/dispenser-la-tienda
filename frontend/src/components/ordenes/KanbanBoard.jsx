@@ -18,20 +18,20 @@ function KanbanCard({ orden, onEditar }) {
         <div onClick={() => onEditar?.(orden)}
             className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform"
             style={{ borderLeft: `3px solid ${priColor}` }}>
-            <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-tight truncate">
+            <p className="text-[12px] font-black text-ink leading-tight truncate">
                 {orden.titulo}
             </p>
             {orden.clienteNombre && (
-                <p className="text-[10px] text-[#A8A29E] mt-0.5 truncate">{orden.clienteNombre}</p>
+                <p className="text-[10px] text-muted mt-0.5 truncate">{orden.clienteNombre}</p>
             )}
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {orden.tecnicoNombre && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-panel text-secondary">
                         {orden.tecnicoNombre}
                     </span>
                 )}
                 {orden.horaEstimada && (
-                    <span className="text-[9px] text-[#A8A29E]">{orden.horaEstimada}</span>
+                    <span className="text-[9px] text-muted">{orden.horaEstimada}</span>
                 )}
                 {orden.prioridad === 'URGENTE' && (
                     <span className="text-[9px] font-black text-[#DC2626]">URGENTE</span>
@@ -74,14 +74,14 @@ export default function KanbanBoard({ ordenes, filtroTecnico, onEditar }) {
                                 className={`shrink-0 flex items-center gap-1.5 h-9 px-3 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
                                     sel
                                         ? 'text-white'
-                                        : 'bg-white dark:bg-[#242424] text-[#57534E] dark:text-[#9E9A94] border border-black/[0.05] dark:border-white/[0.05]'
+                                        : 'bg-white dark:bg-[#242424] text-secondary border border-black/[0.05] dark:border-white/[0.05]'
                                 }`}
                                 style={sel ? { backgroundColor: col.color } : {}}>
                                 <span>{col.emoji}</span>
                                 <span>{col.label}</span>
                                 {count > 0 && (
                                     <span className={`min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black ${
-                                        sel ? 'bg-white/20 text-white' : 'bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9]'
+                                        sel ? 'bg-white/20 text-white' : 'bg-panel text-ink'
                                     }`}>{count}</span>
                                 )}
                             </button>
@@ -90,7 +90,7 @@ export default function KanbanBoard({ ordenes, filtroTecnico, onEditar }) {
                 </div>
                 <div className="space-y-2 mt-2">
                     {porEstado[colMobile]?.length === 0 ? (
-                        <p className="text-center py-8 text-[#A8A29E] text-[12px] font-bold">Sin ordenes</p>
+                        <p className="text-center py-8 text-muted text-[12px] font-bold">Sin ordenes</p>
                     ) : (
                         porEstado[colMobile]?.map(o => <KanbanCard key={o.id} orden={o} onEditar={onEditar} />)
                     )}
@@ -102,13 +102,13 @@ export default function KanbanBoard({ ordenes, filtroTecnico, onEditar }) {
                 {COLUMNAS.map(col => {
                     const items = porEstado[col.id];
                     return (
-                        <div key={col.id} className="rounded-2xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05] p-2 min-h-[200px]">
+                        <div key={col.id} className="rounded-2xl bg-panel border border-black/[0.05] dark:border-white/[0.05] p-2 min-h-[200px]">
                             <div className="flex items-center gap-2 px-2 py-2 mb-2">
                                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: col.color }} />
-                                <span className="text-[11px] font-black uppercase tracking-wider text-[#1C1917] dark:text-[#F0EEE9]">
+                                <span className="text-[11px] font-black uppercase tracking-wider text-ink">
                                     {col.label}
                                 </span>
-                                <span className="text-[10px] font-bold text-[#A8A29E] ml-auto">{items.length}</span>
+                                <span className="text-[10px] font-bold text-muted ml-auto">{items.length}</span>
                             </div>
                             <div className="space-y-2">
                                 {items.map(o => <KanbanCard key={o.id} orden={o} onEditar={onEditar} />)}

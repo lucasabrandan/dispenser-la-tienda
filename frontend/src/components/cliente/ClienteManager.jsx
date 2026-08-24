@@ -78,28 +78,28 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
     };
 
     return (
-        <div className="min-h-screen pb-20 bg-[#F5F3F1] dark:bg-[#141414] transition-colors">
+        <div className="min-h-screen pb-20 bg-page transition-colors">
 
             {/* Header sticky */}
-            <div className="sticky top-0 z-30 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+            <div className="sticky top-0 z-30 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink">
                         Clientes
                     </h2>
                     <div className="flex gap-1.5">
                         <div className="relative flex-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
                             <input placeholder="Cliente, sede, teléfono, S/N..."
                                 value={busqueda}
                                 onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
                         </div>
                         <button onClick={() => setModalOpen('nuevo')}
-                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F] shrink-0">
+                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-brand-red shrink-0">
                             + Nuevo
                         </button>
                     </div>
-                    <span className="text-[10px] font-bold text-[#A8A29E]">
+                    <span className="text-[10px] font-bold text-muted">
                         {filtrados.length} clientes · A-Z
                     </span>
                 </div>
@@ -135,13 +135,13 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                 return (
                     <>
                         <div className="fixed inset-0 bg-black/50 z-[40]" onClick={() => setExpandedId(null)} />
-                        <div className="fixed inset-x-0 bottom-0 z-[41] max-h-[85vh] overflow-y-auto rounded-t-3xl bg-[#FFFFFF] dark:bg-[#242424] shadow-2xl md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[80vh] md:rounded-3xl">
-                            <div className="sticky top-0 z-10 bg-[#FFFFFF] dark:bg-[#242424] px-5 pt-4 pb-3 border-b border-black/[0.07] dark:border-white/[0.07]">
-                                <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] md:hidden" />
+                        <div className="fixed inset-x-0 bottom-0 z-[41] max-h-[85vh] overflow-y-auto rounded-t-3xl bg-card shadow-2xl md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[80vh] md:rounded-3xl">
+                            <div className="sticky top-0 z-10 bg-card px-5 pt-4 pb-3 border-b border-black/[0.07] dark:border-white/[0.07]">
+                                <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip md:hidden" />
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[17px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{cliente.nombre}</h3>
+                                    <h3 className="text-[17px] font-black text-ink">{cliente.nombre}</h3>
                                     <button onClick={() => setExpandedId(null)}
-                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">✕</button>
+                                        className="w-9 h-9 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90">✕</button>
                                 </div>
                             </div>
                             <div className="p-5">
@@ -203,21 +203,21 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                 <>
                     <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" />
                     <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
-                        <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
+                        <div className="bg-card rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
                             <div className="text-center mb-5">
                                 <p className="text-[36px] mb-2">⚠️</p>
-                                <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">Eliminar cliente</h3>
+                                <h3 className="text-[16px] font-black text-ink uppercase">Eliminar cliente</h3>
                             </div>
-                            <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] text-center mb-5 leading-snug">
+                            <p className="text-[12px] text-secondary text-center mb-5 leading-snug">
                                 Se eliminará el cliente y todo su historial. Esta acción no se puede deshacer.
                             </p>
                             <div className="flex gap-2">
                                 <button onClick={() => setConfirmEliminarCliente(null)}
-                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-chip text-secondary active:scale-95">
                                     Cancelar
                                 </button>
                                 <button onClick={confirmarEliminarCliente}
-                                    className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                    className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-brand-red active:scale-95">
                                     Sí, eliminar
                                 </button>
                             </div>

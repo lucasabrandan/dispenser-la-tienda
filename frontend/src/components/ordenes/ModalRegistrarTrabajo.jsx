@@ -4,8 +4,8 @@ import { toast } from 'react-hot-toast';
 import { getTodayISO } from '../../utils/dateUtils';
 import FotoUpload from '../servicio/FotoUpload';
 
-const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
-const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
+const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
+const labelCls = 'block text-[10px] font-black text-muted uppercase tracking-wider mb-1';
 
 // Mismas 3 opciones y mismo destino que EjecutarAdminSheet — un solo vocabulario
 // de "modalidad de cobro" en toda la app, no uno por pantalla.
@@ -160,17 +160,17 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
     const disponibles = repuestosDisp.filter(r => !seleccionados.find(s => s.repuesto.id === r.id));
 
     return (
-        <div className="fixed inset-0 z-[3000] flex flex-col bg-[#F5F3F1] dark:bg-[#141414]">
+        <div className="fixed inset-0 z-[3000] flex flex-col bg-page">
             {/* Header */}
-            <div className="shrink-0 px-4 pt-4 pb-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
+            <div className="shrink-0 px-4 pt-4 pb-3 bg-panel border-b border-black/[0.08]">
                 <div className="flex items-center gap-3">
                     <button onClick={onCerrar}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-90">
+                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-chip text-secondary active:scale-90">
                         ←
                     </button>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">Registrar trabajo</h2>
-                        <p className="text-[11px] text-[#A8A29E] truncate mt-0.5">{orden.clienteNombre || 'Cliente'} · {orden.titulo}</p>
+                        <h2 className="text-[15px] font-black text-ink leading-none">Registrar trabajo</h2>
+                        <p className="text-[11px] text-muted truncate mt-0.5">{orden.clienteNombre || 'Cliente'} · {orden.titulo}</p>
                     </div>
                 </div>
             </div>
@@ -237,10 +237,10 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     <div className="space-y-2">
                         {MODALIDADES.map(o => (
                             <button key={o.id} type="button" onClick={() => setModalidad(o.id)}
-                                className={`w-full p-3 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-[#EFEDEA] dark:bg-[#1C1C1C]'}`}
+                                className={`w-full p-3 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-panel'}`}
                                 style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}>
-                                <p className="text-[12.5px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{o.label}</p>
-                                <p className="text-[10px] text-[#A8A29E] mt-0.5">{o.desc}</p>
+                                <p className="text-[12.5px] font-black text-ink">{o.label}</p>
+                                <p className="text-[10px] text-muted mt-0.5">{o.desc}</p>
                             </button>
                         ))}
                     </div>
@@ -259,15 +259,15 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                         <div className="mt-2 space-y-1.5">
                             {seleccionados.map(({ repuesto, cantidad }) => (
                                 <div key={repuesto.id}
-                                    className="flex items-center gap-2 p-2.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C]">
-                                    <span className="flex-1 text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">
+                                    className="flex items-center gap-2 p-2.5 rounded-xl bg-panel">
+                                    <span className="flex-1 text-[12px] font-bold text-ink truncate">
                                         {repuesto.nombre}
                                     </span>
                                     <input type="text" inputMode="numeric" value={cantidad}
                                         onChange={e => cambiarCantidad(repuesto.id, Number(e.target.value))}
-                                        className="w-14 px-2 py-1 rounded-lg text-[12px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] outline-none text-center" />
+                                        className="w-14 px-2 py-1 rounded-lg text-[12px] font-bold bg-chip text-ink outline-none text-center" />
                                     <button onClick={() => quitarRepuesto(repuesto.id)}
-                                        className="w-7 h-7 rounded-lg bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F] text-[14px] font-black flex items-center justify-center active:scale-90 transition-all">
+                                        className="w-7 h-7 rounded-lg bg-[#D13A28]/10 text-brand-red text-[14px] font-black flex items-center justify-center active:scale-90 transition-all">
                                         ×
                                     </button>
                                 </div>
@@ -294,13 +294,13 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
             </div>
 
             {/* Boton fijo abajo */}
-            <div className="shrink-0 flex gap-2 px-4 py-4 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.08]">
+            <div className="shrink-0 flex gap-2 px-4 py-4 bg-panel border-t border-black/[0.08]">
                 <button onClick={onCerrar}
-                    className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                    className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-chip text-secondary active:scale-95 transition-all">
                     Cancelar
                 </button>
                 <button onClick={handleGuardar} disabled={guardando || !sedeId || !descripcion.trim() || !costo || !modalidad}
-                    className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F] disabled:opacity-40">
+                    className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white active:scale-95 transition-all bg-brand-red disabled:opacity-40">
                     {guardando ? 'Guardando...' : 'Registrar trabajo'}
                 </button>
             </div>

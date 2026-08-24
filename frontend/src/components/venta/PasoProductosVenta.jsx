@@ -66,11 +66,11 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                 key={p.id}
                                 type="button"
                                 onClick={() => agregarFrecuente(p)}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold active:scale-95 transition-all bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.07] dark:border-white/[0.07]"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold active:scale-95 transition-all bg-panel text-ink border border-black/[0.07] dark:border-white/[0.07]"
                             >
-                                <span className="text-[#D13A28] dark:text-[#E8422F]">+</span>
+                                <span className="text-brand-red">+</span>
                                 {p.nombre}
-                                <span className="text-[10px] text-[#A8A29E]">${Math.round(p.precio).toLocaleString('es-AR')}</span>
+                                <span className="text-[10px] text-muted">${Math.round(p.precio).toLocaleString('es-AR')}</span>
                             </button>
                         ))}
                     </div>
@@ -83,14 +83,14 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                 <button
                     type="button"
                     onClick={() => setSheetOpen(true)}
-                    className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-[13px] border border-dashed border-[#E8E5E0] dark:border-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] bg-[#EFEDEA] dark:bg-[#1C1C1C] active:scale-[0.98] transition-all"
+                    className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-[13px] border border-dashed border-chip text-ink bg-panel active:scale-[0.98] transition-all"
                 >
                     <span>
                         {productos.length > 0
                             ? `${productos.length} producto${productos.length > 1 ? 's' : ''} seleccionado${productos.length > 1 ? 's' : ''}`
                             : '+ Seleccionar productos'}
                     </span>
-                    <span className="text-[#A8A29E]">▼</span>
+                    <span className="text-muted">▼</span>
                 </button>
             </div>
 
@@ -113,12 +113,12 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                             )}
                             <div className="flex-1 min-w-0">
                                 {p.sku && (
-                                    <p className="text-[9px] font-black uppercase tracking-wider text-[#D13A28] dark:text-[#E8422F]">
+                                    <p className="text-[9px] font-black uppercase tracking-wider text-brand-red">
                                         {p.sku}
                                     </p>
                                 )}
-                                <p className="font-bold text-sm text-[#1C1917] dark:text-[#F0EEE9] truncate">{p.nombre}</p>
-                                <p className="text-[10px] text-[#A8A29E]">${Math.round(Number(p.precio)).toLocaleString('es-AR')} c/u</p>
+                                <p className="font-bold text-sm text-ink truncate">{p.nombre}</p>
+                                <p className="text-[10px] text-muted">${Math.round(Number(p.precio)).toLocaleString('es-AR')} c/u</p>
                             </div>
                             <div className="flex items-center gap-1 bg-[#E8E5E0] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
                                 <button
@@ -130,7 +130,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                         );
                                         setProductos(nuevos);
                                     }}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90"
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-brand-red active:scale-90"
                                 >−</button>
                                 <input
                                     type="text"
@@ -159,7 +159,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                             ));
                                         }
                                     }}
-                                    className="font-black text-[13px] w-14 text-center text-[#1C1917] dark:text-[#F0EEE9] bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    className="font-black text-[13px] w-14 text-center text-ink bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                                 <button
                                     type="button"
@@ -170,16 +170,16 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                         );
                                         setProductos(nuevos);
                                     }}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90"
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-brand-red active:scale-90"
                                 >+</button>
                             </div>
-                            <p className="font-black text-sm w-16 text-right text-[#1C1917] dark:text-[#F0EEE9]">
+                            <p className="font-black text-sm w-16 text-right text-ink">
                                 ${Math.round(Number(p.subtotal)).toLocaleString('es-AR')}
                             </p>
                             <button
                                 type="button"
                                 onClick={() => setProductos(productos.filter((_, j) => j !== i))}
-                                className="ml-1 text-[#A8A29E] hover:text-[#D13A28] text-lg active:scale-90"
+                                className="ml-1 text-muted hover:text-[#D13A28] text-lg active:scale-90"
                             >✕</button>
                         </div>
                     ))}
@@ -196,16 +196,16 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                         onChange={e => setCostoEnvio(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0))}
                         onFocus={e => e.target.select()}
                         placeholder="0"
-                        className="flex-1 h-11 rounded-xl px-4 font-black text-xl text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10 outline-none focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
+                        className="flex-1 h-11 rounded-xl px-4 font-black text-xl text-ink bg-chip border border-black/10 dark:border-white/10 outline-none focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
                     />
                     {envioNum > 0 && (
-                        <button type="button" onClick={() => setCostoEnvio('')} className="text-[#A8A29E] hover:text-[#D13A28] text-lg">
+                        <button type="button" onClick={() => setCostoEnvio('')} className="text-muted hover:text-[#D13A28] text-lg">
                             ✕
                         </button>
                     )}
                 </div>
                 {envioNum > 0 && (
-                    <p className="text-[10px] text-[#A8A29E] font-bold mt-1.5">
+                    <p className="text-[10px] text-muted font-bold mt-1.5">
                         +${Math.round(envioNum).toLocaleString('es-AR')} al total
                     </p>
                 )}

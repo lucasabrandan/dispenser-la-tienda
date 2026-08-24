@@ -11,23 +11,23 @@ export default function PasoFirmas({
     return (
         <>
             <button onClick={onBack}
-                className="flex items-center gap-1 text-[12px] font-bold text-[#A8A29E] active:scale-95 mb-2">
+                className="flex items-center gap-1 text-[12px] font-bold text-muted active:scale-95 mb-2">
                 ← Volver
             </button>
 
             <button onClick={() => setIncluirFirmas(v => !v)}
-                className="flex items-center gap-2 text-[11px] text-[#A8A29E] font-bold active:scale-95 transition-all">
-                <span className={`w-8 h-4 rounded-full flex items-center transition-colors ${incluirFirmas ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E]'}`}>
+                className="flex items-center gap-2 text-[11px] text-muted font-bold active:scale-95 transition-all">
+                <span className={`w-8 h-4 rounded-full flex items-center transition-colors ${incluirFirmas ? 'bg-brand-red' : 'bg-chip'}`}>
                     <span className={`w-3 h-3 rounded-full bg-white shadow transition-transform mx-0.5 ${incluirFirmas ? 'translate-x-4' : 'translate-x-0'}`} />
                 </span>
                 Incluir firmas en el PDF
             </button>
 
             {incluirFirmas && (!editandoFirma ? (
-                <div className="flex items-center gap-2 px-3 py-3 rounded-xl bg-[#FFFFFF] dark:bg-[#242424]">
+                <div className="flex items-center gap-2 px-3 py-3 rounded-xl bg-card">
                     <span className="text-[12px] font-bold text-[#16A34A]">✓ Firma del tecnico guardada</span>
                     <button onClick={() => setEditandoFirma(true)}
-                        className="ml-auto text-[11px] font-bold text-[#A8A29E]">Cambiar</button>
+                        className="ml-auto text-[11px] font-bold text-muted">Cambiar</button>
                 </div>
             ) : (
                 <div className="space-y-2">
@@ -37,7 +37,7 @@ export default function PasoFirmas({
                             className="text-[11px] px-3 py-1.5 rounded-full bg-[#D13A28] text-white font-bold disabled:opacity-40 active:scale-95">
                             Guardar mi firma
                         </button>
-                        <span className="text-[10px] text-[#A8A29E]">Se recordara para proximas veces</span>
+                        <span className="text-[10px] text-muted">Se recordara para proximas veces</span>
                     </div>
                 </div>
             ))}
@@ -47,7 +47,7 @@ export default function PasoFirmas({
             )}
 
             <button onClick={onNext}
-                className="w-full py-4 rounded-2xl font-black text-[13px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-[0.98] transition-all">
+                className="w-full py-4 rounded-2xl font-black text-[13px] uppercase text-white bg-brand-red active:scale-[0.98] transition-all">
                 Definir cobro →
             </button>
         </>

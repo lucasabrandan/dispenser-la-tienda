@@ -5,7 +5,7 @@ function Badge({ estado }) {
     const map = {
         REALIZADO:   { label: 'Realizado',  cls: 'bg-[#16A34A]/10 text-[#16A34A]' },
         PRESUPUESTO: { label: 'Pendiente',  cls: 'bg-[#D48800]/10 text-[#D48800]' },
-        ARCHIVADO:   { label: 'Archivado',  cls: 'bg-[#A8A29E]/10 text-[#A8A29E]' },
+        ARCHIVADO:   { label: 'Archivado',  cls: 'bg-muted/10 text-muted' },
     };
     const { label, cls } = map[estado] || { label: estado, cls: 'bg-[#E8E5E0] text-[#57534E]' };
     return (
@@ -53,27 +53,27 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
             >
                 {/* Handle */}
                 <div className="flex justify-center pt-3 pb-1 shrink-0">
-                    <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                    <div className="w-10 h-1 rounded-full bg-chip" />
                 </div>
 
                 {/* Header del equipo */}
                 <div className="px-5 pb-4 pt-2 border-b border-black/[0.07] dark:border-white/[0.07] shrink-0">
                     <div className="flex items-start justify-between gap-3">
                         <div>
-                            <p className="text-[9px] font-black text-[#A8A29E] uppercase mb-1">Historial del Dispenser</p>
-                            <h3 className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase leading-none">
+                            <p className="text-[9px] font-black text-muted uppercase mb-1">Historial del Dispenser</p>
+                            <h3 className="text-[18px] font-black text-ink uppercase leading-none">
                                 {equipo.marca} {equipo.modelo}
                             </h3>
-                            <p className="text-[11px] font-bold text-[#D13A28] dark:text-[#E8422F] mt-0.5">
+                            <p className="text-[11px] font-bold text-brand-red mt-0.5">
                                 S/N: {equipo.numeroSerie}
                             </p>
                             {equipo.ubicacion && (
-                                <p className="text-[9px] font-bold text-[#A8A29E] mt-0.5 uppercase">📍 {equipo.ubicacion}</p>
+                                <p className="text-[9px] font-bold text-muted mt-0.5 uppercase">📍 {equipo.ubicacion}</p>
                             )}
                         </div>
                         <button
                             onClick={onClose}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E] active:scale-90"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-chip text-muted active:scale-90"
                         >
                             ✕
                         </button>
@@ -82,18 +82,18 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                     {/* Stats rápidas */}
                     <div className="grid grid-cols-3 gap-2 mt-4">
                         <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
-                            <p className="text-[18px] font-black text-[#D13A28] dark:text-[#E8422F] leading-none">{historial.length}</p>
-                            <p className="text-[8px] font-black text-[#A8A29E] uppercase mt-0.5">Servicios</p>
+                            <p className="text-[18px] font-black text-brand-red leading-none">{historial.length}</p>
+                            <p className="text-[8px] font-black text-muted uppercase mt-0.5">Servicios</p>
                         </div>
                         <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
-                            <p className="text-[18px] font-black text-[#D48800] dark:text-[#F0A500] leading-none">${fmt(totalGastado)}</p>
-                            <p className="text-[8px] font-black text-[#A8A29E] uppercase mt-0.5">Total facturado</p>
+                            <p className="text-[18px] font-black text-brand-amber leading-none">${fmt(totalGastado)}</p>
+                            <p className="text-[8px] font-black text-muted uppercase mt-0.5">Total facturado</p>
                         </div>
                         <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
-                            <p className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">
+                            <p className="text-[18px] font-black text-ink leading-none">
                                 {diasSinAtender !== null ? diasSinAtender : '—'}
                             </p>
-                            <p className="text-[8px] font-black text-[#A8A29E] uppercase mt-0.5">Días sin service</p>
+                            <p className="text-[8px] font-black text-muted uppercase mt-0.5">Días sin service</p>
                         </div>
                     </div>
                 </div>
@@ -102,12 +102,12 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                 <div className="overflow-y-auto flex-1 px-5 py-4">
                     {historial.length === 0 ? (
                         <div className="text-center py-12">
-                            <p className="text-[#A8A29E] font-black uppercase text-sm">Sin servicios registrados</p>
+                            <p className="text-muted font-black uppercase text-sm">Sin servicios registrados</p>
                         </div>
                     ) : (
                         <div className="relative">
                             {/* Línea vertical del timeline */}
-                            <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                            <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-chip" />
 
                             <div className="space-y-4">
                                 {historial.map((s, idx) => {
@@ -121,8 +121,8 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                             <div className="shrink-0 mt-1 relative z-10">
                                                 <div className={`w-4 h-4 rounded-full border-2 ${
                                                     esPrimero
-                                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] border-[#D13A28] dark:border-[#E8422F]'
-                                                        : 'bg-[#FFFFFF] dark:bg-[#1C1C1C] border-[#E8E5E0] dark:border-[#2E2E2E]'
+                                                        ? 'bg-brand-red border-brand-red'
+                                                        : 'bg-[#FFFFFF] dark:bg-[#1C1C1C] border-chip'
                                                 }`} />
                                             </div>
 
@@ -134,19 +134,19 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                         <div className="flex items-center gap-2">
                                                             <Badge estado={s.estado} />
                                                             {esPrimero && (
-                                                                <span className="text-[7px] font-black bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F] px-1.5 py-0.5 rounded uppercase">
+                                                                <span className="text-[7px] font-black bg-[#D13A28]/10 text-brand-red px-1.5 py-0.5 rounded uppercase">
                                                                     Último
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-[10px] font-bold text-[#A8A29E]">
+                                                        <p className="text-[10px] font-bold text-muted">
                                                             {formatFecha(s.fecha)}
                                                         </p>
                                                     </div>
 
                                                     {/* Trabajo realizado */}
                                                     {item?.trabajoRealizado && (
-                                                        <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] mb-2 leading-snug">
+                                                        <p className="text-[12px] font-bold text-ink mb-2 leading-snug">
                                                             {item.trabajoRealizado}
                                                         </p>
                                                     )}
@@ -155,7 +155,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                     {repuestos.length > 0 && (
                                                         <div className="flex flex-wrap gap-1 mb-2">
                                                             {repuestos.map((r, i) => (
-                                                                <span key={i} className="text-[8px] font-black px-2 py-0.5 rounded-lg bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] uppercase">
+                                                                <span key={i} className="text-[8px] font-black px-2 py-0.5 rounded-lg bg-chip text-secondary uppercase">
                                                                     {r.cantidad}× {r.nombre}
                                                                 </span>
                                                             ))}
@@ -166,12 +166,12 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                     <div className="flex justify-between items-center pt-2 border-t border-black/[0.06] dark:border-white/[0.06]">
                                                         <div className="flex items-center gap-3">
                                                             {Number(item?.costoExtra || 0) > 0 && (
-                                                                <span className="text-[9px] font-bold text-[#A8A29E]">
-                                                                    MO: <span className="text-[#D48800] dark:text-[#F0A500] font-black">${fmt(item.costoExtra)}</span>
+                                                                <span className="text-[9px] font-bold text-muted">
+                                                                    MO: <span className="text-brand-amber font-black">${fmt(item.costoExtra)}</span>
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <span className="text-[14px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                                        <span className="text-[14px] font-black text-ink">
                                                             ${fmt(item?.costo || 0)}
                                                         </span>
                                                     </div>

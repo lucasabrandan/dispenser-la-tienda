@@ -7,14 +7,14 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
     const inputBase = `
         w-full p-3 mt-2 rounded-xl border transition-all outline-none
         border-black/[0.08] dark:border-white/[0.08]
-        bg-[#E8E5E0] dark:bg-[#2E2E2E]
-        text-[#1C1917] dark:text-[#F0EEE9]
-        placeholder-[#A8A29E]
+        bg-chip
+        text-ink
+        placeholder-muted
         focus:border-[#D13A28] dark:focus:border-[#E8422F]
         focus:ring-2 focus:ring-[#D13A28]/10
     `;
 
-    const inputError = 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/5';
+    const inputError = 'border-brand-red bg-[#D13A28]/5';
 
     return (
         <div className="space-y-4">
@@ -33,8 +33,8 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
                                 flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer
                                 transition-all active:scale-95
                                 ${activo
-                                    ? 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/8 dark:bg-[#E8422F]/10'
-                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#1C1C1C] hover:opacity-80'
+                                    ? 'border-brand-red bg-[#D13A28]/8 dark:bg-[#E8422F]/10'
+                                    : 'border-black/[0.08] dark:border-white/[0.08] bg-panel hover:opacity-80'
                                 }
                             `}
                         >
@@ -50,15 +50,15 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
                             <span className={`
                                 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0
                                 ${activo
-                                    ? 'border-[#D13A28] dark:border-[#E8422F]'
-                                    : 'border-[#A8A29E]'
+                                    ? 'border-brand-red'
+                                    : 'border-muted'
                                 }
                             `}>
                                 {activo && (
-                                    <span className="w-2 h-2 rounded-full bg-[#D13A28] dark:bg-[#E8422F]" />
+                                    <span className="w-2 h-2 rounded-full bg-brand-red" />
                                 )}
                             </span>
-                            <span className="text-sm font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                            <span className="text-sm font-black text-ink">
                                 {icon} {label}
                             </span>
                         </label>
@@ -68,7 +68,7 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
 
             {/* NOMBRE */}
             <div>
-                <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wide">
+                <label className="text-[10px] font-black text-muted uppercase tracking-wide">
                     Nombre *
                 </label>
                 <input
@@ -84,7 +84,7 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
 
             {/* CUIL / DNI */}
             <div>
-                <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wide">
+                <label className="text-[10px] font-black text-muted uppercase tracking-wide">
                     CUIL / DNI (opcional)
                 </label>
                 <input
@@ -98,7 +98,7 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
             {/* TELÉFONO + EMAIL */}
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wide">
+                    <label className="text-[10px] font-black text-muted uppercase tracking-wide">
                         Teléfono (opcional)
                     </label>
                     <input
@@ -109,7 +109,7 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
                     />
                 </div>
                 <div>
-                    <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wide">
+                    <label className="text-[10px] font-black text-muted uppercase tracking-wide">
                         Email (opcional)
                     </label>
                     <input
@@ -123,7 +123,7 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
 
             {/* NOTAS */}
             <div>
-                <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wide">
+                <label className="text-[10px] font-black text-muted uppercase tracking-wide">
                     Notas (opcional)
                 </label>
                 <textarea

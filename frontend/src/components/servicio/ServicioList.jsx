@@ -191,33 +191,33 @@ export default function ServicioList({ onEditar }) {
     };
 
     return (
-        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-[#F5F3F1] dark:bg-[#141414]" {...swipeHandlers}>
+        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page" {...swipeHandlers}>
 
             {/* Header sticky */}
-            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Historial</h2>
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink">Historial</h2>
                     {/* Búsqueda + seleccionar */}
                     <div className="flex gap-1.5 items-center">
                         <div className="relative flex-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, S/N, ubicación, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-xs font-bold">✕</button>
                             )}
                         </div>
                         {esAdmin && (
                             seleccionando ? (
                                 <button onClick={salirSeleccion}
-                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase shrink-0 active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase shrink-0 active:scale-95 bg-chip text-secondary">
                                     Cancelar
                                 </button>
                             ) : (
                                 <button onClick={() => { setSeleccionando(true); setSeleccionadas(new Set()); }}
-                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase shrink-0 active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase shrink-0 active:scale-95 bg-chip text-secondary">
                                     Seleccionar
                                 </button>
                             )
@@ -233,11 +233,11 @@ export default function ServicioList({ onEditar }) {
                     {/* Stats compacto — solo admin */}
                     {esAdmin && (
                         <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                            <span className="text-[11px] font-bold text-[#A8A29E]">Ventas</span>
-                            <M valor={totalVentas} className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
-                            <span className="text-[11px] text-[#A8A29E]">·</span>
-                            <span className="text-[11px] font-bold text-[#A8A29E]">Técnica</span>
-                            <M valor={totalTecnica} className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
+                            <span className="text-[11px] font-bold text-muted">Ventas</span>
+                            <M valor={totalVentas} className="text-[11px] font-black text-ink" />
+                            <span className="text-[11px] text-muted">·</span>
+                            <span className="text-[11px] font-bold text-muted">Técnica</span>
+                            <M valor={totalTecnica} className="text-[11px] font-black text-ink" />
                         </div>
                     )}
 
@@ -247,8 +247,8 @@ export default function ServicioList({ onEditar }) {
                     {/* Filtros colapsables */}
                     <button onClick={() => setMostrarFiltros(v => !v)}
                         className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
-                        <span className="text-[10px] font-bold uppercase text-[#A8A29E]">{mostrarFiltros ? '▲' : '▼'} Filtros</span>
-                        <span className="text-[10px] font-bold text-[#A8A29E]">{filtros.totalItems} resultados</span>
+                        <span className="text-[10px] font-bold uppercase text-muted">{mostrarFiltros ? '▲' : '▼'} Filtros</span>
+                        <span className="text-[10px] font-bold text-muted">{filtros.totalItems} resultados</span>
                     </button>
 
                     {mostrarFiltros && (
@@ -261,7 +261,7 @@ export default function ServicioList({ onEditar }) {
                         {filtros.itemsPagina.length === 0 ? (
                             <div className={`${card} text-center py-12`}>
                                 <p className="text-2xl mb-1">📋</p>
-                                <p className="text-[12px] font-bold text-[#A8A29E]">No se encontraron registros</p>
+                                <p className="text-[12px] font-bold text-muted">No se encontraron registros</p>
                             </div>
                         ) : filtros.itemsPagina.map((s, idx) => {
                             const badge = badgeTipo(s);
@@ -277,52 +277,52 @@ export default function ServicioList({ onEditar }) {
                             return (
                                 <React.Fragment key={s.id}>
                                 {mostrarHeaderMes && (
-                                    <p className="px-1 pt-1 pb-0.5 text-[11px] font-black uppercase tracking-wide text-[#A8A29E]">
+                                    <p className="px-1 pt-1 pb-0.5 text-[11px] font-black uppercase tracking-wide text-muted">
                                         {formatMesLargo(mesKey)}
                                     </p>
                                 )}
                                 <div
-                                    className={`${card} ${borderColor} transition-all ${seleccionando && seleccionadas.has(s.id) ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''}`}
+                                    className={`${card} ${borderColor} transition-all ${seleccionando && seleccionadas.has(s.id) ? 'ring-2 ring-brand-red' : ''}`}
                                     onClick={seleccionando ? () => toggleSel(s.id) : undefined}>
                                     <div className="p-3.5">
                                         <div className="flex justify-between items-start mb-1">
                                             <div className="flex items-center gap-1.5">
                                                 {seleccionando && (
-                                                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${seleccionadas.has(s.id) ? 'bg-[#D13A28] dark:bg-[#E8422F] border-[#D13A28] dark:border-[#E8422F]' : 'border-[#A8A29E] bg-transparent'}`}>
+                                                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${seleccionadas.has(s.id) ? 'bg-brand-red border-brand-red' : 'border-muted bg-transparent'}`}>
                                                         {seleccionadas.has(s.id) && <span className="text-white text-[10px] font-black">✓</span>}
                                                     </div>
                                                 )}
-                                                <span className="text-[10px] text-[#A8A29E] font-bold">#{s.id}</span>
+                                                <span className="text-[10px] text-muted font-bold">#{s.id}</span>
                                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ${badge.cls}`}>{badge.label}</span>
                                             </div>
                                             <div className="text-right">
-                                                {esAdmin && <M valor={costo} className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />}
-                                                <p className="text-[10px] text-[#A8A29E]">{s.fecha}</p>
+                                                {esAdmin && <M valor={costo} className="text-[16px] font-black text-ink block" />}
+                                                <p className="text-[10px] text-muted">{s.fecha}</p>
                                             </div>
                                         </div>
-                                        <p className="text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                                        <p className="text-[10px] text-[#A8A29E] mt-0.5">📍 {s.sedeNombre}</p>
+                                        <p className="text-[14px] font-bold text-ink truncate">{s.clienteNombre}</p>
+                                        <p className="text-[10px] text-muted mt-0.5">📍 {s.sedeNombre}</p>
 
                                         {s.items?.length > 0 && s.servicioTipo === 'TECNICA' && (
                                             <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
                                                 {s.items.slice(0, 2).map((it, idx) => {
                                                     const g = it.garantiaHasta ? estadoGarantia(it.garantiaHasta) : null;
                                                     return (
-                                                        <p key={`${it.equipoSerial || 'it'}-${idx}`} className="text-[10px] text-[#A8A29E] truncate">
+                                                        <p key={`${it.equipoSerial || 'it'}-${idx}`} className="text-[10px] text-muted truncate">
                                                             · {it.equipoSerial} — {it.trabajoRealizado}
                                                             {g && (
-                                                                <span className={`ml-1.5 font-bold ${g.vigente ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>
+                                                                <span className={`ml-1.5 font-bold ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
                                                                     {g.vigente ? `· 🛡️ ${g.dias}d` : `· ⏳ vencida hace ${Math.abs(g.dias)}d`}
                                                                 </span>
                                                             )}
                                                         </p>
                                                     );
                                                 })}
-                                                {s.items.length > 2 && <p className="text-[10px] text-[#A8A29E]">+{s.items.length - 2} más</p>}
+                                                {s.items.length > 2 && <p className="text-[10px] text-muted">+{s.items.length - 2} más</p>}
                                             </div>
                                         )}
                                         {s.items?.length > 0 && s.servicioTipo === 'VENTA' && (
-                                            <p className="text-[10px] text-[#A8A29E] mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">
+                                            <p className="text-[10px] text-muted mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">
                                                 · {s.items.map(it => `${it.cantidad || 1}x ${it.nombre || it.trabajoRealizado}`).join(', ')}
                                             </p>
                                         )}
@@ -332,33 +332,33 @@ export default function ServicioList({ onEditar }) {
                                     {!seleccionando && (
                                         <div className="flex items-center gap-1.5 px-3 py-1.5 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
                                             <IconBtn onClick={() => setModalDetalle(s)} title="Ver detalle"
-                                                cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
+                                                cls="bg-chip text-secondary">👁️</IconBtn>
                                             <IconBtn onClick={() => generarPDFHistorial(s)} title="PDF"
-                                                cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+                                                cls="bg-chip text-secondary">📄</IconBtn>
 
                                             <div className="relative">
                                                     <IconBtn onClick={() => setMenuAbiertoId(v => v === s.id ? null : s.id)} title="Más acciones"
-                                                        cls={menuAbiertoId === s.id ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}>
+                                                        cls={menuAbiertoId === s.id ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-brand-red' : 'bg-chip text-secondary'}>
                                                         ⋯
                                                     </IconBtn>
                                                     {menuAbiertoId === s.id && (
                                                         <>
                                                             <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuAbiertoId(null)} />
                                                             <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
-                                                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                                                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
                                                                 <button onClick={() => { generarPDFHistorial(s, { sinPrecios: true }); setMenuAbiertoId(null); }}
-                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
+                                                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
                                                                     📋 PDF sin precios
                                                                 </button>
                                                                 {esAdmin && esPendiente && (
                                                                     <button onClick={() => { onEditar?.(s); setMenuAbiertoId(null); }}
-                                                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
+                                                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
                                                                         ✏️ Editar
                                                                     </button>
                                                                 )}
                                                                 {esAdmin && (
                                                                     <button onClick={() => { setConfirmEliminarId(s.id); setMenuAbiertoId(null); }}
-                                                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] dark:active:bg-[#3B1111] rounded-xl">
+                                                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-brand-red active:bg-[#FEE2E2] dark:active:bg-[#3B1111] rounded-xl">
                                                                         🗑️ Eliminar
                                                                     </button>
                                                                 )}
@@ -387,31 +387,31 @@ export default function ServicioList({ onEditar }) {
                             const todasSel = ids.every(id => seleccionadas.has(id));
                             setSeleccionadas(todasSel ? new Set() : new Set(ids));
                         }}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
                             {filtros.itemsPagina.length > 0 && filtros.itemsPagina.every(s => seleccionadas.has(s.id)) ? 'Deseleccionar' : 'Toda la pág.'}
                         </button>
-                        <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
+                        <span className="text-[11px] font-bold text-muted flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
                         {!confirmMasivo ? (
                             <>
                             <button onClick={pdfMasivoSinPrecios}
                                 disabled={seleccionadas.size === 0}
-                                className={`h-9 px-3 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-[#D48800] dark:bg-[#F0A500] text-white' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                                className={`h-9 px-3 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-brand-amber text-white' : 'bg-chip text-muted'}`}>
                                 📋 Sin $
                             </button>
                             <button onClick={() => seleccionadas.size > 0 && setConfirmMasivo(true)}
                                 disabled={seleccionadas.size === 0}
-                                className={`h-9 px-4 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                                className={`h-9 px-4 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-brand-red text-white' : 'bg-chip text-muted'}`}>
                                 Eliminar ({seleccionadas.size})
                             </button>
                             </>
                         ) : (
                             <div className="flex gap-1.5">
                                 <button onClick={() => setConfirmMasivo(false)}
-                                    className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
                                     No
                                 </button>
                                 <button onClick={eliminarMasivo}
-                                    className="h-9 px-4 rounded-xl font-bold text-[11px] bg-[#D13A28] dark:bg-[#E8422F] text-white active:scale-95">
+                                    className="h-9 px-4 rounded-xl font-bold text-[11px] bg-brand-red text-white active:scale-95">
                                     Confirmar
                                 </button>
                             </div>
@@ -425,30 +425,30 @@ export default function ServicioList({ onEditar }) {
                 <div className="fixed inset-0 z-[2000] flex items-end bg-black/50" onClick={() => setModalDetalle(null)}>
                     <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 bg-white dark:bg-[#242424] border-t border-black/[0.05] dark:border-white/[0.05]"
                         onClick={e => e.stopPropagation()}>
-                        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
-                        <h3 className="text-[16px] font-black mb-1 text-[#1C1917] dark:text-[#F0EEE9]">
+                        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip" />
+                        <h3 className="text-[16px] font-black mb-1 text-ink">
                             Desglose — {modalDetalle.clienteNombre}
                         </h3>
-                        <p className="text-[11px] text-[#A8A29E] mb-4">#{modalDetalle.id} · {modalDetalle.fecha}</p>
+                        <p className="text-[11px] text-muted mb-4">#{modalDetalle.id} · {modalDetalle.fecha}</p>
                         <div className="max-h-[50vh] overflow-y-auto space-y-2 mb-4">
                             {modalDetalle.items.map((it, idx) => {
                                 const g = it.garantiaHasta ? estadoGarantia(it.garantiaHasta) : null;
                                 return (
                                 <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.04] dark:border-white/[0.04]">
                                     <div className="flex justify-between mb-1">
-                                        <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
-                                        {esAdmin && <M valor={Number(it.costo)} className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]" />}
+                                        <span className="font-bold text-[13px] text-brand-red">{it.equipoSerial}</span>
+                                        {esAdmin && <M valor={Number(it.costo)} className="font-black text-[14px] text-ink" />}
                                     </div>
-                                    <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] leading-snug mb-2">{it.trabajoRealizado}</p>
+                                    <p className="text-[12px] text-secondary leading-snug mb-2">{it.trabajoRealizado}</p>
                                     {g && (
-                                        <p className={`text-[11px] font-black mb-2 ${g.vigente ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>
+                                        <p className={`text-[11px] font-black mb-2 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
                                             {g.vigente
                                                 ? `🛡️ Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
                                                 : `⏳ Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
                                         </p>
                                     )}
                                     {it.repuestosUsados?.length > 0 && (
-                                        <p className="text-[10px] text-[#A8A29E] pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
+                                        <p className="text-[10px] text-muted pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
                                             <span className="font-bold">Repuestos: </span>
                                             {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
                                         </p>
@@ -458,7 +458,7 @@ export default function ServicioList({ onEditar }) {
                             })}
                         </div>
                         <button onClick={() => setModalDetalle(null)}
-                            className="w-full py-3 rounded-xl font-bold text-sm text-white active:scale-95 bg-[#1C1917] dark:bg-[#F0EEE9] dark:text-[#1C1917]">
+                            className="w-full py-3 rounded-xl font-bold text-sm text-white active:scale-95 bg-ink dark:text-[#1C1917]">
                             Cerrar
                         </button>
                     </div>

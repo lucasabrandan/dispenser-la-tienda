@@ -163,26 +163,26 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
     const fmt = v => `$${Math.round(v).toLocaleString('es-AR')}`;
 
     return (
-        <div className="fixed inset-0 z-[2000] flex flex-col bg-[#F5F3F1] dark:bg-[#141414]">
+        <div className="fixed inset-0 z-[2000] flex flex-col bg-page">
             {/* Header */}
-            <div className="shrink-0 px-4 pt-4 pb-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
+            <div className="shrink-0 px-4 pt-4 pb-3 bg-panel border-b border-black/[0.08]">
                 <div className="flex items-center gap-3">
                     <button onClick={onCerrar}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-90">
+                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-chip text-secondary active:scale-90">
                         ←
                     </button>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] leading-none">Ejecutar trabajo</h2>
-                        <p className="text-[11px] text-[#A8A29E] truncate mt-0.5">{servicio.clienteNombre} · {servicio.sedeNombre}</p>
+                        <h2 className="text-[15px] font-black text-ink leading-none">Ejecutar trabajo</h2>
+                        <p className="text-[11px] text-muted truncate mt-0.5">{servicio.clienteNombre} · {servicio.sedeNombre}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider">Total</p>
-                        <p className="text-[18px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9]">{fmt(totalHeader)}</p>
+                        <p className="text-[9px] font-black text-muted uppercase tracking-wider">Total</p>
+                        <p className="text-[18px] font-black leading-none text-ink">{fmt(totalHeader)}</p>
                     </div>
                 </div>
                 <div className="flex gap-1 mt-3">
                     {PASOS.slice(0, 3).map((s, i) => (
-                        <div key={s} className={`flex-1 h-1 rounded-full transition-colors ${i <= PASOS.indexOf(paso) ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E]'}`} />
+                        <div key={s} className={`flex-1 h-1 rounded-full transition-colors ${i <= PASOS.indexOf(paso) ? 'bg-brand-red' : 'bg-chip'}`} />
                     ))}
                 </div>
             </div>

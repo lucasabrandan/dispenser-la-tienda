@@ -3,8 +3,8 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { formatDateISO, lunesDeLaSemana } from '../../utils/dateUtils';
 
-const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
-const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
+const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
+const labelCls = 'block text-[10px] font-black text-muted uppercase tracking-wider mb-1';
 
 // Generar dias de la semana (lunes a sabado) — misma cuenta de "lunes de la
 // semana" que usa WeekDatePicker.jsx, centralizada en dateUtils.js.
@@ -28,17 +28,17 @@ function DiaBtn({ d, seleccionado, count, onClick }) {
     return (
         <button onClick={onClick}
             className={`rounded-lg p-2 text-center transition-all active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${
-                d.esHoy ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''
-            } ${seleccionado ? 'bg-[#1C1917] dark:bg-[#F0EEE9]' : 'bg-white dark:bg-[#242424]'}`}>
-            <p className={`text-[10px] font-bold uppercase ${seleccionado ? 'text-white dark:text-[#1C1917]' : 'text-[#A8A29E]'}`}>
+                d.esHoy ? 'ring-2 ring-brand-red' : ''
+            } ${seleccionado ? 'bg-ink' : 'bg-white dark:bg-[#242424]'}`}>
+            <p className={`text-[10px] font-bold uppercase ${seleccionado ? 'text-white dark:text-[#1C1917]' : 'text-muted'}`}>
                 {d.dia.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
             </p>
-            <p className={`text-[14px] font-black ${seleccionado ? 'text-white dark:text-[#1C1917]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+            <p className={`text-[14px] font-black ${seleccionado ? 'text-white dark:text-[#1C1917]' : 'text-ink'}`}>
                 {d.dia.getDate()}
             </p>
             {count > 0 && (
                 <div className={`mx-auto mt-1 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ${
-                    seleccionado ? 'bg-[#D13A28] text-white' : 'bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9]'
+                    seleccionado ? 'bg-[#D13A28] text-white' : 'bg-panel text-ink'
                 }`}>{count}</div>
             )}
         </button>
@@ -58,9 +58,9 @@ function OrdenAgendaCard({ orden }) {
             <div className="flex items-center gap-2">
                 <span className="text-[14px]">📌</span>
                 <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{orden.titulo}</p>
+                    <p className="text-[12px] font-bold text-ink truncate">{orden.titulo}</p>
                     {orden.horaEstimada && (
-                        <p className="text-[10px] text-[#A8A29E]">{orden.horaEstimada}</p>
+                        <p className="text-[10px] text-muted">{orden.horaEstimada}</p>
                     )}
                 </div>
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0" style={{ color: borderColor, backgroundColor: borderColor + '15' }}>
@@ -84,28 +84,28 @@ function NotaCard({ nota, onToggle, onEliminar }) {
 
     return (
         <div className={`rounded-xl shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 border-l-[3px] transition-opacity ${
-            nota.completada ? 'opacity-50 bg-[#EFEDEA] dark:bg-[#1C1C1C]' : 'bg-white dark:bg-[#242424]'
+            nota.completada ? 'opacity-50 bg-panel' : 'bg-white dark:bg-[#242424]'
         }`} style={{ borderLeftColor: nota.completada ? '#16A34A' : '#D48800' }}>
             <div className="flex items-center gap-2">
                 <button onClick={() => onToggle(nota.id)}
                     className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 active:scale-90 transition-all ${
                         nota.completada
                             ? 'bg-[#16A34A] border-[#16A34A] text-white'
-                            : 'border-[#A8A29E] text-transparent'
+                            : 'border-muted text-transparent'
                     }`}>
                     {nota.completada && <span className="text-[10px]">✓</span>}
                 </button>
                 <div className="flex-1 min-w-0">
-                    <p className={`text-[12px] font-bold truncate ${nota.completada ? 'line-through text-[#A8A29E]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                    <p className={`text-[12px] font-bold truncate ${nota.completada ? 'line-through text-muted' : 'text-ink'}`}>
                         {nota.titulo}
                     </p>
                     {nota.horaEstimada && (
-                        <p className="text-[10px] text-[#A8A29E]">{nota.horaEstimada}</p>
+                        <p className="text-[10px] text-muted">{nota.horaEstimada}</p>
                     )}
                 </div>
                 {!confirmElim ? (
                     <button onClick={() => setConfirmElim(true)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] text-[#A8A29E] active:scale-90">
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] text-muted active:scale-90">
                         ×
                     </button>
                 ) : (
@@ -116,7 +116,7 @@ function NotaCard({ nota, onToggle, onEliminar }) {
                 )}
             </div>
             {nota.descripcion && (
-                <p className="text-[10px] text-[#A8A29E] mt-1 line-clamp-2">{nota.descripcion}</p>
+                <p className="text-[10px] text-muted mt-1 line-clamp-2">{nota.descripcion}</p>
             )}
             {nota.direccion && (
                 <a href={`https://maps.google.com/?q=${encodeURIComponent(nota.direccion)}`}
@@ -167,12 +167,12 @@ function CrearNotaSheet({ fecha, tecnicoId, onCreada, onCerrar }) {
     return (
         <div className="fixed inset-0 z-[3000] flex items-end justify-center bg-black/60 backdrop-blur-sm"
             onClick={onCerrar}>
-            <div className="w-full max-w-md bg-[#FFFFFF] dark:bg-[#242424] rounded-t-3xl shadow-2xl p-5 space-y-4"
+            <div className="w-full max-w-md bg-card rounded-t-3xl shadow-2xl p-5 space-y-4"
                 onClick={e => e.stopPropagation()}>
-                <div className="w-10 h-1 rounded-full mx-auto bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                <div className="w-10 h-1 rounded-full mx-auto bg-chip" />
                 <div>
-                    <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-0.5">Nueva nota</p>
-                    <p className="text-[13px] font-bold text-[#1C1917] dark:text-[#F0EEE9] capitalize">{fechaLabel}</p>
+                    <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-0.5">Nueva nota</p>
+                    <p className="text-[13px] font-bold text-ink capitalize">{fechaLabel}</p>
                 </div>
 
                 <div>
@@ -204,11 +204,11 @@ function CrearNotaSheet({ fecha, tecnicoId, onCreada, onCerrar }) {
 
                 <div className="flex gap-2">
                     <button onClick={onCerrar}
-                        className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                        className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-chip text-secondary active:scale-95 transition-all">
                         Cancelar
                     </button>
                     <button onClick={handleGuardar} disabled={guardando || !titulo.trim()}
-                        className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all disabled:opacity-40">
+                        className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-brand-red active:scale-95 transition-all disabled:opacity-40">
                         {guardando ? 'Guardando...' : 'Agregar'}
                     </button>
                 </div>
@@ -293,27 +293,27 @@ export default function MiAgenda({ tecnicoId }) {
 
     return (
         <>
-        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]">
+        <div className="min-h-screen pb-28 bg-page">
             <div className="max-w-2xl mx-auto px-4 pt-4">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-[20px] font-black text-[#1C1917] dark:text-[#F0EEE9]">Mi Agenda</h1>
-                        <p className="text-[11px] text-[#A8A29E] capitalize">{mesLabel}</p>
+                        <h1 className="text-[20px] font-black text-ink">Mi Agenda</h1>
+                        <p className="text-[11px] text-muted capitalize">{mesLabel}</p>
                     </div>
                     <div className="flex gap-1.5">
                         <button onClick={() => setSemanaOffset(v => v - 1)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-white dark:bg-[#242424] text-[#57534E] dark:text-[#9E9A94] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-white dark:bg-[#242424] text-secondary shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                             ←
                         </button>
                         {semanaOffset !== 0 && (
                             <button onClick={() => setSemanaOffset(0)}
-                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-white dark:bg-[#242424] text-[#D13A28] dark:text-[#E8422F] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
+                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-white dark:bg-[#242424] text-brand-red shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                                 Hoy
                             </button>
                         )}
                         <button onClick={() => setSemanaOffset(v => v + 1)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-white dark:bg-[#242424] text-[#57534E] dark:text-[#9E9A94] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-white dark:bg-[#242424] text-secondary shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                             →
                         </button>
                     </div>
@@ -331,9 +331,9 @@ export default function MiAgenda({ tecnicoId }) {
 
                 {/* Detalle del dia */}
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] capitalize">{fechaLabel}</p>
+                    <p className="text-[12px] font-black text-ink capitalize">{fechaLabel}</p>
                     <button onClick={() => setCreandoNota(true)}
-                        className="h-8 px-3 rounded-lg font-bold text-[11px] text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
+                        className="h-8 px-3 rounded-lg font-bold text-[11px] text-white bg-brand-red active:scale-95 transition-all">
                         + Nota
                     </button>
                 </div>
@@ -345,9 +345,9 @@ export default function MiAgenda({ tecnicoId }) {
                 ) : ordenesDia.length === 0 && notasDia.length === 0 ? (
                     <div className="text-center py-12 rounded-2xl bg-white dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-2xl mb-2">📭</p>
-                        <p className="text-[13px] font-bold text-[#A8A29E]">Dia libre</p>
+                        <p className="text-[13px] font-bold text-muted">Dia libre</p>
                         <button onClick={() => setCreandoNota(true)}
-                            className="mt-3 text-[11px] font-bold text-[#D13A28] dark:text-[#E8422F] px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">
+                            className="mt-3 text-[11px] font-bold text-brand-red px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">
                             Agregar nota
                         </button>
                     </div>
@@ -356,7 +356,7 @@ export default function MiAgenda({ tecnicoId }) {
                         {/* Ordenes del admin primero */}
                         {ordenesDia.length > 0 && (
                             <>
-                                <p className="text-[9px] font-black text-[#D13A28] dark:text-[#E8422F] uppercase tracking-wider px-1">Ordenes asignadas</p>
+                                <p className="text-[9px] font-black text-brand-red uppercase tracking-wider px-1">Ordenes asignadas</p>
                                 {ordenesDia.map(o => <OrdenAgendaCard key={`o-${o.id}`} orden={o} />)}
                             </>
                         )}
@@ -364,7 +364,7 @@ export default function MiAgenda({ tecnicoId }) {
                         {/* Notas personales */}
                         {notasDia.length > 0 && (
                             <>
-                                <p className="text-[9px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider px-1 mt-3">Mis notas</p>
+                                <p className="text-[9px] font-black text-brand-amber uppercase tracking-wider px-1 mt-3">Mis notas</p>
                                 {notasDia.map(n => (
                                     <NotaCard key={`n-${n.id}`} nota={n} onToggle={toggleNota} onEliminar={eliminarNota} />
                                 ))}

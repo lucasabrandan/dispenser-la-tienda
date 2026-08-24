@@ -106,7 +106,7 @@ export default function ServicioCard({
 
     return (
         <div
-            className={`rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
+            className={`rounded-2xl overflow-hidden bg-card border border-black/[0.07] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
             style={{ borderLeft: `3px solid ${BORDER[servicio.estado] || '#A8A29E'}` }}
         >
             <div className="p-3">
@@ -129,26 +129,26 @@ export default function ServicioCard({
                                 {diasPendiente}d
                             </span>
                         )}
-                        <span className="text-[11px] font-bold text-[#A8A29E] shrink-0">#{servicio.id}</span>
+                        <span className="text-[11px] font-bold text-muted shrink-0">#{servicio.id}</span>
                         {servicio.nroDocumento && (
-                            <span className="text-[9px] text-[#A8A29E] truncate">{servicio.nroDocumento}</span>
+                            <span className="text-[9px] text-muted truncate">{servicio.nroDocumento}</span>
                         )}
                     </div>
                     <div className="text-right shrink-0">
-                        <M valor={total} className="text-[17px] font-black leading-none text-[#1C1917] dark:text-[#F0EEE9] block" />
-                        <p className="text-[10px] text-[#A8A29E] mt-0.5">{servicio.fecha}</p>
+                        <M valor={total} className="text-[17px] font-black leading-none text-ink block" />
+                        <p className="text-[10px] text-muted mt-0.5">{servicio.fecha}</p>
                     </div>
                 </div>
 
                 {/* Fila 2: cliente */}
-                <p className="font-black text-[16px] leading-tight text-[#1C1917] dark:text-[#F0EEE9] mb-0.5">
+                <p className="font-black text-[16px] leading-tight text-ink mb-0.5">
                     {servicio.clienteNombre}
                 </p>
 
                 {/* Fila 3: sede + técnico (una sola línea, corta con … si no entra) + modalidad cobro */}
                 <div className="flex items-center gap-2">
                     {(servicio.sedeNombre || servicio.usuarioNombre) && (
-                        <p className="flex-1 min-w-0 truncate text-[12px] text-[#A8A29E]">
+                        <p className="flex-1 min-w-0 truncate text-[12px] text-muted">
                             {[
                                 servicio.sedeNombre    && `📍 ${servicio.sedeNombre}`,
                                 servicio.usuarioNombre && `👤 ${servicio.usuarioNombre}`,
@@ -197,17 +197,17 @@ export default function ServicioCard({
                 {(seriales.length > 0 || ubicInfo) && (
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {seriales.slice(0, 2).map((s) => (
-                            <span key={s} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
+                            <span key={s} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-panel text-secondary">
                                 {s}
                             </span>
                         ))}
                         {seriales.length > 2 && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#A8A29E]">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-panel text-muted">
                                 +{seriales.length - 2}
                             </span>
                         )}
                         {ubicInfo && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#A8A29E]">
+                            <span className="text-[10px] px-2 py-0.5 rounded-lg bg-panel text-muted">
                                 {ubicInfo}
                             </span>
                         )}
@@ -218,7 +218,7 @@ export default function ServicioCard({
                 {items.length > 0 && (
                     <button
                         onClick={() => setExpandido(v => !v)}
-                        className="mt-2 w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]"
+                        className="mt-2 w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all active:scale-[0.98] bg-panel text-secondary"
                     >
                         <span>Detalle trabajo · {items.length} equipo{items.length > 1 ? 's' : ''}</span>
                         <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
@@ -227,23 +227,23 @@ export default function ServicioCard({
 
                 {/* Detalle expandido por equipo */}
                 {expandido && items.map((it, i) => (
-                    <div key={`${it.equipoSerial || 'item'}-${i}`} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05]">
+                    <div key={`${it.equipoSerial || 'item'}-${i}`} className="mt-2 p-3 rounded-xl bg-panel border border-black/[0.05]">
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
-                                <span className="text-[13px] font-black text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
+                                <span className="text-[13px] font-black text-brand-red">{it.equipoSerial}</span>
                                 {(it.equipoUbicacion || it.equipoPiso || it.equipoSector) && (
-                                    <p className="text-[10px] text-[#A8A29E] mt-0.5 truncate">
+                                    <p className="text-[10px] text-muted mt-0.5 truncate">
                                         {[it.equipoUbicacion, it.equipoPiso && `Piso ${it.equipoPiso}`, it.equipoSector].filter(Boolean).join(' · ')}
                                     </p>
                                 )}
                             </div>
-                            <M valor={Number(it.costo || 0)} className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0 ml-2" />
+                            <M valor={Number(it.costo || 0)} className="text-[12px] font-black text-ink shrink-0 ml-2" />
                         </div>
-                        <p className="text-[13px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{it.trabajoRealizado}</p>
+                        <p className="text-[13px] text-secondary leading-snug">{it.trabajoRealizado}</p>
                         {it.garantiaHasta && (() => {
                             const g = estadoGarantia(it.garantiaHasta);
                             return (
-                                <p className={`text-[11px] font-black mt-1 ${g.vigente ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>
+                                <p className={`text-[11px] font-black mt-1 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
                                     {g.vigente
                                         ? `🛡️ Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
                                         : `⏳ Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
@@ -254,7 +254,7 @@ export default function ServicioCard({
                             <div className="mt-1.5 pt-1.5 border-t border-black/[0.05] dark:border-white/[0.05]">
                                 <div className="flex flex-wrap gap-1 mt-1">
                                     {it.repuestosUsados.map((r, ri) => (
-                                        <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                        <span key={ri} className="text-[9px] px-1.5 py-0.5 rounded bg-chip text-secondary">
                                             {r.cantidad}× {r.nombre}
                                         </span>
                                     ))}
@@ -272,8 +272,8 @@ export default function ServicioCard({
                         <>
                             <button onClick={() => setVerRentab(v => !v)}
                                 className="mt-2 flex items-center gap-1.5 py-1.5 transition-all active:scale-[0.99]">
-                                <span className={`w-1.5 h-1.5 rounded-full transition-colors ${verRentab ? 'bg-[#2A9D5C] dark:bg-[#5DD68F]' : 'bg-[#A8A29E]'}`} />
-                                <span className="text-[10px] font-semibold text-[#A8A29E]">
+                                <span className={`w-1.5 h-1.5 rounded-full transition-colors ${verRentab ? 'bg-[#2A9D5C] dark:bg-[#5DD68F]' : 'bg-muted'}`} />
+                                <span className="text-[10px] font-semibold text-muted">
                                     {verRentab ? 'Ocultar rentabilidad' : 'Ver rentabilidad'}
                                 </span>
                             </button>
@@ -290,13 +290,13 @@ export default function ServicioCard({
                                                 <p className="text-[9px] uppercase tracking-wide font-bold text-[#A8855A] dark:text-[#5C5954] mb-0.5">{item.label}</p>
                                                 {item.pct !== undefined
                                                     ? <p className="text-[12px] font-black text-[#5C3D00] dark:text-[#5DD68F]">{item.pct}%</p>
-                                                    : <M valor={Math.round(item.val)} className={`text-[12px] font-black ${item.green ? 'text-[#5C3D00] dark:text-[#5DD68F]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`} />
+                                                    : <M valor={Math.round(item.val)} className={`text-[12px] font-black ${item.green ? 'text-[#5C3D00] dark:text-[#5DD68F]' : 'text-ink'}`} />
                                                 }
                                             </div>
                                         ))}
                                     </div>
                                     {g.totalMO > 0 && (
-                                        <p className="text-[9px] text-[#A8A29E] mt-1.5">MO incluida: ${Math.round(g.totalMO).toLocaleString('es-AR')}</p>
+                                        <p className="text-[9px] text-muted mt-1.5">MO incluida: ${Math.round(g.totalMO).toLocaleString('es-AR')}</p>
                                     )}
                                 </div>
                             )}
@@ -306,49 +306,49 @@ export default function ServicioCard({
             </div>
 
             {/* Barra de acciones — compacta con menu overflow */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-panel border-t border-black/[0.06]">
                 {/* Izquierda: solo acciones rapidas */}
                 <IconBtn onClick={() => onDetalle(servicio)} title="Ver detalle"
-                    cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">👁️</IconBtn>
+                    cls="bg-chip text-secondary">👁️</IconBtn>
                 <IconBtn onClick={() => onGenerarPDF(servicio)} title="PDF"
-                    cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
+                    cls="bg-chip text-secondary">📄</IconBtn>
 
                 {/* Menu overflow para acciones secundarias */}
                 <div className="relative">
                     <IconBtn onClick={() => setMenuAbierto(v => !v)} title="Mas acciones"
-                        cls={`${menuAbierto ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'}`}>
+                        cls={`${menuAbierto ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-brand-red' : 'bg-chip text-secondary'}`}>
                         ⋯
                     </IconBtn>
                     {menuAbierto && (
                         <>
                             <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuAbierto(false)} />
                             <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
-                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
                                 <button onClick={() => { onGenerarPDF(servicio, { sinPrecios: true }); setMenuAbierto(false); }}
-                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
+                                    className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                     📋 PDF sin precios
                                 </button>
                                 {esPpto && onEditar && (
                                     <button onClick={() => { onEditar(servicio); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         ✏️ Editar
                                     </button>
                                 )}
                                 {onDuplicar && (
                                     <button onClick={() => { onDuplicar(servicio); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         ⧉ Duplicar
                                     </button>
                                 )}
                                 {!esArch && (
                                     <button onClick={() => { onArchivar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         🗄️ Archivar
                                     </button>
                                 )}
                                 {onEliminar && (
                                     <button onClick={() => { onEliminar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#D13A28] dark:text-[#E8422F] active:bg-[#FEE2E2] rounded-xl">
+                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
                                         🗑️ Eliminar
                                     </button>
                                 )}
@@ -362,13 +362,13 @@ export default function ServicioCard({
                 {/* Derecha: accion principal del estado */}
                 {esPpto && (
                     <button onClick={() => onEjecutar(servicio)}
-                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-brand-amber">
                         Ejecutar
                     </button>
                 )}
                 {esComp && (
                     <button onClick={() => onAbrirCobro ? onAbrirCobro(servicio) : onCobrar(servicio.id, 'COBRADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-brand-red">
                         Definir cobro
                     </button>
                 )}

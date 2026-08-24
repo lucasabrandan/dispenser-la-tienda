@@ -5,8 +5,8 @@ const FOTO_KEYS = ['fotoUrl', 'fotoUrl2', 'fotoUrl3'];
 
 export default function FotosUploader({ form, fotoPreviews, onFotoChange }) {
     return (
-        <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] p-3 rounded-2xl border border-dashed border-[#E8E5E0] dark:border-[#2E2E2E]">
-            <label className="text-[10px] font-black uppercase tracking-wide text-[#A8A29E] mb-2 block">
+        <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] p-3 rounded-2xl border border-dashed border-chip">
+            <label className="text-[10px] font-black uppercase tracking-wide text-muted mb-2 block">
                 Fotos del producto (hasta 3)
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -16,7 +16,7 @@ export default function FotosUploader({ form, fotoPreviews, onFotoChange }) {
                     return (
                         <div key={i} className="relative">
                             <label className="cursor-pointer block">
-                                <div className="w-full aspect-square bg-[#FFFFFF] dark:bg-[#242424] rounded-xl flex justify-center items-center overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
+                                <div className="w-full aspect-square bg-card rounded-xl flex justify-center items-center overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
                                     {preview
                                         ? <img src={preview} className="w-full h-full object-cover" alt={`foto ${i+1}`} />
                                         : <span className="text-2xl opacity-30">{i === 0 ? '📸' : '+'}</span>

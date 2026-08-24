@@ -12,11 +12,11 @@ export default function AgendaCard({ s, onClick }) {
             style={{ borderLeftColor: borderHex }}>
             <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                    <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>
+                    <p className="text-[12px] font-bold text-ink truncate">{s.clienteNombre}</p>
+                    <p className="text-[10px] text-muted truncate">{s.sedeNombre}</p>
                 </div>
                 <div className="text-right shrink-0">
-                    <M valor={calcTotal(s)} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                    <M valor={calcTotal(s)} className="text-[13px] font-black text-ink block" />
                     <span className="text-[9px] font-bold" style={{ color: borderHex }}>
                         {estadoLabel}
                     </span>
@@ -32,7 +32,7 @@ export default function AgendaCard({ s, onClick }) {
                 </a>
             )}
             {s.duracionMinutos && (
-                <p className="text-[9px] font-bold text-[#A8A29E] mt-1">⏱ {Math.round(s.duracionMinutos / 60 * 10) / 10}h estimadas</p>
+                <p className="text-[9px] font-bold text-muted mt-1">⏱ {Math.round(s.duracionMinutos / 60 * 10) / 10}h estimadas</p>
             )}
         </div>
     );

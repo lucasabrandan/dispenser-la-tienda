@@ -136,24 +136,24 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
 
     if (!isOpen) return null;
 
-    const inputCls = 'w-full px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/10 placeholder:text-[#A8A29E] transition-all';
+    const inputCls = 'w-full px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-chip text-ink border border-black/10 dark:border-white/10 placeholder:text-muted transition-all';
 
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[300] backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-0 z-[301] flex items-end md:items-center justify-center">
-                <div className="w-full md:max-w-md bg-[#FFFFFF] dark:bg-[#242424] rounded-t-3xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+                <div className="w-full md:max-w-md bg-card rounded-t-3xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
 
                     {/* Header */}
-                    <div className="sticky top-0 z-10 bg-[#FFFFFF] dark:bg-[#242424] px-5 pt-4 pb-3 border-b border-black/[0.07] dark:border-white/[0.07]">
-                        <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] md:hidden" />
+                    <div className="sticky top-0 z-10 bg-card px-5 pt-4 pb-3 border-b border-black/[0.07] dark:border-white/[0.07]">
+                        <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip md:hidden" />
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9]">⚡ Carga Rápida</h3>
-                                <p className="text-[11px] text-[#A8A29E] mt-0.5">Copiando trabajo del equipo anterior</p>
+                                <h3 className="text-[16px] font-black text-ink">⚡ Carga Rápida</h3>
+                                <p className="text-[11px] text-muted mt-0.5">Copiando trabajo del equipo anterior</p>
                             </div>
                             <button onClick={onClose}
-                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">✕</button>
+                                className="w-9 h-9 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90">✕</button>
                         </div>
                     </div>
 
@@ -163,8 +163,8 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                         <div className="grid grid-cols-2 gap-2">
                             {/* Antes */}
                             <div>
-                                <label className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Antes</label>
-                                <div className="h-20 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07] flex items-center justify-center overflow-hidden relative">
+                                <label className="text-[9px] font-black text-muted uppercase tracking-wider block mb-1">Antes</label>
+                                <div className="h-20 rounded-xl bg-panel border border-black/[0.07] dark:border-white/[0.07] flex items-center justify-center overflow-hidden relative">
                                     {fotoAntes
                                         ? <>
                                             <img src={fotoAntes} className="w-full h-full object-cover" alt="Antes" />
@@ -176,11 +176,11 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                                 </div>
                                 <div className="flex gap-1 mt-1">
                                     <button onClick={() => refCamaraAntes.current?.click()}
-                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-white bg-brand-red active:scale-95">
                                         📷
                                     </button>
                                     <button onClick={() => refGaleriaAntes.current?.click()}
-                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95">
+                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-ink bg-chip active:scale-95">
                                         🖼️
                                     </button>
                                 </div>
@@ -189,8 +189,8 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                             </div>
                             {/* Después */}
                             <div>
-                                <label className="text-[9px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Después</label>
-                                <div className="h-20 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.07] dark:border-white/[0.07] flex items-center justify-center overflow-hidden relative">
+                                <label className="text-[9px] font-black text-muted uppercase tracking-wider block mb-1">Después</label>
+                                <div className="h-20 rounded-xl bg-panel border border-black/[0.07] dark:border-white/[0.07] flex items-center justify-center overflow-hidden relative">
                                     {fotoDespues
                                         ? <>
                                             <img src={fotoDespues} className="w-full h-full object-cover" alt="Después" />
@@ -202,11 +202,11 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                                 </div>
                                 <div className="flex gap-1 mt-1">
                                     <button onClick={() => refCamaraDespues.current?.click()}
-                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95">
+                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-white bg-brand-red active:scale-95">
                                         📷
                                     </button>
                                     <button onClick={() => refGaleriaDespues.current?.click()}
-                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95">
+                                        className="flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase text-ink bg-chip active:scale-95">
                                         🖼️
                                     </button>
                                 </div>
@@ -217,7 +217,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
 
                         {/* Serial — selector con equipos del cliente */}
                         <div>
-                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">
+                            <label className="text-[10px] font-black text-muted uppercase tracking-wider block mb-1">
                                 Equipo *
                                 {opcionesSerial.length > 0 && <span className="text-[#D48800] ml-1">({opcionesSerial.length} disponibles)</span>}
                             </label>
@@ -249,7 +249,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
 
                         {/* Ubicación */}
                         <div>
-                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">Ubicación</label>
+                            <label className="text-[10px] font-black text-muted uppercase tracking-wider block mb-1">Ubicación</label>
                             <input value={ubicacion} onChange={e => setUbicacion(e.target.value)}
                                 placeholder="Ej: Piso 2 - Consultorio B"
                                 className={inputCls} />
@@ -257,7 +257,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
 
                         {/* Trabajo (copiado, editable) */}
                         <div>
-                            <label className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider block mb-1">
+                            <label className="text-[10px] font-black text-muted uppercase tracking-wider block mb-1">
                                 Trabajo <span className="text-[#D48800]">(copiado)</span>
                             </label>
                             <textarea value={trabajo} onChange={e => setTrabajo(e.target.value)}
@@ -274,7 +274,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                         {/* Repuestos */}
                         <div>
                             <button type="button" onClick={() => setSheetRepuestos(true)}
-                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
                                 <span>{repuestos.length > 0
                                     ? `📦 ${repuestos.length} repuesto${repuestos.length > 1 ? 's' : ''}`
                                     : '📦 Repuestos'
@@ -282,11 +282,11 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                                 <span className="text-[10px]">✏</span>
                             </button>
                             {repuestos.length > 0 && (
-                                <div className="mt-1.5 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] overflow-hidden">
+                                <div className="mt-1.5 rounded-xl bg-panel overflow-hidden">
                                     {repuestos.map((r, i) => (
                                         <div key={i} className="flex justify-between text-[11px] px-3 py-1.5 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
-                                            <span className="text-[#57534E] dark:text-[#9E9A94]">{r.cantidad}x {r.nombre}</span>
-                                            <span className="font-bold text-[#1C1917] dark:text-[#F0EEE9]">${Math.round(r.subtotal).toLocaleString('es-AR')}</span>
+                                            <span className="text-secondary">{r.cantidad}x {r.nombre}</span>
+                                            <span className="font-bold text-ink">${Math.round(r.subtotal).toLocaleString('es-AR')}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -295,17 +295,17 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                     </div>
 
                     {/* Footer fijo */}
-                    <div className="sticky bottom-0 px-5 pb-5 pt-3 bg-[#FFFFFF] dark:bg-[#242424] border-t border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="sticky bottom-0 px-5 pb-5 pt-3 bg-card border-t border-black/[0.07] dark:border-white/[0.07]">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-[11px] font-bold text-[#A8A29E]">
+                            <span className="text-[11px] font-bold text-muted">
                                 {ticketItems.length} cargados
                             </span>
-                            <span className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                            <span className="text-[13px] font-black text-ink">
                                 ${Math.round(totalCargado).toLocaleString('es-AR')}
                             </span>
                         </div>
                         <button onClick={handleGuardar} disabled={guardando}
-                            className="w-full py-3.5 rounded-2xl font-black text-[13px] text-white active:scale-[0.98] transition-all disabled:opacity-50 bg-[#D13A28] dark:bg-[#E8422F]">
+                            className="w-full py-3.5 rounded-2xl font-black text-[13px] text-white active:scale-[0.98] transition-all disabled:opacity-50 bg-brand-red">
                             {guardando ? 'Guardando...' : '✓ Guardar y siguiente →'}
                         </button>
                     </div>

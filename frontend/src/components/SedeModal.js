@@ -5,13 +5,13 @@ import { toast } from 'react-hot-toast';
 // Estilos reutilizables del sistema
 const fieldCls = `
     w-full h-12 px-4 rounded-xl
-    bg-[#E8E5E0] dark:bg-[#2E2E2E]
+    bg-chip
     border border-black/[0.07] dark:border-white/[0.07]
     font-bold text-[12px] uppercase outline-none
-    text-[#1C1917] dark:text-[#F0EEE9]
+    text-ink
     focus:ring-2 focus:ring-[#D13A28]/20
     focus:border-[#D13A28] dark:focus:border-[#E8422F]
-    transition-all placeholder:text-[#A8A29E]
+    transition-all placeholder:text-muted
 `;
 
 export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
@@ -75,40 +75,40 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end z-[2000]">
-            <div className="bg-[#FFFFFF] dark:bg-[#242424] w-full max-w-xl rounded-t-[2rem] shadow-2xl animate-slide-up h-[90vh] flex flex-col">
+            <div className="bg-card w-full max-w-xl rounded-t-[2rem] shadow-2xl animate-slide-up h-[90vh] flex flex-col">
 
                 {/* Handle */}
                 <div className="flex justify-center pt-4 pb-2">
-                    <div className="w-12 h-1 bg-[#E8E5E0] dark:bg-[#2E2E2E] rounded-full" />
+                    <div className="w-12 h-1 bg-chip rounded-full" />
                 </div>
 
                 {/* Título */}
                 <div className="px-6 pb-4 border-b border-black/[0.07] dark:border-white/[0.07]">
-                    <h3 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-tighter">
+                    <h3 className="text-lg font-black text-ink uppercase tracking-tighter">
                         Sedes · {cliente.nombre}
                     </h3>
-                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase mt-0.5">{sedes.length} ubicación{sedes.length !== 1 ? 'es' : ''} registrada{sedes.length !== 1 ? 's' : ''}</p>
+                    <p className="text-[10px] font-bold text-muted uppercase mt-0.5">{sedes.length} ubicación{sedes.length !== 1 ? 'es' : ''} registrada{sedes.length !== 1 ? 's' : ''}</p>
                 </div>
 
                 {/* Lista de sedes */}
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
                     {sedes.length === 0 ? (
-                        <div className="text-center py-10 font-bold uppercase text-[10px] text-[#A8A29E] border-2 border-dashed border-black/[0.07] dark:border-white/[0.07] rounded-2xl">
+                        <div className="text-center py-10 font-bold uppercase text-[10px] text-muted border-2 border-dashed border-black/[0.07] dark:border-white/[0.07] rounded-2xl">
                             Sin sedes cargadas
                         </div>
                     ) : (
                         sedes.map(s => (
-                            <div key={s.id} className="p-4 bg-[#EFEDEA] dark:bg-[#1C1C1C] rounded-2xl border border-black/[0.07] dark:border-white/[0.07]">
+                            <div key={s.id} className="p-4 bg-panel rounded-2xl border border-black/[0.07] dark:border-white/[0.07]">
                                 <div className="flex justify-between items-start gap-3">
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-black text-[13px] text-[#1C1917] dark:text-[#F0EEE9] uppercase leading-none mb-1">
+                                        <p className="font-black text-[13px] text-ink uppercase leading-none mb-1">
                                             {s.nombreSede}
                                         </p>
-                                        <p className="text-[10px] font-bold text-[#A8A29E] uppercase truncate">
+                                        <p className="text-[10px] font-bold text-muted uppercase truncate">
                                             {s.direccion} · {s.localidad}
                                         </p>
                                         {s.equipos?.length > 0 && (
-                                            <p className="text-[9px] font-black text-[#D48800] dark:text-[#F0A500] mt-1">
+                                            <p className="text-[9px] font-black text-brand-amber mt-1">
                                                 {s.equipos.length} equipo{s.equipos.length !== 1 ? 's' : ''}
                                             </p>
                                         )}
@@ -116,19 +116,19 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
                                     <div className="flex gap-2 shrink-0">
                                         <button
                                             onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.direccion + ', ' + s.provincia + ', Argentina')}`, '_blank')}
-                                            className="w-9 h-9 bg-[#1C1917]/10 dark:bg-[#F0EEE9]/10 text-[#1C1917] dark:text-[#F0EEE9] rounded-xl flex items-center justify-center text-sm hover:opacity-80 transition-all">
+                                            className="w-9 h-9 bg-[#1C1917]/10 dark:bg-[#F0EEE9]/10 text-ink rounded-xl flex items-center justify-center text-sm hover:opacity-80 transition-all">
                                             📍
                                         </button>
                                         <button
                                             onClick={() => handleArchivar(s)}
                                             title="Archivar (preserva historial)"
-                                            className="w-9 h-9 bg-[#D48800]/10 dark:bg-[#F0A500]/10 text-[#D48800] dark:text-[#F0A500] rounded-xl flex items-center justify-center text-sm hover:opacity-80 transition-all">
+                                            className="w-9 h-9 bg-[#D48800]/10 dark:bg-[#F0A500]/10 text-brand-amber rounded-xl flex items-center justify-center text-sm hover:opacity-80 transition-all">
                                             📦
                                         </button>
                                         <button
                                             onClick={() => handleEliminarDefinitivo(s)}
                                             title="Eliminar definitivamente"
-                                            className="w-9 h-9 bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F] rounded-xl flex items-center justify-center text-sm hover:bg-[#D13A28] hover:text-white dark:hover:bg-[#E8422F] transition-all">
+                                            className="w-9 h-9 bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-brand-red rounded-xl flex items-center justify-center text-sm hover:bg-[#D13A28] hover:text-white dark:hover:bg-[#E8422F] transition-all">
                                             🗑️
                                         </button>
                                     </div>
@@ -140,7 +140,7 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
 
                 {/* Formulario nueva sede */}
                 <form onSubmit={handleSubmit} className="px-6 pb-6 pt-4 border-t border-black/[0.07] dark:border-white/[0.07] space-y-3">
-                    <p className="text-[10px] font-black text-[#D13A28] dark:text-[#E8422F] uppercase mb-2">Nueva Ubicación</p>
+                    <p className="text-[10px] font-black text-brand-red uppercase mb-2">Nueva Ubicación</p>
                     <div className="grid grid-cols-2 gap-3">
                         <input className={fieldCls} placeholder="Nombre (Ej: Depósito)"
                             value={form.nombreSede} onChange={e => setForm({ ...form, nombreSede: e.target.value })} />
@@ -159,11 +159,11 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
                     </div>
                     <div className="flex gap-3">
                         <button type="button" onClick={onClose}
-                            className="flex-1 py-3.5 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            className="flex-1 py-3.5 bg-chip text-ink rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
                             Cerrar
                         </button>
                         <button type="submit"
-                            className="flex-[2] py-3.5 bg-[#D13A28] dark:bg-[#E8422F] text-white rounded-xl font-black text-[11px] uppercase shadow-lg hover:opacity-90 transition-all active:scale-95">
+                            className="flex-[2] py-3.5 bg-brand-red text-white rounded-xl font-black text-[11px] uppercase shadow-lg hover:opacity-90 transition-all active:scale-95">
                             + Registrar Sede
                         </button>
                     </div>

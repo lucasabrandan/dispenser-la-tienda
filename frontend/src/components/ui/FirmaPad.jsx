@@ -72,11 +72,11 @@ export default function FirmaPad({ value, onChange, label, height = 110 }) {
     return (
         <div className="flex flex-col gap-1">
             {label && (
-                <span className="text-xs font-semibold text-[#1C1917] dark:text-[#F0EEE9]">
+                <span className="text-xs font-semibold text-ink">
                     {label}
                 </span>
             )}
-            <div className="relative border border-[#E8E5E0] dark:border-[#2E2E2E] rounded-lg bg-white overflow-hidden"
+            <div className="relative border border-chip rounded-lg bg-white overflow-hidden"
                  style={{ height }}>
                 <canvas
                     ref={canvasRef}
@@ -94,7 +94,7 @@ export default function FirmaPad({ value, onChange, label, height = 110 }) {
                 {/* Línea guía */}
                 <div className="absolute bottom-8 left-4 right-4 border-b border-dashed border-[#E8E5E0] pointer-events-none" />
                 {isEmpty && (
-                    <span className="absolute inset-0 flex items-center justify-center text-xs text-[#A8A29E] pointer-events-none select-none">
+                    <span className="absolute inset-0 flex items-center justify-center text-xs text-muted pointer-events-none select-none">
                         Firmar aquí
                     </span>
                 )}
@@ -102,7 +102,7 @@ export default function FirmaPad({ value, onChange, label, height = 110 }) {
             <button
                 type="button"
                 onClick={limpiar}
-                className="self-end text-[10px] text-[#A8A29E] hover:text-[#D13A28] transition-colors"
+                className="self-end text-[10px] text-muted hover:text-[#D13A28] transition-colors"
             >
                 Limpiar
             </button>

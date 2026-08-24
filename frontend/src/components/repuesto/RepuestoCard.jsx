@@ -22,9 +22,9 @@ export default function RepuestoCard({
     return (
         <div
             onClick={handleClick}
-            className={`rounded-2xl overflow-hidden cursor-pointer transition-all active:scale-[0.97] bg-[#FFFFFF] dark:bg-[#242424] border ${
+            className={`rounded-2xl overflow-hidden cursor-pointer transition-all active:scale-[0.97] bg-card border ${
                 estaSeleccionado
-                    ? 'border-[#D13A28] dark:border-[#E8422F] ring-2 ring-[#D13A28]/20'
+                    ? 'border-brand-red ring-2 ring-[#D13A28]/20'
                     : 'border-black/[0.07] dark:border-white/[0.07]'
             }`}
         >
@@ -48,11 +48,11 @@ export default function RepuestoCard({
 
             {/* Info */}
             <div className="p-2.5">
-                <p className="text-[10px] font-black text-[#D13A28] dark:text-[#E8422F] tracking-wide mb-0.5">{r.sku}</p>
-                <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] leading-tight line-clamp-2 min-h-[32px]">
+                <p className="text-[10px] font-black text-brand-red tracking-wide mb-0.5">{r.sku}</p>
+                <p className="text-[12px] font-bold text-ink leading-tight line-clamp-2 min-h-[32px]">
                     {r.nombre}
                 </p>
-                <p className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] mt-1">
+                <p className="text-[15px] font-black text-ink mt-1">
                     ${Math.round(precioNegro).toLocaleString('es-AR')}
                 </p>
             </div>

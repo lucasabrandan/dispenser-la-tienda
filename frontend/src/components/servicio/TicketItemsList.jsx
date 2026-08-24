@@ -67,7 +67,7 @@ export default function TicketItemsList({ ticketItems, editarItem, eliminarItem,
             <Label>
                 {ticketItems.length} equipo{ticketItems.length > 1 ? 's' : ''} en el ticket
                 {onReorder && ticketItems.length > 1 && (
-                    <span className="text-[9px] font-medium text-[#A8A29E] ml-2">
+                    <span className="text-[9px] font-medium text-muted ml-2">
                         mantener presionado para reordenar
                     </span>
                 )}
@@ -87,11 +87,11 @@ export default function TicketItemsList({ ticketItems, editarItem, eliminarItem,
                             onTouchStart={(e) => onReorder && ticketItems.length > 1 ? handleTouchStart(idx, e) : null}
                             onTouchCancel={() => { clearTimeout(longPressTimer.current); setDragIdx(null); setOverIdx(null); }}
                             className={`flex items-center justify-between p-3 rounded-xl border transition-all
-                                bg-[#E8E5E0] dark:bg-[#2E2E2E]
+                                bg-chip
                                 ${isDragging
-                                    ? 'opacity-50 scale-95 border-[#D13A28] dark:border-[#E8422F]'
+                                    ? 'opacity-50 scale-95 border-brand-red'
                                     : isOver
-                                        ? 'border-[#D48800] dark:border-[#F0A500] shadow-md'
+                                        ? 'border-brand-amber shadow-md'
                                         : 'border-black/10 dark:border-white/10'
                                 }
                                 ${dragIdx !== null ? 'select-none' : ''}
@@ -100,29 +100,29 @@ export default function TicketItemsList({ ticketItems, editarItem, eliminarItem,
                             <div className="flex items-center gap-2 min-w-0">
                                 {/* Handle visual de drag */}
                                 {onReorder && ticketItems.length > 1 && (
-                                    <span className={`text-[10px] flex-shrink-0 transition-colors ${dragIdx !== null ? 'text-[#D48800]' : 'text-[#A8A29E]'}`}>
+                                    <span className={`text-[10px] flex-shrink-0 transition-colors ${dragIdx !== null ? 'text-[#D48800]' : 'text-muted'}`}>
                                         ⠿
                                     </span>
                                 )}
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 bg-[#D13A28] dark:bg-[#E8422F]">
+                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 bg-brand-red">
                                     {idx + 1}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[12px] font-bold truncate text-[#1C1917] dark:text-[#F0EEE9]">
+                                    <p className="text-[12px] font-bold truncate text-ink">
                                         {it.equipoSerial || 'Sin S/N'}
                                     </p>
-                                    <p className="text-[10px] truncate text-[#A8A29E]">
+                                    <p className="text-[10px] truncate text-muted">
                                         {it.resumenTexto}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                                <M valor={it.totalCalculado} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
+                                <M valor={it.totalCalculado} className="text-[13px] font-black text-ink" />
                                 <button onClick={() => editarItem(idx)}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] bg-[#D48800]/20 text-[#D48800] dark:text-[#F0A500] active:scale-90 transition-all"
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] bg-[#D48800]/20 text-brand-amber active:scale-90 transition-all"
                                     title="Editar equipo">✏️</button>
                                 <button onClick={() => eliminarItem(idx)}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F] active:scale-90 transition-all"
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] bg-[#D13A28]/10 text-brand-red active:scale-90 transition-all"
                                     title="Eliminar equipo">✕</button>
                             </div>
                         </div>

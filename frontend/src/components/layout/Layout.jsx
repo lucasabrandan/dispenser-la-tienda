@@ -46,7 +46,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     }, [pollNotifs]);
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row transition-colors duration-300 antialiased bg-[#F5F3F1] dark:bg-[#141414]">
+        <div className="min-h-screen flex flex-col md:flex-row transition-colors duration-300 antialiased bg-page">
 
             {/* SIDEBAR DESKTOP */}
             <Sidebar vistaActual={vistaActual} setVistaActual={setVistaActual}
@@ -55,12 +55,12 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             <div className="flex-1 flex flex-col min-w-0">
 
                 {/* HEADER MOBILE */}
-                <header className="md:hidden h-14 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08] dark:border-white/[0.07]">
+                <header className="md:hidden h-14 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-panel border-b border-black/[0.08] dark:border-white/[0.07]">
 
                     {/* Logo + sección actual */}
                     <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setVistaActual('caja')}>
                         <img src={logo} alt="Dispenser La Tienda" className="h-12 w-auto" />
-                        <span className="font-black text-[14px] tracking-tight uppercase text-[#1C1917] dark:text-[#F0EEE9] leading-none">
+                        <span className="font-black text-[14px] tracking-tight uppercase text-ink leading-none">
                             {NOMBRES_SECCION[vistaActual] || 'Dispenser'}
                         </span>
                     </div>

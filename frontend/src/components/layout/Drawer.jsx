@@ -39,21 +39,21 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
             )}
 
             {/* Panel lateral */}
-            <div className={`fixed top-0 right-0 h-full w-72 bg-[#EFEDEA] dark:bg-[#1C1C1C] shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
+            <div className={`fixed top-0 right-0 h-full w-72 bg-panel shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
                 isOpen ? 'translate-x-0' : 'translate-x-full'
             }`}>
 
                 {/* Header */}
                 <div className="p-5 border-b border-black/[0.07] dark:border-white/[0.07] flex justify-between items-center">
                     <div>
-                        <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{usuario?.nombre}</p>
-                        <p className="text-[9px] font-bold text-[#A8A29E] uppercase tracking-wider">
+                        <p className="text-[13px] font-black text-ink">{usuario?.nombre}</p>
+                        <p className="text-[9px] font-bold text-muted uppercase tracking-wider">
                             {usuario?.rol === 'ADMIN' ? 'Administrador' : 'Técnico'}
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-[#A8A29E] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] transition-colors"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -69,7 +69,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                     ].map((grupo, gi) => (
                         <div key={gi} className="space-y-0.5">
                             {grupo.label && (
-                                <p className="text-[9px] font-bold text-[#A8A29E]/70 uppercase tracking-[0.15em] mb-1 px-3">{grupo.label}</p>
+                                <p className="text-[9px] font-bold text-muted/70 uppercase tracking-[0.15em] mb-1 px-3">{grupo.label}</p>
                             )}
                             {grupo.items.map(item => {
                                 const activa = vistaActual === item.id;
@@ -82,15 +82,15 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                                         onClick={() => handleClick(item.id)}
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-[13px] font-bold transition-all active:scale-[0.98] ${
                                             activa
-                                                ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
-                                                : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
+                                                ? 'bg-brand-red text-white shadow-md'
+                                                : 'text-ink hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
                                         }`}
                                     >
                                         <span>{item.icon}</span>
                                         <span className="flex-1">{item.nombre}</span>
                                         {badge && (
                                             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${
-                                                activa ? 'bg-white/30 text-white' : 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+                                                activa ? 'bg-white/30 text-white' : 'bg-brand-red text-white'
                                             }`}>
                                                 {badge}
                                             </span>
@@ -106,11 +106,11 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
                     <button
                         onClick={() => { logout(); onClose(); }}
-                        className="w-full px-4 py-3 rounded-xl text-left text-[13px] font-bold text-[#D13A28] dark:text-[#E8422F] hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all"
+                        className="w-full px-4 py-3 rounded-xl text-left text-[13px] font-bold text-brand-red hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all"
                     >
                         🚪 Cerrar sesión
                     </button>
-                    <p className="text-[8px] text-[#A8A29E] text-center mt-2 uppercase tracking-widest font-bold">
+                    <p className="text-[8px] text-muted text-center mt-2 uppercase tracking-widest font-bold">
                         Dispenser La Tienda v1.0
                     </p>
                 </div>

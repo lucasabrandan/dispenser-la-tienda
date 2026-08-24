@@ -161,14 +161,14 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
 
     if (!isOpen) return null;
 
-    const inputBase = "w-full mt-1 p-3 rounded-xl text-sm font-bold outline-none transition-all border bg-[#E8E5E0] dark:bg-[#2E2E2E] border-black/[0.07] dark:border-white/[0.07] text-[#1C1917] dark:text-[#F0EEE9] focus:ring-2 focus:ring-[#D13A28]/20";
+    const inputBase = "w-full mt-1 p-3 rounded-xl text-sm font-bold outline-none transition-all border bg-chip border-black/[0.07] dark:border-white/[0.07] text-ink focus:ring-2 focus:ring-[#D13A28]/20";
     const labelBase = "text-[10px] font-black uppercase tracking-wide";
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end z-[3000]">
-            <div className="bg-[#FFFFFF] dark:bg-[#242424] w-full max-w-lg rounded-t-3xl p-6 shadow-2xl">
-                <div className="w-12 h-1.5 bg-[#E8E5E0] dark:bg-[#2E2E2E] rounded-full mx-auto mb-5" />
-                <h3 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] mb-5">
+            <div className="bg-card w-full max-w-lg rounded-t-3xl p-6 shadow-2xl">
+                <div className="w-12 h-1.5 bg-chip rounded-full mx-auto mb-5" />
+                <h3 className="text-lg font-black text-ink mb-5">
                     {form.id ? 'Editar Producto' : 'Nuevo Producto'}
                 </h3>
 
@@ -177,23 +177,23 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
 
                     <div className="grid grid-cols-3 gap-3">
                         <div>
-                            <label className={`${labelBase} text-[#A8A29E]`}>SKU</label>
+                            <label className={`${labelBase} text-muted`}>SKU</label>
                             <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value.toUpperCase() })} className={inputBase} />
                         </div>
                         <div className="col-span-2">
-                            <label className={`${labelBase} text-[#A8A29E]`}>Nombre</label>
+                            <label className={`${labelBase} text-muted`}>Nombre</label>
                             <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className={inputBase} />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className={`${labelBase} text-[#A8A29E]`}>Stock actual</label>
+                            <label className={`${labelBase} text-muted`}>Stock actual</label>
                             <input type="text" inputMode="numeric" value={form.stock}
                                 onChange={e => setForm({ ...form, stock: e.target.value.replace(/[^0-9]/g, '') })} className={inputBase} />
                         </div>
                         <div>
-                            <label className={`${labelBase} text-[#A8A29E]`}>Descripcion</label>
+                            <label className={`${labelBase} text-muted`}>Descripcion</label>
                             <input value={form.descripcion || ''} onChange={e => setForm({ ...form, descripcion: e.target.value })}
                                 placeholder="Opcional" className={inputBase} />
                         </div>
@@ -208,11 +208,11 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
 
                     <div className="flex gap-3 mt-1">
                         <button type="button" onClick={onClose} disabled={cargando}
-                            className="flex-1 py-3.5 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-extrabold text-sm disabled:opacity-50 active:scale-95 transition-all">
+                            className="flex-1 py-3.5 bg-chip text-ink rounded-xl font-extrabold text-sm disabled:opacity-50 active:scale-95 transition-all">
                             Cancelar
                         </button>
                         <button type="submit" disabled={cargando}
-                            className="flex-[2] py-3.5 bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-90 text-white rounded-xl font-extrabold text-sm shadow-md shadow-[#D13A28]/30 disabled:opacity-50 active:scale-95 transition-all">
+                            className="flex-[2] py-3.5 bg-brand-red hover:opacity-90 text-white rounded-xl font-extrabold text-sm shadow-md shadow-[#D13A28]/30 disabled:opacity-50 active:scale-95 transition-all">
                             {cargando ? 'Guardando...' : 'Guardar'}
                         </button>
                     </div>

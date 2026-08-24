@@ -32,14 +32,14 @@ export function StepHeader({ paso, total, titulo, subtitulo }) {
     return (
         <div className="px-5 pt-5 pb-4">
             <StepBar paso={paso} total={total} />
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-[#A8A29E]">
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-muted">
                 Paso {paso + 1} de {total}
             </p>
-            <h3 className="text-[18px] font-black leading-tight text-[#1C1917] dark:text-[#F0EEE9]">
+            <h3 className="text-[18px] font-black leading-tight text-ink">
                 {titulo}
             </h3>
             {subtitulo && (
-                <p className="text-[12px] mt-0.5 text-[#A8A29E]">{subtitulo}</p>
+                <p className="text-[12px] mt-0.5 text-muted">{subtitulo}</p>
             )}
         </div>
     );
@@ -48,7 +48,7 @@ export function StepHeader({ paso, total, titulo, subtitulo }) {
 // ── Label de sección ──────────────────────────────────────────────────────────
 export function Label({ children }) {
     return (
-        <p className="text-[10px] font-bold uppercase tracking-widest mb-2 text-[#A8A29E]">
+        <p className="text-[10px] font-bold uppercase tracking-widest mb-2 text-muted">
             {children}
         </p>
     );
@@ -60,7 +60,7 @@ export function NextBtn({ onClick, children, disabled }) {
         <button
             onClick={onClick}
             disabled={disabled}
-            className="w-full py-4 rounded-2xl font-black text-sm text-white transition-all active:scale-[0.98] disabled:opacity-40 bg-[#D13A28] dark:bg-[#E8422F]"
+            className="w-full py-4 rounded-2xl font-black text-sm text-white transition-all active:scale-[0.98] disabled:opacity-40 bg-brand-red"
         >
             {children} →
         </button>
@@ -72,7 +72,7 @@ export function BackBtn({ onClick }) {
     return (
         <button
             onClick={onClick}
-            className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]"
+            className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] bg-chip text-secondary"
         >
             ← Volver
         </button>
@@ -82,7 +82,7 @@ export function BackBtn({ onClick }) {
 // ── Card del sistema ──────────────────────────────────────────────────────────
 export function DSCard({ children, className = '' }) {
     return (
-        <div className={`rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] ${className}`}>
+        <div className={`rounded-2xl p-4 bg-card border border-black/[0.07] dark:border-white/[0.07] ${className}`}>
             {children}
         </div>
     );
@@ -97,10 +97,10 @@ export function DSInput({ label, className = '', ...props }) {
                 {...props}
                 className={`
                     w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-                    bg-[#E8E5E0] dark:bg-[#2E2E2E]
-                    text-[#1C1917] dark:text-[#F0EEE9]
+                    bg-chip
+                    text-ink
                     border border-black/10 dark:border-white/10
-                    placeholder-[#A8A29E]
+                    placeholder-muted
                     focus:border-[#D13A28] dark:focus:border-[#E8422F]
                     focus:ring-2 focus:ring-[#D13A28]/20
                     transition-all
@@ -120,10 +120,10 @@ export function DSTextarea({ label, className = '', ...props }) {
                 {...props}
                 className={`
                     w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none resize-none
-                    bg-[#E8E5E0] dark:bg-[#2E2E2E]
-                    text-[#1C1917] dark:text-[#F0EEE9]
+                    bg-chip
+                    text-ink
                     border border-black/10 dark:border-white/10
-                    placeholder-[#A8A29E]
+                    placeholder-muted
                     focus:border-[#D13A28] dark:focus:border-[#E8422F]
                     focus:ring-2 focus:ring-[#D13A28]/20
                     transition-all

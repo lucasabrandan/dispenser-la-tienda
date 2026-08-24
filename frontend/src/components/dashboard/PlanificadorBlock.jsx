@@ -11,12 +11,12 @@ function DiaBtn({ d, diaSel, onSelect }) {
     return (
         <button onClick={() => onSelect(sel ? null : d.fecha)}
             className={`rounded-lg p-2 text-center transition-all active:scale-95 ${
-                d.esHoy ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''
-            } ${sel ? 'bg-[#1C1917] dark:bg-[#F0EEE9]' : 'bg-white dark:bg-[#242424]'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
-            <p className={`text-[10px] font-bold uppercase ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#A8A29E]'}`}>
+                d.esHoy ? 'ring-2 ring-brand-red' : ''
+            } ${sel ? 'bg-ink' : 'bg-white dark:bg-[#242424]'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
+            <p className={`text-[10px] font-bold uppercase ${sel ? 'text-white dark:text-[#1C1917]' : 'text-muted'}`}>
                 {d.dia.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
             </p>
-            <p className={`text-[14px] font-black ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+            <p className={`text-[14px] font-black ${sel ? 'text-white dark:text-[#1C1917]' : 'text-ink'}`}>
                 {d.dia.getDate()}
             </p>
             <div className="h-1.5 rounded-full bg-black/10 dark:bg-white/10 mt-1.5">
@@ -24,11 +24,11 @@ function DiaBtn({ d, diaSel, onSelect }) {
                     style={{ width: `${Math.max(pct * 100, d.items.length > 0 ? 20 : 0)}%` }} />
             </div>
             <div className="flex items-center justify-center gap-1 mt-1">
-                <p className={`text-[9px] font-bold ${sel ? 'text-white/70 dark:text-black/50' : 'text-[#A8A29E]'}`}>
+                <p className={`text-[9px] font-bold ${sel ? 'text-white/70 dark:text-black/50' : 'text-muted'}`}>
                     {Math.round(d.horasUsadas)}/{d.horasTotal}h
                 </p>
                 {d.notas?.length > 0 && (
-                    <span className={`w-1.5 h-1.5 rounded-full ${sel ? 'bg-[#F0A500]' : 'bg-[#D48800] dark:bg-[#F0A500]'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${sel ? 'bg-[#F0A500]' : 'bg-brand-amber'}`} />
                 )}
             </div>
         </button>
@@ -44,7 +44,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
     if (cargando) {
         return (
             <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-2">Planificador</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2">Planificador</p>
                 <div className="grid grid-cols-6 gap-1.5">
                     {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-14 rounded-lg animate-pulse bg-white dark:bg-[#242424] border border-black/[0.05] dark:border-white/[0.05]" />)}
                 </div>
@@ -54,14 +54,14 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
 
     return (
         <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-2">Planificador</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2">Planificador</p>
             <div className="grid grid-cols-6 gap-1.5 mb-2">
                 {planificador.slice(0, 6).map(d => <DiaBtn key={d.fecha} d={d} diaSel={diaSel} onSelect={setDiaSel} />)}
             </div>
             {planificador.length > 6 && (
                 <>
                     <button onClick={() => setSemana2(v => !v)}
-                        className="w-full flex items-center justify-center gap-1 h-6 rounded-lg text-[9px] font-bold uppercase text-[#A8A29E] bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99] mb-2">
+                        className="w-full flex items-center justify-center gap-1 h-6 rounded-lg text-[9px] font-bold uppercase text-muted bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99] mb-2">
                         {semana2 ? '▲ Ocultar' : '▼ Semana siguiente'}
                     </button>
                     {semana2 && (
@@ -78,7 +78,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                 return (
                     <div className={`${card} p-3 mt-2`}>
                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] capitalize">
+                            <p className="text-[11px] font-bold text-ink capitalize">
                                 {dia.dia.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' })}
                             </p>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
@@ -90,7 +90,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                             </span>
                         </div>
                         {dia.items.length === 0 && (!dia.notas || dia.notas.length === 0) ? (
-                            <p className="text-[11px] text-[#A8A29E] text-center py-3">Dia libre</p>
+                            <p className="text-[11px] text-muted text-center py-3">Dia libre</p>
                         ) : (
                             <div className="space-y-3">
                                 {/* Servicios agrupados por tecnico */}
@@ -113,7 +113,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                     <p className={`text-[15px] font-black tracking-tight leading-tight flex-1 ${color.text}`}>
                                                         {tecNombre}
                                                     </p>
-                                                    <span className="text-[9px] font-bold text-[#A8A29E]">{tecItems.length} trabajo{tecItems.length !== 1 ? 's' : ''}</span>
+                                                    <span className="text-[9px] font-bold text-muted">{tecItems.length} trabajo{tecItems.length !== 1 ? 's' : ''}</span>
                                                     <M valor={totalTec} className={`text-[13px] font-black shrink-0 ${color.text}`} />
                                                 </div>
                                                 {tecItems.map(s => {
@@ -128,26 +128,26 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                                 <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center justify-between gap-2">
-                                                                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{s.clienteNombre}</p>
-                                                                        <span className={`text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]' : 'bg-[#16A34A]/10 text-[#16A34A]'}`}>
+                                                                        <p className="text-[11px] font-bold text-ink truncate">{s.clienteNombre}</p>
+                                                                        <span className={`text-[9px] font-bold shrink-0 px-1.5 py-0.5 rounded ${esPendiente ? 'bg-[#D48800]/10 text-brand-amber' : 'bg-[#16A34A]/10 text-[#16A34A]'}`}>
                                                                             {esPendiente ? 'Pendiente' : s.estado?.replace('_', ' ')}
                                                                         </span>
                                                                     </div>
-                                                                    {s.sedeNombre && <p className="text-[10px] text-[#A8A29E] truncate">{s.sedeNombre}</p>}
+                                                                    {s.sedeNombre && <p className="text-[10px] text-muted truncate">{s.sedeNombre}</p>}
                                                                     {s.sedeDireccion && (
                                                                         <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
                                                                             target="_blank" rel="noopener noreferrer"
-                                                                            className="text-[10px] text-[#D13A28] dark:text-[#E8422F] truncate block mt-0.5 active:opacity-70"
+                                                                            className="text-[10px] text-brand-red truncate block mt-0.5 active:opacity-70"
                                                                             onClick={e => e.stopPropagation()}>
                                                                             📍 {s.sedeDireccion}
                                                                         </a>
                                                                     )}
                                                                     {s.items?.[0]?.trabajoRealizado && (
-                                                                        <p className="text-[10px] text-[#A8A29E] mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
+                                                                        <p className="text-[10px] text-muted mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
                                                                     )}
                                                                     <div className="flex items-center gap-3 mt-1.5">
-                                                                        <span className="text-[9px] font-bold text-[#A8A29E]">⏱ {horas}</span>
-                                                                        <M valor={calcTotal(s)} className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] ml-auto" />
+                                                                        <span className="text-[9px] font-bold text-muted">⏱ {horas}</span>
+                                                                        <M valor={calcTotal(s)} className="text-[10px] font-black text-ink ml-auto" />
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -169,21 +169,21 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                     });
                                     return (
                                         <>
-                                            <p className="text-[9px] font-black text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider px-1 pt-1">Agenda de tecnicos</p>
+                                            <p className="text-[9px] font-black text-brand-amber uppercase tracking-wider px-1 pt-1">Agenda de tecnicos</p>
                                             {Object.entries(gruposNotas).map(([tecNombre, tecNotas]) => (
                                                 <div key={`notas-${tecNombre}`} className="space-y-1.5">
                                                     <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-[#D48800]/10 dark:bg-[#F0A500]/10">
-                                                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-[#D48800] dark:bg-[#F0A500]">
+                                                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-brand-amber">
                                                             <span className="text-[10px] font-black text-white leading-none">{getIniciales(tecNombre)}</span>
                                                         </div>
-                                                        <p className="text-[12px] font-black text-[#D48800] dark:text-[#F0A500] flex-1">{tecNombre}</p>
-                                                        <span className="text-[9px] font-bold text-[#A8A29E]">{tecNotas.length} nota{tecNotas.length !== 1 ? 's' : ''}</span>
+                                                        <p className="text-[12px] font-black text-brand-amber flex-1">{tecNombre}</p>
+                                                        <span className="text-[9px] font-bold text-muted">{tecNotas.length} nota{tecNotas.length !== 1 ? 's' : ''}</span>
                                                     </div>
                                                     {tecNotas.map(n => (
                                                         <div key={`nota-${n.id}`}
                                                             className={`rounded-lg p-2.5 ml-2 border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] ${
                                                                 n.completada
-                                                                    ? 'bg-[#EFEDEA] dark:bg-[#1C1C1C] opacity-50'
+                                                                    ? 'bg-panel opacity-50'
                                                                     : 'bg-[#F5F3F1] dark:bg-[#1C1C1C]'
                                                             }`}
                                                             style={{ borderLeftColor: n.completada ? '#16A34A' : '#D48800' }}>
@@ -191,15 +191,15 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                                 <span className="mt-0.5 text-[12px]">📝</span>
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center justify-between gap-2">
-                                                                        <p className={`text-[11px] font-bold truncate ${n.completada ? 'line-through text-[#A8A29E]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                                                        <p className={`text-[11px] font-bold truncate ${n.completada ? 'line-through text-muted' : 'text-ink'}`}>
                                                                             {n.titulo}
                                                                         </p>
                                                                         {n.horaEstimada && (
-                                                                            <span className="text-[9px] font-bold text-[#A8A29E] shrink-0">{n.horaEstimada}</span>
+                                                                            <span className="text-[9px] font-bold text-muted shrink-0">{n.horaEstimada}</span>
                                                                         )}
                                                                     </div>
                                                                     {n.descripcion && (
-                                                                        <p className="text-[10px] text-[#A8A29E] mt-0.5 line-clamp-2">{n.descripcion}</p>
+                                                                        <p className="text-[10px] text-muted mt-0.5 line-clamp-2">{n.descripcion}</p>
                                                                     )}
                                                                     {n.direccion && (
                                                                         <p className="text-[10px] text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 truncate">📍 {n.direccion}</p>

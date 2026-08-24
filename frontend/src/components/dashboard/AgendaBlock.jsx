@@ -11,7 +11,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
     if (cargando) {
         return (
             <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-2">Agenda de hoy</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2">Agenda de hoy</p>
                 <div className="space-y-1.5">
                     {[1, 2].map(i => <div key={i} className={`${card} h-16 animate-pulse`} />)}
                 </div>
@@ -32,11 +32,11 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
 
     return (
         <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-2">Agenda de hoy ({agendaHoy.length})</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2">Agenda de hoy ({agendaHoy.length})</p>
             {agendaHoy.length === 0 ? (
                 <div className={`${card} text-center py-8`}>
                     <p className="text-2xl mb-1">📭</p>
-                    <p className="text-[12px] font-bold text-[#A8A29E]">Sin actividad para hoy</p>
+                    <p className="text-[12px] font-bold text-muted">Sin actividad para hoy</p>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -56,7 +56,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                             <p className={`text-[17px] font-black tracking-tight leading-tight ${color.text}`}>
                                                 {tecNombre}
                                             </p>
-                                            <p className="text-[10px] font-bold text-[#A8A29E]">
+                                            <p className="text-[10px] font-bold text-muted">
                                                 {tecServicios.length} trabajo{tecServicios.length !== 1 ? 's' : ''} hoy
                                             </p>
                                         </div>
@@ -69,7 +69,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                 </div>
                                 {servicios.length > 0 && (
                                     <div className="ml-3">
-                                        <p className="text-[9px] font-bold text-[#D13A28] dark:text-[#E8422F] uppercase tracking-wider mb-1 px-1">🔧 Servicios</p>
+                                        <p className="text-[9px] font-bold text-brand-red uppercase tracking-wider mb-1 px-1">🔧 Servicios</p>
                                         <div className="space-y-1.5">
                                             {servicios.map(s => (
                                                 <AgendaCard key={s.id} s={s} onClick={() => setVistaActual('servicio-tecnico')} />
@@ -79,7 +79,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                 )}
                                 {ventas.length > 0 && (
                                     <div className="ml-3">
-                                        <p className="text-[9px] font-bold text-[#D48800] dark:text-[#F0A500] uppercase tracking-wider mb-1 px-1">🛒 Ventas / Entregas</p>
+                                        <p className="text-[9px] font-bold text-brand-amber uppercase tracking-wider mb-1 px-1">🛒 Ventas / Entregas</p>
                                         <div className="space-y-1.5">
                                             {ventas.map(s => (
                                                 <AgendaCard key={s.id} s={s} onClick={() => setVistaActual('venta')} />

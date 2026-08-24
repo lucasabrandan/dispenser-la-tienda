@@ -9,10 +9,10 @@ const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucum
 
 const inputCls = `
     w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-    bg-[#E8E5E0] dark:bg-[#2E2E2E]
-    text-[#1C1917] dark:text-[#F0EEE9]
+    bg-chip
+    text-ink
     border border-black/10 dark:border-white/10
-    placeholder-[#A8A29E]
+    placeholder-muted
     focus:border-[#D13A28] dark:focus:border-[#E8422F]
     focus:ring-2 focus:ring-[#D13A28]/20
     transition-all
@@ -52,7 +52,7 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                         <span className={`text-[10px] font-bold ${fechaVenta < hoy ? 'text-[#D48800]' : 'text-blue-500'}`}>
                             {fechaVenta < hoy ? 'Carga histórica' : 'Fecha futura'}
                         </span>
-                        <button onClick={() => setFechaVenta(hoy)} className="text-[10px] text-[#A8A29E] hover:text-[#D13A28]">
+                        <button onClick={() => setFechaVenta(hoy)} className="text-[10px] text-muted hover:text-[#D13A28]">
                             Usar hoy
                         </button>
                     </div>
@@ -75,15 +75,15 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                                 className={`
                                     p-3 rounded-2xl text-left transition-all active:scale-95
                                     ${activo
-                                        ? 'bg-[#D48800] dark:bg-[#F0A500] border border-[#D48800] dark:border-[#F0A500]'
-                                        : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10'
+                                        ? 'bg-brand-amber border border-brand-amber'
+                                        : 'bg-chip border border-black/10 dark:border-white/10'
                                     }
                                 `}
                             >
-                                <p className={`font-black text-[13px] ${activo ? 'text-[#1C1917]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                <p className={`font-black text-[13px] ${activo ? 'text-[#1C1917]' : 'text-ink'}`}>
                                     {opt.label}
                                 </p>
-                                <p className={`text-[10px] mt-0.5 ${activo ? 'text-[#1C1917]/60' : 'text-[#A8A29E]'}`}>
+                                <p className={`text-[10px] mt-0.5 ${activo ? 'text-[#1C1917]/60' : 'text-muted'}`}>
                                     {opt.hint}
                                 </p>
                             </button>
@@ -111,21 +111,21 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                     {/* Toggle registrar como cliente */}
                     <div className={`p-4 rounded-2xl border-2 transition-all ${
                         registrarCliente
-                            ? 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/5'
-                            : 'border-black/10 dark:border-white/10 bg-[#E8E5E0] dark:bg-[#2E2E2E]'
+                            ? 'border-brand-red bg-[#D13A28]/5'
+                            : 'border-black/10 dark:border-white/10 bg-chip'
                     }`}>
                         <button type="button" onClick={() => setRegistrarCliente(!registrarCliente)}
                             className="flex items-center justify-between w-full">
                             <div className="text-left">
-                                <p className="font-black text-[13px] text-[#1C1917] dark:text-[#F0EEE9]">
+                                <p className="font-black text-[13px] text-ink">
                                     Registrar como cliente
                                 </p>
-                                <p className="text-[10px] text-[#A8A29E] mt-0.5">
+                                <p className="text-[10px] text-muted mt-0.5">
                                     Guardarlo para futuras operaciones
                                 </p>
                             </div>
                             <div className={`w-11 h-6 rounded-full transition-all relative shrink-0 ml-3 ${
-                                registrarCliente ? 'bg-[#D13A28] dark:bg-[#E8422F]' : 'bg-[#A8A29E]'
+                                registrarCliente ? 'bg-brand-red' : 'bg-muted'
                             }`}>
                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${
                                     registrarCliente ? 'left-6' : 'left-1'
@@ -200,17 +200,17 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                         isClearable
                     />
                     {clienteObj && (
-                        <div className="mt-2 p-3 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] grid grid-cols-2 gap-2">
+                        <div className="mt-2 p-3 rounded-xl bg-chip grid grid-cols-2 gap-2">
                             {clienteObj.telefono && (
                                 <div>
-                                    <p className="text-[9px] font-bold uppercase text-[#A8A29E]">Teléfono</p>
-                                    <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">{clienteObj.telefono}</p>
+                                    <p className="text-[9px] font-bold uppercase text-muted">Teléfono</p>
+                                    <p className="text-[12px] font-bold text-ink">{clienteObj.telefono}</p>
                                 </div>
                             )}
                             {clienteObj.localidad && (
                                 <div>
-                                    <p className="text-[9px] font-bold uppercase text-[#A8A29E]">Localidad</p>
-                                    <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">{clienteObj.localidad}</p>
+                                    <p className="text-[9px] font-bold uppercase text-muted">Localidad</p>
+                                    <p className="text-[12px] font-bold text-ink">{clienteObj.localidad}</p>
                                 </div>
                             )}
                         </div>

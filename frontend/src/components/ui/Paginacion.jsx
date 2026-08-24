@@ -27,7 +27,7 @@ export default function Paginacion({ pagina, totalPaginas, irA, next, prev }) {
             <button
                 onClick={prev}
                 disabled={pagina === 1}
-                className={`${baseClass} bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] disabled:opacity-40 disabled:cursor-not-allowed`}
+                className={`${baseClass} bg-chip text-secondary disabled:opacity-40 disabled:cursor-not-allowed`}
             >
                 ‹
             </button>
@@ -38,7 +38,7 @@ export default function Paginacion({ pagina, totalPaginas, irA, next, prev }) {
                     ? (
                         <span
                             key={`e${i}`}
-                            className="w-9 text-center text-[12px] font-bold text-[#A8A29E]"
+                            className="w-9 text-center text-[12px] font-bold text-muted"
                         >
                             ···
                         </span>
@@ -49,8 +49,8 @@ export default function Paginacion({ pagina, totalPaginas, irA, next, prev }) {
                             onClick={() => irA(p)}
                             className={`${baseClass} ${
                                 p === pagina
-                                    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                    ? 'bg-brand-red text-white'
+                                    : 'bg-chip text-secondary'
                             }`}
                         >
                             {p}
@@ -62,7 +62,7 @@ export default function Paginacion({ pagina, totalPaginas, irA, next, prev }) {
             <button
                 onClick={next}
                 disabled={pagina === totalPaginas}
-                className={`${baseClass} bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] disabled:opacity-40 disabled:cursor-not-allowed`}
+                className={`${baseClass} bg-chip text-secondary disabled:opacity-40 disabled:cursor-not-allowed`}
             >
                 ›
             </button>

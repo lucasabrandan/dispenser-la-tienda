@@ -213,41 +213,41 @@ export default function PresupuestosManager() {
         : (PERIODO_LABELS[filtros.periodoRapido] || 'Período');
 
     return (
-        <div className="min-h-screen pb-28 font-sans bg-[#F5F3F1] dark:bg-[#141414] transition-colors"
+        <div className="min-h-screen pb-28 font-sans bg-page transition-colors"
             {...swipeHandlers}>
 
             {/* ═══ HEADER ═══ */}
-            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9] mb-2.5">
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink mb-2.5">
                         Presupuestos
                     </h2>
                     <div className="flex items-center gap-1.5">
                         {/* Búsqueda — mobile: toggle */}
                         <button onClick={() => setMostrarBusqueda(v => !v)}
-                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
                             🔍
                         </button>
                         <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-sm pointer-events-none">🔍</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, teléfono, S/N, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder:text-[#A8A29E] shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
                                 autoFocus={mostrarBusqueda} />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] text-xs font-bold">✕</button>
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-xs font-bold">✕</button>
                             )}
                         </div>
                         {/* Período — chip que despliega FiltrosPanel; arranca colapsado en "Este mes" */}
                         <button onClick={() => setMostrarPeriodo(v => !v)}
                             className={`${mostrarBusqueda ? 'hidden md:flex' : 'flex'} h-9 px-2.5 rounded-lg items-center gap-1 shrink-0 active:scale-95 shadow-sm border text-[11px] font-bold whitespace-nowrap ${
-                                mostrarPeriodo ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white border-transparent' : 'bg-white dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] border-black/[0.05] dark:border-white/[0.05]'
+                                mostrarPeriodo ? 'bg-brand-red text-white border-transparent' : 'bg-white dark:bg-[#2E2E2E] text-secondary border-black/[0.05] dark:border-white/[0.05]'
                             }`}>
                             📅 {periodoLabel} {mostrarPeriodo ? '▴' : '▾'}
                         </button>
                         <button onClick={() => setModalCotizar(true)}
-                            className="h-9 px-3 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D48800] dark:bg-[#F0A500] shrink-0">
+                            className="h-9 px-3 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-brand-amber shrink-0">
                             Cotizar
                         </button>
                     </div>
@@ -265,8 +265,8 @@ export default function PresupuestosManager() {
 
                 {/* Subline — pendiente + ver ruta, discreto (reemplaza la barra de stats) */}
                 <div className="flex items-center gap-2 px-1">
-                    <span className="text-[11px] font-semibold text-[#A8A29E]">Pendiente</span>
-                    <M valor={stats.total} className="text-[12px] font-black text-[#D48800] dark:text-[#F0A500]" />
+                    <span className="text-[11px] font-semibold text-muted">Pendiente</span>
+                    <M valor={stats.total} className="text-[12px] font-black text-brand-amber" />
                     <button onClick={() => abrirRuta(presupuestosFiltradosTipo)}
                         className="ml-auto text-[10px] font-bold text-[#1A73E8] underline underline-offset-2 active:opacity-70">
                         Ver ruta
@@ -281,7 +281,7 @@ export default function PresupuestosManager() {
                 {/* Selección masiva */}
                 {modoSeleccion && (
                     <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <span className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9] flex-1">
+                        <span className="text-[11px] font-bold text-ink flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
                         {seleccionados.size > 0 && (<>
@@ -290,12 +290,12 @@ export default function PresupuestosManager() {
                                 Ver ruta
                             </button>
                             <button onClick={() => setConfirmMasivoArchivar(true)}
-                                className="h-7 px-3 rounded-lg font-bold text-[10px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                className="h-7 px-3 rounded-lg font-bold text-[10px] bg-chip text-secondary active:scale-95">
                                 Archivar
                             </button>
                         </>)}
                         <button onClick={() => { setModoSeleccion(false); setSeleccionados(new Set()); }}
-                            className="h-7 px-3 rounded-lg font-bold text-[10px] text-[#A8A29E] active:scale-95">
+                            className="h-7 px-3 rounded-lg font-bold text-[10px] text-muted active:scale-95">
                             Cancelar
                         </button>
                     </div>
@@ -304,12 +304,12 @@ export default function PresupuestosManager() {
                 {/* ═══ LISTA ═══ */}
                 {cargando ? (
                     <div className="flex flex-col gap-2">
-                        {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
+                        {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-card" />)}
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
-                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-3xl mb-2">✅</p>
-                        <p className="text-[13px] font-bold text-[#A8A29E]">Sin presupuestos pendientes</p>
+                        <p className="text-[13px] font-bold text-muted">Sin presupuestos pendientes</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-2">
@@ -320,7 +320,7 @@ export default function PresupuestosManager() {
                             return (
                             <React.Fragment key={s.id}>
                             {mostrarHeaderMes && (
-                                <p className="px-1 pt-1 pb-0.5 text-[11px] font-black uppercase tracking-wide text-[#A8A29E]">
+                                <p className="px-1 pt-1 pb-0.5 text-[11px] font-black uppercase tracking-wide text-muted">
                                     {formatMesLargo(mesKey)}
                                 </p>
                             )}
@@ -393,13 +393,13 @@ export default function PresupuestosManager() {
                         <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-[#FFFFFF] dark:bg-[#141414]">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
-                        <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-b border-black/[0.08]">
+                        <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-panel border-b border-black/[0.08]">
                             <div>
-                                <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">✏️ Editar Presupuesto</h3>
-                                <p className="text-[11px] text-[#A8A29E] mt-0.5">#{presupuestoEditar.id} · {presupuestoEditar.clienteNombre}</p>
+                                <h3 className="text-[15px] font-black text-ink">✏️ Editar Presupuesto</h3>
+                                <p className="text-[11px] text-muted mt-0.5">#{presupuestoEditar.id} · {presupuestoEditar.clienteNombre}</p>
                             </div>
                             <button onClick={() => setPresupuestoEditar(null)}
-                                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">✕</button>
+                                className="w-9 h-9 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90">✕</button>
                         </div>
                         <ServicioForm
                             servicioParaEditar={presupuestoEditar}

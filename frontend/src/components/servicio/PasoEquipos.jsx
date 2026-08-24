@@ -85,8 +85,8 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
     const inputClass = `
         w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
-        bg-[#E8E5E0] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9]
-        border border-black/10 dark:border-white/[0.08] placeholder-[#A8A29E]
+        bg-[#E8E5E0] dark:bg-[#1C1C1C] text-ink
+        border border-black/10 dark:border-white/[0.08] placeholder-muted
         focus:border-[#D13A28] dark:focus:border-[#E8422F]
         focus:ring-2 focus:ring-[#D13A28]/20 transition-all
     `;
@@ -98,21 +98,21 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
             {!formVisible && ticketItems.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2">
                     <button type="button" onClick={() => setFormVisible(true)}
-                        className="py-3.5 rounded-2xl font-black text-[12px] uppercase border-2 border-dashed border-[#D13A28]/40 dark:border-[#E8422F]/40 text-[#D13A28] dark:text-[#E8422F] bg-transparent active:scale-[0.98] transition-all">
+                        className="py-3.5 rounded-2xl font-black text-[12px] uppercase border-2 border-dashed border-[#D13A28]/40 dark:border-[#E8422F]/40 text-brand-red bg-transparent active:scale-[0.98] transition-all">
                         + Agregar equipo
                     </button>
                     <button type="button" onClick={() => setCargaRapida(true)}
-                        className="py-3.5 rounded-2xl font-black text-[12px] uppercase text-white bg-[#D48800] dark:bg-[#F0A500] active:scale-[0.98] transition-all">
+                        className="py-3.5 rounded-2xl font-black text-[12px] uppercase text-white bg-brand-amber active:scale-[0.98] transition-all">
                         ⚡ Carga rápida
                     </button>
                 </div>
             ) : (
             <div className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                 <div className="flex items-center gap-2 mb-4">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black bg-[#D13A28] dark:bg-[#E8422F]">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black bg-brand-red">
                         {ticketItems.length + 1}
                     </div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-[#A8A29E]">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted">
                         Equipo {ticketItems.length + 1}
                     </p>
                 </div>
@@ -127,7 +127,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             value={itemActual.trabajo || ''}
                             onChange={e => setItemActual({ ...itemActual, trabajo: e.target.value })} />
                         <div className="flex justify-end mt-1">
-                            <span className={`text-[10px] font-bold ${(itemActual.trabajo || '').length >= 380 ? 'text-[#D13A28]' : (itemActual.trabajo || '').length >= 300 ? 'text-[#D48800]' : 'text-[#A8A29E]'}`}>
+                            <span className={`text-[10px] font-bold ${(itemActual.trabajo || '').length >= 380 ? 'text-[#D13A28]' : (itemActual.trabajo || '').length >= 300 ? 'text-[#D48800]' : 'text-muted'}`}>
                                 {(itemActual.trabajo || '').length}/400
                             </span>
                         </div>
@@ -148,7 +148,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             </button>
                         </div>
                         <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black text-[#5C5954] uppercase tracking-widest">MO $ <span className="text-[8px] text-[#A8A29E] normal-case">(con IVA)</span></span>
+                            <span className="text-[10px] font-black text-[#5C5954] uppercase tracking-widest">MO $ <span className="text-[8px] text-muted normal-case">(con IVA)</span></span>
                             <input type="text" inputMode="decimal"
                                 value={itemActual.costoExtra}
                                 onChange={e => setItemActual({ ...itemActual, costoExtra: e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0) })}
@@ -161,7 +161,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                     <div className="border-t border-black/[0.07] dark:border-white/[0.07] pt-3 space-y-1.5">
                         {/* Equipo */}
                         <button type="button" onClick={() => setMostrarEquipo(v => !v)}
-                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
                             <span>{itemActual.equipoSerial ? `🔧 ${itemActual.equipoSerial}` : '🔧 Equipo (S/N, modelo, ubicación)'}</span>
                             <span className="text-[10px]">{mostrarEquipo ? '▲' : '▼'}</span>
                         </button>
@@ -185,15 +185,15 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                 </div>
                                 {historialEquipo && (
                                     <div className="p-2.5 rounded-xl bg-[#FFF4D6] dark:bg-[#2A1E00] border border-[#D48800]/30">
-                                        <p className="text-[10px] font-bold text-[#D48800] dark:text-[#F0A500]">Último servicio</p>
-                                        <p className="text-[10px] text-[#57534E] dark:text-[#9E9A94]">{historialEquipo.fecha} — {historialEquipo.items?.[0]?.trabajoRealizado}</p>
+                                        <p className="text-[10px] font-bold text-brand-amber">Último servicio</p>
+                                        <p className="text-[10px] text-secondary">{historialEquipo.fecha} — {historialEquipo.items?.[0]?.trabajoRealizado}</p>
                                         {historialEquipo.garantiaInfo && (
                                             historialEquipo.garantiaInfo.vigente ? (
-                                                <p className="text-[10px] font-black mt-1 text-[#16A34A] dark:text-[#4ADE80]">
+                                                <p className="text-[10px] font-black mt-1 text-brand-green">
                                                     🛡️ Garantía vigente · {historialEquipo.garantiaInfo.dias} día{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'} restante{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'}
                                                 </p>
                                             ) : (
-                                                <p className="text-[10px] font-black mt-1 text-[#D13A28] dark:text-[#E8422F]">
+                                                <p className="text-[10px] font-black mt-1 text-brand-red">
                                                     ⏳ Garantía vencida hace {Math.abs(historialEquipo.garantiaInfo.dias)} día{Math.abs(historialEquipo.garantiaInfo.dias) === 1 ? '' : 's'}
                                                 </p>
                                             )
@@ -211,23 +211,23 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
                         {/* Repuestos */}
                         <button type="button" onClick={() => setSheetRepuestos(true)}
-                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
                             <span>{itemActual.repuestosUsados?.length > 0
                                 ? `📦 ${itemActual.repuestosUsados.length} repuesto${itemActual.repuestosUsados.length > 1 ? 's' : ''}`
                                 : '📦 Repuestos'}</span>
                             <span className="text-[10px]">+</span>
                         </button>
                         {itemActual.repuestosUsados?.length > 0 && (
-                            <div className="rounded-xl overflow-hidden bg-[#E8E5E0] dark:bg-[#2E2E2E] border border-black/10 dark:border-white/10">
+                            <div className="rounded-xl overflow-hidden bg-chip border border-black/10 dark:border-white/10">
                                 {itemActual.repuestosUsados.map((r, i) => {
                                     const g = calcularGananciaRepuesto(r, r.cantidad);
                                     return (
                                         <div key={i} className={`px-3 py-2 flex items-center gap-3 ${i < itemActual.repuestosUsados.length - 1 ? 'border-b-[0.5px] border-black/[0.07]' : ''}`}>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-[11px] truncate text-[#1C1917] dark:text-[#F0EEE9]">{r.nombre}</p>
+                                                <p className="font-bold text-[11px] truncate text-ink">{r.nombre}</p>
                                             </div>
-                                            <span className="text-[10px] font-black text-[#A8A29E]">{r.cantidad}x</span>
-                                            <p className="font-black text-[12px] text-[#1C1917] dark:text-[#F0EEE9]">${Math.round(g.subtotal).toLocaleString('es-AR')}</p>
+                                            <span className="text-[10px] font-black text-muted">{r.cantidad}x</span>
+                                            <p className="font-black text-[12px] text-ink">${Math.round(g.subtotal).toLocaleString('es-AR')}</p>
                                         </div>
                                     );
                                 })}
@@ -236,7 +236,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
                         {/* Fotos */}
                         <button type="button" onClick={() => setMostrarFotos(v => !v)}
-                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-[0.98] transition-all">
+                            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[11px] font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
                             <span>{(itemActual.fotoAntes || itemActual.fotoDespues) ? '📷 Fotos adjuntas' : '📷 Fotos'}</span>
                             <span className="text-[10px]">{mostrarFotos ? '▲' : '▼'}</span>
                         </button>
@@ -258,7 +258,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                     </div>
 
                     <button onClick={() => { agregarAlTicket(); setMostrarFotos(false); setMostrarEquipo(false); setFormVisible(false); }}
-                        className="w-full py-3.5 rounded-xl font-black text-sm text-white active:scale-[0.98] transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                        className="w-full py-3.5 rounded-xl font-black text-sm text-white active:scale-[0.98] transition-all bg-brand-red">
                         + Agregar equipo al ticket
                     </button>
                 </div>

@@ -57,7 +57,7 @@ function RentabilidadPanel({ resumen }) {
                                          style={{ width: `${Math.min(100, parseFloat(resumen.margenFinal))}%` }} />
                                 </div>
                             </div>
-                            <p className="text-[9px] text-[#A8A29E] mt-2">Solo visible para vos.</p>
+                            <p className="text-[9px] text-muted mt-2">Solo visible para vos.</p>
                         </div>
                     </div>
                     <div className="hidden dark:block mt-1 rounded-xl p-3 bg-[#0D2E1C] border border-[#2A9D5C]/20">
@@ -146,9 +146,9 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
     const inputCls = `
         w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
         bg-[#E8E5E0] dark:bg-[#1C1C1C]
-        text-[#1C1917] dark:text-[#F0EEE9]
+        text-ink
         border border-black/10 dark:border-white/[0.08]
-        placeholder-[#A8A29E]
+        placeholder-muted
         focus:border-[#D13A28] dark:focus:border-[#E8422F]
         focus:ring-2 focus:ring-[#D13A28]/20
         transition-all resize-none
@@ -157,8 +157,8 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
     const chipCls = (activo) => `
         h-9 px-3.5 rounded-xl text-[12px] font-black transition-all active:scale-95
         ${activo
-            ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-            : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+            ? 'bg-brand-red text-white'
+            : 'bg-chip text-secondary'
         }
     `;
 
@@ -173,10 +173,10 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         <div key={`${it.equipoSerial || 'eq'}-${idx}`} className="rounded-2xl overflow-hidden bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
                             <div className="p-4 flex justify-between items-start">
                                 <div className="flex-1 min-w-0 pr-3">
-                                    <p className="font-black text-[13px] text-[#D13A28] dark:text-[#E8422F]">
+                                    <p className="font-black text-[13px] text-brand-red">
                                         {it.equipoSerial && it.equipoSerial !== 'SIN-SN' ? `S/N: ${it.equipoSerial}` : 'Sin S/N'}
                                     </p>
-                                    <p className="text-[11px] mt-1 text-[#57534E] dark:text-[#9E9A94] leading-relaxed">
+                                    <p className="text-[11px] mt-1 text-secondary leading-relaxed">
                                         {it.resumenTexto}
                                     </p>
                                     {it.repuestosUsados?.length > 0 && (
@@ -185,7 +185,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                                 const g = esAdmin ? calcularGananciaRepuesto(r, r.cantidad) : null;
                                                 return (
                                                     <div key={ri} className="flex justify-between text-[10px]">
-                                                        <span className="text-[#A8A29E]">{r.cantidad}x {r.nombre}</span>
+                                                        <span className="text-muted">{r.cantidad}x {r.nombre}</span>
                                                         {esAdmin && g?.ganancia > 0 && <span className="text-[#1E8A4A]">+${Math.round(g.ganancia)}</span>}
                                                     </div>
                                                 );
@@ -194,7 +194,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                     )}
                                 </div>
                                 <div className="text-right flex-shrink-0">
-                                    <M valor={it.totalCalculado} className="text-[18px] font-black block text-[#1C1917] dark:text-[#F0EEE9]" />
+                                    <M valor={it.totalCalculado} className="text-[18px] font-black block text-ink" />
                                     <button onClick={() => eliminarItem(idx)}
                                         className="text-[10px] mt-1 font-bold text-rose-500 hover:text-rose-600">
                                         Quitar
@@ -208,7 +208,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
             {/* ── Planificación: fecha + duración + técnico ────────────── */}
             <div className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] space-y-3">
-                <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">Planificación</p>
+                <p className="text-[10px] font-black text-muted uppercase tracking-widest">Planificación</p>
 
                 {/* Fecha */}
                 <div>
@@ -224,7 +224,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                 {fechaServicio < getTodayISO() ? 'Carga histórica' : 'Fecha futura'}
                             </span>
                             <button onClick={() => setFechaServicio(getTodayISO())}
-                                className="text-[10px] text-[#A8A29E] hover:text-[#D13A28]">
+                                className="text-[10px] text-muted hover:text-[#D13A28]">
                                 Usar hoy
                             </button>
                         </div>
@@ -240,8 +240,8 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                 onClick={() => setDuracionMinutos(duracionMinutos === min ? null : min)}
                                 className={`h-8 px-3 rounded-lg text-[11px] font-bold transition-all active:scale-95 ${
                                     duracionMinutos === min
-                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                        : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                        ? 'bg-brand-red text-white'
+                                        : 'bg-chip text-secondary'
                                 }`}>
                                 {min < 60 ? `${min}m` : `${min / 60}h`}
                             </button>
@@ -283,7 +283,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
             {/* ── Más opciones ──────────────────────────────────────────── */}
             <button onClick={() => setMasOpciones(v => !v)}
-                className="flex items-center gap-2 py-1.5 text-[11px] font-black text-[#A8A29E] uppercase tracking-widest transition-all active:scale-[0.98]">
+                className="flex items-center gap-2 py-1.5 text-[11px] font-black text-muted uppercase tracking-widest transition-all active:scale-[0.98]">
                 <span className={`transition-transform duration-200 ${masOpciones ? 'rotate-45' : ''}`}>＋</span>
                 <span>Más opciones</span>
             </button>
@@ -295,7 +295,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         <div className="flex items-center gap-2">
                             <Label>Descuento</Label>
                             {ticketItems.length >= 5 && descuentoPorcentaje === 10 && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#D48800]/15 text-[#D48800] dark:text-[#F0A500]">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#D48800]/15 text-brand-amber">
                                     Auto · {ticketItems.length} equipos
                                 </span>
                             )}
@@ -312,10 +312,10 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                 <input type="text" inputMode="decimal" autoFocus
                                     value={descuentoPorcentaje || ''}
                                     onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                                    className="w-20 h-9 rounded-xl text-center font-black text-sm outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20" />
+                                    className="w-20 h-9 rounded-xl text-center font-black text-sm outline-none bg-chip text-ink border border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20" />
                             )}
                             {descuentoPorcentaje > 0 && (
-                                <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F] ml-1">
+                                <span className="text-[12px] font-black text-brand-red ml-1">
                                     -${descuentoMonto.toLocaleString('es-AR')}
                                 </span>
                             )}
@@ -329,15 +329,15 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                     <div className="flex items-start gap-3 py-2">
                         <button onClick={() => setAceptaTerminos(!aceptaTerminos)}
                             className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all active:scale-90 ${
-                                aceptaTerminos ? 'bg-[#16A34A] border-[#16A34A]' : 'border-[#A8A29E]'
+                                aceptaTerminos ? 'bg-[#16A34A] border-[#16A34A]' : 'border-muted'
                             }`}>
                             {aceptaTerminos && <span className="text-white text-[9px] font-black">✓</span>}
                         </button>
                         <div>
-                            <p className="text-[12px] font-bold text-[#1C1917] dark:text-[#F0EEE9] leading-tight">
+                            <p className="text-[12px] font-bold text-ink leading-tight">
                                 Cliente acepta terminos y condiciones
                             </p>
-                            <p className="text-[10px] text-[#A8A29E] mt-0.5 leading-snug">
+                            <p className="text-[10px] text-muted mt-0.5 leading-snug">
                                 Validez, garantia y condiciones del presupuesto. Se incluyen en el PDF.
                             </p>
                         </div>
@@ -349,7 +349,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         <textarea value={leyenda} onChange={e => setLeyenda(e.target.value)}
                             placeholder="Ej: Garantía 90 días sobre MO, 50% adelanto..."
                             rows={3} className={inputCls} />
-                        <p className="text-[9px] mt-1.5 text-[#A8A29E]">Aparece al pie del PDF.</p>
+                        <p className="text-[9px] mt-1.5 text-muted">Aparece al pie del PDF.</p>
                     </DSCard>
                 </div>
             )}
@@ -378,7 +378,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                 }
                                 onCerrarTicket();
                             }}
-                            className={`h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 ${esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado ? 'opacity-40 cursor-not-allowed bg-[#A8A29E]' : 'bg-[#D13A28] dark:bg-[#E8422F]'}`}>
+                            className={`h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 ${esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado ? 'opacity-40 cursor-not-allowed bg-muted' : 'bg-brand-red'}`}>
                             {modoEjecucion ? 'Cerrar trabajo →' : 'Cerrar ticket →'}
                         </button>
                     </div>

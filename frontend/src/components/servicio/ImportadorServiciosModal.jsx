@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 
-const LABEL = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-widest mb-1.5';
+const LABEL = 'block text-[10px] font-black text-muted uppercase tracking-widest mb-1.5';
 
 const PLANTILLA = `fecha,cliente,equipo_modelo,equipo_serial,descripcion,monto,tecnico
 15/01/2023,Juan García,Dispenser fría,,Cambio de filtro y sanitización,8500,Lucas
@@ -94,22 +94,22 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={!cargando ? onCerrar : undefined} />
             <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[1000] p-0 sm:p-4">
-                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-lg max-h-[92vh] flex flex-col border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="bg-card rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-lg max-h-[92vh] flex flex-col border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
-                    <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] sm:hidden" />
+                    <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-chip sm:hidden" />
 
                     {/* Header */}
                     <div className="flex items-start justify-between px-6 pt-5 pb-3 shrink-0">
                         <div>
-                            <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase">
+                            <h3 className="text-[15px] font-black text-ink uppercase">
                                 Importar servicios históricos
                             </h3>
-                            <p className="text-[11px] text-[#A8A29E] mt-0.5">
+                            <p className="text-[11px] text-muted mt-0.5">
                                 Cargá un CSV con tus reparaciones anteriores
                             </p>
                         </div>
                         <button onClick={onCerrar} disabled={cargando}
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-sm font-black active:scale-90 disabled:opacity-40">
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-muted bg-chip text-sm font-black active:scale-90 disabled:opacity-40">
                             ✕
                         </button>
                     </div>
@@ -117,13 +117,13 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                     <div className="overflow-y-auto flex-1 px-6 pb-2 space-y-4">
 
                         {/* Paso 1 — Plantilla */}
-                        <div className="p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
-                            <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1">Paso 1 — Descargá la plantilla</p>
-                            <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] mb-2 leading-snug">
+                        <div className="p-3 rounded-xl bg-panel border border-black/[0.05] dark:border-white/[0.05]">
+                            <p className="text-[10px] font-black text-muted uppercase tracking-wider mb-1">Paso 1 — Descargá la plantilla</p>
+                            <p className="text-[11px] text-secondary mb-2 leading-snug">
                                 Completala con tus datos en Google Sheets o Excel y guardala como CSV.
                             </p>
                             <button onClick={descargarPlantilla}
-                                className="px-4 py-2 rounded-xl text-[11px] font-black text-white bg-[#D48800] dark:bg-[#F0A500] active:scale-95 transition-all">
+                                className="px-4 py-2 rounded-xl text-[11px] font-black text-white bg-brand-amber active:scale-95 transition-all">
                                 📥 Descargar plantilla CSV
                             </button>
                         </div>
@@ -131,11 +131,11 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         {/* Paso 2 — Técnico default */}
                         <div>
                             <label className={LABEL}>Paso 2 — Técnico por defecto</label>
-                            <p className="text-[10px] text-[#A8A29E] mb-1.5">Se usa si la columna "tecnico" del CSV está vacía o no coincide.</p>
+                            <p className="text-[10px] text-muted mb-1.5">Se usa si la columna "tecnico" del CSV está vacía o no coincide.</p>
                             <select
                                 value={tecnicoId}
                                 onChange={e => setTecnicoId(e.target.value)}
-                                className="w-full px-3 py-2.5 rounded-xl text-[13px] font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.07] dark:border-white/[0.07]">
+                                className="w-full px-3 py-2.5 rounded-xl text-[13px] font-bold outline-none bg-chip text-ink border border-black/[0.07] dark:border-white/[0.07]">
                                 {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                             </select>
                         </div>
@@ -143,13 +143,13 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         {/* Paso 3 — Subir CSV */}
                         <div>
                             <label className={LABEL}>Paso 3 — Subí tu CSV</label>
-                            <label className="flex flex-col items-center justify-center w-full py-6 rounded-xl border-2 border-dashed border-[#E8E5E0] dark:border-[#2E2E2E] cursor-pointer hover:border-[#D13A28]/40 transition-all bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
+                            <label className="flex flex-col items-center justify-center w-full py-6 rounded-xl border-2 border-dashed border-chip cursor-pointer hover:border-[#D13A28]/40 transition-all bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
                                 <span className="text-2xl mb-1">📂</span>
-                                <span className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                <span className="text-[12px] font-black text-ink">
                                     {archivo ? archivo.name : 'Tocá para seleccionar archivo'}
                                 </span>
                                 {totalFilas > 0 && (
-                                    <span className="text-[10px] text-[#A8A29E] mt-0.5">{totalFilas} fila{totalFilas !== 1 ? 's' : ''} detectada{totalFilas !== 1 ? 's' : ''}</span>
+                                    <span className="text-[10px] text-muted mt-0.5">{totalFilas} fila{totalFilas !== 1 ? 's' : ''} detectada{totalFilas !== 1 ? 's' : ''}</span>
                                 )}
                                 <input type="file" accept=".csv,text/csv" className="hidden" onChange={onArchivoChange} />
                             </label>
@@ -158,34 +158,34 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         {/* Preview */}
                         {preview.length > 0 && !resultado && (
                             <div>
-                                <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-2">
+                                <p className="text-[10px] font-black text-muted uppercase tracking-wider mb-2">
                                     Preview — primeras {preview.length} filas
                                 </p>
                                 <div className="rounded-xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
                                     <table className="w-full text-[10px]">
                                         <thead>
-                                            <tr className="bg-[#EFEDEA] dark:bg-[#1C1C1C]">
+                                            <tr className="bg-panel">
                                                 {['Fecha','Cliente','Modelo','Serial','Monto','Técnico'].map(h => (
-                                                    <th key={h} className="px-2 py-1.5 text-left font-black text-[#A8A29E] uppercase">{h}</th>
+                                                    <th key={h} className="px-2 py-1.5 text-left font-black text-muted uppercase">{h}</th>
                                                 ))}
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {preview.map((r, i) => (
-                                                <tr key={i} className={i % 2 === 0 ? 'bg-[#FFFFFF] dark:bg-[#242424]' : 'bg-[#E8E4E0] dark:bg-[#1C1C1C]'}>
-                                                    <td className="px-2 py-1.5 text-[#1C1917] dark:text-[#F0EEE9]">{r.fecha}</td>
-                                                    <td className="px-2 py-1.5 text-[#1C1917] dark:text-[#F0EEE9] font-bold">{r.cliente}</td>
-                                                    <td className="px-2 py-1.5 text-[#A8A29E]">{r.modelo}</td>
-                                                    <td className="px-2 py-1.5 text-[#A8A29E]">{r.serial || '—'}</td>
-                                                    <td className="px-2 py-1.5 text-[#1C1917] dark:text-[#F0EEE9]">${r.monto}</td>
-                                                    <td className="px-2 py-1.5 text-[#A8A29E]">{r.tecnico || '—'}</td>
+                                                <tr key={i} className={i % 2 === 0 ? 'bg-card' : 'bg-[#E8E4E0] dark:bg-[#1C1C1C]'}>
+                                                    <td className="px-2 py-1.5 text-ink">{r.fecha}</td>
+                                                    <td className="px-2 py-1.5 text-ink font-bold">{r.cliente}</td>
+                                                    <td className="px-2 py-1.5 text-muted">{r.modelo}</td>
+                                                    <td className="px-2 py-1.5 text-muted">{r.serial || '—'}</td>
+                                                    <td className="px-2 py-1.5 text-ink">${r.monto}</td>
+                                                    <td className="px-2 py-1.5 text-muted">{r.tecnico || '—'}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 </div>
                                 {totalFilas > 5 && (
-                                    <p className="text-[10px] text-[#A8A29E] text-center mt-1">... y {totalFilas - 5} fila{totalFilas - 5 !== 1 ? 's' : ''} más</p>
+                                    <p className="text-[10px] text-muted text-center mt-1">... y {totalFilas - 5} fila{totalFilas - 5 !== 1 ? 's' : ''} más</p>
                                 )}
                             </div>
                         )}
@@ -193,7 +193,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         {/* Resultado */}
                         {resultado && (
                             <div className={`p-4 rounded-2xl ${resultado.importados > 0 ? 'bg-[#D1FAE5] dark:bg-[#052E16]' : 'bg-[#FEE2E2] dark:bg-[#450A0A]'}`}>
-                                <p className="text-[14px] font-black text-[#1C1917] dark:text-[#F0EEE9] mb-1">
+                                <p className="text-[14px] font-black text-ink mb-1">
                                     {resultado.importados > 0 ? '✅' : '⚠️'} {resultado.importados} importados · {resultado.errores} errores
                                 </p>
                                 {resultado.detalleErrores?.length > 0 && (
@@ -210,12 +210,12 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                     {/* Footer */}
                     <div className="flex gap-2 px-6 py-4 shrink-0 border-t border-black/[0.07] dark:border-white/[0.07]">
                         <button onClick={onCerrar} disabled={cargando}
-                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] active:scale-95 disabled:opacity-40">
+                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-chip text-ink active:scale-95 disabled:opacity-40">
                             {resultado ? 'Cerrar' : 'Cancelar'}
                         </button>
                         {!resultado && (
                             <button onClick={handleImportar} disabled={cargando || !archivo}
-                                className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 disabled:opacity-40 transition-all">
+                                className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-brand-red active:scale-95 disabled:opacity-40 transition-all">
                                 {cargando ? 'Importando...' : `📤 Importar ${totalFilas > 0 ? totalFilas + ' registros' : ''}`}
                             </button>
                         )}

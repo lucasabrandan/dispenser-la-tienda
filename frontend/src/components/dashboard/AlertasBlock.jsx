@@ -6,7 +6,7 @@ export default function AlertasBlock({ pptoVencidos, ordenesActivas, alertasRada
 
     return (
         <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8A29E] mb-2">Alertas ({total})</p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2">Alertas ({total})</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 {pptoVencidos.length > 0 && (
                     <button onClick={() => setVistaActual('presupuestos')}
@@ -40,17 +40,17 @@ export default function AlertasBlock({ pptoVencidos, ordenesActivas, alertasRada
                 )}
                 {alertasRadar.length > 0 && (
                     <button onClick={() => setVistaActual('radar')}
-                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-panel border border-black/[0.05] dark:border-white/[0.05]">
                         <span>🚨</span>
                         <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">
+                            <p className="text-[11px] font-bold text-ink">
                                 {alertasRadar.length} equipo{alertasRadar.length !== 1 ? 's' : ''} sin mantenimiento
                             </p>
-                            <p className="text-[9px] text-[#A8A29E] truncate">
+                            <p className="text-[9px] text-muted truncate">
                                 {alertasRadar.slice(0, 3).map(a => a.clienteNombre).join(', ')}
                             </p>
                         </div>
-                        <span className="text-[#A8A29E] text-lg">›</span>
+                        <span className="text-muted text-lg">›</span>
                     </button>
                 )}
             </div>

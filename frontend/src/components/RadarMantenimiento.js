@@ -30,24 +30,24 @@ export default function RadarMantenimiento() {
     };
 
     if (cargando) return (
-        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] flex items-center justify-center p-5 transition-colors">
-            <p className="font-black text-[#A8A29E] animate-pulse uppercase text-sm tracking-widest">
+        <div className="min-h-screen bg-page flex items-center justify-center p-5 transition-colors">
+            <p className="font-black text-muted animate-pulse uppercase text-sm tracking-widest">
                 Escaneando base de datos...
             </p>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#F5F3F1] dark:bg-[#141414] pb-28 transition-colors">
+        <div className="min-h-screen bg-page pb-28 transition-colors">
 
             {/* Header sticky */}
-            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9]">Radar</h2>
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink">Radar</h2>
                     <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-[#A8A29E]">Dispensers que necesitan atención</span>
+                        <span className="text-[11px] font-bold text-muted">Dispensers que necesitan atención</span>
                         <div className="flex-1" />
-                        <span className="text-[11px] font-black text-[#D13A28] dark:text-[#E8422F]">{alertas.length} alertas</span>
+                        <span className="text-[11px] font-black text-brand-red">{alertas.length} alertas</span>
                         <button onClick={cargarAlertas}
                             className="h-8 w-8 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 text-sm">
                             🔄
@@ -61,17 +61,17 @@ export default function RadarMantenimiento() {
             {/* Stats compacto */}
             {alertas.length > 0 && (
                 <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] mb-3">
-                    <span className="text-[11px] font-bold text-[#D13A28] dark:text-[#E8422F]">{alertas.filter(a => a.tipoAlerta === 'FILTRO').length} filtros</span>
-                    <span className="text-[11px] text-[#A8A29E]">·</span>
-                    <span className="text-[11px] font-bold text-[#D48800] dark:text-[#F0A500]">{alertas.filter(a => a.tipoAlerta === 'SANITIZACION').length} sanitizaciones</span>
+                    <span className="text-[11px] font-bold text-brand-red">{alertas.filter(a => a.tipoAlerta === 'FILTRO').length} filtros</span>
+                    <span className="text-[11px] text-muted">·</span>
+                    <span className="text-[11px] font-bold text-brand-amber">{alertas.filter(a => a.tipoAlerta === 'SANITIZACION').length} sanitizaciones</span>
                 </div>
             )}
 
             {/* Sin alertas */}
             {alertas.length === 0 ? (
-                <div className="text-center p-10 bg-[#FFFFFF] dark:bg-[#242424] rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07]">
-                    <p className="text-[#D13A28] dark:text-[#E8422F] font-black text-xl uppercase">Todo al día</p>
-                    <p className="text-[#A8A29E] text-[11px] font-bold uppercase mt-2">No hay dispensers vencidos.</p>
+                <div className="text-center p-10 bg-card rounded-[2rem] border border-black/[0.07] dark:border-white/[0.07]">
+                    <p className="text-brand-red font-black text-xl uppercase">Todo al día</p>
+                    <p className="text-muted text-[11px] font-bold uppercase mt-2">No hay dispensers vencidos.</p>
                 </div>
             ) : (
                 <div className="flex flex-col gap-3">
@@ -82,7 +82,7 @@ export default function RadarMantenimiento() {
                             : a.fechaUltimoServicio;
                         return (
                             <div key={i} className={`
-                                bg-[#FFFFFF] dark:bg-[#242424] rounded-[1.5rem]
+                                bg-card rounded-[1.5rem]
                                 border border-black/[0.07] dark:border-white/[0.07]
                                 border-l-4 overflow-hidden
                                 ${esFiltro
@@ -94,23 +94,23 @@ export default function RadarMantenimiento() {
                                         <div className="flex-1 min-w-0">
                                             <span className={`inline-block px-2.5 py-1 rounded-lg text-[9px] font-black uppercase mb-2 ${
                                                 esFiltro
-                                                    ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-[#D13A28] dark:text-[#E8422F]'
-                                                    : 'bg-[#D48800]/10 dark:bg-[#F0A500]/10 text-[#D48800] dark:text-[#F0A500]'
+                                                    ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-brand-red'
+                                                    : 'bg-[#D48800]/10 dark:bg-[#F0A500]/10 text-brand-amber'
                                             }`}>
                                                 {a.tipoAlerta} · {a.meses} meses
                                             </span>
-                                            <h3 className="font-black text-[16px] text-[#1C1917] dark:text-[#F0EEE9] uppercase leading-none">
+                                            <h3 className="font-black text-[16px] text-ink uppercase leading-none">
                                                 {a.clienteNombre}
                                             </h3>
-                                            <p className="text-[10px] font-bold text-[#A8A29E] uppercase mt-1">
-                                                📍 {a.sedeNombre} · S/N: <span className="text-[#1C1917] dark:text-[#F0EEE9]">{a.serial}</span>
+                                            <p className="text-[10px] font-bold text-muted uppercase mt-1">
+                                                📍 {a.sedeNombre} · S/N: <span className="text-ink">{a.serial}</span>
                                             </p>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className="text-[9px] font-black text-[#A8A29E] uppercase">
+                                            <p className="text-[9px] font-black text-muted uppercase">
                                                 {esFiltro ? 'Último filtro' : 'Último service'}
                                             </p>
-                                            <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9] mt-0.5">
+                                            <p className="text-[13px] font-black text-ink mt-0.5">
                                                 {fechaRef}
                                             </p>
                                         </div>

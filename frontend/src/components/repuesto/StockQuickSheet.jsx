@@ -96,16 +96,16 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}
-                <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-2 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-2 bg-chip" />
 
                 {/* Header */}
                 <div className="px-4 pb-3 flex items-center justify-between">
                     <div>
-                        <h3 className="text-[15px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                        <h3 className="text-[15px] font-black text-ink">
                             Ajustar stock
                         </h3>
                         {hayModificados && (
-                            <p className="text-[11px] text-[#D13A28] dark:text-[#E8422F] font-bold">
+                            <p className="text-[11px] text-brand-red font-bold">
                                 {idsModificados.length} ítem{idsModificados.length > 1 ? 's' : ''} modificado{idsModificados.length > 1 ? 's' : ''}
                             </p>
                         )}
@@ -113,7 +113,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                     <button
                         type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[#A8A29E] bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-muted bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90"
                     >✕</button>
                 </div>
 
@@ -124,14 +124,14 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                         value={busqueda}
                         onChange={e => setBusqueda(e.target.value)}
                         placeholder="Buscar por nombre o SKU..."
-                        className="w-full px-4 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/[0.07] dark:border-white/[0.07]"
+                        className="w-full px-4 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink placeholder-muted border border-black/[0.07] dark:border-white/[0.07]"
                     />
                 </div>
 
                 {/* Lista */}
                 <div className="flex-1 overflow-y-auto px-4 pb-2 space-y-2">
                     {repuestosOrdenados.length === 0 ? (
-                        <p className="text-center py-8 text-[#A8A29E] font-bold text-sm">Sin resultados</p>
+                        <p className="text-center py-8 text-muted font-bold text-sm">Sin resultados</p>
                     ) : repuestosOrdenados.map(r => {
                         const stock      = getStock(r);
                         const stockOrig  = Number(r.stock) || 0;
@@ -143,8 +143,8 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                                 key={r.id}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
                                     modificado
-                                        ? 'border-[#D13A28] dark:border-[#E8422F] bg-[#D13A28]/5 dark:bg-[#E8422F]/5'
-                                        : 'border-black/[0.07] dark:border-white/[0.07] bg-[#FFFFFF] dark:bg-[#242424]'
+                                        ? 'border-brand-red bg-[#D13A28]/5 dark:bg-[#E8422F]/5'
+                                        : 'border-black/[0.07] dark:border-white/[0.07] bg-card'
                                 }`}
                             >
                                 {/* Foto miniatura */}
@@ -158,19 +158,19 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
 
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-[13px] text-[#1C1917] dark:text-[#F0EEE9] truncate">{r.nombre}</p>
-                                    <p className="text-[10px] text-[#A8A29E]">
+                                    <p className="font-bold text-[13px] text-ink truncate">{r.nombre}</p>
+                                    <p className="text-[10px] text-muted">
                                         ${Number(r.precio || 0).toLocaleString('es-AR')} venta
                                         {r.costo ? ` · $${Number(r.costo).toLocaleString('es-AR')} costo` : ''}
                                     </p>
                                 </div>
 
                                 {/* Controles +/− */}
-                                <div className="flex items-center gap-1 shrink-0 bg-[#EFEDEA] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
+                                <div className="flex items-center gap-1 shrink-0 bg-panel rounded-xl px-2 py-1">
                                     <button
                                         type="button"
                                         onClick={() => restar(r)}
-                                        className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90 transition-all"
+                                        className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-brand-red active:scale-90 transition-all"
                                     >−</button>
                                     <input
                                         type="text"
@@ -178,12 +178,12 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                                         value={stock}
                                         onFocus={e => e.target.select()}
                                         onChange={e => setDirecto(r, e.target.value)}
-                                        className="font-black text-[14px] w-12 text-center text-[#1C1917] dark:text-[#F0EEE9] bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="font-black text-[14px] w-12 text-center text-ink bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => sumar(r)}
-                                        className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-[#D13A28] dark:text-[#E8422F] active:scale-90 transition-all"
+                                        className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-brand-red active:scale-90 transition-all"
                                     >+</button>
                                 </div>
                             </div>
@@ -197,7 +197,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                         type="button"
                         onClick={guardar}
                         disabled={guardando}
-                        className="w-full py-4 rounded-2xl font-black text-[15px] text-white active:scale-[0.98] transition-all bg-[#D13A28] dark:bg-[#E8422F] disabled:opacity-50"
+                        className="w-full py-4 rounded-2xl font-black text-[15px] text-white active:scale-[0.98] transition-all bg-brand-red disabled:opacity-50"
                     >
                         {guardando
                             ? 'Guardando...'

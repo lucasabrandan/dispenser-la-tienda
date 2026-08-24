@@ -17,28 +17,28 @@ export default function ModalPrecioMasivo({
 
     const inputClass = `
         w-full p-3.5 rounded-xl outline-none transition-all mb-4
-        bg-[#E8E5E0] dark:bg-[#2E2E2E]
+        bg-chip
         border border-black/[0.07] dark:border-white/[0.07]
-        text-[#1C1917] dark:text-[#F0EEE9] text-sm font-bold
+        text-ink text-sm font-bold
         focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
-        placeholder:text-[#A8A29E]
+        placeholder:text-muted
     `;
 
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onCerrar} />
             <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
-                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-[2rem] p-6 w-full max-w-sm border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="bg-card rounded-[2rem] p-6 w-full max-w-sm border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
-                    <h3 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase mb-1">
+                    <h3 className="text-lg font-black text-ink uppercase mb-1">
                         Actualizar margenes
                     </h3>
-                    <p className="text-[10px] font-bold text-[#A8A29E] uppercase mb-5">
+                    <p className="text-[10px] font-bold text-muted uppercase mb-5">
                         {cantidadSeleccionados} producto{cantidadSeleccionados !== 1 ? 's' : ''} seleccionado{cantidadSeleccionados !== 1 ? 's' : ''} · deja vacio lo que no quieras cambiar
                     </p>
 
                     {/* Ganancia */}
-                    <label className="block text-[10px] font-black text-[#A8A29E] uppercase mb-1.5 tracking-widest">
+                    <label className="block text-[10px] font-black text-muted uppercase mb-1.5 tracking-widest">
                         % Ganancia (efectivo)
                     </label>
                     <input
@@ -49,7 +49,7 @@ export default function ModalPrecioMasivo({
                     />
 
                     {/* Markup */}
-                    <label className="block text-[10px] font-black text-[#A8A29E] uppercase mb-1.5 tracking-widest">
+                    <label className="block text-[10px] font-black text-muted uppercase mb-1.5 tracking-widest">
                         % Markup adicional
                     </label>
                     <input
@@ -60,7 +60,7 @@ export default function ModalPrecioMasivo({
                     />
 
                     {/* Impuestos */}
-                    <label className="block text-[10px] font-black text-[#A8A29E] uppercase mb-1.5 tracking-widest">
+                    <label className="block text-[10px] font-black text-muted uppercase mb-1.5 tracking-widest">
                         % Impuestos (facturado)
                     </label>
                     <input
@@ -72,11 +72,11 @@ export default function ModalPrecioMasivo({
 
                     {/* Preview */}
                     <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] rounded-xl p-3 mb-4 border border-black/[0.05] dark:border-white/[0.05]">
-                        <p className="text-[10px] font-black text-[#A8A29E] uppercase mb-1">Formula</p>
-                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">
+                        <p className="text-[10px] font-black text-muted uppercase mb-1">Formula</p>
+                        <p className="text-[11px] font-bold text-ink">
                             Efectivo = Costo × (1 + Ganancia%)
                         </p>
-                        <p className="text-[11px] font-bold text-[#1C1917] dark:text-[#F0EEE9]">
+                        <p className="text-[11px] font-bold text-ink">
                             Facturado = Efectivo × (1 + Impuestos%)
                         </p>
                     </div>
@@ -84,11 +84,11 @@ export default function ModalPrecioMasivo({
                     {/* Botones */}
                     <div className="flex gap-2">
                         <button onClick={onCerrar}
-                            className="flex-1 py-3 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            className="flex-1 py-3 bg-chip text-ink rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
                             Cancelar
                         </button>
                         <button onClick={onAplicar} disabled={sinCambios}
-                            className="flex-1 py-3 bg-[#D13A28] dark:bg-[#E8422F] text-white rounded-xl font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 disabled:opacity-40">
+                            className="flex-1 py-3 bg-brand-red text-white rounded-xl font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 disabled:opacity-40">
                             Aplicar
                         </button>
                     </div>

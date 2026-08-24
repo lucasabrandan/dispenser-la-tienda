@@ -53,20 +53,20 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/[0.07] dark:border-white/[0.07] shrink-0">
                     <div>
-                        <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-widest">Historial técnico</p>
-                        <h2 className="text-[18px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase leading-none mt-0.5">
+                        <p className="text-[10px] font-black text-muted uppercase tracking-widest">Historial técnico</p>
+                        <h2 className="text-[18px] font-black text-ink uppercase leading-none mt-0.5">
                             {cliente?.nombre}
                         </h2>
                     </div>
                     <div className="flex items-center gap-2">
                         {esAdmin && servicios.length > 0 && (
                             <button onClick={() => generarPDFHistorialCliente({ cliente, servicios })}
-                                className="h-9 px-3 flex items-center justify-center rounded-2xl bg-[#D13A28] dark:bg-[#E8422F] text-white font-black text-[10px] uppercase hover:opacity-90 active:scale-95 transition-all">
+                                className="h-9 px-3 flex items-center justify-center rounded-2xl bg-brand-red text-white font-black text-[10px] uppercase hover:opacity-90 active:scale-95 transition-all">
                                 PDF
                             </button>
                         )}
                         <button onClick={onClose}
-                            className="w-9 h-9 flex items-center justify-center rounded-2xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E] font-black text-sm hover:opacity-70 transition-opacity">
+                            className="w-9 h-9 flex items-center justify-center rounded-2xl bg-chip text-[#57534E] dark:text-[#A8A29E] font-black text-sm hover:opacity-70 transition-opacity">
                             ✕
                         </button>
                     </div>
@@ -75,10 +75,10 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                 {/* Contenido scrolleable */}
                 <div className="overflow-y-auto flex-1 px-4 py-4 space-y-2">
                     {cargando && (
-                        <p className="text-center text-[11px] font-bold text-[#A8A29E] uppercase py-10">Cargando...</p>
+                        <p className="text-center text-[11px] font-bold text-muted uppercase py-10">Cargando...</p>
                     )}
                     {!cargando && servicios.length === 0 && (
-                        <p className="text-center text-[11px] font-bold text-[#A8A29E] uppercase py-10">Sin servicios registrados</p>
+                        <p className="text-center text-[11px] font-bold text-muted uppercase py-10">Sin servicios registrados</p>
                     )}
                     {!cargando && servicios.map(s => {
                         const equipos = (s.items || []).map(it => it.equipoSerial).filter(Boolean).join(', ');
@@ -92,36 +92,36 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                                 <div className="flex-1 min-w-0 space-y-1">
                                     {/* Fila: fecha + estado */}
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-[10px] font-black text-[#A8A29E]">{formatFecha(s.fecha)}</span>
+                                        <span className="text-[10px] font-black text-muted">{formatFecha(s.fecha)}</span>
                                         <span className={`text-[8px] font-black px-2 py-0.5 rounded-lg uppercase ${badgeEstado(s.estado)}`}>
                                             {labelEstado(s.estado)}
                                         </span>
                                         {s.servicioTipo === 'TECNICA' && (
-                                            <span className="text-[8px] font-black px-2 py-0.5 rounded-lg uppercase bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F]">
+                                            <span className="text-[8px] font-black px-2 py-0.5 rounded-lg uppercase bg-[#D13A28]/10 text-brand-red">
                                                 Técnica
                                             </span>
                                         )}
                                     </div>
                                     {/* Equipos */}
                                     {equipos && (
-                                        <p className="text-[10px] font-black text-[#1C1917] dark:text-[#F0EEE9] truncate">
+                                        <p className="text-[10px] font-black text-ink truncate">
                                             🔧 {equipos}
                                         </p>
                                     )}
                                     {/* Trabajo realizado */}
                                     {trabajos && (
-                                        <p className="text-[10px] text-[#57534E] dark:text-[#9E9A94] line-clamp-2">{trabajos}</p>
+                                        <p className="text-[10px] text-secondary line-clamp-2">{trabajos}</p>
                                     )}
                                     {/* Técnico asignado */}
                                     {tecnicos && (
-                                        <p className="text-[9px] font-bold text-[#A8A29E] uppercase">👷 {tecnicos}</p>
+                                        <p className="text-[9px] font-bold text-muted uppercase">👷 {tecnicos}</p>
                                     )}
                                 </div>
 
                                 {/* Monto — solo admin */}
                                 {esAdmin && total > 0 && (
                                     <div className="shrink-0 text-right">
-                                        <p className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]">
+                                        <p className="text-[13px] font-black text-ink">
                                             ${total.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                                         </p>
                                     </div>
@@ -134,7 +134,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                 {/* Footer */}
                 {!cargando && servicios.length > 0 && (
                     <div className="px-5 py-3 border-t border-black/[0.07] dark:border-white/[0.07] shrink-0">
-                        <p className="text-[10px] font-black text-[#A8A29E] uppercase text-center">
+                        <p className="text-[10px] font-black text-muted uppercase text-center">
                             {servicios.length} registro{servicios.length !== 1 ? 's' : ''}
                             {esAdmin && ` · Total: $${servicios.reduce((acc, s) => acc + calcTotal(s), 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`}
                         </p>

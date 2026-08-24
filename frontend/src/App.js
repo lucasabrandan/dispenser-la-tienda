@@ -98,7 +98,7 @@ function AppInterna() {
                 return <MiSueldo />;
             default:
                 return (
-                    <div className="flex items-center justify-center h-64 text-[#A8A29E] font-black text-sm uppercase tracking-widest">
+                    <div className="flex items-center justify-center h-64 text-muted font-black text-sm uppercase tracking-widest">
                         Sección en construcción
                     </div>
                 );

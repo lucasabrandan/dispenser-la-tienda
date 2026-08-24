@@ -28,29 +28,29 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F5F3F1] dark:bg-[#141414] px-4">
+        <div className="min-h-screen flex items-center justify-center bg-page px-4">
             <div className="w-full max-w-sm">
 
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
                     <img src={logo} alt="Dispenser La Tienda" className="h-16 mb-4 drop-shadow-sm dark:brightness-110" />
-                    <p className="text-[10px] font-black text-[#A8A29E] uppercase tracking-[0.25em]">
+                    <p className="text-[10px] font-black text-muted uppercase tracking-[0.25em]">
                         Sistema de Logística
                     </p>
-                    <p className="text-[9px] text-[#A8A29E] mt-1">
+                    <p className="text-[9px] text-muted mt-1">
                         www.dispenserlatienda.com.ar
                     </p>
                 </div>
 
                 {/* Card */}
-                <div className="bg-[#FFFFFF] dark:bg-[#242424] rounded-2xl p-8 shadow-xl border border-black/[0.06] dark:border-white/[0.06]">
-                    <h1 className="text-lg font-black text-[#1C1917] dark:text-[#F0EEE9] mb-6 tracking-tight">
+                <div className="bg-card rounded-2xl p-8 shadow-xl border border-black/[0.06] dark:border-white/[0.06]">
+                    <h1 className="text-lg font-black text-ink mb-6 tracking-tight">
                         Iniciar sesión
                     </h1>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-[11px] font-black text-[#A8A29E] uppercase tracking-widest mb-1.5">
+                            <label className="block text-[11px] font-black text-muted uppercase tracking-widest mb-1.5">
                                 Usuario
                             </label>
                             <input
@@ -58,14 +58,14 @@ export default function LoginPage() {
                                 autoComplete="username"
                                 value={form.username}
                                 onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-xl text-sm font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
+                                className="w-full px-4 py-3 rounded-xl text-sm font-bold outline-none bg-chip text-ink placeholder-muted border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
                                 placeholder="admin"
                                 disabled={cargando}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-[11px] font-black text-[#A8A29E] uppercase tracking-widest mb-1.5">
+                            <label className="block text-[11px] font-black text-muted uppercase tracking-widest mb-1.5">
                                 Contraseña
                             </label>
                             <div className="relative">
@@ -74,14 +74,14 @@ export default function LoginPage() {
                                     autoComplete="current-password"
                                     value={form.password}
                                     onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                                    className="w-full px-4 py-3 pr-11 rounded-xl text-sm font-bold outline-none bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] placeholder-[#A8A29E] border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
+                                    className="w-full px-4 py-3 pr-11 rounded-xl text-sm font-bold outline-none bg-chip text-ink placeholder-muted border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
                                     placeholder="••••••••"
                                     disabled={cargando}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setVerClave(v => !v)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A29E] hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors text-sm"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors text-sm"
                                     tabIndex={-1}
                                 >
                                     {verClave ? '🙈' : '👁️'}
@@ -92,7 +92,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={cargando || !form.username || !form.password}
-                            className="w-full py-3 rounded-xl font-black text-sm text-white bg-[#D13A28] dark:bg-[#E8422F] hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                            className="w-full py-3 rounded-xl font-black text-sm text-white bg-brand-red hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                         >
                             {cargando ? 'Ingresando...' : 'Ingresar'}
                         </button>

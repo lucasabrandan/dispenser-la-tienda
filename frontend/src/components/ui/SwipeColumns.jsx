@@ -88,11 +88,11 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                                 style={activo ? { backgroundColor: col.color || '#D13A28' } : {}}
                             >
                                 <div className="flex items-center gap-2">
-                                    <span className={`text-[12px] font-black whitespace-nowrap ${activo ? 'text-white' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`}>
+                                    <span className={`text-[12px] font-black whitespace-nowrap ${activo ? 'text-white' : 'text-ink'}`}>
                                         {col.fullLabel || col.label}
                                     </span>
                                     {col.count != null && (
-                                        <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md leading-none ${activo ? 'bg-white/20 text-white' : 'bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#A8A29E]'}`}>
+                                        <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md leading-none ${activo ? 'bg-white/20 text-white' : 'bg-panel text-muted'}`}>
                                             {col.count}
                                         </span>
                                     )}
@@ -109,8 +109,8 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                             key={col.id}
                             className={`rounded-full transition-all duration-200 ${
                                 col.id === activeId
-                                    ? 'w-4 h-1.5 bg-[#D13A28] dark:bg-[#E8422F]'
-                                    : 'w-1.5 h-1.5 bg-[#E8E5E0] dark:bg-[#2E2E2E]'
+                                    ? 'w-4 h-1.5 bg-brand-red'
+                                    : 'w-1.5 h-1.5 bg-chip'
                             }`}
                         />
                     ))}
@@ -131,8 +131,8 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                                 activo
                                     ? 'text-white z-[1]'
                                     : completado
-                                        ? 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
-                                        : 'bg-white dark:bg-[#1C1C1C] text-[#A8A29E]'
+                                        ? 'bg-chip text-secondary'
+                                        : 'bg-white dark:bg-[#1C1C1C] text-muted'
                             } ${i > 0 ? 'border-l border-black/[0.05] dark:border-white/[0.05]' : ''}`}
                             style={activo ? { backgroundColor: col.color || '#D13A28' } : {}}
                         >

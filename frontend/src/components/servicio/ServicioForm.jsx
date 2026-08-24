@@ -210,16 +210,16 @@ export default function ServicioForm({
             {/* Banner borrador */}
             {borradorDisponible && !servicioParaEditar && (
                 <div className="mx-5 mt-4 p-3 rounded-xl bg-[#D48800]/10 border border-[#D48800]/30 flex items-center justify-between gap-3">
-                    <p className="text-[13px] font-bold text-[#D48800] dark:text-[#F0A500]">
+                    <p className="text-[13px] font-bold text-brand-amber">
                         💾 Tenés un trabajo sin guardar
                     </p>
                     <div className="flex gap-2 flex-shrink-0">
                         <button onClick={descartarBorrador}
-                            className="text-[11px] font-bold text-[#A8A29E] px-2 py-1">
+                            className="text-[11px] font-bold text-muted px-2 py-1">
                             Descartar
                         </button>
                         <button onClick={recuperarBorrador}
-                            className="px-3 py-1.5 rounded-lg text-[11px] font-black text-white bg-[#D48800] dark:bg-[#F0A500] active:scale-95">
+                            className="px-3 py-1.5 rounded-lg text-[11px] font-black text-white bg-brand-amber active:scale-95">
                             Recuperar
                         </button>
                     </div>

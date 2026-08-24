@@ -28,7 +28,7 @@ export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) 
     const NAV_ITEMS = esAdmin ? NAV_ADMIN : NAV_TECNICO;
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#EFEDEA] dark:bg-[#1C1C1C] transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-panel transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">
 
             {/* Indicador de sección activa */}
             <div className="flex">
@@ -64,7 +64,7 @@ export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) 
                                 {item.nombre}
                             </span>
                             {badge && (
-                                <span className="absolute top-1.5 right-1/4 text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full bg-[#D13A28] dark:bg-[#E8422F] text-white leading-none">
+                                <span className="absolute top-1.5 right-1/4 text-[8px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full bg-brand-red text-white leading-none">
                                     {badge}
                                 </span>
                             )}

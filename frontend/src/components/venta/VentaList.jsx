@@ -35,12 +35,12 @@ export default function VentaList({
     calcularTotal,
     onEditar, onConfirmar, onEliminar, onPDF, onDuplicar,
 }) {
-    if (cargando) return <div className="text-center py-16 text-[#A8A29E] font-bold">Cargando ventas...</div>;
+    if (cargando) return <div className="text-center py-16 text-muted font-bold">Cargando ventas...</div>;
 
     if (ventas.length === 0) return (
         <div className="text-center py-12 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
             <p className="text-2xl mb-1">📭</p>
-            <p className="text-[12px] font-bold text-[#A8A29E]">No hay ventas en esta categoría</p>
+            <p className="text-[12px] font-bold text-muted">No hay ventas en esta categoría</p>
         </div>
     );
 
@@ -67,7 +67,7 @@ export default function VentaList({
                             <div className="flex justify-between items-start">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 mb-1">
-                                        <span className="text-[10px] text-[#A8A29E] font-bold">#{v.id}</span>
+                                        <span className="text-[10px] text-muted font-bold">#{v.id}</span>
                                         <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ${badgeClass(v)}`}>
                                             {badgeLabel(v)}
                                         </span>
@@ -81,13 +81,13 @@ export default function VentaList({
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] truncate">{v.clienteNombre}</p>
-                                    <p className="text-[10px] text-[#A8A29E] mt-0.5">{v.sedeNombre} · {v.fecha}</p>
+                                    <p className="text-[14px] font-bold text-ink truncate">{v.clienteNombre}</p>
+                                    <p className="text-[10px] text-muted mt-0.5">{v.sedeNombre} · {v.fecha}</p>
                                 </div>
                                 <div className="text-right shrink-0 ml-3">
-                                    <M valor={calcularTotal(v)} className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] block" />
+                                    <M valor={calcularTotal(v)} className="text-[16px] font-black text-ink block" />
                                     {v.descuentoPorcentaje > 0 && (
-                                        <p className="text-[9px] text-[#D13A28] dark:text-[#E8422F] font-bold">-{v.descuentoPorcentaje}% desc.</p>
+                                        <p className="text-[9px] text-brand-red font-bold">-{v.descuentoPorcentaje}% desc.</p>
                                     )}
                                 </div>
                             </div>
@@ -97,7 +97,7 @@ export default function VentaList({
                                 const prods = v.items.flatMap(it => it.repuestosUsados || []).map(r => r.nombre);
                                 if (prods.length === 0) return null;
                                 const preview = prods.slice(0, 3).join(', ') + (prods.length > 3 ? ` +${prods.length - 3} más` : '');
-                                return <p className="text-[10px] text-[#A8A29E] mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">{preview}</p>;
+                                return <p className="text-[10px] text-muted mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">{preview}</p>;
                             })()}
                         </div>
 
@@ -105,15 +105,15 @@ export default function VentaList({
                         <div className="flex items-center gap-1.5 px-3.5 py-2 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
                             {esPendiente && (
                                 <Accion onClick={() => onEditar(v)} icon="✏️" label="Editar"
-                                    className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                    className="bg-chip text-ink" />
                             )}
                             <Accion onClick={() => onPDF(v)} icon="📄" label="PDF"
-                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                className="bg-chip text-ink" />
                             <Accion onClick={() => onPDF(v, { sinPrecios: true })} icon="📋" label="Sin $"
-                                className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                className="bg-chip text-ink" />
                             {onDuplicar && (
                                 <Accion onClick={() => onDuplicar(v)} icon="⧉" label="Duplicar"
-                                    className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
+                                    className="bg-chip text-ink" />
                             )}
                             {v.clienteTelefono && (
                                 <Accion
@@ -131,7 +131,7 @@ export default function VentaList({
 
                             {esPendiente && (
                                 <button onClick={() => onConfirmar(v.id)}
-                                    className="h-7 px-3 rounded-lg font-bold text-[10px] text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                                    className="h-7 px-3 rounded-lg font-bold text-[10px] text-white active:scale-95 bg-brand-red">
                                     Cobrar
                                 </button>
                             )}

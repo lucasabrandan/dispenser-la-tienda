@@ -39,13 +39,13 @@ export default function FotoUpload({ label, foto, onChange }) {
 
     return (
         <div className="flex flex-col gap-1">
-            <div className="relative rounded-xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-[#E8E5E0] dark:bg-[#2E2E2E] aspect-[3/4] flex items-center justify-center">
+            <div className="relative rounded-xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-chip aspect-[3/4] flex items-center justify-center">
                 {preview ? (
                     <img src={preview} alt={label} className="w-full h-full object-cover" />
                 ) : (
                     <div className="text-center p-2">
                         <p className="text-2xl mb-1">📷</p>
-                        <p className="text-[9px] font-black text-[#A8A29E] uppercase">{label}</p>
+                        <p className="text-[9px] font-black text-muted uppercase">{label}</p>
                     </div>
                 )}
                 <div className={`absolute bottom-0 left-0 right-0 py-1 text-center text-[9px] font-black uppercase text-white ${preview ? 'bg-black/50' : 'bg-[#D13A28]/80 dark:bg-[#E8422F]/80'}`}>
@@ -54,11 +54,11 @@ export default function FotoUpload({ label, foto, onChange }) {
             </div>
             <div className="grid grid-cols-2 gap-1">
                 <button type="button" onClick={() => refCamara.current?.click()}
-                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-white bg-[#D13A28] dark:bg-[#E8422F] active:scale-95 transition-all">
+                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-white bg-brand-red active:scale-95 transition-all">
                     📷 Cámara
                 </button>
                 <button type="button" onClick={() => refGaleria.current?.click()}
-                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-[#1C1917] dark:text-[#F0EEE9] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-95 transition-all">
+                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-ink bg-chip active:scale-95 transition-all">
                     🖼️ Galería
                 </button>
             </div>

@@ -13,10 +13,10 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
 
     const textareaCls = `
         w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none resize-none
-        bg-[#E8E5E0] dark:bg-[#2E2E2E]
-        text-[#1C1917] dark:text-[#F0EEE9]
+        bg-chip
+        text-ink
         border border-black/10 dark:border-white/10
-        placeholder-[#A8A29E]
+        placeholder-muted
         focus:border-[#D13A28] dark:focus:border-[#E8422F]
         focus:ring-2 focus:ring-[#D13A28]/20
         transition-all
@@ -28,39 +28,39 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
             {/* ── Resumen de productos ── */}
             <div>
                 <Label>Resumen del pedido</Label>
-                <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-[#FFFFFF] dark:bg-[#242424]">
+                <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-card">
                     {productos.map((p, i) => (
                         <div key={i} className="px-4 py-2.5 border-b border-black/[0.07] dark:border-white/[0.07] last:border-0 flex justify-between items-center">
-                            <span className="text-[13px] font-medium text-[#1C1917] dark:text-[#F0EEE9]">
+                            <span className="text-[13px] font-medium text-ink">
                                 {p.cantidad}× {p.nombre}
                             </span>
-                            <M valor={p.subtotal} className="text-[13px] font-black text-[#1C1917] dark:text-[#F0EEE9]" />
+                            <M valor={p.subtotal} className="text-[13px] font-black text-ink" />
                         </div>
                     ))}
                     {envioNum > 0 && (
                         <div className="px-4 py-2.5 flex justify-between items-center">
-                            <span className="text-[13px] font-medium text-[#A8A29E]">🚚 Envío</span>
-                            <M valor={envioNum} className="text-[13px] font-black text-[#A8A29E]" />
+                            <span className="text-[13px] font-medium text-muted">🚚 Envío</span>
+                            <M valor={envioNum} className="text-[13px] font-black text-muted" />
                         </div>
                     )}
                 </div>
             </div>
 
             {/* ── Descuento ── */}
-            <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+            <div className="rounded-2xl p-4 bg-card border border-black/[0.07] dark:border-white/[0.07]">
                 <Label>Descuento (%)</Label>
                 <div className="flex items-center gap-3 mb-3">
                     <input
                         type="text" inputMode="decimal"
                         value={descuentoPorcentaje}
                         onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                        className="w-20 h-12 rounded-xl text-center font-black text-2xl outline-none bg-[#E8E5E0] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/10 dark:border-white/[0.08] focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
+                        className="w-20 h-12 rounded-xl text-center font-black text-2xl outline-none bg-[#E8E5E0] dark:bg-[#1C1C1C] text-ink border border-black/10 dark:border-white/[0.08] focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
                     />
-                    <span className="font-black text-xl text-[#A8A29E]">%</span>
+                    <span className="font-black text-xl text-muted">%</span>
                     {descuentoPorcentaje > 0 && (
                         <div className="flex-1 text-right">
-                            <p className="text-[10px] font-bold uppercase text-[#A8A29E]">Descuento</p>
-                            <p className="text-lg font-black text-[#D13A28] dark:text-[#E8422F]">
+                            <p className="text-[10px] font-bold uppercase text-muted">Descuento</p>
+                            <p className="text-lg font-black text-brand-red">
                                 -${Math.round(descuentoMonto).toLocaleString('es-AR')}
                             </p>
                         </div>
@@ -71,8 +71,8 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                         <button key={p} onClick={() => setDescuentoPorcentaje(p)}
                             className={`flex-1 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
                                 descuentoPorcentaje === p
-                                    ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                    : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]'
+                                    ? 'bg-brand-red text-white'
+                                    : 'bg-chip text-secondary'
                             }`}>
                             {p}%
                         </button>
@@ -81,7 +81,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
             </div>
 
             {/* ── Observaciones ── */}
-            <div className="rounded-2xl p-4 bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+            <div className="rounded-2xl p-4 bg-card border border-black/[0.07] dark:border-white/[0.07]">
                 <Label>Observaciones (opcional)</Label>
                 <textarea
                     value={leyenda}
@@ -90,7 +90,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                     rows={3}
                     className={textareaCls}
                 />
-                <p className="text-[9px] mt-1.5 text-[#A8A29E]">Aparece al pie del PDF.</p>
+                <p className="text-[9px] mt-1.5 text-muted">Aparece al pie del PDF.</p>
             </div>
 
             <BackBtn onClick={onBack} />
@@ -117,7 +117,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                             Pendiente
                         </button>
                         <button onClick={() => guardarVenta(true, mostrador.sedeId)}
-                            className="h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                            className="h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 bg-brand-red">
                             Confirmar
                         </button>
                     </div>

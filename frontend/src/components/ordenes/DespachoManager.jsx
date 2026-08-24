@@ -8,7 +8,7 @@ import DateInput from '../ui/DateInput';
 import { formatFechaCorta } from '../../utils/dateUtils';
 
 const PRIORIDAD_COLOR = {
-    BAJA:    { bg: 'bg-[#E8E5E0] dark:bg-[#2E2E2E]', tx: 'text-[#A8A29E]' },
+    BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
     NORMAL:  { bg: 'bg-[#DBEAFE] dark:bg-[#1E3A5F]', tx: 'text-[#2563EB] dark:text-[#60A5FA]' },
     ALTA:    { bg: 'bg-[var(--warning-bg)]',           tx: 'text-[var(--warning-tx)]' },
     URGENTE: { bg: 'bg-[var(--danger-bg)]',            tx: 'text-[var(--danger-tx)]' },
@@ -37,7 +37,7 @@ const ESTADO_TABS = [
 // (costo, modalidad de cobro) que no tiene sentido completar a ciegas por él.
 const SIGUIENTE_ESTADO_ADMIN = {
     PENDIENTE: { estado: 'EN_CAMINO', label: '🚗 Salió',  color: 'bg-[#3B82F6]' },
-    EN_CAMINO: { estado: 'EN_SITIO',  label: '📍 Llegó',  color: 'bg-[#D48800] dark:bg-[#F0A500]' },
+    EN_CAMINO: { estado: 'EN_SITIO',  label: '📍 Llegó',  color: 'bg-brand-amber' },
 };
 
 function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, seleccionada, onToggleSel }) {
@@ -49,13 +49,13 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
     const esNoAtendido = orden.estado === 'NO_ATENDIDO';
 
     return (
-        <div className={`rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] transition-all ${seleccionando && seleccionada ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''}`}
+        <div className={`rounded-2xl overflow-hidden bg-card transition-all ${seleccionando && seleccionada ? 'ring-2 ring-brand-red' : ''}`}
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${es.dot}` }}
             onClick={seleccionando ? () => onToggleSel(orden.id) : undefined}>
             <div className="p-4">
                 <div className="flex items-start gap-2 mb-2">
                     {seleccionando && (
-                        <div className={`w-5 h-5 mt-0.5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${seleccionada ? 'bg-[#D13A28] dark:bg-[#E8422F] border-[#D13A28] dark:border-[#E8422F]' : 'border-[#A8A29E] bg-transparent'}`}>
+                        <div className={`w-5 h-5 mt-0.5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${seleccionada ? 'bg-brand-red border-brand-red' : 'border-muted bg-transparent'}`}>
                             {seleccionada && <span className="text-white text-[10px] font-black">✓</span>}
                         </div>
                     )}
@@ -64,30 +64,30 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
                                 {orden.prioridad}
                             </span>
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-[#A8A29E]">
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-muted">
                                 <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: es.dot, display: 'inline-block' }} />
                                 {es.label}
                             </span>
                         </div>
-                        <p className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9] leading-tight">{orden.titulo}</p>
+                        <p className="font-black text-[14px] text-ink leading-tight">{orden.titulo}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-[11px] font-black text-[#1C1917] dark:text-[#F0EEE9]">{orden.horaEstimada || '—'}</p>
-                        <p className="text-[10px] text-[#A8A29E]">{formatFechaCorta(orden.fechaProgramada)}</p>
+                        <p className="text-[11px] font-black text-ink">{orden.horaEstimada || '—'}</p>
+                        <p className="text-[10px] text-muted">{formatFechaCorta(orden.fechaProgramada)}</p>
                     </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-bold text-[#A8A29E]">👤 {orden.tecnicoNombre}</p>
+                    <p className="text-[11px] font-bold text-muted">👤 {orden.tecnicoNombre}</p>
                     {orden.montoEstimado && (
-                        <span className="text-[11px] font-black text-[#D48800] dark:text-[#F0A500]">
+                        <span className="text-[11px] font-black text-brand-amber">
                             ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transf.' : 'Efectivo'}
                         </span>
                     )}
                 </div>
 
                 {orden.clienteNombre && (
-                    <p className="text-[11px] text-[#A8A29E] mt-0.5">🏢 {orden.clienteNombre}{orden.clienteTelefono ? ` · ${orden.clienteTelefono}` : ''}</p>
+                    <p className="text-[11px] text-muted mt-0.5">🏢 {orden.clienteNombre}{orden.clienteTelefono ? ` · ${orden.clienteTelefono}` : ''}</p>
                 )}
                 {orden.direccion && (
                     <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
@@ -97,7 +97,7 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                     </a>
                 )}
                 {orden.presupuestoId && (
-                    <p className="text-[10px] font-bold text-[#D48800] dark:text-[#F0A500] mt-0.5">
+                    <p className="text-[10px] font-bold text-brand-amber mt-0.5">
                         📋 Presupuesto #{orden.presupuestoId} vinculado
                     </p>
                 )}
@@ -109,16 +109,16 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
 
                 {(orden.descripcion || orden.notasTecnico) && (
                     <button onClick={() => setExpanded(v => !v)}
-                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94] active:scale-95 transition-all">
+                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-panel text-secondary active:scale-95 transition-all">
                         <span>Detalle</span>
                         <span className="text-[10px]">{expanded ? '▲' : '▼'}</span>
                     </button>
                 )}
                 {expanded && (
-                    <div className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] space-y-1">
-                        {orden.descripcion && <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{orden.descripcion}</p>}
+                    <div className="mt-2 p-3 rounded-xl bg-panel space-y-1">
+                        {orden.descripcion && <p className="text-[11px] text-secondary leading-snug">{orden.descripcion}</p>}
                         {orden.notasTecnico && (
-                            <p className="text-[11px] text-[#16A34A] dark:text-[#4ADE80] leading-snug">
+                            <p className="text-[11px] text-brand-green leading-snug">
                                 📝 Nota técnico: {orden.notasTecnico}
                             </p>
                         )}
@@ -127,10 +127,10 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
             </div>
 
             {!seleccionando && (
-                <div className="flex items-center gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
+                <div className="flex items-center gap-2 px-4 py-3 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]">
                     {!esFinal && (
                         <button onClick={() => onEditar(orden)}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
                             ✏️ Editar
                         </button>
                     )}
@@ -143,17 +143,17 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                     <div className="flex-1" />
                     {!confirmElim ? (
                         <button onClick={() => setConfirmElim(true)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]">
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-chip text-muted">
                             🗑
                         </button>
                     ) : (
                         <>
                             <button onClick={() => setConfirmElim(false)}
-                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
                                 No
                             </button>
                             <button onClick={() => { setConfirmElim(false); onEliminar(orden.id); }}
-                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#D13A28] dark:bg-[#E8422F] text-white active:scale-95">
+                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-brand-red text-white active:scale-95">
                                 Sí, eliminar
                             </button>
                         </>
@@ -254,32 +254,32 @@ export default function DespachoManager() {
     const swipeHandlers = useSwipeGesture(columnIds, estadoFiltro, setEstadoFiltro);
 
     return (
-        <div className="min-h-screen pb-28 bg-[#F5F3F1] dark:bg-[#141414]"
+        <div className="min-h-screen pb-28 bg-page"
             {...swipeHandlers}>
 
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-[#F5F3F1] dark:bg-[#141414] border-b border-black/[0.04] dark:border-white/[0.04]">
+            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-[#1C1917] dark:text-[#F0EEE9] mb-2.5">Despacho</h2>
+                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink mb-2.5">Despacho</h2>
                     <div className="flex gap-1.5 items-center">
                         <button onClick={() => setMostrarFiltros(v => !v)}
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-white dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
                             ⚙
                         </button>
-                        <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{ordenesFiltradas.length} ordenes</span>
+                        <span className="text-[11px] font-bold text-muted flex-1">{ordenesFiltradas.length} ordenes</span>
                         {seleccionando ? (
                             <button onClick={salirSeleccion}
-                                className="h-9 px-4 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                className="h-9 px-4 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-chip text-secondary">
                                 Cancelar
                             </button>
                         ) : (
                             <>
                                 <button onClick={() => { setSeleccionando(true); setSeleccionadas(new Set()); }}
-                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">
+                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-chip text-secondary">
                                     Seleccionar
                                 </button>
                                 <button onClick={() => setModalCrear(true)}
-                                    className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
+                                    className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-brand-red">
                                     + Orden
                                 </button>
                             </>
@@ -297,12 +297,12 @@ export default function DespachoManager() {
                 {mostrarFiltros && (
                     <div className="flex gap-1.5 items-center flex-wrap p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <DateInput value={desde} onChange={setDesde}
-                            className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
-                        <span className="text-[10px] text-[#A8A29E]">a</span>
+                            className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]" />
+                        <span className="text-[10px] text-muted">a</span>
                         <DateInput value={hasta} onChange={setHasta}
-                            className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]" />
+                            className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]" />
                         <select value={filtrTecnico} onChange={e => setFiltrTecnico(e.target.value)}
-                            className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#1C1917] dark:text-[#F0EEE9] border border-black/[0.05] dark:border-white/[0.05]">
+                            className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]">
                             <option value="">Todos los técnicos</option>
                             {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                         </select>
@@ -312,12 +312,12 @@ export default function DespachoManager() {
                 {/* Lista agrupada por técnico */}
                 {cargando ? (
                     <div className="flex flex-col gap-2">
-                        {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-[#FFFFFF] dark:bg-[#242424]" />)}
+                        {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-card" />)}
                     </div>
                 ) : Object.keys(grupos).length === 0 ? (
-                    <div className="text-center py-16 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-3xl mb-2">{ESTADO_TABS.find(t => t.id === estadoFiltro)?.icon || '📋'}</p>
-                        <p className="text-[13px] font-bold text-[#A8A29E]">
+                        <p className="text-[13px] font-bold text-muted">
                             Sin órdenes {estadoFiltro ? ESTADO_TABS.find(t => t.id === estadoFiltro)?.fullLabel?.toLowerCase() : ''}
                         </p>
                     </div>
@@ -328,11 +328,11 @@ export default function DespachoManager() {
                         return (
                             <div key={key} className="mb-4">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <p className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] uppercase tracking-wider">
+                                    <p className="text-[12px] font-black text-ink uppercase tracking-wider">
                                         👤 {nombre}
                                     </p>
                                     {activas > 0 && (
-                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#D13A28] dark:bg-[#E8422F] text-white">
+                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-red text-white">
                                             {activas} activa{activas > 1 ? 's' : ''}
                                         </span>
                                     )}
@@ -357,26 +357,26 @@ export default function DespachoManager() {
             {/* Barra masiva */}
             {seleccionando && (
                 <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
-                    <div className="max-w-lg mx-auto flex items-center gap-2 p-3 rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] shadow-lg border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="max-w-lg mx-auto flex items-center gap-2 p-3 rounded-2xl bg-card shadow-lg border border-black/[0.07] dark:border-white/[0.07]">
                         <button onClick={toggleTodas}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
                             {ordenesFiltradas.length > 0 && ordenesFiltradas.every(o => seleccionadas.has(o.id)) ? 'Deseleccionar' : 'Todas'}
                         </button>
-                        <span className="text-[11px] font-bold text-[#A8A29E] flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
+                        <span className="text-[11px] font-bold text-muted flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
                         {!confirmMasivo ? (
                             <button onClick={() => seleccionadas.size > 0 && setConfirmMasivo(true)}
                                 disabled={seleccionadas.size === 0}
-                                className={`h-9 px-4 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#A8A29E]'}`}>
+                                className={`h-9 px-4 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-brand-red text-white' : 'bg-chip text-muted'}`}>
                                 Eliminar ({seleccionadas.size})
                             </button>
                         ) : (
                             <div className="flex gap-1.5">
                                 <button onClick={() => setConfirmMasivo(false)}
-                                    className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
+                                    className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
                                     No
                                 </button>
                                 <button onClick={eliminarMasivo}
-                                    className="h-9 px-4 rounded-xl font-bold text-[11px] bg-[#D13A28] dark:bg-[#E8422F] text-white active:scale-95">
+                                    className="h-9 px-4 rounded-xl font-bold text-[11px] bg-brand-red text-white active:scale-95">
                                     Confirmar
                                 </button>
                             </div>
@@ -388,11 +388,11 @@ export default function DespachoManager() {
             {/* Modal crear / editar */}
             {(modalCrear || ordenEditar) && (
                 <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
-                    <div className="w-full max-w-lg bg-[#FFFFFF] dark:bg-[#242424] rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-lg bg-card rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
                         <div className="md:hidden flex justify-center -mt-2 mb-4">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
-                        <h2 className="text-[16px] font-black text-[#1C1917] dark:text-[#F0EEE9] mb-5">
+                        <h2 className="text-[16px] font-black text-ink mb-5">
                             {ordenEditar ? 'Editar orden' : 'Nueva orden'}
                         </h2>
                         <OrdenForm
