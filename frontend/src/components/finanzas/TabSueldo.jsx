@@ -4,11 +4,19 @@ import { useAuth } from '../../context/AuthContext';
 import { useMontos } from '../../context/MontosContext';
 import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
 import { MESES_ES } from '../../utils/dateUtils';
+import { useTheme } from '../../hooks/useTheme';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 
 export default function TabSueldo({ filtroMes, setFiltroMes }) {
     const { usuario, esAdmin } = useAuth();
     const { ocultar } = useMontos();
+    const { isDark } = useTheme();
+    // Recharts dibuja SVG puro — las clases dark: de Tailwind no le llegan,
+    // así que estos colores hay que resolverlos a mano según el tema activo
+    // (antes quedaba fijo en rojo oscuro incluso en modo claro).
+    const colorVerde = isDark ? '#4ADE80' : '#16A34A';
+    const colorAmbar = isDark ? '#F0A500' : '#D48800';
+    const colorRojo = isDark ? '#E8422F' : '#D13A28';
     const [data, setData] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [editandoMeta, setEditandoMeta] = useState(false);
@@ -232,12 +240,12 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                             />
                             <Bar dataKey="Acumulado" radius={[4, 4, 0, 0]}>
                                 {chartData.map((entry, i) => (
-                                    <Cell key={i} fill={entry.Acumulado >= entry.Objetivo ? '#16A34A' : '#D48800'} />
+                                    <Cell key={i} fill={entry.Acumulado >= entry.Objetivo ? colorVerde : colorAmbar} />
                                 ))}
                             </Bar>
                             {objetivo > 0 && (
-                                <ReferenceLine y={objetivo} stroke="#E8422F" strokeDasharray="6 3" strokeWidth={2}
-                                    label={{ value: 'Meta', position: 'right', fontSize: 9, fill: '#E8422F' }} />
+                                <ReferenceLine y={objetivo} stroke={colorRojo} strokeDasharray="6 3" strokeWidth={2}
+                                    label={{ value: 'Meta', position: 'right', fontSize: 9, fill: colorRojo }} />
                             )}
                         </BarChart>
                     </ResponsiveContainer>

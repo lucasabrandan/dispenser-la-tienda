@@ -357,7 +357,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
             <BackBtn onClick={onBack} />
 
             {/* ── Barra fija ────────────────────────────────────────────── */}
-            <div className="fixed bottom-0 left-0 right-0 z-[100] px-3 pb-3">
+            <div className="hide-on-keyboard fixed bottom-0 left-0 right-0 z-[100] px-3 pb-3">
                 <div className="p-4 rounded-2xl flex justify-between items-center shadow-2xl bg-[#1C1917] dark:bg-[#0F0F0F] border border-white/[0.06]">
                     <div>
                         <p className="text-[9px] font-bold uppercase tracking-widest text-[#5C5954]">

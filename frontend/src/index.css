@@ -20,6 +20,13 @@
   --color-bg-page: #F5F3F1;
   --color-bg-card: #FFFFFF;
 
+  /* Segunda capa neutra — usada en decenas de archivos como hex suelto
+     antes de esta migración (chip/pill/botón-icono, panel/footer
+     secundario, texto secundario más oscuro que --color-muted). */
+  --color-chip-bg: #E8E5E0;
+  --color-panel-bg: #EFEDEA;
+  --color-text-secondary: #57534E;
+
   /* Estados — fondo / texto (badges de estado, prioridad, etc.) */
   --warning-bg: #FEF3C7;
   --warning-tx: #92400E;
@@ -42,12 +49,20 @@
   --color-bg-page: #141414;
   --color-bg-card: #242424;
 
+  --color-chip-bg: #2E2E2E;
+  --color-panel-bg: #1C1C1C;
+  --color-text-secondary: #9E9A94;
+
   --warning-bg: #2E2207;
   --warning-tx: #FBBF24;
   --success-bg: #0F2A1A;
   --success-tx: #4ADE80;
-  --danger-bg:  #2E100C;
-  --danger-tx:  #E8422F;
+  /* Ajustado a la variante que ya usaba la mayoría de los badges "danger"
+     escritos a mano (#3B1111/#F87171) en vez del valor original de este
+     token (#2E100C/#E8422F), que casi nadie terminó usando — así la
+     migración no le cambia el color a la mayoría de la app. */
+  --danger-bg:  #3B1111;
+  --danger-tx:  #F87171;
   --info-bg:    #2E1065;
   --info-tx:    #C084FC;
 }
@@ -144,8 +159,12 @@ input, select, textarea {
     scroll-margin-bottom: 200px;
   }
 
-  /* Ocultar la barra fija del total cuando el teclado está abierto */
-  body:has(input:focus, textarea:focus, select:focus) .fixed.bottom-0 {
+  /* Ocultar SOLO la barra/sheet marcada explícitamente con esta clase
+     cuando el teclado está abierto — antes esta regla apuntaba a
+     CUALQUIER .fixed.bottom-0 de toda la app (el BottomNav global
+     incluido), así que un input enfocado en cualquier pantalla podía
+     hacer desaparecer navegación o menús que no tenían nada que ver. */
+  body:has(input:focus, textarea:focus, select:focus) .hide-on-keyboard {
     display: none;
   }
 }
