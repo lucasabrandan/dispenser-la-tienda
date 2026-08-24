@@ -108,15 +108,6 @@ export default function ServicioList({ onEditar }) {
             .catch(() => toast.error('Error al conectar con el historial'));
     };
 
-    const aprobarPresupuesto = async (id) => {
-        const loading = toast.loading('Confirmando...');
-        try {
-            await api.patch(`/servicios/${id}/estado`, { estado: 'REALIZADO' });
-            toast.success('Confirmado', { id: loading });
-            cargarServicios();
-        } catch { toast.error('Error al procesar', { id: loading }); }
-    };
-
     const eliminarServicio = async (id) => {
         if (!window.confirm('¿Eliminar permanentemente?')) return;
         try {
@@ -343,12 +334,6 @@ export default function ServicioList({ onEditar }) {
                                             <Accion onClick={() => generarPDFHistorial(s, { sinPrecios: true })} icon="📋" label="Sin $"
                                                 className="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9]" />
                                             <div className="flex-1" />
-                                            {esPendiente && (
-                                                <button onClick={() => aprobarPresupuesto(s.id)}
-                                                    className="h-7 px-3 rounded-lg font-bold text-[10px] text-white active:scale-95 bg-[#D13A28] dark:bg-[#E8422F]">
-                                                    Cobrar
-                                                </button>
-                                            )}
                                             {esAdmin && (
                                                 <Accion onClick={() => eliminarServicio(s.id)} icon="🗑️" label=""
                                                     className="text-[#D13A28]/60 dark:text-[#E8422F]/60 hover:bg-[#FEE2E2] dark:hover:bg-[#3B1111]" />
