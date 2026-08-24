@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
+import { estadoGarantia } from '../../utils/dateUtils';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -231,6 +232,16 @@ export default function ServicioCard({
                             <M valor={Number(it.costo || 0)} className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0 ml-2" />
                         </div>
                         <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{it.trabajoRealizado}</p>
+                        {it.garantiaHasta && (() => {
+                            const g = estadoGarantia(it.garantiaHasta);
+                            return (
+                                <p className={`text-[10px] font-black mt-1 ${g.vigente ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>
+                                    {g.vigente
+                                        ? `🛡️ Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
+                                        : `⏳ Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
+                                </p>
+                            );
+                        })()}
                         {it.repuestosUsados?.length > 0 && (
                             <div className="mt-1.5 pt-1.5 border-t border-black/[0.05] dark:border-white/[0.05]">
                                 <div className="flex flex-wrap gap-1 mt-1">
