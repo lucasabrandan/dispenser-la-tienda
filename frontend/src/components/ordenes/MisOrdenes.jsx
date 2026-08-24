@@ -44,24 +44,24 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                 <div className="flex items-start gap-2 mb-2">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
+                            <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
                                 {orden.prioridad}
                             </span>
                         </div>
-                        <p className="font-black text-[15px] text-ink leading-tight">{orden.titulo}</p>
+                        <p className="font-black text-body-lg text-ink leading-tight">{orden.titulo}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-[13px] font-black text-ink">{orden.horaEstimada || '—'}</p>
-                        <p className="text-[10px] text-muted">{orden.fechaProgramada}</p>
+                        <p className="text-body font-black text-ink">{orden.horaEstimada || '—'}</p>
+                        <p className="text-caption text-muted">{orden.fechaProgramada}</p>
                     </div>
                 </div>
 
                 {!esFinal && orden.clienteNombre && (
-                    <p className="text-[12px] text-secondary font-bold">🏢 {orden.clienteNombre}</p>
+                    <p className="text-body text-secondary font-bold">🏢 {orden.clienteNombre}</p>
                 )}
 
                 {!esFinal && orden.montoEstimado && (
-                    <p className="text-[12px] font-black text-brand-amber mt-0.5">
+                    <p className="text-body font-black text-brand-amber mt-0.5">
                         💰 ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}
                     </p>
                 )}
@@ -69,29 +69,29 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                 {!esFinal && orden.direccion && (
                     <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
                         target="_blank" rel="noreferrer"
-                        className="text-[12px] text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 flex items-center gap-1 hover:underline">
+                        className="text-body text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 flex items-center gap-1 hover:underline">
                         📍 {orden.direccion}
-                        <span className="text-[10px]">↗</span>
+                        <span className="text-label">↗</span>
                     </a>
                 )}
 
                 {!esFinal && orden.descripcion && (
                     <>
                         <button onClick={() => setExpandido(v => !v)}
-                            className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-panel text-secondary active:scale-95 transition-all">
+                            className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-label font-bold bg-panel text-secondary active:scale-95 transition-all">
                             <span>Instrucciones</span>
-                            <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
+                            <span className="text-label">{expandido ? '▲' : '▼'}</span>
                         </button>
                         {expandido && (
                             <div className="mt-2 p-3 rounded-xl bg-panel">
-                                <p className="text-[12px] text-secondary leading-snug">{orden.descripcion}</p>
+                                <p className="text-caption text-secondary leading-snug">{orden.descripcion}</p>
                             </div>
                         )}
                     </>
                 )}
 
                 {orden.notasTecnico && (
-                    <p className="mt-2 text-[11px] text-brand-green">
+                    <p className="mt-2 text-caption text-brand-green">
                         📝 {orden.notasTecnico}
                     </p>
                 )}
@@ -100,7 +100,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                     presupuesto; las de "Registrar trabajo" todavía no guardan ese id. */}
                 {esFinal && orden.estado === 'COMPLETADA' && orden.presupuestoId && (
                     <button onClick={() => onVerServicio(orden)}
-                        className="mt-2 text-[11px] font-bold text-[#3B82F6] dark:text-[#60A5FA] active:opacity-60">
+                        className="mt-2 text-label font-bold text-[#3B82F6] dark:text-[#60A5FA] active:opacity-60">
                         Ver servicio →
                     </button>
                 )}
@@ -114,22 +114,22 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                                 o "Ejecutar trabajo" según un dato invisible (si venía de un
                                 presupuesto). Adentro se decide solo qué formulario abrir. */}
                             <button onClick={() => orden.presupuestoId ? onEjecutar(orden) : onRegistrarTrabajo(orden)}
-                                className="w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all bg-brand-red">
+                                className="w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all bg-brand-red">
                                 Cerrar trabajo
                             </button>
-                            <p className="text-[10px] text-center text-muted font-bold">
+                            <p className="text-caption text-center text-muted font-bold">
                                 Completá los datos del trabajo para cerrar la orden
                             </p>
                         </>
                     ) : (
                         <button onClick={() => onAvanzar(orden.id, sig.estado)}
-                            className={`w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all ${sig.color}`}>
+                            className={`w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all ${sig.color}`}>
                             {sig.label}
                         </button>
                     )}
                     {(orden.estado === 'EN_CAMINO' || orden.estado === 'EN_SITIO') && (
                         <button onClick={() => onNoAtendido(orden)}
-                            className="w-full py-2 rounded-xl font-bold text-[11px] text-muted bg-chip active:scale-95 transition-all">
+                            className="w-full py-2 rounded-xl font-bold text-label text-muted bg-chip active:scale-95 transition-all">
                             No atendido
                         </button>
                     )}
@@ -147,41 +147,41 @@ function MesCard({ d, fmt, labelMes }) {
             <button onClick={() => setAbierto(v => !v)}
                 className="w-full flex items-center justify-between px-4 py-3 active:bg-[#EFEDEA] dark:active:bg-[#1C1C1C] transition-colors">
                 <div className="flex items-center gap-2">
-                    <p className="text-[14px] font-black text-ink capitalize">
+                    <p className="text-body-lg font-black text-ink capitalize">
                         {labelMes(d.periodo)}
                     </p>
-                    <span className="text-[10px] font-bold text-muted bg-panel px-2 py-0.5 rounded-md">
+                    <span className="text-label font-bold text-muted bg-panel px-2 py-0.5 rounded-md">
                         {d.cantidadServicios} {d.cantidadServicios === 1 ? 'trabajo' : 'trabajos'}
                     </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <p className="text-[15px] font-black text-brand-amber">
+                    <p className="text-body-lg font-black text-brand-amber">
                         ${fmt(d.totalTecnico)}
                     </p>
-                    <span className="text-[10px] text-muted">{abierto ? '▲' : '▼'}</span>
+                    <span className="text-label text-muted">{abierto ? '▲' : '▼'}</span>
                 </div>
             </button>
             {abierto && (
                 <div className="px-4 pb-3 space-y-1.5 border-t border-black/[0.06] dark:border-white/[0.06] pt-3">
-                    <div className="flex justify-between text-[11px]">
+                    <div className="flex justify-between text-body">
                         <span className="text-secondary">Facturado</span>
                         <span className="font-bold text-ink">${fmt(d.totalFacturado)}</span>
                     </div>
-                    <div className="flex justify-between text-[11px]">
+                    <div className="flex justify-between text-body">
                         <span className="text-muted">− Impuestos (30%)</span>
                         <span className="text-brand-red">−${fmt(d.totalImpuestos)}</span>
                     </div>
                     {parseFloat(d.totalRepuestos || 0) > 0 && (
-                        <div className="flex justify-between text-[11px]">
+                        <div className="flex justify-between text-body">
                             <span className="text-muted">− Repuestos</span>
                             <span className="text-brand-red">−${fmt(d.totalRepuestos)}</span>
                         </div>
                     )}
-                    <div className="flex justify-between text-[11px] pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
+                    <div className="flex justify-between text-body pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
                         <span className="text-secondary">Ganancia neta</span>
                         <span className="font-bold text-ink">${fmt(d.gananciaNet)}</span>
                     </div>
-                    <div className="flex justify-between text-[11px] font-black">
+                    <div className="flex justify-between text-body font-black">
                         <span className="text-brand-amber">Tu parte (50%)</span>
                         <span className="text-brand-amber">${fmt(d.totalTecnico)}</span>
                     </div>
@@ -213,7 +213,7 @@ function RendimientoTab({ tecnicoId }) {
         <div className="text-center py-12 space-y-3">
             <p className="text-muted">Sin trabajos registrados aún</p>
             <button onClick={() => setTick(t => t + 1)}
-                className="text-[11px] font-bold text-brand-red px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">
+                className="text-label font-bold text-brand-red px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">
                 Recargar
             </button>
         </div>
@@ -236,48 +236,48 @@ function RendimientoTab({ tecnicoId }) {
         <div className="space-y-4">
             <div className="flex justify-end">
                 <button onClick={() => setTick(t => t + 1)}
-                    className="text-[11px] font-bold text-muted px-3 py-1.5 rounded-xl bg-panel active:scale-95 transition-all">
+                    className="text-label font-bold text-muted px-3 py-1.5 rounded-xl bg-panel active:scale-95 transition-all">
                     ↻ Recargar
                 </button>
             </div>
             <div className="rounded-2xl overflow-hidden bg-card border-[0.5px] border-black/[0.07]"
                 >
                 <div className="p-4">
-                    <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">
+                    <p className="text-label font-black text-muted uppercase tracking-widest mb-1">
                         Total acumulado · {totalTrabajos} {totalTrabajos === 1 ? 'trabajo' : 'trabajos'}
                     </p>
                     <p className="text-[42px] font-black text-brand-amber leading-none mb-3">
                         ${fmt(totalTecni)}
                     </p>
                     <div className="space-y-1">
-                        <div className="flex justify-between text-[11px]">
+                        <div className="flex justify-between text-body">
                             <span className="text-muted">Facturado</span>
                             <span className="font-bold text-ink">${fmt(totalFact)}</span>
                         </div>
-                        <div className="flex justify-between text-[11px]">
+                        <div className="flex justify-between text-body">
                             <span className="text-muted">− Impuestos (30%)</span>
                             <span className="text-brand-red">−${fmt(totalImp)}</span>
                         </div>
                         {totalReps > 0 && (
-                            <div className="flex justify-between text-[11px]">
+                            <div className="flex justify-between text-body">
                                 <span className="text-muted">− Repuestos</span>
                                 <span className="text-brand-red">−${fmt(totalReps)}</span>
                             </div>
                         )}
-                        <div className="flex justify-between text-[11px] pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
+                        <div className="flex justify-between text-body pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
                             <span className="text-muted">Ganancia neta</span>
                             <span className="font-bold text-ink">${fmt(totalNet)}</span>
                         </div>
                     </div>
                 </div>
                 <div className="px-4 py-2 bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-t border-[#D48800]/20">
-                    <p className="text-[10px] text-brand-amber font-bold">
+                    <p className="text-caption text-brand-amber font-bold">
                         Facturado − 30% imp. − repuestos = ganancia ÷ 2
                     </p>
                 </div>
             </div>
 
-            <p className="text-[10px] font-black text-muted uppercase tracking-widest px-1">
+            <p className="text-label font-black text-muted uppercase tracking-widest px-1">
                 Por mes · tocá para ver detalle
             </p>
             {datos.map(d => (
@@ -414,8 +414,8 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
             <div className="max-w-2xl mx-auto px-4 pt-4">
                 {/* Header */}
                 <div className="mb-4">
-                    <h1 className="text-[20px] font-black text-ink">Mis Órdenes</h1>
-                    <p className="text-[11px] text-muted">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
+                    <h1 className="text-body-lg font-black text-ink">Mis Órdenes</h1>
+                    <p className="text-caption text-muted">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
                 </div>
 
                 {/* SwipeColumns */}
@@ -429,19 +429,19 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="text-center">
-                                    <p className="text-[20px] font-black text-ink leading-none">{ordenesHoy.length}</p>
-                                    <p className="text-[9px] font-black text-muted uppercase">hoy</p>
+                                    <p className="text-body-lg font-black text-ink leading-none">{ordenesHoy.length}</p>
+                                    <p className="text-label font-black text-muted uppercase">hoy</p>
                                 </div>
                                 <div className="w-px h-8 bg-black/[0.07] dark:bg-white/[0.07]" />
                                 <div className="text-center">
-                                    <p className="text-[20px] font-black text-[#16A34A] leading-none">{completadasHoy.length}</p>
-                                    <p className="text-[9px] font-black text-muted uppercase">listas</p>
+                                    <p className="text-body-lg font-black text-[#16A34A] leading-none">{completadasHoy.length}</p>
+                                    <p className="text-label font-black text-muted uppercase">listas</p>
                                 </div>
                             </div>
                             {proxima && (
                                 <div className="text-right">
-                                    <p className="text-[9px] font-black text-muted uppercase">Proxima</p>
-                                    <p className="text-[18px] font-black text-brand-amber leading-none">{proxima.horaEstimada}</p>
+                                    <p className="text-label font-black text-muted uppercase">Proxima</p>
+                                    <p className="text-body-lg font-black text-brand-amber leading-none">{proxima.horaEstimada}</p>
                                 </div>
                             )}
                         </div>
@@ -458,14 +458,14 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 ) : lista.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-3xl mb-2">{tab === 'activas' ? '🎉' : '📋'}</p>
-                        <p className="text-[13px] font-bold text-muted">
+                        <p className="text-body font-bold text-muted">
                             {tab === 'activas' ? 'Sin órdenes pendientes' : 'Sin historial aún'}
                         </p>
                     </div>
                 ) : (
                     Object.entries(porFecha).map(([fecha, items]) => (
                         <div key={fecha} className="mb-5">
-                            <p className="text-[11px] font-black text-muted uppercase tracking-wider mb-2 capitalize">
+                            <p className="text-label font-black text-muted uppercase tracking-wider mb-2 capitalize">
                                 {formatFecha(fecha)}
                             </p>
                             <div className="space-y-2">
@@ -486,19 +486,19 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                     onClick={e => e.stopPropagation()}>
                     <div className="w-10 h-1 rounded-full mx-auto bg-chip" />
                     <div>
-                        <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-1">No atendido</p>
-                        <p className="text-[14px] font-black text-ink">{noAtendidoOrden.titulo}</p>
+                        <p className="text-label font-black text-muted uppercase tracking-widest mb-1">No atendido</p>
+                        <p className="text-body-lg font-black text-ink">{noAtendidoOrden.titulo}</p>
                     </div>
                     <textarea value={notaNoAtendido} onChange={e => setNotaNoAtendido(e.target.value)}
                         rows={3} placeholder="Motivo (ej: no habia nadie, cerrado, no atendia el telefono...)"
-                        className="w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-[13px] font-medium outline-none resize-none placeholder:text-muted" />
+                        className="w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-body font-medium outline-none resize-none placeholder:text-muted" />
                     <div className="flex gap-2">
                         <button onClick={() => setNoAtendidoOrden(null)}
-                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-chip text-secondary active:scale-95 transition-all">
+                            className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95 transition-all">
                             Cancelar
                         </button>
                         <button onClick={handleNoAtendido}
-                            className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-[#DC2626] active:scale-95 transition-all">
+                            className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-[#DC2626] active:scale-95 transition-all">
                             Confirmar
                         </button>
                     </div>
@@ -533,20 +533,20 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         <p className="text-center text-muted py-8">Cargando...</p>
                     ) : (
                         <>
-                            <h3 className="text-[16px] font-black mb-1 text-ink">
+                            <h3 className="text-body-lg font-black mb-1 text-ink">
                                 Servicio — {servicioDetalle.clienteNombre}
                             </h3>
-                            <p className="text-[11px] text-muted mb-4">#{servicioDetalle.id} · {servicioDetalle.fecha}</p>
+                            <p className="text-caption text-muted mb-4">#{servicioDetalle.id} · {servicioDetalle.fecha}</p>
                             <div className="max-h-[50vh] overflow-y-auto space-y-2 mb-4">
                                 {(servicioDetalle.items || []).map((it, idx) => (
                                     <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.04] dark:border-white/[0.04]">
                                         <div className="flex justify-between mb-1">
-                                            <span className="font-bold text-[13px] text-brand-red">{it.equipoSerial}</span>
-                                            <span className="font-black text-[14px] text-ink">${Number(it.costo || 0).toLocaleString('es-AR')}</span>
+                                            <span className="font-bold text-body text-brand-red">{it.equipoSerial}</span>
+                                            <span className="font-black text-body-lg text-ink">${Number(it.costo || 0).toLocaleString('es-AR')}</span>
                                         </div>
-                                        <p className="text-[12px] text-secondary leading-snug">{it.trabajoRealizado}</p>
+                                        <p className="text-caption text-secondary leading-snug">{it.trabajoRealizado}</p>
                                         {it.repuestosUsados?.length > 0 && (
-                                            <p className="text-[10px] text-muted pt-2 mt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
+                                            <p className="text-caption text-muted pt-2 mt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
                                                 <span className="font-bold">Repuestos: </span>
                                                 {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
                                             </p>

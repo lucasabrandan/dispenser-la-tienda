@@ -56,69 +56,69 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                 <div className="flex items-start gap-2 mb-2">
                     {seleccionando && (
                         <div className={`w-5 h-5 mt-0.5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${seleccionada ? 'bg-brand-red border-brand-red' : 'border-muted bg-transparent'}`}>
-                            {seleccionada && <span className="text-white text-[10px] font-black">✓</span>}
+                            {seleccionada && <span className="text-white text-label font-black">✓</span>}
                         </div>
                     )}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
+                            <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
                                 {orden.prioridad}
                             </span>
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-muted">
+                            <span className="flex items-center gap-1 text-label font-bold text-muted">
                                 <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: es.dot, display: 'inline-block' }} />
                                 {es.label}
                             </span>
                         </div>
-                        <p className="font-black text-[14px] text-ink leading-tight">{orden.titulo}</p>
+                        <p className="font-black text-body-lg text-ink leading-tight">{orden.titulo}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-[11px] font-black text-ink">{orden.horaEstimada || '—'}</p>
-                        <p className="text-[10px] text-muted">{formatFechaCorta(orden.fechaProgramada)}</p>
+                        <p className="text-body font-black text-ink">{orden.horaEstimada || '—'}</p>
+                        <p className="text-caption text-muted">{formatFechaCorta(orden.fechaProgramada)}</p>
                     </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-bold text-muted">👤 {orden.tecnicoNombre}</p>
+                    <p className="text-caption font-bold text-muted">👤 {orden.tecnicoNombre}</p>
                     {orden.montoEstimado && (
-                        <span className="text-[11px] font-black text-brand-amber">
+                        <span className="text-body font-black text-brand-amber">
                             ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transf.' : 'Efectivo'}
                         </span>
                     )}
                 </div>
 
                 {orden.clienteNombre && (
-                    <p className="text-[11px] text-muted mt-0.5">🏢 {orden.clienteNombre}{orden.clienteTelefono ? ` · ${orden.clienteTelefono}` : ''}</p>
+                    <p className="text-caption text-muted mt-0.5">🏢 {orden.clienteNombre}{orden.clienteTelefono ? ` · ${orden.clienteTelefono}` : ''}</p>
                 )}
                 {orden.direccion && (
                     <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
                         target="_blank" rel="noreferrer"
-                        className="text-[11px] text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 block hover:underline">
+                        className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 block hover:underline">
                         📍 {orden.direccion}
                     </a>
                 )}
                 {orden.presupuestoId && (
-                    <p className="text-[10px] font-bold text-brand-amber mt-0.5">
+                    <p className="text-label font-bold text-brand-amber mt-0.5">
                         📋 Presupuesto #{orden.presupuestoId} vinculado
                     </p>
                 )}
                 {esNoAtendido && (
-                    <p className="text-[11px] font-black text-[#DC2626] mt-1">
+                    <p className="text-caption font-black text-[#DC2626] mt-1">
                         El tecnico reporto que no fue atendido. Reprograma o cancela.
                     </p>
                 )}
 
                 {(orden.descripcion || orden.notasTecnico) && (
                     <button onClick={() => setExpanded(v => !v)}
-                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold bg-panel text-secondary active:scale-95 transition-all">
+                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-label font-bold bg-panel text-secondary active:scale-95 transition-all">
                         <span>Detalle</span>
-                        <span className="text-[10px]">{expanded ? '▲' : '▼'}</span>
+                        <span className="text-label">{expanded ? '▲' : '▼'}</span>
                     </button>
                 )}
                 {expanded && (
                     <div className="mt-2 p-3 rounded-xl bg-panel space-y-1">
-                        {orden.descripcion && <p className="text-[11px] text-secondary leading-snug">{orden.descripcion}</p>}
+                        {orden.descripcion && <p className="text-caption text-secondary leading-snug">{orden.descripcion}</p>}
                         {orden.notasTecnico && (
-                            <p className="text-[11px] text-brand-green leading-snug">
+                            <p className="text-caption text-brand-green leading-snug">
                                 📝 Nota técnico: {orden.notasTecnico}
                             </p>
                         )}
@@ -130,13 +130,13 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                 <div className="flex items-center gap-2 px-4 py-3 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]">
                     {!esFinal && (
                         <button onClick={() => onEditar(orden)}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
+                            className="h-9 px-3 rounded-xl font-bold text-label bg-chip text-secondary active:scale-95">
                             ✏️ Editar
                         </button>
                     )}
                     {SIGUIENTE_ESTADO_ADMIN[orden.estado] && (
                         <button onClick={() => onAvanzar(orden.id, SIGUIENTE_ESTADO_ADMIN[orden.estado].estado)}
-                            className={`h-9 px-3 rounded-xl font-bold text-[11px] text-white active:scale-95 ${SIGUIENTE_ESTADO_ADMIN[orden.estado].color}`}>
+                            className={`h-9 px-3 rounded-xl font-bold text-label text-white active:scale-95 ${SIGUIENTE_ESTADO_ADMIN[orden.estado].color}`}>
                             {SIGUIENTE_ESTADO_ADMIN[orden.estado].label}
                         </button>
                     )}
@@ -149,11 +149,11 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                     ) : (
                         <>
                             <button onClick={() => setConfirmElim(false)}
-                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
+                                className="h-9 px-3 rounded-xl font-bold text-label bg-chip text-secondary active:scale-95">
                                 No
                             </button>
                             <button onClick={() => { setConfirmElim(false); onEliminar(orden.id); }}
-                                className="h-9 px-3 rounded-xl font-bold text-[11px] bg-brand-red text-white active:scale-95">
+                                className="h-9 px-3 rounded-xl font-bold text-label bg-brand-red text-white active:scale-95">
                                 Sí, eliminar
                             </button>
                         </>
@@ -266,20 +266,20 @@ export default function DespachoManager() {
                             className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
                             ⚙
                         </button>
-                        <span className="text-[11px] font-bold text-muted flex-1">{ordenesFiltradas.length} ordenes</span>
+                        <span className="text-label font-bold text-muted flex-1">{ordenesFiltradas.length} ordenes</span>
                         {seleccionando ? (
                             <button onClick={salirSeleccion}
-                                className="h-9 px-4 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-chip text-secondary">
+                                className="h-9 px-4 rounded-lg font-bold text-label uppercase transition-all active:scale-95 bg-chip text-secondary">
                                 Cancelar
                             </button>
                         ) : (
                             <>
                                 <button onClick={() => { setSeleccionando(true); setSeleccionadas(new Set()); }}
-                                    className="h-9 px-3 rounded-lg font-bold text-[11px] uppercase transition-all active:scale-95 bg-chip text-secondary">
+                                    className="h-9 px-3 rounded-lg font-bold text-label uppercase transition-all active:scale-95 bg-chip text-secondary">
                                     Seleccionar
                                 </button>
                                 <button onClick={() => setModalCrear(true)}
-                                    className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-brand-red">
+                                    className="h-9 px-4 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red">
                                     + Orden
                                 </button>
                             </>
@@ -297,12 +297,12 @@ export default function DespachoManager() {
                 {mostrarFiltros && (
                     <div className="flex gap-1.5 items-center flex-wrap p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <DateInput value={desde} onChange={setDesde}
-                            className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]" />
-                        <span className="text-[10px] text-muted">a</span>
+                            className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]" />
+                        <span className="text-label text-muted">a</span>
                         <DateInput value={hasta} onChange={setHasta}
-                            className="h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]" />
+                            className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]" />
                         <select value={filtrTecnico} onChange={e => setFiltrTecnico(e.target.value)}
-                            className="flex-1 h-8 px-2 rounded-lg text-[11px] font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]">
+                            className="flex-1 h-8 px-2 rounded-lg text-label font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]">
                             <option value="">Todos los técnicos</option>
                             {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                         </select>
@@ -317,7 +317,7 @@ export default function DespachoManager() {
                 ) : Object.keys(grupos).length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-3xl mb-2">{ESTADO_TABS.find(t => t.id === estadoFiltro)?.icon || '📋'}</p>
-                        <p className="text-[13px] font-bold text-muted">
+                        <p className="text-body font-bold text-muted">
                             Sin órdenes {estadoFiltro ? ESTADO_TABS.find(t => t.id === estadoFiltro)?.fullLabel?.toLowerCase() : ''}
                         </p>
                     </div>
@@ -328,11 +328,11 @@ export default function DespachoManager() {
                         return (
                             <div key={key} className="mb-4">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <p className="text-[12px] font-black text-ink uppercase tracking-wider">
+                                    <p className="text-label font-black text-ink uppercase tracking-wider">
                                         👤 {nombre}
                                     </p>
                                     {activas > 0 && (
-                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-brand-red text-white">
+                                        <span className="text-label font-black px-2 py-0.5 rounded-full bg-brand-red text-white">
                                             {activas} activa{activas > 1 ? 's' : ''}
                                         </span>
                                     )}
@@ -359,24 +359,24 @@ export default function DespachoManager() {
                 <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
                     <div className="max-w-lg mx-auto flex items-center gap-2 p-3 rounded-2xl bg-card shadow-lg border border-black/[0.07] dark:border-white/[0.07]">
                         <button onClick={toggleTodas}
-                            className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
+                            className="h-9 px-3 rounded-xl font-bold text-label bg-chip text-secondary active:scale-95">
                             {ordenesFiltradas.length > 0 && ordenesFiltradas.every(o => seleccionadas.has(o.id)) ? 'Deseleccionar' : 'Todas'}
                         </button>
-                        <span className="text-[11px] font-bold text-muted flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
+                        <span className="text-label font-bold text-muted flex-1">{seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? 's' : ''}</span>
                         {!confirmMasivo ? (
                             <button onClick={() => seleccionadas.size > 0 && setConfirmMasivo(true)}
                                 disabled={seleccionadas.size === 0}
-                                className={`h-9 px-4 rounded-xl font-bold text-[11px] uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-brand-red text-white' : 'bg-chip text-muted'}`}>
+                                className={`h-9 px-4 rounded-xl font-bold text-label uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-brand-red text-white' : 'bg-chip text-muted'}`}>
                                 Eliminar ({seleccionadas.size})
                             </button>
                         ) : (
                             <div className="flex gap-1.5">
                                 <button onClick={() => setConfirmMasivo(false)}
-                                    className="h-9 px-3 rounded-xl font-bold text-[11px] bg-chip text-secondary active:scale-95">
+                                    className="h-9 px-3 rounded-xl font-bold text-label bg-chip text-secondary active:scale-95">
                                     No
                                 </button>
                                 <button onClick={eliminarMasivo}
-                                    className="h-9 px-4 rounded-xl font-bold text-[11px] bg-brand-red text-white active:scale-95">
+                                    className="h-9 px-4 rounded-xl font-bold text-label bg-brand-red text-white active:scale-95">
                                     Confirmar
                                 </button>
                             </div>
@@ -392,7 +392,7 @@ export default function DespachoManager() {
                         <div className="md:hidden flex justify-center -mt-2 mb-4">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
-                        <h2 className="text-[16px] font-black text-ink mb-5">
+                        <h2 className="text-body-lg font-black text-ink mb-5">
                             {ordenEditar ? 'Editar orden' : 'Nueva orden'}
                         </h2>
                         <OrdenForm
