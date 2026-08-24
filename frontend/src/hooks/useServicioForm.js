@@ -693,8 +693,12 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         usuarioId:          tecnicoFinal.id,
         fecha:              fechaServicio,
         servicioTipo:       tieneEquipo ? 'TECNICA' : 'VENTA',
-        estado:             confirmarTrabajo ? 'REALIZADO' : (presupuestoOrigen ? 'REALIZADO' : 'PRESUPUESTO'),
-        presupuestoOrigenId: presupuestoOrigen?.id || null,
+        estado:             confirmarTrabajo ? 'REALIZADO' : ((presupuestoOrigen || ordenOrigen?.presupuestoId) ? 'REALIZADO' : 'PRESUPUESTO'),
+        // Bug real: si se llega acá vía una Orden despachada (Path B), `presupuestoOrigen`
+        // (el parámetro) nunca se completaba aunque la orden tuviera presupuesto vinculado —
+        // el servicio nuevo quedaba sin linkear al presupuesto original. `ordenOrigen.presupuestoId`
+        // ya viene resuelto desde el backend (ver GET /ordenes), así que lo usamos como fallback.
+        presupuestoOrigenId: presupuestoOrigen?.id || ordenOrigen?.presupuestoId || null,
         ordenId: ordenOrigen?.id || null,
         clienteNombre:      nombreCliente,
         sedeNombre:         nombreSedeF,
@@ -733,6 +737,18 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       } else {
         const res = await api.post('/servicios', servicioData);
         savedId = res.data?.id;
+      }
+
+      // Si este servicio se creó a partir de un presupuesto despachado a un técnico,
+      // el original queda archivado — ya cumplió su función, el registro real ahora es este.
+      // Cierra el ciclo que antes dejaba el presupuesto huérfano en PRESUPUESTO para siempre.
+      const idPresupuestoOrigen = presupuestoOrigen?.id || ordenOrigen?.presupuestoId || null;
+      if (!idEdicion && idPresupuestoOrigen) {
+        try {
+          await api.patch(`/servicios/${idPresupuestoOrigen}/estado`, { estado: 'ARCHIVADO' });
+        } catch {
+          console.error('No se pudo archivar el presupuesto original', idPresupuestoOrigen);
+        }
       }
 
       toast.success(confirmarTrabajo ? '✅ ¡Confirmado!' : '💾 ¡Guardado!', { id: loading });

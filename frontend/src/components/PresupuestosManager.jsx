@@ -10,6 +10,7 @@ import SwipeColumns from './ui/SwipeColumns';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import ModalCotizacionVolumen from './presupuesto/ModalCotizacionVolumen';
 import ModalDespacharPresupuesto from './presupuesto/ModalDespacharPresupuesto';
+import IniciarTrabajoSheet from './presupuesto/IniciarTrabajoSheet';
 import EjecutarAdminSheet from './servicio/EjecutarAdminSheet';
 import ServicioForm from './servicio/ServicioForm';
 import PresupuestoCard from './presupuesto/PresupuestoCard';
@@ -45,7 +46,6 @@ export default function PresupuestosManager() {
     const { esAdmin, usuario } = useAuth();
     const [presupuestos, setPresupuestos]   = useState([]);
     const [cargando, setCargando]           = useState(true);
-    const [ejecutadosIds, setEjecutadosIds] = useState(new Set());
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
     const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
@@ -63,6 +63,7 @@ export default function PresupuestosManager() {
     const [modalCotizar, setModalCotizar]         = useState(false);
     const [presupuestoDespachar, setPresupuestoDespachar] = useState(null);
     const [presupuestoEjecutar, setPresupuestoEjecutar] = useState(null);
+    const [presupuestoIniciar, setPresupuestoIniciar]   = useState(null);
     const [presupuestoEditar, setPresupuestoEditar]     = useState(null);
 
     useEffect(() => { cargar(); }, []); // eslint-disable-line
@@ -71,16 +72,14 @@ export default function PresupuestosManager() {
         setCargando(true);
         const filtroUsuario = (!esAdmin && usuario?.id) ? { usuarioId: usuario.id } : {};
         try {
-            const [resPresu, resEjec] = await Promise.all([
-                api.get('/servicios', { params: { estado: 'PRESUPUESTO', page: 0, size: 200, sort: 'fechaServicio,desc', ...filtroUsuario } }),
-                api.get('/servicios', { params: { page: 0, size: 500, ...filtroUsuario } }),
-            ]);
+            // Solo PRESUPUESTO: apenas se despacha o se ejecuta, el registro cambia de
+            // estado (EN_PROGRESO / COBRADO / etc.) y sale de esta lista solo — ya no hace
+            // falta cruzar contra todos los servicios para marcar "Ejecutado" a mano.
+            const resPresu = await api.get('/servicios', { params: { estado: 'PRESUPUESTO', page: 0, size: 200, sort: 'fechaServicio,desc', ...filtroUsuario } });
             const data = resPresu.data.content || resPresu.data || [];
             setPresupuestos(Array.isArray(data)
                 ? data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha) || (b.id || 0) - (a.id || 0))
                 : []);
-            const todos = resEjec.data.content || resEjec.data || [];
-            setEjecutadosIds(new Set(todos.filter(s => s.presupuestoOrigenId).map(s => s.presupuestoOrigenId)));
         } catch { toast.error('Error al cargar presupuestos'); }
         finally  { setCargando(false); }
     };
@@ -312,10 +311,8 @@ export default function PresupuestosManager() {
                                 calcularTotal={calcularTotal}
                                 onPDF={generarPDF}
                                 onArchivar={archivar}
-                                onEjecutar={(serv) => setPresupuestoEjecutar(serv)}
-                                onDespachar={setPresupuestoDespachar}
+                                onIniciar={(serv) => serv.servicioTipo === 'TECNICA' ? setPresupuestoIniciar(serv) : setPresupuestoEjecutar(serv)}
                                 onEditar={esAdmin ? setPresupuestoEditar : null}
-                                ejecutado={ejecutadosIds.has(s.id)}
                                 modoSeleccion={modoSeleccion}
                                 seleccionado={seleccionados.has(s.id)}
                                 onToggleSelect={toggleSeleccion}
@@ -332,6 +329,15 @@ export default function PresupuestosManager() {
 
             {modalCotizar && (
                 <ModalCotizacionVolumen onCerrar={() => setModalCotizar(false)} />
+            )}
+
+            {presupuestoIniciar && (
+                <IniciarTrabajoSheet
+                    servicio={presupuestoIniciar}
+                    onYoAhora={() => { setPresupuestoEjecutar(presupuestoIniciar); setPresupuestoIniciar(null); }}
+                    onAsignar={() => { setPresupuestoDespachar(presupuestoIniciar); setPresupuestoIniciar(null); }}
+                    onCerrar={() => setPresupuestoIniciar(null)}
+                />
             )}
 
             {presupuestoDespachar && (

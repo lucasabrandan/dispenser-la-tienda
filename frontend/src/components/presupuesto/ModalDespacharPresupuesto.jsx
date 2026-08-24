@@ -70,6 +70,15 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
             });
             setOrdenCreada(res.data);
             toast.success('Orden de visita creada');
+            // El presupuesto pasa a "en progreso": ya no es un pendiente suelto, está
+            // asignado a un técnico. Antes se quedaba huérfano en estado PRESUPUESTO
+            // para siempre y la pantalla de Presupuestos lo marcaba "Ejecutado" solo
+            // por una búsqueda cruzada — ahora el estado real refleja lo que pasó.
+            try {
+                await api.patch(`/servicios/${presupuesto.id}/estado`, { estado: 'EN_PROGRESO' });
+            } catch {
+                console.error('No se pudo pasar el presupuesto a EN_PROGRESO');
+            }
             if (onDespachado) onDespachado(res.data);
         } catch {
             toast.error('Error al crear la orden');

@@ -10,7 +10,7 @@ function IconBtn({ onClick, title, children, cls = '' }) {
     );
 }
 
-export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, onEjecutar, onDespachar, onEditar, ejecutado, modoSeleccion, seleccionado, onToggleSelect }) {
+export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, onIniciar, onEditar, modoSeleccion, seleccionado, onToggleSelect }) {
     const [expandido, setExpandido] = useState(false);
     const [menuAbierto, setMenuAbierto] = useState(false);
     const total    = calcularTotal(s);
@@ -24,7 +24,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
     return (
         <div className={`rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
-            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${ejecutado ? '#16A34A' : '#D48800'}` }}>
+            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: '3px solid #D48800' }}>
             <div className="p-3">
                 <div className="flex items-start gap-2 mb-1.5">
                     {modoSeleccion && (
@@ -37,11 +37,6 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                         <span className={`text-[11px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${esTecnico ? 'bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F]' : 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]'}`}>
                             {esTecnico ? '🔧 Servicio' : '🛒 Venta'}
                         </span>
-                        {ejecutado && (
-                            <span className="text-[11px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
-                                ✓ Ejecutado
-                            </span>
-                        )}
                         <span className="text-[11px] font-bold text-[#A8A29E] shrink-0">#{s.id}</span>
                     </div>
                     <div className="text-right shrink-0">
@@ -126,12 +121,6 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                                     className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                     📋 PDF sin precios
                                 </button>
-                                {esTecnico && (
-                                    <button onClick={() => { onDespachar(s); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
-                                        📬 Despachar
-                                    </button>
-                                )}
                                 <button onClick={() => { onArchivar(s.id); setMenuAbierto(false); }}
                                     className="w-full px-5 py-3.5 text-left text-[14px] font-bold text-[#1C1917] dark:text-[#F0EEE9] active:bg-[#E8E5E0] rounded-xl">
                                     🗄️ Archivar
@@ -143,9 +132,9 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
                 <div className="flex-1" />
 
-                <button onClick={() => onEjecutar(s)}
+                <button onClick={() => onIniciar(s)}
                     className="h-9 px-4 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
-                    {ejecutado ? '✓ Ejecutado' : '⚡ Ejecutar y cobrar'}
+                    ⚡ Iniciar
                 </button>
             </div>
         </div>
