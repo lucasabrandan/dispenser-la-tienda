@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import DateInput from '../ui/DateInput';
+import WeekDatePicker from '../ui/WeekDatePicker';
 
 const PRIORIDADES = [
     { value: 'NORMAL',  label: 'Normal'  },
     { value: 'ALTA',    label: 'Alta'    },
     { value: 'URGENTE', label: 'Urgente' },
 ];
+
+// Horario laboral: cada 30 min de 08:00 a 17:00. Antes era un <input type="time">
+// que dejaba elegir cualquier hora de las 24 — en la práctica nunca se despacha
+// una visita a las 3 de la mañana, así que directamente se acotan las opciones.
+const HORARIOS_LABORALES = Array.from({ length: ((17 - 8) * 2) + 1 }, (_, i) => {
+    const totalMin = 8 * 60 + i * 30;
+    const hh = String(Math.floor(totalMin / 60)).padStart(2, '0');
+    const mm = String(totalMin % 60).padStart(2, '0');
+    return `${hh}:${mm}`;
+});
 
 const INPUT = `w-full px-3 py-2.5 rounded-xl text-[13px] font-medium outline-none
     bg-[#E8E5E0] dark:bg-[#2E2E2E]
@@ -189,20 +199,22 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                         </select>
                                     </div>
 
-                                    {/* Fecha + Hora */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className={LABEL}>Fecha programada</label>
-                                            <DateInput value={form.fechaProgramada}
-                                                onChange={v => set('fechaProgramada', v)}
-                                                className={INPUT} />
-                                        </div>
-                                        <div>
-                                            <label className={LABEL}>Hora estimada</label>
-                                            <input type="time" value={form.horaEstimada}
-                                                onChange={e => set('horaEstimada', e.target.value)}
-                                                className={INPUT} />
-                                        </div>
+                                    {/* Fecha programada — semana actual, con flechas para ir hacia atrás (carga histórica) o adelante */}
+                                    <div>
+                                        <label className={LABEL}>Fecha programada</label>
+                                        <WeekDatePicker value={form.fechaProgramada} onChange={v => set('fechaProgramada', v)} />
+                                    </div>
+
+                                    {/* Hora estimada — acotada al horario laboral, antes eran las 24hs */}
+                                    <div>
+                                        <label className={LABEL}>Hora estimada</label>
+                                        <select value={form.horaEstimada} onChange={e => set('horaEstimada', e.target.value)}
+                                            className={INPUT}>
+                                            <option value="">Seleccioná un horario…</option>
+                                            {HORARIOS_LABORALES.map(h => (
+                                                <option key={h} value={h}>{h}</option>
+                                            ))}
+                                        </select>
                                     </div>
 
                                     {/* Prioridad chips */}
