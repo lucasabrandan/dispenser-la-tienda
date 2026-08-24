@@ -2,16 +2,23 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 
-// Items que NO están en el BottomNav, ordenados por frecuencia de uso
-const MENU_ITEMS = [
-    { id: 'presupuestos', nombre: 'Presupuestos',  icon: '💰' },
-    { id: 'historial',    nombre: 'Historial',      icon: '📋' },
-    { id: 'clientes',     nombre: 'Clientes',       icon: '👥' },
-    { id: 'radar',        nombre: 'Radar',           icon: '🚨' },
-    { id: 'productos',    nombre: 'Productos',      icon: '📦' },
-    { id: 'finanzas',     nombre: 'Finanzas',        icon: '💹' },
-    { id: 'usuarios',     nombre: 'Usuarios',        icon: '🔐' },
+// Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
+// (mismo criterio que Sidebar.jsx en desktop).
+const MENU_SERVICIO_DRAWER = [
+    { id: 'presupuestos', nombre: 'Presupuestos', icon: '💰' },
 ];
+// Historial queda aparte: mezcla registros de servicio y de venta, no es de un solo dominio.
+const MENU_HISTORIAL_DRAWER = [
+    { id: 'historial', nombre: 'Historial', icon: '📋' },
+];
+const MENU_GESTION_DRAWER = [
+    { id: 'clientes',  nombre: 'Clientes',  icon: '👥' },
+    { id: 'radar',     nombre: 'Radar',     icon: '🚨' },
+    { id: 'productos', nombre: 'Productos', icon: '📦' },
+    { id: 'finanzas',  nombre: 'Finanzas',  icon: '💹' },
+    { id: 'usuarios',  nombre: 'Usuarios',  icon: '🔐' },
+];
+const MENU_ITEMS = [...MENU_SERVICIO_DRAWER, ...MENU_HISTORIAL_DRAWER, ...MENU_GESTION_DRAWER];
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
     const { usuario, logout } = useAuth();
@@ -56,34 +63,45 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 </div>
 
                 {/* Items */}
-                <div className="p-3 space-y-0.5">
-                    {MENU_ITEMS.map(item => {
-                        const activa = vistaActual === item.id;
-                        const badge =
-                            item.id === 'presupuestos' && pendientes > 0 ? pendientes :
-                            null;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => handleClick(item.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-[13px] font-bold transition-all active:scale-[0.98] ${
-                                    activa
-                                        ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
-                                        : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
-                                }`}
-                            >
-                                <span>{item.icon}</span>
-                                <span className="flex-1">{item.nombre}</span>
-                                {badge && (
-                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${
-                                        activa ? 'bg-white/30 text-white' : 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
-                                    }`}>
-                                        {badge}
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
+                <div className="p-3 space-y-4 overflow-y-auto">
+                    {[
+                        { label: '🔧 Servicio', items: MENU_SERVICIO_DRAWER },
+                        { label: null,          items: MENU_HISTORIAL_DRAWER },
+                        { label: '⚙️ Gestión',  items: MENU_GESTION_DRAWER },
+                    ].map((grupo, gi) => (
+                        <div key={gi} className="space-y-0.5">
+                            {grupo.label && (
+                                <p className="text-[9px] font-bold text-[#A8A29E]/70 uppercase tracking-[0.15em] mb-1 px-3">{grupo.label}</p>
+                            )}
+                            {grupo.items.map(item => {
+                                const activa = vistaActual === item.id;
+                                const badge =
+                                    item.id === 'presupuestos' && pendientes > 0 ? pendientes :
+                                    null;
+                                return (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => handleClick(item.id)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-[13px] font-bold transition-all active:scale-[0.98] ${
+                                            activa
+                                                ? 'bg-[#D13A28] dark:bg-[#E8422F] text-white shadow-md'
+                                                : 'text-[#1C1917] dark:text-[#F0EEE9] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
+                                        }`}
+                                    >
+                                        <span>{item.icon}</span>
+                                        <span className="flex-1">{item.nombre}</span>
+                                        {badge && (
+                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${
+                                                activa ? 'bg-white/30 text-white' : 'bg-[#D13A28] dark:bg-[#E8422F] text-white'
+                                            }`}>
+                                                {badge}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ))}
                 </div>
 
                 {/* Cerrar sesión */}

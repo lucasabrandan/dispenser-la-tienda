@@ -5,14 +5,22 @@ import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 
-// Reordenado por flujo de trabajo real
-const MENU_OPERACIONES_ADMIN = [
-    { id: 'caja',             icon: '🏠', nombre: 'Panel'            },
+// Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
+// para no mezclar todo en una sola lista larga.
+const MENU_PANEL = [
+    { id: 'caja', icon: '🏠', nombre: 'Panel' },
+];
+const MENU_SERVICIO = [
     { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Técnico' },
     { id: 'presupuestos',     icon: '💰', nombre: 'Presupuestos'     },
     { id: 'despacho',         icon: '📌', nombre: 'Despacho'         },
-    { id: 'venta',            icon: '🛒', nombre: 'Venta / Insumos'  },
-    { id: 'historial',        icon: '📋', nombre: 'Historial'        },
+];
+const MENU_VENTAS = [
+    { id: 'venta', icon: '🛒', nombre: 'Venta / Insumos' },
+];
+// Historial queda aparte: mezcla registros de servicio y de venta, no es de un solo dominio.
+const MENU_HISTORIAL = [
+    { id: 'historial', icon: '📋', nombre: 'Historial' },
 ];
 
 const MENU_OPERACIONES_TECNICO = [
@@ -39,7 +47,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
     const { montosVisibles, toggleMontos } = useMontos();
     const { usuario, logout, esAdmin } = useAuth();
     const { pendientes, ordenesActivas } = useBadges();
-    const menuOperaciones = esAdmin ? MENU_OPERACIONES_ADMIN : MENU_OPERACIONES_TECNICO;
+    const menuOperaciones = esAdmin ? null : MENU_OPERACIONES_TECNICO; // null = admin usa los grupos por dominio, se renderiza aparte
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
@@ -105,12 +113,36 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
 
             {/* NAVEGACIÓN */}
             <nav className={`flex-1 overflow-y-auto py-5 space-y-6 ${colapsado ? 'px-1.5' : 'px-4'}`}>
-                <div>
-                    {!colapsado && <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-[0.2em] mb-3 px-2">Operaciones</p>}
-                    <div className="space-y-1">
-                        {menuOperaciones.map(item => <MenuItem key={item.id} item={item} />)}
+                {esAdmin ? (
+                    <div className="space-y-4">
+                        {!colapsado && <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-[0.2em] mb-3 px-2">Operaciones</p>}
+                        <div className="space-y-1">
+                            {MENU_PANEL.map(item => <MenuItem key={item.id} item={item} />)}
+                        </div>
+                        <div>
+                            {!colapsado && <p className="text-[9px] font-bold text-[#A8A29E]/70 uppercase tracking-[0.15em] mb-2 px-2">🔧 Servicio</p>}
+                            <div className="space-y-1">
+                                {MENU_SERVICIO.map(item => <MenuItem key={item.id} item={item} />)}
+                            </div>
+                        </div>
+                        <div>
+                            {!colapsado && <p className="text-[9px] font-bold text-[#A8A29E]/70 uppercase tracking-[0.15em] mb-2 px-2">🛒 Ventas</p>}
+                            <div className="space-y-1">
+                                {MENU_VENTAS.map(item => <MenuItem key={item.id} item={item} />)}
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            {MENU_HISTORIAL.map(item => <MenuItem key={item.id} item={item} />)}
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div>
+                        {!colapsado && <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-[0.2em] mb-3 px-2">Operaciones</p>}
+                        <div className="space-y-1">
+                            {menuOperaciones.map(item => <MenuItem key={item.id} item={item} />)}
+                        </div>
+                    </div>
+                )}
                 {esAdmin && (
                     <div>
                         {!colapsado && <p className="text-[9px] font-black text-[#A8A29E] uppercase tracking-[0.2em] mb-3 px-2">Gestión</p>}
