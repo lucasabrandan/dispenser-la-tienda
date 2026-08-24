@@ -19,7 +19,7 @@ const HORARIOS_LABORALES = Array.from({ length: ((17 - 8) * 2) + 1 }, (_, i) => 
     return `${hh}:${mm}`;
 });
 
-const INPUT = `w-full px-3 py-2.5 rounded-xl text-[13px] font-medium outline-none
+const INPUT = `w-full px-3 py-2.5 rounded-xl text-body font-medium outline-none
     bg-chip
     text-ink
     border border-black/[0.07] dark:border-white/[0.07]
@@ -27,7 +27,7 @@ const INPUT = `w-full px-3 py-2.5 rounded-xl text-[13px] font-medium outline-non
     focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
     transition-all`;
 
-const LABEL = 'block text-[10px] font-black text-muted uppercase tracking-widest mb-1.5';
+const LABEL = 'block text-label font-black text-muted uppercase tracking-widest mb-1.5';
 
 /**
  * ModalDespacharPresupuesto
@@ -127,14 +127,14 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                             <h3 className="text-[16px] font-black text-ink uppercase leading-none">
                                 Despachar visita
                             </h3>
-                            <p className="text-[12px] font-bold text-muted mt-1 leading-tight">
+                            <p className="text-body font-bold text-muted mt-1 leading-tight">
                                 {presupuesto.clienteNombre}
                                 {presupuesto.sedeNombre ? ` · ${presupuesto.sedeNombre}` : ''}
                             </p>
                         </div>
                         <div className="text-right shrink-0 ml-4">
-                            <p className="text-[10px] font-black text-muted uppercase">Monto</p>
-                            <p className="text-[18px] font-black text-brand-amber leading-none">
+                            <p className="text-label font-black text-muted uppercase">Monto</p>
+                            <p className="text-body-lg font-black text-brand-amber leading-none">
                                 ${total.toLocaleString('es-AR')}
                             </p>
                         </div>
@@ -145,38 +145,38 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                         <div className="px-6 pb-6 space-y-4">
                             <div className="py-6 text-center">
                                 <p className="text-[36px] mb-2">✅</p>
-                                <p className="text-[15px] font-black text-ink">
+                                <p className="text-body-lg font-black text-ink">
                                     Orden creada
                                 </p>
-                                <p className="text-[12px] text-muted mt-1">
+                                <p className="text-caption text-muted mt-1">
                                     {tecnicoAsignado?.nombre || 'Técnico'} — {form.fechaProgramada}{form.horaEstimada ? ` a las ${form.horaEstimada}` : ''}
                                 </p>
                             </div>
 
                             {/* Resumen de lo que verá el técnico */}
                             <div className="p-3 rounded-2xl bg-panel space-y-1.5">
-                                <p className="text-[10px] font-black text-muted uppercase tracking-widest">El técnico verá en Mis Órdenes</p>
-                                <p className="text-[13px] font-black text-ink">
+                                <p className="text-label font-black text-muted uppercase tracking-widest">El técnico verá en Mis Órdenes</p>
+                                <p className="text-body font-black text-ink">
                                     Visita · {presupuesto.clienteNombre}
                                 </p>
-                                <div className="flex items-center gap-3 text-[11px] text-muted">
+                                <div className="flex items-center gap-3 text-caption text-muted">
                                     <span>📅 {form.fechaProgramada}</span>
                                     {form.horaEstimada && <span>🕐 {form.horaEstimada}</span>}
                                     <span className="capitalize">{form.prioridad.toLowerCase()}</span>
                                 </div>
                                 {presupuesto.items?.length > 0 && (
-                                    <p className="text-[11px] text-secondary leading-snug">
+                                    <p className="text-caption text-secondary leading-snug">
                                         {presupuesto.items.slice(0, 2).map(it => it.trabajoRealizado).filter(Boolean).join(' · ')}
                                     </p>
                                 )}
                             </div>
 
                             <button onClick={abrirWhatsApp}
-                                className="w-full py-3.5 rounded-2xl font-black text-[11px] uppercase text-white bg-[#25D366] active:scale-95">
+                                className="w-full py-3.5 rounded-2xl font-black text-label uppercase text-white bg-[#25D366] active:scale-95">
                                 💬 Avisar por WhatsApp a {tecnicoAsignado?.nombre || 'Técnico'}
                             </button>
                             <button onClick={onCerrar}
-                                className="w-full py-3.5 rounded-2xl font-black text-[11px] uppercase text-white bg-brand-red active:scale-95">
+                                className="w-full py-3.5 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95">
                                 Listo
                             </button>
                         </div>
@@ -224,7 +224,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                             {PRIORIDADES.map(p => (
                                                 <button key={p.value} type="button"
                                                     onClick={() => set('prioridad', p.value)}
-                                                    className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase transition-all active:scale-95 ${
+                                                    className={`flex-1 py-2 rounded-xl text-label font-black uppercase transition-all active:scale-95 ${
                                                         form.prioridad === p.value
                                                             ? 'bg-brand-red text-white'
                                                             : 'bg-chip text-secondary'
@@ -238,13 +238,13 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                     {/* Qué verá el técnico — preview */}
                                     {form.tecnicoId && form.fechaProgramada && (
                                         <div className="p-3 rounded-xl bg-panel border-[0.5px] border-black/[0.06]">
-                                            <p className="text-[9px] font-black text-muted uppercase tracking-widest mb-1.5">
+                                            <p className="text-label font-black text-muted uppercase tracking-widest mb-1.5">
                                                 Preview · aparecerá en Mis Órdenes
                                             </p>
-                                            <p className="text-[12px] font-black text-ink">
+                                            <p className="text-body font-black text-ink">
                                                 {tecnicos.find(t => String(t.id) === String(form.tecnicoId))?.nombre}
                                             </p>
-                                            <p className="text-[11px] text-muted mt-0.5">
+                                            <p className="text-caption text-muted mt-0.5">
                                                 📅 {form.fechaProgramada}{form.horaEstimada ? ` · 🕐 ${form.horaEstimada}` : ''}
                                             </p>
                                         </div>
@@ -253,11 +253,11 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                     {/* Botones */}
                                     <div className="flex gap-2 pt-1">
                                         <button type="button" onClick={onCerrar}
-                                            className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-chip text-secondary active:scale-95">
+                                            className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95">
                                             Cancelar
                                         </button>
                                         <button type="button" onClick={handleGuardar} disabled={guardando}
-                                            className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white bg-brand-amber active:scale-95 disabled:opacity-50">
+                                            className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-amber active:scale-95 disabled:opacity-50">
                                             {guardando ? 'Creando orden…' : '📬 Despachar'}
                                         </button>
                                     </div>
