@@ -25,8 +25,8 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
     return (
         <div className={`rounded-2xl overflow-hidden bg-[#FFFFFF] dark:bg-[#242424] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
             style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${ejecutado ? '#16A34A' : '#D48800'}` }}>
-            <div className="p-4">
-                <div className="flex items-start gap-2 mb-2.5">
+            <div className="p-3">
+                <div className="flex items-start gap-2 mb-1.5">
                     {modoSeleccion && (
                         <button onClick={() => onToggleSelect(s.id)}
                             className={`mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-all ${seleccionado ? 'bg-[#D13A28] border-[#D13A28]' : 'border-[#E8E5E0] dark:border-[#3E3E3E]'}`}>
@@ -50,15 +50,16 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                     </div>
                 </div>
 
-                <p className="font-black text-[16px] leading-tight text-[#1C1917] dark:text-[#F0EEE9] mb-1">{s.clienteNombre}</p>
+                <p className="font-black text-[16px] leading-tight text-[#1C1917] dark:text-[#F0EEE9] mb-0.5">{s.clienteNombre}</p>
 
-                <div className="flex items-center gap-3 text-[13px] text-[#A8A29E] flex-wrap">
-                    {s.sedeNombre    && <span>📍 {s.sedeNombre}</span>}
-                    {s.usuarioNombre && <span>👤 {s.usuarioNombre}</span>}
-                </div>
+                {(s.sedeNombre || s.usuarioNombre) && (
+                    <p className="truncate text-[12px] text-[#A8A29E]">
+                        {[s.sedeNombre && `📍 ${s.sedeNombre}`, s.usuarioNombre && `👤 ${s.usuarioNombre}`].filter(Boolean).join(' · ')}
+                    </p>
+                )}
 
                 {(seriales.length > 0 || ubicInfo) && (
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {seriales.slice(0, 2).map((sr, i) => (
                             <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">{sr}</span>
                         ))}
@@ -73,7 +74,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
                 {items.length > 0 && (
                     <button onClick={() => setExpandido(v => !v)}
-                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
+                        className="mt-2 w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
                         <span>Detalle · {items.length} ítem{items.length > 1 ? 's' : ''}</span>
                         <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
                     </button>
@@ -108,7 +109,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                 ))}
             </div>
 
-            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
                 <IconBtn onClick={() => onPDF(s)} title="PDF" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">📄</IconBtn>
                 {onEditar && (
                     <IconBtn onClick={() => onEditar(s)} title="Editar" cls="bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94]">✏️</IconBtn>
