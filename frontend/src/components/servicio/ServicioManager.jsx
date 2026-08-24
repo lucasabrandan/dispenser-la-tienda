@@ -17,8 +17,10 @@ import DetalleSheet from '../servicio/DetalleSheet';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import DateInput from '../ui/DateInput';
 
+// "Presupuestos" (estado PRESUPUESTO) ya no es un tab acá — es la pantalla dedicada del
+// sidebar (con Cotizar / Ver ruta), para no mostrar la misma data pendiente en dos lugares.
+// Servicio Tecnico arranca directamente en lo que ya esta aprobado / en curso de cobro.
 const TABS = [
-    { id: 'PRESUPUESTO',           label: 'Presupuestos', short: 'Ppto',     color: '#D48800', icon: '💰' },
     { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar', color: '#8B5CF6', icon: '📋' },
     { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', icon: '📄' },
     { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', icon: '✅' },
@@ -72,7 +74,7 @@ export default function ServicioManager({
     const [tabCounts, setTabCounts]                 = useState({});
     const [tabAntesBusqueda, setTabAntesBusqueda]   = useState(null);
 
-    const tabActual = filtros.estado || 'PRESUPUESTO';
+    const tabActual = filtros.estado || 'PENDIENTE_FACTURACION';
     const enBusquedaGlobal = tabActual === 'TODOS' && !!filtros.busqueda;
 
     // Auto-switch a TODOS cuando se escribe búsqueda, volver al tab anterior al borrar

@@ -30,7 +30,7 @@ export function useServicioManager() {
     // ── Filtros (interfaz compatible con FiltrosPanel) ──────────────────────────
     const [busquedaInput, setBusquedaInput]   = useState('');
     const [busquedaApi, setBusquedaApi]       = useState('');
-    const [estado, setEstadoInternal]         = useState('PRESUPUESTO');
+    const [estado, setEstadoInternal]         = useState('PENDIENTE_FACTURACION');
     const [periodoRapido, setPeriodoRapido]   = useState('MES');
     const [mesSelector, setMesSelector]       = useState('');
     const [desde, setDesde]                   = useState('');
