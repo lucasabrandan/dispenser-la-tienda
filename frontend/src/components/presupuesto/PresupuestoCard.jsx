@@ -34,11 +34,11 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                         </button>
                     )}
                     <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${esTecnico ? 'bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F]' : 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]'}`}>
+                        <span className={`text-[11px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${esTecnico ? 'bg-[#D13A28]/10 text-[#D13A28] dark:text-[#E8422F]' : 'bg-[#D48800]/10 text-[#D48800] dark:text-[#F0A500]'}`}>
                             {esTecnico ? '🔧 Servicio' : '🛒 Venta'}
                         </span>
                         {ejecutado && (
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
+                            <span className="text-[11px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
                                 ✓ Ejecutado
                             </span>
                         )}
@@ -52,7 +52,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
                 <p className="font-black text-[16px] leading-tight text-[#1C1917] dark:text-[#F0EEE9] mb-1">{s.clienteNombre}</p>
 
-                <div className="flex items-center gap-3 text-[11px] text-[#A8A29E] flex-wrap">
+                <div className="flex items-center gap-3 text-[13px] text-[#A8A29E] flex-wrap">
                     {s.sedeNombre    && <span>📍 {s.sedeNombre}</span>}
                     {s.usuarioNombre && <span>👤 {s.usuarioNombre}</span>}
                 </div>
@@ -73,7 +73,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
                 {items.length > 0 && (
                     <button onClick={() => setExpandido(v => !v)}
-                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
+                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]">
                         <span>Detalle · {items.length} ítem{items.length > 1 ? 's' : ''}</span>
                         <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
                     </button>
@@ -83,7 +83,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                     <div key={i} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05]">
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
-                                <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F]">
+                                <span className="text-[13px] font-black text-[#D13A28] dark:text-[#E8422F]">
                                     {it.equipoSerial !== 'MOSTRADOR' ? it.equipoSerial : 'Mostrador'}
                                 </span>
                                 {(it.equipoUbicacion || it.equipoPiso || it.equipoSector) && (
@@ -94,7 +94,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                             </div>
                             <M valor={Number(it.costo || 0)} className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0 ml-2" />
                         </div>
-                        <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{it.trabajoRealizado}</p>
+                        <p className="text-[13px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{it.trabajoRealizado}</p>
                         {it.repuestosUsados?.length > 0 && (
                             <div className="mt-1.5 pt-1.5 border-t border-black/[0.05] dark:border-white/[0.05] flex flex-wrap gap-1">
                                 {it.repuestosUsados.map((r, ri) => (
@@ -143,7 +143,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                 <div className="flex-1" />
 
                 <button onClick={() => onEjecutar(s)}
-                    className="h-9 px-4 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                    className="h-9 px-4 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
                     {ejecutado ? '✓ Ejecutado' : '⚡ Ejecutar y cobrar'}
                 </button>
             </div>

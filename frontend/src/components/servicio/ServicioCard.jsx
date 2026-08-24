@@ -119,7 +119,7 @@ export default function ServicioCard({
                         </button>
                     )}
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${badge.cls}`}>
+                        <span className={`text-[11px] font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${badge.cls}`}>
                             {badge.label}
                         </span>
                         {esPpto && diasPendiente > 0 && (
@@ -144,7 +144,7 @@ export default function ServicioCard({
                 </p>
 
                 {/* Fila 3: sede + técnico + modalidad cobro */}
-                <div className="flex items-center gap-3 text-[11px] text-[#A8A29E] flex-wrap">
+                <div className="flex items-center gap-3 text-[13px] text-[#A8A29E] flex-wrap">
                     {servicio.sedeNombre    && <span>📍 {servicio.sedeNombre}</span>}
                     {servicio.usuarioNombre && <span>👤 {servicio.usuarioNombre}</span>}
                     {servicio.modalidadCobro && (
@@ -210,7 +210,7 @@ export default function ServicioCard({
                 {items.length > 0 && (
                     <button
                         onClick={() => setExpandido(v => !v)}
-                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]"
+                        className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-bold transition-all active:scale-[0.98] bg-[#EFEDEA] dark:bg-[#1C1C1C] text-[#57534E] dark:text-[#9E9A94]"
                     >
                         <span>Detalle trabajo · {items.length} equipo{items.length > 1 ? 's' : ''}</span>
                         <span className="text-[10px]">{expandido ? '▲' : '▼'}</span>
@@ -222,7 +222,7 @@ export default function ServicioCard({
                     <div key={`${it.equipoSerial || 'item'}-${i}`} className="mt-2 p-3 rounded-xl bg-[#EFEDEA] dark:bg-[#1C1C1C] border border-black/[0.05]">
                         <div className="flex justify-between items-start mb-1.5">
                             <div className="min-w-0">
-                                <span className="text-[12px] font-black text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
+                                <span className="text-[13px] font-black text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
                                 {(it.equipoUbicacion || it.equipoPiso || it.equipoSector) && (
                                     <p className="text-[10px] text-[#A8A29E] mt-0.5 truncate">
                                         {[it.equipoUbicacion, it.equipoPiso && `Piso ${it.equipoPiso}`, it.equipoSector].filter(Boolean).join(' · ')}
@@ -231,11 +231,11 @@ export default function ServicioCard({
                             </div>
                             <M valor={Number(it.costo || 0)} className="text-[12px] font-black text-[#1C1917] dark:text-[#F0EEE9] shrink-0 ml-2" />
                         </div>
-                        <p className="text-[11px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{it.trabajoRealizado}</p>
+                        <p className="text-[13px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{it.trabajoRealizado}</p>
                         {it.garantiaHasta && (() => {
                             const g = estadoGarantia(it.garantiaHasta);
                             return (
-                                <p className={`text-[10px] font-black mt-1 ${g.vigente ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>
+                                <p className={`text-[11px] font-black mt-1 ${g.vigente ? 'text-[#16A34A] dark:text-[#4ADE80]' : 'text-[#D13A28] dark:text-[#E8422F]'}`}>
                                     {g.vigente
                                         ? `🛡️ Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
                                         : `⏳ Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
@@ -279,7 +279,7 @@ export default function ServicioCard({
                                             { label: 'Margen',   pct: g.margen, green: true },
                                         ].map((item, idx) => (
                                             <div key={idx}>
-                                                <p className="text-[8px] uppercase tracking-wide font-bold text-[#A8855A] dark:text-[#5C5954] mb-0.5">{item.label}</p>
+                                                <p className="text-[9px] uppercase tracking-wide font-bold text-[#A8855A] dark:text-[#5C5954] mb-0.5">{item.label}</p>
                                                 {item.pct !== undefined
                                                     ? <p className="text-[12px] font-black text-[#5C3D00] dark:text-[#5DD68F]">{item.pct}%</p>
                                                     : <M valor={Math.round(item.val)} className={`text-[12px] font-black ${item.green ? 'text-[#5C3D00] dark:text-[#5DD68F]' : 'text-[#1C1917] dark:text-[#F0EEE9]'}`} />
@@ -354,25 +354,25 @@ export default function ServicioCard({
                 {/* Derecha: accion principal del estado */}
                 {esPpto && (
                     <button onClick={() => onEjecutar(servicio)}
-                        className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
+                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#D48800] dark:bg-[#F0A500]">
                         Ejecutar
                     </button>
                 )}
                 {esComp && (
                     <button onClick={() => onAbrirCobro ? onAbrirCobro(servicio) : onCobrar(servicio.id, 'COBRADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
+                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
                         Definir cobro
                     </button>
                 )}
                 {esPendFact && (
                     <button onClick={() => onCobrar(servicio.id, 'FACTURADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#6366F1]">
+                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#6366F1]">
                         Factura enviada
                     </button>
                 )}
                 {esFact && (
                     <button onClick={() => onCobrar(servicio.id, 'COBRADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-[11px] text-white shrink-0 active:scale-95 transition-all bg-[#16A34A]">
+                        className="h-8 px-3 rounded-xl font-bold text-[13px] text-white shrink-0 active:scale-95 transition-all bg-[#16A34A]">
                         Cobrado
                     </button>
                 )}
