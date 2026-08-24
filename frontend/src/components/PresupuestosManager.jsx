@@ -5,6 +5,7 @@ import { useFiltros } from '../hooks/useFiltros';
 import { useMontos } from '../context/MontosContext';
 import { useAuth } from '../context/AuthContext';
 import Paginacion from './ui/Paginacion';
+import FiltrosPanel from './ui/FiltrosPanel';
 import SwipeColumns from './ui/SwipeColumns';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import ModalCotizacionVolumen from './presupuesto/ModalCotizacionVolumen';
@@ -14,6 +15,7 @@ import ServicioForm from './servicio/ServicioForm';
 import PresupuestoCard from './presupuesto/PresupuestoCard';
 import { M } from './servicio/ServicioUI';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
+import { mesKeyDeFecha, formatMesLargo } from '../utils/dateUtils';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function buildGoogleMapsRouteUrl(direcciones) {
@@ -171,7 +173,7 @@ export default function PresupuestosManager() {
     }, [presupuestosConNro, tipoFiltro]);
 
     const filtros = useFiltros(presupuestosFiltradosTipo, {
-        porPagina: 10, campoFecha: 'fecha',
+        porPagina: 10, campoFecha: 'fecha', periodoInicial: 'MES',
         campoBusqueda: ['clienteNombre', 'sedeNombre', 'clienteTelefono', 'observaciones', 'nroDocPdf'],
         campoBusquedaFn: (s) => s.items?.map(it =>
             [it.equipoSerial, it.equipoModelo, it.equipoUbicacion].filter(Boolean).join(' ')
@@ -243,6 +245,9 @@ export default function PresupuestosManager() {
                     onChangeColumn={(id) => { setTipoFiltro(id); setModoSeleccion(false); setSeleccionados(new Set()); }}
                 />
 
+                {/* ═══ PERÍODO — arranca en "Este mes" para no mezclar todo el historico ═══ */}
+                <FiltrosPanel hook={filtros} conBusqueda={false} conRango />
+
                 {/* Stats resumen — monto total pendiente + ver ruta */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <span className="text-[11px] font-bold text-[#A8A29E] flex-1 text-center">Pendiente total</span>
@@ -289,8 +294,18 @@ export default function PresupuestosManager() {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-2">
-                        {filtros.itemsPagina.map(s => (
-                            <div key={s.id}
+                        {filtros.itemsPagina.map((s, idx) => {
+                            const mesKey = mesKeyDeFecha(s.fecha);
+                            const mesAnterior = idx > 0 ? mesKeyDeFecha(filtros.itemsPagina[idx - 1].fecha) : null;
+                            const mostrarHeaderMes = mesKey && mesKey !== mesAnterior;
+                            return (
+                            <React.Fragment key={s.id}>
+                            {mostrarHeaderMes && (
+                                <p className="px-1 pt-1 pb-0.5 text-[11px] font-black uppercase tracking-wide text-[#A8A29E]">
+                                    {formatMesLargo(mesKey)}
+                                </p>
+                            )}
+                            <div
                                 onTouchStart={() => iniciarLongPress(s.id)} onTouchEnd={cancelarLongPress} onTouchMove={cancelarLongPress}
                                 onMouseDown={() => iniciarLongPress(s.id)} onMouseUp={cancelarLongPress} onMouseLeave={cancelarLongPress}>
                             <PresupuestoCard s={s}
@@ -306,7 +321,9 @@ export default function PresupuestosManager() {
                                 onToggleSelect={toggleSeleccion}
                             />
                             </div>
-                        ))}
+                            </React.Fragment>
+                            );
+                        })}
                     </div>
                 )}
 

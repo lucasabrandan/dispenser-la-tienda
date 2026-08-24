@@ -9,7 +9,7 @@ import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import { useMontos } from '../../context/MontosContext';
-import { estadoGarantia } from '../../utils/dateUtils';
+import { estadoGarantia, mesKeyDeFecha, formatMesLargo } from '../../utils/dateUtils';
 
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
@@ -63,7 +63,7 @@ export default function ServicioList({ onEditar }) {
     const [servicios, setServicios]       = useState([]);
     const [modalDetalle, setModalDetalle] = useState(null);
     const [tipoFiltro, setTipoFiltro]     = useState('TODOS');
-    const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [mostrarFiltros, setMostrarFiltros] = useState(true);
     const [seleccionando, setSeleccionando] = useState(false);
     const [seleccionadas, setSeleccionadas] = useState(new Set());
     const [confirmMasivo, setConfirmMasivo] = useState(false);
@@ -149,6 +149,7 @@ export default function ServicioList({ onEditar }) {
         porPagina: 10,
         campoFecha: 'fecha',
         campoEstado: 'estado',
+        periodoInicial: 'MES',
         campoBusqueda: ['clienteNombre', 'sedeNombre', 'clienteTelefono', 'observaciones', 'nroDocPdf'],
         campoBusquedaFn: (s) => s.items?.map(it =>
             [it.equipoSerial, it.equipoModelo, it.equipoUbicacion].filter(Boolean).join(' ')
@@ -263,16 +264,25 @@ export default function ServicioList({ onEditar }) {
                                 <p className="text-2xl mb-1">📋</p>
                                 <p className="text-[12px] font-bold text-[#A8A29E]">No se encontraron registros</p>
                             </div>
-                        ) : filtros.itemsPagina.map(s => {
+                        ) : filtros.itemsPagina.map((s, idx) => {
                             const badge = badgeTipo(s);
                             const costo = calcularCosto(s);
                             const esPendiente = s.estado === 'PRESUPUESTO';
                             const borderColor = s.servicioTipo === 'TECNICA'
                                 ? 'border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]'
                                 : 'border-l-[3px] border-l-[#16A34A]';
+                            const mesKey = mesKeyDeFecha(s.fecha);
+                            const mesAnterior = idx > 0 ? mesKeyDeFecha(filtros.itemsPagina[idx - 1].fecha) : null;
+                            const mostrarHeaderMes = mesKey && mesKey !== mesAnterior;
 
                             return (
-                                <div key={s.id}
+                                <React.Fragment key={s.id}>
+                                {mostrarHeaderMes && (
+                                    <p className="px-1 pt-1 pb-0.5 text-[11px] font-black uppercase tracking-wide text-[#A8A29E]">
+                                        {formatMesLargo(mesKey)}
+                                    </p>
+                                )}
+                                <div
                                     className={`${card} ${borderColor} transition-all ${seleccionando && seleccionadas.has(s.id) ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''}`}
                                     onClick={seleccionando ? () => toggleSel(s.id) : undefined}>
                                     <div className="p-3.5">
@@ -346,6 +356,7 @@ export default function ServicioList({ onEditar }) {
                                         </div>
                                     )}
                                 </div>
+                                </React.Fragment>
                             );
                         })}
                     </div>

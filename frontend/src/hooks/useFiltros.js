@@ -9,12 +9,12 @@ const hoy = () => new Date();
  * Recibe un array de items con campo `fecha` (YYYY-MM-DD) y `estado` opcional.
  * Devuelve los items filtrados y paginados + helpers para los controles.
  */
-export function useFiltros(items = [], { porPagina = 15, campoFecha = 'fecha', campoEstado = 'estado', campoBusqueda = null, campoBusquedaFn = null } = {}) {
+export function useFiltros(items = [], { porPagina = 15, campoFecha = 'fecha', campoEstado = 'estado', campoBusqueda = null, campoBusquedaFn = null, periodoInicial = 'TODO' } = {}) {
 
     const [pagina,       setPagina]       = useState(1);
     const [busqueda,     setBusqueda]     = useState('');
     const [estado,       setEstado]       = useState('TODOS');
-    const [periodoRapido,setPeriodoRapido]= useState('TODO');   // MES | MES_ANT | ANO | TODO | CUSTOM
+    const [periodoRapido,setPeriodoRapido]= useState(periodoInicial);   // MES | MES_ANT | ANO | TODO | CUSTOM
     const [desde,        setDesde]        = useState('');
     const [hasta,        setHasta]        = useState('');
     const [mesSelector,  setMesSelector]  = useState('');      // "2026-03"

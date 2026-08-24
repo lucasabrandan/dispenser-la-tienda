@@ -15,6 +15,27 @@ export const inicioMes = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
 // Ultimo dia del mes de una fecha
 export const finMes = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 
+const MESES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// Extrae la clave "YYYY-MM" de una fecha en formato ISO (YYYY-MM-DD) o DD/MM/YYYY.
+// Se usa para agrupar listados por mes sin importar en qué formato venga la fecha.
+export function mesKeyDeFecha(f) {
+    if (!f) return '';
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+        const [, m, y] = f.split('/');
+        return `${y}-${m}`;
+    }
+    return f.slice(0, 7);
+}
+
+// "2026-08" -> "Agosto 2026"
+export function formatMesLargo(mesKey) {
+    if (!mesKey) return '';
+    const [y, m] = mesKey.split('-');
+    const idx = parseInt(m, 10) - 1;
+    return `${MESES_LARGO[idx] || ''} ${y}`.trim();
+}
+
 // Estado de garantía respecto de hoy, a partir de una fecha "hasta" (YYYY-MM-DD).
 // dias >= 0 y vigente = true  → días que quedan de garantía
 // dias <  0 y vigente = false → días que pasaron desde que venció
