@@ -30,7 +30,7 @@ const SIGUIENTE_ESTADO = {
     EN_SITIO:   { estado: 'COMPLETADA', label: '✓ Completar', color: 'bg-[#16A34A]' },
 };
 
-function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido }) {
+function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido, onVerServicio }) {
     const [expandido, setExpandido] = useState(false);
 
     const pr  = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
@@ -95,28 +95,30 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                         📝 {orden.notasTecnico}
                     </p>
                 )}
+
+                {/* Link al servicio — solo existe el dato para las que vinieron de un
+                    presupuesto; las de "Registrar trabajo" todavía no guardan ese id. */}
+                {esFinal && orden.estado === 'COMPLETADA' && orden.presupuestoId && (
+                    <button onClick={() => onVerServicio(orden)}
+                        className="mt-2 text-[11px] font-bold text-[#3B82F6] dark:text-[#60A5FA] active:opacity-60">
+                        Ver servicio →
+                    </button>
+                )}
             </div>
 
             {!esFinal && sig && (
                 <div className="flex flex-col gap-2 px-4 py-3 bg-[#EFEDEA] dark:bg-[#1C1C1C] border-t border-black/[0.06] dark:border-white/[0.06]">
-                    {orden.estado === 'EN_SITIO' && !orden.presupuestoId ? (
+                    {orden.estado === 'EN_SITIO' ? (
                         <>
-                            <button onClick={() => onRegistrarTrabajo(orden)}
+                            {/* Un solo botón con un solo texto — antes decía "Registrar trabajo"
+                                o "Ejecutar trabajo" según un dato invisible (si venía de un
+                                presupuesto). Adentro se decide solo qué formulario abrir. */}
+                            <button onClick={() => orden.presupuestoId ? onEjecutar(orden) : onRegistrarTrabajo(orden)}
                                 className="w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
-                                Registrar trabajo
+                                Cerrar trabajo
                             </button>
                             <p className="text-[10px] text-center text-[#A8A29E] font-bold">
-                                Registra el trabajo y repuestos antes de cerrar
-                            </p>
-                        </>
-                    ) : orden.estado === 'EN_SITIO' && orden.presupuestoId ? (
-                        <>
-                            <button onClick={() => onEjecutar(orden)}
-                                className="w-full py-2.5 rounded-xl font-black text-[13px] text-white active:scale-95 transition-all bg-[#D13A28] dark:bg-[#E8422F]">
-                                Ejecutar trabajo
-                            </button>
-                            <p className="text-[10px] text-center text-[#A8A29E] font-bold">
-                                Completá el trabajo para registrar repuestos y generar PDF
+                                Completá los datos del trabajo para cerrar la orden
                             </p>
                         </>
                     ) : (
@@ -317,6 +319,20 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [ordenRegistrando, setOrdenRegistrando] = useState(null);
     const [noAtendidoOrden, setNoAtendidoOrden] = useState(null);
     const [notaNoAtendido, setNotaNoAtendido] = useState('');
+    const [servicioDetalle, setServicioDetalle] = useState(null);
+    const [cargandoDetalle, setCargandoDetalle] = useState(false);
+
+    const verServicio = async (orden) => {
+        setCargandoDetalle(true);
+        try {
+            const res = await api.get(`/servicios/${orden.presupuestoId}`);
+            setServicioDetalle(res.data);
+        } catch {
+            toast.error('No se pudo cargar el servicio');
+        } finally {
+            setCargandoDetalle(false);
+        }
+    };
 
     const handleNoAtendido = async () => {
         if (!noAtendidoOrden) return;
@@ -456,7 +472,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             </p>
                             <div className="space-y-2">
                                 {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} />
+                                    <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} onVerServicio={verServicio} />
                                 ))}
                             </div>
                         </div>
@@ -507,6 +523,47 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 onConfirmado={handleConfirmado}
                 onCerrar={() => { setServicioEjecutando(null); setOrdenEjecutandoId(null); }}
             />
+        )}
+
+        {/* Detalle del servicio — link "Ver servicio" desde Completadas (hallazgo 07) */}
+        {(cargandoDetalle || servicioDetalle) && (
+            <div className="fixed inset-0 z-[3000] flex items-end bg-black/50" onClick={() => setServicioDetalle(null)}>
+                <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 bg-white dark:bg-[#242424] border-t border-black/[0.05] dark:border-white/[0.05]"
+                    onClick={e => e.stopPropagation()}>
+                    <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-[#E8E5E0] dark:bg-[#2E2E2E]" />
+                    {cargandoDetalle ? (
+                        <p className="text-center text-[#A8A29E] py-8">Cargando...</p>
+                    ) : (
+                        <>
+                            <h3 className="text-[16px] font-black mb-1 text-[#1C1917] dark:text-[#F0EEE9]">
+                                Servicio — {servicioDetalle.clienteNombre}
+                            </h3>
+                            <p className="text-[11px] text-[#A8A29E] mb-4">#{servicioDetalle.id} · {servicioDetalle.fecha}</p>
+                            <div className="max-h-[50vh] overflow-y-auto space-y-2 mb-4">
+                                {(servicioDetalle.items || []).map((it, idx) => (
+                                    <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.04] dark:border-white/[0.04]">
+                                        <div className="flex justify-between mb-1">
+                                            <span className="font-bold text-[13px] text-[#D13A28] dark:text-[#E8422F]">{it.equipoSerial}</span>
+                                            <span className="font-black text-[14px] text-[#1C1917] dark:text-[#F0EEE9]">${Number(it.costo || 0).toLocaleString('es-AR')}</span>
+                                        </div>
+                                        <p className="text-[12px] text-[#57534E] dark:text-[#9E9A94] leading-snug">{it.trabajoRealizado}</p>
+                                        {it.repuestosUsados?.length > 0 && (
+                                            <p className="text-[10px] text-[#A8A29E] pt-2 mt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
+                                                <span className="font-bold">Repuestos: </span>
+                                                {it.repuestosUsados.map(r => `${r.cantidad}x ${r.nombre}`).join(', ')}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => setServicioDetalle(null)}
+                                className="w-full py-3 rounded-xl font-bold text-sm text-white active:scale-95 bg-[#1C1917] dark:bg-[#F0EEE9] dark:text-[#1C1917]">
+                                Cerrar
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
         )}
         </>
     );
