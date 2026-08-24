@@ -30,6 +30,15 @@ const ESTADO_TABS = [
     { id: 'FINAL',      label: 'Finalizadas', fullLabel: 'Finalizadas', color: '#16A34A', icon: '✅' },
 ];
 
+// Mismo atajo que ya tiene el técnico en su celu (Salir/Llegué) — antes vos no
+// tenías forma de empujar una orden si a Marcos se le corta la batería o se
+// olvida. Se corta en "En sitio" a propósito: cerrar el trabajo pide datos
+// (costo, modalidad de cobro) que no tiene sentido completar a ciegas por él.
+const SIGUIENTE_ESTADO_ADMIN = {
+    PENDIENTE: { estado: 'EN_CAMINO', label: '🚗 Salió',  color: 'bg-[#3B82F6]' },
+    EN_CAMINO: { estado: 'EN_SITIO',  label: '📍 Llegó',  color: 'bg-[#D48800] dark:bg-[#F0A500]' },
+};
+
 function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, seleccionada, onToggleSel }) {
     const [expanded, setExpanded] = useState(false);
     const [confirmElim, setConfirmElim] = useState(false);
@@ -122,6 +131,12 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                         <button onClick={() => onEditar(orden)}
                             className="h-9 px-3 rounded-xl font-bold text-[11px] bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#9E9A94] active:scale-95">
                             ✏️ Editar
+                        </button>
+                    )}
+                    {SIGUIENTE_ESTADO_ADMIN[orden.estado] && (
+                        <button onClick={() => onAvanzar(orden.id, SIGUIENTE_ESTADO_ADMIN[orden.estado].estado)}
+                            className={`h-9 px-3 rounded-xl font-bold text-[11px] text-white active:scale-95 ${SIGUIENTE_ESTADO_ADMIN[orden.estado].color}`}>
+                            {SIGUIENTE_ESTADO_ADMIN[orden.estado].label}
                         </button>
                     )}
                     <div className="flex-1" />
