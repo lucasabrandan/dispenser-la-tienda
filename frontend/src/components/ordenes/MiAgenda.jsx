@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { formatDateISO } from '../../utils/dateUtils';
+import { formatDateISO, lunesDeLaSemana } from '../../utils/dateUtils';
 
 const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-[#E8E5E0] dark:bg-[#2E2E2E] text-[#1C1917] dark:text-[#F0EEE9] text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-[#A8A29E]';
 const labelCls = 'block text-[10px] font-black text-[#A8A29E] uppercase tracking-wider mb-1';
 
-// Generar dias de la semana (lunes a sabado)
+// Generar dias de la semana (lunes a sabado) — misma cuenta de "lunes de la
+// semana" que usa WeekDatePicker.jsx, centralizada en dateUtils.js.
 function generarSemana(offset = 0) {
-    const hoy = new Date();
-    const dia = hoy.getDay(); // 0=dom
-    const diffLunes = dia === 0 ? -6 : 1 - dia;
-    const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() + diffLunes + (offset * 7));
+    const lunes = lunesDeLaSemana(new Date());
+    lunes.setDate(lunes.getDate() + offset * 7);
     const dias = [];
     for (let i = 0; i < 6; i++) {
         const d = new Date(lunes);

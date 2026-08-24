@@ -1,28 +1,14 @@
 import React, { useState, useMemo } from 'react';
-
-function lunesDeLaSemana(fecha) {
-    const d = new Date(fecha);
-    const dow = d.getDay(); // 0=domingo, 1=lunes...
-    const offset = dow === 0 ? -6 : 1 - dow;
-    d.setDate(d.getDate() + offset);
-    d.setHours(0, 0, 0, 0);
-    return d;
-}
-
-function formatISO(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-}
+import { lunesDeLaSemana, formatDateISO } from '../../utils/dateUtils';
 
 /**
  * WeekDatePicker
  * Selector de fecha por semana — mismo lenguaje visual que el Planificador del
- * Panel (grilla Lun-Sáb, hoy con anillo, seleccionado en oscuro). Arranca
- * siempre en la semana actual (calendario real, no "hoy + 7 días") y deja
- * navegar hacia adelante o hacia atrás con las flechas — para la carga
- * histórica se puede ir para atrás las semanas que hagan falta.
+ * Panel y MiAgenda (grilla Lun-Sáb, tarjeta blanca con sombra/borde, hoy con
+ * anillo, seleccionado en oscuro). Arranca siempre en la semana actual
+ * (calendario real, no "hoy + 7 días") y deja navegar hacia adelante o hacia
+ * atrás con las flechas — para la carga histórica se puede ir para atrás las
+ * semanas que hagan falta.
  */
 export default function WeekDatePicker({ value, onChange }) {
     const hoy = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
@@ -41,14 +27,14 @@ export default function WeekDatePicker({ value, onChange }) {
         return d;
     }), [lunesVisible]);
 
-    const hoyISO = formatISO(hoy);
+    const hoyISO = formatDateISO(hoy);
     const rangoLabel = `${dias[0].toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })} – ${dias[5].toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}`;
 
     return (
         <div>
             <div className="flex items-center justify-between mb-1.5">
                 <button type="button" onClick={() => setOffsetSemanas(o => o - 1)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px] font-black text-[#57534E] dark:text-[#9E9A94] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px] font-black text-[#57534E] dark:text-[#9E9A94] bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                     ‹
                 </button>
                 <div className="text-center leading-tight">
@@ -61,18 +47,18 @@ export default function WeekDatePicker({ value, onChange }) {
                     )}
                 </div>
                 <button type="button" onClick={() => setOffsetSemanas(o => o + 1)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px] font-black text-[#57534E] dark:text-[#9E9A94] bg-[#E8E5E0] dark:bg-[#2E2E2E] active:scale-90">
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[13px] font-black text-[#57534E] dark:text-[#9E9A94] bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                     ›
                 </button>
             </div>
             <div className="grid grid-cols-6 gap-1.5">
                 {dias.map(d => {
-                    const iso = formatISO(d);
+                    const iso = formatDateISO(d);
                     const sel = value === iso;
                     const esHoy = iso === hoyISO;
                     return (
                         <button key={iso} type="button" onClick={() => onChange(iso)}
-                            className={`rounded-lg py-2 text-center transition-all active:scale-95 ${esHoy ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''} ${sel ? 'bg-[#1C1917] dark:bg-[#F0EEE9]' : 'bg-[#E8E5E0] dark:bg-[#2E2E2E]'}`}>
+                            className={`rounded-lg py-2 text-center transition-all active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${esHoy ? 'ring-2 ring-[#D13A28] dark:ring-[#E8422F]' : ''} ${sel ? 'bg-[#1C1917] dark:bg-[#F0EEE9]' : 'bg-white dark:bg-[#242424]'}`}>
                             <p className={`text-[9px] font-bold uppercase ${sel ? 'text-white dark:text-[#1C1917]' : 'text-[#A8A29E]'}`}>
                                 {d.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
                             </p>
