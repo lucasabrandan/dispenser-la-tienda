@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { LuDownload, LuFolderOpen, LuCircleCheck, LuTriangleAlert, LuUpload } from 'react-icons/lu';
 
 const LABEL = 'block text-label font-black text-muted uppercase tracking-widest mb-1.5';
 
@@ -123,8 +124,8 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                                 Completala con tus datos en Google Sheets o Excel y guardala como CSV.
                             </p>
                             <button onClick={descargarPlantilla}
-                                className="px-4 py-2 rounded-xl text-label font-black text-white bg-brand-amber active:scale-95 transition-all">
-                                📥 Descargar plantilla CSV
+                                className="px-4 py-2 rounded-xl text-label font-black text-white bg-brand-amber active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                                <LuDownload size={14} /> Descargar plantilla CSV
                             </button>
                         </div>
 
@@ -144,7 +145,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         <div>
                             <label className={LABEL}>Paso 3 — Subí tu CSV</label>
                             <label className="flex flex-col items-center justify-center w-full py-6 rounded-xl border-2 border-dashed border-chip cursor-pointer hover:border-[#D13A28]/40 transition-all bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
-                                <span className="text-2xl mb-1">📂</span>
+                                <LuFolderOpen size={24} className="mb-1" />
                                 <span className="text-body font-black text-ink">
                                     {archivo ? archivo.name : 'Tocá para seleccionar archivo'}
                                 </span>
@@ -193,8 +194,8 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         {/* Resultado */}
                         {resultado && (
                             <div className={`p-4 rounded-2xl ${resultado.importados > 0 ? 'bg-[#D1FAE5] dark:bg-[#052E16]' : 'bg-[#FEE2E2] dark:bg-[#450A0A]'}`}>
-                                <p className="text-body-lg font-black text-ink mb-1">
-                                    {resultado.importados > 0 ? '✅' : '⚠️'} {resultado.importados} importados · {resultado.errores} errores
+                                <p className="text-body-lg font-black text-ink mb-1 flex items-center gap-1.5">
+                                    {resultado.importados > 0 ? <LuCircleCheck size={16} /> : <LuTriangleAlert size={16} />} {resultado.importados} importados · {resultado.errores} errores
                                 </p>
                                 {resultado.detalleErrores?.length > 0 && (
                                     <div className="mt-2 space-y-0.5">
@@ -215,8 +216,8 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         </button>
                         {!resultado && (
                             <button onClick={handleImportar} disabled={cargando || !archivo}
-                                className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95 disabled:opacity-40 transition-all">
-                                {cargando ? 'Importando...' : `📤 Importar ${totalFilas > 0 ? totalFilas + ' registros' : ''}`}
+                                className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95 disabled:opacity-40 transition-all flex items-center justify-center gap-1.5">
+                                {cargando ? 'Importando...' : (<><LuUpload size={14} /> Importar {totalFilas > 0 ? totalFilas + ' registros' : ''}</>)}
                             </button>
                         )}
                     </div>

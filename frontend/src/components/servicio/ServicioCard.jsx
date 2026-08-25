@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuClipboardList, LuPencil, LuCopy, LuArchive, LuTrash2 } from 'react-icons/lu';
+import { LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuClipboardList, LuPencil, LuCopy, LuArchive, LuTrash2, LuMapPin, LuUser } from 'react-icons/lu';
 import { useMontos } from '../../context/MontosContext';
 import IconBtn from '../ui/IconBtn';
 import ActionSheet from '../ui/ActionSheet';
@@ -144,9 +144,9 @@ export default function ServicioCard({
                     {(servicio.sedeNombre || servicio.usuarioNombre) && (
                         <p className="flex-1 min-w-0 truncate text-caption text-muted">
                             {[
-                                servicio.sedeNombre    && `📍 ${servicio.sedeNombre}`,
-                                servicio.usuarioNombre && `👤 ${servicio.usuarioNombre}`,
-                            ].filter(Boolean).join(' · ')}
+                                servicio.sedeNombre    && (<span key="sede" className="inline-flex items-center gap-0.5"><LuMapPin size={10} />{servicio.sedeNombre}</span>),
+                                servicio.usuarioNombre && (<span key="user" className="inline-flex items-center gap-0.5"><LuUser size={10} />{servicio.usuarioNombre}</span>),
+                            ].filter(Boolean).reduce((acc, cur, i) => i === 0 ? [cur] : [...acc, ' · ', cur], [])}
                         </p>
                     )}
                     {servicio.modalidadCobro && (

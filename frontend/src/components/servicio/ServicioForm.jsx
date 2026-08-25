@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { LuSave, LuLock } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import { useServicioForm } from '../../hooks/useServicioForm';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
@@ -210,8 +211,8 @@ export default function ServicioForm({
             {/* Banner borrador */}
             {borradorDisponible && !servicioParaEditar && (
                 <div className="mx-5 mt-4 p-3 rounded-xl bg-[#D48800]/10 border border-[#D48800]/30 flex items-center justify-between gap-3">
-                    <p className="text-[13px] font-bold text-brand-amber">
-                        💾 Tenés un trabajo sin guardar
+                    <p className="text-[13px] font-bold text-brand-amber flex items-center gap-1.5">
+                        <LuSave size={13} /> Tenés un trabajo sin guardar
                     </p>
                     <div className="flex gap-2 flex-shrink-0">
                         <button onClick={descartarBorrador}
@@ -227,8 +228,8 @@ export default function ServicioForm({
             )}
 
             {estaBloqueado && (
-                <div className="mx-5 mt-4 p-3 rounded-xl text-center font-bold text-[13px] bg-red-50 dark:bg-red-900/30 text-[#D13A28] dark:text-red-300">
-                    🔒 Registro cobrado — solo lectura
+                <div className="mx-5 mt-4 p-3 rounded-xl text-center font-bold text-[13px] bg-red-50 dark:bg-red-900/30 text-[#D13A28] dark:text-red-300 flex items-center justify-center gap-1.5">
+                    <LuLock size={13} /> Registro cobrado — solo lectura
                 </div>
             )}
 

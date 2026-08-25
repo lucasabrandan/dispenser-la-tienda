@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Label, M } from './ServicioUI';
+import { LuPencil } from 'react-icons/lu';
 
 export default function TicketItemsList({ ticketItems, editarItem, eliminarItem, onReorder }) {
     const [dragIdx, setDragIdx] = useState(null);
@@ -120,7 +121,7 @@ export default function TicketItemsList({ ticketItems, editarItem, eliminarItem,
                                 <M valor={it.totalCalculado} className="text-body font-black text-ink" />
                                 <button onClick={() => editarItem(idx)}
                                     className="w-7 h-7 rounded-lg flex items-center justify-center text-label bg-[#D48800]/20 text-brand-amber active:scale-90 transition-all"
-                                    title="Editar equipo">✏️</button>
+                                    title="Editar equipo"><LuPencil size={14} /></button>
                                 <button onClick={() => eliminarItem(idx)}
                                     className="w-7 h-7 rounded-lg flex items-center justify-center text-label bg-[#D13A28]/10 text-brand-red active:scale-90 transition-all"
                                     title="Eliminar equipo">✕</button>

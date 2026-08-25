@@ -8,6 +8,7 @@ import CargaRapidaSheet from './CargaRapidaSheet';
 import FotoUpload from './FotoUpload';
 import TicketItemsList from './TicketItemsList';
 import CalculadoraMO from './CalculadoraMO';
+import { LuZap, LuWrench, LuShieldCheck, LuHourglass, LuPackage, LuCamera } from 'react-icons/lu';
 
 export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const {
@@ -102,8 +103,8 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         + Agregar equipo
                     </button>
                     <button type="button" onClick={() => setCargaRapida(true)}
-                        className="py-3.5 rounded-2xl font-black text-label uppercase text-white bg-brand-amber active:scale-[0.98] transition-all">
-                        ⚡ Carga rápida
+                        className="py-3.5 rounded-2xl font-black text-label uppercase text-white bg-brand-amber active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
+                        <LuZap size={14} /> Carga rápida
                     </button>
                 </div>
             ) : (
@@ -162,7 +163,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         {/* Equipo */}
                         <button type="button" onClick={() => setMostrarEquipo(v => !v)}
                             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-label font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
-                            <span>{itemActual.equipoSerial ? `🔧 ${itemActual.equipoSerial}` : '🔧 Equipo (S/N, modelo, ubicación)'}</span>
+                            <span className="inline-flex items-center gap-1.5"><LuWrench size={13} />{itemActual.equipoSerial ? ` ${itemActual.equipoSerial}` : ' Equipo (S/N, modelo, ubicación)'}</span>
                             <span className="text-label">{mostrarEquipo ? '▲' : '▼'}</span>
                         </button>
                         {mostrarEquipo && (
@@ -189,12 +190,12 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                         <p className="text-caption text-secondary">{historialEquipo.fecha} — {historialEquipo.items?.[0]?.trabajoRealizado}</p>
                                         {historialEquipo.garantiaInfo && (
                                             historialEquipo.garantiaInfo.vigente ? (
-                                                <p className="text-caption font-black mt-1 text-brand-green">
-                                                    🛡️ Garantía vigente · {historialEquipo.garantiaInfo.dias} día{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'} restante{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'}
+                                                <p className="text-caption font-black mt-1 text-brand-green flex items-center gap-1">
+                                                    <LuShieldCheck size={12} /> Garantía vigente · {historialEquipo.garantiaInfo.dias} día{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'} restante{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'}
                                                 </p>
                                             ) : (
-                                                <p className="text-caption font-black mt-1 text-brand-red">
-                                                    ⏳ Garantía vencida hace {Math.abs(historialEquipo.garantiaInfo.dias)} día{Math.abs(historialEquipo.garantiaInfo.dias) === 1 ? '' : 's'}
+                                                <p className="text-caption font-black mt-1 text-brand-red flex items-center gap-1">
+                                                    <LuHourglass size={12} /> Garantía vencida hace {Math.abs(historialEquipo.garantiaInfo.dias)} día{Math.abs(historialEquipo.garantiaInfo.dias) === 1 ? '' : 's'}
                                                 </p>
                                             )
                                         )}
@@ -212,9 +213,9 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         {/* Repuestos */}
                         <button type="button" onClick={() => setSheetRepuestos(true)}
                             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-label font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
-                            <span>{itemActual.repuestosUsados?.length > 0
-                                ? `📦 ${itemActual.repuestosUsados.length} repuesto${itemActual.repuestosUsados.length > 1 ? 's' : ''}`
-                                : '📦 Repuestos'}</span>
+                            <span className="inline-flex items-center gap-1.5"><LuPackage size={13} />{itemActual.repuestosUsados?.length > 0
+                                ? ` ${itemActual.repuestosUsados.length} repuesto${itemActual.repuestosUsados.length > 1 ? 's' : ''}`
+                                : ' Repuestos'}</span>
                             <span className="text-label">+</span>
                         </button>
                         {itemActual.repuestosUsados?.length > 0 && (
@@ -237,7 +238,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         {/* Fotos */}
                         <button type="button" onClick={() => setMostrarFotos(v => !v)}
                             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-label font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
-                            <span>{(itemActual.fotoAntes || itemActual.fotoDespues) ? '📷 Fotos adjuntas' : '📷 Fotos'}</span>
+                            <span className="inline-flex items-center gap-1.5"><LuCamera size={13} />{(itemActual.fotoAntes || itemActual.fotoDespues) ? ' Fotos adjuntas' : ' Fotos'}</span>
                             <span className="text-label">{mostrarFotos ? '▲' : '▼'}</span>
                         </button>
                         {mostrarFotos && (

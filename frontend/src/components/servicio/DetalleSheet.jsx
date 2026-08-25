@@ -1,5 +1,6 @@
 import React from 'react';
 import { M } from './ServicioUI';
+import { LuMapPin } from 'react-icons/lu';
 
 export default function DetalleSheet({ servicio, onCerrar }) {
     return (
@@ -8,7 +9,7 @@ export default function DetalleSheet({ servicio, onCerrar }) {
                 onClick={e => e.stopPropagation()}>
                 <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip" />
                 <h3 className="text-title font-black mb-1 text-ink">{servicio.clienteNombre}</h3>
-                <p className="text-caption text-muted mb-4">📍 {servicio.sedeNombre} · {servicio.fecha}</p>
+                <p className="text-caption text-muted mb-4 flex items-center gap-1"><LuMapPin size={11} />{servicio.sedeNombre} · {servicio.fecha}</p>
                 <div className="overflow-y-auto flex-1 mb-4 space-y-3">
                     {servicio.items?.map((it, idx) => (
                         <div key={idx} className="p-4 rounded-2xl bg-panel">

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { LuCalculator } from 'react-icons/lu';
 
 export default function CalculadoraMO({ desglose, esVisita, pctIVA, itemActual, setItemActual }) {
     const [abierto, setAbierto] = useState(false);
@@ -21,7 +22,7 @@ export default function CalculadoraMO({ desglose, esVisita, pctIVA, itemActual, 
         <>
             <button type="button" onClick={() => setAbierto(v => !v)}
                 className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-label font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
-                <span>🧮 Calculadora</span>
+                <span className="flex items-center gap-1"><LuCalculator size={14} />Calculadora</span>
                 <span className="text-label">{abierto ? '▲' : '▼'}</span>
             </button>
             {abierto && (

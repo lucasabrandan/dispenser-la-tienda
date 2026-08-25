@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { LuClipboardList, LuHourglass, LuCar, LuMapPin, LuCircleCheck } from 'react-icons/lu';
+import { LuClipboardList, LuHourglass, LuCar, LuMapPin, LuCircleCheck, LuUser, LuBuilding2, LuStickyNote, LuPencil, LuTrash2, LuSettings2 } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import OrdenForm from './OrdenForm';
 import SwipeColumns from '../ui/SwipeColumns';
@@ -79,7 +79,7 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <p className="text-caption font-bold text-muted">👤 {orden.tecnicoNombre}</p>
+                    <p className="text-caption font-bold text-muted flex items-center gap-1"><LuUser size={11} />{orden.tecnicoNombre}</p>
                     {orden.montoEstimado && (
                         <span className="text-body font-black text-brand-amber">
                             ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transf.' : 'Efectivo'}
@@ -88,18 +88,18 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                 </div>
 
                 {orden.clienteNombre && (
-                    <p className="text-caption text-muted mt-0.5">🏢 {orden.clienteNombre}{orden.clienteTelefono ? ` · ${orden.clienteTelefono}` : ''}</p>
+                    <p className="text-caption text-muted mt-0.5 flex items-center gap-1"><LuBuilding2 size={11} />{orden.clienteNombre}{orden.clienteTelefono ? ` · ${orden.clienteTelefono}` : ''}</p>
                 )}
                 {orden.direccion && (
                     <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
                         target="_blank" rel="noreferrer"
-                        className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 block hover:underline">
-                        📍 {orden.direccion}
+                        className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 flex items-center gap-1 hover:underline">
+                        <LuMapPin size={11} />{orden.direccion}
                     </a>
                 )}
                 {orden.presupuestoId && (
-                    <p className="text-label font-bold text-brand-amber mt-0.5">
-                        📋 Presupuesto #{orden.presupuestoId} vinculado
+                    <p className="text-label font-bold text-brand-amber mt-0.5 flex items-center gap-1">
+                        <LuClipboardList size={11} /> Presupuesto #{orden.presupuestoId} vinculado
                     </p>
                 )}
                 {esNoAtendido && (
@@ -119,8 +119,8 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                     <div className="mt-2 p-3 rounded-xl bg-panel space-y-1">
                         {orden.descripcion && <p className="text-caption text-secondary leading-snug">{orden.descripcion}</p>}
                         {orden.notasTecnico && (
-                            <p className="text-caption text-brand-green leading-snug">
-                                📝 Nota técnico: {orden.notasTecnico}
+                            <p className="text-caption text-brand-green leading-snug flex items-center gap-1">
+                                <LuStickyNote size={12} /> Nota técnico: {orden.notasTecnico}
                             </p>
                         )}
                     </div>
@@ -131,8 +131,8 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                 <div className="flex items-center gap-2 px-4 py-3 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]">
                     {!esFinal && (
                         <button onClick={() => onEditar(orden)}
-                            className="h-9 px-3 rounded-xl font-bold text-label bg-chip text-secondary active:scale-95">
-                            ✏️ Editar
+                            className="h-9 px-3 rounded-xl font-bold text-label bg-chip text-secondary active:scale-95 flex items-center gap-1">
+                            <LuPencil size={13} /> Editar
                         </button>
                     )}
                     {SIGUIENTE_ESTADO_ADMIN[orden.estado] && (
@@ -146,7 +146,7 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                     {!confirmElim ? (
                         <button onClick={() => setConfirmElim(true)}
                             className="w-9 h-9 rounded-xl flex items-center justify-center text-sm active:scale-90 bg-chip text-muted">
-                            🗑
+                            <LuTrash2 size={15} />
                         </button>
                     ) : (
                         <>
@@ -266,7 +266,7 @@ export default function DespachoManager() {
                     <div className="flex gap-1.5 items-center">
                         <button onClick={() => setMostrarFiltros(v => !v)}
                             className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
-                            ⚙
+                            <LuSettings2 size={15} />
                         </button>
                         <span className="text-label font-bold text-muted flex-1">{ordenesFiltradas.length} ordenes</span>
                         {seleccionando ? (
@@ -330,8 +330,8 @@ export default function DespachoManager() {
                         return (
                             <div key={key} className="mb-4">
                                 <div className="flex items-center gap-2 mb-2">
-                                    <p className="text-label font-black text-ink uppercase tracking-wider">
-                                        👤 {nombre}
+                                    <p className="text-label font-black text-ink uppercase tracking-wider flex items-center gap-1">
+                                        <LuUser size={12} /> {nombre}
                                     </p>
                                     {activas > 0 && (
                                         <span className="text-label font-black px-2 py-0.5 rounded-full bg-brand-red text-white">

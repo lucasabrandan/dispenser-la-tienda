@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList, LuCar, LuMapPin } from 'react-icons/lu';
+import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuBuilding2, LuBanknote, LuStickyNote } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -58,12 +58,12 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                 </div>
 
                 {!esFinal && orden.clienteNombre && (
-                    <p className="text-body text-secondary font-bold">🏢 {orden.clienteNombre}</p>
+                    <p className="text-body text-secondary font-bold flex items-center gap-1"><LuBuilding2 size={13} />{orden.clienteNombre}</p>
                 )}
 
                 {!esFinal && orden.montoEstimado && (
-                    <p className="text-body font-black text-brand-amber mt-0.5">
-                        💰 ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}
+                    <p className="text-body font-black text-brand-amber mt-0.5 flex items-center gap-1">
+                        <LuBanknote size={14} /> ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}
                     </p>
                 )}
 
@@ -71,7 +71,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                     <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
                         target="_blank" rel="noreferrer"
                         className="text-body text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 flex items-center gap-1 hover:underline">
-                        📍 {orden.direccion}
+                        <LuMapPin size={14} />{orden.direccion}
                         <span className="text-label">↗</span>
                     </a>
                 )}
@@ -92,8 +92,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                 )}
 
                 {orden.notasTecnico && (
-                    <p className="mt-2 text-caption text-brand-green">
-                        📝 {orden.notasTecnico}
+                    <p className="mt-2 text-caption text-brand-green flex items-center gap-1">
+                        <LuStickyNote size={12} />{orden.notasTecnico}
                     </p>
                 )}
 

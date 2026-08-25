@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LuClipboardList, LuWrench, LuShoppingCart, LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuPencil, LuTrash2 } from 'react-icons/lu';
+import { LuClipboardList, LuWrench, LuShoppingCart, LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuPencil, LuTrash2, LuSearch, LuMapPin } from 'react-icons/lu';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -192,7 +192,7 @@ export default function ServicioList({ onEditar }) {
                     {/* Búsqueda + seleccionar */}
                     <div className="flex gap-1.5 items-center">
                         <div className="relative flex-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
+                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, S/N, ubicación, sede..."
                                 className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
@@ -293,7 +293,7 @@ export default function ServicioList({ onEditar }) {
                                             </div>
                                         </div>
                                         <p className="text-body font-bold text-ink truncate">{s.clienteNombre}</p>
-                                        <p className="text-caption text-muted mt-0.5">📍 {s.sedeNombre}</p>
+                                        <p className="text-caption text-muted mt-0.5 flex items-center gap-1"><LuMapPin size={11} />{s.sedeNombre}</p>
 
                                         {s.items?.length > 0 && s.servicioTipo === 'TECNICA' && (
                                             <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">

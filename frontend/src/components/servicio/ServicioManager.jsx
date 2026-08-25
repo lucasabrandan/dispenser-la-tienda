@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive } from 'react-icons/lu';
+import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuSearch, LuSettings2, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil } from 'react-icons/lu';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import { useAuth } from '../../context/AuthContext';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
@@ -189,7 +189,7 @@ export default function ServicioManager({
     const columns = [
         ...(enBusquedaGlobal ? [{
             id: 'TODOS', label: 'Todos', fullLabel: 'Todos', color: '#1C1917',
-            count: filtros.totalItems, icon: '🔍',
+            count: filtros.totalItems, Icon: LuSearch,
         }] : []),
         ...TABS.map(t => ({
             id: t.id,
@@ -218,10 +218,10 @@ export default function ServicioManager({
                         {/* Búsqueda — mobile: toggle, desktop: siempre visible */}
                         <button onClick={() => setMostrarBusqueda(v => !v)}
                             className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
-                            🔍
+                            <LuSearch size={15} />
                         </button>
                         <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
+                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input
                                 value={filtros.busqueda}
                                 onChange={e => filtros.setBusqueda(e.target.value)}
@@ -238,7 +238,7 @@ export default function ServicioManager({
                         {/* Filtros toggle */}
                         <button onClick={() => setMostrarFiltros(v => !v)}
                             className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
-                            ⚙
+                            <LuSettings2 size={15} />
                         </button>
 
                         {/* Menú overflow */}
@@ -254,12 +254,12 @@ export default function ServicioManager({
                                     <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
                                         <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
                                         <button onClick={() => { exportarServiciosCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
-                                            📥 Exportar CSV
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
+                                            <LuDownload size={15} /> Exportar CSV
                                         </button>
                                         <button onClick={() => { setModalImportar(true); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none">
-                                            📤 Importar históricos
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
+                                            <LuUpload size={15} /> Importar históricos
                                         </button>
                                     </div>
                                 </>
@@ -400,7 +400,7 @@ export default function ServicioManager({
                         <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-panel border-b border-black/[0.08]">
                             <div>
                                 <h3 className="text-title font-black text-ink">
-                                    {servicioEjecutar ? '🔧 Ejecutar Trabajo' : servicioDuplicar ? '⧉ Duplicar Presupuesto' : servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
+                                    {servicioEjecutar ? (<><LuWrench size={16} className="inline -mt-1 mr-1" /> Ejecutar Trabajo</>) : servicioDuplicar ? (<><LuCopy size={16} className="inline -mt-1 mr-1" /> Duplicar Presupuesto</>) : servicioEditar ? (<><LuPencil size={16} className="inline -mt-1 mr-1" /> Editar Presupuesto</>) : (<><LuWrench size={16} className="inline -mt-1 mr-1" /> Nuevo Servicio</>)}
                                 </h3>
                                 <p className="text-caption text-muted mt-0.5">
                                     {servicioEjecutar
