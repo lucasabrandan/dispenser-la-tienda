@@ -693,7 +693,15 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         usuarioId:          tecnicoFinal.id,
         fecha:              fechaServicio,
         servicioTipo:       tieneEquipo ? 'TECNICA' : 'VENTA',
-        estado:             confirmarTrabajo ? 'REALIZADO' : ((presupuestoOrigen || ordenOrigen?.presupuestoId) ? 'REALIZADO' : 'PRESUPUESTO'),
+        // Antes: si había presupuestoOrigen/ordenOrigen vinculado, forzaba REALIZADO
+        // aunque confirmarTrabajo fuera false (el botón "Guardar presupuesto" terminaba
+        // guardando como REALIZADO igual, contradiciendo su propia etiqueta). Se sacó esa
+        // excepción: hoy es dead code en la práctica (ni `ejecutarPresupuesto` ni
+        // `ejecutarOrden` en App.js se llaman desde ningún lado — MisOrdenes.jsx usa
+        // EjecutarOrdenSheet, que confirma con su propio PUT sin pasar por este hook),
+        // pero si algún día se vuelve a cablear, el estado ahora depende solo del botón
+        // que el usuario realmente tocó — sin excepciones silenciosas.
+        estado:             confirmarTrabajo ? 'REALIZADO' : 'PRESUPUESTO',
         // Bug real: si se llega acá vía una Orden despachada (Path B), `presupuestoOrigen`
         // (el parámetro) nunca se completaba aunque la orden tuviera presupuesto vinculado —
         // el servicio nuevo quedaba sin linkear al presupuesto original. `ordenOrigen.presupuestoId`
