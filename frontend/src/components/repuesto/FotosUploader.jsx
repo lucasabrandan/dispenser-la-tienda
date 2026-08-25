@@ -1,4 +1,5 @@
 import React from 'react';
+import { LuCamera } from 'react-icons/lu';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
 
 const FOTO_KEYS = ['fotoUrl', 'fotoUrl2', 'fotoUrl3'];
@@ -19,7 +20,7 @@ export default function FotosUploader({ form, fotoPreviews, onFotoChange }) {
                                 <div className="w-full aspect-square bg-card rounded-xl flex justify-center items-center overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
                                     {preview
                                         ? <img src={preview} className="w-full h-full object-cover" alt={`foto ${i+1}`} />
-                                        : <span className="text-2xl opacity-30">{i === 0 ? '📸' : '+'}</span>
+                                        : <span className="text-2xl opacity-30 flex justify-center">{i === 0 ? <LuCamera size={20} /> : '+'}</span>
                                     }
                                 </div>
                                 <input type="file" accept="image/*" onChange={e => onFotoChange(e, i)} className="hidden" />

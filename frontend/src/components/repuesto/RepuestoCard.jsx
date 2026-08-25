@@ -1,4 +1,5 @@
 import React from 'react';
+import { LuPackage } from 'react-icons/lu';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
 
 export default function RepuestoCard({
@@ -32,7 +33,7 @@ export default function RepuestoCard({
             <div className="aspect-square bg-[#F5F3F1] dark:bg-[#1C1C1C] flex items-center justify-center overflow-hidden relative">
                 {fotoSrc
                     ? <img src={fotoSrc} className="w-full h-full object-cover" alt={r.nombre} />
-                    : <span className="text-4xl opacity-30">📦</span>
+                    : <LuPackage size={36} className="opacity-30" />
                 }
                 {/* Checkbox selección */}
                 {modoSeleccion && (

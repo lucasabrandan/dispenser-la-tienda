@@ -5,6 +5,7 @@ import { useMontos } from '../../context/MontosContext';
 import { formatearPrecio } from '../../utils/formatearPrecio';
 import Paginacion from '../ui/Paginacion';
 import StatCard from './StatCard';
+import { LuPackage } from 'react-icons/lu';
 
 const POR_PAGINA = 15;
 
@@ -47,7 +48,7 @@ export default function TabInventario() {
             {enStock.length === 0 ? (
                 <div className="text-center py-12 rounded-2xl bg-card border-[0.5px] border-black/[0.07]">
                     <p className="text-muted font-bold text-caption">Sin stock registrado</p>
-                    <p className="text-caption text-muted mt-1">Usá el botón 📦 en la sección Repuestos para cargar stock</p>
+                    <p className="text-caption text-muted mt-1 flex items-center justify-center gap-1">Usá el botón <LuPackage size={12} className="inline" /> en la sección Repuestos para cargar stock</p>
                 </div>
             ) : (
                 <div className="bg-card rounded-2xl overflow-hidden border-[0.5px] border-black/[0.07]">

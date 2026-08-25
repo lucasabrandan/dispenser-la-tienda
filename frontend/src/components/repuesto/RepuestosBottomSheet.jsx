@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { LuPackage, LuSearch } from 'react-icons/lu';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
 
 function FotoRepuesto({ repuesto }) {
@@ -41,9 +42,9 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
                 {tieneFoto
                     ? <>
                         <FotoRepuesto repuesto={repuesto} />
-                        <span className="text-3xl hidden">📦</span>
+                        <LuPackage size={28} className="hidden" />
                       </>
-                    : <span className="text-3xl opacity-40">📦</span>
+                    : <LuPackage size={28} className="opacity-40" />
                 }
             </div>
 
@@ -218,7 +219,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                 {/* Buscador */}
                 <div className="px-4 pb-3">
                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">🔍</span>
+                        <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
                         <input
                             type="text"
                             value={busqueda}

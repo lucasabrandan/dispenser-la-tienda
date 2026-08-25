@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { LuSearch, LuPackage, LuEllipsis, LuListChecks, LuDownload, LuFileText } from 'react-icons/lu';
 import { useRepuestoManager } from '../../hooks/useRepuestoManager';
 import RepuestoCard from './RepuestoCard';
 import RepuestoModal from './RepuestoModal';
@@ -56,7 +57,7 @@ export default function RepuestoManager() {
                     <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink mb-2.5">Productos</h2>
                     <div className="flex gap-1.5 items-center">
                         <div className="relative flex-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
+                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input placeholder="Buscar..."
                                 value={busqueda} onChange={e => setBusqueda(e.target.value)}
                                 className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
@@ -66,28 +67,28 @@ export default function RepuestoManager() {
                             )}
                         </div>
                         <button onClick={() => setStockSheetOpen(true)} title="Ajuste stock"
-                            className="h-9 w-9 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">📦</button>
+                            className="h-9 w-9 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuPackage size={15} /></button>
 
                         {/* Menú overflow */}
                         <div className="relative">
                             <button onClick={() => setMenuOverflow(v => !v)}
-                                className="h-9 w-9 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">⋯</button>
+                                className="h-9 w-9 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuEllipsis size={15} /></button>
                             {menuOverflow && (
                                 <>
                                     <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
                                     <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
                                         <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
                                         <button onClick={() => { setModoSeleccion(true); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none">
-                                            ☑ Seleccionar
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
+                                            <LuListChecks size={15} /> Seleccionar
                                         </button>
                                         <button onClick={() => { exportarTodos(); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none">
-                                            📥 Exportar lista
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
+                                            <LuDownload size={15} /> Exportar lista
                                         </button>
                                         <button onClick={() => { exportarCatalogoTodos(); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none">
-                                            📄 Exportar catálogo
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
+                                            <LuFileText size={15} /> Exportar catálogo
                                         </button>
                                     </div>
                                 </>
@@ -151,7 +152,7 @@ export default function RepuestoManager() {
                 {/* Grid de productos */}
                 {productosFiltrados.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-3xl mb-2">📦</p>
+                        <p className="mb-2 flex justify-center"><LuPackage size={28} /></p>
                         <p className="text-body font-bold text-muted">
                             {busqueda ? `Sin resultados para "${busqueda}"` : 'Sin productos. Creá uno.'}
                         </p>

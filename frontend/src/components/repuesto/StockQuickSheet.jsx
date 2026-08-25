@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
+import { LuPackage } from 'react-icons/lu';
 
 /**
  * StockQuickSheet
@@ -152,7 +153,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                                     {fotoSrc
                                         ? <img src={fotoSrc} alt={r.nombre} className="w-full h-full object-cover"
                                                onError={e => { e.target.style.display = 'none'; }} />
-                                        : <span className="text-lg opacity-30">📦</span>
+                                        : <LuPackage size={16} className="opacity-30" />
                                     }
                                 </div>
 
