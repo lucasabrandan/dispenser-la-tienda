@@ -92,14 +92,14 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             <input placeholder="Cliente, sede, teléfono, S/N..."
                                 value={busqueda}
                                 onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
                         </div>
                         <button onClick={() => setModalOpen('nuevo')}
-                            className="h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase transition-all active:scale-95 bg-brand-red shrink-0">
+                            className="h-9 px-4 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red shrink-0">
                             + Nuevo
                         </button>
                     </div>
-                    <span className="text-[10px] font-bold text-muted">
+                    <span className="text-label font-bold text-muted">
                         {filtrados.length} clientes · A-Z
                     </span>
                 </div>
@@ -208,16 +208,16 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                                 <p className="text-[36px] mb-2">⚠️</p>
                                 <h3 className="text-[16px] font-black text-ink uppercase">Eliminar cliente</h3>
                             </div>
-                            <p className="text-[12px] text-secondary text-center mb-5 leading-snug">
+                            <p className="text-caption text-secondary text-center mb-5 leading-snug">
                                 Se eliminará el cliente y todo su historial. Esta acción no se puede deshacer.
                             </p>
                             <div className="flex gap-2">
                                 <button onClick={() => setConfirmEliminarCliente(null)}
-                                    className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-chip text-secondary active:scale-95">
+                                    className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95">
                                     Cancelar
                                 </button>
                                 <button onClick={confirmarEliminarCliente}
-                                    className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-brand-red active:scale-95">
+                                    className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95">
                                     Sí, eliminar
                                 </button>
                             </div>

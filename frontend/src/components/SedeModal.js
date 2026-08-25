@@ -7,7 +7,7 @@ const fieldCls = `
     w-full h-12 px-4 rounded-xl
     bg-chip
     border border-black/[0.07] dark:border-white/[0.07]
-    font-bold text-[12px] uppercase outline-none
+    font-bold text-body uppercase outline-none
     text-ink
     focus:ring-2 focus:ring-[#D13A28]/20
     focus:border-[#D13A28] dark:focus:border-[#E8422F]
@@ -87,13 +87,13 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
                     <h3 className="text-lg font-black text-ink uppercase tracking-tighter">
                         Sedes · {cliente.nombre}
                     </h3>
-                    <p className="text-[10px] font-bold text-muted uppercase mt-0.5">{sedes.length} ubicación{sedes.length !== 1 ? 'es' : ''} registrada{sedes.length !== 1 ? 's' : ''}</p>
+                    <p className="text-caption font-bold text-muted uppercase mt-0.5">{sedes.length} ubicación{sedes.length !== 1 ? 'es' : ''} registrada{sedes.length !== 1 ? 's' : ''}</p>
                 </div>
 
                 {/* Lista de sedes */}
                 <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
                     {sedes.length === 0 ? (
-                        <div className="text-center py-10 font-bold uppercase text-[10px] text-muted border-2 border-dashed border-black/[0.07] dark:border-white/[0.07] rounded-2xl">
+                        <div className="text-center py-10 font-bold uppercase text-caption text-muted border-2 border-dashed border-black/[0.07] dark:border-white/[0.07] rounded-2xl">
                             Sin sedes cargadas
                         </div>
                     ) : (
@@ -101,14 +101,14 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
                             <div key={s.id} className="p-4 bg-panel rounded-2xl border border-black/[0.07] dark:border-white/[0.07]">
                                 <div className="flex justify-between items-start gap-3">
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-black text-[13px] text-ink uppercase leading-none mb-1">
+                                        <p className="font-black text-body text-ink uppercase leading-none mb-1">
                                             {s.nombreSede}
                                         </p>
-                                        <p className="text-[10px] font-bold text-muted uppercase truncate">
+                                        <p className="text-caption font-bold text-muted uppercase truncate">
                                             {s.direccion} · {s.localidad}
                                         </p>
                                         {s.equipos?.length > 0 && (
-                                            <p className="text-[9px] font-black text-brand-amber mt-1">
+                                            <p className="text-label font-black text-brand-amber mt-1">
                                                 {s.equipos.length} equipo{s.equipos.length !== 1 ? 's' : ''}
                                             </p>
                                         )}
@@ -140,7 +140,7 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
 
                 {/* Formulario nueva sede */}
                 <form onSubmit={handleSubmit} className="px-6 pb-6 pt-4 border-t border-black/[0.07] dark:border-white/[0.07] space-y-3">
-                    <p className="text-[10px] font-black text-brand-red uppercase mb-2">Nueva Ubicación</p>
+                    <p className="text-label font-black text-brand-red uppercase mb-2">Nueva Ubicación</p>
                     <div className="grid grid-cols-2 gap-3">
                         <input className={fieldCls} placeholder="Nombre (Ej: Depósito)"
                             value={form.nombreSede} onChange={e => setForm({ ...form, nombreSede: e.target.value })} />
@@ -159,11 +159,11 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
                     </div>
                     <div className="flex gap-3">
                         <button type="button" onClick={onClose}
-                            className="flex-1 py-3.5 bg-chip text-ink rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            className="flex-1 py-3.5 bg-chip text-ink rounded-xl font-black text-label uppercase hover:opacity-80 transition-all active:scale-95">
                             Cerrar
                         </button>
                         <button type="submit"
-                            className="flex-[2] py-3.5 bg-brand-red text-white rounded-xl font-black text-[11px] uppercase shadow-lg hover:opacity-90 transition-all active:scale-95">
+                            className="flex-[2] py-3.5 bg-brand-red text-white rounded-xl font-black text-label uppercase shadow-lg hover:opacity-90 transition-all active:scale-95">
                             + Registrar Sede
                         </button>
                     </div>

@@ -110,7 +110,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, producto, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-[13px] outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
                                 autoFocus={mostrarBusqueda} />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
@@ -127,7 +127,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                                     <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
                                         <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
                                         <button onClick={() => { exportarVentasCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-[14px] md:text-[13px] font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none">
+                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none">
                                             📥 Exportar CSV
                                         </button>
                                     </div>
@@ -137,7 +137,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
                         {esAdmin && (
                             <button onClick={() => setModalCrear(true)}
-                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-[11px] text-white uppercase items-center active:scale-95 bg-brand-amber shrink-0">
+                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label text-white uppercase items-center active:scale-95 bg-brand-amber shrink-0">
                                 + Venta
                             </button>
                         )}
@@ -153,7 +153,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                 {/* Filtros colapsables */}
                 {mostrarFiltros && (
                     <div className="space-y-2 p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <p className="text-[10px] text-center text-muted font-bold">{filtros.totalItems} resultados</p>
+                        <p className="text-label text-center text-muted font-bold">{filtros.totalItems} resultados</p>
                     </div>
                 )}
 
@@ -165,7 +165,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         <p className="text-3xl mb-2">{TABS.find(t => t.id === tabActual)?.icon || '🛒'}</p>
-                        <p className="text-[13px] font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'ventas'}</p>
+                        <p className="text-body font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'ventas'}</p>
                     </div>
                 ) : (
                     <VentaList
@@ -204,7 +204,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                                 <h3 className="text-[15px] font-black text-ink">
                                     {ventaDuplicar ? 'Duplicar Venta' : ventaEditar ? 'Editar Venta' : 'Nueva Venta'}
                                 </h3>
-                                <p className="text-[11px] text-muted mt-0.5">
+                                <p className="text-caption text-muted mt-0.5">
                                     {ventaDuplicar ? 'Copia — ajustá y guardá'
                                         : ventaEditar ? `#${ventaEditar.id}`
                                         : 'Seleccioná cliente y productos'}

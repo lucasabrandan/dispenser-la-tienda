@@ -11,7 +11,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
     if (cargando) {
         return (
             <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2">Agenda de hoy</p>
+                <p className="text-label font-bold uppercase tracking-wider text-muted mb-2">Agenda de hoy</p>
                 <div className="space-y-1.5">
                     {[1, 2].map(i => <div key={i} className={`${card} h-16 animate-pulse`} />)}
                 </div>
@@ -32,11 +32,11 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
 
     return (
         <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2">Agenda de hoy ({agendaHoy.length})</p>
+            <p className="text-label font-bold uppercase tracking-wider text-muted mb-2">Agenda de hoy ({agendaHoy.length})</p>
             {agendaHoy.length === 0 ? (
                 <div className={`${card} text-center py-8`}>
                     <p className="text-2xl mb-1">📭</p>
-                    <p className="text-[12px] font-bold text-muted">Sin actividad para hoy</p>
+                    <p className="text-caption font-bold text-muted">Sin actividad para hoy</p>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -50,17 +50,17 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                 <div className={`px-3 py-2.5 rounded-xl ${color.bg}`}>
                                     <div className="flex items-center gap-3">
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${color.avatar}`}>
-                                            <span className="text-[14px] font-black text-white leading-none">{getIniciales(tecNombre)}</span>
+                                            <span className="text-label font-black text-white leading-none">{getIniciales(tecNombre)}</span>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className={`text-[17px] font-black tracking-tight leading-tight ${color.text}`}>
                                                 {tecNombre}
                                             </p>
-                                            <p className="text-[10px] font-bold text-muted">
+                                            <p className="text-caption font-bold text-muted">
                                                 {tecServicios.length} trabajo{tecServicios.length !== 1 ? 's' : ''} hoy
                                             </p>
                                         </div>
-                                        <M valor={totalTec} className={`text-[15px] font-black shrink-0 ${color.text}`} />
+                                        <M valor={totalTec} className={`text-body-lg font-black shrink-0 ${color.text}`} />
                                     </div>
                                     <div className="mt-2 h-1.5 rounded-full bg-black/[0.06] dark:bg-white/[0.06] overflow-hidden">
                                         <div className={`h-full rounded-full transition-all ${color.bar} ${tecServicios.length >= MAX_TRABAJOS ? 'opacity-100' : 'opacity-70'}`}
@@ -69,7 +69,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                 </div>
                                 {servicios.length > 0 && (
                                     <div className="ml-3">
-                                        <p className="text-[9px] font-bold text-brand-red uppercase tracking-wider mb-1 px-1">🔧 Servicios</p>
+                                        <p className="text-label font-bold text-brand-red uppercase tracking-wider mb-1 px-1">🔧 Servicios</p>
                                         <div className="space-y-1.5">
                                             {servicios.map(s => (
                                                 <AgendaCard key={s.id} s={s} onClick={() => setVistaActual('servicio-tecnico')} />
@@ -79,7 +79,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                 )}
                                 {ventas.length > 0 && (
                                     <div className="ml-3">
-                                        <p className="text-[9px] font-bold text-brand-amber uppercase tracking-wider mb-1 px-1">🛒 Ventas / Entregas</p>
+                                        <p className="text-label font-bold text-brand-amber uppercase tracking-wider mb-1 px-1">🛒 Ventas / Entregas</p>
                                         <div className="space-y-1.5">
                                             {ventas.map(s => (
                                                 <AgendaCard key={s.id} s={s} onClick={() => setVistaActual('venta')} />

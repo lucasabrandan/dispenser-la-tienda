@@ -83,11 +83,11 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                             onChange={e => setIncluirFirmas(e.target.checked)}
                             className="w-4 h-4 accent-[#D13A28]"
                         />
-                        <span className="text-[13px] font-semibold text-ink">
+                        <span className="text-body font-semibold text-ink">
                             Incluir firmas en el PDF
                         </span>
                         {!incluirFirmas && (
-                            <span className="ml-auto text-[11px] text-muted">No se mostrará sección de firmas</span>
+                            <span className="ml-auto text-caption text-muted">No se mostrará sección de firmas</span>
                         )}
                     </label>
 
@@ -97,10 +97,10 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                             {/* Firma técnico */}
                             {firmaGuardada ? (
                                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-panel">
-                                    <span className="text-[12px] font-bold text-[var(--success-tx)]">✓ Firma técnico guardada</span>
+                                    <span className="text-body font-bold text-[var(--success-tx)]">✓ Firma técnico guardada</span>
                                     <button
                                         onClick={() => setEditandoTecnico(true)}
-                                        className="ml-auto text-[11px] text-muted hover:text-[#D13A28] transition-colors font-medium"
+                                        className="ml-auto text-label text-muted hover:text-[#D13A28] transition-colors font-medium"
                                     >
                                         Cambiar
                                     </button>
@@ -118,14 +118,14 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                                             type="button"
                                             onClick={guardarFirmaTecnico}
                                             disabled={!firmaTecnico || guardando}
-                                            className="text-[11px] px-3 py-1 rounded-full bg-[#D13A28] text-white font-semibold disabled:opacity-40 transition-colors"
+                                            className="text-label px-3 py-1 rounded-full bg-[#D13A28] text-white font-semibold disabled:opacity-40 transition-colors"
                                         >
                                             {guardando ? 'Guardando…' : 'Guardar mi firma'}
                                         </button>
                                         {guardado && (
-                                            <span className="text-[11px] text-[var(--success-tx)] font-semibold">✓ Guardada</span>
+                                            <span className="text-caption text-[var(--success-tx)] font-semibold">✓ Guardada</span>
                                         )}
-                                        <span className="text-[10px] text-muted ml-auto">Se usará automáticamente</span>
+                                        <span className="text-caption text-muted ml-auto">Se usará automáticamente</span>
                                     </div>
                                 </div>
                             )}
@@ -142,7 +142,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
                                 value={aclaracionCliente}
                                 onChange={e => setAclaracionCliente(e.target.value)}
                                 placeholder="Aclaración (nombre de quien firma)"
-                                className="w-full mt-1 px-3 py-2 rounded-xl text-[12px] bg-panel text-ink border border-chip placeholder:text-muted focus:outline-none focus:border-[#D13A28]"
+                                className="w-full mt-1 px-3 py-2 rounded-xl text-body bg-panel text-ink border border-chip placeholder:text-muted focus:outline-none focus:border-[#D13A28]"
                             />
                         </>
                     )}
