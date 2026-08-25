@@ -19,7 +19,7 @@ export default function IniciarTrabajoSheet({ servicio, onYoAhora, onAsignar, on
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className="text-[15px] font-black text-ink">¿Quién hace el trabajo?</h3>
-                                <p className="text-[11px] text-muted mt-0.5">{servicio.clienteNombre} · #{servicio.id}</p>
+                                <p className="text-caption text-muted mt-0.5">{servicio.clienteNombre} · #{servicio.id}</p>
                             </div>
                             <button onClick={onCerrar}
                                 className="w-9 h-9 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90">
@@ -31,13 +31,13 @@ export default function IniciarTrabajoSheet({ servicio, onYoAhora, onAsignar, on
                     <div className="p-5 space-y-2.5">
                         <button onClick={onYoAhora}
                             className="w-full p-4 rounded-2xl text-left border-2 border-black/[0.06] dark:border-white/[0.06] bg-panel transition-all active:scale-[0.98]">
-                            <p className="text-[14px] font-black text-ink">⚡ Lo hago yo ahora</p>
-                            <p className="text-[11px] text-muted mt-0.5">Cerrás el trabajo y definís el cobro en el momento.</p>
+                            <p className="text-body-lg font-black text-ink">⚡ Lo hago yo ahora</p>
+                            <p className="text-caption text-muted mt-0.5">Cerrás el trabajo y definís el cobro en el momento.</p>
                         </button>
                         <button onClick={onAsignar}
                             className="w-full p-4 rounded-2xl text-left border-2 border-black/[0.06] dark:border-white/[0.06] bg-panel transition-all active:scale-[0.98]">
-                            <p className="text-[14px] font-black text-ink">📬 Se lo asigno a un técnico</p>
-                            <p className="text-[11px] text-muted mt-0.5">Programás una visita — el técnico la cierra después desde Mis Órdenes.</p>
+                            <p className="text-body-lg font-black text-ink">📬 Se lo asigno a un técnico</p>
+                            <p className="text-caption text-muted mt-0.5">Programás una visita — el técnico la cierra después desde Mis Órdenes.</p>
                         </button>
                     </div>
                 </div>

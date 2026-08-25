@@ -32,14 +32,14 @@ export function StepHeader({ paso, total, titulo, subtitulo }) {
     return (
         <div className="px-5 pt-5 pb-4">
             <StepBar paso={paso} total={total} />
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-muted">
+            <p className="text-label font-bold uppercase tracking-widest mb-1 text-muted">
                 Paso {paso + 1} de {total}
             </p>
             <h3 className="text-[18px] font-black leading-tight text-ink">
                 {titulo}
             </h3>
             {subtitulo && (
-                <p className="text-[12px] mt-0.5 text-muted">{subtitulo}</p>
+                <p className="text-caption mt-0.5 text-muted">{subtitulo}</p>
             )}
         </div>
     );
@@ -48,7 +48,7 @@ export function StepHeader({ paso, total, titulo, subtitulo }) {
 // ── Label de sección ──────────────────────────────────────────────────────────
 export function Label({ children }) {
     return (
-        <p className="text-[10px] font-bold uppercase tracking-widest mb-2 text-muted">
+        <p className="text-label font-bold uppercase tracking-widest mb-2 text-muted">
             {children}
         </p>
     );
@@ -96,7 +96,7 @@ export function DSInput({ label, className = '', ...props }) {
             <input
                 {...props}
                 className={`
-                    w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
+                    w-full block px-3.5 py-2.5 rounded-xl text-body font-medium outline-none
                     bg-chip
                     text-ink
                     border border-black/10 dark:border-white/10
@@ -119,7 +119,7 @@ export function DSTextarea({ label, className = '', ...props }) {
             <textarea
                 {...props}
                 className={`
-                    w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none resize-none
+                    w-full block px-3.5 py-2.5 rounded-xl text-body font-medium outline-none resize-none
                     bg-chip
                     text-ink
                     border border-black/10 dark:border-white/10

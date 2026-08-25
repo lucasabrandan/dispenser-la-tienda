@@ -12,12 +12,12 @@ export default function AgendaCard({ s, onClick }) {
             style={{ borderLeftColor: borderHex }}>
             <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-bold text-ink truncate">{s.clienteNombre}</p>
-                    <p className="text-[10px] text-muted truncate">{s.sedeNombre}</p>
+                    <p className="text-body font-bold text-ink truncate">{s.clienteNombre}</p>
+                    <p className="text-caption text-muted truncate">{s.sedeNombre}</p>
                 </div>
                 <div className="text-right shrink-0">
-                    <M valor={calcTotal(s)} className="text-[13px] font-black text-ink block" />
-                    <span className="text-[9px] font-bold" style={{ color: borderHex }}>
+                    <M valor={calcTotal(s)} className="text-body-lg font-black text-ink block" />
+                    <span className="text-label font-bold" style={{ color: borderHex }}>
                         {estadoLabel}
                     </span>
                 </div>
@@ -25,14 +25,14 @@ export default function AgendaCard({ s, onClick }) {
             {s.sedeDireccion && (
                 <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.sedeDireccion)}`}
                     target="_blank" rel="noopener noreferrer"
-                    className="text-[10px] truncate block mt-1 active:opacity-70"
+                    className="text-caption truncate block mt-1 active:opacity-70"
                     style={{ color: borderHex }}
                     onClick={e => e.stopPropagation()}>
                     📍 {s.sedeDireccion}
                 </a>
             )}
             {s.duracionMinutos && (
-                <p className="text-[9px] font-bold text-muted mt-1">⏱ {Math.round(s.duracionMinutos / 60 * 10) / 10}h estimadas</p>
+                <p className="text-caption font-bold text-muted mt-1">⏱ {Math.round(s.duracionMinutos / 60 * 10) / 10}h estimadas</p>
             )}
         </div>
     );
