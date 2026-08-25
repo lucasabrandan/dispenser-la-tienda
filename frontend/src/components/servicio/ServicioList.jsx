@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LuClipboardList, LuWrench, LuShoppingCart, LuShieldCheck, LuHourglass } from 'react-icons/lu';
+import { LuClipboardList, LuWrench, LuShoppingCart, LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuPencil, LuTrash2 } from 'react-icons/lu';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -325,30 +325,30 @@ export default function ServicioList({ onEditar }) {
                                     {!seleccionando && (
                                         <div className="flex items-center gap-1.5 px-3 py-1.5 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
                                             <IconBtn onClick={() => setModalDetalle(s)} title="Ver detalle"
-                                                cls="bg-chip text-secondary">👁️</IconBtn>
+                                                cls="bg-chip text-secondary"><LuEye size={15} /></IconBtn>
                                             <IconBtn onClick={() => generarPDFHistorial(s)} title="PDF"
-                                                cls="bg-chip text-secondary">📄</IconBtn>
+                                                cls="bg-chip text-secondary"><LuFileText size={15} /></IconBtn>
 
                                             <div className="relative">
                                                     <IconBtn onClick={() => setMenuAbiertoId(v => v === s.id ? null : s.id)} title="Más acciones"
                                                         cls={menuAbiertoId === s.id ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-brand-red' : 'bg-chip text-secondary'}>
-                                                        ⋯
+                                                        <LuEllipsis size={15} />
                                                     </IconBtn>
                                                     <ActionSheet open={menuAbiertoId === s.id} onClose={() => setMenuAbiertoId(null)}>
                                                                 <button onClick={() => { generarPDFHistorial(s, { sinPrecios: true }); setMenuAbiertoId(null); }}
-                                                                    className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
-                                                                    📋 PDF sin precios
+                                                                    className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl flex items-center gap-2.5">
+                                                                    <LuClipboardList size={16} /> PDF sin precios
                                                                 </button>
                                                                 {esAdmin && esPendiente && (
                                                                     <button onClick={() => { onEditar?.(s); setMenuAbiertoId(null); }}
-                                                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
-                                                                        ✏️ Editar
+                                                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl flex items-center gap-2.5">
+                                                                        <LuPencil size={16} /> Editar
                                                                     </button>
                                                                 )}
                                                                 {esAdmin && (
                                                                     <button onClick={() => { setConfirmEliminarId(s.id); setMenuAbiertoId(null); }}
-                                                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-brand-red active:bg-[#FEE2E2] dark:active:bg-[#3B1111] rounded-xl">
-                                                                        🗑️ Eliminar
+                                                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-brand-red active:bg-[#FEE2E2] dark:active:bg-[#3B1111] rounded-xl flex items-center gap-2.5">
+                                                                        <LuTrash2 size={16} /> Eliminar
                                                                     </button>
                                                                 )}
                                                     </ActionSheet>
@@ -382,8 +382,8 @@ export default function ServicioList({ onEditar }) {
                             <>
                             <button onClick={pdfMasivoSinPrecios}
                                 disabled={seleccionadas.size === 0}
-                                className={`h-9 px-3 rounded-xl font-bold text-label uppercase active:scale-95 transition-all ${seleccionadas.size > 0 ? 'bg-brand-amber text-white' : 'bg-chip text-muted'}`}>
-                                📋 Sin $
+                                className={`h-9 px-3 rounded-xl font-bold text-label uppercase active:scale-95 transition-all flex items-center gap-1.5 ${seleccionadas.size > 0 ? 'bg-brand-amber text-white' : 'bg-chip text-muted'}`}>
+                                <LuClipboardList size={13} /> Sin $
                             </button>
                             <button onClick={() => seleccionadas.size > 0 && setConfirmMasivo(true)}
                                 disabled={seleccionadas.size === 0}

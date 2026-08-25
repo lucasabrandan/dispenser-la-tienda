@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuInbox } from 'react-icons/lu';
+import { LuInbox, LuPencil, LuFileText, LuClipboardList, LuCopy, LuMessageCircle, LuTrash2 } from 'react-icons/lu';
 import { useMontos } from '../../context/MontosContext';
 
 function M({ valor, prefix = '$', className = '' }) {
@@ -25,10 +25,10 @@ const badgeLabel = (v) => {
 };
 
 // Botón de acción compacto con label
-const Accion = ({ onClick, icon, label, className = '', href, ...rest }) => {
+const Accion = ({ onClick, Icon, label, className = '', href, ...rest }) => {
     const cls = `inline-flex items-center gap-1 h-7 px-2 rounded-lg text-label font-bold transition-all active:scale-95 ${className}`;
-    if (href) return <a href={href} className={cls} {...rest}>{icon} <span className="hidden sm:inline">{label}</span></a>;
-    return <button onClick={onClick} className={cls}>{icon} <span className="hidden sm:inline">{label}</span></button>;
+    if (href) return <a href={href} className={cls} {...rest}>{Icon && <Icon size={13} />} <span className="hidden sm:inline">{label}</span></a>;
+    return <button onClick={onClick} className={cls}>{Icon && <Icon size={13} />} <span className="hidden sm:inline">{label}</span></button>;
 };
 
 export default function VentaList({
@@ -105,15 +105,15 @@ export default function VentaList({
                         {/* Acciones */}
                         <div className="flex items-center gap-1.5 px-3.5 py-2 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
                             {esPendiente && (
-                                <Accion onClick={() => onEditar(v)} icon="✏️" label="Editar"
+                                <Accion onClick={() => onEditar(v)} Icon={LuPencil} label="Editar"
                                     className="bg-chip text-ink" />
                             )}
-                            <Accion onClick={() => onPDF(v)} icon="📄" label="PDF"
+                            <Accion onClick={() => onPDF(v)} Icon={LuFileText} label="PDF"
                                 className="bg-chip text-ink" />
-                            <Accion onClick={() => onPDF(v, { sinPrecios: true })} icon="📋" label="Sin $"
+                            <Accion onClick={() => onPDF(v, { sinPrecios: true })} Icon={LuClipboardList} label="Sin $"
                                 className="bg-chip text-ink" />
                             {onDuplicar && (
-                                <Accion onClick={() => onDuplicar(v)} icon="⧉" label="Duplicar"
+                                <Accion onClick={() => onDuplicar(v)} Icon={LuCopy} label="Duplicar"
                                     className="bg-chip text-ink" />
                             )}
                             {v.clienteTelefono && (
@@ -124,7 +124,7 @@ export default function VentaList({
                                             : `Hola ${v.clienteNombre}, gracias por tu compra #${v.id}.`
                                     )}`}
                                     target="_blank" rel="noopener noreferrer"
-                                    icon="💬" label="WhatsApp"
+                                    Icon={LuMessageCircle} label="WhatsApp"
                                     className="bg-[#25D366]/10 text-[#25D366]" />
                             )}
 
@@ -136,7 +136,7 @@ export default function VentaList({
                                     Cobrar
                                 </button>
                             )}
-                            <Accion onClick={() => onEliminar(v.id)} icon="🗑️" label=""
+                            <Accion onClick={() => onEliminar(v.id)} Icon={LuTrash2} label=""
                                 className="text-[#D13A28]/60 dark:text-[#E8422F]/60 hover:bg-[#FEE2E2] dark:hover:bg-[#3B1111]" />
                         </div>
                     </div>

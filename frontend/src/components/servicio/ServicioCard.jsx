@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LuShieldCheck, LuHourglass } from 'react-icons/lu';
+import { LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuClipboardList, LuPencil, LuCopy, LuArchive, LuTrash2 } from 'react-icons/lu';
 import { useMontos } from '../../context/MontosContext';
 import IconBtn from '../ui/IconBtn';
 import ActionSheet from '../ui/ActionSheet';
@@ -304,43 +304,43 @@ export default function ServicioCard({
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-panel border-t border-black/[0.06]">
                 {/* Izquierda: solo acciones rapidas */}
                 <IconBtn onClick={() => onDetalle(servicio)} title="Ver detalle"
-                    cls="bg-chip text-secondary">👁️</IconBtn>
+                    cls="bg-chip text-secondary"><LuEye size={15} /></IconBtn>
                 <IconBtn onClick={() => onGenerarPDF(servicio)} title="PDF"
-                    cls="bg-chip text-secondary">📄</IconBtn>
+                    cls="bg-chip text-secondary"><LuFileText size={15} /></IconBtn>
 
                 {/* Menu overflow para acciones secundarias */}
                 <div className="relative">
                     <IconBtn onClick={() => setMenuAbierto(v => !v)} title="Mas acciones"
                         cls={`${menuAbierto ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-brand-red' : 'bg-chip text-secondary'}`}>
-                        ⋯
+                        <LuEllipsis size={15} />
                     </IconBtn>
                     <ActionSheet open={menuAbierto} onClose={() => setMenuAbierto(false)}>
                                 <button onClick={() => { onGenerarPDF(servicio, { sinPrecios: true }); setMenuAbierto(false); }}
-                                    className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                    📋 PDF sin precios
+                                    className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                    <LuClipboardList size={16} /> PDF sin precios
                                 </button>
                                 {esPpto && onEditar && (
                                     <button onClick={() => { onEditar(servicio); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                        ✏️ Editar
+                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                        <LuPencil size={16} /> Editar
                                     </button>
                                 )}
                                 {onDuplicar && (
                                     <button onClick={() => { onDuplicar(servicio); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                        ⧉ Duplicar
+                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                        <LuCopy size={16} /> Duplicar
                                     </button>
                                 )}
                                 {!esArch && (
                                     <button onClick={() => { onArchivar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                        🗄️ Archivar
+                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                        <LuArchive size={16} /> Archivar
                                     </button>
                                 )}
                                 {onEliminar && (
                                     <button onClick={() => { onEliminar(servicio.id); setMenuAbierto(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
-                                        🗑️ Eliminar
+                                        className="w-full px-5 py-3.5 text-left text-body font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl flex items-center gap-2.5">
+                                        <LuTrash2 size={16} /> Eliminar
                                     </button>
                                 )}
                     </ActionSheet>

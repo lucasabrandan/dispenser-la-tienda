@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { M } from '../servicio/ServicioUI';
 import IconBtn from '../ui/IconBtn';
 import ActionSheet from '../ui/ActionSheet';
+import { LuFileText, LuPencil, LuEllipsisVertical, LuClipboardList, LuArchive, LuZap } from 'react-icons/lu';
 import { formatFechaCorta } from '../../utils/dateUtils';
 
 export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, onIniciar, onEditar, modoSeleccion, seleccionado, onToggleSelect }) {
@@ -99,21 +100,21 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
             </div>
 
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]">
-                <IconBtn onClick={() => onPDF(s)} title="PDF" cls="bg-chip text-secondary">📄</IconBtn>
+                <IconBtn onClick={() => onPDF(s)} title="PDF" cls="bg-chip text-secondary"><LuFileText size={15} /></IconBtn>
                 {onEditar && (
-                    <IconBtn onClick={() => onEditar(s)} title="Editar" cls="bg-chip text-secondary">✏️</IconBtn>
+                    <IconBtn onClick={() => onEditar(s)} title="Editar" cls="bg-chip text-secondary"><LuPencil size={15} /></IconBtn>
                 )}
 
                 <div className="relative">
-                    <IconBtn onClick={() => setMenuAbierto(v => !v)} title="Más opciones" cls="bg-chip text-secondary">⋮</IconBtn>
+                    <IconBtn onClick={() => setMenuAbierto(v => !v)} title="Más opciones" cls="bg-chip text-secondary"><LuEllipsisVertical size={15} /></IconBtn>
                     <ActionSheet open={menuAbierto} onClose={() => setMenuAbierto(false)}>
                                 <button onClick={() => { onPDF(s, { sinPrecios: true }); setMenuAbierto(false); }}
-                                    className="w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                    📋 PDF sin precios
+                                    className="w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                    <LuClipboardList size={15} /> PDF sin precios
                                 </button>
                                 <button onClick={() => { onArchivar(s.id); setMenuAbierto(false); }}
-                                    className="w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                    🗄️ Archivar
+                                    className="w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                    <LuArchive size={15} /> Archivar
                                 </button>
                     </ActionSheet>
                 </div>
@@ -121,8 +122,8 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                 <div className="flex-1" />
 
                 <button onClick={() => onIniciar(s)}
-                    className="h-9 px-4 rounded-xl font-bold text-label text-white shrink-0 active:scale-95 transition-all bg-brand-red">
-                    ⚡ Iniciar
+                    className="h-9 px-4 rounded-xl font-bold text-label text-white shrink-0 active:scale-95 transition-all bg-brand-red flex items-center gap-1.5">
+                    <LuZap size={14} /> Iniciar
                 </button>
             </div>
         </div>
