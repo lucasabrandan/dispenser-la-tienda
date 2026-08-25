@@ -1,22 +1,23 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuCalendar, LuClipboardList, LuBanknote } from 'react-icons/lu';
 
 // Reordenado: las acciones más frecuentes accesibles directamente
 const NAV_ADMIN = [
-    { id: 'caja',             nombre: 'Panel',    icon: '🏠' },
-    { id: 'servicio-tecnico', nombre: 'Técnico',  icon: '🔧' },
-    { id: 'despacho',         nombre: 'Despacho', icon: '📌' },
-    { id: 'venta',            nombre: 'Venta',    icon: '🛒' },
-    { id: '_more',            nombre: 'Más',      icon: '⋯'  },
+    { id: 'caja',             nombre: 'Panel',    Icon: LuHouse        },
+    { id: 'servicio-tecnico', nombre: 'Técnico',  Icon: LuWrench       },
+    { id: 'despacho',         nombre: 'Despacho', Icon: LuPin          },
+    { id: 'venta',            nombre: 'Venta',    Icon: LuShoppingCart },
+    { id: '_more',            nombre: 'Más',      Icon: LuEllipsis     },
 ];
 
 const NAV_TECNICO = [
-    { id: 'mis-ordenes',      nombre: 'Ordenes',  icon: '📌' },
-    { id: 'mi-agenda',        nombre: 'Agenda',   icon: '📅' },
-    { id: 'servicio-tecnico', nombre: 'Tecnico',  icon: '🔧' },
-    { id: 'historial',        nombre: 'Historial',icon: '📋' },
-    { id: 'mi-sueldo',        nombre: 'Sueldo',   icon: '💰' },
+    { id: 'mis-ordenes',      nombre: 'Ordenes',  Icon: LuPin           },
+    { id: 'mi-agenda',        nombre: 'Agenda',   Icon: LuCalendar      },
+    { id: 'servicio-tecnico', nombre: 'Tecnico',  Icon: LuWrench        },
+    { id: 'historial',        nombre: 'Historial',Icon: LuClipboardList },
+    { id: 'mi-sueldo',        nombre: 'Sueldo',   Icon: LuBanknote      },
 ];
 
 // Secciones accesibles desde "Más"
@@ -57,9 +58,7 @@ export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) 
                             onClick={() => item.id === '_more' ? onMoreClick?.() : setVistaActual(item.id)}
                             className="relative flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all active:scale-90"
                         >
-                            <span className={`text-[20px] transition-transform duration-200 ${activo ? 'scale-110' : 'scale-100'}`}>
-                                {item.icon}
-                            </span>
+                            <item.Icon size={20} className={`transition-transform duration-200 ${activo ? 'scale-110' : 'scale-100'}`} />
                             <span className={`text-[9px] font-bold uppercase tracking-tight transition-colors duration-200 ${activo ? 'text-[#E8422F]' : 'text-[#9E9A94]'}`}>
                                 {item.nombre}
                             </span>

@@ -4,42 +4,43 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuClipboardList, LuCalendar, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut } from 'react-icons/lu';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
 // para no mezclar todo en una sola lista larga.
 const MENU_PANEL = [
-    { id: 'caja', icon: '🏠', nombre: 'Panel' },
+    { id: 'caja', Icon: LuHouse, nombre: 'Panel' },
 ];
 const MENU_SERVICIO = [
-    { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Técnico' },
-    { id: 'despacho',         icon: '📌', nombre: 'Despacho'         },
+    { id: 'servicio-tecnico', Icon: LuWrench, nombre: 'Servicio Técnico' },
+    { id: 'despacho',         Icon: LuPin,    nombre: 'Despacho'         },
 ];
 const MENU_VENTAS = [
-    { id: 'venta', icon: '🛒', nombre: 'Venta / Insumos' },
+    { id: 'venta', Icon: LuShoppingCart, nombre: 'Venta / Insumos' },
 ];
 // Presupuestos e Historial quedan aparte de los grupos por dominio: un
 // "presupuesto" puede ser de Servicio o de Venta, así que agruparlo bajo
-// "🔧 Servicio" prometía algo que la pantalla no era — ahí adentro se
+// "Servicio" prometía algo que la pantalla no era — ahí adentro se
 // vuelve a separar por tipo, quedaba redundante con el propio menú.
 const MENU_TRANSVERSAL = [
-    { id: 'presupuestos', icon: '💰', nombre: 'Presupuestos' },
-    { id: 'historial',    icon: '📋', nombre: 'Historial'    },
+    { id: 'presupuestos', Icon: LuBanknote,      nombre: 'Presupuestos' },
+    { id: 'historial',    Icon: LuClipboardList, nombre: 'Historial'    },
 ];
 
 const MENU_OPERACIONES_TECNICO = [
-    { id: 'mis-ordenes',      icon: '📌', nombre: 'Mis Ordenes'      },
-    { id: 'mi-agenda',        icon: '📅', nombre: 'Mi Agenda'        },
-    { id: 'servicio-tecnico', icon: '🔧', nombre: 'Servicio Tecnico' },
-    { id: 'historial',        icon: '📋', nombre: 'Historial'        },
-    { id: 'mi-sueldo',        icon: '💰', nombre: 'Mi Sueldo'        },
+    { id: 'mis-ordenes',      Icon: LuPin,           nombre: 'Mis Ordenes'      },
+    { id: 'mi-agenda',        Icon: LuCalendar,      nombre: 'Mi Agenda'        },
+    { id: 'servicio-tecnico', Icon: LuWrench,        nombre: 'Servicio Tecnico' },
+    { id: 'historial',        Icon: LuClipboardList, nombre: 'Historial'        },
+    { id: 'mi-sueldo',        Icon: LuBanknote,      nombre: 'Mi Sueldo'        },
 ];
 
 const MENU_GESTION = [
-    { id: 'clientes',  icon: '👥', nombre: 'Clientes'  },
-    { id: 'radar',     icon: '🚨', nombre: 'Radar'     },
-    { id: 'productos', icon: '📦', nombre: 'Productos' },
-    { id: 'finanzas',  icon: '💹', nombre: 'Finanzas'  },
-    { id: 'usuarios',  icon: '🔐', nombre: 'Usuarios'  },
+    { id: 'clientes',  Icon: LuUsers,      nombre: 'Clientes'  },
+    { id: 'radar',     Icon: LuSiren,      nombre: 'Radar'     },
+    { id: 'productos', Icon: LuPackage,    nombre: 'Productos' },
+    { id: 'finanzas',  Icon: LuTrendingUp, nombre: 'Finanzas'  },
+    { id: 'usuarios',  Icon: LuLock,       nombre: 'Usuarios'  },
 ];
 
 const ChevronLeft  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
@@ -65,8 +66,8 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
         if (colapsado) {
             return (
                 <div onClick={() => setVistaActual(item.id)} title={item.nombre}
-                    className={`relative h-11 w-11 mx-auto rounded-2xl cursor-pointer flex items-center justify-center text-xl transition-all duration-200 active:scale-95 ${baseBtn}`}>
-                    {item.icon}
+                    className={`relative h-11 w-11 mx-auto rounded-2xl cursor-pointer flex items-center justify-center transition-all duration-200 active:scale-95 ${baseBtn}`}>
+                    <item.Icon size={20} />
                     {badge && (
                         <span className="absolute top-0.5 right-0.5 text-label font-black w-4 h-4 flex items-center justify-center rounded-full bg-brand-red text-white leading-none">
                             {badge}
@@ -79,7 +80,8 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
         return (
             <div onClick={() => setVistaActual(item.id)}
                 className={`px-5 py-3.5 rounded-2xl cursor-pointer text-body transition-all duration-200 flex items-center gap-3 whitespace-nowrap active:scale-95 ${baseBtn}`}>
-                <span>{item.icon} {item.nombre}</span>
+                <item.Icon size={16} className="shrink-0" />
+                <span>{item.nombre}</span>
                 {badge && (
                     <span className={`ml-auto text-label font-black px-1.5 py-0.5 rounded-full leading-none ${activa ? 'bg-white/30 text-white' : 'bg-brand-red text-white'}`}>
                         {badge}
@@ -123,13 +125,13 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                             {MENU_PANEL.map(item => <MenuItem key={item.id} item={item} />)}
                         </div>
                         <div>
-                            {!colapsado && <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-2 px-2">🔧 Servicio</p>}
+                            {!colapsado && <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-2 px-2 flex items-center gap-1.5"><LuWrench size={11} /> Servicio</p>}
                             <div className="space-y-1">
                                 {MENU_SERVICIO.map(item => <MenuItem key={item.id} item={item} />)}
                             </div>
                         </div>
                         <div>
-                            {!colapsado && <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-2 px-2">🛒 Ventas</p>}
+                            {!colapsado && <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-2 px-2 flex items-center gap-1.5"><LuShoppingCart size={11} /> Ventas</p>}
                             <div className="space-y-1">
                                 {MENU_VENTAS.map(item => <MenuItem key={item.id} item={item} />)}
                             </div>
@@ -196,12 +198,12 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                         </button>
                         <button onClick={toggleTheme} title={isDark ? 'Modo claro' : 'Modo oscuro'}
                             className={`${iconBtn} text-[#57534E] dark:text-[#A8A29E]`}>
-                            <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
+                            {isDark ? <LuSun size={16} /> : <LuMoon size={16} />}
                         </button>
                         {colapsado && (
                             <button onClick={logout} title="Cerrar sesión"
                                 className={`${iconBtn} text-brand-red`}>
-                                🚪
+                                <LuLogOut size={16} />
                             </button>
                         )}
                     </div>
