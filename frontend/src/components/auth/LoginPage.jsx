@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import logo from '../../assets/logo-dispenser.svg';
+import { LuEyeOff, LuEye } from 'react-icons/lu';
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -84,7 +85,7 @@ export default function LoginPage() {
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors text-sm"
                                     tabIndex={-1}
                                 >
-                                    {verClave ? '🙈' : '👁️'}
+                                    {verClave ? <LuEyeOff size={14} /> : <LuEye size={14} />}
                                 </button>
                             </div>
                         </div>

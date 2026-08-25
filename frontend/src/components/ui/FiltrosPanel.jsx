@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DateInput from './DateInput';
 import { MESES_ES } from '../../utils/dateUtils';
+import { LuSearch } from 'react-icons/lu';
 
 function formatMes(ym) {
     if (!ym) return '';
@@ -54,7 +55,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = false, conRan
             {/* Búsqueda */}
             {conBusqueda && (
                 <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
+                    <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                     <input type="text" placeholder={placeholderBusqueda}
                         value={busqueda} onChange={e => setBusqueda(e.target.value)}
                         className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />

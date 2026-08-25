@@ -7,6 +7,7 @@ import NotificacionesPanel, { NotifBell } from './NotificacionesPanel';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import api from '../../services/api';
+import { LuSun, LuMoon } from 'react-icons/lu';
 
 const NOMBRES_SECCION = {
     'caja':             'Panel',
@@ -93,7 +94,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                                 isDark ? 'text-[#F0A500]' : 'text-[#9E9A94]'
                             }`}
                         >
-                            <span className="text-[18px]">{isDark ? '☀️' : '🌙'}</span>
+                            {isDark ? <LuSun size={18} /> : <LuMoon size={18} />}
                         </button>
                     </div>
                 </header>
