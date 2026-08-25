@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { M } from '../servicio/ServicioUI';
+import { LuWrench, LuShoppingCart, LuMapPin, LuClock, LuStickyNote } from 'react-icons/lu';
 import { ESTADO_COLORS, ESTADO_BORDER, DEFAULT_COLOR, calcTotal, getIniciales, estadoPredominante } from './estadoConstants';
 
 const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
@@ -125,7 +126,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                             className="rounded-lg p-2.5 ml-2 bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform border-l-[3px]"
                                                             style={{ borderLeftColor: ESTADO_BORDER[s.estado] || '#A8A29E' }}>
                                                             <div className="flex items-start gap-2">
-                                                                <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? '🔧' : '🛒'}</span>
+                                                                <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? <LuWrench size={14} /> : <LuShoppingCart size={14} />}</span>
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center justify-between gap-2">
                                                                         <p className="text-body font-bold text-ink truncate">{s.clienteNombre}</p>
@@ -139,14 +140,14 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                                             target="_blank" rel="noopener noreferrer"
                                                                             className="text-caption text-brand-red truncate block mt-0.5 active:opacity-70"
                                                                             onClick={e => e.stopPropagation()}>
-                                                                            📍 {s.sedeDireccion}
+                                                                            <LuMapPin size={11} className="inline -mt-0.5 mr-0.5" />{s.sedeDireccion}
                                                                         </a>
                                                                     )}
                                                                     {s.items?.[0]?.trabajoRealizado && (
                                                                         <p className="text-caption text-muted mt-1 line-clamp-2">{s.items[0].trabajoRealizado}</p>
                                                                     )}
                                                                     <div className="flex items-center gap-3 mt-1.5">
-                                                                        <span className="text-label font-bold text-muted">⏱ {horas}</span>
+                                                                        <span className="text-label font-bold text-muted flex items-center gap-1"><LuClock size={11} />{horas}</span>
                                                                         <M valor={calcTotal(s)} className="text-caption font-black text-ink ml-auto" />
                                                                     </div>
                                                                 </div>
@@ -188,7 +189,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                             }`}
                                                             style={{ borderLeftColor: n.completada ? '#16A34A' : '#D48800' }}>
                                                             <div className="flex items-start gap-2">
-                                                                <span className="mt-0.5 text-label">📝</span>
+                                                                <span className="mt-0.5"><LuStickyNote size={13} /></span>
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center justify-between gap-2">
                                                                         <p className={`text-body font-bold truncate ${n.completada ? 'line-through text-muted' : 'text-ink'}`}>
@@ -202,7 +203,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                                         <p className="text-caption text-muted mt-0.5 line-clamp-2">{n.descripcion}</p>
                                                                     )}
                                                                     {n.direccion && (
-                                                                        <p className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 truncate">📍 {n.direccion}</p>
+                                                                        <p className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 truncate flex items-center gap-1"><LuMapPin size={11} />{n.direccion}</p>
                                                                     )}
                                                                 </div>
                                                             </div>

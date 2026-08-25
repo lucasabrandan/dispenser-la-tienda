@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuInbox } from 'react-icons/lu';
+import { LuInbox, LuWrench, LuShoppingCart } from 'react-icons/lu';
 import { M } from '../servicio/ServicioUI';
 import AgendaCard from './AgendaCard';
 import { ESTADO_COLORS, DEFAULT_COLOR, MAX_TRABAJOS, calcTotal, getIniciales, estadoPredominante } from './estadoConstants';
@@ -70,7 +70,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                 </div>
                                 {servicios.length > 0 && (
                                     <div className="ml-3">
-                                        <p className="text-label font-bold text-brand-red uppercase tracking-wider mb-1 px-1">🔧 Servicios</p>
+                                        <p className="text-label font-bold text-brand-red uppercase tracking-wider mb-1 px-1 flex items-center gap-1"><LuWrench size={11} /> Servicios</p>
                                         <div className="space-y-1.5">
                                             {servicios.map(s => (
                                                 <AgendaCard key={s.id} s={s} onClick={() => setVistaActual('servicio-tecnico')} />
@@ -80,7 +80,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                 )}
                                 {ventas.length > 0 && (
                                     <div className="ml-3">
-                                        <p className="text-label font-bold text-brand-amber uppercase tracking-wider mb-1 px-1">🛒 Ventas / Entregas</p>
+                                        <p className="text-label font-bold text-brand-amber uppercase tracking-wider mb-1 px-1 flex items-center gap-1"><LuShoppingCart size={11} /> Ventas / Entregas</p>
                                         <div className="space-y-1.5">
                                             {ventas.map(s => (
                                                 <AgendaCard key={s.id} s={s} onClick={() => setVistaActual('venta')} />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { LuPin, LuSiren } from 'react-icons/lu';
 
 export default function AlertasBlock({ pptoVencidos, ordenesActivas, alertasRadar, setVistaActual }) {
     const total = pptoVencidos.length + ordenesActivas.length + alertasRadar.length;
@@ -26,7 +27,7 @@ export default function AlertasBlock({ pptoVencidos, ordenesActivas, alertasRada
                 {ordenesActivas.length > 0 && (
                     <button onClick={() => setVistaActual('despacho')}
                         className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#FEF3C7] dark:bg-[#2E2207] border border-[#D48800]/15">
-                        <span>📌</span>
+                        <LuPin size={16} />
                         <div className="flex-1 min-w-0">
                             <p className="text-body font-bold text-[#92400E] dark:text-[#FBBF24]">
                                 {ordenesActivas.length} orden{ordenesActivas.length !== 1 ? 'es' : ''} activa{ordenesActivas.length !== 1 ? 's' : ''}
@@ -41,7 +42,7 @@ export default function AlertasBlock({ pptoVencidos, ordenesActivas, alertasRada
                 {alertasRadar.length > 0 && (
                     <button onClick={() => setVistaActual('radar')}
                         className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-panel border border-black/[0.05] dark:border-white/[0.05]">
-                        <span>🚨</span>
+                        <LuSiren size={16} />
                         <div className="flex-1 min-w-0">
                             <p className="text-body font-bold text-ink">
                                 {alertasRadar.length} equipo{alertasRadar.length !== 1 ? 's' : ''} sin mantenimiento

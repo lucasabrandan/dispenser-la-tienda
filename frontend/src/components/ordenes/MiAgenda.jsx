@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { LuInbox } from 'react-icons/lu';
+import { LuInbox, LuPin, LuMapPin } from 'react-icons/lu';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { formatDateISO, lunesDeLaSemana } from '../../utils/dateUtils';
@@ -57,7 +57,7 @@ function OrdenAgendaCard({ orden }) {
         <div className="rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 border-l-[3px]"
             style={{ borderLeftColor: borderColor }}>
             <div className="flex items-center gap-2">
-                <span className="text-body-lg">📌</span>
+                <LuPin size={18} />
                 <div className="flex-1 min-w-0">
                     <p className="text-body font-bold text-ink truncate">{orden.titulo}</p>
                     {orden.horaEstimada && (
@@ -72,7 +72,7 @@ function OrdenAgendaCard({ orden }) {
                 <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
                     target="_blank" rel="noreferrer"
                     className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-1 block truncate hover:underline">
-                    📍 {orden.direccion}
+                    <LuMapPin size={11} className="inline -mt-0.5 mr-0.5" />{orden.direccion}
                 </a>
             )}
         </div>
@@ -123,7 +123,7 @@ function NotaCard({ nota, onToggle, onEliminar }) {
                 <a href={`https://maps.google.com/?q=${encodeURIComponent(nota.direccion)}`}
                     target="_blank" rel="noreferrer"
                     className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-1 block truncate hover:underline">
-                    📍 {nota.direccion}
+                    <LuMapPin size={11} className="inline -mt-0.5 mr-0.5" />{nota.direccion}
                 </a>
             )}
         </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { M } from '../servicio/ServicioUI';
+import { LuMapPin, LuClock } from 'react-icons/lu';
 import { ESTADO_BORDER, ESTADO_LABEL, calcTotal } from './estadoConstants';
 
 export default function AgendaCard({ s, onClick }) {
@@ -28,11 +29,11 @@ export default function AgendaCard({ s, onClick }) {
                     className="text-caption truncate block mt-1 active:opacity-70"
                     style={{ color: borderHex }}
                     onClick={e => e.stopPropagation()}>
-                    📍 {s.sedeDireccion}
+                    <LuMapPin size={11} className="inline -mt-0.5 mr-0.5" />{s.sedeDireccion}
                 </a>
             )}
             {s.duracionMinutos && (
-                <p className="text-caption font-bold text-muted mt-1">⏱ {Math.round(s.duracionMinutos / 60 * 10) / 10}h estimadas</p>
+                <p className="text-caption font-bold text-muted mt-1 flex items-center gap-1"><LuClock size={11} />{Math.round(s.duracionMinutos / 60 * 10) / 10}h estimadas</p>
             )}
         </div>
     );

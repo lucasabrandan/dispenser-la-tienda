@@ -8,6 +8,7 @@ import PlanificadorBlock from './dashboard/PlanificadorBlock';
 import AgendaBlock from './dashboard/AgendaBlock';
 import AlertasBlock from './dashboard/AlertasBlock';
 import { calcTotal } from './dashboard/estadoConstants';
+import { LuWrench, LuShoppingCart, LuBanknote, LuTrendingUp } from 'react-icons/lu';
 import { getTodayISO, formatDateISO } from '../utils/dateUtils';
 
 export default function DashboardCaja({ setVistaActual }) {
@@ -156,12 +157,12 @@ export default function DashboardCaja({ setVistaActual }) {
                     <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
                             className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-brand-red text-white">
-                            <span>🔧</span>
+                            <LuWrench size={18} />
                             <span className="text-body font-black">Nuevo Servicio</span>
                         </button>
                         <button onClick={() => setVistaActual('venta', { crear: true })}
                             className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-brand-amber text-white">
-                            <span>🛒</span>
+                            <LuShoppingCart size={18} />
                             <span className="text-body font-black">Nueva Venta</span>
                         </button>
                     </div>
@@ -194,14 +195,14 @@ export default function DashboardCaja({ setVistaActual }) {
                         <div className="flex flex-col gap-1.5">
                             <div className="grid grid-cols-2 gap-1.5 flex-1">
                                 {[
-                                    { vista: 'servicio-tecnico', icon: '🔧', label: 'Servicio', border: 'border-l-[#D13A28] dark:border-l-[#E8422F]' },
-                                    { vista: 'venta', icon: '🛒', label: 'Venta', border: 'border-l-[#D48800] dark:border-l-[#F0A500]' },
-                                    { vista: 'presupuestos', icon: '💰', label: 'Presupuestos', border: '' },
-                                    { vista: 'finanzas', icon: '💹', label: 'Finanzas', border: '' },
-                                ].map(({ vista, icon, label, border }) => (
+                                    { vista: 'servicio-tecnico', Icon: LuWrench, label: 'Servicio', border: 'border-l-[#D13A28] dark:border-l-[#E8422F]' },
+                                    { vista: 'venta', Icon: LuShoppingCart, label: 'Venta', border: 'border-l-[#D48800] dark:border-l-[#F0A500]' },
+                                    { vista: 'presupuestos', Icon: LuBanknote, label: 'Presupuestos', border: '' },
+                                    { vista: 'finanzas', Icon: LuTrendingUp, label: 'Finanzas', border: '' },
+                                ].map(({ vista, Icon, label, border }) => (
                                     <button key={vista} onClick={() => setVistaActual(vista)}
                                         className={`${card} flex items-center gap-2 p-2.5 text-left active:scale-[0.98] hover:shadow-md transition-shadow ${border ? `border-l-[3px] ${border}` : ''}`}>
-                                        <span>{icon}</span>
+                                        <Icon size={15} />
                                         <span className="text-label font-bold text-ink">{label}</span>
                                     </button>
                                 ))}
