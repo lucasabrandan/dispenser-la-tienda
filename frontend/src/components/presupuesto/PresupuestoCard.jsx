@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { M } from '../servicio/ServicioUI';
 import IconBtn from '../ui/IconBtn';
 import ActionSheet from '../ui/ActionSheet';
-import { LuFileText, LuPencil, LuEllipsisVertical, LuClipboardList, LuArchive, LuZap } from 'react-icons/lu';
+import { LuFileText, LuPencil, LuEllipsisVertical, LuClipboardList, LuArchive, LuZap, LuWrench, LuShoppingCart, LuMapPin, LuUser } from 'react-icons/lu';
 import { formatFechaCorta } from '../../utils/dateUtils';
 
 export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, onIniciar, onEditar, modoSeleccion, seleccionado, onToggleSelect }) {
@@ -29,8 +29,8 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                         </button>
                     )}
                     <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
-                        <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${esTecnico ? 'bg-[#D13A28]/10 text-brand-red' : 'bg-[#D48800]/10 text-brand-amber'}`}>
-                            {esTecnico ? '🔧 Servicio' : '🛒 Venta'}
+                        <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase shrink-0 flex items-center gap-1 ${esTecnico ? 'bg-[#D13A28]/10 text-brand-red' : 'bg-[#D48800]/10 text-brand-amber'}`}>
+                            {esTecnico ? <><LuWrench size={11} /> Servicio</> : <><LuShoppingCart size={11} /> Venta</>}
                         </span>
                         <span className="text-caption font-bold text-muted shrink-0">#{s.id}</span>
                     </div>
@@ -44,7 +44,10 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
                 {(s.sedeNombre || s.usuarioNombre) && (
                     <p className="truncate text-caption text-muted">
-                        {[s.sedeNombre && `📍 ${s.sedeNombre}`, s.usuarioNombre && `👤 ${s.usuarioNombre}`].filter(Boolean).join(' · ')}
+                        {[
+                            s.sedeNombre    && (<span key="sede" className="inline-flex items-center gap-0.5"><LuMapPin size={10} />{s.sedeNombre}</span>),
+                            s.usuarioNombre && (<span key="user" className="inline-flex items-center gap-0.5"><LuUser size={10} />{s.usuarioNombre}</span>),
+                        ].filter(Boolean).reduce((acc, cur, i) => i === 0 ? [cur] : [...acc, ' · ', cur], [])}
                     </p>
                 )}
 
