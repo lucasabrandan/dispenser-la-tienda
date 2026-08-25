@@ -169,7 +169,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                         ←
                     </button>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-[15px] font-black text-ink leading-none">Registrar trabajo</h2>
+                        <h2 className="text-title font-black text-ink leading-none">Registrar trabajo</h2>
                         <p className="text-caption text-muted truncate mt-0.5">{orden.clienteNombre || 'Cliente'} · {orden.titulo}</p>
                     </div>
                 </div>

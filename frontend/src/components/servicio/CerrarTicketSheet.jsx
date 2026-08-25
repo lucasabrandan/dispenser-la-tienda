@@ -308,7 +308,7 @@ export default function CerrarTicketSheet({
                 {paso === 'cobrar' && (
                     <div className="p-6 space-y-4">
                         <div>
-                            <h3 className="text-[16px] font-black text-ink leading-none">
+                            <h3 className="text-title font-black text-ink leading-none">
                                 Confirmar trabajo
                             </h3>
                             <p className="text-caption text-muted mt-0.5">Firmas para el PDF</p>

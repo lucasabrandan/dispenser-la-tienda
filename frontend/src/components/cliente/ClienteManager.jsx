@@ -139,7 +139,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             <div className="sticky top-0 z-10 bg-card px-5 pt-4 pb-3 border-b border-black/[0.07] dark:border-white/[0.07]">
                                 <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip md:hidden" />
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[17px] font-black text-ink">{cliente.nombre}</h3>
+                                    <h3 className="text-title font-black text-ink">{cliente.nombre}</h3>
                                     <button onClick={() => setExpandedId(null)}
                                         className="w-9 h-9 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90">✕</button>
                                 </div>
@@ -206,7 +206,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                         <div className="bg-card rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
                             <div className="text-center mb-5">
                                 <p className="text-[36px] mb-2">⚠️</p>
-                                <h3 className="text-[16px] font-black text-ink uppercase">Eliminar cliente</h3>
+                                <h3 className="text-title font-black text-ink uppercase">Eliminar cliente</h3>
                             </div>
                             <p className="text-caption text-secondary text-center mb-5 leading-snug">
                                 Se eliminará el cliente y todo su historial. Esta acción no se puede deshacer.

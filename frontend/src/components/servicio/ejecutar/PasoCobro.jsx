@@ -78,7 +78,7 @@ export default function PasoCobro({
                                 <p className="text-caption text-muted mt-0.5">{opt.sub}</p>
                             </div>
                             {opt.monto !== null && (
-                                <p className={`text-[20px] font-black ${opt.montoColor}`}>{fmt(opt.monto)}</p>
+                                <p className={`text-title font-black ${opt.montoColor}`}>{fmt(opt.monto)}</p>
                             )}
                         </div>
                     </button>

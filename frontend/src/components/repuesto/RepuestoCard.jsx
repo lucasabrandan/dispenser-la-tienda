@@ -52,7 +52,7 @@ export default function RepuestoCard({
                 <p className="text-[12px] font-bold text-ink leading-tight line-clamp-2 min-h-[32px]">
                     {r.nombre}
                 </p>
-                <p className="text-[15px] font-black text-ink mt-1">
+                <p className="text-title font-black text-ink mt-1">
                     ${Math.round(precioNegro).toLocaleString('es-AR')}
                 </p>
             </div>

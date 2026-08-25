@@ -58,10 +58,10 @@ export default function RepuestoRapidoModal({ isOpen, onClose, nombreInicial = '
             <div className="bg-card w-full max-w-md md:max-w-sm rounded-t-3xl md:rounded-2xl p-6 shadow-2xl">
                 <div className="w-12 h-1.5 bg-black/20 dark:bg-white/20 rounded-full mx-auto mb-5" />
 
-                <h3 className="text-[15px] font-black text-ink mb-1">
+                <h3 className="text-title font-black text-ink mb-1">
                     Nuevo repuesto
                 </h3>
-                <p className="text-[11px] text-muted mb-5">
+                <p className="text-caption text-muted mb-5">
                     Ingresá los datos esenciales. Podés agregar foto, costo y descripción
                     después desde el catálogo.
                 </p>

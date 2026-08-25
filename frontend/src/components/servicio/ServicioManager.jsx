@@ -398,7 +398,7 @@ export default function ServicioManager({
                         </div>
                         <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-panel border-b border-black/[0.08]">
                             <div>
-                                <h3 className="text-[15px] font-black text-ink">
+                                <h3 className="text-title font-black text-ink">
                                     {servicioEjecutar ? '🔧 Ejecutar Trabajo' : servicioDuplicar ? '⧉ Duplicar Presupuesto' : servicioEditar ? '✏️ Editar Presupuesto' : '🔧 Nuevo Servicio'}
                                 </h3>
                                 <p className="text-caption text-muted mt-0.5">

@@ -101,7 +101,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                 {/* Header */}
                 <div className="px-4 pb-3 flex items-center justify-between">
                     <div>
-                        <h3 className="text-[15px] font-black text-ink">
+                        <h3 className="text-title font-black text-ink">
                             Ajustar stock
                         </h3>
                         {hayModificados && (

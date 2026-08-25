@@ -83,7 +83,7 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.08] dark:border-white/[0.07]">
                     <div>
-                        <h2 className="text-[16px] font-black text-ink">Notificaciones</h2>
+                        <h2 className="text-title font-black text-ink">Notificaciones</h2>
                         {noLeidas > 0 && (
                             <p className="text-label font-bold text-brand-red">{noLeidas} sin leer</p>
                         )}

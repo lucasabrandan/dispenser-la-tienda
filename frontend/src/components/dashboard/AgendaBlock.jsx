@@ -53,7 +53,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
                                             <span className="text-label font-black text-white leading-none">{getIniciales(tecNombre)}</span>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className={`text-[17px] font-black tracking-tight leading-tight ${color.text}`}>
+                                            <p className={`text-title font-black tracking-tight leading-tight ${color.text}`}>
                                                 {tecNombre}
                                             </p>
                                             <p className="text-caption font-bold text-muted">

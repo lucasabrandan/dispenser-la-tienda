@@ -298,7 +298,7 @@ export default function MiAgenda({ tecnicoId }) {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-[20px] font-black text-ink">Mi Agenda</h1>
+                        <h1 className="text-title font-black text-ink">Mi Agenda</h1>
                         <p className="text-caption text-muted capitalize">{mesLabel}</p>
                     </div>
                     <div className="flex gap-1.5">

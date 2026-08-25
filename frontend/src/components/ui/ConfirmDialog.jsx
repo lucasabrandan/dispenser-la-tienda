@@ -22,7 +22,7 @@ export default function ConfirmDialog({
                     onClick={e => e.stopPropagation()}>
                     <div className="text-center mb-5">
                         <p className="text-[36px] mb-2">⚠️</p>
-                        <h3 className="text-[16px] font-black text-ink uppercase">
+                        <h3 className="text-title font-black text-ink uppercase">
                             {titulo}
                         </h3>
                     </div>

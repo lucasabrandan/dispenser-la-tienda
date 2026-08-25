@@ -201,7 +201,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                 {/* Header */}
                 <div className="px-4 pb-3 flex items-center justify-between">
                     <div>
-                        <h3 className="text-[15px] font-black text-ink">Repuestos</h3>
+                        <h3 className="text-title font-black text-ink">Repuestos</h3>
                         {totalSeleccionados > 0 && (
                             <p className="text-caption text-brand-red font-bold">
                                 {totalSeleccionados} seleccionado{totalSeleccionados > 1 ? 's' : ''}

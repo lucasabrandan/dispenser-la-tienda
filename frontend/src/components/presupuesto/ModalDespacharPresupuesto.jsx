@@ -124,7 +124,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                     {/* Header */}
                     <div className="flex items-start justify-between px-6 pt-5 pb-3">
                         <div>
-                            <h3 className="text-[16px] font-black text-ink uppercase leading-none">
+                            <h3 className="text-title font-black text-ink uppercase leading-none">
                                 Despachar visita
                             </h3>
                             <p className="text-body font-bold text-muted mt-1 leading-tight">

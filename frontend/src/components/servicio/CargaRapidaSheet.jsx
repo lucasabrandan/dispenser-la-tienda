@@ -149,7 +149,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                         <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip md:hidden" />
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-[16px] font-black text-ink">⚡ Carga Rápida</h3>
+                                <h3 className="text-title font-black text-ink">⚡ Carga Rápida</h3>
                                 <p className="text-caption text-muted mt-0.5">Copiando trabajo del equipo anterior</p>
                             </div>
                             <button onClick={onClose}

@@ -41,8 +41,8 @@ export default function ClienteForm({ form, setForm, onSubmit, onClose }) {
                     {/* HEADER */}
                     <div className="flex justify-between items-center p-5 pb-4 border-b border-black/[0.07] dark:border-white/[0.07]">
                         <div>
-                            <h2 className="text-[20px] font-black text-ink">Editar Cliente</h2>
-                            <p className="text-[11px] text-muted mt-1">{form.nombre}</p>
+                            <h2 className="text-title font-black text-ink">Editar Cliente</h2>
+                            <p className="text-caption text-muted mt-1">{form.nombre}</p>
                         </div>
                         <button
                             onClick={onClose}

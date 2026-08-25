@@ -105,7 +105,7 @@ export default function CrearClienteModal({
                     {/* Header */}
                     <div className="flex justify-between items-center px-5 pt-4 pb-3">
                         <div>
-                            <h2 className="text-[17px] font-black text-ink">Nuevo Cliente</h2>
+                            <h2 className="text-title font-black text-ink">Nuevo Cliente</h2>
                             <p className="text-caption text-muted mt-0.5">Alta rápida — completá el resto después</p>
                         </div>
                         <button onClick={onClose}

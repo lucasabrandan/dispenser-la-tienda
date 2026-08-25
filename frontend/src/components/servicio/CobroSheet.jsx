@@ -26,7 +26,7 @@ export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCer
                 <div className="bg-card rounded-t-3xl md:rounded-3xl p-5 shadow-2xl border-t border-black/[0.07]">
                     <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip md:hidden" />
                     <div className="mb-4">
-                        <h3 className="text-[15px] font-black text-ink">Definir cobro</h3>
+                        <h3 className="text-title font-black text-ink">Definir cobro</h3>
                         <p className="text-caption text-muted mt-0.5">{servicio.clienteNombre} · #{servicio.id}</p>
                     </div>
                     <div className="mb-4 p-3 rounded-xl bg-panel">

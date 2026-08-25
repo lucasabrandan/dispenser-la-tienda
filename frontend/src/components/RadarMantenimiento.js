@@ -99,7 +99,7 @@ export default function RadarMantenimiento() {
                                             }`}>
                                                 {a.tipoAlerta} · {a.meses} meses
                                             </span>
-                                            <h3 className="font-black text-[16px] text-ink uppercase leading-none">
+                                            <h3 className="font-black text-title text-ink uppercase leading-none">
                                                 {a.clienteNombre}
                                             </h3>
                                             <p className="text-caption font-bold text-muted uppercase mt-1">

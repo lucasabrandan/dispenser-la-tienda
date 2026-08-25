@@ -279,7 +279,7 @@ export default function UsuariosManager() {
             {modal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="w-full max-w-sm rounded-3xl p-6 bg-card shadow-2xl space-y-4">
-                        <h3 className="text-[16px] font-black text-ink">
+                        <h3 className="text-title font-black text-ink">
                             {modal === 'crear' ? 'Nuevo usuario' : `Editar: ${modal.nombre}`}
                         </h3>
 
@@ -394,7 +394,7 @@ export default function UsuariosManager() {
             {confirmEliminar && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="w-full max-w-sm rounded-3xl p-6 bg-card shadow-2xl space-y-4">
-                        <h3 className="text-[16px] font-black text-ink">
+                        <h3 className="text-title font-black text-ink">
                             Eliminar usuario
                         </h3>
                         <p className="text-body text-[#57534E] dark:text-[#A8A29E]">
@@ -418,7 +418,7 @@ export default function UsuariosManager() {
             {modalPass && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="w-full max-w-sm rounded-3xl p-6 bg-card shadow-2xl space-y-4">
-                        <h3 className="text-[16px] font-black text-ink">
+                        <h3 className="text-title font-black text-ink">
                             Cambiar clave: {modalPass.nombre}
                         </h3>
                         <div>
