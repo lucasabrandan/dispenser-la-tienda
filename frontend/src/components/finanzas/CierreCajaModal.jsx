@@ -5,6 +5,7 @@ import { useMontos } from '../../context/MontosContext';
 import { generarPDFCierreCaja } from '../../utils/pdf/cierreCaja';
 import DateInput from '../ui/DateInput';
 import { getTodayISO, formatDateISO } from '../../utils/dateUtils';
+import { LuCircleCheck, LuWrench, LuShoppingCart, LuFileText } from 'react-icons/lu';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -178,7 +179,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                         </div>
                     ) : totalItems === 0 && gastos.length === 0 ? (
                         <div className="text-center py-10">
-                            <p className="text-2xl mb-2">✅</p>
+                            <p className="mb-2 flex justify-center"><LuCircleCheck size={22} /></p>
                             <p className="font-bold text-muted">Sin movimientos en el período</p>
                         </div>
                     ) : (
@@ -193,12 +194,12 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                                 </div>
                                 <div className="p-3 space-y-1.5 bg-panel">
                                     <div className="flex justify-between text-body">
-                                        <span className="text-secondary">🔧 Servicios ({servicios.length})</span>
+                                        <span className="text-secondary flex items-center gap-1"><LuWrench size={13} /> Servicios ({servicios.length})</span>
                                         <span className="font-black text-ink">${Math.round(totalServicios).toLocaleString('es-AR')}</span>
                                     </div>
                                     {totalVentas > 0 && (
                                         <div className="flex justify-between text-body">
-                                            <span className="text-secondary">🛒 Ventas ({ventas.length})</span>
+                                            <span className="text-secondary flex items-center gap-1"><LuShoppingCart size={13} /> Ventas ({ventas.length})</span>
                                             <span className="font-black text-ink">${Math.round(totalVentas).toLocaleString('es-AR')}</span>
                                         </div>
                                     )}
@@ -337,8 +338,8 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                         <button
                             onClick={() => generarPDFCierreCaja({ servicios, porTecnico, totalGeneral: totalServicios, moGeneral, repuestosGeneral, desde, hasta })}
                             disabled={totalItems === 0}
-                            className="flex-1 h-11 rounded-2xl font-bold text-label uppercase text-white active:scale-95 transition-all disabled:opacity-40 bg-brand-red">
-                            📄 PDF
+                            className="flex-1 h-11 rounded-2xl font-bold text-label uppercase text-white active:scale-95 transition-all disabled:opacity-40 bg-brand-red flex items-center justify-center gap-1.5">
+                            <LuFileText size={14} /> PDF
                         </button>
                     </div>
                 </div>

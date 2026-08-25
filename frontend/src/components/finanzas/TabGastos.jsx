@@ -6,6 +6,7 @@ import { getTodayISO } from '../../utils/dateUtils';
 import { formatearPrecio } from '../../utils/formatearPrecio';
 import Paginacion from '../ui/Paginacion';
 import DateInput from '../ui/DateInput';
+import { LuPencil, LuTrash2 } from 'react-icons/lu';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const POR_PAGINA = 15;
@@ -153,11 +154,11 @@ export default function TabGastos({ filtroMes, setFiltroMes }) {
                             <p className="text-body font-black text-brand-red shrink-0">${fmt(g.monto)}</p>
                             <button onClick={() => editarGasto(g)}
                                 className="text-label font-bold text-muted hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors shrink-0">
-                                ✏️
+                                <LuPencil size={14} />
                             </button>
                             <button onClick={() => handleEliminar(g.id)}
                                 className="text-label font-bold text-muted hover:text-[#D13A28] dark:hover:text-[#E8422F] transition-colors shrink-0">
-                                🗑️
+                                <LuTrash2 size={14} />
                             </button>
                         </div>
                     ))}
@@ -181,7 +182,7 @@ export default function TabGastos({ filtroMes, setFiltroMes }) {
                     <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
                         <div className="bg-card rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
                             <div className="text-center mb-4">
-                                <p className="text-[32px] mb-2">🗑️</p>
+                                <p className="mb-2 flex justify-center"><LuTrash2 size={28} /></p>
                                 <h3 className="text-body-lg font-black text-ink uppercase">Eliminar gasto</h3>
                                 <p className="text-caption text-secondary mt-2">Esta acción no se puede deshacer.</p>
                             </div>
