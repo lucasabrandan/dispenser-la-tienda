@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { LuClipboardList, LuWrench, LuShoppingCart, LuCircleCheck } from 'react-icons/lu';
+import { LuClipboardList, LuWrench, LuShoppingCart, LuCircleCheck, LuSearch, LuCalendar, LuPencil } from 'react-icons/lu';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useFiltros } from '../hooks/useFiltros';
@@ -227,10 +227,10 @@ export default function PresupuestosManager() {
                         {/* Búsqueda — mobile: toggle */}
                         <button onClick={() => setMostrarBusqueda(v => !v)}
                             className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
-                            🔍
+                            <LuSearch size={15} />
                         </button>
                         <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
+                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, teléfono, S/N, sede..."
                                 className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
@@ -245,7 +245,7 @@ export default function PresupuestosManager() {
                             className={`${mostrarBusqueda ? 'hidden md:flex' : 'flex'} h-9 px-2.5 rounded-lg items-center gap-1 shrink-0 active:scale-95 shadow-sm border text-label font-bold whitespace-nowrap ${
                                 mostrarPeriodo ? 'bg-brand-red text-white border-transparent' : 'bg-white dark:bg-[#2E2E2E] text-secondary border-black/[0.05] dark:border-white/[0.05]'
                             }`}>
-                            📅 {periodoLabel} {mostrarPeriodo ? '▴' : '▾'}
+                            <LuCalendar size={12} /> {periodoLabel} {mostrarPeriodo ? '▴' : '▾'}
                         </button>
                         <button onClick={() => setModalCotizar(true)}
                             className="h-9 px-3 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-amber shrink-0">
@@ -396,7 +396,7 @@ export default function PresupuestosManager() {
                         </div>
                         <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-panel border-b border-black/[0.08]">
                             <div>
-                                <h3 className="text-title font-black text-ink">✏️ Editar Presupuesto</h3>
+                                <h3 className="text-title font-black text-ink flex items-center gap-1.5"><LuPencil size={16} /> Editar Presupuesto</h3>
                                 <p className="text-caption text-muted mt-0.5">#{presupuestoEditar.id} · {presupuestoEditar.clienteNombre}</p>
                             </div>
                             <button onClick={() => setPresupuestoEditar(null)}

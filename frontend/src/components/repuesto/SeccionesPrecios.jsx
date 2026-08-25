@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LuBanknote, LuReceipt, LuPackage, LuCreditCard, LuCalculator, LuSearch } from 'react-icons/lu';
 
 const inputBase = "w-full mt-1 p-3 rounded-xl text-sm font-bold outline-none transition-all border bg-chip border-black/[0.07] dark:border-white/[0.07] text-ink focus:ring-2 focus:ring-[#D13A28]/20";
 const readonlyBase = "w-full mt-1 p-3 rounded-xl text-sm font-black outline-none border";
@@ -9,7 +10,7 @@ const fmt = (v) => {
     return n > 0 ? `$ ${Math.round(n).toLocaleString('es-AR')}` : '—';
 };
 
-function Seccion({ id, titulo, icono, children, color = 'blue', seccionAbierta, onToggle }) {
+function Seccion({ id, titulo, Icono, children, color = 'blue', seccionAbierta, onToggle }) {
     const abierta = seccionAbierta === id;
     const colores = {
         green:  'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200/50 dark:border-emerald-800/30',
@@ -22,8 +23,8 @@ function Seccion({ id, titulo, icono, children, color = 'blue', seccionAbierta, 
         <div className={`rounded-2xl border overflow-hidden transition-all ${abierta ? colores[color] : 'bg-[#F5F3F1] dark:bg-[#1C1C1C] border-black/[0.05] dark:border-white/[0.05]'}`}>
             <button type="button" onClick={() => onToggle(abierta ? '' : id)}
                 className="w-full flex items-center justify-between p-3 text-left">
-                <span className="text-xs font-black text-ink uppercase tracking-wide">
-                    {icono} {titulo}
+                <span className="text-xs font-black text-ink uppercase tracking-wide flex items-center gap-1.5">
+                    <Icono size={13} /> {titulo}
                 </span>
                 <span className={`text-xs text-muted transition-transform ${abierta ? 'rotate-180' : ''}`}>▼</span>
             </button>
@@ -77,7 +78,7 @@ export default function SeccionesPrecios({
     return (
         <>
             {/* Precio negro */}
-            <Seccion id="basico" titulo="Precio Efectivo (negro)" icono="💵" color="green" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
+            <Seccion id="basico" titulo="Precio Efectivo (negro)" Icono={LuBanknote} color="green" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
                 <p className="text-caption text-muted font-bold mb-2">
                     Lo que cobrás si el cliente paga en efectivo o transferencia, sin factura.
                 </p>
@@ -117,7 +118,7 @@ export default function SeccionesPrecios({
 
                 {/* Comparador con precio de mercado */}
                 <div className="mt-3 pt-3 border-t border-black/[0.08] dark:border-white/[0.08]">
-                    <label className={`${labelBase} text-sky-600 dark:text-sky-400`}>🔍 ¿Cuánto cobra la competencia?</label>
+                    <label className={`${labelBase} text-sky-600 dark:text-sky-400 flex items-center gap-1`}><LuSearch size={12} /> ¿Cuánto cobra la competencia?</label>
                     <input type="text" inputMode="decimal" value={precioMercadoInput}
                         onChange={e => setPrecioMercadoInput(sanitizarNumero(e.target.value))}
                         placeholder="Precio que viste en el mercado" className={inputBase} />
@@ -140,7 +141,7 @@ export default function SeccionesPrecios({
             </Seccion>
 
             {/* Precio facturado */}
-            <Seccion id="facturado" titulo="Precio Facturado (blanco)" icono="🧾" color="blue" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
+            <Seccion id="facturado" titulo="Precio Facturado (blanco)" Icono={LuReceipt} color="blue" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
                 <p className="text-caption text-muted font-bold mb-2">
                     Lo que hay que cobrar CON factura para que, después de pagar impuestos, te quede en el
                     bolsillo la misma ganancia que en efectivo — no es un precio con más ganancia, es el
@@ -227,7 +228,7 @@ export default function SeccionesPrecios({
             </Seccion>
 
             {/* Precio por cantidad */}
-            <Seccion id="cantidad" titulo="Precio por Cantidad" icono="📦" color="amber" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
+            <Seccion id="cantidad" titulo="Precio por Cantidad" Icono={LuPackage} color="amber" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
                 <p className="text-caption text-muted font-bold mb-2">
                     Precio especial si compran varias unidades juntas (mayorista) — vos elegís cuánto ceder de ganancia.
                 </p>
@@ -260,7 +261,7 @@ export default function SeccionesPrecios({
             </Seccion>
 
             {/* Cuotas */}
-            <Seccion id="cuotas" titulo="Cuotas / MercadoLibre" icono="💳" color="purple" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
+            <Seccion id="cuotas" titulo="Cuotas / MercadoLibre" Icono={LuCreditCard} color="purple" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
                 <div className="grid grid-cols-2 gap-3">
                     <div>
                         <label className={`${labelBase} text-muted`}>Recargo 3 cuotas %</label>
@@ -291,7 +292,7 @@ export default function SeccionesPrecios({
             </Seccion>
 
             {/* Presupuesto rápido por cantidad */}
-            <Seccion id="presupuesto" titulo="Presupuesto Rápido (por cantidad)" icono="🧮" color="teal" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
+            <Seccion id="presupuesto" titulo="Presupuesto Rápido (por cantidad)" Icono={LuCalculator} color="teal" seccionAbierta={seccionAbierta} onToggle={setSeccionAbierta}>
                 <p className="text-caption text-muted font-bold mb-2">
                     Poné una cantidad de unidades y mirá cuánto te queda en total — ya descontados los costos reales (IIBB, tarjeta) si elegís "Facturado".
                 </p>

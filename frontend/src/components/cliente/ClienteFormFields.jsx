@@ -1,3 +1,5 @@
+import { LuUser, LuBuilding2 } from 'react-icons/lu';
+
 /**
  * ClienteFormFields — campos de datos personales del cliente
  * Paleta del sistema: sin slate-*, sin inline styles, sin colores hardcodeados
@@ -22,9 +24,9 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
             {/* TIPO — PARTICULAR / EMPRESA */}
             <div className="grid grid-cols-2 gap-3">
                 {[
-                    { value: 'PARTICULAR', label: 'Particular', icon: '👤' },
-                    { value: 'EMPRESA',    label: 'Empresa',    icon: '🏢' },
-                ].map(({ value, label, icon }) => {
+                    { value: 'PARTICULAR', label: 'Particular', Icon: LuUser },
+                    { value: 'EMPRESA',    label: 'Empresa',    Icon: LuBuilding2 },
+                ].map(({ value, label, Icon }) => {
                     const activo = formData.clienteTipo === value;
                     return (
                         <label
@@ -58,8 +60,8 @@ export default function ClienteFormFields({ formData, errores, handleChange }) {
                                     <span className="w-2 h-2 rounded-full bg-brand-red" />
                                 )}
                             </span>
-                            <span className="text-sm font-black text-ink">
-                                {icon} {label}
+                            <span className="text-sm font-black text-ink flex items-center gap-1.5">
+                                <Icon size={14} /> {label}
                             </span>
                         </label>
                     );

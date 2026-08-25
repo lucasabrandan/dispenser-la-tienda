@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { LuMapPin, LuArchive, LuTrash2 } from 'react-icons/lu';
 
 // Estilos reutilizables del sistema
 const fieldCls = `
@@ -117,19 +118,19 @@ export default function SedeModal({ cliente, sedes, onRefresh, onClose }) {
                                         <button
                                             onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.direccion + ', ' + s.provincia + ', Argentina')}`, '_blank')}
                                             className="w-9 h-9 bg-[#1C1917]/10 dark:bg-[#F0EEE9]/10 text-ink rounded-xl flex items-center justify-center text-sm hover:opacity-80 transition-all">
-                                            📍
+                                            <LuMapPin size={15} />
                                         </button>
                                         <button
                                             onClick={() => handleArchivar(s)}
                                             title="Archivar (preserva historial)"
                                             className="w-9 h-9 bg-[#D48800]/10 dark:bg-[#F0A500]/10 text-brand-amber rounded-xl flex items-center justify-center text-sm hover:opacity-80 transition-all">
-                                            📦
+                                            <LuArchive size={15} />
                                         </button>
                                         <button
                                             onClick={() => handleEliminarDefinitivo(s)}
                                             title="Eliminar definitivamente"
                                             className="w-9 h-9 bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-brand-red rounded-xl flex items-center justify-center text-sm hover:bg-[#D13A28] hover:text-white dark:hover:bg-[#E8422F] transition-all">
-                                            🗑️
+                                            <LuTrash2 size={15} />
                                         </button>
                                     </div>
                                 </div>

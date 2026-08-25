@@ -3,6 +3,7 @@ import ActionSheet from '../ui/ActionSheet';
 import HistorialEquipoModal from '../equipo/HistorialEquipoModal';
 import { abrirMaps, abrirWhatsApp } from '../../utils/clienteUtils';
 import HistorialClienteModal from './HistorialClienteModal';
+import { LuMapPin, LuMessageCircle, LuWrench, LuShoppingCart, LuPencil, LuClipboardList, LuTrash2, LuHouse, LuTriangleAlert } from 'react-icons/lu';
 
 function formatFecha(fecha) {
     if (!fecha) return null;
@@ -48,10 +49,10 @@ export default function ClienteCard({
                        : tieneTecnica ? '#D48800'
                        : tieneVenta   ? '#D13A28'
                        : 'transparent';
-    const tipoIcon     = tieneTecnica && tieneVenta ? '🔧🛒'
-                       : tieneTecnica ? '🔧'
-                       : tieneVenta   ? '🛒'
-                       : '';
+    const tipoIcons    = tieneTecnica && tieneVenta ? [LuWrench, LuShoppingCart]
+                       : tieneTecnica ? [LuWrench]
+                       : tieneVenta   ? [LuShoppingCart]
+                       : [];
     const iniciales = cliente.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 
     // Vista colapsada
@@ -73,7 +74,7 @@ export default function ClienteCard({
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                     {alertaSinServicio && <span className="w-2 h-2 rounded-full bg-[#D48800]" />}
-                    {tipoIcon && <span className="text-label">{tipoIcon}</span>}
+                    {tipoIcons.map((TIcon, i) => <TIcon key={i} size={13} className="text-label" />)}
                 </div>
             </div>
         );
@@ -89,7 +90,7 @@ export default function ClienteCard({
                     <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`}
                         target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-2 px-3 py-2 rounded-xl bg-panel active:opacity-70 transition-opacity">
-                        <span className="text-caption">📍</span>
+                        <LuMapPin size={13} className="text-caption" />
                         <span className="text-caption font-bold text-ink flex-1 truncate">{direccion}</span>
                         <span className="text-label text-muted">↗</span>
                     </a>
@@ -100,19 +101,19 @@ export default function ClienteCard({
                     {cliente.telefono && (
                         <button onClick={() => abrirWhatsApp(cliente.telefono, cliente.nombre)}
                             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] text-white rounded-xl font-black text-label active:scale-95 transition-all">
-                            💬 WA
+                            <LuMessageCircle size={14} /> WA
                         </button>
                     )}
                     {onNuevoServicio && (
                         <button onClick={() => onNuevoServicio(cliente)}
                             className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-brand-red text-white rounded-xl font-black text-label active:scale-95 transition-all">
-                            🔧 Servicio
+                            <LuWrench size={14} /> Servicio
                         </button>
                     )}
                     {onNuevaVenta && (
                         <button onClick={() => onNuevaVenta(cliente)}
                             className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-brand-amber text-white rounded-xl font-black text-label active:scale-95 transition-all">
-                            🛒 Venta
+                            <LuShoppingCart size={14} /> Venta
                         </button>
                     )}
                     {/* Menú ⋯ del cliente */}
@@ -121,20 +122,20 @@ export default function ClienteCard({
                             className="w-10 h-10 rounded-xl flex items-center justify-center bg-chip text-muted active:scale-95">⋯</button>
                         <ActionSheet open={menuCliente} onClose={() => setMenuCliente(false)}>
                                     <button onClick={() => { onEditCliente(cliente); setMenuCliente(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                        ✏️ Editar cliente
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                        <LuPencil size={15} /> Editar cliente
                                     </button>
                                     <button onClick={() => { setModalHistorial(true); setMenuCliente(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                        📋 Ver historial
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                        <LuClipboardList size={15} /> Ver historial
                                     </button>
                                     <button onClick={() => { abrirMaps(cliente); setMenuCliente(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                        📍 Ver en mapa
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                        <LuMapPin size={15} /> Ver en mapa
                                     </button>
                                     <button onClick={() => { setConfirmEliminar('cliente'); setMenuCliente(false); }}
-                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
-                                        🗑 Eliminar cliente
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl flex items-center gap-2.5">
+                                        <LuTrash2 size={15} /> Eliminar cliente
                                     </button>
                         </ActionSheet>
                     </div>
@@ -148,7 +149,7 @@ export default function ClienteCard({
                             <div key={sede.id} className="rounded-xl bg-panel overflow-hidden">
                                 <div className="flex items-center justify-between px-3 py-2">
                                     <p className="text-caption font-black text-ink">
-                                        🏠 {sede.nombreSede}
+                                        <LuHouse size={12} className="inline mr-1 -mt-0.5" />{sede.nombreSede}
                                         {eqSede.length > 0 && (
                                             <span className="text-muted font-bold ml-1.5">{eqSede.length} eq</span>
                                         )}
@@ -176,16 +177,16 @@ export default function ClienteCard({
                                                     <ActionSheet open={menuEquipo === eq.id} onClose={() => setMenuEquipo(null)}>
                                                                 <p className="px-5 py-2 text-label font-black text-muted truncate">{eq.modelo || eq.numeroSerie}</p>
                                                                 <button onClick={() => { setEquipoHistorial(eq); setMenuEquipo(null); }}
-                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                                                    📋 Historial
+                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                                                    <LuClipboardList size={15} /> Historial
                                                                 </button>
                                                                 <button onClick={() => { onEditEquipo(eq, cliente); setMenuEquipo(null); }}
-                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
-                                                                    ✏️ Editar
+                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                                                    <LuPencil size={15} /> Editar
                                                                 </button>
                                                                 <button onClick={() => { setConfirmEliminar(eq.id); setMenuEquipo(null); }}
-                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
-                                                                    🗑 Eliminar
+                                                                    className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl flex items-center gap-2.5">
+                                                                    <LuTrash2 size={15} /> Eliminar
                                                                 </button>
                                                     </ActionSheet>
                                                 </div>
@@ -207,8 +208,8 @@ export default function ClienteCard({
                 {serviciosCli.length > 0 && (
                     <button onClick={() => setModalHistorial(true)}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-panel active:opacity-70 transition-opacity">
-                        <span className="text-caption font-black text-brand-amber">
-                            📋 {serviciosCli.length} servicio{serviciosCli.length !== 1 ? 's' : ''} · último {formatFecha(ultimoServicio?.fecha)}
+                        <span className="text-caption font-black text-brand-amber flex items-center gap-1">
+                            <LuClipboardList size={13} />{serviciosCli.length} servicio{serviciosCli.length !== 1 ? 's' : ''} · último {formatFecha(ultimoServicio?.fecha)}
                         </span>
                         <span className="text-label text-muted">Ver →</span>
                     </button>
@@ -221,7 +222,7 @@ export default function ClienteCard({
                     <div className="fixed inset-0 bg-black/70 z-[199] backdrop-blur-sm" onClick={() => setConfirmEliminar(null)} />
                     <div className="fixed inset-0 flex items-center justify-center z-[200] p-4">
                         <div className="bg-card rounded-3xl w-full max-w-sm shadow-2xl p-6">
-                            <p className="text-center text-[28px] mb-3">⚠️</p>
+                            <div className="flex justify-center mb-3"><LuTriangleAlert size={28} className="text-brand-amber" /></div>
                             <h3 className="text-center text-body-lg font-black text-ink mb-2">
                                 {confirmEliminar === 'cliente' ? 'Eliminar cliente' : 'Eliminar equipo'}
                             </h3>

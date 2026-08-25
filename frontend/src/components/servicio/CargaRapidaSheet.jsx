@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { buildSelectStyles } from './ServicioUI';
 import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
 import { useTheme } from '../../hooks/useTheme';
+import { LuZap, LuCamera, LuImage, LuPackage, LuPencil } from 'react-icons/lu';
 
 async function comprimirFoto(file) {
     try {
@@ -149,7 +150,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                         <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip md:hidden" />
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-title font-black text-ink">⚡ Carga Rápida</h3>
+                                <h3 className="text-title font-black text-ink flex items-center gap-1.5"><LuZap size={16} /> Carga Rápida</h3>
                                 <p className="text-caption text-muted mt-0.5">Copiando trabajo del equipo anterior</p>
                             </div>
                             <button onClick={onClose}
@@ -171,17 +172,17 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                                             <button onClick={() => setFotoAntes(null)}
                                                 className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-label flex items-center justify-center">✕</button>
                                           </>
-                                        : <span className="text-2xl opacity-30">📷</span>
+                                        : <LuCamera size={24} className="opacity-30" />
                                     }
                                 </div>
                                 <div className="flex gap-1 mt-1">
                                     <button onClick={() => refCamaraAntes.current?.click()}
-                                        className="flex-1 py-1.5 rounded-lg text-label font-black uppercase text-white bg-brand-red active:scale-95">
-                                        📷
+                                        className="flex-1 py-1.5 rounded-lg text-label font-black uppercase text-white bg-brand-red active:scale-95 flex items-center justify-center">
+                                        <LuCamera size={13} />
                                     </button>
                                     <button onClick={() => refGaleriaAntes.current?.click()}
-                                        className="flex-1 py-1.5 rounded-lg text-label font-black uppercase text-ink bg-chip active:scale-95">
-                                        🖼️
+                                        className="flex-1 py-1.5 rounded-lg text-label font-black uppercase text-ink bg-chip active:scale-95 flex items-center justify-center">
+                                        <LuImage size={13} />
                                     </button>
                                 </div>
                                 <input ref={refCamaraAntes} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFoto(setFotoAntes)} />
@@ -197,17 +198,17 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                                             <button onClick={() => setFotoDespues(null)}
                                                 className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-label flex items-center justify-center">✕</button>
                                           </>
-                                        : <span className="text-2xl opacity-30">📷</span>
+                                        : <LuCamera size={24} className="opacity-30" />
                                     }
                                 </div>
                                 <div className="flex gap-1 mt-1">
                                     <button onClick={() => refCamaraDespues.current?.click()}
-                                        className="flex-1 py-1.5 rounded-lg text-label font-black uppercase text-white bg-brand-red active:scale-95">
-                                        📷
+                                        className="flex-1 py-1.5 rounded-lg text-label font-black uppercase text-white bg-brand-red active:scale-95 flex items-center justify-center">
+                                        <LuCamera size={13} />
                                     </button>
                                     <button onClick={() => refGaleriaDespues.current?.click()}
-                                        className="flex-1 py-1.5 rounded-lg text-label font-black uppercase text-ink bg-chip active:scale-95">
-                                        🖼️
+                                        className="flex-1 py-1.5 rounded-lg text-label font-black uppercase text-ink bg-chip active:scale-95 flex items-center justify-center">
+                                        <LuImage size={13} />
                                     </button>
                                 </div>
                                 <input ref={refCamaraDespues} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFoto(setFotoDespues)} />
@@ -275,11 +276,11 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                         <div>
                             <button type="button" onClick={() => setSheetRepuestos(true)}
                                 className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-label font-bold bg-chip text-secondary active:scale-[0.98] transition-all">
-                                <span>{repuestos.length > 0
-                                    ? `📦 ${repuestos.length} repuesto${repuestos.length > 1 ? 's' : ''}`
-                                    : '📦 Repuestos'
+                                <span className="inline-flex items-center gap-1.5"><LuPackage size={13} />{repuestos.length > 0
+                                    ? ` ${repuestos.length} repuesto${repuestos.length > 1 ? 's' : ''}`
+                                    : ' Repuestos'
                                 } {repuestos.length > 0 ? '(copiados)' : ''}</span>
-                                <span className="text-label">✏</span>
+                                <LuPencil size={13} />
                             </button>
                             {repuestos.length > 0 && (
                                 <div className="mt-1.5 rounded-xl bg-panel overflow-hidden">

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import imageCompression from 'browser-image-compression';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
+import { LuCamera, LuImage } from 'react-icons/lu';
 
 async function comprimirFoto(file) {
     try {
@@ -44,7 +45,7 @@ export default function FotoUpload({ label, foto, onChange }) {
                     <img src={preview} alt={label} className="w-full h-full object-cover" />
                 ) : (
                     <div className="text-center p-2">
-                        <p className="text-2xl mb-1">📷</p>
+                        <div className="flex justify-center mb-1"><LuCamera size={24} className="opacity-60" /></div>
                         <p className="text-[9px] font-black text-muted uppercase">{label}</p>
                     </div>
                 )}
@@ -54,12 +55,12 @@ export default function FotoUpload({ label, foto, onChange }) {
             </div>
             <div className="grid grid-cols-2 gap-1">
                 <button type="button" onClick={() => refCamara.current?.click()}
-                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-white bg-brand-red active:scale-95 transition-all">
-                    📷 Cámara
+                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-white bg-brand-red active:scale-95 transition-all flex items-center justify-center gap-1">
+                    <LuCamera size={11} /> Cámara
                 </button>
                 <button type="button" onClick={() => refGaleria.current?.click()}
-                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-ink bg-chip active:scale-95 transition-all">
-                    🖼️ Galería
+                    className="py-1.5 rounded-lg text-[10px] font-black uppercase text-ink bg-chip active:scale-95 transition-all flex items-center justify-center gap-1">
+                    <LuImage size={11} /> Galería
                 </button>
             </div>
             <input ref={refCamara}  type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />

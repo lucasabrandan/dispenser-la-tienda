@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword, eliminarUsuario } from '../../services/api';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { LuShieldCheck, LuWrench, LuKey, LuPencil, LuLock, LuCircleCheck, LuTrash2, LuEyeOff, LuEye } from 'react-icons/lu';
 
 const ROL_LABEL = { ADMIN: 'Administrador', TECNICO: 'Técnico' };
 const ROL_COLOR = {
@@ -226,7 +227,7 @@ export default function UsuariosManager() {
                                 <div className="p-4 flex items-center justify-between gap-3">
                                     {/* Avatar */}
                                     <div className="w-10 h-10 rounded-xl bg-[#D13A28]/10 dark:bg-[#E8422F]/10 flex items-center justify-center text-[18px] shrink-0">
-                                        {u.rol === 'ADMIN' ? '🛡️' : '🔧'}
+                                        {u.rol === 'ADMIN' ? <LuShieldCheck size={18} /> : <LuWrench size={18} />}
                                     </div>
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
@@ -249,23 +250,23 @@ export default function UsuariosManager() {
                                             onClick={() => { setModalPass(u); setNuevaClave(''); }}
                                             title="Cambiar contraseña"
                                             className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
-                                        >🔑</button>
+                                        ><LuKey size={15} /></button>
                                         <button
                                             onClick={() => abrirEditar(u)}
                                             title="Editar"
                                             className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
-                                        >✏️</button>
+                                        ><LuPencil size={15} /></button>
                                         <button
                                             onClick={() => toggleActivo(u)}
                                             title={u.activo ? 'Desactivar' : 'Activar'}
                                             className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
-                                        >{u.activo ? '🔒' : '✅'}</button>
+                                        >{u.activo ? <LuLock size={15} /> : <LuCircleCheck size={15} />}</button>
                                         {usuarioActual?.id !== u.id && (
                                             <button
                                                 onClick={() => setConfirmEliminar(u)}
                                                 title="Eliminar"
                                                 className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#D13A28]/10 dark:bg-[#E8422F]/10 active:scale-90 transition-all"
-                                            >🗑️</button>
+                                            ><LuTrash2 size={15} /></button>
                                         )}
                                     </div>
                                 </div>
@@ -316,7 +317,7 @@ export default function UsuariosManager() {
                                             />
                                             <button type="button" onClick={() => setVerClave(v => !v)} tabIndex={-1}
                                                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-xs">
-                                                {verClave ? '🙈' : '👁️'}
+                                                {verClave ? <LuEyeOff size={14} /> : <LuEye size={14} />}
                                             </button>
                                         </div>
                                     </div>
@@ -336,7 +337,7 @@ export default function UsuariosManager() {
                                             />
                                             <button type="button" onClick={() => setVerClaveConfirm(v => !v)} tabIndex={-1}
                                                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-xs">
-                                                {verClaveConfirm ? '🙈' : '👁️'}
+                                                {verClaveConfirm ? <LuEyeOff size={14} /> : <LuEye size={14} />}
                                             </button>
                                         </div>
                                     </div>
@@ -433,7 +434,7 @@ export default function UsuariosManager() {
                                 />
                                 <button type="button" onClick={() => setVerNuevaClave(v => !v)} tabIndex={-1}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-xs">
-                                    {verNuevaClave ? '🙈' : '👁️'}
+                                    {verNuevaClave ? <LuEyeOff size={14} /> : <LuEye size={14} />}
                                 </button>
                             </div>
                         </div>

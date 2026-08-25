@@ -3,6 +3,7 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import Card from './ui/Card';
 import { useSedeForm } from '../hooks/useSedeForm';
+import { LuMapPinPlus, LuMapPin, LuMap, LuHourglass, LuCircleCheck } from 'react-icons/lu';
 
 /**
  * CrearSedeModal
@@ -85,8 +86,8 @@ export default function CrearSedeModal({
           
           <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200 dark:border-slate-700">
             <div>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-                ➕ Nueva Sede
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <LuMapPinPlus size={22} /> Nueva Sede
               </h2>
               <p className="text-xs text-slate-400 mt-1">
                 Completa los datos de la nueva sede
@@ -126,8 +127,8 @@ export default function CrearSedeModal({
 
             {/* DIRECCIÓN */}
             <div className="bg-slate-50 dark:bg-slate-900/30 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4">
-              <h3 className="font-black text-sm text-slate-900 dark:text-white">
-                📍 Dirección
+              <h3 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                <LuMapPin size={13} /> Dirección
               </h3>
 
               <div className="grid grid-cols-2 gap-4">
@@ -235,8 +236,8 @@ export default function CrearSedeModal({
               {/* DIRECCIÓN AUTO-GENERADA */}
               {formData.direccion && (
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">
-                    🗺️ Dirección: {formData.direccion}
+                  <p className="text-xs text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
+                    <LuMap size={12} /> Dirección: {formData.direccion}
                   </p>
                 </div>
               )}
@@ -255,9 +256,9 @@ export default function CrearSedeModal({
               <button
                 type="submit"
                 disabled={cargando}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-sm uppercase hover:bg-blue-700 transition-all disabled:opacity-50 active:scale-95"
+                className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-black text-sm uppercase hover:bg-blue-700 transition-all disabled:opacity-50 active:scale-95 flex items-center justify-center gap-1.5"
               >
-                {cargando ? '⏳ Creando...' : '✅ Crear Sede'}
+                {cargando ? (<><LuHourglass size={14} /> Creando...</>) : (<><LuCircleCheck size={14} /> Crear Sede</>)}
               </button>
             </div>
           </form>

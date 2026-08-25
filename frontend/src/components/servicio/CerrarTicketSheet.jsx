@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { getTodayISO } from '../../utils/dateUtils';
 import DateInput from '../ui/DateInput';
+import { LuClipboardList, LuCircleCheck, LuFileText, LuRocket } from 'react-icons/lu';
 
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
@@ -202,8 +203,8 @@ export default function CerrarTicketSheet({
 
                         <button onClick={handleGuardar} disabled={procesando}
                             className="w-full p-4 rounded-2xl text-left transition-all active:scale-[0.98] bg-brand-amber text-white disabled:opacity-50">
-                            <p className="text-body-lg font-black leading-none mb-1">
-                                {procesando ? 'Guardando…' : '📋 Guardar presupuesto'}
+                            <p className="text-body-lg font-black leading-none mb-1 flex items-center gap-1.5">
+                                {procesando ? 'Guardando…' : (<><LuClipboardList size={16} /> Guardar presupuesto</>)}
                             </p>
                             <p className="text-caption opacity-80">Se guarda y podés despachar un técnico</p>
                         </button>
@@ -220,7 +221,7 @@ export default function CerrarTicketSheet({
                     <div className="p-6 space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <span className="text-[24px]">✅</span>
+                                <LuCircleCheck size={24} className="text-[#1E8A4A]" />
                                 <div>
                                     <p className="text-body-lg font-black text-ink leading-none">Presupuesto guardado</p>
                                     {savedResult?.id && (
@@ -232,7 +233,7 @@ export default function CerrarTicketSheet({
                                 <button onClick={onGenerarPDF}
                                     className="w-10 h-10 rounded-xl flex items-center justify-center text-lg active:scale-90 bg-chip"
                                     title="Generar PDF">
-                                    📄
+                                    <LuFileText size={16} />
                                 </button>
                             )}
                         </div>
@@ -285,8 +286,8 @@ export default function CerrarTicketSheet({
                                         Ahora no
                                     </button>
                                     <button onClick={handleCrearOrden} disabled={creandoOrden || !dispTecnico || !dispFecha}
-                                        className="flex-[2] py-3 rounded-2xl text-label font-black uppercase text-white active:scale-95 bg-brand-amber disabled:opacity-40">
-                                        {creandoOrden ? 'Creando…' : '🚀 Despachar'}
+                                        className="flex-[2] py-3 rounded-2xl text-label font-black uppercase text-white active:scale-95 bg-brand-amber disabled:opacity-40 flex items-center justify-center gap-1.5">
+                                        {creandoOrden ? 'Creando…' : (<><LuRocket size={14} /> Despachar</>)}
                                     </button>
                                 </div>
                             </>

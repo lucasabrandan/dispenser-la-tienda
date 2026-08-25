@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { LuRefreshCw, LuMapPin, LuMessageCircle } from 'react-icons/lu';
 
 export default function RadarMantenimiento() {
     const [alertas, setAlertas]   = useState([]);
@@ -50,7 +51,7 @@ export default function RadarMantenimiento() {
                         <span className="text-body font-black text-brand-red">{alertas.length} alertas</span>
                         <button onClick={cargarAlertas}
                             className="h-8 w-8 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 text-sm">
-                            🔄
+                            <LuRefreshCw size={14} />
                         </button>
                     </div>
                 </div>
@@ -102,8 +103,8 @@ export default function RadarMantenimiento() {
                                             <h3 className="font-black text-title text-ink uppercase leading-none">
                                                 {a.clienteNombre}
                                             </h3>
-                                            <p className="text-caption font-bold text-muted uppercase mt-1">
-                                                📍 {a.sedeNombre} · S/N: <span className="text-ink">{a.serial}</span>
+                                            <p className="text-caption font-bold text-muted uppercase mt-1 flex items-center gap-1">
+                                                <LuMapPin size={11} /> {a.sedeNombre} · S/N: <span className="text-ink">{a.serial}</span>
                                             </p>
                                         </div>
                                         <div className="text-right shrink-0">
@@ -118,7 +119,7 @@ export default function RadarMantenimiento() {
 
                                     <button onClick={() => enviarWA(a)}
                                         className="w-full py-3.5 bg-[#25D366] hover:opacity-90 text-white rounded-xl text-body font-black flex justify-center items-center gap-2 active:scale-[0.98] transition-all">
-                                        💬 Avisar por WhatsApp
+                                        <LuMessageCircle size={16} /> Avisar por WhatsApp
                                     </button>
                                 </div>
                             </div>

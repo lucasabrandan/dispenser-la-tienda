@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import WeekDatePicker from '../ui/WeekDatePicker';
+import { LuCircleCheck, LuCalendar, LuClock, LuMessageCircle, LuSend } from 'react-icons/lu';
 
 const PRIORIDADES = [
     { value: 'NORMAL',  label: 'Normal'  },
@@ -144,7 +145,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                         /* ── Confirmación ────────────────────────────────── */
                         <div className="px-6 pb-6 space-y-4">
                             <div className="py-6 text-center">
-                                <p className="text-[36px] mb-2">✅</p>
+                                <div className="flex justify-center mb-2"><LuCircleCheck size={36} className="text-[#1E8A4A]" /></div>
                                 <p className="text-body-lg font-black text-ink">
                                     Orden creada
                                 </p>
@@ -160,8 +161,8 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                     Visita · {presupuesto.clienteNombre}
                                 </p>
                                 <div className="flex items-center gap-3 text-caption text-muted">
-                                    <span>📅 {form.fechaProgramada}</span>
-                                    {form.horaEstimada && <span>🕐 {form.horaEstimada}</span>}
+                                    <span className="inline-flex items-center gap-1"><LuCalendar size={12} />{form.fechaProgramada}</span>
+                                    {form.horaEstimada && <span className="inline-flex items-center gap-1"><LuClock size={12} />{form.horaEstimada}</span>}
                                     <span className="capitalize">{form.prioridad.toLowerCase()}</span>
                                 </div>
                                 {presupuesto.items?.length > 0 && (
@@ -172,8 +173,8 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                             </div>
 
                             <button onClick={abrirWhatsApp}
-                                className="w-full py-3.5 rounded-2xl font-black text-label uppercase text-white bg-[#25D366] active:scale-95">
-                                💬 Avisar por WhatsApp a {tecnicoAsignado?.nombre || 'Técnico'}
+                                className="w-full py-3.5 rounded-2xl font-black text-label uppercase text-white bg-[#25D366] active:scale-95 flex items-center justify-center gap-1.5">
+                                <LuMessageCircle size={14} /> Avisar por WhatsApp a {tecnicoAsignado?.nombre || 'Técnico'}
                             </button>
                             <button onClick={onCerrar}
                                 className="w-full py-3.5 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95">
@@ -244,8 +245,8 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                             <p className="text-body font-black text-ink">
                                                 {tecnicos.find(t => String(t.id) === String(form.tecnicoId))?.nombre}
                                             </p>
-                                            <p className="text-caption text-muted mt-0.5">
-                                                📅 {form.fechaProgramada}{form.horaEstimada ? ` · 🕐 ${form.horaEstimada}` : ''}
+                                            <p className="text-caption text-muted mt-0.5 flex items-center gap-1 flex-wrap">
+                                                <LuCalendar size={12} />{form.fechaProgramada}{form.horaEstimada ? (<> · <LuClock size={12} className="ml-0.5" />{form.horaEstimada}</>) : ''}
                                             </p>
                                         </div>
                                     )}
@@ -257,8 +258,8 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                             Cancelar
                                         </button>
                                         <button type="button" onClick={handleGuardar} disabled={guardando}
-                                            className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-amber active:scale-95 disabled:opacity-50">
-                                            {guardando ? 'Creando orden…' : '📬 Despachar'}
+                                            className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-amber active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                                            {guardando ? 'Creando orden…' : (<><LuSend size={14} /> Despachar</>)}
                                         </button>
                                     </div>
                                 </>
