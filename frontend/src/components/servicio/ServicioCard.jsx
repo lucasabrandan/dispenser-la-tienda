@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LuShieldCheck, LuHourglass } from 'react-icons/lu';
 import { useMontos } from '../../context/MontosContext';
 import IconBtn from '../ui/IconBtn';
 import ActionSheet from '../ui/ActionSheet';
@@ -236,10 +237,11 @@ export default function ServicioCard({
                         {it.garantiaHasta && (() => {
                             const g = estadoGarantia(it.garantiaHasta);
                             return (
-                                <p className={`text-caption font-black mt-1 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
+                                <p className={`text-caption font-black mt-1 flex items-center gap-1 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
+                                    {g.vigente ? <LuShieldCheck size={12} className="shrink-0" /> : <LuHourglass size={12} className="shrink-0" />}
                                     {g.vigente
-                                        ? `🛡️ Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
-                                        : `⏳ Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
+                                        ? `Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
+                                        : `Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
                                 </p>
                             );
                         })()}

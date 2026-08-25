@@ -37,8 +37,8 @@ const ESTADO_TABS = [
 // olvida. Se corta en "En sitio" a propósito: cerrar el trabajo pide datos
 // (costo, modalidad de cobro) que no tiene sentido completar a ciegas por él.
 const SIGUIENTE_ESTADO_ADMIN = {
-    PENDIENTE: { estado: 'EN_CAMINO', label: '🚗 Salió',  color: 'bg-[#3B82F6]' },
-    EN_CAMINO: { estado: 'EN_SITIO',  label: '📍 Llegó',  color: 'bg-brand-amber' },
+    PENDIENTE: { estado: 'EN_CAMINO', label: 'Salió',  color: 'bg-[#3B82F6]', Icon: LuCar },
+    EN_CAMINO: { estado: 'EN_SITIO',  label: 'Llegó',  color: 'bg-brand-amber', Icon: LuMapPin },
 };
 
 function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, seleccionada, onToggleSel }) {
@@ -137,7 +137,8 @@ function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, sele
                     )}
                     {SIGUIENTE_ESTADO_ADMIN[orden.estado] && (
                         <button onClick={() => onAvanzar(orden.id, SIGUIENTE_ESTADO_ADMIN[orden.estado].estado)}
-                            className={`h-9 px-3 rounded-xl font-bold text-label text-white active:scale-95 ${SIGUIENTE_ESTADO_ADMIN[orden.estado].color}`}>
+                            className={`h-9 px-3 rounded-xl font-bold text-label text-white active:scale-95 flex items-center gap-1 ${SIGUIENTE_ESTADO_ADMIN[orden.estado].color}`}>
+                            {(() => { const SIcon = SIGUIENTE_ESTADO_ADMIN[orden.estado].Icon; return <SIcon size={13} />; })()}
                             {SIGUIENTE_ESTADO_ADMIN[orden.estado].label}
                         </button>
                     )}

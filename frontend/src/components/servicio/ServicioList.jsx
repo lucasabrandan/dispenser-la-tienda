@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LuClipboardList, LuWrench, LuShoppingCart } from 'react-icons/lu';
+import { LuClipboardList, LuWrench, LuShoppingCart, LuShieldCheck, LuHourglass } from 'react-icons/lu';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -303,8 +303,9 @@ export default function ServicioList({ onEditar }) {
                                                         <p key={`${it.equipoSerial || 'it'}-${idx}`} className="text-caption text-muted truncate">
                                                             · {it.equipoSerial} — {it.trabajoRealizado}
                                                             {g && (
-                                                                <span className={`ml-1.5 font-bold ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
-                                                                    {g.vigente ? `· 🛡️ ${g.dias}d` : `· ⏳ vencida hace ${Math.abs(g.dias)}d`}
+                                                                <span className={`ml-1.5 font-bold inline-flex items-center gap-0.5 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
+                                                                    {g.vigente ? <LuShieldCheck size={11} className="shrink-0" /> : <LuHourglass size={11} className="shrink-0" />}
+                                                                    {g.vigente ? `${g.dias}d` : `vencida hace ${Math.abs(g.dias)}d`}
                                                                 </span>
                                                             )}
                                                         </p>
@@ -427,10 +428,11 @@ export default function ServicioList({ onEditar }) {
                                     </div>
                                     <p className="text-caption text-secondary leading-snug mb-2">{it.trabajoRealizado}</p>
                                     {g && (
-                                        <p className={`text-caption font-black mb-2 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
+                                        <p className={`text-caption font-black mb-2 flex items-center gap-1 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
+                                            {g.vigente ? <LuShieldCheck size={12} className="shrink-0" /> : <LuHourglass size={12} className="shrink-0" />}
                                             {g.vigente
-                                                ? `🛡️ Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
-                                                : `⏳ Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
+                                                ? `Garantía vigente · ${g.dias} día${g.dias === 1 ? '' : 's'} restante${g.dias === 1 ? '' : 's'}`
+                                                : `Garantía vencida hace ${Math.abs(g.dias)} día${Math.abs(g.dias) === 1 ? '' : 's'}`}
                                         </p>
                                     )}
                                     {it.repuestosUsados?.length > 0 && (

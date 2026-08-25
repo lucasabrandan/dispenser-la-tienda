@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList } from 'react-icons/lu';
+import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList, LuCar, LuMapPin } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -26,9 +26,9 @@ const BORDER_COLOR = {
 };
 
 const SIGUIENTE_ESTADO = {
-    PENDIENTE:  { estado: 'EN_CAMINO', label: '🚗 Salir', color: 'bg-[#3B82F6]' },
-    EN_CAMINO:  { estado: 'EN_SITIO',  label: '📍 Llegué', color: 'bg-brand-amber' },
-    EN_SITIO:   { estado: 'COMPLETADA', label: '✓ Completar', color: 'bg-[#16A34A]' },
+    PENDIENTE:  { estado: 'EN_CAMINO', label: 'Salir', color: 'bg-[#3B82F6]', Icon: LuCar },
+    EN_CAMINO:  { estado: 'EN_SITIO',  label: 'Llegué', color: 'bg-brand-amber', Icon: LuMapPin },
+    EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', color: 'bg-[#16A34A]', Icon: LuCircleCheck },
 };
 
 function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido, onVerServicio }) {
@@ -124,8 +124,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                         </>
                     ) : (
                         <button onClick={() => onAvanzar(orden.id, sig.estado)}
-                            className={`w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all ${sig.color}`}>
-                            {sig.label}
+                            className={`w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all flex items-center justify-center gap-1.5 ${sig.color}`}>
+                            <sig.Icon size={16} /> {sig.label}
                         </button>
                     )}
                     {(orden.estado === 'EN_CAMINO' || orden.estado === 'EN_SITIO') && (
