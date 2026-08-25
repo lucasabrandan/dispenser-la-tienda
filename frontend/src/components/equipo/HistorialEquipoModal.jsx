@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { LuMapPin } from 'react-icons/lu';
 
 // Badge de estado
 function Badge({ estado }) {
@@ -68,7 +69,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                 S/N: {equipo.numeroSerie}
                             </p>
                             {equipo.ubicacion && (
-                                <p className="text-label font-bold text-muted mt-0.5 uppercase">📍 {equipo.ubicacion}</p>
+                                <p className="text-label font-bold text-muted mt-0.5 uppercase flex items-center gap-1"><LuMapPin size={11} />{equipo.ubicacion}</p>
                             )}
                         </div>
                         <button
