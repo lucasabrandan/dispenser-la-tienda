@@ -11,6 +11,8 @@ import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import { useMontos } from '../../context/MontosContext';
 import { estadoGarantia, mesKeyDeFecha, formatMesLargo } from '../../utils/dateUtils';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import IconBtn from '../ui/IconBtn';
+import ActionSheet from '../ui/ActionSheet';
 
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
@@ -51,17 +53,6 @@ function parseFechaSort(f) {
 }
 
 const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] overflow-hidden';
-
-// Icono compacto + menú "⋯" para lo secundario — mismo patrón que ya usan
-// PresupuestoCard/ServicioCard, para no tener 5 botones sueltos compitiendo.
-function IconBtn({ onClick, title, children, cls = '' }) {
-    return (
-        <button onClick={onClick} title={title}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 shrink-0 ${cls}`}>
-            {children}
-        </button>
-    );
-}
 
 export default function ServicioList({ onEditar }) {
     const { usuario, esAdmin } = useAuth();
@@ -341,11 +332,7 @@ export default function ServicioList({ onEditar }) {
                                                         cls={menuAbiertoId === s.id ? 'bg-[#D13A28]/10 dark:bg-[#E8422F]/10 text-brand-red' : 'bg-chip text-secondary'}>
                                                         ⋯
                                                     </IconBtn>
-                                                    {menuAbiertoId === s.id && (
-                                                        <>
-                                                            <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuAbiertoId(null)} />
-                                                            <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
-                                                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
+                                                    <ActionSheet open={menuAbiertoId === s.id} onClose={() => setMenuAbiertoId(null)}>
                                                                 <button onClick={() => { generarPDFHistorial(s, { sinPrecios: true }); setMenuAbiertoId(null); }}
                                                                     className="w-full px-5 py-3.5 text-left text-body font-bold text-ink active:bg-[#E8E5E0] dark:active:bg-[#2E2E2E] rounded-xl">
                                                                     📋 PDF sin precios
@@ -362,9 +349,7 @@ export default function ServicioList({ onEditar }) {
                                                                         🗑️ Eliminar
                                                                     </button>
                                                                 )}
-                                                            </div>
-                                                        </>
-                                                    )}
+                                                    </ActionSheet>
                                                 </div>
                                         </div>
                                     )}

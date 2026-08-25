@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
 import { M } from '../servicio/ServicioUI';
+import IconBtn from '../ui/IconBtn';
+import ActionSheet from '../ui/ActionSheet';
 import { formatFechaCorta } from '../../utils/dateUtils';
-
-function IconBtn({ onClick, title, children, cls = '' }) {
-    return (
-        <button onClick={onClick} title={title}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all active:scale-90 shrink-0 ${cls}`}>
-            {children}
-        </button>
-    );
-}
 
 export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, onIniciar, onEditar, modoSeleccion, seleccionado, onToggleSelect }) {
     const [expandido, setExpandido] = useState(false);
@@ -113,11 +106,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
                 <div className="relative">
                     <IconBtn onClick={() => setMenuAbierto(v => !v)} title="Más opciones" cls="bg-chip text-secondary">⋮</IconBtn>
-                    {menuAbierto && (
-                        <>
-                            <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuAbierto(false)} />
-                            <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
-                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
+                    <ActionSheet open={menuAbierto} onClose={() => setMenuAbierto(false)}>
                                 <button onClick={() => { onPDF(s, { sinPrecios: true }); setMenuAbierto(false); }}
                                     className="w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                     📋 PDF sin precios
@@ -126,9 +115,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                                     className="w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                     🗄️ Archivar
                                 </button>
-                            </div>
-                        </>
-                    )}
+                    </ActionSheet>
                 </div>
 
                 <div className="flex-1" />

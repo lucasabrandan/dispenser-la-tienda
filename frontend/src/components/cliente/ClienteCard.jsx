@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ActionSheet from '../ui/ActionSheet';
 import HistorialEquipoModal from '../equipo/HistorialEquipoModal';
 import { abrirMaps, abrirWhatsApp } from '../../utils/clienteUtils';
 import HistorialClienteModal from './HistorialClienteModal';
@@ -118,11 +119,7 @@ export default function ClienteCard({
                     <div className="relative">
                         <button onClick={() => setMenuCliente(v => !v)}
                             className="w-10 h-10 rounded-xl flex items-center justify-center bg-chip text-muted active:scale-95">⋯</button>
-                        {menuCliente && (
-                            <>
-                                <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuCliente(false)} />
-                                <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
-                                    <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
+                        <ActionSheet open={menuCliente} onClose={() => setMenuCliente(false)}>
                                     <button onClick={() => { onEditCliente(cliente); setMenuCliente(false); }}
                                         className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
                                         ✏️ Editar cliente
@@ -139,9 +136,7 @@ export default function ClienteCard({
                                         className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
                                         🗑 Eliminar cliente
                                     </button>
-                                </div>
-                            </>
-                        )}
+                        </ActionSheet>
                     </div>
                 </div>
 
@@ -178,11 +173,7 @@ export default function ClienteCard({
                                                 <div className="relative">
                                                     <button onClick={() => setMenuEquipo(menuEquipo === eq.id ? null : eq.id)}
                                                         className="w-7 h-7 rounded-lg flex items-center justify-center text-muted active:scale-90 text-label">⋯</button>
-                                                    {menuEquipo === eq.id && (
-                                                        <>
-                                                            <div className="fixed inset-0 bg-black/40 z-[100]" onClick={() => setMenuEquipo(null)} />
-                                                            <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
-                                                                <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
+                                                    <ActionSheet open={menuEquipo === eq.id} onClose={() => setMenuEquipo(null)}>
                                                                 <p className="px-5 py-2 text-label font-black text-muted truncate">{eq.modelo || eq.numeroSerie}</p>
                                                                 <button onClick={() => { setEquipoHistorial(eq); setMenuEquipo(null); }}
                                                                     className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl">
@@ -196,9 +187,7 @@ export default function ClienteCard({
                                                                     className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl">
                                                                     🗑 Eliminar
                                                                 </button>
-                                                            </div>
-                                                        </>
-                                                    )}
+                                                    </ActionSheet>
                                                 </div>
                                             </div>
                                         ))}
