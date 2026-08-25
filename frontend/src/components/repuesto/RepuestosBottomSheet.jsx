@@ -31,7 +31,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
 
             {/* Badge cantidad */}
             {seleccionado && (
-                <div className="absolute top-2 right-2 z-10 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white bg-brand-red">
+                <div className="absolute top-2 right-2 z-10 w-5 h-5 rounded-full flex items-center justify-center text-label font-black text-white bg-brand-red">
                     {cantidad}
                 </div>
             )}
@@ -50,14 +50,14 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
             {/* Info */}
             <div className="p-2">
                 {repuesto.sku && (
-                    <p className="text-[9px] font-black uppercase tracking-wider text-brand-red mb-0.5">
+                    <p className="text-label font-black uppercase tracking-wider text-brand-red mb-0.5">
                         {repuesto.sku}
                     </p>
                 )}
-                <p className="text-[12px] font-bold leading-tight text-ink line-clamp-2 mb-1">
+                <p className="text-body font-bold leading-tight text-ink line-clamp-2 mb-1">
                     {repuesto.nombre}
                 </p>
-                <p className="text-[13px] font-black text-ink mb-2">
+                <p className="text-body font-black text-ink mb-2">
                     ${Math.round(Number(repuesto.precio || 0)).toLocaleString('es-AR')}
                 </p>
 
@@ -85,7 +85,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
                                 onCambiar(val);
                                 setInputVal(String(val));
                             }}
-                            className="font-black text-[14px] w-14 text-center text-ink bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="font-black text-body-lg w-14 text-center text-ink bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <button
                             type="button"
@@ -97,7 +97,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
                     <button
                         type="button"
                         onClick={onSumar}
-                        className="w-full py-1.5 rounded-xl text-[11px] font-black text-white active:scale-95 transition-all bg-brand-red"
+                        className="w-full py-1.5 rounded-xl text-label font-black text-white active:scale-95 transition-all bg-brand-red"
                     >
                         + Agregar
                     </button>
@@ -203,7 +203,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                     <div>
                         <h3 className="text-[15px] font-black text-ink">Repuestos</h3>
                         {totalSeleccionados > 0 && (
-                            <p className="text-[11px] text-brand-red font-bold">
+                            <p className="text-caption text-brand-red font-bold">
                                 {totalSeleccionados} seleccionado{totalSeleccionados > 1 ? 's' : ''}
                             </p>
                         )}
@@ -224,7 +224,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                             value={busqueda}
                             onChange={e => setBusqueda(e.target.value)}
                             placeholder="Buscar por nombre o SKU..."
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink placeholder-muted focus:ring-2 focus:ring-[#D13A28]/20 border border-black/[0.07] dark:border-white/[0.07]"
+                            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-body font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink placeholder-muted focus:ring-2 focus:ring-[#D13A28]/20 border border-black/[0.07] dark:border-white/[0.07]"
                         />
                     </div>
                 </div>
@@ -255,7 +255,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                         <button
                             type="button"
                             onClick={onCrearNuevo}
-                            className="w-full py-3 rounded-xl text-[12px] font-black uppercase text-muted border border-dashed border-chip active:scale-95 transition-all mt-1 mb-3"
+                            className="w-full py-3 rounded-xl text-label font-black uppercase text-muted border border-dashed border-chip active:scale-95 transition-all mt-1 mb-3"
                         >
                             + Crear repuesto nuevo
                         </button>
@@ -267,7 +267,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                     <button
                         type="button"
                         onClick={confirmar}
-                        className="w-full py-4 rounded-2xl font-black text-[15px] text-white active:scale-[0.98] transition-all bg-brand-red"
+                        className="w-full py-4 rounded-2xl font-black text-body-lg text-white active:scale-[0.98] transition-all bg-brand-red"
                     >
                         {totalSeleccionados > 0
                             ? `Confirmar ${totalSeleccionados} repuesto${totalSeleccionados > 1 ? 's' : ''}`

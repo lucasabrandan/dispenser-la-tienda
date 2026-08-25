@@ -33,12 +33,12 @@ export default function ModalPrecioMasivo({
                     <h3 className="text-lg font-black text-ink uppercase mb-1">
                         Actualizar margenes
                     </h3>
-                    <p className="text-[10px] font-bold text-muted uppercase mb-5">
+                    <p className="text-label font-bold text-muted uppercase mb-5">
                         {cantidadSeleccionados} producto{cantidadSeleccionados !== 1 ? 's' : ''} seleccionado{cantidadSeleccionados !== 1 ? 's' : ''} · deja vacio lo que no quieras cambiar
                     </p>
 
                     {/* Ganancia */}
-                    <label className="block text-[10px] font-black text-muted uppercase mb-1.5 tracking-widest">
+                    <label className="block text-label font-black text-muted uppercase mb-1.5 tracking-widest">
                         % Ganancia (efectivo)
                     </label>
                     <input
@@ -49,7 +49,7 @@ export default function ModalPrecioMasivo({
                     />
 
                     {/* Markup */}
-                    <label className="block text-[10px] font-black text-muted uppercase mb-1.5 tracking-widest">
+                    <label className="block text-label font-black text-muted uppercase mb-1.5 tracking-widest">
                         % Markup adicional
                     </label>
                     <input
@@ -60,7 +60,7 @@ export default function ModalPrecioMasivo({
                     />
 
                     {/* Impuestos */}
-                    <label className="block text-[10px] font-black text-muted uppercase mb-1.5 tracking-widest">
+                    <label className="block text-label font-black text-muted uppercase mb-1.5 tracking-widest">
                         % Impuestos (facturado)
                     </label>
                     <input
@@ -72,11 +72,11 @@ export default function ModalPrecioMasivo({
 
                     {/* Preview */}
                     <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] rounded-xl p-3 mb-4 border border-black/[0.05] dark:border-white/[0.05]">
-                        <p className="text-[10px] font-black text-muted uppercase mb-1">Formula</p>
-                        <p className="text-[11px] font-bold text-ink">
+                        <p className="text-label font-black text-muted uppercase mb-1">Formula</p>
+                        <p className="text-caption font-bold text-ink">
                             Efectivo = Costo × (1 + Ganancia%)
                         </p>
-                        <p className="text-[11px] font-bold text-ink">
+                        <p className="text-caption font-bold text-ink">
                             Facturado = Efectivo × (1 + Impuestos%)
                         </p>
                     </div>
@@ -84,11 +84,11 @@ export default function ModalPrecioMasivo({
                     {/* Botones */}
                     <div className="flex gap-2">
                         <button onClick={onCerrar}
-                            className="flex-1 py-3 bg-chip text-ink rounded-xl font-black text-[11px] uppercase hover:opacity-80 transition-all active:scale-95">
+                            className="flex-1 py-3 bg-chip text-ink rounded-xl font-black text-label uppercase hover:opacity-80 transition-all active:scale-95">
                             Cancelar
                         </button>
                         <button onClick={onAplicar} disabled={sinCambios}
-                            className="flex-1 py-3 bg-brand-red text-white rounded-xl font-black text-[11px] uppercase hover:opacity-90 transition-all active:scale-95 disabled:opacity-40">
+                            className="flex-1 py-3 bg-brand-red text-white rounded-xl font-black text-label uppercase hover:opacity-90 transition-all active:scale-95 disabled:opacity-40">
                             Aplicar
                         </button>
                     </div>

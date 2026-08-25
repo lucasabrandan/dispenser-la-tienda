@@ -4,8 +4,8 @@ import { toast } from 'react-hot-toast';
 import { getTodayISO } from '../../utils/dateUtils';
 import FotoUpload from '../servicio/FotoUpload';
 
-const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
-const labelCls = 'block text-[10px] font-black text-muted uppercase tracking-wider mb-1';
+const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-body font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
+const labelCls = 'block text-label font-black text-muted uppercase tracking-wider mb-1';
 
 // Mismas 3 opciones y mismo destino que EjecutarAdminSheet — un solo vocabulario
 // de "modalidad de cobro" en toda la app, no uno por pantalla.
@@ -170,7 +170,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     </button>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-[15px] font-black text-ink leading-none">Registrar trabajo</h2>
-                        <p className="text-[11px] text-muted truncate mt-0.5">{orden.clienteNombre || 'Cliente'} · {orden.titulo}</p>
+                        <p className="text-caption text-muted truncate mt-0.5">{orden.clienteNombre || 'Cliente'} · {orden.titulo}</p>
                     </div>
                 </div>
             </div>
@@ -196,7 +196,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                 {sedes.length === 0 && (
                     <div>
                         <label className={labelCls}>Sede *</label>
-                        <p className="text-[11px] text-[#D13A28] font-bold">Sin sedes disponibles en el sistema</p>
+                        <p className="text-caption text-[#D13A28] font-bold">Sin sedes disponibles en el sistema</p>
                     </div>
                 )}
 
@@ -240,7 +240,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                                 className={`w-full p-3 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-panel'}`}
                                 style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}>
                                 <p className="text-[12.5px] font-black text-ink">{o.label}</p>
-                                <p className="text-[10px] text-muted mt-0.5">{o.desc}</p>
+                                <p className="text-caption text-muted mt-0.5">{o.desc}</p>
                             </button>
                         ))}
                     </div>
@@ -260,14 +260,14 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                             {seleccionados.map(({ repuesto, cantidad }) => (
                                 <div key={repuesto.id}
                                     className="flex items-center gap-2 p-2.5 rounded-xl bg-panel">
-                                    <span className="flex-1 text-[12px] font-bold text-ink truncate">
+                                    <span className="flex-1 text-body font-bold text-ink truncate">
                                         {repuesto.nombre}
                                     </span>
                                     <input type="text" inputMode="numeric" value={cantidad}
                                         onChange={e => cambiarCantidad(repuesto.id, Number(e.target.value))}
-                                        className="w-14 px-2 py-1 rounded-lg text-[12px] font-bold bg-chip text-ink outline-none text-center" />
+                                        className="w-14 px-2 py-1 rounded-lg text-body font-bold bg-chip text-ink outline-none text-center" />
                                     <button onClick={() => quitarRepuesto(repuesto.id)}
-                                        className="w-7 h-7 rounded-lg bg-[#D13A28]/10 text-brand-red text-[14px] font-black flex items-center justify-center active:scale-90 transition-all">
+                                        className="w-7 h-7 rounded-lg bg-[#D13A28]/10 text-brand-red text-label font-black flex items-center justify-center active:scale-90 transition-all">
                                         ×
                                     </button>
                                 </div>
@@ -296,11 +296,11 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
             {/* Boton fijo abajo */}
             <div className="shrink-0 flex gap-2 px-4 py-4 bg-panel border-t border-black/[0.08]">
                 <button onClick={onCerrar}
-                    className="flex-1 py-3 rounded-2xl font-black text-[11px] uppercase bg-chip text-secondary active:scale-95 transition-all">
+                    className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95 transition-all">
                     Cancelar
                 </button>
                 <button onClick={handleGuardar} disabled={guardando || !sedeId || !descripcion.trim() || !costo || !modalidad}
-                    className="flex-[2] py-3 rounded-2xl font-black text-[11px] uppercase text-white active:scale-95 transition-all bg-brand-red disabled:opacity-40">
+                    className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white active:scale-95 transition-all bg-brand-red disabled:opacity-40">
                     {guardando ? 'Guardando...' : 'Registrar trabajo'}
                 </button>
             </div>

@@ -33,7 +33,7 @@ export function NotifBell({ count, onClick }) {
                 <path d="M13.73 21a2 2 0 01-3.46 0"/>
             </svg>
             {count > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-brand-red text-white text-[9px] font-black flex items-center justify-center leading-none">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-brand-red text-white text-label font-black flex items-center justify-center leading-none">
                     {count > 99 ? '99+' : count}
                 </span>
             )}
@@ -85,13 +85,13 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                     <div>
                         <h2 className="text-[16px] font-black text-ink">Notificaciones</h2>
                         {noLeidas > 0 && (
-                            <p className="text-[10px] font-bold text-brand-red">{noLeidas} sin leer</p>
+                            <p className="text-label font-bold text-brand-red">{noLeidas} sin leer</p>
                         )}
                     </div>
                     <div className="flex items-center gap-2">
                         {noLeidas > 0 && (
                             <button onClick={marcarTodas}
-                                className="text-[10px] font-bold text-[#3B82F6] px-2 py-1 rounded-lg active:scale-95">
+                                className="text-label font-bold text-[#3B82F6] px-2 py-1 rounded-lg active:scale-95">
                                 Marcar todas leidas
                             </button>
                         )}
@@ -111,7 +111,7 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                     ) : notifs.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-muted">
                             <span className="text-3xl mb-2">🔔</span>
-                            <p className="text-[13px] font-bold">Sin notificaciones</p>
+                            <p className="text-body font-bold">Sin notificaciones</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-black/[0.05] dark:divide-white/[0.05]">
@@ -126,18 +126,18 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                                         <span className="text-[20px] mt-0.5 shrink-0">{cfg.emoji}</span>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-0.5">
-                                                <span className={`text-[9px] font-black uppercase tracking-wider ${cfg.color}`}>{cfg.label}</span>
-                                                <span className="text-[9px] text-muted">{tiempoRelativo(n.creadoEn)}</span>
+                                                <span className={`text-label font-black uppercase tracking-wider ${cfg.color}`}>{cfg.label}</span>
+                                                <span className="text-caption text-muted">{tiempoRelativo(n.creadoEn)}</span>
                                                 {!n.leida && <span className="w-2 h-2 rounded-full bg-brand-red shrink-0" />}
                                             </div>
-                                            <p className="text-[12px] font-bold text-ink leading-tight truncate">
+                                            <p className="text-body font-bold text-ink leading-tight truncate">
                                                 {n.titulo}
                                             </p>
                                             {n.mensaje && (
-                                                <p className="text-[11px] text-muted mt-0.5 line-clamp-2">{n.mensaje}</p>
+                                                <p className="text-caption text-muted mt-0.5 line-clamp-2">{n.mensaje}</p>
                                             )}
                                             {n.origenNombre && (
-                                                <p className="text-[10px] text-muted mt-0.5">de {n.origenNombre}</p>
+                                                <p className="text-caption text-muted mt-0.5">de {n.origenNombre}</p>
                                             )}
                                         </div>
                                     </div>
