@@ -46,8 +46,8 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 {/* Header */}
                 <div className="p-5 border-b border-black/[0.07] dark:border-white/[0.07] flex justify-between items-center">
                     <div>
-                        <p className="text-[13px] font-black text-ink">{usuario?.nombre}</p>
-                        <p className="text-[9px] font-bold text-muted uppercase tracking-wider">
+                        <p className="text-body font-black text-ink">{usuario?.nombre}</p>
+                        <p className="text-label font-bold text-muted uppercase tracking-wider">
                             {usuario?.rol === 'ADMIN' ? 'Administrador' : 'Técnico'}
                         </p>
                     </div>
@@ -69,7 +69,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                     ].map((grupo, gi) => (
                         <div key={gi} className="space-y-0.5">
                             {grupo.label && (
-                                <p className="text-[9px] font-bold text-muted/70 uppercase tracking-[0.15em] mb-1 px-3">{grupo.label}</p>
+                                <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-1 px-3">{grupo.label}</p>
                             )}
                             {grupo.items.map(item => {
                                 const activa = vistaActual === item.id;
@@ -80,7 +80,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                                     <button
                                         key={item.id}
                                         onClick={() => handleClick(item.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-[13px] font-bold transition-all active:scale-[0.98] ${
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-body font-bold transition-all active:scale-[0.98] ${
                                             activa
                                                 ? 'bg-brand-red text-white shadow-md'
                                                 : 'text-ink hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
@@ -89,7 +89,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                                         <span>{item.icon}</span>
                                         <span className="flex-1">{item.nombre}</span>
                                         {badge && (
-                                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none ${
+                                            <span className={`text-label font-black px-1.5 py-0.5 rounded-full leading-none ${
                                                 activa ? 'bg-white/30 text-white' : 'bg-brand-red text-white'
                                             }`}>
                                                 {badge}
@@ -106,11 +106,11 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
                     <button
                         onClick={() => { logout(); onClose(); }}
-                        className="w-full px-4 py-3 rounded-xl text-left text-[13px] font-bold text-brand-red hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all"
+                        className="w-full px-4 py-3 rounded-xl text-left text-body font-bold text-brand-red hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all"
                     >
                         🚪 Cerrar sesión
                     </button>
-                    <p className="text-[8px] text-muted text-center mt-2 uppercase tracking-widest font-bold">
+                    <p className="text-label text-muted text-center mt-2 uppercase tracking-widest font-bold">
                         Dispenser La Tienda v1.0
                     </p>
                 </div>

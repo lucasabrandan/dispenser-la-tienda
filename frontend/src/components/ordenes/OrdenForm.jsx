@@ -105,8 +105,8 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
         });
     };
 
-    const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-[13px] font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
-    const labelCls = 'block text-[10px] font-black text-muted uppercase tracking-wider mb-1';
+    const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-body font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
+    const labelCls = 'block text-label font-black text-muted uppercase tracking-wider mb-1';
 
     const clienteOpciones = clientes.map(c => ({
         value: c.id,
@@ -150,9 +150,9 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                     menuPortalTarget={document.body}
                     formatOptionLabel={(opt) => (
                         <div>
-                            <span className="font-bold text-[13px]">{opt.label}</span>
+                            <span className="font-bold text-body">{opt.label}</span>
                             {opt.sublabel && (
-                                <span className="text-[11px] text-muted ml-2">{opt.sublabel}</span>
+                                <span className="text-caption text-muted ml-2">{opt.sublabel}</span>
                             )}
                         </div>
                     )}
@@ -191,7 +191,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                     ))}
                 </select>
                 {presupuestoSeleccionado && (
-                    <p className="mt-1 text-[10px] text-brand-amber font-bold">
+                    <p className="mt-1 text-caption text-brand-amber font-bold">
                         ✓ El técnico verá el botón "Ejecutar presupuesto" en la orden
                     </p>
                 )}
@@ -262,11 +262,11 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
             {/* Botones */}
             <div className="flex gap-3 pt-2">
                 <button type="button" onClick={onCancelar}
-                    className="flex-1 py-3 rounded-xl font-bold text-[13px] bg-chip text-secondary active:scale-95 transition-all">
+                    className="flex-1 py-3 rounded-xl font-bold text-body bg-chip text-secondary active:scale-95 transition-all">
                     Cancelar
                 </button>
                 <button type="submit"
-                    className="flex-1 py-3 rounded-xl font-bold text-[13px] bg-brand-red text-white active:scale-95 transition-all">
+                    className="flex-1 py-3 rounded-xl font-bold text-body bg-brand-red text-white active:scale-95 transition-all">
                     {orden ? 'Guardar cambios' : 'Crear orden'}
                 </button>
             </div>

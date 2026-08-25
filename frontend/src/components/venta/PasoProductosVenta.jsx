@@ -66,11 +66,11 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                 key={p.id}
                                 type="button"
                                 onClick={() => agregarFrecuente(p)}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold active:scale-95 transition-all bg-panel text-ink border border-black/[0.07] dark:border-white/[0.07]"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-label font-bold active:scale-95 transition-all bg-panel text-ink border border-black/[0.07] dark:border-white/[0.07]"
                             >
                                 <span className="text-brand-red">+</span>
                                 {p.nombre}
-                                <span className="text-[10px] text-muted">${Math.round(p.precio).toLocaleString('es-AR')}</span>
+                                <span className="text-caption text-muted">${Math.round(p.precio).toLocaleString('es-AR')}</span>
                             </button>
                         ))}
                     </div>
@@ -83,7 +83,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                 <button
                     type="button"
                     onClick={() => setSheetOpen(true)}
-                    className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-[13px] border border-dashed border-chip text-ink bg-panel active:scale-[0.98] transition-all"
+                    className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-body border border-dashed border-chip text-ink bg-panel active:scale-[0.98] transition-all"
                 >
                     <span>
                         {productos.length > 0
@@ -113,12 +113,12 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                             )}
                             <div className="flex-1 min-w-0">
                                 {p.sku && (
-                                    <p className="text-[9px] font-black uppercase tracking-wider text-brand-red">
+                                    <p className="text-label font-black uppercase tracking-wider text-brand-red">
                                         {p.sku}
                                     </p>
                                 )}
                                 <p className="font-bold text-sm text-ink truncate">{p.nombre}</p>
-                                <p className="text-[10px] text-muted">${Math.round(Number(p.precio)).toLocaleString('es-AR')} c/u</p>
+                                <p className="text-caption text-muted">${Math.round(Number(p.precio)).toLocaleString('es-AR')} c/u</p>
                             </div>
                             <div className="flex items-center gap-1 bg-[#E8E5E0] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
                                 <button
@@ -159,7 +159,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                             ));
                                         }
                                     }}
-                                    className="font-black text-[13px] w-14 text-center text-ink bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    className="font-black text-body-lg w-14 text-center text-ink bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                                 <button
                                     type="button"
@@ -205,7 +205,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                     )}
                 </div>
                 {envioNum > 0 && (
-                    <p className="text-[10px] text-muted font-bold mt-1.5">
+                    <p className="text-caption text-muted font-bold mt-1.5">
                         +${Math.round(envioNum).toLocaleString('es-AR')} al total
                     </p>
                 )}

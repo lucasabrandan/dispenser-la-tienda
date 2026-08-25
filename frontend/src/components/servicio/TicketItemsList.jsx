@@ -67,7 +67,7 @@ export default function TicketItemsList({ ticketItems, editarItem, eliminarItem,
             <Label>
                 {ticketItems.length} equipo{ticketItems.length > 1 ? 's' : ''} en el ticket
                 {onReorder && ticketItems.length > 1 && (
-                    <span className="text-[9px] font-medium text-muted ml-2">
+                    <span className="text-caption font-medium text-muted ml-2">
                         mantener presionado para reordenar
                     </span>
                 )}
@@ -100,29 +100,29 @@ export default function TicketItemsList({ ticketItems, editarItem, eliminarItem,
                             <div className="flex items-center gap-2 min-w-0">
                                 {/* Handle visual de drag */}
                                 {onReorder && ticketItems.length > 1 && (
-                                    <span className={`text-[10px] flex-shrink-0 transition-colors ${dragIdx !== null ? 'text-[#D48800]' : 'text-muted'}`}>
+                                    <span className={`text-label flex-shrink-0 transition-colors ${dragIdx !== null ? 'text-[#D48800]' : 'text-muted'}`}>
                                         ⠿
                                     </span>
                                 )}
-                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 bg-brand-red">
+                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-label font-black flex-shrink-0 bg-brand-red">
                                     {idx + 1}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[12px] font-bold truncate text-ink">
+                                    <p className="text-body font-bold truncate text-ink">
                                         {it.equipoSerial || 'Sin S/N'}
                                     </p>
-                                    <p className="text-[10px] truncate text-muted">
+                                    <p className="text-caption truncate text-muted">
                                         {it.resumenTexto}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                                <M valor={it.totalCalculado} className="text-[13px] font-black text-ink" />
+                                <M valor={it.totalCalculado} className="text-body font-black text-ink" />
                                 <button onClick={() => editarItem(idx)}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] bg-[#D48800]/20 text-brand-amber active:scale-90 transition-all"
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-label bg-[#D48800]/20 text-brand-amber active:scale-90 transition-all"
                                     title="Editar equipo">✏️</button>
                                 <button onClick={() => eliminarItem(idx)}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] bg-[#D13A28]/10 text-brand-red active:scale-90 transition-all"
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-label bg-[#D13A28]/10 text-brand-red active:scale-90 transition-all"
                                     title="Eliminar equipo">✕</button>
                             </div>
                         </div>

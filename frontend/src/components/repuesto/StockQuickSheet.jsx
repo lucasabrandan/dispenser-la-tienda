@@ -105,7 +105,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                             Ajustar stock
                         </h3>
                         {hayModificados && (
-                            <p className="text-[11px] text-brand-red font-bold">
+                            <p className="text-caption text-brand-red font-bold">
                                 {idsModificados.length} ítem{idsModificados.length > 1 ? 's' : ''} modificado{idsModificados.length > 1 ? 's' : ''}
                             </p>
                         )}
@@ -124,7 +124,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                         value={busqueda}
                         onChange={e => setBusqueda(e.target.value)}
                         placeholder="Buscar por nombre o SKU..."
-                        className="w-full px-4 py-2.5 rounded-xl text-[13px] font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink placeholder-muted border border-black/[0.07] dark:border-white/[0.07]"
+                        className="w-full px-4 py-2.5 rounded-xl text-body font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink placeholder-muted border border-black/[0.07] dark:border-white/[0.07]"
                     />
                 </div>
 
@@ -158,8 +158,8 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
 
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-bold text-[13px] text-ink truncate">{r.nombre}</p>
-                                    <p className="text-[10px] text-muted">
+                                    <p className="font-bold text-body text-ink truncate">{r.nombre}</p>
+                                    <p className="text-caption text-muted">
                                         ${Number(r.precio || 0).toLocaleString('es-AR')} venta
                                         {r.costo ? ` · $${Number(r.costo).toLocaleString('es-AR')} costo` : ''}
                                     </p>
@@ -178,7 +178,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                                         value={stock}
                                         onFocus={e => e.target.select()}
                                         onChange={e => setDirecto(r, e.target.value)}
-                                        className="font-black text-[14px] w-12 text-center text-ink bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="font-black text-body-lg w-12 text-center text-ink bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                     <button
                                         type="button"
@@ -197,7 +197,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                         type="button"
                         onClick={guardar}
                         disabled={guardando}
-                        className="w-full py-4 rounded-2xl font-black text-[15px] text-white active:scale-[0.98] transition-all bg-brand-red disabled:opacity-50"
+                        className="w-full py-4 rounded-2xl font-black text-body-lg text-white active:scale-[0.98] transition-all bg-brand-red disabled:opacity-50"
                     >
                         {guardando
                             ? 'Guardando...'
