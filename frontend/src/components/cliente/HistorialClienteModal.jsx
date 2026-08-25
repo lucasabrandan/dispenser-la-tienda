@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { generarPDFHistorialCliente } from '../../utils/pdf/historialCliente';
+import { LuWrench, LuHardHat } from 'react-icons/lu';
 
 function formatFecha(f) {
     if (!f) return '-';
@@ -104,8 +105,8 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                                     </div>
                                     {/* Equipos */}
                                     {equipos && (
-                                        <p className="text-body font-black text-ink truncate">
-                                            🔧 {equipos}
+                                        <p className="text-body font-black text-ink truncate flex items-center gap-1.5">
+                                            <LuWrench size={13} />{equipos}
                                         </p>
                                     )}
                                     {/* Trabajo realizado */}
@@ -114,7 +115,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                                     )}
                                     {/* Técnico asignado */}
                                     {tecnicos && (
-                                        <p className="text-label font-bold text-muted uppercase">👷 {tecnicos}</p>
+                                        <p className="text-label font-bold text-muted uppercase flex items-center gap-1"><LuHardHat size={12} />{tecnicos}</p>
                                     )}
                                 </div>
 

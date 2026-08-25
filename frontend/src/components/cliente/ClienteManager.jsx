@@ -5,6 +5,7 @@ import { useClienteData } from '../../hooks/useClienteData';
 import { useEquipoActions } from '../../hooks/useEquipoActions';
 import { filtrarClientesPorBusqueda } from '../../utils/clienteUtils';
 import { toTitleCase } from '../../utils/titleCase';
+import { LuSearch, LuTriangleAlert } from 'react-icons/lu';
 import ClienteCard        from './ClienteCard';
 import ClienteForm        from './ClienteForm';
 import CrearClienteModal  from './CrearClienteModal';
@@ -88,7 +89,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     </h2>
                     <div className="flex gap-1.5">
                         <div className="relative flex-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">🔍</span>
+                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input placeholder="Cliente, sede, teléfono, S/N..."
                                 value={busqueda}
                                 onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
@@ -205,7 +206,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
                         <div className="bg-card rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6">
                             <div className="text-center mb-5">
-                                <p className="text-[36px] mb-2">⚠️</p>
+                                <p className="mb-2 flex justify-center"><LuTriangleAlert size={32} /></p>
                                 <h3 className="text-title font-black text-ink uppercase">Eliminar cliente</h3>
                             </div>
                             <p className="text-caption text-secondary text-center mb-5 leading-snug">

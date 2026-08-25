@@ -1,3 +1,5 @@
+import { LuMapPin, LuMap } from 'react-icons/lu';
+
 /**
  * ClienteFormDireccion
  * Componente presentacional — sección de dirección.
@@ -12,7 +14,7 @@ export default function ClienteFormDireccion({ formData, errores, handleChange }
 
     return (
         <div className="bg-slate-50 dark:bg-slate-900/30 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4">
-            <h3 className="font-black text-sm text-slate-900 dark:text-white">📍 Dirección</h3>
+            <h3 className="font-black text-sm text-slate-900 dark:text-white flex items-center gap-1.5"><LuMapPin size={14} /> Dirección</h3>
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -57,8 +59,8 @@ export default function ClienteFormDireccion({ formData, errores, handleChange }
 
             {formData.direccion && (
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">
-                        🗺️ Dirección generada: {formData.direccion}
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1.5">
+                        <LuMap size={13} /> Dirección generada: {formData.direccion}
                     </p>
                 </div>
             )}
