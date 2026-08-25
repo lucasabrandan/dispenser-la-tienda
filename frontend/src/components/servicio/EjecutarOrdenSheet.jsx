@@ -172,12 +172,12 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                         ←
                     </button>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-[15px] font-black text-ink leading-none">Ejecutar trabajo</h2>
-                        <p className="text-[11px] text-muted truncate mt-0.5">{servicio.clienteNombre} · {servicio.sedeNombre}</p>
+                        <h2 className="text-title font-black text-ink leading-none">Ejecutar trabajo</h2>
+                        <p className="text-caption text-muted truncate mt-0.5">{servicio.clienteNombre} · {servicio.sedeNombre}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-[9px] font-black text-muted uppercase tracking-wider">Total</p>
-                        <p className="text-[18px] font-black leading-none text-ink">{fmt(totalHeader)}</p>
+                        <p className="text-label font-black text-muted uppercase tracking-wider">Total</p>
+                        <p className="text-title font-black leading-none text-ink">{fmt(totalHeader)}</p>
                     </div>
                 </div>
                 <div className="flex gap-1 mt-3">

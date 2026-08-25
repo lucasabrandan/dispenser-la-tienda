@@ -54,7 +54,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
                 <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/[0.07] dark:border-white/[0.07] shrink-0">
                     <div>
                         <p className="text-label font-black text-muted uppercase tracking-widest">Historial técnico</p>
-                        <h2 className="text-[18px] font-black text-ink uppercase leading-none mt-0.5">
+                        <h2 className="text-title font-black text-ink uppercase leading-none mt-0.5">
                             {cliente?.nombre}
                         </h2>
                     </div>

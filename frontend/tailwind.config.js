@@ -9,11 +9,12 @@ module.exports = {
     extend: {
       fontSize: {
         // Escala tipográfica fija (auditoría UX/UI, punto A2): en vez de
-        // valores sueltos pixel a pixel, 4 tamaños con un rol claro cada uno.
+        // valores sueltos pixel a pixel, 5 tamaños con un rol claro cada uno.
         label: ['10px', { lineHeight: '1.3' }],     // etiquetas/eyebrows/metadatos chicos
         caption: ['11px', { lineHeight: '1.4' }],   // texto secundario, ayudas, notas
         body: ['13px', { lineHeight: '1.5' }],      // texto principal / resultados que se leen
         'body-lg': ['14px', { lineHeight: '1.5' }], // texto principal con énfasis
+        title: ['18px', { lineHeight: '1.3' }],       // títulos de modal, montos totales destacados
       },
       colors: {
         brand: {

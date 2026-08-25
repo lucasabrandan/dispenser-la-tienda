@@ -61,7 +61,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                     <div className="flex items-start justify-between gap-3">
                         <div>
                             <p className="text-label font-black text-muted uppercase mb-1">Historial del Dispenser</p>
-                            <h3 className="text-[18px] font-black text-ink uppercase leading-none">
+                            <h3 className="text-title font-black text-ink uppercase leading-none">
                                 {equipo.marca} {equipo.modelo}
                             </h3>
                             <p className="text-caption font-bold text-brand-red mt-0.5">
@@ -102,7 +102,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                 <div className="overflow-y-auto flex-1 px-5 py-4">
                     {historial.length === 0 ? (
                         <div className="text-center py-12">
-                            <p className="text-muted font-black uppercase text-sm">Sin servicios registrados</p>
+                            <p className="text-muted font-black uppercase text-caption">Sin servicios registrados</p>
                         </div>
                     ) : (
                         <div className="relative">

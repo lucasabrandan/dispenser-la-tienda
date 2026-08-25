@@ -201,7 +201,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                         </div>
                         <div className="sticky top-0 bg-panel px-5 py-4 border-b border-black/[0.08] dark:border-white/[0.07] flex justify-between items-center z-10 md:rounded-t-3xl">
                             <div>
-                                <h3 className="text-[15px] font-black text-ink">
+                                <h3 className="text-title font-black text-ink">
                                     {ventaDuplicar ? 'Duplicar Venta' : ventaEditar ? 'Editar Venta' : 'Nueva Venta'}
                                 </h3>
                                 <p className="text-caption text-muted mt-0.5">

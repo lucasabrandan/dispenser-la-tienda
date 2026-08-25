@@ -35,7 +35,7 @@ export function StepHeader({ paso, total, titulo, subtitulo }) {
             <p className="text-label font-bold uppercase tracking-widest mb-1 text-muted">
                 Paso {paso + 1} de {total}
             </p>
-            <h3 className="text-[18px] font-black leading-tight text-ink">
+            <h3 className="text-title font-black leading-tight text-ink">
                 {titulo}
             </h3>
             {subtitulo && (

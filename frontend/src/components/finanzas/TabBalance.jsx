@@ -66,7 +66,7 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
                 ))}
                 <div className="flex justify-between items-center pt-2 mt-1">
                     <p className="text-body-lg font-black text-ink">= Ganancia neta</p>
-                    <p className="text-[18px] font-black text-brand-amber">{fmt(gananciaNeta)}</p>
+                    <p className="text-title font-black text-brand-amber">{fmt(gananciaNeta)}</p>
                 </div>
             </div>
 

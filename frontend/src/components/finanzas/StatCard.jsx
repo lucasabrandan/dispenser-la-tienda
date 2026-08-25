@@ -14,10 +14,10 @@ export default function StatCard({ label, value, sub, variante, ocultar }) {
     const displayFull = ocultar ? '••••' : `$${formatearPrecio(num)}`;
     return (
         <div className={`p-4 sm:p-5 rounded-[1.5rem] border ${wrap}`}>
-            <p className="text-[9px] font-black uppercase text-muted tracking-widest mb-2 sm:mb-3">{label}</p>
+            <p className="text-label font-black uppercase text-muted tracking-widest mb-2 sm:mb-3">{label}</p>
             <p className={`text-lg sm:text-2xl font-black ${val} hidden sm:block`}>{displayFull}</p>
             <p className={`text-lg font-black ${val} sm:hidden`}>{display}</p>
-            <p className="text-[9px] font-bold text-muted uppercase mt-1">{sub}</p>
+            <p className="text-label font-bold text-muted uppercase mt-1">{sub}</p>
         </div>
     );
 }

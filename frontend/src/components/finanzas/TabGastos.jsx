@@ -15,7 +15,7 @@ const inputCls = `
     px-4 py-3 rounded-xl outline-none transition-all
     bg-chip
     border border-black/[0.07] dark:border-white/[0.07]
-    text-ink text-sm font-bold
+    text-ink text-body font-bold
     focus:ring-2 focus:ring-[#D13A28]/20
     focus:border-[#D13A28] dark:focus:border-[#E8422F]
     placeholder:text-muted
@@ -134,7 +134,7 @@ export default function TabGastos({ filtroMes, setFiltroMes }) {
             </div>
 
             {gastos.length === 0 ? (
-                <p className="text-center text-muted py-8 font-bold text-sm uppercase">No hay gastos este mes</p>
+                <p className="text-center text-muted py-8 font-bold text-caption uppercase">No hay gastos este mes</p>
             ) : (
                 <div className="bg-card rounded-2xl overflow-hidden border-[0.5px] border-black/[0.07]">
                     <div className="flex items-center justify-between px-5 py-3 bg-panel">

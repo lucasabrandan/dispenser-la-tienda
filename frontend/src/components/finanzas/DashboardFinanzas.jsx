@@ -30,21 +30,21 @@ export default function DashboardFinanzas() {
                     <div className="hidden md:flex items-center justify-between">
                         <h2 className="text-2xl font-black uppercase tracking-tight text-ink">Finanzas</h2>
                         <button onClick={() => setModalCierre(true)}
-                            className="h-8 px-3 rounded-lg font-bold text-[11px] uppercase text-white bg-brand-red active:scale-95">
+                            className="h-8 px-3 rounded-lg font-bold text-caption uppercase text-white bg-brand-red active:scale-95">
                             Cierre de caja
                         </button>
                     </div>
                     <div className="flex gap-2 items-center md:hidden mb-1">
                         <div className="flex-1" />
                         <button onClick={() => setModalCierre(true)}
-                            className="h-7 px-2.5 rounded-lg font-bold text-[10px] uppercase text-white bg-brand-red active:scale-95 shrink-0">
+                            className="h-7 px-2.5 rounded-lg font-bold text-label uppercase text-white bg-brand-red active:scale-95 shrink-0">
                             Cierre
                         </button>
                     </div>
                     <div className="flex gap-1 bg-panel p-1 rounded-lg">
                         {TABS.map(t => (
                             <button key={t.id} onClick={() => setTab(t.id)}
-                                className={`flex-1 py-1.5 rounded-md font-bold text-[11px] uppercase transition-all active:scale-95
+                                className={`flex-1 py-1.5 rounded-md font-bold text-caption uppercase transition-all active:scale-95
                                     ${tab === t.id
                                         ? 'bg-white dark:bg-[#242424] text-ink shadow-sm'
                                         : 'text-muted'}`}>
