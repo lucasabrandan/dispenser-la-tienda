@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
 const COLUMNAS = [
-    { id: 'PENDIENTE',  label: 'Pendiente',   color: '#A8A29E', emoji: '\u23F3' },
-    { id: 'EN_CAMINO',  label: 'En camino',   color: '#3B82F6', emoji: '\uD83D\uDE97' },
-    { id: 'EN_SITIO',   label: 'En sitio',    color: '#D48800', emoji: '\uD83D\uDCCD' },
-    { id: 'COMPLETADA', label: 'Completada',   color: '#16A34A', emoji: '\u2705' },
-    { id: 'NO_ATENDIDO',label: 'No atendido',  color: '#DC2626', emoji: '\u26A0\uFE0F' },
+    { id: 'PENDIENTE',  label: 'Pendiente',   color: '#A8A29E', emoji: '⏳' },
+    { id: 'EN_CAMINO',  label: 'En camino',   color: '#3B82F6', emoji: '🚗' },
+    { id: 'EN_SITIO',   label: 'En sitio',    color: '#D48800', emoji: '📍' },
+    { id: 'COMPLETADA', label: 'Completada',   color: '#16A34A', emoji: '✅' },
+    { id: 'NO_ATENDIDO',label: 'No atendido',  color: '#DC2626', emoji: '⚠️' },
 ];
 
 const PRIORIDAD_BORDER = {
@@ -18,30 +18,30 @@ function KanbanCard({ orden, onEditar }) {
         <div onClick={() => onEditar?.(orden)}
             className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform"
             style={{ borderLeft: `3px solid ${priColor}` }}>
-            <p className="text-[12px] font-black text-ink leading-tight truncate">
+            <p className="text-body font-black text-ink leading-tight truncate">
                 {orden.titulo}
             </p>
             {orden.clienteNombre && (
-                <p className="text-[10px] text-muted mt-0.5 truncate">{orden.clienteNombre}</p>
+                <p className="text-caption text-muted mt-0.5 truncate">{orden.clienteNombre}</p>
             )}
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {orden.tecnicoNombre && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-panel text-secondary">
+                    <span className="text-label font-bold px-1.5 py-0.5 rounded bg-panel text-secondary">
                         {orden.tecnicoNombre}
                     </span>
                 )}
                 {orden.horaEstimada && (
-                    <span className="text-[9px] text-muted">{orden.horaEstimada}</span>
+                    <span className="text-label text-muted">{orden.horaEstimada}</span>
                 )}
                 {orden.prioridad === 'URGENTE' && (
-                    <span className="text-[9px] font-black text-[#DC2626]">URGENTE</span>
+                    <span className="text-label font-black text-[#DC2626]">URGENTE</span>
                 )}
                 {orden.prioridad === 'ALTA' && (
-                    <span className="text-[9px] font-black text-[#D48800]">ALTA</span>
+                    <span className="text-label font-black text-[#D48800]">ALTA</span>
                 )}
             </div>
             {orden.direccion && (
-                <p className="text-[9px] text-[#3B82F6] dark:text-[#60A5FA] mt-1 truncate">{orden.direccion}</p>
+                <p className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-1 truncate">{orden.direccion}</p>
             )}
         </div>
     );
@@ -71,7 +71,7 @@ export default function KanbanBoard({ ordenes, filtroTecnico, onEditar }) {
                         const sel = colMobile === col.id;
                         return (
                             <button key={col.id} onClick={() => setColMobile(col.id)}
-                                className={`shrink-0 flex items-center gap-1.5 h-9 px-3 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
+                                className={`shrink-0 flex items-center gap-1.5 h-9 px-3 rounded-xl text-label font-bold transition-all active:scale-95 ${
                                     sel
                                         ? 'text-white'
                                         : 'bg-white dark:bg-[#242424] text-secondary border border-black/[0.05] dark:border-white/[0.05]'
@@ -80,7 +80,7 @@ export default function KanbanBoard({ ordenes, filtroTecnico, onEditar }) {
                                 <span>{col.emoji}</span>
                                 <span>{col.label}</span>
                                 {count > 0 && (
-                                    <span className={`min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-black ${
+                                    <span className={`min-w-[18px] h-[18px] rounded-full flex items-center justify-center text-label font-black ${
                                         sel ? 'bg-white/20 text-white' : 'bg-panel text-ink'
                                     }`}>{count}</span>
                                 )}
@@ -90,7 +90,7 @@ export default function KanbanBoard({ ordenes, filtroTecnico, onEditar }) {
                 </div>
                 <div className="space-y-2 mt-2">
                     {porEstado[colMobile]?.length === 0 ? (
-                        <p className="text-center py-8 text-muted text-[12px] font-bold">Sin ordenes</p>
+                        <p className="text-center py-8 text-muted text-body font-bold">Sin ordenes</p>
                     ) : (
                         porEstado[colMobile]?.map(o => <KanbanCard key={o.id} orden={o} onEditar={onEditar} />)
                     )}
@@ -105,10 +105,10 @@ export default function KanbanBoard({ ordenes, filtroTecnico, onEditar }) {
                         <div key={col.id} className="rounded-2xl bg-panel border border-black/[0.05] dark:border-white/[0.05] p-2 min-h-[200px]">
                             <div className="flex items-center gap-2 px-2 py-2 mb-2">
                                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: col.color }} />
-                                <span className="text-[11px] font-black uppercase tracking-wider text-ink">
+                                <span className="text-label font-black uppercase tracking-wider text-ink">
                                     {col.label}
                                 </span>
-                                <span className="text-[10px] font-bold text-muted ml-auto">{items.length}</span>
+                                <span className="text-label font-bold text-muted ml-auto">{items.length}</span>
                             </div>
                             <div className="space-y-2">
                                 {items.map(o => <KanbanCard key={o.id} orden={o} onEditar={onEditar} />)}

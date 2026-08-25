@@ -8,7 +8,7 @@ import { useTheme } from '../../hooks/useTheme';
 const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucumán','Salta','Neuquén'];
 
 const inputCls = `
-    w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none
+    w-full block px-3.5 py-2.5 rounded-xl text-body font-medium outline-none
     bg-chip
     text-ink
     border border-black/10 dark:border-white/10
@@ -49,10 +49,10 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                 />
                 {fechaVenta !== hoy && (
                     <div className="flex justify-between mt-1.5">
-                        <span className={`text-[10px] font-bold ${fechaVenta < hoy ? 'text-[#D48800]' : 'text-blue-500'}`}>
+                        <span className={`text-label font-bold ${fechaVenta < hoy ? 'text-[#D48800]' : 'text-blue-500'}`}>
                             {fechaVenta < hoy ? 'Carga histórica' : 'Fecha futura'}
                         </span>
-                        <button onClick={() => setFechaVenta(hoy)} className="text-[10px] text-muted hover:text-[#D13A28]">
+                        <button onClick={() => setFechaVenta(hoy)} className="text-label text-muted hover:text-[#D13A28]">
                             Usar hoy
                         </button>
                     </div>
@@ -80,10 +80,10 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                                     }
                                 `}
                             >
-                                <p className={`font-black text-[13px] ${activo ? 'text-[#1C1917]' : 'text-ink'}`}>
+                                <p className={`font-black text-body ${activo ? 'text-[#1C1917]' : 'text-ink'}`}>
                                     {opt.label}
                                 </p>
-                                <p className={`text-[10px] mt-0.5 ${activo ? 'text-[#1C1917]/60' : 'text-muted'}`}>
+                                <p className={`text-caption mt-0.5 ${activo ? 'text-[#1C1917]/60' : 'text-muted'}`}>
                                     {opt.hint}
                                 </p>
                             </button>
@@ -117,10 +117,10 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                         <button type="button" onClick={() => setRegistrarCliente(!registrarCliente)}
                             className="flex items-center justify-between w-full">
                             <div className="text-left">
-                                <p className="font-black text-[13px] text-ink">
+                                <p className="font-black text-body text-ink">
                                     Registrar como cliente
                                 </p>
-                                <p className="text-[10px] text-muted mt-0.5">
+                                <p className="text-caption text-muted mt-0.5">
                                     Guardarlo para futuras operaciones
                                 </p>
                             </div>
@@ -136,7 +136,7 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                         {/* Campos adicionales para registrar */}
                         {registrarCliente && (
                             <div className="mt-4 space-y-3 pt-3 border-t border-[#D13A28]/20">
-                                <p className="text-[10px] font-black text-[#D13A28] uppercase tracking-widest">
+                                <p className="text-label font-black text-[#D13A28] uppercase tracking-widest">
                                     Datos del cliente — completá lo que tengas
                                 </p>
                                 <div>
@@ -203,14 +203,14 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
                         <div className="mt-2 p-3 rounded-xl bg-chip grid grid-cols-2 gap-2">
                             {clienteObj.telefono && (
                                 <div>
-                                    <p className="text-[9px] font-bold uppercase text-muted">Teléfono</p>
-                                    <p className="text-[12px] font-bold text-ink">{clienteObj.telefono}</p>
+                                    <p className="text-label font-bold uppercase text-muted">Teléfono</p>
+                                    <p className="text-body font-bold text-ink">{clienteObj.telefono}</p>
                                 </div>
                             )}
                             {clienteObj.localidad && (
                                 <div>
-                                    <p className="text-[9px] font-bold uppercase text-muted">Localidad</p>
-                                    <p className="text-[12px] font-bold text-ink">{clienteObj.localidad}</p>
+                                    <p className="text-label font-bold uppercase text-muted">Localidad</p>
+                                    <p className="text-body font-bold text-ink">{clienteObj.localidad}</p>
                                 </div>
                             )}
                         </div>

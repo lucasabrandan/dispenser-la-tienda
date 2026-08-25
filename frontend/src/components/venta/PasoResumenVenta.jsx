@@ -12,7 +12,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
     } = hook;
 
     const textareaCls = `
-        w-full block px-3.5 py-2.5 rounded-xl text-[13px] font-medium outline-none resize-none
+        w-full block px-3.5 py-2.5 rounded-xl text-body font-medium outline-none resize-none
         bg-chip
         text-ink
         border border-black/10 dark:border-white/10
@@ -31,16 +31,16 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                 <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07] bg-card">
                     {productos.map((p, i) => (
                         <div key={i} className="px-4 py-2.5 border-b border-black/[0.07] dark:border-white/[0.07] last:border-0 flex justify-between items-center">
-                            <span className="text-[13px] font-medium text-ink">
+                            <span className="text-body font-medium text-ink">
                                 {p.cantidad}× {p.nombre}
                             </span>
-                            <M valor={p.subtotal} className="text-[13px] font-black text-ink" />
+                            <M valor={p.subtotal} className="text-body font-black text-ink" />
                         </div>
                     ))}
                     {envioNum > 0 && (
                         <div className="px-4 py-2.5 flex justify-between items-center">
-                            <span className="text-[13px] font-medium text-muted">🚚 Envío</span>
-                            <M valor={envioNum} className="text-[13px] font-black text-muted" />
+                            <span className="text-body font-medium text-muted">🚚 Envío</span>
+                            <M valor={envioNum} className="text-body font-black text-muted" />
                         </div>
                     )}
                 </div>
@@ -59,7 +59,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                     <span className="font-black text-xl text-muted">%</span>
                     {descuentoPorcentaje > 0 && (
                         <div className="flex-1 text-right">
-                            <p className="text-[10px] font-bold uppercase text-muted">Descuento</p>
+                            <p className="text-label font-bold uppercase text-muted">Descuento</p>
                             <p className="text-lg font-black text-brand-red">
                                 -${Math.round(descuentoMonto).toLocaleString('es-AR')}
                             </p>
@@ -69,7 +69,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                 <div className="flex gap-2">
                     {[5, 10, 15, 20].map(p => (
                         <button key={p} onClick={() => setDescuentoPorcentaje(p)}
-                            className={`flex-1 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-95 ${
+                            className={`flex-1 py-2 rounded-xl text-label font-bold transition-all active:scale-95 ${
                                 descuentoPorcentaje === p
                                     ? 'bg-brand-red text-white'
                                     : 'bg-chip text-secondary'
@@ -90,7 +90,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                     rows={3}
                     className={textareaCls}
                 />
-                <p className="text-[9px] mt-1.5 text-muted">Aparece al pie del PDF.</p>
+                <p className="text-caption mt-1.5 text-muted">Aparece al pie del PDF.</p>
             </div>
 
             <BackBtn onClick={onBack} />
@@ -99,7 +99,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
             <div className="hide-on-keyboard fixed bottom-0 left-0 right-0 z-[100] px-3 pb-3">
                 <div className="p-4 rounded-2xl flex justify-between items-center shadow-2xl bg-[#1C1917] dark:bg-[#0F0F0F] border border-white/[0.06]">
                     <div>
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-[#5C5954]">
+                        <p className="text-label font-bold uppercase tracking-widest text-[#5C5954]">
                             Total final
                             {descuentoPorcentaje > 0 && (
                                 <span className="text-[#F5796C] ml-1">(-{descuentoPorcentaje}%)</span>
@@ -109,11 +109,11 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                     </div>
                     <div className="flex gap-2">
                         <button onClick={dispararPDF}
-                            className="h-11 px-3 rounded-xl font-bold text-[11px] text-white flex items-center gap-1.5 active:scale-90 bg-[#2E2E2E]">
+                            className="h-11 px-3 rounded-xl font-bold text-label text-white flex items-center gap-1.5 active:scale-90 bg-[#2E2E2E]">
                             📄 PDF
                         </button>
                         <button onClick={() => guardarVenta(false, mostrador.sedeId)}
-                            className="h-11 px-4 rounded-xl font-black text-[11px] text-white active:scale-95 bg-[#2E2E2E]">
+                            className="h-11 px-4 rounded-xl font-black text-label text-white active:scale-95 bg-[#2E2E2E]">
                             Pendiente
                         </button>
                         <button onClick={() => guardarVenta(true, mostrador.sedeId)}

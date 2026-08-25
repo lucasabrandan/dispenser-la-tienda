@@ -89,7 +89,7 @@ export default function CrearClienteModal({
 
     if (!isOpen) return null;
 
-    const inputCls = 'w-full px-3.5 py-3 rounded-xl text-[13px] font-medium outline-none bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] focus:ring-2 focus:ring-[#D13A28]/20 transition-all';
+    const inputCls = 'w-full px-3.5 py-3 rounded-xl text-body font-medium outline-none bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] focus:ring-2 focus:ring-[#D13A28]/20 transition-all';
 
     return (
         <>
@@ -106,7 +106,7 @@ export default function CrearClienteModal({
                     <div className="flex justify-between items-center px-5 pt-4 pb-3">
                         <div>
                             <h2 className="text-[17px] font-black text-ink">Nuevo Cliente</h2>
-                            <p className="text-[11px] text-muted mt-0.5">Alta rápida — completá el resto después</p>
+                            <p className="text-caption text-muted mt-0.5">Alta rápida — completá el resto después</p>
                         </div>
                         <button onClick={onClose}
                             className="w-9 h-9 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90">
@@ -117,7 +117,7 @@ export default function CrearClienteModal({
                     <form onSubmit={handleGuardar} className="px-5 pb-5 space-y-3">
                         {/* Nombre */}
                         <div>
-                            <label className="text-[10px] font-black text-muted uppercase tracking-wider block mb-1">Nombre *</label>
+                            <label className="text-label font-black text-muted uppercase tracking-wider block mb-1">Nombre *</label>
                             <input
                                 value={nombre}
                                 onChange={e => setNombre(e.target.value)}
@@ -129,7 +129,7 @@ export default function CrearClienteModal({
 
                         {/* Teléfono */}
                         <div>
-                            <label className="text-[10px] font-black text-muted uppercase tracking-wider block mb-1">Teléfono</label>
+                            <label className="text-label font-black text-muted uppercase tracking-wider block mb-1">Teléfono</label>
                             <input
                                 type="tel"
                                 value={telefono}
@@ -141,33 +141,33 @@ export default function CrearClienteModal({
 
                         {/* Dirección */}
                         <div className="rounded-xl p-3 bg-chip border border-black/[0.06] dark:border-white/[0.06] space-y-2.5">
-                            <p className="text-[10px] font-black text-muted uppercase tracking-wider">Dirección</p>
+                            <p className="text-label font-black text-muted uppercase tracking-wider">Dirección</p>
                             <div className="grid grid-cols-[1fr_80px] gap-2">
                                 <div>
-                                    <label className="text-[9px] font-bold text-muted uppercase block mb-0.5">Calle *</label>
+                                    <label className="text-label font-bold text-muted uppercase block mb-0.5">Calle *</label>
                                     <input value={calle} onChange={e => setCalle(e.target.value)}
                                         placeholder="Av. Rivadavia" className={inputCls} />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-bold text-muted uppercase block mb-0.5">Nro</label>
+                                    <label className="text-label font-bold text-muted uppercase block mb-0.5">Nro</label>
                                     <input value={numero} onChange={e => setNumero(e.target.value)}
                                         placeholder="5000" className={inputCls} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="text-[9px] font-bold text-muted uppercase block mb-0.5">Piso</label>
+                                    <label className="text-label font-bold text-muted uppercase block mb-0.5">Piso</label>
                                     <input value={piso} onChange={e => setPiso(e.target.value)}
                                         placeholder="3" className={inputCls} />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-bold text-muted uppercase block mb-0.5">Depto</label>
+                                    <label className="text-label font-bold text-muted uppercase block mb-0.5">Depto</label>
                                     <input value={depto} onChange={e => setDepto(e.target.value)}
                                         placeholder="B" className={inputCls} />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[9px] font-bold text-muted uppercase block mb-0.5">Localidad *</label>
+                                <label className="text-label font-bold text-muted uppercase block mb-0.5">Localidad *</label>
                                 <input value={localidad} onChange={e => setLocalidad(e.target.value)}
                                     placeholder="Caballito, CABA" className={inputCls} />
                             </div>
@@ -176,11 +176,11 @@ export default function CrearClienteModal({
                         {/* Botones */}
                         <div className="flex gap-2 pt-2">
                             <button type="button" onClick={onClose} disabled={cargando}
-                                className="flex-1 py-3 rounded-2xl font-black text-[12px] uppercase bg-chip text-secondary active:scale-95 disabled:opacity-50">
+                                className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95 disabled:opacity-50">
                                 Cancelar
                             </button>
                             <button type="submit" disabled={cargando || !nombre.trim()}
-                                className="flex-[2] py-3 rounded-2xl font-black text-[12px] uppercase text-white bg-brand-red active:scale-95 disabled:opacity-50">
+                                className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95 disabled:opacity-50">
                                 {cargando ? 'Creando...' : 'Crear Cliente'}
                             </button>
                         </div>

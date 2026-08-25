@@ -25,7 +25,7 @@ const badgeLabel = (v) => {
 
 // Botón de acción compacto con label
 const Accion = ({ onClick, icon, label, className = '', href, ...rest }) => {
-    const cls = `inline-flex items-center gap-1 h-7 px-2 rounded-lg text-[10px] font-bold transition-all active:scale-95 ${className}`;
+    const cls = `inline-flex items-center gap-1 h-7 px-2 rounded-lg text-label font-bold transition-all active:scale-95 ${className}`;
     if (href) return <a href={href} className={cls} {...rest}>{icon} <span className="hidden sm:inline">{label}</span></a>;
     return <button onClick={onClick} className={cls}>{icon} <span className="hidden sm:inline">{label}</span></button>;
 };
@@ -40,7 +40,7 @@ export default function VentaList({
     if (ventas.length === 0) return (
         <div className="text-center py-12 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
             <p className="text-2xl mb-1">📭</p>
-            <p className="text-[12px] font-bold text-muted">No hay ventas en esta categoría</p>
+            <p className="text-caption font-bold text-muted">No hay ventas en esta categoría</p>
         </div>
     );
 
@@ -67,12 +67,12 @@ export default function VentaList({
                             <div className="flex justify-between items-start">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 mb-1">
-                                        <span className="text-[10px] text-muted font-bold">#{v.id}</span>
-                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ${badgeClass(v)}`}>
+                                        <span className="text-label text-muted font-bold">#{v.id}</span>
+                                        <span className={`text-label font-bold px-1.5 py-0.5 rounded-md uppercase ${badgeClass(v)}`}>
                                             {badgeLabel(v)}
                                         </span>
                                         {esPendiente && diasPendiente > 0 && (
-                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
+                                            <span className={`text-label font-bold px-1.5 py-0.5 rounded-md ${
                                                 diasPendiente > 7
                                                     ? 'bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171]'
                                                     : 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]'
@@ -81,13 +81,13 @@ export default function VentaList({
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-[14px] font-bold text-ink truncate">{v.clienteNombre}</p>
-                                    <p className="text-[10px] text-muted mt-0.5">{v.sedeNombre} · {v.fecha}</p>
+                                    <p className="text-body font-bold text-ink truncate">{v.clienteNombre}</p>
+                                    <p className="text-caption text-muted mt-0.5">{v.sedeNombre} · {v.fecha}</p>
                                 </div>
                                 <div className="text-right shrink-0 ml-3">
-                                    <M valor={calcularTotal(v)} className="text-[16px] font-black text-ink block" />
+                                    <M valor={calcularTotal(v)} className="text-body-lg font-black text-ink block" />
                                     {v.descuentoPorcentaje > 0 && (
-                                        <p className="text-[9px] text-brand-red font-bold">-{v.descuentoPorcentaje}% desc.</p>
+                                        <p className="text-caption text-brand-red font-bold">-{v.descuentoPorcentaje}% desc.</p>
                                     )}
                                 </div>
                             </div>
@@ -97,7 +97,7 @@ export default function VentaList({
                                 const prods = v.items.flatMap(it => it.repuestosUsados || []).map(r => r.nombre);
                                 if (prods.length === 0) return null;
                                 const preview = prods.slice(0, 3).join(', ') + (prods.length > 3 ? ` +${prods.length - 3} más` : '');
-                                return <p className="text-[10px] text-muted mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">{preview}</p>;
+                                return <p className="text-caption text-muted mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">{preview}</p>;
                             })()}
                         </div>
 
@@ -131,7 +131,7 @@ export default function VentaList({
 
                             {esPendiente && (
                                 <button onClick={() => onConfirmar(v.id)}
-                                    className="h-7 px-3 rounded-lg font-bold text-[10px] text-white active:scale-95 bg-brand-red">
+                                    className="h-7 px-3 rounded-lg font-bold text-label text-white active:scale-95 bg-brand-red">
                                     Cobrar
                                 </button>
                             )}
