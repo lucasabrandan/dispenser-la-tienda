@@ -16,7 +16,10 @@
 
   /* Texto y fondos base */
   --color-ink: #1C1917;
-  --color-muted: #A8A29E;
+  /* Antes #A8A29E (contraste ~2.5:1 sobre blanco, no llega a WCAG AA).
+     Se lleva al mismo valor de --color-text-secondary (~7.6:1) para que
+     el texto secundario/caption de toda la app sea legible por defecto. */
+  --color-muted: #57534E;
   --color-bg-page: #F5F3F1;
   --color-bg-card: #FFFFFF;
 
@@ -55,7 +58,7 @@
   --color-brand-amber: #F0A500;
 
   --color-ink: #F0EEE9;
-  --color-muted: #A8A29E;
+  --color-muted: #9E9A94;
   --color-bg-page: #141414;
   --color-bg-card: #242424;
 
