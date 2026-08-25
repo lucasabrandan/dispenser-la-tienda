@@ -1,5 +1,6 @@
 import React from 'react';
 import { Label, BackBtn, M } from '../servicio/ServicioUI';
+import { LuTruck, LuFileText } from 'react-icons/lu';
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PasoResumenVenta({ hook, mostrador, onBack }) {
@@ -39,7 +40,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                     ))}
                     {envioNum > 0 && (
                         <div className="px-4 py-2.5 flex justify-between items-center">
-                            <span className="text-body font-medium text-muted">🚚 Envío</span>
+                            <span className="text-body font-medium text-muted flex items-center gap-1"><LuTruck size={13} /> Envío</span>
                             <M valor={envioNum} className="text-body font-black text-muted" />
                         </div>
                     )}
@@ -110,7 +111,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                     <div className="flex gap-2">
                         <button onClick={dispararPDF}
                             className="h-11 px-3 rounded-xl font-bold text-label text-white flex items-center gap-1.5 active:scale-90 bg-[#2E2E2E]">
-                            📄 PDF
+                            <LuFileText size={14} /> PDF
                         </button>
                         <button onClick={() => guardarVenta(false, mostrador.sedeId)}
                             className="h-11 px-4 rounded-xl font-black text-label text-white active:scale-95 bg-[#2E2E2E]">

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Label, NextBtn, BackBtn } from '../servicio/ServicioUI';
 import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
 import RepuestoRapidoModal from '../repuesto/RepuestoRapidoModal';
+import { LuTruck } from 'react-icons/lu';
 
 // Productos frecuentes basados en historial local
 const FREQ_KEY = 'venta_productos_frecuentes';
@@ -190,7 +191,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
             <div>
                 <Label>Envío (opcional)</Label>
                 <div className="flex items-center gap-3">
-                    <span className="text-xl">🚚</span>
+                    <LuTruck size={19} />
                     <input
                         type="text" inputMode="decimal" value={costoEnvio}
                         onChange={e => setCostoEnvio(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value) || 0))}
