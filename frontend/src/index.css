@@ -36,6 +36,16 @@
   --danger-tx:  #D13A28;
   --info-bg:    #F3E8FF;
   --info-tx:    #7E22CE;
+
+  /* Estados adicionales para ServicioCard (EN_PROGRESO/COMPLETADO/FACTURADO) —
+     antes clases Tailwind crudas (bg-cyan-100, bg-blue-100, bg-indigo-100),
+     sin relación con el sistema de tokens. */
+  --cyan-bg:    #CFFAFE;
+  --cyan-tx:    #0E7490;
+  --blue-bg:    #DBEAFE;
+  --blue-tx:    #1D4ED8;
+  --indigo-bg:  #E0E7FF;
+  --indigo-tx:  #4338CA;
 }
 
 /* Cuando se activa el modo oscuro (.dark en el HTML) */
@@ -65,6 +75,13 @@
   --danger-tx:  #F87171;
   --info-bg:    #2E1065;
   --info-tx:    #C084FC;
+
+  --cyan-bg:    rgba(22, 78, 99, 0.3);
+  --cyan-tx:    #22D3EE;
+  --blue-bg:    rgba(30, 58, 138, 0.3);
+  --blue-tx:    #60A5FA;
+  --indigo-bg:  rgba(49, 46, 129, 0.3);
+  --indigo-tx:  #818CF8;
 }
 
 /* =========================================

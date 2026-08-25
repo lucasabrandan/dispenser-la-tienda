@@ -14,13 +14,13 @@ function M({ valor, className = '' }) {
 
 const BADGE = {
     PRESUPUESTO:           { label: 'Pendiente',       cls: 'bg-[var(--warning-bg)] text-[var(--warning-tx)]' },
-    EN_PROGRESO:           { label: 'En curso',        cls: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400' },
-    COMPLETADO:            { label: 'Realizado',       cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-    PENDIENTE_FACTURACION: { label: 'Por cobrar',      cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-    FACTURADO:             { label: 'Facturado',       cls: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    EN_PROGRESO:           { label: 'En curso',        cls: 'bg-[var(--cyan-bg)] text-[var(--cyan-tx)]' },
+    COMPLETADO:            { label: 'Realizado',       cls: 'bg-[var(--blue-bg)] text-[var(--blue-tx)]' },
+    PENDIENTE_FACTURACION: { label: 'Por cobrar',      cls: 'bg-[var(--info-bg)] text-[var(--info-tx)]' },
+    FACTURADO:             { label: 'Facturado',       cls: 'bg-[var(--indigo-bg)] text-[var(--indigo-tx)]' },
     COBRADO:               { label: 'Cobrado',         cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
     REALIZADO:             { label: 'Anterior',        cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
-    ARCHIVADO:             { label: 'Archivado',       cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' },
+    ARCHIVADO:             { label: 'Archivado',       cls: 'bg-[var(--color-chip-bg)] text-[var(--color-text-secondary)]' },
 };
 
 const MODALIDAD_LABELS = {
@@ -150,7 +150,7 @@ export default function ServicioCard({
                         </p>
                     )}
                     {servicio.modalidadCobro && (
-                        <span className={`shrink-0 text-label font-bold px-1.5 py-0.5 rounded-md ${servicio.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]' : servicio.modalidadCobro === 'CON_FACTURA' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]'}`}>
+                        <span className={`shrink-0 text-label font-bold px-1.5 py-0.5 rounded-md ${servicio.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'bg-[var(--success-bg)] text-[var(--success-tx)]' : servicio.modalidadCobro === 'CON_FACTURA' ? 'bg-[var(--info-bg)] text-[var(--info-tx)]' : 'bg-[var(--color-chip-bg)] text-[var(--color-text-secondary)]'}`}>
                             {MODALIDAD_LABELS[servicio.modalidadCobro] || servicio.modalidadCobro}
                         </span>
                     )}
@@ -160,27 +160,27 @@ export default function ServicioCard({
                 {(servicio.fechaCompletado || servicio.fechaFacturacion || servicio.fechaCobro || servicio.montoFinal) && (
                     <div className="flex flex-wrap gap-1.5 mt-1">
                         {servicio.montoFinal && Number(servicio.montoFinal) !== total && (
-                            <span className="text-label font-bold px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
+                            <span className="text-label font-bold px-1.5 py-0.5 rounded-md bg-[var(--success-bg)] text-[var(--success-tx)]">
                                 Final: ${Math.round(Number(servicio.montoFinal)).toLocaleString('es-AR')}
                             </span>
                         )}
                         {servicio.fechaCompletado && (
-                            <span className="text-label px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[var(--blue-bg)] text-[var(--blue-tx)]">
                                 Hecho {servicio.fechaCompletado.slice(0, 10)}
                             </span>
                         )}
                         {servicio.fechaFacturacion && (
-                            <span className="text-label px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[var(--info-bg)] text-[var(--info-tx)]">
                                 Fact. {servicio.fechaFacturacion.slice(0, 10)}
                             </span>
                         )}
                         {servicio.fechaCobro && (
-                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[#DCFCE7] text-[#16A34A] dark:bg-[#052E16] dark:text-[#4ADE80]">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[var(--success-bg)] text-[var(--success-tx)]">
                                 Cobrado {servicio.fechaCobro.slice(0, 10)}
                             </span>
                         )}
                         {servicio.datosBancariosEnviados && (
-                            <span className="text-label px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[var(--indigo-bg)] text-[var(--indigo-tx)]">
                                 Datos enviados
                             </span>
                         )}
