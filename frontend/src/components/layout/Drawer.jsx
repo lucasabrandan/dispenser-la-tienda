@@ -1,21 +1,22 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
+import { LuBanknote, LuClipboardList, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
 // (mismo criterio que Sidebar.jsx en desktop). Presupuestos e Historial quedan
 // juntos, aparte de cualquier dominio: un "presupuesto" puede ser de Servicio
-// o de Venta, así que meterlo bajo "🔧 Servicio" prometía algo que no era.
+// o de Venta, así que meterlo bajo "Servicio" prometía algo que no era.
 const MENU_TRANSVERSAL_DRAWER = [
-    { id: 'presupuestos', nombre: 'Presupuestos', icon: '💰' },
-    { id: 'historial',    nombre: 'Historial',    icon: '📋' },
+    { id: 'presupuestos', nombre: 'Presupuestos', Icon: LuBanknote },
+    { id: 'historial',    nombre: 'Historial',    Icon: LuClipboardList },
 ];
 const MENU_GESTION_DRAWER = [
-    { id: 'clientes',  nombre: 'Clientes',  icon: '👥' },
-    { id: 'radar',     nombre: 'Radar',     icon: '🚨' },
-    { id: 'productos', nombre: 'Productos', icon: '📦' },
-    { id: 'finanzas',  nombre: 'Finanzas',  icon: '💹' },
-    { id: 'usuarios',  nombre: 'Usuarios',  icon: '🔐' },
+    { id: 'clientes',  nombre: 'Clientes',  Icon: LuUsers },
+    { id: 'radar',     nombre: 'Radar',     Icon: LuSiren },
+    { id: 'productos', nombre: 'Productos', Icon: LuPackage },
+    { id: 'finanzas',  nombre: 'Finanzas',  Icon: LuTrendingUp },
+    { id: 'usuarios',  nombre: 'Usuarios',  Icon: LuLock },
 ];
 const MENU_ITEMS = [...MENU_TRANSVERSAL_DRAWER, ...MENU_GESTION_DRAWER];
 
@@ -65,11 +66,13 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 <div className="p-3 space-y-4 overflow-y-auto">
                     {[
                         { label: null,          items: MENU_TRANSVERSAL_DRAWER },
-                        { label: '⚙️ Gestión',  items: MENU_GESTION_DRAWER },
+                        { label: 'Gestión',     icon: LuSettings, items: MENU_GESTION_DRAWER },
                     ].map((grupo, gi) => (
                         <div key={gi} className="space-y-0.5">
                             {grupo.label && (
-                                <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-1 px-3">{grupo.label}</p>
+                                <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-1 px-3 flex items-center gap-1.5">
+                                    {grupo.icon && <grupo.icon size={11} />} {grupo.label}
+                                </p>
                             )}
                             {grupo.items.map(item => {
                                 const activa = vistaActual === item.id;
@@ -86,7 +89,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                                                 : 'text-ink hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
                                         }`}
                                     >
-                                        <span>{item.icon}</span>
+                                        <item.Icon size={18} className="shrink-0" />
                                         <span className="flex-1">{item.nombre}</span>
                                         {badge && (
                                             <span className={`text-label font-black px-1.5 py-0.5 rounded-full leading-none ${
@@ -106,9 +109,9 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
                     <button
                         onClick={() => { logout(); onClose(); }}
-                        className="w-full px-4 py-3 rounded-xl text-left text-body font-bold text-brand-red hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all"
+                        className="w-full px-4 py-3 rounded-xl text-left text-body font-bold text-brand-red hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all flex items-center gap-2"
                     >
-                        🚪 Cerrar sesión
+                        <LuLogOut size={16} /> Cerrar sesión
                     </button>
                     <p className="text-label text-muted text-center mt-2 uppercase tracking-widest font-bold">
                         Dispenser La Tienda v1.0

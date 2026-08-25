@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -288,9 +289,9 @@ function RendimientoTab({ tecnicoId }) {
 }
 
 const TAB_DEFS = [
-    { id: 'activas',     label: 'Activas',     fullLabel: 'Activas',     color: '#D13A28', icon: '📌' },
-    { id: 'historial',   label: 'Completadas', fullLabel: 'Completadas', color: '#16A34A', icon: '✅' },
-    { id: 'rendimiento', label: 'Rendimiento', fullLabel: 'Rendimiento', color: '#D48800', icon: '📊' },
+    { id: 'activas',     label: 'Activas',     fullLabel: 'Activas',     color: '#D13A28', Icon: LuPin },
+    { id: 'historial',   label: 'Completadas', fullLabel: 'Completadas', color: '#16A34A', Icon: LuCircleCheck },
+    { id: 'rendimiento', label: 'Rendimiento', fullLabel: 'Rendimiento', color: '#D48800', Icon: LuChartColumn },
 ];
 
 export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
@@ -457,7 +458,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                     </div>
                 ) : lista.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-3xl mb-2">{tab === 'activas' ? '🎉' : '📋'}</p>
+                        {tab === 'activas' ? <LuPartyPopper size={32} className="mb-2 text-muted inline-block" /> : <LuClipboardList size={32} className="mb-2 text-muted inline-block" />}
                         <p className="text-body font-bold text-muted">
                             {tab === 'activas' ? 'Sin órdenes pendientes' : 'Sin historial aún'}
                         </p>

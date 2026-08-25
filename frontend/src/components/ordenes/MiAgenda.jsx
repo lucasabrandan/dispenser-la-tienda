@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { LuInbox } from 'react-icons/lu';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { formatDateISO, lunesDeLaSemana } from '../../utils/dateUtils';
@@ -344,7 +345,7 @@ export default function MiAgenda({ tecnicoId }) {
                     </div>
                 ) : ordenesDia.length === 0 && notasDia.length === 0 ? (
                     <div className="text-center py-12 rounded-2xl bg-white dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-2xl mb-2">📭</p>
+                        <LuInbox size={24} className="mb-2 text-muted inline-block" />
                         <p className="text-body font-bold text-muted">Dia libre</p>
                         <button onClick={() => setCreandoNota(true)}
                             className="mt-3 text-label font-bold text-brand-red px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">

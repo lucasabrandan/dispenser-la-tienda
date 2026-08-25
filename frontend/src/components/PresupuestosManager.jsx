@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { LuClipboardList, LuWrench, LuShoppingCart, LuCircleCheck } from 'react-icons/lu';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useFiltros } from '../hooks/useFiltros';
@@ -37,9 +38,9 @@ function parseFechaSort(f) {
 }
 
 const TIPO_TABS = [
-    { id: '',        label: 'Todos',     fullLabel: 'Todos',     color: '#1C1917', icon: '📋' },
-    { id: 'TECNICA', label: 'Servicios', fullLabel: 'Servicios', color: '#D13A28', icon: '🔧' },
-    { id: 'VENTA',   label: 'Ventas',    fullLabel: 'Ventas',    color: '#D48800', icon: '🛒' },
+    { id: '',        label: 'Todos',     fullLabel: 'Todos',     color: '#1C1917', Icon: LuClipboardList },
+    { id: 'TECNICA', label: 'Servicios', fullLabel: 'Servicios', color: '#D13A28', Icon: LuWrench },
+    { id: 'VENTA',   label: 'Ventas',    fullLabel: 'Ventas',    color: '#D48800', Icon: LuShoppingCart },
 ];
 
 const PERIODO_LABELS = { MES: 'Este mes', MES_ANT: 'Mes ant.', ANO: 'Este año', TODO: 'Todo' };
@@ -203,7 +204,7 @@ export default function PresupuestosManager() {
         label: t.label,
         fullLabel: t.fullLabel,
         color: t.color,
-        icon: t.icon,
+        Icon: t.Icon,
         count: t.id === '' ? stats.count : t.id === 'TECNICA' ? stats.servicios : stats.ventas,
     }));
 
@@ -308,7 +309,7 @@ export default function PresupuestosManager() {
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-3xl mb-2">✅</p>
+                        <LuCircleCheck size={32} className="mb-2 text-muted inline-block" />
                         <p className="text-body font-bold text-muted">Sin presupuestos pendientes</p>
                     </div>
                 ) : (

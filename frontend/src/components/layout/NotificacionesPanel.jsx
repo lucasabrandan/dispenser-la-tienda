@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { LuBellOff } from 'react-icons/lu';
 import api from '../../services/api';
 
 const TIPO_CONFIG = {
@@ -110,7 +111,7 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                         </div>
                     ) : notifs.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-muted">
-                            <span className="text-3xl mb-2">🔔</span>
+                            <LuBellOff size={32} className="mb-2 text-muted inline-block" />
                             <p className="text-body font-bold">Sin notificaciones</p>
                         </div>
                     ) : (

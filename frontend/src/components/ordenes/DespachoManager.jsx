@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { LuClipboardList, LuHourglass, LuCar, LuMapPin, LuCircleCheck } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import OrdenForm from './OrdenForm';
 import SwipeColumns from '../ui/SwipeColumns';
@@ -24,11 +25,11 @@ const ESTADO_COLOR = {
 };
 
 const ESTADO_TABS = [
-    { id: '',           label: 'Todas',       fullLabel: 'Todas',       color: '#1C1917', icon: '📋' },
-    { id: 'PENDIENTE',  label: 'Pendientes',  fullLabel: 'Pendientes',  color: '#A8A29E', icon: '⏳' },
-    { id: 'EN_CAMINO',  label: 'En camino',   fullLabel: 'En camino',   color: '#3B82F6', icon: '🚗' },
-    { id: 'EN_SITIO',   label: 'En sitio',    fullLabel: 'En sitio',    color: '#D48800', icon: '📍' },
-    { id: 'FINAL',      label: 'Finalizadas', fullLabel: 'Finalizadas', color: '#16A34A', icon: '✅' },
+    { id: '',           label: 'Todas',       fullLabel: 'Todas',       color: '#1C1917', Icon: LuClipboardList },
+    { id: 'PENDIENTE',  label: 'Pendientes',  fullLabel: 'Pendientes',  color: '#A8A29E', Icon: LuHourglass },
+    { id: 'EN_CAMINO',  label: 'En camino',   fullLabel: 'En camino',   color: '#3B82F6', Icon: LuCar },
+    { id: 'EN_SITIO',   label: 'En sitio',    fullLabel: 'En sitio',    color: '#D48800', Icon: LuMapPin },
+    { id: 'FINAL',      label: 'Finalizadas', fullLabel: 'Finalizadas', color: '#16A34A', Icon: LuCircleCheck },
 ];
 
 // Mismo atajo que ya tiene el técnico en su celu (Salir/Llegué) — antes vos no
@@ -316,7 +317,7 @@ export default function DespachoManager() {
                     </div>
                 ) : Object.keys(grupos).length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-3xl mb-2">{ESTADO_TABS.find(t => t.id === estadoFiltro)?.icon || '📋'}</p>
+                        {(() => { const EmptyIcon = ESTADO_TABS.find(t => t.id === estadoFiltro)?.Icon || LuClipboardList; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
                         <p className="text-body font-bold text-muted">
                             Sin órdenes {estadoFiltro ? ESTADO_TABS.find(t => t.id === estadoFiltro)?.fullLabel?.toLowerCase() : ''}
                         </p>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { LuClipboardList, LuWrench, LuShoppingCart } from 'react-icons/lu';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -31,9 +32,9 @@ const ESTADOS_HISTORIAL = [
 ];
 
 const TIPOS = [
-    { id: 'TODOS',   label: 'Todos',   fullLabel: 'Todos',   color: '#1C1917', icon: '📋' },
-    { id: 'TECNICA', label: 'Técnica', fullLabel: 'Técnica', color: '#D48800', icon: '🔧' },
-    { id: 'VENTA',   label: 'Venta',   fullLabel: 'Venta',   color: '#D13A28', icon: '🛒' },
+    { id: 'TODOS',   label: 'Todos',   fullLabel: 'Todos',   color: '#1C1917', Icon: LuClipboardList },
+    { id: 'TECNICA', label: 'Técnica', fullLabel: 'Técnica', color: '#D48800', Icon: LuWrench },
+    { id: 'VENTA',   label: 'Venta',   fullLabel: 'Venta',   color: '#D13A28', Icon: LuShoppingCart },
 ];
 
 const badgeTipo = (s) => {
@@ -251,7 +252,7 @@ export default function ServicioList({ onEditar }) {
                     <div className="flex flex-col gap-2">
                         {filtros.itemsPagina.length === 0 ? (
                             <div className={`${card} text-center py-12`}>
-                                <p className="text-2xl mb-1">📋</p>
+                                <LuClipboardList size={24} className="mb-1 text-muted inline-block" />
                                 <p className="text-caption font-bold text-muted">No se encontraron registros</p>
                             </div>
                         ) : filtros.itemsPagina.map((s, idx) => {

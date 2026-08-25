@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive } from 'react-icons/lu';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import { useAuth } from '../../context/AuthContext';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
@@ -22,10 +23,10 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 // sidebar (con Cotizar / Ver ruta), para no mostrar la misma data pendiente en dos lugares.
 // Servicio Tecnico arranca directamente en lo que ya esta aprobado / en curso de cobro.
 const TABS = [
-    { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar', color: '#8B5CF6', icon: '📋' },
-    { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', icon: '📄' },
-    { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', icon: '✅' },
-    { id: 'ARCHIVADO',             label: 'Archivados',   short: 'Arch.',    color: '#A8A29E', icon: '🗄️' },
+    { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar', color: '#8B5CF6', Icon: LuClipboardList },
+    { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', Icon: LuFileText },
+    { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', Icon: LuCircleCheck },
+    { id: 'ARCHIVADO',             label: 'Archivados',   short: 'Arch.',    color: '#A8A29E', Icon: LuArchive },
 ];
 
 const ESTADO_API_MAP = {
@@ -196,7 +197,7 @@ export default function ServicioManager({
             fullLabel: t.label,
             count: tabCounts[t.id] ?? null,
             color: t.color,
-            icon: t.icon,
+            Icon: t.Icon,
         })),
     ];
 
@@ -341,7 +342,7 @@ export default function ServicioManager({
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <p className="text-3xl mb-2">{TABS.find(t => t.id === tabActual)?.icon || '📋'}</p>
+                        {(() => { const EmptyIcon = TABS.find(t => t.id === tabActual)?.Icon || LuClipboardList; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
                         <p className="text-body font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'resultados'}</p>
                         <p className="text-caption text-muted mt-1">Deslizá para ver otros estados</p>
                     </div>

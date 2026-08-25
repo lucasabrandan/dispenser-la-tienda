@@ -1,4 +1,5 @@
 import React from 'react';
+import { LuInbox } from 'react-icons/lu';
 import { useMontos } from '../../context/MontosContext';
 
 function M({ valor, prefix = '$', className = '' }) {
@@ -39,7 +40,7 @@ export default function VentaList({
 
     if (ventas.length === 0) return (
         <div className="text-center py-12 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-            <p className="text-2xl mb-1">📭</p>
+            <LuInbox size={24} className="mb-1 text-muted inline-block" />
             <p className="text-caption font-bold text-muted">No hay ventas en esta categoría</p>
         </div>
     );

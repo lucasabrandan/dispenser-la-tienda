@@ -1,4 +1,5 @@
 import React from 'react';
+import { LuInbox } from 'react-icons/lu';
 import { M } from '../servicio/ServicioUI';
 import AgendaCard from './AgendaCard';
 import { ESTADO_COLORS, DEFAULT_COLOR, MAX_TRABAJOS, calcTotal, getIniciales, estadoPredominante } from './estadoConstants';
@@ -35,7 +36,7 @@ export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
             <p className="text-label font-bold uppercase tracking-wider text-muted mb-2">Agenda de hoy ({agendaHoy.length})</p>
             {agendaHoy.length === 0 ? (
                 <div className={`${card} text-center py-8`}>
-                    <p className="text-2xl mb-1">📭</p>
+                    <LuInbox size={24} className="mb-1 text-muted inline-block" />
                     <p className="text-caption font-bold text-muted">Sin actividad para hoy</p>
                 </div>
             ) : (

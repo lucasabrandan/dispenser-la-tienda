@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { LuBanknote, LuCircleCheck, LuArchive, LuShoppingCart } from 'react-icons/lu';
 import { useVentaManager } from '../../hooks/useVentaManager';
 import { useAuth } from '../../context/AuthContext';
 import VentaList   from './VentaList';
@@ -10,9 +11,9 @@ import { exportarVentasCSV } from '../../utils/exportarCSV';
 import api from '../../services/api';
 
 const TABS = [
-    { id: 'PRESUPUESTO', label: 'Pendientes', short: 'Pend.',   color: '#D48800', icon: '💰' },
-    { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#16A34A', icon: '✅' },
-    { id: 'ARCHIVADO',   label: 'Archivadas', short: 'Arch.',   color: '#A8A29E', icon: '🗄️' },
+    { id: 'PRESUPUESTO', label: 'Pendientes', short: 'Pend.',   color: '#D48800', Icon: LuBanknote },
+    { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#16A34A', Icon: LuCircleCheck },
+    { id: 'ARCHIVADO',   label: 'Archivadas', short: 'Arch.',   color: '#A8A29E', Icon: LuArchive },
 ];
 
 const ESTADO_API_MAP = {
@@ -85,7 +86,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
     const columns = TABS.map(t => ({
         id: t.id, label: t.short, fullLabel: t.label,
-        count: tabCounts[t.id] ?? null, color: t.color, icon: t.icon,
+        count: tabCounts[t.id] ?? null, color: t.color, Icon: t.Icon,
     }));
 
     const columnIds = TABS.map(t => t.id);
@@ -164,7 +165,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
-                        <p className="text-3xl mb-2">{TABS.find(t => t.id === tabActual)?.icon || '🛒'}</p>
+                        {(() => { const EmptyIcon = TABS.find(t => t.id === tabActual)?.Icon || LuShoppingCart; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
                         <p className="text-body font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'ventas'}</p>
                     </div>
                 ) : (
