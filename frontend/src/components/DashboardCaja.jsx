@@ -109,18 +109,18 @@ export default function DashboardCaja({ setVistaActual }) {
     const StatsBlock = () => (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <div className={`${card} p-3.5`}>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">Hoy</p>
+                <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Hoy</p>
                 <M valor={data.totalHoy} className="text-xl font-black text-ink block" />
-                <p className="text-[10px] text-muted mt-0.5">{data.countHoy} operaciones</p>
+                <p className="text-caption text-muted mt-0.5">{data.countHoy} operaciones</p>
             </div>
             <div className={`${card} p-3.5`}>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">Mes</p>
+                <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Mes</p>
                 <M valor={data.totalMes} className="text-xl font-black text-ink block" />
-                <p className="text-[10px] text-muted mt-0.5">{data.countMes} cobradas</p>
+                <p className="text-caption text-muted mt-0.5">{data.countMes} cobradas</p>
             </div>
             {data.moHoy > 0 && (
                 <div className={`${card} p-3.5 col-span-2 md:col-span-1`}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">MO Hoy</p>
+                    <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">MO Hoy</p>
                     <M valor={data.moHoy} className="text-xl font-black text-brand-amber block" />
                 </div>
             )}
@@ -135,12 +135,12 @@ export default function DashboardCaja({ setVistaActual }) {
                 <div className="flex justify-between items-center mb-5">
                     <div>
                         <h2 className="text-2xl font-black uppercase tracking-tight text-ink">Panel</h2>
-                        <p className="text-[11px] font-medium capitalize text-muted">{hoyLabel}</p>
+                        <p className="text-caption font-medium capitalize text-muted">{hoyLabel}</p>
                     </div>
                     <div className="flex gap-2">
                         {esAdmin && (
                             <button onClick={() => setModalCierre(true)}
-                                className="h-8 px-3 rounded-lg flex items-center gap-1.5 font-bold text-[11px] uppercase active:scale-95 bg-brand-red text-white">
+                                className="h-8 px-3 rounded-lg flex items-center gap-1.5 font-bold text-label uppercase active:scale-95 bg-brand-red text-white">
                                 Cierre
                             </button>
                         )}
@@ -157,12 +157,12 @@ export default function DashboardCaja({ setVistaActual }) {
                         <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
                             className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-brand-red text-white">
                             <span>🔧</span>
-                            <span className="text-[12px] font-black">Nuevo Servicio</span>
+                            <span className="text-body font-black">Nuevo Servicio</span>
                         </button>
                         <button onClick={() => setVistaActual('venta', { crear: true })}
                             className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-brand-amber text-white">
                             <span>🛒</span>
-                            <span className="text-[12px] font-black">Nueva Venta</span>
+                            <span className="text-body font-black">Nueva Venta</span>
                         </button>
                     </div>
                     <PlanificadorBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
@@ -173,13 +173,13 @@ export default function DashboardCaja({ setVistaActual }) {
                         <div className={`${card} p-3.5`}>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">Pendientes</p>
+                                    <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Pendientes</p>
                                     <p className="text-sm font-bold text-brand-amber">
                                         {data.pendientesCount} — <M valor={data.pendientesVal} />
                                     </p>
                                 </div>
                                 <button onClick={() => setVistaActual('presupuestos')}
-                                    className="text-[10px] font-black uppercase text-brand-red hover:underline">
+                                    className="text-label font-black uppercase text-brand-red hover:underline">
                                     Ver →
                                 </button>
                             </div>
@@ -202,17 +202,17 @@ export default function DashboardCaja({ setVistaActual }) {
                                     <button key={vista} onClick={() => setVistaActual(vista)}
                                         className={`${card} flex items-center gap-2 p-2.5 text-left active:scale-[0.98] hover:shadow-md transition-shadow ${border ? `border-l-[3px] ${border}` : ''}`}>
                                         <span>{icon}</span>
-                                        <span className="text-[11px] font-bold text-ink">{label}</span>
+                                        <span className="text-label font-bold text-ink">{label}</span>
                                     </button>
                                 ))}
                             </div>
                             {data.pendientesCount > 0 && (
                                 <div className={`${card} p-2.5 flex items-center justify-between`}>
-                                    <p className="text-[11px] font-bold text-brand-amber">
+                                    <p className="text-body font-bold text-brand-amber">
                                         {data.pendientesCount} pendientes — <M valor={data.pendientesVal} />
                                     </p>
                                     <button onClick={() => setVistaActual('presupuestos')}
-                                        className="text-[10px] font-black text-brand-red">
+                                        className="text-label font-black text-brand-red">
                                         Ver →
                                     </button>
                                 </div>

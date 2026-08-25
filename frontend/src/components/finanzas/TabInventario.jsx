@@ -47,16 +47,16 @@ export default function TabInventario() {
             {enStock.length === 0 ? (
                 <div className="text-center py-12 rounded-2xl bg-card border-[0.5px] border-black/[0.07]">
                     <p className="text-muted font-bold text-sm">Sin stock registrado</p>
-                    <p className="text-[11px] text-muted mt-1">Usá el botón 📦 en la sección Repuestos para cargar stock</p>
+                    <p className="text-caption text-muted mt-1">Usá el botón 📦 en la sección Repuestos para cargar stock</p>
                 </div>
             ) : (
                 <div className="bg-card rounded-2xl overflow-hidden border-[0.5px] border-black/[0.07]">
                     <div className="flex items-center justify-between px-5 py-3 bg-panel">
-                        <p className="text-[10px] font-black text-muted uppercase tracking-wider">
+                        <p className="text-label font-black text-muted uppercase tracking-wider">
                             Detalle por producto ({enStock.length})
                         </p>
                         <button onClick={cargar}
-                            className="text-[10px] font-black text-muted uppercase hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors">
+                            className="text-label font-black text-muted uppercase hover:text-[#1C1917] dark:hover:text-[#F0EEE9] transition-colors">
                             Actualizar
                         </button>
                     </div>
@@ -74,21 +74,21 @@ export default function TabInventario() {
                                     className={`px-4 py-3 flex items-center gap-3 ${i < invPagina.length - 1 ? 'border-b border-black/[0.04] dark:border-white/[0.04]' : ''} ${stockBajo ? 'bg-[#FEE2E2]/50 dark:bg-[#3B1111]/30' : ''}`}>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5">
-                                            <p className="text-[12px] font-bold text-ink truncate">{r.nombre}</p>
-                                            {stockBajo && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171] shrink-0">BAJO</span>}
+                                            <p className="text-body font-bold text-ink truncate">{r.nombre}</p>
+                                            {stockBajo && <span className="text-label font-bold px-1.5 py-0.5 rounded bg-[#FEE2E2] text-[#D13A28] dark:bg-[#3B1111] dark:text-[#F87171] shrink-0">BAJO</span>}
                                         </div>
-                                        <p className="text-[10px] text-muted">
+                                        <p className="text-caption text-muted">
                                             {r.stock} unid.
                                             {costo ? ` · costo ${ocultar ? '••••' : `$${formatearPrecio(costo)}`}` : ''}
                                             {precio ? ` · venta ${ocultar ? '••••' : `$${formatearPrecio(precio)}`}` : ''}
                                         </p>
                                     </div>
                                     {margen > 0 && (
-                                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500] shrink-0">{margen}%</span>
+                                        <span className="text-label font-bold px-1.5 py-0.5 rounded bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500] shrink-0">{margen}%</span>
                                     )}
                                     <div className="text-right shrink-0">
-                                        <p className="text-[12px] font-black text-brand-amber">{fmt(ganancia)}</p>
-                                        <p className="text-[9px] text-muted">{fmt(valorCosto)} inv.</p>
+                                        <p className="text-body font-black text-brand-amber">{fmt(ganancia)}</p>
+                                        <p className="text-caption text-muted">{fmt(valorCosto)} inv.</p>
                                     </div>
                                 </div>
                             );
@@ -100,12 +100,12 @@ export default function TabInventario() {
                     )}
 
                     <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
-                        <p className="text-[11px] font-black text-muted uppercase">Totales</p>
+                        <p className="text-label font-black text-muted uppercase">Totales</p>
                         <div className="text-right">
-                            <p className="text-[15px] font-black text-brand-amber">
-                                {fmt(ganPotencial)} <span className="text-[10px] text-muted font-bold">ganancia</span>
+                            <p className="text-body-lg font-black text-brand-amber">
+                                {fmt(ganPotencial)} <span className="text-label text-muted font-bold">ganancia</span>
                             </p>
-                            <p className="text-[11px] text-muted">{fmt(totalCosto)} invertido · {fmt(totalVenta)} en ventas</p>
+                            <p className="text-caption text-muted">{fmt(totalCosto)} invertido · {fmt(totalVenta)} en ventas</p>
                         </div>
                     </div>
                 </div>

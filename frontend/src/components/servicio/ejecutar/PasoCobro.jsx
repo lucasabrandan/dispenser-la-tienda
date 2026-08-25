@@ -10,20 +10,20 @@ export default function PasoCobro({
     return (
         <>
             <button onClick={onBack}
-                className="flex items-center gap-1 text-[12px] font-bold text-muted active:scale-95 mb-2">
+                className="flex items-center gap-1 text-label font-bold text-muted active:scale-95 mb-2">
                 ← Volver
             </button>
 
             <div className="text-center py-1">
-                <p className="text-[14px] font-black text-ink">
+                <p className="text-body-lg font-black text-ink">
                     {pricing.esVisita ? 'Cobro de visita' : 'Cobro del servicio'}
                 </p>
-                <p className="text-[11px] text-muted mt-0.5">Selecciona como paga el cliente</p>
+                <p className="text-caption text-muted mt-0.5">Selecciona como paga el cliente</p>
             </div>
 
             {/* Desglose */}
             <div className="rounded-2xl bg-card border border-black/[0.06] p-4 space-y-2">
-                <div className="flex justify-between text-[12px]">
+                <div className="flex justify-between text-body">
                     <span className="text-secondary">
                         {pricing.esVisita ? 'Visita diagnostica' : 'Mano de obra'}
                     </span>
@@ -32,13 +32,13 @@ export default function PasoCobro({
                     </span>
                 </div>
                 {!pricing.esVisita && pricing.totalRepuestos > 0 && (
-                    <div className="flex justify-between text-[12px]">
+                    <div className="flex justify-between text-body">
                         <span className="text-secondary">Repuestos</span>
                         <span className="font-bold text-ink">{fmt(pricing.totalRepuestos)}</span>
                     </div>
                 )}
                 {!pricing.esVisita && costoMOExtra > 0 && (
-                    <div className="flex justify-between text-[12px]">
+                    <div className="flex justify-between text-body">
                         <span className="text-secondary">Ajuste MO extra</span>
                         <span className="font-bold text-ink">+{fmt(Math.round(costoMOExtra * (1 + pricing.pctIVA / 100)))}</span>
                     </div>
@@ -48,14 +48,14 @@ export default function PasoCobro({
             {/* Ajuste MO */}
             {!pricing.esVisita && (
                 <div className="rounded-2xl bg-card border border-black/[0.06] p-3">
-                    <p className="text-[10px] font-black text-muted uppercase tracking-widest mb-2">Ajustar mano de obra (solo subir)</p>
+                    <p className="text-label font-black text-muted uppercase tracking-widest mb-2">Ajustar mano de obra (solo subir)</p>
                     <div className="flex items-center gap-2">
-                        <span className="text-[12px] text-secondary">Extra:</span>
+                        <span className="text-label text-secondary">Extra:</span>
                         <input type="text" inputMode="decimal"
                             value={costoMOExtra || ''}
                             onChange={e => setCostoMOExtra(Math.max(0, Number(e.target.value) || 0))}
                             placeholder="0"
-                            className="flex-1 px-3 py-2 rounded-lg text-[13px] bg-[#F5F3F1] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                            className="flex-1 px-3 py-2 rounded-lg text-body bg-[#F5F3F1] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                         />
                     </div>
                 </div>
@@ -74,8 +74,8 @@ export default function PasoCobro({
                         }`}>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-[13px] font-black text-ink">{opt.label}</p>
-                                <p className="text-[10px] text-muted mt-0.5">{opt.sub}</p>
+                                <p className="text-body font-black text-ink">{opt.label}</p>
+                                <p className="text-caption text-muted mt-0.5">{opt.sub}</p>
                             </div>
                             {opt.monto !== null && (
                                 <p className={`text-[20px] font-black ${opt.montoColor}`}>{fmt(opt.monto)}</p>
@@ -86,7 +86,7 @@ export default function PasoCobro({
             </div>
 
             <button onClick={onConfirmar} disabled={procesando || !modalidadCobro}
-                className="w-full py-4 rounded-2xl font-black text-[13px] uppercase text-white bg-brand-red active:scale-[0.98] disabled:opacity-50 transition-all">
+                className="w-full py-4 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-[0.98] disabled:opacity-50 transition-all">
                 {procesando ? 'Procesando...' : '✓ Confirmar trabajo'}
             </button>
         </>
