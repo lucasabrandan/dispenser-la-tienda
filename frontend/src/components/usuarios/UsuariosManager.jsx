@@ -25,31 +25,11 @@ export default function UsuariosManager() {
     const [condicionesPDF, setCondicionesPDF] = useState(() => localStorage.getItem('empresa_condiciones_pdf') || CONDICIONES_DEFAULT);
     const [condGuardado, setCondGuardado] = useState(false);
 
-    // Configuracion global de pricing
-    const [configGlobal, setConfigGlobal] = useState(null);
-    const [configGuardado, setConfigGuardado] = useState(false);
-
-    useEffect(() => {
-        if (usuarioActual?.rol === 'ADMIN') {
-            api.get('/configuracion').then(r => setConfigGlobal(r.data)).catch(() => {});
-        }
-    }, [usuarioActual?.rol]);
-
     const guardarCondiciones = () => {
         localStorage.setItem('empresa_condiciones_pdf', condicionesPDF.trim() || CONDICIONES_DEFAULT);
         setCondGuardado(true);
         toast.success('Condiciones guardadas');
         setTimeout(() => setCondGuardado(false), 2000);
-    };
-
-    const guardarConfig = async () => {
-        try {
-            const res = await api.put('/configuracion', configGlobal);
-            setConfigGlobal(res.data);
-            setConfigGuardado(true);
-            toast.success('Configuracion guardada');
-            setTimeout(() => setConfigGuardado(false), 2000);
-        } catch { toast.error('Error al guardar'); }
     };
 
     // Modal crear/editar
@@ -187,14 +167,14 @@ export default function UsuariosManager() {
                             </label>
                             <div className="mt-1 flex gap-2">
                                 <textarea
-                                    className="flex-1 h-16 px-3 py-2 rounded-xl text-body bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none resize-none"
+                                    className="flex-1 h-16 px-3 py-2 rounded-xl text-body bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none resize-none"
                                     value={condicionesPDF}
                                     onChange={e => setCondicionesPDF(e.target.value)}
                                     placeholder="Garantía 90 días mano de obra · Repuestos según fabricante..."
                                 />
                                 <button
                                     onClick={guardarCondiciones}
-                                    className={`h-10 px-4 rounded-xl font-bold text-xs text-white transition-all active:scale-95 self-start ${
+                                    className={`h-10 px-4 rounded-xl font-bold text-label text-white transition-all active:scale-95 self-start ${
                                         condGuardado ? 'bg-[#16a34a]' : 'bg-brand-red hover:opacity-90'
                                     }`}
                                 >
@@ -249,17 +229,17 @@ export default function UsuariosManager() {
                                         <button
                                             onClick={() => { setModalPass(u); setNuevaClave(''); }}
                                             title="Cambiar contraseña"
-                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-chip active:scale-90 transition-all"
                                         ><LuKey size={15} /></button>
                                         <button
                                             onClick={() => abrirEditar(u)}
                                             title="Editar"
-                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-chip active:scale-90 transition-all"
                                         ><LuPencil size={15} /></button>
                                         <button
                                             onClick={() => toggleActivo(u)}
                                             title={u.activo ? 'Desactivar' : 'Activar'}
-                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90 transition-all"
+                                            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm bg-chip active:scale-90 transition-all"
                                         >{u.activo ? <LuLock size={15} /> : <LuCircleCheck size={15} />}</button>
                                         {usuarioActual?.id !== u.id && (
                                             <button
@@ -288,7 +268,7 @@ export default function UsuariosManager() {
                             <div>
                                 <label className="text-label font-bold text-muted uppercase tracking-wider">Nombre completo</label>
                                 <input
-                                    className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={form.nombre}
                                     onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                                     placeholder="Ej: Juan Pérez"
@@ -299,7 +279,7 @@ export default function UsuariosManager() {
                                     <div>
                                         <label className="text-label font-bold text-muted uppercase tracking-wider">Usuario (login)</label>
                                         <input
-                                            className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                            className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                             value={form.username}
                                             onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
                                             placeholder="Ej: juan"
@@ -310,13 +290,13 @@ export default function UsuariosManager() {
                                         <div className="relative mt-1">
                                             <input
                                                 type={verClave ? 'text' : 'password'}
-                                                className="w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                                className="w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                                 value={form.password}
                                                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                                                 placeholder="Mínimo 6 caracteres"
                                             />
                                             <button type="button" onClick={() => setVerClave(v => !v)} tabIndex={-1}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-xs">
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-label">
                                                 {verClave ? <LuEyeOff size={14} /> : <LuEye size={14} />}
                                             </button>
                                         </div>
@@ -326,7 +306,7 @@ export default function UsuariosManager() {
                                         <div className="relative mt-1">
                                             <input
                                                 type={verClaveConfirm ? 'text' : 'password'}
-                                                className={`w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink outline-none border ${
+                                                className={`w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-chip text-ink outline-none border ${
                                                     form.passwordConfirm && form.password !== form.passwordConfirm
                                                         ? 'border-brand-red'
                                                         : 'border-black/[0.08] dark:border-white/[0.08]'
@@ -336,7 +316,7 @@ export default function UsuariosManager() {
                                                 placeholder="Repetir contraseña"
                                             />
                                             <button type="button" onClick={() => setVerClaveConfirm(v => !v)} tabIndex={-1}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-xs">
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-label">
                                                 {verClaveConfirm ? <LuEyeOff size={14} /> : <LuEye size={14} />}
                                             </button>
                                         </div>
@@ -347,7 +327,7 @@ export default function UsuariosManager() {
                                 <div>
                                     <label className="text-label font-bold text-muted uppercase tracking-wider">Teléfono</label>
                                     <input
-                                        className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                         value={form.telefono}
                                         onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
                                         placeholder="(011) XXXX-XXXX"
@@ -356,7 +336,7 @@ export default function UsuariosManager() {
                                 <div>
                                     <label className="text-label font-bold text-muted uppercase tracking-wider">WhatsApp</label>
                                     <input
-                                        className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                         value={form.whatsapp}
                                         onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))}
                                         placeholder="11 XXXX-XXXX"
@@ -366,7 +346,7 @@ export default function UsuariosManager() {
                             <div>
                                 <label className="text-label font-bold text-muted uppercase tracking-wider">Rol</label>
                                 <select
-                                    className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={form.rol}
                                     onChange={e => setForm(f => ({ ...f, rol: e.target.value }))}
                                 >
@@ -379,12 +359,12 @@ export default function UsuariosManager() {
                         <div className="flex gap-3 pt-2">
                             <button
                                 onClick={() => setModal(null)}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
+                                className="flex-1 h-10 rounded-xl font-bold text-label uppercase bg-chip text-secondary"
                             >Cancelar</button>
                             <button
                                 onClick={guardar}
                                 disabled={guardando}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase text-white bg-brand-red disabled:opacity-50"
+                                className="flex-1 h-10 rounded-xl font-bold text-label uppercase text-white bg-brand-red disabled:opacity-50"
                             >{guardando ? 'Guardando...' : 'Guardar'}</button>
                         </div>
                     </div>
@@ -398,17 +378,17 @@ export default function UsuariosManager() {
                         <h3 className="text-title font-black text-ink">
                             Eliminar usuario
                         </h3>
-                        <p className="text-body text-[#57534E] dark:text-[#A8A29E]">
+                        <p className="text-body text-secondary">
                             ¿Seguro que querés eliminar a <span className="font-bold text-ink">{confirmEliminar.nombre}</span>? Esta acción no se puede deshacer.
                         </p>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setConfirmEliminar(null)}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
+                                className="flex-1 h-10 rounded-xl font-bold text-label uppercase bg-chip text-secondary"
                             >Cancelar</button>
                             <button
                                 onClick={eliminar}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase text-white bg-brand-red"
+                                className="flex-1 h-10 rounded-xl font-bold text-label uppercase text-white bg-brand-red"
                             >Eliminar</button>
                         </div>
                     </div>
@@ -427,13 +407,13 @@ export default function UsuariosManager() {
                             <div className="relative mt-1">
                                 <input
                                     type={verNuevaClave ? 'text' : 'password'}
-                                    className="w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                    className="w-full h-10 px-3 pr-9 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={nuevaClave}
                                     onChange={e => setNuevaClave(e.target.value)}
                                     placeholder="Mínimo 6 caracteres"
                                 />
                                 <button type="button" onClick={() => setVerNuevaClave(v => !v)} tabIndex={-1}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-xs">
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted text-label">
                                     {verNuevaClave ? <LuEyeOff size={14} /> : <LuEye size={14} />}
                                 </button>
                             </div>
@@ -441,11 +421,11 @@ export default function UsuariosManager() {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => { setModalPass(null); setNuevaClave(''); }}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase bg-[#EFEDEA] dark:bg-[#2E2E2E] text-[#57534E] dark:text-[#A8A29E]"
+                                className="flex-1 h-10 rounded-xl font-bold text-label uppercase bg-chip text-secondary"
                             >Cancelar</button>
                             <button
                                 onClick={guardarClave}
-                                className="flex-1 h-10 rounded-xl font-bold text-xs uppercase text-white bg-brand-red"
+                                className="flex-1 h-10 rounded-xl font-bold text-label uppercase text-white bg-brand-red"
                             >Guardar</button>
                         </div>
                     </div>
