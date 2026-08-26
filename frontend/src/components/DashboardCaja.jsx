@@ -104,7 +104,7 @@ export default function DashboardCaja({ setVistaActual }) {
         };
     }, [servicios, ordenes, notasAgenda]);
 
-    const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
+    const card = 'rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
 
     // Stats inline (pequeno, no amerita archivo separado)
     const StatsBlock = () => (

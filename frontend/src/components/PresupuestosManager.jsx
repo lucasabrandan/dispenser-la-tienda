@@ -281,7 +281,7 @@ export default function PresupuestosManager() {
 
                 {/* Selección masiva */}
                 {modoSeleccion && (
-                    <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <span className="text-caption font-bold text-ink flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>

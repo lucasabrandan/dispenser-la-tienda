@@ -34,7 +34,7 @@ export default function WeekDatePicker({ value, onChange }) {
         <div>
             <div className="flex items-center justify-between mb-1.5">
                 <button type="button" onClick={() => setOffsetSemanas(o => o - 1)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-black text-secondary bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-black text-secondary bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                     ‹
                 </button>
                 <div className="text-center leading-tight">
@@ -47,7 +47,7 @@ export default function WeekDatePicker({ value, onChange }) {
                     )}
                 </div>
                 <button type="button" onClick={() => setOffsetSemanas(o => o + 1)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-black text-secondary bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-black text-secondary bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                     ›
                 </button>
             </div>
@@ -58,7 +58,7 @@ export default function WeekDatePicker({ value, onChange }) {
                     const esHoy = iso === hoyISO;
                     return (
                         <button key={iso} type="button" onClick={() => onChange(iso)}
-                            className={`rounded-lg py-2 text-center transition-all active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${esHoy ? 'ring-2 ring-brand-red' : ''} ${sel ? 'bg-ink' : 'bg-white dark:bg-[#242424]'}`}>
+                            className={`rounded-lg py-2 text-center transition-all active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${esHoy ? 'ring-2 ring-brand-red' : ''} ${sel ? 'bg-ink' : 'bg-card'}`}>
                             <p className={`text-label font-bold uppercase ${sel ? 'text-white dark:text-[#1C1917]' : 'text-muted'}`}>
                                 {d.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
                             </p>

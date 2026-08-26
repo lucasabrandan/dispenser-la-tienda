@@ -11,7 +11,7 @@ export default function ActionSheet({ open, onClose, children }) {
     return (
         <>
             <div className="fixed inset-0 bg-black/40 z-[100]" onClick={onClose} />
-            <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
+            <div className="fixed inset-x-0 bottom-0 z-[101] rounded-t-2xl p-2 pb-6 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08]">
                 <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip" />
                 {children}
             </div>

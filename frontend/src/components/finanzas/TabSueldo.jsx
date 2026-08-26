@@ -109,7 +109,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
             </div>
 
             {/* Meta de sueldo */}
-            <div className="rounded-2xl bg-white dark:bg-[#242424] p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
+            <div className="rounded-2xl bg-card p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
                 <div className="flex items-center justify-between mb-3">
                     <p className="text-label font-black text-muted uppercase tracking-wider">
                         Sueldo objetivo — {data.usuarioNombre}
@@ -173,7 +173,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
             </div>
 
             {/* Desglose de ingresos */}
-            <div className="rounded-2xl bg-white dark:bg-[#242424] p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
+            <div className="rounded-2xl bg-card p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
                 <p className="text-label font-black text-muted uppercase tracking-wider mb-3">Desglose del mes</p>
                 {[
                     verEmpresa && { label: `Servicios propios (${data.cantServiciosPropios})`, valor: data.ingresoServiciosPropios, sub: '100% ganancia neta' },
@@ -226,7 +226,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
 
             {/* Evolución mensual */}
             {chartData.length > 1 && (
-                <div className="rounded-2xl bg-white dark:bg-[#242424] p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
+                <div className="rounded-2xl bg-card p-4 border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
                     <p className="text-label font-black text-muted uppercase tracking-wider mb-3">Evolución mensual</p>
                     <ResponsiveContainer width="100%" height={200}>
                         <BarChart data={chartData}>
@@ -254,7 +254,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
 
             {/* Tabla evolución */}
             {(data.evolucion || []).length > 0 && (
-                <div className="rounded-2xl overflow-x-auto bg-white dark:bg-[#242424] border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
+                <div className="rounded-2xl overflow-x-auto bg-card border-[0.5px] border-black/[0.07] dark:border-white/[0.07]">
                     <div className="min-w-[400px]">
                         <div className={`grid px-4 py-2 bg-panel ${verEmpresa ? 'grid-cols-[1fr_80px_80px_80px_50px]' : 'grid-cols-[1fr_90px_90px_50px]'}`}>
                             {['Mes', 'Acumulado', verEmpresa && 'Empresa', 'Meta', 'Trab.'].filter(Boolean).map(h => (

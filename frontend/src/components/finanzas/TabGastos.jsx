@@ -94,7 +94,7 @@ export default function TabGastos({ filtroMes, setFiltroMes }) {
                 const dataChart = Object.entries(porCat).map(([name, value]) => ({ name, value: Math.round(value) }))
                     .sort((a, b) => b.value - a.value);
                 return (
-                    <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="rounded-xl bg-card p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <p className="text-label font-bold text-muted uppercase tracking-wider mb-2">Distribución por categoría</p>
                         <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
@@ -109,7 +109,7 @@ export default function TabGastos({ filtroMes, setFiltroMes }) {
                 );
             })()}
 
-            <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+            <div className="rounded-xl bg-card p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                 <div className="flex items-center justify-between mb-3">
                     <p className="text-label font-bold text-muted uppercase tracking-wider">{form.id ? 'Editar gasto' : 'Agregar gasto'}</p>
                     {form.id && (

@@ -39,7 +39,7 @@ export default function VentaList({
     if (cargando) return <div className="text-center py-16 text-muted font-bold">Cargando ventas...</div>;
 
     if (ventas.length === 0) return (
-        <div className="text-center py-12 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+        <div className="text-center py-12 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
             <LuInbox size={24} className="mb-1 text-muted inline-block" />
             <p className="text-caption font-bold text-muted">No hay ventas en esta categoría</p>
         </div>
@@ -59,8 +59,8 @@ export default function VentaList({
                             esPendiente
                                 ? 'border-l-[#D48800] dark:border-l-[#F0A500] bg-[#FFFBF0] dark:bg-[#242118]'
                                 : v.estado === 'REALIZADO'
-                                    ? 'border-l-[#16A34A] bg-white dark:bg-[#242424]'
-                                    : 'border-l-[#A8A29E] bg-white dark:bg-[#242424]'
+                                    ? 'border-l-[#16A34A] bg-card'
+                                    : 'border-l-[#A8A29E] bg-card'
                         }`}>
 
                         {/* Contenido */}

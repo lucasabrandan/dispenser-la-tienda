@@ -3,7 +3,7 @@ import { M } from '../servicio/ServicioUI';
 import { LuWrench, LuShoppingCart, LuMapPin, LuClock, LuStickyNote } from 'react-icons/lu';
 import { ESTADO_COLORS, ESTADO_BORDER, DEFAULT_COLOR, calcTotal, getIniciales, estadoPredominante } from './estadoConstants';
 
-const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
+const card = 'rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
 
 function DiaBtn({ d, diaSel, onSelect }) {
     const pct = Math.min(d.horasUsadas / d.horasTotal, 1);
@@ -13,7 +13,7 @@ function DiaBtn({ d, diaSel, onSelect }) {
         <button onClick={() => onSelect(sel ? null : d.fecha)}
             className={`rounded-lg p-2 text-center transition-all active:scale-95 ${
                 d.esHoy ? 'ring-2 ring-brand-red' : ''
-            } ${sel ? 'bg-ink' : 'bg-white dark:bg-[#242424]'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
+            } ${sel ? 'bg-ink' : 'bg-card'} shadow-sm border border-black/[0.05] dark:border-white/[0.05]`}>
             <p className={`text-label font-bold uppercase ${sel ? 'text-white dark:text-[#1C1917]' : 'text-muted'}`}>
                 {d.dia.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
             </p>
@@ -47,7 +47,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
             <div>
                 <p className="text-label font-bold uppercase tracking-wider text-muted mb-2">Planificador</p>
                 <div className="grid grid-cols-6 gap-1.5">
-                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-14 rounded-lg animate-pulse bg-white dark:bg-[#242424] border border-black/[0.05] dark:border-white/[0.05]" />)}
+                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-14 rounded-lg animate-pulse bg-card border border-black/[0.05] dark:border-white/[0.05]" />)}
                 </div>
             </div>
         );

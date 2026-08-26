@@ -153,7 +153,7 @@ export default function DespachoManager() {
 
                 {/* Filtros colapsables */}
                 {mostrarFiltros && (
-                    <div className="flex gap-1.5 items-center flex-wrap p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="flex gap-1.5 items-center flex-wrap p-3 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <DateInput value={desde} onChange={setDesde}
                             className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]" />
                         <span className="text-label text-muted">a</span>

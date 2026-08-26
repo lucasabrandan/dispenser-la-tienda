@@ -46,7 +46,7 @@ export default function DashboardFinanzas() {
                             <button key={t.id} onClick={() => setTab(t.id)}
                                 className={`flex-1 py-1.5 rounded-md font-bold text-caption uppercase transition-all active:scale-95
                                     ${tab === t.id
-                                        ? 'bg-white dark:bg-[#242424] text-ink shadow-sm'
+                                        ? 'bg-card text-ink shadow-sm'
                                         : 'text-muted'}`}>
                                 {t.label}
                             </button>

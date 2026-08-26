@@ -83,7 +83,7 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                                 className={`snap-center shrink-0 rounded-xl px-4 py-2 text-left transition-all active:scale-[0.97] border ${
                                     activo
                                         ? 'shadow-md border-transparent'
-                                        : 'bg-white dark:bg-[#242424] border-black/[0.05] dark:border-white/[0.05] shadow-sm'
+                                        : 'bg-card border-black/[0.05] dark:border-white/[0.05] shadow-sm'
                                 }`}
                                 style={activo ? { backgroundColor: col.color || '#D13A28' } : {}}
                             >

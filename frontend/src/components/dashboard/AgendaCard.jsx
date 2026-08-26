@@ -9,7 +9,7 @@ export default function AgendaCard({ s, onClick }) {
 
     return (
         <div onClick={onClick}
-            className="rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px]"
+            className="rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 cursor-pointer active:scale-[0.98] hover:shadow-md transition-shadow border-l-[3px]"
             style={{ borderLeftColor: borderHex }}>
             <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">

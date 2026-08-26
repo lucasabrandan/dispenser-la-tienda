@@ -125,7 +125,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                             {menuOverflow && (
                                 <>
                                     <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
-                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
+                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
                                         <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
                                         <button onClick={() => { exportarVentasCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
                                             className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
@@ -153,7 +153,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
                 {/* Filtros colapsables */}
                 {mostrarFiltros && (
-                    <div className="space-y-2 p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="space-y-2 p-3 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <p className="text-label text-center text-muted font-bold">{filtros.totalItems} resultados</p>
                     </div>
                 )}

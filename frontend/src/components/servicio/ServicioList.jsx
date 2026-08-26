@@ -53,7 +53,7 @@ function parseFechaSort(f) {
     return new Date(f).getTime() || 0;
 }
 
-const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] overflow-hidden';
+const card = 'rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] overflow-hidden';
 
 export default function ServicioList({ onEditar }) {
     const { usuario, esAdmin } = useAuth();
@@ -224,7 +224,7 @@ export default function ServicioList({ onEditar }) {
 
                     {/* Stats compacto — solo admin */}
                     {esAdmin && (
-                        <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                             <span className="text-label font-bold text-muted">Ventas</span>
                             <M valor={totalVentas} className="text-label font-black text-ink" />
                             <span className="text-label text-muted">·</span>
@@ -368,7 +368,7 @@ export default function ServicioList({ onEditar }) {
             {/* Barra masiva */}
             {seleccionando && (
                 <div className="fixed bottom-20 left-0 right-0 z-40 px-4">
-                    <div className="max-w-lg mx-auto flex items-center gap-2 p-3 rounded-2xl bg-white dark:bg-[#242424] shadow-lg border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="max-w-lg mx-auto flex items-center gap-2 p-3 rounded-2xl bg-card shadow-lg border border-black/[0.07] dark:border-white/[0.07]">
                         <button onClick={() => {
                             const ids = filtros.itemsPagina.map(s => s.id);
                             const todasSel = ids.every(id => seleccionadas.has(id));
@@ -410,7 +410,7 @@ export default function ServicioList({ onEditar }) {
             {/* Modal detalle */}
             {modalDetalle && (
                 <div className="fixed inset-0 z-[2000] flex items-end bg-black/50" onClick={() => setModalDetalle(null)}>
-                    <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 bg-white dark:bg-[#242424] border-t border-black/[0.05] dark:border-white/[0.05]"
+                    <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 bg-card border-t border-black/[0.05] dark:border-white/[0.05]"
                         onClick={e => e.stopPropagation()}>
                         <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip" />
                         <h3 className="text-body-lg font-black mb-1 text-ink">

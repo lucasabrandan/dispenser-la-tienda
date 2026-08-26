@@ -51,7 +51,7 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
                 <StatCard label="Ganancia neta"  value={gananciaNeta}         sub="Lo que queda"       variante="redBold" ocultar={ocultar} />
             </div>
 
-            <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+            <div className="rounded-xl bg-card p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                 <p className="text-label font-bold text-muted uppercase tracking-wider mb-3">Desglose del mes</p>
                 {[
                     { label: 'Facturación bruta',            valor: stats.facturacion,    color: 'text-brand-amber' },
@@ -71,7 +71,7 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
             </div>
 
             {stats.facturacion > 0 && (
-                <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                <div className="rounded-xl bg-card p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <p className="text-label font-bold text-muted uppercase tracking-wider mb-2">Distribución</p>
                     <ResponsiveContainer width="100%" height={200}>
                         <PieChart>

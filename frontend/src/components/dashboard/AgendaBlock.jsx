@@ -4,7 +4,7 @@ import { M } from '../servicio/ServicioUI';
 import AgendaCard from './AgendaCard';
 import { ESTADO_COLORS, DEFAULT_COLOR, MAX_TRABAJOS, calcTotal, getIniciales, estadoPredominante } from './estadoConstants';
 
-const card = 'rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
+const card = 'rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
 
 export default function AgendaBlock({ agendaHoy, setVistaActual, cargando }) {
     // Mientras carga, no mostrar "sin actividad" — se confunde con que

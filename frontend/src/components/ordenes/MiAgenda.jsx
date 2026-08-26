@@ -30,7 +30,7 @@ function DiaBtn({ d, seleccionado, count, onClick }) {
         <button onClick={onClick}
             className={`rounded-lg p-2 text-center transition-all active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${
                 d.esHoy ? 'ring-2 ring-brand-red' : ''
-            } ${seleccionado ? 'bg-ink' : 'bg-white dark:bg-[#242424]'}`}>
+            } ${seleccionado ? 'bg-ink' : 'bg-card'}`}>
             <p className={`text-label font-bold uppercase ${seleccionado ? 'text-white dark:text-[#1C1917]' : 'text-muted'}`}>
                 {d.dia.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')}
             </p>
@@ -54,7 +54,7 @@ function OrdenAgendaCard({ orden }) {
     }[orden.estado] || '#A8A29E';
 
     return (
-        <div className="rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 border-l-[3px]"
+        <div className="rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 border-l-[3px]"
             style={{ borderLeftColor: borderColor }}>
             <div className="flex items-center gap-2">
                 <LuPin size={18} />
@@ -85,7 +85,7 @@ function NotaCard({ nota, onToggle, onEliminar }) {
 
     return (
         <div className={`rounded-xl shadow-sm border border-black/[0.05] dark:border-white/[0.05] px-3.5 py-2.5 border-l-[3px] transition-opacity ${
-            nota.completada ? 'opacity-50 bg-panel' : 'bg-white dark:bg-[#242424]'
+            nota.completada ? 'opacity-50 bg-panel' : 'bg-card'
         }`} style={{ borderLeftColor: nota.completada ? '#16A34A' : '#D48800' }}>
             <div className="flex items-center gap-2">
                 <button onClick={() => onToggle(nota.id)}
@@ -304,17 +304,17 @@ export default function MiAgenda({ tecnicoId }) {
                     </div>
                     <div className="flex gap-1.5">
                         <button onClick={() => setSemanaOffset(v => v - 1)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-white dark:bg-[#242424] text-secondary shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-card text-secondary shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                             ←
                         </button>
                         {semanaOffset !== 0 && (
                             <button onClick={() => setSemanaOffset(0)}
-                                className="h-9 px-3 rounded-xl font-bold text-label bg-white dark:bg-[#242424] text-brand-red shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
+                                className="h-9 px-3 rounded-xl font-bold text-label bg-card text-brand-red shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                                 Hoy
                             </button>
                         )}
                         <button onClick={() => setSemanaOffset(v => v + 1)}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-white dark:bg-[#242424] text-secondary shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-card text-secondary shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                             →
                         </button>
                     </div>
@@ -341,10 +341,10 @@ export default function MiAgenda({ tecnicoId }) {
 
                 {cargando ? (
                     <div className="space-y-2">
-                        {[1, 2].map(i => <div key={i} className="h-16 rounded-xl animate-pulse bg-white dark:bg-[#242424]" />)}
+                        {[1, 2].map(i => <div key={i} className="h-16 rounded-xl animate-pulse bg-card" />)}
                     </div>
                 ) : ordenesDia.length === 0 && notasDia.length === 0 ? (
-                    <div className="text-center py-12 rounded-2xl bg-white dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="text-center py-12 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         <LuInbox size={24} className="mb-2 text-muted inline-block" />
                         <p className="text-body font-bold text-muted">Dia libre</p>
                         <button onClick={() => setCreandoNota(true)}

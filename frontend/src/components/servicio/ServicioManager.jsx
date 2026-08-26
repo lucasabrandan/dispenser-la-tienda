@@ -329,7 +329,7 @@ export default function ServicioManager({
                                 <>
                                     <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
                                     {/* Mobile: bottom-sheet, Desktop: dropdown */}
-                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
+                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
                                         <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
                                         <button onClick={() => { exportarServiciosCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
                                             className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
@@ -363,7 +363,7 @@ export default function ServicioManager({
                     de Servicio no tienen sentido ahí; fecha/técnico de Orden queda para más
                     adelante) */}
                 {mostrarFiltros && !esTabOrdenActual && (
-                    <div className="space-y-2 p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="space-y-2 p-3 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         {/* Período + rango — mismo componente que ya usan Historial y
                             Presupuestos, en vez de reimplementarlo acá aparte. */}
                         <FiltrosPanel hook={filtros} estados={[]} conBusqueda={false} conRango />
@@ -391,7 +391,7 @@ export default function ServicioManager({
                 {/* ═══ SELECCIÓN MASIVA ═══ (solo Servicio — selección masiva de Ordenes
                     queda en Despacho por ahora) */}
                 {modoSeleccion && !esTabOrdenActual && (
-                    <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <span className="text-caption font-bold text-ink flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
@@ -421,7 +421,7 @@ export default function ServicioManager({
                             {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-card" />)}
                         </div>
                     ) : Object.keys(gruposOrdenes).length === 0 ? (
-                        <div className="text-center py-16 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        <div className="text-center py-16 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                             {(() => { const EmptyIcon = TABS_ORDEN.find(t => t.id === tabActual)?.Icon || LuClipboardList; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
                             <p className="text-body font-bold text-muted">Sin {TABS_ORDEN.find(t => t.id === tabActual)?.label?.toLowerCase()}</p>
                         </div>
@@ -463,7 +463,7 @@ export default function ServicioManager({
                         ))}
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
-                    <div className="text-center py-16 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="text-center py-16 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         {(() => { const EmptyIcon = TABS.find(t => t.id === tabActual)?.Icon || LuClipboardList; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
                         <p className="text-body font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'resultados'}</p>
                         <p className="text-caption text-muted mt-1">Deslizá para ver otros estados</p>

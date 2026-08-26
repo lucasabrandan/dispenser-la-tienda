@@ -61,7 +61,7 @@ export default function RadarMantenimiento() {
 
             {/* Stats compacto */}
             {alertas.length > 0 && (
-                <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] mb-3">
+                <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] mb-3">
                     <span className="text-body font-bold text-brand-red">{alertas.filter(a => a.tipoAlerta === 'FILTRO').length} filtros</span>
                     <span className="text-caption text-muted">·</span>
                     <span className="text-body font-bold text-brand-amber">{alertas.filter(a => a.tipoAlerta === 'SANITIZACION').length} sanitizaciones</span>

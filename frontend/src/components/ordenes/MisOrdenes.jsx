@@ -527,7 +527,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         {/* Detalle del servicio — link "Ver servicio" desde Completadas (hallazgo 07) */}
         {(cargandoDetalle || servicioDetalle) && (
             <div className="fixed inset-0 z-[3000] flex items-end bg-black/50" onClick={() => setServicioDetalle(null)}>
-                <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 bg-white dark:bg-[#242424] border-t border-black/[0.05] dark:border-white/[0.05]"
+                <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 bg-card border-t border-black/[0.05] dark:border-white/[0.05]"
                     onClick={e => e.stopPropagation()}>
                     <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip" />
                     {cargandoDetalle ? (

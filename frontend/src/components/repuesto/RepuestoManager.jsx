@@ -76,7 +76,7 @@ export default function RepuestoManager() {
                             {menuOverflow && (
                                 <>
                                     <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
-                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-white dark:bg-[#242424] shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
+                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
                                         <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
                                         <button onClick={() => { setModoSeleccion(true); setMenuOverflow(false); }}
                                             className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
@@ -104,7 +104,7 @@ export default function RepuestoManager() {
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
                 {/* Stats + orden */}
-                <div className="flex items-center justify-between px-3 h-8 rounded-lg bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                <div className="flex items-center justify-between px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <span className="text-caption font-bold text-muted">{productosFiltrados.length} productos</span>
                     <select value={ordenProductos} onChange={e => setOrdenProductos(e.target.value)}
                         className="h-6 px-2 rounded text-label font-bold outline-none bg-transparent text-muted cursor-pointer">
@@ -117,7 +117,7 @@ export default function RepuestoManager() {
 
                 {/* Barra selección masiva */}
                 {modoSeleccion && (
-                    <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] flex-wrap">
+                    <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] flex-wrap">
                         <span className="text-caption font-bold text-ink">
                             {seleccionados.size} sel.
                         </span>

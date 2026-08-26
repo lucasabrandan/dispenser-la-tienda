@@ -63,7 +63,7 @@ export default function TabTecnicos({ filtroMes, setFiltroMes }) {
             </div>
 
             {datosFiltrados.length > 1 && (
-                <div className="rounded-xl bg-white dark:bg-[#242424] p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                <div className="rounded-xl bg-card p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <p className="text-label font-bold text-muted uppercase tracking-wider mb-2">Comparación</p>
                     <ResponsiveContainer width="100%" height={180}>
                         <BarChart data={datosFiltrados.map(d => ({
