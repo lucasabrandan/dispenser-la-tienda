@@ -1,16 +1,18 @@
-// Colores por estado para headers de tecnico y cards
+// Colores por estado para headers de tecnico y cards — usa las variables CSS
+// semanticas de index.css (mismo criterio que ya adoptó ServicioCard.jsx) en
+// vez de hex sueltos por tema: un solo valor por estado, ya theme-aware.
 export const ESTADO_COLORS = {
-    PRESUPUESTO:           { bg: 'bg-[#D48800]/10 dark:bg-[#F0A500]/10', text: 'text-brand-amber', avatar: 'bg-brand-amber', bar: 'bg-brand-amber' },
-    COMPLETADO:            { bg: 'bg-[#3B82F6]/10 dark:bg-[#3B82F6]/10', text: 'text-[#3B82F6] dark:text-[#60A5FA]', avatar: 'bg-[#3B82F6] dark:bg-[#60A5FA]', bar: 'bg-[#3B82F6] dark:bg-[#60A5FA]' },
-    PENDIENTE_FACTURACION: { bg: 'bg-[#8B5CF6]/10 dark:bg-[#8B5CF6]/10', text: 'text-[#8B5CF6] dark:text-[#A78BFA]', avatar: 'bg-[#8B5CF6] dark:bg-[#A78BFA]', bar: 'bg-[#8B5CF6] dark:bg-[#A78BFA]' },
-    COBRADO:               { bg: 'bg-[#16A34A]/10 dark:bg-[#22C55E]/10', text: 'text-[#16A34A] dark:text-[#22C55E]', avatar: 'bg-[#16A34A] dark:bg-[#22C55E]', bar: 'bg-[#16A34A] dark:bg-[#22C55E]' },
-    REALIZADO:             { bg: 'bg-[#16A34A]/10 dark:bg-[#22C55E]/10', text: 'text-[#16A34A] dark:text-[#22C55E]', avatar: 'bg-[#16A34A] dark:bg-[#22C55E]', bar: 'bg-[#16A34A] dark:bg-[#22C55E]' },
-    ARCHIVADO:             { bg: 'bg-muted/10 dark:bg-[#A8A29E]/10', text: 'text-muted', avatar: 'bg-muted', bar: 'bg-muted' },
+    PRESUPUESTO:           { bg: 'bg-[var(--warning-bg)]', text: 'text-brand-amber',        avatar: 'bg-brand-amber',        bar: 'bg-brand-amber' },
+    COMPLETADO:            { bg: 'bg-[var(--blue-bg)]',    text: 'text-[var(--blue-tx)]',    avatar: 'bg-[var(--blue-tx)]',    bar: 'bg-[var(--blue-tx)]' },
+    PENDIENTE_FACTURACION: { bg: 'bg-[var(--info-bg)]',    text: 'text-[var(--info-tx)]',    avatar: 'bg-[var(--info-tx)]',    bar: 'bg-[var(--info-tx)]' },
+    COBRADO:               { bg: 'bg-[var(--success-bg)]', text: 'text-[var(--success-tx)]', avatar: 'bg-[var(--success-tx)]', bar: 'bg-[var(--success-tx)]' },
+    REALIZADO:             { bg: 'bg-[var(--success-bg)]', text: 'text-[var(--success-tx)]', avatar: 'bg-[var(--success-tx)]', bar: 'bg-[var(--success-tx)]' },
+    ARCHIVADO:             { bg: 'bg-muted/10',            text: 'text-muted',               avatar: 'bg-muted',               bar: 'bg-muted' },
 };
 
 export const ESTADO_BORDER = {
-    PRESUPUESTO: '#D48800', COMPLETADO: '#3B82F6', PENDIENTE_FACTURACION: '#8B5CF6',
-    FACTURADO: '#6366F1', COBRADO: '#16A34A', REALIZADO: '#16A34A', ARCHIVADO: '#A8A29E',
+    PRESUPUESTO: 'var(--color-brand-amber)', COMPLETADO: 'var(--blue-tx)', PENDIENTE_FACTURACION: 'var(--info-tx)',
+    FACTURADO: 'var(--indigo-tx)', COBRADO: 'var(--success-tx)', REALIZADO: 'var(--success-tx)', ARCHIVADO: 'var(--color-muted)',
 };
 
 export const ESTADO_LABEL = {

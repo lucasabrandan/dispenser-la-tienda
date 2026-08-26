@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuPin, LuSiren } from 'react-icons/lu';
+import { LuPin, LuSiren, LuAlarmClock } from 'react-icons/lu';
 
 export default function AlertasBlock({ pptoVencidos, ordenesActivas, alertasRadar, setVistaActual }) {
     const total = pptoVencidos.length + ordenesActivas.length + alertasRadar.length;
@@ -12,7 +12,7 @@ export default function AlertasBlock({ pptoVencidos, ordenesActivas, alertasRada
                 {pptoVencidos.length > 0 && (
                     <button onClick={() => setVistaActual('presupuestos')}
                         className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#FEE2E2] dark:bg-[#3B1111] border border-[#D13A28]/15">
-                        <span>⏰</span>
+                        <LuAlarmClock size={16} className="text-[#D13A28] dark:text-[#F87171]" />
                         <div className="flex-1 min-w-0">
                             <p className="text-body font-bold text-[#D13A28] dark:text-[#F87171]">
                                 {pptoVencidos.length} presupuesto{pptoVencidos.length !== 1 ? 's' : ''} sin respuesta +7d
