@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuSearch, LuSettings2, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil, LuLayers, LuHourglass, LuCar, LuMapPin, LuUser } from 'react-icons/lu';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import { useOrdenes } from '../../hooks/useOrdenes';
@@ -363,7 +364,7 @@ export default function ServicioManager({
                                 className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                                 ⋯
                             </button>
-                            {menuOverflow && (
+                            {menuOverflow && createPortal(
                                 <>
                                     <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
                                     {/* Mobile: bottom-sheet, Desktop: dropdown */}
@@ -378,7 +379,8 @@ export default function ServicioManager({
                                             <LuUpload size={15} /> Importar históricos
                                         </button>
                                     </div>
-                                </>
+                                </>,
+                                document.body
                             )}
                         </div>
 

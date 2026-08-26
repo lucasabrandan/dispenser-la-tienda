@@ -224,9 +224,9 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                 repuestos={repuestos || []}
                 seleccionados={productos}
                 onChange={nuevos => setProductos(nuevos)}
-                onCrearNuevo={() => {
+                onCrearNuevo={(nombre) => {
                     setSheetOpen(false);
-                    abrirModalRepuesto('');
+                    abrirModalRepuesto(nombre || '');
                 }}
             />
 

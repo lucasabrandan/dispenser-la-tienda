@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuSearch, LuEllipsis, LuDownload } from 'react-icons/lu';
 import { useVentaManager } from '../../hooks/useVentaManager';
 import { useAuth } from '../../context/AuthContext';
@@ -146,7 +147,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                         <div className="relative">
                             <button onClick={() => setMenuOverflow(v => !v)}
                                 className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuEllipsis size={15} /></button>
-                            {menuOverflow && (
+                            {menuOverflow && createPortal(
                                 <>
                                     <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
                                     <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
@@ -156,7 +157,8 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                                             <LuDownload size={15} /> Exportar CSV
                                         </button>
                                     </div>
-                                </>
+                                </>,
+                                document.body
                             )}
                         </div>
 

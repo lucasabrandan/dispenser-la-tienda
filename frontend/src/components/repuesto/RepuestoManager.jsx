@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { LuSearch, LuPackage, LuEllipsis, LuListChecks, LuDownload, LuFileText } from 'react-icons/lu';
 import { useRepuestoManager } from '../../hooks/useRepuestoManager';
 import RepuestoCard from './RepuestoCard';
@@ -73,7 +74,7 @@ export default function RepuestoManager() {
                         <div className="relative">
                             <button onClick={() => setMenuOverflow(v => !v)}
                                 className="h-9 w-9 rounded-lg flex items-center justify-center bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuEllipsis size={15} /></button>
-                            {menuOverflow && (
+                            {menuOverflow && createPortal(
                                 <>
                                     <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
                                     <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
@@ -91,7 +92,8 @@ export default function RepuestoManager() {
                                             <LuFileText size={15} /> Exportar catálogo
                                         </button>
                                     </div>
-                                </>
+                                </>,
+                                document.body
                             )}
                         </div>
 
