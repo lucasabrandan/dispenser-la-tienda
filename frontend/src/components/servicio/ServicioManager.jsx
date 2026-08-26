@@ -1,12 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuSearch, LuSettings2, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil, LuLayers } from 'react-icons/lu';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuSearch, LuSettings2, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil, LuLayers, LuHourglass, LuCar, LuMapPin, LuUser } from 'react-icons/lu';
 import { useServicioManager } from '../../hooks/useServicioManager';
+import { useOrdenes } from '../../hooks/useOrdenes';
 import { useAuth } from '../../context/AuthContext';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
 import { getUsuarios } from '../../services/api';
 import api from '../../services/api';
 import ServicioForm from '../servicio/ServicioForm';
 import ServicioCard from '../servicio/ServicioCard';
+import { OrdenCard } from '../ordenes/OrdenCard';
+import OrdenForm from '../ordenes/OrdenForm';
 import SwipeColumns from '../ui/SwipeColumns';
 import Paginacion from '../ui/Paginacion';
 import FiltrosPanel from '../ui/FiltrosPanel';
@@ -22,7 +25,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 // "Presupuestos" (estado PRESUPUESTO) ya no es un tab acá — es la pantalla dedicada del
 // sidebar (con Cotizar / Ver ruta), para no mostrar la misma data pendiente en dos lugares.
 // Servicio Tecnico arranca directamente en lo que ya esta aprobado / en curso de cobro.
-const TABS = [
+const TABS_SERVICIO = [
     { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar', color: '#8B5CF6', Icon: LuClipboardList },
     { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', Icon: LuFileText },
     { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', Icon: LuCircleCheck },
@@ -31,6 +34,18 @@ const TABS = [
     // cualquier servicio técnico sin importar el estado, en vez de ir a buscarlo a Historial.
     { id: 'TODOS',                 label: 'Todo',         short: 'Todo',     color: '#1C1917', Icon: LuLayers },
 ];
+
+// Tabs de Despacho fusionados acá (paso 3/N del hub — ver TABS_SERVICIO arriba):
+// Pendientes/En camino/En sitio comparten pantalla con Servicio Técnico, pero siguen
+// leyendo /ordenes (useOrdenes), no /servicios — son dos modelos de datos distintos,
+// por eso quedan separados de TABS_SERVICIO en vez de mezclarse en un solo array.
+// Solo para admin: los técnicos ya tienen su propia vista de órdenes (Mis Órdenes).
+const TABS_ORDEN = [
+    { id: 'PENDIENTE', label: 'Pendientes', short: 'Pend.',     color: '#A8A29E', Icon: LuHourglass },
+    { id: 'EN_CAMINO', label: 'En camino',  short: 'En camino', color: '#3B82F6', Icon: LuCar },
+    { id: 'EN_SITIO',  label: 'En sitio',   short: 'En sitio',  color: '#D48800', Icon: LuMapPin },
+];
+const TABS_ORDEN_IDS = new Set(TABS_ORDEN.map(t => t.id));
 
 const ESTADO_API_MAP = {
     COBRADO: 'COBRADO,REALIZADO',
@@ -58,6 +73,19 @@ export default function ServicioManager({
         ordenServicio, setOrdenServicio,
     } = useServicioManager();
 
+    const TABS = esAdmin ? [...TABS_ORDEN, ...TABS_SERVICIO] : TABS_SERVICIO;
+
+    // Ordenes (Pendientes/En camino/En sitio) — mismo hook que ya usaba DespachoManager.jsx,
+    // deshabilitado para técnicos (enabled: esAdmin) para no pegarle a /ordenes de más.
+    const {
+        ordenes,
+        tecnicos: tecnicosOrden,
+        cargando: cargandoOrdenes,
+        modalCrear: modalCrearOrden, setModalCrear: setModalCrearOrden,
+        ordenEditar, abrirEditar: abrirEditarOrden, cerrarModal: cerrarModalOrden,
+        crear: crearOrden, actualizar: actualizarOrden, eliminar: eliminarOrden, avanzarEstado,
+    } = useOrdenes({ enabled: esAdmin });
+
     const [servicioEjecutar, setServicioEjecutar]             = useState(null);
     const [servicioEjecutarSimple, setServicioEjecutarSimple] = useState(null);
     const [servicioDuplicar, setServicioDuplicar]   = useState(null);
@@ -75,25 +103,35 @@ export default function ServicioManager({
     const [tabCounts, setTabCounts]                 = useState({});
     const [tabAntesBusqueda, setTabAntesBusqueda]   = useState(null);
 
-    const tabActual = filtros.estado || 'PENDIENTE_FACTURACION';
+    // tabActual vive en estado propio (no en filtros.estado): los 3 tabs de Orden
+    // (Pendientes/En camino/En sitio) no son estados válidos para /servicios, así que
+    // filtros.estado solo se actualiza cuando el tab activo es de tipo Servicio — evita
+    // que useServicioManager dispare un fetch con un estado que el backend no reconoce.
+    const [tabActual, setTabActual] = useState('PENDIENTE_FACTURACION');
+    const esTabOrden = (id) => TABS_ORDEN_IDS.has(id);
+    const esTabOrdenActual = esTabOrden(tabActual);
     const enBusquedaGlobal = tabActual === 'TODOS' && !!filtros.busqueda;
 
     // Auto-switch a TODOS cuando se escribe búsqueda, volver al tab anterior al borrar
     useEffect(() => {
         if (filtros.busqueda && tabActual !== 'TODOS') {
             setTabAntesBusqueda(tabActual);
+            setTabActual('TODOS');
             filtros.setEstado('TODOS');
         } else if (!filtros.busqueda && tabActual === 'TODOS' && tabAntesBusqueda) {
-            filtros.setEstado(tabAntesBusqueda);
+            setTabActual(tabAntesBusqueda);
+            if (!esTabOrden(tabAntesBusqueda)) filtros.setEstado(tabAntesBusqueda);
             setTabAntesBusqueda(null);
         }
     }, [filtros.busqueda]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Cargar conteos por estado (para las SwipeColumns)
+    // Cargar conteos por estado (para las SwipeColumns) — solo tabs de Servicio;
+    // los de Orden (Pendientes/En camino/En sitio) se cuentan abajo con ordenCounts,
+    // a partir de la misma lista que ya trae useOrdenes (sin pegarle de nuevo a la API).
     const fetchTabCounts = useCallback(async () => {
         try {
             const results = await Promise.all(
-                TABS.map(t => api.get('/servicios', {
+                TABS_SERVICIO.map(t => api.get('/servicios', {
                     params: {
                         tipo: 'TECNICA', page: 0, size: 1,
                         // "Todo" no filtra por estado — cuenta todos los servicios técnicos
@@ -102,17 +140,45 @@ export default function ServicioManager({
                 }).catch(() => ({ data: { totalElements: 0 } })))
             );
             const counts = {};
-            TABS.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
+            TABS_SERVICIO.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
             setTabCounts(counts);
         } catch (err) { console.warn('Servicios: error cargando conteos tabs', err); }
     }, []);
 
     useEffect(() => { fetchTabCounts(); }, [fetchTabCounts]);
 
-    // Actualizar count del tab activo cuando cambian los items
+    // Actualizar count del tab activo cuando cambian los items (solo tabs de Servicio)
     useEffect(() => {
-        setTabCounts(prev => ({ ...prev, [tabActual]: filtros.totalItems }));
-    }, [filtros.totalItems, tabActual]);
+        if (!esTabOrdenActual) {
+            setTabCounts(prev => ({ ...prev, [tabActual]: filtros.totalItems }));
+        }
+    }, [filtros.totalItems, tabActual]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Conteos de los tabs de Orden — reactivos, calculados en el cliente igual que
+    // ya hacía DespachoManager.jsx (counts), no hay un endpoint de conteo por estado.
+    const ordenCounts = useMemo(() => ({
+        PENDIENTE: ordenes.filter(o => o.estado === 'PENDIENTE').length,
+        EN_CAMINO: ordenes.filter(o => o.estado === 'EN_CAMINO').length,
+        EN_SITIO:  ordenes.filter(o => o.estado === 'EN_SITIO').length,
+    }), [ordenes]);
+
+    // Agrupado por técnico para el tab de Orden activo — mismo patrón que
+    // DespachoManager.jsx (grupos/activasPorTecnico), acá acotado al tab activo.
+    const ordenesDelTabActual = useMemo(
+        () => ordenes.filter(o => o.estado === tabActual),
+        [ordenes, tabActual]
+    );
+    const gruposOrdenes = useMemo(() => ordenesDelTabActual.reduce((acc, o) => {
+        const key = `${o.tecnicoId}__${o.tecnicoNombre}`;
+        (acc[key] = acc[key] || []).push(o);
+        return acc;
+    }, {}), [ordenesDelTabActual]);
+    const activasPorTecnico = useMemo(() => ordenes.reduce((acc, o) => {
+        if (!['COMPLETADA', 'CANCELADA', 'NO_ATENDIDO'].includes(o.estado)) {
+            acc[o.tecnicoId] = (acc[o.tecnicoId] || 0) + 1;
+        }
+        return acc;
+    }, {}), [ordenes]);
 
     // Long-press para selección masiva
     const longPressRef = React.useRef(null);
@@ -132,7 +198,11 @@ export default function ServicioManager({
             filtros.setBusqueda('');
             setTabAntesBusqueda(null);
         }
-        filtros.setEstado(id);
+        setTabActual(id);
+        // Los tabs de Orden (Pendientes/En camino/En sitio) no son estados válidos
+        // para /servicios — no tocar filtros.estado, que sigue en el último tab
+        // de Servicio visitado (fetch de fondo inofensivo, no se muestra).
+        if (!esTabOrden(id)) filtros.setEstado(id);
         setModoSeleccion(false);
         setSeleccionados(new Set());
     };
@@ -152,6 +222,9 @@ export default function ServicioManager({
         setModoSeleccion(false);
         fetchTabCounts();
     };
+
+    // Tab de Orden activo → el botón "+ Nuevo"/FAB crea una Orden, no un Servicio.
+    const abrirCrear = () => { if (esTabOrdenActual) setModalCrearOrden(true); else setModalCrear(true); };
 
     const [servicioEjecutarAdmin, setServicioEjecutarAdmin] = useState(null);
     const abrirEjecutar = (s) => {
@@ -195,12 +268,13 @@ export default function ServicioManager({
     // Columnas para SwipeColumns — "Todo" ya es un tab fijo más (ver TABS arriba), no hace
     // falta inyectarlo aparte cuando hay búsqueda activa (antes se armaba un "Todos" sintético
     // con ícono de lupa solo mientras se buscaba; ahora el auto-switch a TODOS en cambiarTab/
-    // el useEffect de más arriba simplemente resalta este mismo tab).
+    // el useEffect de más arriba simplemente resalta este mismo tab). Los 3 tabs de Orden
+    // fusionados desde Despacho toman su conteo de ordenCounts, no de tabCounts (API distinta).
     const columns = TABS.map(t => ({
         id: t.id,
         label: t.short,
         fullLabel: t.label,
-        count: tabCounts[t.id] ?? null,
+        count: TABS_ORDEN_IDS.has(t.id) ? (ordenCounts[t.id] ?? null) : (tabCounts[t.id] ?? null),
         color: t.color,
         Icon: t.Icon,
     }));
@@ -271,7 +345,7 @@ export default function ServicioManager({
                         </div>
 
                         {esAdmin && (
-                            <button onClick={() => setModalCrear(true)}
+                            <button onClick={abrirCrear}
                                 className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label text-white uppercase items-center transition-all active:scale-95 bg-brand-red shrink-0">
                                 + Nuevo
                             </button>
@@ -285,8 +359,10 @@ export default function ServicioManager({
                 {/* ═══ SWIPE COLUMNS (mobile) / PIPELINE TABS (desktop) ═══ */}
                 <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
 
-                {/* ═══ FILTROS COLAPSABLES ═══ */}
-                {mostrarFiltros && (
+                {/* ═══ FILTROS COLAPSABLES ═══ (no aplica a los tabs de Orden — período/orden
+                    de Servicio no tienen sentido ahí; fecha/técnico de Orden queda para más
+                    adelante) */}
+                {mostrarFiltros && !esTabOrdenActual && (
                     <div className="space-y-2 p-3 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         {/* Período + rango — mismo componente que ya usan Historial y
                             Presupuestos, en vez de reimplementarlo acá aparte. */}
@@ -312,8 +388,9 @@ export default function ServicioManager({
                     </div>
                 )}
 
-                {/* ═══ SELECCIÓN MASIVA ═══ */}
-                {modoSeleccion && (
+                {/* ═══ SELECCIÓN MASIVA ═══ (solo Servicio — selección masiva de Ordenes
+                    queda en Despacho por ahora) */}
+                {modoSeleccion && !esTabOrdenActual && (
                     <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <span className="text-caption font-bold text-ink flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
@@ -338,7 +415,48 @@ export default function ServicioManager({
                 )}
 
                 {/* ═══ LISTA ═══ */}
-                {cargando ? (
+                {esTabOrdenActual ? (
+                    cargandoOrdenes ? (
+                        <div className="flex flex-col gap-2">
+                            {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-card" />)}
+                        </div>
+                    ) : Object.keys(gruposOrdenes).length === 0 ? (
+                        <div className="text-center py-16 rounded-xl bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                            {(() => { const EmptyIcon = TABS_ORDEN.find(t => t.id === tabActual)?.Icon || LuClipboardList; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
+                            <p className="text-body font-bold text-muted">Sin {TABS_ORDEN.find(t => t.id === tabActual)?.label?.toLowerCase()}</p>
+                        </div>
+                    ) : (
+                        Object.entries(gruposOrdenes).map(([key, items]) => {
+                            const [tecId, nombre] = key.split('__');
+                            const activas = activasPorTecnico[tecId] || 0;
+                            return (
+                                <div key={key} className="mb-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <p className="text-label font-black text-ink uppercase tracking-wider flex items-center gap-1">
+                                            <LuUser size={12} /> {nombre}
+                                        </p>
+                                        {activas > 0 && (
+                                            <span className="text-label font-black px-2 py-0.5 rounded-full bg-brand-red text-white">
+                                                {activas} activa{activas > 1 ? 's' : ''}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        {items.map(o => (
+                                            <OrdenCard key={o.id} orden={o}
+                                                onEditar={abrirEditarOrden}
+                                                onEliminar={eliminarOrden}
+                                                onAvanzar={avanzarEstado}
+                                                seleccionando={false}
+                                                seleccionada={false}
+                                                onToggleSel={() => {}} />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )
+                ) : cargando ? (
                     <div className="flex flex-col gap-2">
                         {[1, 2, 3].map(i => (
                             <div key={i} className="h-28 rounded-2xl animate-pulse bg-card" />
@@ -381,13 +499,15 @@ export default function ServicioManager({
                     </div>
                 )}
 
-                <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
+                {!esTabOrdenActual && (
+                    <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
+                )}
             </div>
 
             {/* FAB — solo mobile, solo admin */}
             {esAdmin && (
                 <button
-                    onClick={() => setModalCrear(true)}
+                    onClick={abrirCrear}
                     className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-white bg-brand-red active:scale-90 transition-all z-20"
                     aria-label="Nuevo servicio"
                 >+</button>
@@ -434,6 +554,24 @@ export default function ServicioManager({
                             ordenOrigen={ordenOrigen}
                             modoEjecucion={!!servicioEjecutar}
                         />
+                    </div>
+                </div>
+            )}
+
+            {(modalCrearOrden || ordenEditar) && (
+                <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
+                    <div className="w-full max-w-lg bg-card rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="md:hidden flex justify-center -mt-2 mb-4">
+                            <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
+                        </div>
+                        <h2 className="text-body-lg font-black text-ink mb-5">
+                            {ordenEditar ? 'Editar orden' : 'Nueva orden'}
+                        </h2>
+                        <OrdenForm
+                            orden={ordenEditar}
+                            tecnicos={tecnicosOrden}
+                            onGuardar={ordenEditar ? (f) => actualizarOrden(ordenEditar.id, f) : crearOrden}
+                            onCancelar={cerrarModalOrden} />
                     </div>
                 </div>
             )}
