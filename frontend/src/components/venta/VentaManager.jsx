@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { LuBanknote, LuCircleCheck, LuArchive, LuShoppingCart, LuSearch, LuEllipsis, LuDownload } from 'react-icons/lu';
+import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuSearch, LuEllipsis, LuDownload } from 'react-icons/lu';
 import { useVentaManager } from '../../hooks/useVentaManager';
 import { useAuth } from '../../context/AuthContext';
 import VentaList   from './VentaList';
 import VentaForm   from './VentaForm';
 import Paginacion   from '../ui/Paginacion';
 import SwipeColumns from '../ui/SwipeColumns';
+import FiltrosPanel from '../ui/FiltrosPanel';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { exportarVentasCSV } from '../../utils/exportarCSV';
 import api from '../../services/api';
@@ -14,6 +15,10 @@ const TABS = [
     { id: 'PRESUPUESTO', label: 'Pendientes', short: 'Pend.',   color: '#D48800', Icon: LuBanknote },
     { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#16A34A', Icon: LuCircleCheck },
     { id: 'ARCHIVADO',   label: 'Archivadas', short: 'Arch.',   color: '#A8A29E', Icon: LuArchive },
+    // "Todo" — mismo patrón que ya tiene Servicio Técnico: búsqueda libre sin
+    // filtro de estado, con rango de fechas. Jubila a "Historial" como pantalla
+    // aparte (ver ServicioList.jsx, ahora sin uso — 26-ago).
+    { id: 'TODOS',        label: 'Todo',       short: 'Todo',    color: '#1C1917', Icon: LuLayers },
 ];
 
 const ESTADO_API_MAP = {
@@ -40,15 +45,35 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
     const [menuOverflow, setMenuOverflow] = useState(false);
     const [tabCounts, setTabCounts] = useState({});
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const [tabAntesBusqueda, setTabAntesBusqueda] = useState(null);
 
     const tabActual = filtros.estado || 'PRESUPUESTO';
+
+    // Auto-switch a "Todo" cuando se escribe en el buscador (mismo patrón que
+    // ServicioManager.jsx): si no, la búsqueda queda acotada a la pestaña activa
+    // y no encuentra ventas que estén en otro estado. Vuelve a la pestaña
+    // anterior al borrar la búsqueda.
+    useEffect(() => {
+        if (filtros.busqueda && tabActual !== 'TODOS') {
+            setTabAntesBusqueda(tabActual);
+            filtros.setEstado('TODOS');
+        } else if (!filtros.busqueda && tabActual === 'TODOS' && tabAntesBusqueda) {
+            filtros.setEstado(tabAntesBusqueda);
+            setTabAntesBusqueda(null);
+        }
+    }, [filtros.busqueda]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Cargar conteos por estado
     const fetchTabCounts = useCallback(async () => {
         try {
             const results = await Promise.all(
                 TABS.map(t => api.get('/servicios', {
-                    params: { tipo: 'VENTA', estado: ESTADO_API_MAP[t.id] || t.id, page: 0, size: 1 }
+                    params: {
+                        tipo: 'VENTA',
+                        ...(t.id !== 'TODOS' ? { estado: ESTADO_API_MAP[t.id] || t.id } : {}),
+                        page: 0, size: 1,
+                    }
                 }).catch(() => ({ data: { totalElements: 0 } })))
             );
             const counts = {};
@@ -149,6 +174,21 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
                 {/* SwipeColumns */}
                 <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
+
+                {/* Filtros colapsables — solo en "Todo": las otras 3 pestañas ya filtran
+                    por estado, acá es donde tiene sentido acotar por fecha */}
+                {tabActual === 'TODOS' && (
+                    <>
+                        <button onClick={() => setMostrarFiltros(v => !v)}
+                            className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
+                            <span className="text-label font-bold uppercase text-muted">{mostrarFiltros ? '▲' : '▼'} Filtros</span>
+                            <span className="text-label font-bold text-muted">{filtros.totalItems} resultados</span>
+                        </button>
+                        {mostrarFiltros && (
+                            <FiltrosPanel hook={filtros} conBusqueda={false} conRango />
+                        )}
+                    </>
+                )}
 
                 {/* Lista */}
                 {cargando ? (
