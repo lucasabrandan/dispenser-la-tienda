@@ -9,15 +9,15 @@ import { useMontos } from '../../context/MontosContext';
 import api from '../../services/api';
 import { LuSun, LuMoon } from 'react-icons/lu';
 
+// 'historial' y 'despacho' se sacaron (26-ago): sus funciones viven ahora
+// adentro de Venta ("Todo") y Servicio Técnico (modo Despacho), sin ruta propia.
 const NOMBRES_SECCION = {
     'caja':             'Panel',
     'venta':            'Ventas',
     'servicio-tecnico': 'Servicio Técnico',
-    'historial':        'Historial',
     'presupuestos':     'Presupuestos',
     'clientes':         'Clientes',
     'productos':        'Productos',
-    'despacho':         'Despacho',
     'radar':            'Radar',
     'finanzas':         'Finanzas',
     'usuarios':         'Usuarios',

@@ -4,7 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuClipboardList, LuCalendar, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut } from 'react-icons/lu';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuCalendar, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut } from 'react-icons/lu';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
 // para no mezclar todo en una sola lista larga.
@@ -18,16 +18,16 @@ const MENU_PANEL = [
 const MENU_SERVICIO = [
     { id: 'servicio-tecnico', Icon: LuWrench, nombre: 'Servicio Técnico' },
 ];
+// 'historial' (ítem propio, 26-ago) se saco de acá: la pestaña "Todo" de
+// VentaManager.jsx ya cubre esa misma búsqueda libre sin filtro de estado
+// (mismo criterio que "Despacho" arriba) — ServicioList.jsx queda sin uso.
 const MENU_VENTAS = [
-    { id: 'venta',     Icon: LuShoppingCart,  nombre: 'Venta / Insumos' },
-    { id: 'historial', Icon: LuClipboardList, nombre: 'Historial'       },
+    { id: 'venta', Icon: LuShoppingCart, nombre: 'Venta' },
 ];
 // Presupuestos queda aparte de los grupos por dominio: un "presupuesto"
 // puede ser de Servicio o de Venta, así que agruparlo bajo "Servicio"
 // prometía algo que la pantalla no era — ahí adentro se vuelve a
 // separar por tipo, quedaba redundante con el propio menú.
-// Historial dejó de ser transversal (26-ago): ahora que la pantalla
-// muestra solo Venta (ver ServicioList.jsx), se mudó al grupo "Ventas".
 const MENU_TRANSVERSAL = [
     { id: 'presupuestos', Icon: LuBanknote, nombre: 'Presupuestos' },
 ];

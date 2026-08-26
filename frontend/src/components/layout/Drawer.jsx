@@ -1,17 +1,15 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
-import { LuBanknote, LuClipboardList, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings } from 'react-icons/lu';
+import { LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
 // (mismo criterio que Sidebar.jsx en desktop). Presupuestos queda aparte de
 // cualquier dominio: un "presupuesto" puede ser de Servicio o de Venta, así
-// que meterlo bajo "Servicio" prometía algo que no era. Historial (ahora solo
-// Venta, 26-ago) no tiene tab propio en el BottomNav, así que se queda acá
-// para seguir siendo alcanzable — no porque sea transversal como Presupuestos.
+// que meterlo bajo "Servicio" prometía algo que no era. 'historial' se retiró
+// (26-ago) — la pestaña "Todo" de Venta cubre lo mismo.
 const MENU_TRANSVERSAL_DRAWER = [
     { id: 'presupuestos', nombre: 'Presupuestos', Icon: LuBanknote },
-    { id: 'historial',    nombre: 'Historial',    Icon: LuClipboardList },
 ];
 const MENU_GESTION_DRAWER = [
     { id: 'clientes',  nombre: 'Clientes',  Icon: LuUsers },

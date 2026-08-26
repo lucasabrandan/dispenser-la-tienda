@@ -10,7 +10,6 @@ import LoginPage from './components/auth/LoginPage';
 import DashboardCaja from './components/DashboardCaja';
 // Operaciones
 import ServicioManager     from './components/servicio/ServicioManager';
-import ServicioList        from './components/servicio/ServicioList';
 import VentaManager        from './components/venta/VentaManager';
 import PresupuestosManager from './components/PresupuestosManager';
 
@@ -70,8 +69,6 @@ function AppInterna() {
                     abrirCrearDirecto={abrirCrear}
                     onCrearConsumido={() => setAbrirCrear(false)}
                 />;
-            case 'historial':
-                return <ServicioList />;
             case 'presupuestos':
                 return <PresupuestosManager />;
             case 'clientes':
