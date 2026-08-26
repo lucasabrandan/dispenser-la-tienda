@@ -49,7 +49,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
             onClick={onClose}
         >
             <div
-                className="w-full rounded-t-[2rem] max-h-[92vh] flex flex-col shadow-2xl bg-[#FFFFFF] dark:bg-[#1C1C1C]"
+                className="w-full rounded-t-[2rem] max-h-[92vh] flex flex-col shadow-2xl bg-card"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}
@@ -82,15 +82,15 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
 
                     {/* Stats rápidas */}
                     <div className="grid grid-cols-3 gap-2 mt-4">
-                        <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
+                        <div className="bg-panel rounded-xl p-3 text-center">
                             <p className="text-body-lg font-black text-brand-red leading-none">{historial.length}</p>
                             <p className="text-label font-black text-muted uppercase mt-0.5">Servicios</p>
                         </div>
-                        <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
+                        <div className="bg-panel rounded-xl p-3 text-center">
                             <p className="text-body-lg font-black text-brand-amber leading-none">${fmt(totalGastado)}</p>
                             <p className="text-label font-black text-muted uppercase mt-0.5">Total facturado</p>
                         </div>
-                        <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-xl p-3 text-center">
+                        <div className="bg-panel rounded-xl p-3 text-center">
                             <p className="text-body-lg font-black text-ink leading-none">
                                 {diasSinAtender !== null ? diasSinAtender : '—'}
                             </p>
@@ -123,13 +123,13 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
                                                 <div className={`w-4 h-4 rounded-full border-2 ${
                                                     esPrimero
                                                         ? 'bg-brand-red border-brand-red'
-                                                        : 'bg-[#FFFFFF] dark:bg-[#1C1C1C] border-chip'
+                                                        : 'bg-card border-chip'
                                                 }`} />
                                             </div>
 
                                             {/* Contenido */}
                                             <div className="flex-1 pb-1">
-                                                <div className="bg-[#EFEDEA] dark:bg-[#242424] rounded-2xl p-4 border border-black/[0.05] dark:border-white/[0.05]">
+                                                <div className="bg-panel rounded-2xl p-4 border border-black/[0.05] dark:border-white/[0.05]">
                                                     {/* Fecha + estado */}
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center gap-2">

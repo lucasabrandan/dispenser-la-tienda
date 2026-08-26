@@ -30,7 +30,7 @@ export default function RepuestoCard({
             }`}
         >
             {/* Foto */}
-            <div className="aspect-square bg-[#F5F3F1] dark:bg-[#1C1C1C] flex items-center justify-center overflow-hidden relative">
+            <div className="aspect-square bg-page flex items-center justify-center overflow-hidden relative">
                 {fotoSrc
                     ? <img src={fotoSrc} className="w-full h-full object-cover" alt={r.nombre} />
                     : <LuPackage size={36} className="opacity-30" />

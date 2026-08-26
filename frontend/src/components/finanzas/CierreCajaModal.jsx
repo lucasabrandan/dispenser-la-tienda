@@ -237,7 +237,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                                                     </div>
                                                     <M valor={tec.total} className="text-body-lg font-black text-ink" />
                                                 </div>
-                                                <div className="px-4 py-2.5 bg-[#FFFFFF] dark:bg-[#1C1C1C] space-y-1">
+                                                <div className="px-4 py-2.5 bg-card space-y-1">
                                                     <div className="flex justify-between text-caption">
                                                         <span className="text-muted">− Imp. {PCT_IMPUESTOS}%</span>
                                                         <span className="text-[#D13A28]">−${impuestos.toLocaleString('es-AR')}</span>
@@ -254,11 +254,11 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 divide-x divide-black/[0.06] dark:divide-white/[0.06] border-t border-black/[0.07] dark:border-white/[0.07]">
-                                                    <div className="px-4 py-2.5 bg-[#EFEDEA] dark:bg-[#242424]">
+                                                    <div className="px-4 py-2.5 bg-panel">
                                                         <p className="text-label font-bold text-muted uppercase mb-0.5">{tec.nombre.split(' ')[0]}</p>
                                                         <M valor={porPartes} className="text-body-lg font-black text-brand-amber" />
                                                     </div>
-                                                    <div className="px-4 py-2.5 bg-[#EFEDEA] dark:bg-[#242424]">
+                                                    <div className="px-4 py-2.5 bg-panel">
                                                         <p className="text-label font-bold text-muted uppercase mb-0.5">Empresa</p>
                                                         <M valor={porPartes} className="text-body-lg font-black text-ink" />
                                                     </div>

@@ -71,7 +71,7 @@ export default function ModalPrecioMasivo({
                     />
 
                     {/* Preview */}
-                    <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] rounded-xl p-3 mb-4 border border-black/[0.05] dark:border-white/[0.05]">
+                    <div className="bg-page rounded-xl p-3 mb-4 border border-black/[0.05] dark:border-white/[0.05]">
                         <p className="text-label font-black text-muted uppercase mb-1">Formula</p>
                         <p className="text-caption font-bold text-ink">
                             Efectivo = Costo × (1 + Ganancia%)

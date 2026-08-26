@@ -51,7 +51,7 @@ export default function PasoDetalle({
                     Repuestos adicionales
                 </p>
                 <button type="button" onClick={() => setSheetRepuestosOpen(true)}
-                    className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-body border border-dashed border-chip text-ink bg-[#FFFFFF] dark:bg-[#1C1C1C] active:scale-[0.98] transition-all">
+                    className="w-full py-3 px-4 rounded-xl flex items-center justify-between font-bold text-body border border-dashed border-chip text-ink bg-card active:scale-[0.98] transition-all">
                     <span>
                         {repuestosAgregados.length > 0
                             ? `${repuestosAgregados.length} repuesto${repuestosAgregados.length > 1 ? 's' : ''} seleccionado${repuestosAgregados.length > 1 ? 's' : ''}`

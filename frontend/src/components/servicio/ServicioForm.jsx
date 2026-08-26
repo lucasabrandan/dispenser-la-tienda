@@ -206,7 +206,7 @@ export default function ServicioForm({
     };
 
     return (
-        <div className="font-sans transition-colors bg-[#FFFFFF] dark:bg-[#141414] min-h-full">
+        <div className="font-sans transition-colors bg-card min-h-full">
 
             {/* Banner borrador */}
             {borradorDisponible && !servicioParaEditar && (

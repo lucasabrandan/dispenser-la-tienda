@@ -20,7 +20,7 @@ function Seccion({ id, titulo, Icono, children, color = 'blue', seccionAbierta, 
         teal:   'bg-teal-50/50 dark:bg-teal-900/10 border-teal-200/50 dark:border-teal-800/30',
     };
     return (
-        <div className={`rounded-2xl border overflow-hidden transition-all ${abierta ? colores[color] : 'bg-[#F5F3F1] dark:bg-[#1C1C1C] border-black/[0.05] dark:border-white/[0.05]'}`}>
+        <div className={`rounded-2xl border overflow-hidden transition-all ${abierta ? colores[color] : 'bg-page border-black/[0.05] dark:border-white/[0.05]'}`}>
             <button type="button" onClick={() => onToggle(abierta ? '' : id)}
                 className="w-full flex items-center justify-between p-3 text-left">
                 <span className="text-label font-black text-ink uppercase tracking-wide flex items-center gap-1.5">
@@ -336,7 +336,7 @@ export default function SeccionesPrecios({
                         </div>
 
                         {baseBudget === 'facturado' && lineasCostosPres.length > 0 && (
-                            <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] rounded-xl p-2.5">
+                            <div className="bg-page rounded-xl p-2.5">
                                 <p className="text-label font-black text-muted uppercase mb-1.5">Desguace por costos reales ({cantPres} unid.)</p>
                                 {lineasCostosPres.map((l, idx) => (
                                     <div key={idx} className="flex justify-between text-body font-bold text-secondary py-0.5">

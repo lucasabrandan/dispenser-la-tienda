@@ -170,7 +170,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                 <Label>Equipos en el ticket</Label>
                 <div className="flex flex-col gap-2">
                     {ticketItems.map((it, idx) => (
-                        <div key={`${it.equipoSerial || 'eq'}-${idx}`} className="rounded-2xl overflow-hidden bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+                        <div key={`${it.equipoSerial || 'eq'}-${idx}`} className="rounded-2xl overflow-hidden bg-panel border border-black/[0.07] dark:border-white/[0.07]">
                             <div className="p-4 flex justify-between items-start">
                                 <div className="flex-1 min-w-0 pr-3">
                                     <p className="font-black text-body text-brand-red">
@@ -207,7 +207,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
             </div>
 
             {/* ── Planificación: fecha + duración + técnico ────────────── */}
-            <div className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07] space-y-3">
+            <div className="rounded-2xl p-4 bg-panel border border-black/[0.07] dark:border-white/[0.07] space-y-3">
                 <p className="text-label font-black text-muted uppercase tracking-widest">Planificación</p>
 
                 {/* Fecha */}

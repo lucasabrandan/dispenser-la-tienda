@@ -163,30 +163,30 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                             <div>
                                 <label className="text-label font-bold text-muted uppercase block mb-0.5">Calle *</label>
                                 <input value={dirLibre.calle} onChange={e => setDirLibre(p => ({ ...p, calle: e.target.value }))}
-                                    placeholder="Av. Rivadavia" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                                    placeholder="Av. Rivadavia" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-card text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
                             </div>
                             <div>
                                 <label className="text-label font-bold text-muted uppercase block mb-0.5">Nro</label>
                                 <input value={dirLibre.numero} onChange={e => setDirLibre(p => ({ ...p, numero: e.target.value }))}
-                                    placeholder="5000" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                                    placeholder="5000" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-card text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             <div>
                                 <label className="text-label font-bold text-muted uppercase block mb-0.5">Piso</label>
                                 <input value={dirLibre.piso} onChange={e => setDirLibre(p => ({ ...p, piso: e.target.value }))}
-                                    placeholder="3" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                                    placeholder="3" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-card text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
                             </div>
                             <div>
                                 <label className="text-label font-bold text-muted uppercase block mb-0.5">Depto</label>
                                 <input value={dirLibre.depto} onChange={e => setDirLibre(p => ({ ...p, depto: e.target.value }))}
-                                    placeholder="B" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                                    placeholder="B" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-card text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
                             </div>
                         </div>
                         <div>
                             <label className="text-label font-bold text-muted uppercase block mb-0.5">Localidad / Barrio *</label>
                             <input value={dirLibre.localidad} onChange={e => setDirLibre(p => ({ ...p, localidad: e.target.value }))}
-                                placeholder="Caballito, CABA" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-[#FFFFFF] dark:bg-[#1C1C1C] text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
+                                placeholder="Caballito, CABA" className="w-full px-3 py-2 rounded-lg text-body font-medium outline-none bg-card text-ink border border-black/[0.06] dark:border-white/[0.06] placeholder:text-muted focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all" />
                         </div>
                     </div>
 

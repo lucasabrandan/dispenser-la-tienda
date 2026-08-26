@@ -108,7 +108,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                     </button>
                 </div>
             ) : (
-            <div className="rounded-2xl p-4 bg-[#EFEDEA] dark:bg-[#242424] border border-black/[0.07] dark:border-white/[0.07]">
+            <div className="rounded-2xl p-4 bg-panel border border-black/[0.07] dark:border-white/[0.07]">
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-label font-black bg-brand-red">
                         {ticketItems.length + 1}

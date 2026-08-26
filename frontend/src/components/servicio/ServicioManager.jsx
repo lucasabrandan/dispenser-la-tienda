@@ -517,8 +517,8 @@ export default function ServicioManager({
 
             {modalCrear && (
                 <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/55">
-                    <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-[#FFFFFF] dark:bg-[#141414]">
-                        <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-[#FFFFFF] dark:bg-[#141414]">
+                    <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-card">
+                        <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-card">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>
                         <div className="sticky top-0 px-5 py-4 flex justify-between items-center z-10 bg-panel border-b border-black/[0.08]">

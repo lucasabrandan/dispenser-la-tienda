@@ -80,7 +80,7 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
     return (
         <>
             <div className="fixed inset-0 bg-black/40 z-[200]" onClick={onCerrar} />
-            <div className="fixed top-0 right-0 bottom-0 w-full max-w-sm z-[201] bg-[#FFFFFF] dark:bg-[#1C1C1C] shadow-2xl flex flex-col">
+            <div className="fixed top-0 right-0 bottom-0 w-full max-w-sm z-[201] bg-card shadow-2xl flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.08] dark:border-white/[0.07]">
                     <div>
@@ -107,7 +107,7 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                 <div className="flex-1 overflow-y-auto">
                     {cargando ? (
                         <div className="space-y-3 p-4">
-                            {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-xl animate-pulse bg-[#EFEDEA] dark:bg-[#242424]" />)}
+                            {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-xl animate-pulse bg-panel" />)}
                         </div>
                     ) : notifs.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-muted">

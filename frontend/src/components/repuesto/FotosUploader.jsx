@@ -6,7 +6,7 @@ const FOTO_KEYS = ['fotoUrl', 'fotoUrl2', 'fotoUrl3'];
 
 export default function FotosUploader({ form, fotoPreviews, onFotoChange }) {
     return (
-        <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] p-3 rounded-2xl border border-dashed border-chip">
+        <div className="bg-page p-3 rounded-2xl border border-dashed border-chip">
             <label className="text-[10px] font-black uppercase tracking-wide text-muted mb-2 block">
                 Fotos del producto (hasta 3)
             </label>

@@ -123,7 +123,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                     return (
                                                         <div key={s.id}
                                                             onClick={() => setVistaActual(s.servicioTipo === 'TECNICA' ? 'servicio-tecnico' : 'venta')}
-                                                            className="rounded-lg p-2.5 ml-2 bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform border-l-[3px]"
+                                                            className="rounded-lg p-2.5 ml-2 bg-page border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform border-l-[3px]"
                                                             style={{ borderLeftColor: ESTADO_BORDER[s.estado] || '#A8A29E' }}>
                                                             <div className="flex items-start gap-2">
                                                                 <span className="mt-0.5">{s.servicioTipo === 'TECNICA' ? <LuWrench size={14} /> : <LuShoppingCart size={14} />}</span>
@@ -185,7 +185,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
                                                             className={`rounded-lg p-2.5 ml-2 border border-black/[0.05] dark:border-white/[0.05] border-l-[3px] ${
                                                                 n.completada
                                                                     ? 'bg-panel opacity-50'
-                                                                    : 'bg-[#F5F3F1] dark:bg-[#1C1C1C]'
+                                                                    : 'bg-page'
                                                             }`}
                                                             style={{ borderLeftColor: n.completada ? '#16A34A' : '#D48800' }}>
                                                             <div className="flex items-start gap-2">

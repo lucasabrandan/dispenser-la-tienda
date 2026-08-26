@@ -540,7 +540,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             <p className="text-caption text-muted mb-4">#{servicioDetalle.id} · {servicioDetalle.fecha}</p>
                             <div className="max-h-[50vh] overflow-y-auto space-y-2 mb-4">
                                 {(servicioDetalle.items || []).map((it, idx) => (
-                                    <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.04] dark:border-white/[0.04]">
+                                    <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-page border border-black/[0.04] dark:border-white/[0.04]">
                                         <div className="flex justify-between mb-1">
                                             <span className="font-bold text-body text-brand-red">{it.equipoSerial}</span>
                                             <span className="font-black text-body-lg text-ink">${Number(it.costo || 0).toLocaleString('es-AR')}</span>

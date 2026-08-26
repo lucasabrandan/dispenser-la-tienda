@@ -48,7 +48,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
             onClick={onClose}>
             <div
-                className="w-full sm:max-w-2xl bg-[#FFFFFF] dark:bg-[#1C1C1C] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh]"
+                className="w-full sm:max-w-2xl bg-card rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -89,7 +89,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
 
                         return (
                             <div key={s.id}
-                                className="bg-[#EFEDEA] dark:bg-[#242424] rounded-2xl px-4 py-3 flex gap-3 items-start">
+                                className="bg-panel rounded-2xl px-4 py-3 flex gap-3 items-start">
                                 <div className="flex-1 min-w-0 space-y-1">
                                     {/* Fila: fecha + estado */}
                                     <div className="flex items-center gap-2 flex-wrap">

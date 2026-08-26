@@ -196,7 +196,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
             {/* Modal crear/editar */}
             {modalCrear && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end md:items-center justify-center p-0 md:p-4">
-                    <div className="bg-[#FFFFFF] dark:bg-[#141414] w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+                    <div className="bg-card w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
                         <div className="md:hidden flex justify-center pt-3 pb-1">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>

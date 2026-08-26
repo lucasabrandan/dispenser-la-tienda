@@ -421,7 +421,7 @@ export default function ServicioList({ onEditar }) {
                             {modalDetalle.items.map((it, idx) => {
                                 const g = it.garantiaHasta ? estadoGarantia(it.garantiaHasta) : null;
                                 return (
-                                <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-[#F5F3F1] dark:bg-[#1C1C1C] border border-black/[0.04] dark:border-white/[0.04]">
+                                <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-page border border-black/[0.04] dark:border-white/[0.04]">
                                     <div className="flex justify-between mb-1">
                                         <span className="font-bold text-body text-brand-red">{it.equipoSerial}</span>
                                         {esAdmin && <M valor={Number(it.costo)} className="font-black text-body-lg text-ink" />}

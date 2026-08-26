@@ -24,7 +24,7 @@ export default function VentaForm({ onSaved, clienteInicialId = null, ventaParaE
         : TITULOS[1].subtitulo;
 
     return (
-        <div className="font-sans transition-colors bg-[#FFFFFF] dark:bg-[#141414] min-h-full">
+        <div className="font-sans transition-colors bg-card min-h-full">
 
             <StepHeader
                 paso={paso}
