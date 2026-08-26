@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuSearch, LuSettings2, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil } from 'react-icons/lu';
+import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuSearch, LuSettings2, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil, LuLayers } from 'react-icons/lu';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import { useAuth } from '../../context/AuthContext';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
@@ -27,6 +27,9 @@ const TABS = [
     { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', Icon: LuFileText },
     { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', Icon: LuCircleCheck },
     { id: 'ARCHIVADO',             label: 'Archivados',   short: 'Arch.',    color: '#A8A29E', Icon: LuArchive },
+    // "Todo" — hub único (ítem 4 paso 3 / ítem 17 opción 3): un solo lugar para ver
+    // cualquier servicio técnico sin importar el estado, en vez de ir a buscarlo a Historial.
+    { id: 'TODOS',                 label: 'Todo',         short: 'Todo',     color: '#1C1917', Icon: LuLayers },
 ];
 
 const ESTADO_API_MAP = {
@@ -91,7 +94,11 @@ export default function ServicioManager({
         try {
             const results = await Promise.all(
                 TABS.map(t => api.get('/servicios', {
-                    params: { tipo: 'TECNICA', estado: ESTADO_API_MAP[t.id] || t.id, page: 0, size: 1 }
+                    params: {
+                        tipo: 'TECNICA', page: 0, size: 1,
+                        // "Todo" no filtra por estado — cuenta todos los servicios técnicos
+                        ...(t.id !== 'TODOS' ? { estado: ESTADO_API_MAP[t.id] || t.id } : {}),
+                    }
                 }).catch(() => ({ data: { totalElements: 0 } })))
             );
             const counts = {};
@@ -182,24 +189,21 @@ export default function ServicioManager({
     useEffect(() => { if (abrirCrearDirecto) { setModalCrear(true); onCrearConsumido?.(); } }, [abrirCrearDirecto]); // eslint-disable-line
 
     // Swipe en contenido para cambiar tab
-    const columnIds = enBusquedaGlobal ? ['TODOS', ...TABS.map(t => t.id)] : TABS.map(t => t.id);
+    const columnIds = TABS.map(t => t.id);
     const swipeHandlers = useSwipeGesture(columnIds, tabActual, cambiarTab);
 
-    // Columnas para SwipeColumns — agrega "Todos" cuando hay búsqueda
-    const columns = [
-        ...(enBusquedaGlobal ? [{
-            id: 'TODOS', label: 'Todos', fullLabel: 'Todos', color: '#1C1917',
-            count: filtros.totalItems, Icon: LuSearch,
-        }] : []),
-        ...TABS.map(t => ({
-            id: t.id,
-            label: t.short,
-            fullLabel: t.label,
-            count: tabCounts[t.id] ?? null,
-            color: t.color,
-            Icon: t.Icon,
-        })),
-    ];
+    // Columnas para SwipeColumns — "Todo" ya es un tab fijo más (ver TABS arriba), no hace
+    // falta inyectarlo aparte cuando hay búsqueda activa (antes se armaba un "Todos" sintético
+    // con ícono de lupa solo mientras se buscaba; ahora el auto-switch a TODOS en cambiarTab/
+    // el useEffect de más arriba simplemente resalta este mismo tab).
+    const columns = TABS.map(t => ({
+        id: t.id,
+        label: t.short,
+        fullLabel: t.label,
+        count: tabCounts[t.id] ?? null,
+        color: t.color,
+        Icon: t.Icon,
+    }));
 
     return (
         <div className="min-h-screen pb-28 font-sans bg-page transition-colors"
