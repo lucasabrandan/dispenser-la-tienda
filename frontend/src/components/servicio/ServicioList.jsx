@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { LuClipboardList, LuWrench, LuShoppingCart, LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuPencil, LuTrash2, LuSearch, LuMapPin } from 'react-icons/lu';
+import { LuClipboardList, LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuPencil, LuTrash2, LuSearch, LuMapPin } from 'react-icons/lu';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useFiltros } from '../../hooks/useFiltros';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import Paginacion   from '../ui/Paginacion';
-import SwipeColumns from '../ui/SwipeColumns';
-import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import { useMontos } from '../../context/MontosContext';
 import { estadoGarantia, mesKeyDeFecha, formatMesLargo } from '../../utils/dateUtils';
@@ -31,16 +29,9 @@ const ESTADOS_HISTORIAL = [
     { value: 'ARCHIVADO',   label: 'Archivado' },
 ];
 
-const TIPOS = [
-    { id: 'TODOS',   label: 'Todos',   fullLabel: 'Todos',   color: '#1C1917', Icon: LuClipboardList },
-    { id: 'TECNICA', label: 'Técnica', fullLabel: 'Técnica', color: '#D48800', Icon: LuWrench },
-    { id: 'VENTA',   label: 'Venta',   fullLabel: 'Venta',   color: '#D13A28', Icon: LuShoppingCart },
-];
-
 const badgeTipo = (s) => {
     if (s.estado === 'PRESUPUESTO') return { label: 'Pendiente', cls: 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]' };
     if (s.estado === 'ARCHIVADO')   return { label: 'Archivado', cls: 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]' };
-    if (s.servicioTipo === 'TECNICA') return { label: 'Técnica', cls: 'bg-[#FDECEA] text-[#B02E1E] dark:bg-[#2E100C] dark:text-[#F5796C]' };
     return { label: 'Venta', cls: 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]' };
 };
 
@@ -59,7 +50,6 @@ export default function ServicioList({ onEditar }) {
     const { usuario, esAdmin } = useAuth();
     const [servicios, setServicios]       = useState([]);
     const [modalDetalle, setModalDetalle] = useState(null);
-    const [tipoFiltro, setTipoFiltro]     = useState('TODOS');
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [seleccionando, setSeleccionando] = useState(false);
     const [seleccionadas, setSeleccionadas] = useState(new Set());
@@ -95,7 +85,7 @@ export default function ServicioList({ onEditar }) {
     useEffect(() => { cargarServicios(); }, []); // eslint-disable-line
 
     const cargarServicios = () => {
-        const params = new URLSearchParams({ page: 0, size: 500, sort: 'fechaServicio,desc' });
+        const params = new URLSearchParams({ tipo: 'VENTA', page: 0, size: 500, sort: 'fechaServicio,desc' });
         if (!esAdmin && usuario?.id) params.append('usuarioId', usuario.id);
         api.get(`/servicios?${params}`)
             .then(res => {
@@ -124,31 +114,16 @@ export default function ServicioList({ onEditar }) {
         nroDocPdf: s.nroDocumento || localStorage.getItem(`pdf_nro_${s.id}`) || '',
     })), [servicios]);
 
-    const serviciosFiltrados = tipoFiltro === 'TODOS'
-        ? serviciosConNro
-        : serviciosConNro.filter(s => s.servicioTipo === tipoFiltro);
-
-    const tipoIds = TIPOS.map(t => t.id);
-    const swipeHandlers = useSwipeGesture(tipoIds, tipoFiltro, setTipoFiltro);
-    const columns = TIPOS.map(t => ({
-        ...t,
-        count: t.id === 'TODOS' ? serviciosConNro.length
-             : serviciosConNro.filter(s => s.servicioTipo === t.id).length,
-    }));
-
-    const filtros = useFiltros(serviciosFiltrados, {
+    const filtros = useFiltros(serviciosConNro, {
         porPagina: 10,
         campoFecha: 'fecha',
         campoEstado: 'estado',
         periodoInicial: 'MES',
         campoBusqueda: ['clienteNombre', 'sedeNombre', 'clienteTelefono', 'observaciones', 'nroDocPdf'],
-        campoBusquedaFn: (s) => s.items?.map(it =>
-            [it.equipoSerial, it.equipoModelo, it.equipoUbicacion].filter(Boolean).join(' ')
-        ).join(' ') ?? '',
+        campoBusquedaFn: (s) => s.items?.map(it => it.nombre).filter(Boolean).join(' ') ?? '',
     });
 
-    const totalVentas  = servicios.filter(s => s.servicioTipo === 'VENTA' && s.estado !== 'PRESUPUESTO').reduce((a, s) => a + calcularCosto(s), 0);
-    const totalTecnica = servicios.filter(s => s.servicioTipo === 'TECNICA' && s.estado !== 'PRESUPUESTO').reduce((a, s) => a + calcularCosto(s), 0);
+    const totalVentas  = servicios.filter(s => s.estado !== 'PRESUPUESTO').reduce((a, s) => a + calcularCosto(s), 0);
 
     const generarPDFHistorial = (s, { sinPrecios = false } = {}) => {
         const esPendiente = s.estado === 'PRESUPUESTO';
@@ -183,7 +158,7 @@ export default function ServicioList({ onEditar }) {
     };
 
     return (
-        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page" {...swipeHandlers}>
+        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page">
 
             {/* Header sticky */}
             <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
@@ -194,7 +169,7 @@ export default function ServicioList({ onEditar }) {
                         <div className="relative flex-1">
                             <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
-                                placeholder="Cliente, S/N, ubicación, sede..."
+                                placeholder="Cliente, sede, producto..."
                                 className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
@@ -225,16 +200,10 @@ export default function ServicioList({ onEditar }) {
                     {/* Stats compacto — solo admin */}
                     {esAdmin && (
                         <div className="flex items-center gap-3 px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                            <span className="text-label font-bold text-muted">Ventas</span>
+                            <span className="text-label font-bold text-muted">Total ventas</span>
                             <M valor={totalVentas} className="text-label font-black text-ink" />
-                            <span className="text-label text-muted">·</span>
-                            <span className="text-label font-bold text-muted">Técnica</span>
-                            <M valor={totalTecnica} className="text-label font-black text-ink" />
                         </div>
                     )}
-
-                    {/* Filtro tipo — SwipeColumns */}
-                    <SwipeColumns columns={columns} activeId={tipoFiltro} onChangeColumn={setTipoFiltro} />
 
                     {/* Filtros colapsables */}
                     <button onClick={() => setMostrarFiltros(v => !v)}
@@ -258,9 +227,7 @@ export default function ServicioList({ onEditar }) {
                             const badge = badgeTipo(s);
                             const costo = calcularCosto(s);
                             const esPendiente = s.estado === 'PRESUPUESTO';
-                            const borderColor = s.servicioTipo === 'TECNICA'
-                                ? 'border-l-[3px] border-l-[#D13A28] dark:border-l-[#E8422F]'
-                                : 'border-l-[3px] border-l-[#16A34A]';
+                            const borderColor = 'border-l-[3px] border-l-[#16A34A]';
                             const mesKey = mesKeyDeFecha(s.fecha);
                             const mesAnterior = idx > 0 ? mesKeyDeFecha(filtros.itemsPagina[idx - 1].fecha) : null;
                             const mostrarHeaderMes = mesKey && mesKey !== mesAnterior;
@@ -294,26 +261,7 @@ export default function ServicioList({ onEditar }) {
                                         <p className="text-body font-bold text-ink truncate">{s.clienteNombre}</p>
                                         <p className="text-caption text-muted mt-0.5 flex items-center gap-1"><LuMapPin size={11} />{s.sedeNombre}</p>
 
-                                        {s.items?.length > 0 && s.servicioTipo === 'TECNICA' && (
-                                            <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
-                                                {s.items.slice(0, 2).map((it, idx) => {
-                                                    const g = it.garantiaHasta ? estadoGarantia(it.garantiaHasta) : null;
-                                                    return (
-                                                        <p key={`${it.equipoSerial || 'it'}-${idx}`} className="text-caption text-muted truncate">
-                                                            · {it.equipoSerial} — {it.trabajoRealizado}
-                                                            {g && (
-                                                                <span className={`ml-1.5 font-bold inline-flex items-center gap-0.5 ${g.vigente ? 'text-brand-green' : 'text-brand-red'}`}>
-                                                                    {g.vigente ? <LuShieldCheck size={11} className="shrink-0" /> : <LuHourglass size={11} className="shrink-0" />}
-                                                                    {g.vigente ? `${g.dias}d` : `vencida hace ${Math.abs(g.dias)}d`}
-                                                                </span>
-                                                            )}
-                                                        </p>
-                                                    );
-                                                })}
-                                                {s.items.length > 2 && <p className="text-caption text-muted">+{s.items.length - 2} más</p>}
-                                            </div>
-                                        )}
-                                        {s.items?.length > 0 && s.servicioTipo === 'VENTA' && (
+                                        {s.items?.length > 0 && (
                                             <p className="text-caption text-muted mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">
                                                 · {s.items.map(it => `${it.cantidad || 1}x ${it.nombre || it.trabajoRealizado}`).join(', ')}
                                             </p>
