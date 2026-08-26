@@ -3,18 +3,27 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
 import { exportarBalanceCSV } from '../../utils/exportarCSV';
-import { formatearPrecio } from '../../utils/formatearPrecio';
+import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
+import { MESES_ES } from '../../utils/dateUtils';
+import { useTheme } from '../../hooks/useTheme';
 import Paginacion from '../ui/Paginacion';
 import StatCard from './StatCard';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
 const POR_PAGINA = 15;
 
 export default function TabBalance({ filtroMes, setFiltroMes }) {
     const { ocultar } = useMontos();
+    const { isDark } = useTheme();
+    // Recharts dibuja SVG puro — las clases dark: de Tailwind no le llegan,
+    // hay que resolver el color a mano segun el tema activo (mismo patron que TabSueldo).
+    const colorVerde = isDark ? '#4ADE80' : '#16A34A';
+    const colorAmbar = isDark ? '#F0A500' : '#D48800';
+    const colorRojo = isDark ? '#E8422F' : '#D13A28';
     const [stats,    setStats]    = useState({ facturacion: 0, costoRepuestos: 0, gastosVarios: 0, gananciaReal: 0, transacciones: [] });
     const [cargando, setCargando] = useState(false);
     const [pagTx, setPagTx] = useState(1);
+    const [evolucion, setEvolucion] = useState([]);
 
     const cargar = () => {
         setCargando(true);
@@ -26,11 +35,37 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
 
     useEffect(() => { cargar(); setPagTx(1); }, [filtroMes]); // eslint-disable-line
 
+    useEffect(() => {
+        const [y, m] = filtroMes.split('-').map(Number);
+        const meses = Array.from({ length: 6 }, (_, i) => {
+            const d = new Date(y, m - 1 - (5 - i), 1);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        });
+        Promise.all(meses.map(mesStr =>
+            api.get(`/servicios/stats/mensual?mes=${mesStr}`)
+                .then(r => ({ mesStr, ...r.data }))
+                .catch(() => ({ mesStr, facturacion: 0, costoRepuestos: 0, gastosVarios: 0 }))
+        )).then(resultados => {
+            setEvolucion(resultados.map(r => {
+                const fact = Number(r.facturacion || 0);
+                const impMes = fact * 0.30;
+                const gananciaMes = fact - impMes - Number(r.costoRepuestos || 0) - Number(r.gastosVarios || 0);
+                const mm = parseInt(r.mesStr.substring(5), 10);
+                return {
+                    mesLabel: MESES_ES[mm] || r.mesStr,
+                    'Facturación': Math.round(fact),
+                    'Ganancia neta': Math.round(gananciaMes),
+                };
+            }));
+        });
+    }, [filtroMes]); // eslint-disable-line
+
     const fmt = v => ocultar ? '••••' : `$${formatearPrecio(v)}`;
     const imp = stats.facturacion * 0.30;
     const totalPagTx = Math.max(1, Math.ceil(stats.transacciones.length / POR_PAGINA));
     const txPagina = stats.transacciones.slice((pagTx - 1) * POR_PAGINA, pagTx * POR_PAGINA);
     const gananciaNeta = stats.facturacion - imp - stats.costoRepuestos - stats.gastosVarios;
+    const margenNeto = stats.facturacion > 0 ? Math.round(gananciaNeta / stats.facturacion * 100) : 0;
 
     return (
         <div className="space-y-4">
@@ -48,7 +83,7 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
                 <StatCard label="Facturación"    value={stats.facturacion}    sub="Total bruto"        variante="gold"    ocultar={ocultar} />
                 <StatCard label="Impuestos 30%"  value={imp}                  sub="Estimado fiscal"    variante="red"     ocultar={ocultar} />
                 <StatCard label="Costos"         value={stats.costoRepuestos + stats.gastosVarios} sub="Repuestos + gastos" variante="muted" ocultar={ocultar} />
-                <StatCard label="Ganancia neta"  value={gananciaNeta}         sub="Lo que queda"       variante="redBold" ocultar={ocultar} />
+                <StatCard label="Ganancia neta"  value={gananciaNeta}         sub={`Margen neto: ${margenNeto}%`} variante="redBold" ocultar={ocultar} />
             </div>
 
             <div className="rounded-xl bg-card p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
@@ -70,33 +105,23 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
                 </div>
             </div>
 
-            {stats.facturacion > 0 && (
+            {evolucion.length > 1 && (
                 <div className="rounded-xl bg-card p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    <p className="text-label font-bold text-muted uppercase tracking-wider mb-2">Distribución</p>
+                    <p className="text-label font-bold text-muted uppercase tracking-wider mb-2">Evolución mensual</p>
                     <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                            <Pie
-                                data={[
-                                    { name: 'Ganancia', value: Math.max(gananciaNeta, 0) },
-                                    { name: 'Impuestos', value: imp },
-                                    { name: 'Repuestos', value: stats.costoRepuestos },
-                                    { name: 'Gastos', value: stats.gastosVarios },
-                                ].filter(d => d.value > 0)}
-                                cx="50%" cy="50%"
-                                innerRadius={55} outerRadius={80}
-                                paddingAngle={3}
-                                dataKey="value"
-                            >
-                                {['#16A34A', '#D13A28', '#A8A29E', '#D48800'].map((c, i) => (
-                                    <Cell key={i} fill={c} />
+                        <BarChart data={evolucion}>
+                            <XAxis dataKey="mesLabel" tick={{ fontSize: 10, fill: '#A8A29E' }} />
+                            <YAxis tick={{ fontSize: 9, fill: '#A8A29E' }} width={55}
+                                tickFormatter={v => `$${formatearPrecioCompacto(v)}`} />
+                            <Tooltip formatter={(v, name) => [`$${formatearPrecio(v)}`, name]} contentStyle={{ fontSize: 11 }} />
+                            <Legend formatter={(v) => <span className="text-label font-bold text-muted">{v}</span>} iconSize={8} />
+                            <Bar dataKey="Facturación" fill={colorAmbar} radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="Ganancia neta" radius={[4, 4, 0, 0]}>
+                                {evolucion.map((entry, i) => (
+                                    <Cell key={i} fill={entry['Ganancia neta'] >= 0 ? colorVerde : colorRojo} />
                                 ))}
-                            </Pie>
-                            <Tooltip formatter={(v) => `$${formatearPrecio(v)}`} />
-                            <Legend
-                                formatter={(v) => <span className="text-label font-bold text-muted">{v}</span>}
-                                iconSize={8}
-                            />
-                        </PieChart>
+                            </Bar>
+                        </BarChart>
                     </ResponsiveContainer>
                 </div>
             )}
