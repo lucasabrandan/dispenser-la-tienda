@@ -255,7 +255,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                     {onCrearNuevo && (
                         <button
                             type="button"
-                            onClick={onCrearNuevo}
+                            onClick={() => onCrearNuevo(busqueda)}
                             className="w-full py-3 rounded-xl text-label font-black uppercase text-muted border border-dashed border-chip active:scale-95 transition-all mt-1 mb-3"
                         >
                             + Crear repuesto nuevo

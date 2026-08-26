@@ -277,7 +277,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
             <RepuestosBottomSheet isOpen={sheetRepuestos} onClose={() => setSheetRepuestos(false)}
                 repuestos={db.repuestos || []} seleccionados={itemActual.repuestosUsados || []}
                 onChange={nuevos => setItemActual(prev => ({ ...prev, repuestosUsados: nuevos }))}
-                onCrearNuevo={() => { setSheetRepuestos(false); setModalRepuesto(true); }} />
+                onCrearNuevo={(nombre) => { setNombreRepuesto(nombre || ''); setSheetRepuestos(false); setModalRepuesto(true); }} />
             <RepuestoRapidoModal isOpen={modalRepuesto} onClose={() => setModalRepuesto(false)}
                 nombreInicial={nombreRepuesto}
                 onCreado={repuesto => { setDb(prev => ({ ...prev, repuestos: [...(prev.repuestos || []), repuesto] })); setSheetRepuestos(true); }} />
