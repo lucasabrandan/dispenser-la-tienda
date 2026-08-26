@@ -295,7 +295,7 @@ export default function ServicioManager({
                     <div className="flex items-center gap-1.5">
                         {/* Búsqueda — mobile: toggle, desktop: siempre visible */}
                         <button onClick={() => setMostrarBusqueda(v => !v)}
-                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
+                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-card text-muted'}`}>
                             <LuSearch size={15} />
                         </button>
                         <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
@@ -304,7 +304,7 @@ export default function ServicioManager({
                                 value={filtros.busqueda}
                                 onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, S/N, ubicación..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
                                 autoFocus={mostrarBusqueda}
                             />
                             {filtros.busqueda && (
@@ -315,14 +315,14 @@ export default function ServicioManager({
 
                         {/* Filtros toggle */}
                         <button onClick={() => setMostrarFiltros(v => !v)}
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-card text-muted'}`}>
                             <LuSettings2 size={15} />
                         </button>
 
                         {/* Menú overflow */}
                         <div className="relative">
                             <button onClick={() => setMenuOverflow(v => !v)}
-                                className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                                className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                                 ⋯
                             </button>
                             {menuOverflow && (

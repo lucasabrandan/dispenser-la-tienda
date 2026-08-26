@@ -82,7 +82,7 @@ export default function TabGastos({ filtroMes, setFiltroMes }) {
         <div className="space-y-5">
             <div className="flex gap-2 items-center">
                 <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                    className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
             </div>
 
             {gastos.length > 0 && (() => {

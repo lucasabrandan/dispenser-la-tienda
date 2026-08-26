@@ -226,14 +226,14 @@ export default function PresupuestosManager() {
                     <div className="flex items-center gap-1.5">
                         {/* Búsqueda — mobile: toggle */}
                         <button onClick={() => setMostrarBusqueda(v => !v)}
-                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
+                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-card text-muted'}`}>
                             <LuSearch size={15} />
                         </button>
                         <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
                             <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, teléfono, S/N, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
                                 autoFocus={mostrarBusqueda} />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
@@ -243,7 +243,7 @@ export default function PresupuestosManager() {
                         {/* Período — chip que despliega FiltrosPanel; arranca colapsado en "Este mes" */}
                         <button onClick={() => setMostrarPeriodo(v => !v)}
                             className={`${mostrarBusqueda ? 'hidden md:flex' : 'flex'} h-9 px-2.5 rounded-lg items-center gap-1 shrink-0 active:scale-95 shadow-sm border text-label font-bold whitespace-nowrap ${
-                                mostrarPeriodo ? 'bg-brand-red text-white border-transparent' : 'bg-white dark:bg-[#2E2E2E] text-secondary border-black/[0.05] dark:border-white/[0.05]'
+                                mostrarPeriodo ? 'bg-brand-red text-white border-transparent' : 'bg-card text-secondary border-black/[0.05] dark:border-white/[0.05]'
                             }`}>
                             <LuCalendar size={12} /> {periodoLabel} {mostrarPeriodo ? '▴' : '▾'}
                         </button>

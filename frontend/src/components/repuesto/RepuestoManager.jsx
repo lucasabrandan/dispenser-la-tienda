@@ -60,19 +60,19 @@ export default function RepuestoManager() {
                             <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input placeholder="Buscar..."
                                 value={busqueda} onChange={e => setBusqueda(e.target.value)}
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                             {busqueda && (
                                 <button onClick={() => setBusqueda('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
                             )}
                         </div>
                         <button onClick={() => setStockSheetOpen(true)} title="Ajuste stock"
-                            className="h-9 w-9 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuPackage size={15} /></button>
+                            className="h-9 w-9 rounded-lg flex items-center justify-center bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuPackage size={15} /></button>
 
                         {/* Menú overflow */}
                         <div className="relative">
                             <button onClick={() => setMenuOverflow(v => !v)}
-                                className="h-9 w-9 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuEllipsis size={15} /></button>
+                                className="h-9 w-9 rounded-lg flex items-center justify-center bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuEllipsis size={15} /></button>
                             {menuOverflow && (
                                 <>
                                     <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />

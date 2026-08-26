@@ -50,7 +50,7 @@ export default function RadarMantenimiento() {
                         <div className="flex-1" />
                         <span className="text-body font-black text-brand-red">{alertas.length} alertas</span>
                         <button onClick={cargarAlertas}
-                            className="h-8 w-8 rounded-lg flex items-center justify-center bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 text-sm">
+                            className="h-8 w-8 rounded-lg flex items-center justify-center bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 text-sm">
                             <LuRefreshCw size={14} />
                         </button>
                     </div>

@@ -121,7 +121,7 @@ export default function DespachoManager() {
                     <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink mb-2.5">Despacho</h2>
                     <div className="flex gap-1.5 items-center">
                         <button onClick={() => setMostrarFiltros(v => !v)}
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted'}`}>
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-card text-muted'}`}>
                             <LuSettings2 size={15} />
                         </button>
                         <span className="text-label font-bold text-muted flex-1">{ordenesFiltradas.length} ordenes</span>

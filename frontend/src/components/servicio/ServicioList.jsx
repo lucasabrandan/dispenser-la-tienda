@@ -195,7 +195,7 @@ export default function ServicioList({ onEditar }) {
                             <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                             <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
                                 placeholder="Cliente, S/N, ubicación, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
@@ -238,7 +238,7 @@ export default function ServicioList({ onEditar }) {
 
                     {/* Filtros colapsables */}
                     <button onClick={() => setMostrarFiltros(v => !v)}
-                        className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
+                        className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
                         <span className="text-label font-bold uppercase text-muted">{mostrarFiltros ? '▲' : '▼'} Filtros</span>
                         <span className="text-label font-bold text-muted">{filtros.totalItems} resultados</span>
                     </button>

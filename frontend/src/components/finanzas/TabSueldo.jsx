@@ -96,10 +96,10 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
             {/* Controles */}
             <div className="flex gap-2 flex-wrap items-center">
                 <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                    className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 {esAdmin && usuarios.length > 1 && (
                     <select value={selectedUserId || ''} onChange={e => setSelectedUserId(e.target.value ? Number(e.target.value) : null)}
-                        className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                         <option value="">Mi sueldo</option>
                         {usuarios.filter(u => u.id !== usuario?.id).map(u => (
                             <option key={u.id} value={u.id}>{u.nombre}</option>

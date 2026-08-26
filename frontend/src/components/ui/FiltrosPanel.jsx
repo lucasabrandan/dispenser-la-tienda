@@ -58,7 +58,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = false, conRan
                     <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
                     <input type="text" placeholder={placeholderBusqueda}
                         value={busqueda} onChange={e => setBusqueda(e.target.value)}
-                        className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
+                        className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
                     {busqueda && (
                         <button onClick={() => setBusqueda('')}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
@@ -74,7 +74,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = false, conRan
                 {mesesDisponibles?.length > 0 && (
                     <select value={mesSelector}
                         onChange={e => aplicarMesSelector(e.target.value)}
-                        className={`h-8 px-2 rounded-lg text-label font-bold outline-none flex-1 bg-white dark:bg-[#2E2E2E] text-secondary shadow-sm ${
+                        className={`h-8 px-2 rounded-lg text-label font-bold outline-none flex-1 bg-card text-secondary shadow-sm ${
                             mesSelector ? 'border-[1.5px] border-brand-red' : 'border border-black/[0.05] dark:border-white/[0.05]'
                         }`}>
                         <option value="">Elegir mes...</option>
@@ -84,7 +84,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = false, conRan
                 {conRango && (
                     <button onClick={() => setMostrarRango(!mostrarRango)}
                         className={`h-8 px-3 rounded-lg text-label font-bold uppercase transition-all active:scale-95 ${
-                            mostrarRango ? 'bg-brand-red text-white' : 'bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
+                            mostrarRango ? 'bg-brand-red text-white' : 'bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
                         }`}>
                         Rango
                     </button>
@@ -95,10 +95,10 @@ export default function FiltrosPanel({ estados = [], conBusqueda = false, conRan
             {mostrarRango && (
                 <div className="flex gap-1.5 items-center">
                     <DateInput value={desdeLocal} onChange={setDesdeLocal}
-                        className="flex-1 h-8 px-2 rounded-lg text-caption font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                        className="flex-1 h-8 px-2 rounded-lg text-caption font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                     <span className="text-label text-muted">a</span>
                     <DateInput value={hastaLocal} onChange={setHastaLocal}
-                        className="flex-1 h-8 px-2 rounded-lg text-caption font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                        className="flex-1 h-8 px-2 rounded-lg text-caption font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                     <button onClick={() => { aplicarRango(desdeLocal, hastaLocal); setMostrarRango(false); }}
                         className="h-8 px-3 rounded-lg text-label font-bold text-white active:scale-95 bg-brand-red">OK</button>
                 </div>

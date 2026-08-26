@@ -36,9 +36,9 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
         <div className="space-y-4">
             <div className="flex gap-2 items-center">
                 <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 <button onClick={() => exportarBalanceCSV(stats, filtroMes)}
-                    className="h-8 px-3 rounded-lg text-label font-bold uppercase bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                    className="h-8 px-3 rounded-lg text-label font-bold uppercase bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                     CSV
                 </button>
                 {cargando && <span className="text-caption text-muted animate-pulse">Cargando...</span>}

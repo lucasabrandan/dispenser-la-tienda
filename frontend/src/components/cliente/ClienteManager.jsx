@@ -93,7 +93,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             <input placeholder="Cliente, sede, teléfono, S/N..."
                                 value={busqueda}
                                 onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
+                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
                         </div>
                         <button onClick={() => setModalOpen('nuevo')}
                             className="h-9 px-4 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red shrink-0">

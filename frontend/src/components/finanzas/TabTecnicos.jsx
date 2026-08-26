@@ -39,9 +39,9 @@ export default function TabTecnicos({ filtroMes, setFiltroMes }) {
         <div className="space-y-5">
             <div className="flex gap-2 flex-wrap items-center">
                 <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 <select value={filtroTec} onChange={e => setFiltroTec(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-white dark:bg-[#2E2E2E] text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <option value="">Todos los técnicos</option>
                     {tecnicoOpciones.map(t => (
                         <option key={t.id} value={t.id}>{t.nombre}</option>

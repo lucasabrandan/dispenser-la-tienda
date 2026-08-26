@@ -62,7 +62,7 @@ export default function PlanificadorBlock({ planificador, setVistaActual, cargan
             {planificador.length > 6 && (
                 <>
                     <button onClick={() => setSemana2(v => !v)}
-                        className="w-full flex items-center justify-center gap-1 h-6 rounded-lg text-label font-bold uppercase text-muted bg-white dark:bg-[#2E2E2E] shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99] mb-2">
+                        className="w-full flex items-center justify-center gap-1 h-6 rounded-lg text-label font-bold uppercase text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99] mb-2">
                         {semana2 ? '▲ Ocultar' : '▼ Semana siguiente'}
                     </button>
                     {semana2 && (

@@ -141,7 +141,7 @@ export default function UsuariosManager() {
                                 className={`h-8 px-3 rounded-lg font-bold text-label uppercase transition-all active:scale-95 ${
                                     filtroRol === rol
                                         ? 'bg-brand-red text-white'
-                                        : 'bg-white dark:bg-[#2E2E2E] text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
+                                        : 'bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
                                 }`}>
                                 {rol === 'TODOS' ? `Todos (${usuarios.length})` : `${ROL_LABEL[rol]} (${usuarios.filter(u => u.rol === rol).length})`}
                             </button>
