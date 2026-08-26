@@ -400,12 +400,14 @@ export default function ServicioManager({
                 {/* ═══ SWIPE COLUMNS (mobile) / PIPELINE TABS (desktop) ═══ */}
                 <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
 
-                {/* ═══ ARCHIVADOS — acceso aparte, no compite con las pestañas de uso diario ═══ */}
+                {/* ═══ ARCHIVADOS — link chico y discreto, no un botón más: es algo que
+                    se consulta de vez en cuando, no debe competir con las pestañas de uso diario ═══ */}
                 {(!esAdmin || modo === 'SERVICIO') && (
                     <button onClick={() => cambiarTab('ARCHIVADO')}
-                        className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-label font-bold uppercase tracking-wide active:scale-[0.99] transition-all
-                            ${tabActual === 'ARCHIVADO' ? 'bg-chip text-ink' : 'text-muted'}`}>
-                        <LuArchive size={13} /> Ver archivados{tabCounts.ARCHIVADO ? ` (${tabCounts.ARCHIVADO})` : ''}
+                        className={`w-full flex items-center gap-1.5 pt-2 mt-0.5 border-t border-dashed border-black/10 dark:border-white/10
+                            text-label font-bold uppercase tracking-wide transition-colors
+                            ${tabActual === 'ARCHIVADO' ? 'text-ink' : 'text-muted'}`}>
+                        <LuArchive size={12} className="opacity-75" /> Ver archivados{tabCounts.ARCHIVADO ? ` (${tabCounts.ARCHIVADO})` : ''}
                     </button>
                 )}
 
