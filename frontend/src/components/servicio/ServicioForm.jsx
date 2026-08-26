@@ -72,7 +72,6 @@ export default function ServicioForm({
 
     // Genera PDF de previsualización (sin firmas — botón 📄 de la barra)
     // Si ticketItems está vacío (post-guardado), usa la snapshot guardada antes del reset
-    const [generandoPDF, setGenerandoPDF] = useState(false);
     const dispararPDF = async () => {
         const items = ticketItems.length > 0 ? ticketItems : snapshotRef.current?.ticketItems;
         if (!items || items.length === 0) {
@@ -82,7 +81,6 @@ export default function ServicioForm({
         const snap = snapshotRef.current || {};
         const sedeObj = db.sedes?.find(s => s.id === (itemActual.sedeId || snap.sedeId));
         const totalFinal = ticketItems.length > 0 ? calcularResumenGanancia().totalConDescuento : snap.totalConDescuento;
-        setGenerandoPDF(true);
         const loading = toast.loading('Generando PDF…');
         try {
             await generarRemitoPDFPremium({
@@ -105,8 +103,6 @@ export default function ServicioForm({
         } catch (e) {
             console.error('Error generando PDF:', e);
             toast.error('Error al generar el PDF', { id: loading });
-        } finally {
-            setGenerandoPDF(false);
         }
     };
 

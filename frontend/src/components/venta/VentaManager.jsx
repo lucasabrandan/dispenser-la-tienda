@@ -38,7 +38,6 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
     const [ventaDuplicar, setVentaDuplicar] = useState(null);
     const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
-    const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [menuOverflow, setMenuOverflow] = useState(false);
     const [tabCounts, setTabCounts] = useState({});
 
@@ -150,13 +149,6 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
                 {/* SwipeColumns */}
                 <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
-
-                {/* Filtros colapsables */}
-                {mostrarFiltros && (
-                    <div className="space-y-2 p-3 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        <p className="text-label text-center text-muted font-bold">{filtros.totalItems} resultados</p>
-                    </div>
-                )}
 
                 {/* Lista */}
                 {cargando ? (

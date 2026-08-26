@@ -45,7 +45,6 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
     const [fotoDespues, setFotoDespues]   = useState(null);
     const [guardando, setGuardando]       = useState(false);
     const [sheetRepuestos, setSheetRepuestos] = useState(false);
-    const [count, setCount]               = useState(0);
     const refCamaraAntes   = useRef(null);
     const refGaleriaAntes  = useRef(null);
     const refCamaraDespues = useRef(null);
@@ -84,7 +83,6 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
             setCostoExtra(ultimo.costoExtra || '');
             setRepuestos(ultimo.repuestosUsados || []);
         }
-        setCount(0);
         setSerial('');
         setEsNuevo(true);
         setUbicacion('');
@@ -122,7 +120,6 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
             modeloEquipo: '',
         });
 
-        setCount(c => c + 1);
         setSerial('');
         setEsNuevo(true);
         setUbicacion('');
