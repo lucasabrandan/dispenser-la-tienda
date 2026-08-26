@@ -114,7 +114,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                     <button
                         type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-muted bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90"
                     >✕</button>
                 </div>
 
@@ -125,7 +125,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                         value={busqueda}
                         onChange={e => setBusqueda(e.target.value)}
                         placeholder="Buscar por nombre o SKU..."
-                        className="w-full px-4 py-2.5 rounded-xl text-body font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink placeholder-muted border border-black/[0.07] dark:border-white/[0.07]"
+                        className="w-full px-4 py-2.5 rounded-xl text-body font-medium outline-none bg-chip text-ink placeholder-muted border border-black/[0.07] dark:border-white/[0.07]"
                     />
                 </div>
 
@@ -149,7 +149,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
                                 }`}
                             >
                                 {/* Foto miniatura */}
-                                <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#EFEDEA] dark:bg-[#2E2E2E] flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-chip flex items-center justify-center">
                                     {fotoSrc
                                         ? <img src={fotoSrc} alt={r.nombre} className="w-full h-full object-cover"
                                                onError={e => { e.target.style.display = 'none'; }} />

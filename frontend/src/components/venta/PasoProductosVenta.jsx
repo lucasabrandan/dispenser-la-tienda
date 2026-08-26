@@ -97,7 +97,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
 
             {/* ── Lista de productos seleccionados ── */}
             {productos.length > 0 && (
-                <div className="rounded-xl overflow-hidden bg-[#EFEDEA] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
+                <div className="rounded-xl overflow-hidden bg-chip border border-black/[0.07] dark:border-white/[0.07]">
                     {productos.map((p, i) => (
                         <div
                             key={p.id ?? i}

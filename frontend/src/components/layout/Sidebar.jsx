@@ -61,7 +61,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
             null;
         const baseBtn = activa
             ? 'bg-brand-red text-white font-black shadow-lg'
-            : 'text-[#57534E] dark:text-[#A8A29E] hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] font-bold';
+            : 'text-secondary hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] font-bold';
 
         if (colapsado) {
             return (
@@ -183,7 +183,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                     )}
                     <div className={`flex items-center ${colapsado ? 'flex-col gap-1' : 'gap-1'}`}>
                         <button onClick={toggleMontos} title={montosVisibles ? 'Ocultar montos' : 'Mostrar montos'}
-                            className={`${iconBtn} ${montosVisibles ? 'text-[#57534E] dark:text-[#A8A29E]' : 'text-brand-red'}`}>
+                            className={`${iconBtn} ${montosVisibles ? 'text-secondary' : 'text-brand-red'}`}>
                             {montosVisibles ? (
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -197,7 +197,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                             )}
                         </button>
                         <button onClick={toggleTheme} title={isDark ? 'Modo claro' : 'Modo oscuro'}
-                            className={`${iconBtn} text-[#57534E] dark:text-[#A8A29E]`}>
+                            className={`${iconBtn} text-secondary`}>
                             {isDark ? <LuSun size={16} /> : <LuMoon size={16} />}
                         </button>
                         {colapsado && (

@@ -149,7 +149,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                     <div className="flex gap-2">
                         {PERIODOS_RAPIDOS.map(p => (
                             <button key={p.id} onClick={() => setPeriodo(p.id)}
-                                className={`flex-1 h-8 rounded-xl font-bold text-label uppercase transition-all active:scale-95 ${periodo === p.id ? 'bg-brand-red text-white' : 'bg-[#EFEDEA] dark:bg-[#2E2E2E] text-secondary'}`}>
+                                className={`flex-1 h-8 rounded-xl font-bold text-label uppercase transition-all active:scale-95 ${periodo === p.id ? 'bg-brand-red text-white' : 'bg-chip text-secondary'}`}>
                                 {p.label}
                             </button>
                         ))}
@@ -157,14 +157,14 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                     {periodo === 'custom' && (
                         <div className="flex gap-2">
                             <DateInput value={desde} onChange={setDesde}
-                                className="flex-1 h-8 px-3 rounded-xl text-caption border border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink outline-none" />
+                                className="flex-1 h-8 px-3 rounded-xl text-caption border border-black/[0.08] dark:border-white/[0.08] bg-chip text-ink outline-none" />
                             <DateInput value={hasta} onChange={setHasta}
-                                className="flex-1 h-8 px-3 rounded-xl text-caption border border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink outline-none" />
+                                className="flex-1 h-8 px-3 rounded-xl text-caption border border-black/[0.08] dark:border-white/[0.08] bg-chip text-ink outline-none" />
                         </div>
                     )}
                     {tecnicos.length > 0 && (
                         <select value={tecnicoFiltro} onChange={e => setTecnicoFiltro(e.target.value)}
-                            className="w-full h-8 px-3 rounded-xl text-caption border border-black/[0.08] dark:border-white/[0.08] bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink outline-none">
+                            className="w-full h-8 px-3 rounded-xl text-caption border border-black/[0.08] dark:border-white/[0.08] bg-chip text-ink outline-none">
                             <option value="">Todos los técnicos</option>
                             {tecnicos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
                         </select>
@@ -175,7 +175,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                 <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
                     {cargando ? (
                         <div className="space-y-2">
-                            {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl animate-pulse bg-[#EFEDEA] dark:bg-[#2E2E2E]" />)}
+                            {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl animate-pulse bg-chip" />)}
                         </div>
                     ) : totalItems === 0 && gastos.length === 0 ? (
                         <div className="text-center py-10">
@@ -332,7 +332,7 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
                 <div className="px-5 pb-6 pt-3 border-t border-black/[0.07] dark:border-white/[0.07] flex-shrink-0 space-y-2">
                     <div className="flex gap-3">
                         <button onClick={onClose}
-                            className="flex-1 h-11 rounded-2xl font-bold text-label uppercase bg-[#EFEDEA] dark:bg-[#2E2E2E] text-secondary active:scale-95 transition-all">
+                            className="flex-1 h-11 rounded-2xl font-bold text-label uppercase bg-chip text-secondary active:scale-95 transition-all">
                             Cerrar
                         </button>
                         <button

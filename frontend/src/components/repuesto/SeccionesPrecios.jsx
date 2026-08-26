@@ -150,7 +150,7 @@ export default function SeccionesPrecios({
                 <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
                         <label className={`${labelBase} text-muted`}>Costo blanco $</label>
-                        <div className={`${readonlyBase} bg-chip border-black/[0.07] dark:border-white/[0.07] text-[#57534E] dark:text-[#A8A29E]`}>
+                        <div className={`${readonlyBase} bg-chip border-black/[0.07] dark:border-white/[0.07] text-secondary`}>
                             {fmt(form.costoBlanco)}
                         </div>
                         <p className="text-label text-muted font-bold mt-0.5">Informativo: Costo + 21% IVA. No afecta el cálculo de abajo.</p>
@@ -339,7 +339,7 @@ export default function SeccionesPrecios({
                             <div className="bg-[#F5F3F1] dark:bg-[#1C1C1C] rounded-xl p-2.5">
                                 <p className="text-label font-black text-muted uppercase mb-1.5">Desguace por costos reales ({cantPres} unid.)</p>
                                 {lineasCostosPres.map((l, idx) => (
-                                    <div key={idx} className="flex justify-between text-body font-bold text-[#57534E] dark:text-[#A8A29E] py-0.5">
+                                    <div key={idx} className="flex justify-between text-body font-bold text-secondary py-0.5">
                                         <span>{l.nombre}</span>
                                         <span>− {fmt(l.monto)}</span>
                                     </div>

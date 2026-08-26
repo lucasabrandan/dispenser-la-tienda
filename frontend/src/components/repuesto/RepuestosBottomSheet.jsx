@@ -212,7 +212,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                     <button
                         type="button"
                         onClick={onClose}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-muted bg-[#EFEDEA] dark:bg-[#2E2E2E] active:scale-90"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90"
                     >✕</button>
                 </div>
 
@@ -225,7 +225,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                             value={busqueda}
                             onChange={e => setBusqueda(e.target.value)}
                             placeholder="Buscar por nombre o SKU..."
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-body font-medium outline-none bg-[#EFEDEA] dark:bg-[#2E2E2E] text-ink placeholder-muted focus:ring-2 focus:ring-[#D13A28]/20 border border-black/[0.07] dark:border-white/[0.07]"
+                            className="w-full pl-9 pr-4 py-2.5 rounded-xl text-body font-medium outline-none bg-chip text-ink placeholder-muted focus:ring-2 focus:ring-[#D13A28]/20 border border-black/[0.07] dark:border-white/[0.07]"
                         />
                     </div>
                 </div>

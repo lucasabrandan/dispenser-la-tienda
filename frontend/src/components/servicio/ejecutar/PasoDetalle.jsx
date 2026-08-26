@@ -61,7 +61,7 @@ export default function PasoDetalle({
                 </button>
 
                 {repuestosAgregados.length > 0 && (
-                    <div className="rounded-xl overflow-hidden bg-[#EFEDEA] dark:bg-[#2E2E2E] border border-black/[0.07] dark:border-white/[0.07]">
+                    <div className="rounded-xl overflow-hidden bg-chip border border-black/[0.07] dark:border-white/[0.07]">
                         {repuestosAgregados.map((r, i) => (
                             <div key={r.id ?? i}
                                 className={`px-3 py-2.5 flex items-center gap-3 ${i < repuestosAgregados.length - 1 ? 'border-b border-black/[0.07] dark:border-white/[0.07]' : ''}`}>
