@@ -3,11 +3,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuCalendar, LuBanknote } from 'react-icons/lu';
 
-// Reordenado: las acciones más frecuentes accesibles directamente
+// Reordenado: las acciones más frecuentes accesibles directamente.
+// 'despacho' (ítem propio, 26-ago) se saco de acá: el modo Despacho/Servicio
+// de ServicioManager.jsx ya cubre esas pestañas adentro de "Técnico" — tenerlo
+// también acá era dos caminos al mismo lugar. Ver Sidebar.jsx (mismo criterio).
 const NAV_ADMIN = [
     { id: 'caja',             nombre: 'Panel',    Icon: LuHouse        },
     { id: 'servicio-tecnico', nombre: 'Técnico',  Icon: LuWrench       },
-    { id: 'despacho',         nombre: 'Despacho', Icon: LuPin          },
     { id: 'venta',            nombre: 'Venta',    Icon: LuShoppingCart },
     { id: '_more',            nombre: 'Más',      Icon: LuEllipsis     },
 ];
@@ -27,8 +29,11 @@ const SECCIONES_MAS = ['presupuestos', 'historial', 'clientes', 'radar', 'produc
 
 export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) {
     const { esAdmin } = useAuth();
-    const { ordenesActivas } = useBadges();
+    const { pendientes, ordenesActivas } = useBadges();
     const NAV_ITEMS = esAdmin ? NAV_ADMIN : NAV_TECNICO;
+    // Mismo criterio que Sidebar.jsx: admin ve Despacho fusionado adentro de
+    // "Técnico" (modo), el badge suma las dos señales.
+    const servicioTecnicoBadge = esAdmin ? pendientes + ordenesActivas : pendientes;
 
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-panel transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">
@@ -53,7 +58,10 @@ export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) 
                     const activo = item.id === '_more'
                         ? SECCIONES_MAS.includes(vistaActual)
                         : vistaActual === item.id;
-                    const badge = item.id === 'despacho' && ordenesActivas > 0 ? ordenesActivas : null;
+                    const badge =
+                        item.id === 'servicio-tecnico' && servicioTecnicoBadge > 0 ? servicioTecnicoBadge :
+                        item.id === 'mis-ordenes' && ordenesActivas > 0 ? ordenesActivas :
+                        null;
                     return (
                         <button
                             key={item.id}

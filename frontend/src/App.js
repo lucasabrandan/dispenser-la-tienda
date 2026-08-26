@@ -20,7 +20,6 @@ import GestorProductos    from './components/productos/GestorProductos';
 import RadarMantenimiento from './components/RadarMantenimiento';
 import DashboardFinanzas  from './components/finanzas/DashboardFinanzas';
 import UsuariosManager    from './components/usuarios/UsuariosManager';
-import DespachoManager    from './components/ordenes/DespachoManager';
 import MisOrdenes         from './components/ordenes/MisOrdenes';
 import MiAgenda           from './components/ordenes/MiAgenda';
 import MiSueldo           from './components/finanzas/MiSueldo';
@@ -88,8 +87,6 @@ function AppInterna() {
                 return <DashboardFinanzas />;
             case 'usuarios':
                 return <UsuariosManager />;
-            case 'despacho':
-                return <DespachoManager />;
             case 'mis-ordenes':
                 return <MisOrdenes tecnicoId={usuario?.id} onEjecutarOrden={ejecutarOrden} />;
             case 'mi-agenda':

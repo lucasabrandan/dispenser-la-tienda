@@ -11,9 +11,12 @@ import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuClipboardList, 
 const MENU_PANEL = [
     { id: 'caja', Icon: LuHouse, nombre: 'Panel' },
 ];
+// 'despacho' (ítem propio, 26-ago) se saco de acá: el modo Despacho/Servicio
+// de ServicioManager.jsx ya cubre esas 3 pestañas (Pendiente/En camino/En
+// sitio) adentro de "Servicio Técnico" — tenerlo también acá era dos
+// caminos al mismo lugar.
 const MENU_SERVICIO = [
     { id: 'servicio-tecnico', Icon: LuWrench, nombre: 'Servicio Técnico' },
-    { id: 'despacho',         Icon: LuPin,    nombre: 'Despacho'         },
 ];
 const MENU_VENTAS = [
     { id: 'venta',     Icon: LuShoppingCart,  nombre: 'Venta / Insumos' },
@@ -56,12 +59,16 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
     const { usuario, logout, esAdmin } = useAuth();
     const { pendientes, ordenesActivas } = useBadges();
     const menuOperaciones = esAdmin ? null : MENU_OPERACIONES_TECNICO; // null = admin usa los grupos por dominio, se renderiza aparte
+    // Admin ve Despacho fusionado adentro de "Servicio Técnico" (modo), así que
+    // el badge de acá suma las dos señales; el técnico no tiene ese modo, sigue
+    // viendo solo sus pendientes (sus órdenes activas ya están en "Mis Ordenes").
+    const servicioTecnicoBadge = esAdmin ? pendientes + ordenesActivas : pendientes;
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
         const badge =
-            item.id === 'servicio-tecnico' && pendientes > 0 ? pendientes :
-            (item.id === 'mis-ordenes' || item.id === 'despacho') && ordenesActivas > 0 ? ordenesActivas :
+            item.id === 'servicio-tecnico' && servicioTecnicoBadge > 0 ? servicioTecnicoBadge :
+            item.id === 'mis-ordenes' && ordenesActivas > 0 ? ordenesActivas :
             null;
         const baseBtn = activa
             ? 'bg-brand-red text-white font-black shadow-lg'
