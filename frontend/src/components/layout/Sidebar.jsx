@@ -29,11 +29,13 @@ const MENU_TRANSVERSAL = [
     { id: 'presupuestos', Icon: LuBanknote, nombre: 'Presupuestos' },
 ];
 
+// 'historial' (ahora solo Venta, 26-ago) se saco de este menu: el tecnico
+// nunca genera una Venta por su cuenta (ModalRegistrarTrabajo.jsx siempre crea
+// servicioTipo TECNICA) — quedaba vacio de adorno para este rol.
 const MENU_OPERACIONES_TECNICO = [
     { id: 'mis-ordenes',      Icon: LuPin,           nombre: 'Mis Ordenes'      },
     { id: 'mi-agenda',        Icon: LuCalendar,      nombre: 'Mi Agenda'        },
     { id: 'servicio-tecnico', Icon: LuWrench,        nombre: 'Servicio Tecnico' },
-    { id: 'historial',        Icon: LuClipboardList, nombre: 'Historial'        },
     { id: 'mi-sueldo',        Icon: LuBanknote,      nombre: 'Mi Sueldo'        },
 ];
 
