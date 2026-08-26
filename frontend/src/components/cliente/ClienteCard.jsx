@@ -42,40 +42,53 @@ export default function ClienteCard({
     // Dirección formateada
     const direccion = [cliente.calle, cliente.numero, cliente.localidad].filter(Boolean).join(' ');
 
-    // Tipo de cliente por servicios: dorado=servicio, rojo=venta
+    // Tipo de cliente por servicios: ambar=servicio, rojo=venta, gris=ambos
     const tieneTecnica = serviciosCli.some(s => s.servicioTipo === 'TECNICA');
     const tieneVenta   = serviciosCli.some(s => s.servicioTipo === 'VENTA');
-    const borderColor  = tieneTecnica && tieneVenta ? '#A8A29E'
-                       : tieneTecnica ? '#D48800'
-                       : tieneVenta   ? '#D13A28'
-                       : 'transparent';
-    const tipoIcons    = tieneTecnica && tieneVenta ? [LuWrench, LuShoppingCart]
-                       : tieneTecnica ? [LuWrench]
-                       : tieneVenta   ? [LuShoppingCart]
-                       : [];
     const iniciales = cliente.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 
     // Vista colapsada
     if (!isExpanded) {
+        const avatarBg = tieneTecnica && tieneVenta ? 'bg-[#A8A29E]'
+                        : tieneTecnica ? 'bg-brand-amber'
+                        : tieneVenta   ? 'bg-brand-red'
+                        : 'bg-chip';
+        const avatarText = (tieneTecnica || tieneVenta) ? 'text-white' : 'text-muted';
+
         return (
             <div onClick={onToggleExpand}
-                className="bg-card rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-center gap-3"
-                style={{ borderLeft: borderColor !== 'transparent' ? `3px solid ${borderColor}` : undefined }}>
-                <span className="w-9 h-9 rounded-lg bg-brand-red flex items-center justify-center text-white font-black text-label shrink-0">
+                className="bg-card rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-start gap-3">
+                <span className={`w-9 h-9 rounded-lg ${avatarBg} ${avatarText} flex items-center justify-center font-black text-label shrink-0 mt-0.5`}>
                     {iniciales}
                 </span>
                 <div className="flex-1 min-w-0">
-                    <p className="text-body font-black text-ink leading-tight truncate">
-                        {cliente.nombre}
-                    </p>
-                    <p className="text-caption text-muted mt-0.5 truncate">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-body font-black text-ink leading-tight">
+                            {cliente.nombre}
+                        </p>
+                        {esEmpresa && (
+                            <span className="text-label font-bold px-1.5 py-0.5 rounded-md uppercase bg-chip text-muted shrink-0">
+                                Empresa
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-caption text-muted mt-0.5">
                         {ultimoServicio ? `Últ: ${formatFecha(ultimoServicio.fecha)}` : 'Sin servicios'}
                     </p>
+                    {alertaSinServicio && (
+                        <span className="inline-flex items-center gap-1 text-label font-bold text-brand-amber bg-[#D48800]/10 px-2 py-0.5 rounded-lg mt-1.5">
+                            <LuTriangleAlert size={11} /> {diasSinAtender} días sin visita
+                        </span>
+                    )}
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                    {alertaSinServicio && <span className="w-2 h-2 rounded-full bg-[#D48800]" />}
-                    {tipoIcons.map((TIcon, i) => <TIcon key={i} size={13} className="text-label" />)}
-                </div>
+                {cliente.telefono && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); abrirWhatsApp(cliente.telefono, cliente.nombre); }}
+                        title="WhatsApp"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#25D366] text-white shrink-0 active:scale-90 transition-all">
+                        <LuMessageCircle size={14} />
+                    </button>
+                )}
             </div>
         );
     }

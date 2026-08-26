@@ -109,7 +109,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
             {/* Lista mobile (1 col) / Grid desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {clientesPagina.map(cliente => (
                     <ClienteCard
                         key={cliente.id} cliente={cliente} sedes={sedes} equipos={equipos} servicios={servicios}
