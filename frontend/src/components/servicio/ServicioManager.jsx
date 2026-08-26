@@ -73,7 +73,19 @@ export default function ServicioManager({
         ordenServicio, setOrdenServicio,
     } = useServicioManager();
 
-    const TABS = esAdmin ? [...TABS_ORDEN, ...TABS_SERVICIO] : TABS_SERVICIO;
+    // Pestañas visibles en la fila principal: Archivados se saca de acá (ver
+    // TABS_SERVICIO_PILLS) y pasa a ser un acceso aparte ("Ver archivados"),
+    // porque no es algo que se consulte con la misma frecuencia que el resto.
+    const TABS_SERVICIO_PILLS = TABS_SERVICIO.filter(t => t.id !== 'ARCHIVADO');
+    // Modo Despacho/Servicio (solo admin — el técnico nunca tuvo los tabs de Orden
+    // acá, así que para su rol esto no cambia nada visualmente).
+    const [modo, setModo] = useState('SERVICIO');
+    const TABS = esAdmin
+        ? (modo === 'DESPACHO' ? TABS_ORDEN : TABS_SERVICIO_PILLS)
+        : TABS_SERVICIO_PILLS;
+    // Lookup completo (incluye Archivados) para resolver ícono/label del estado
+    // vacío sin importar el modo/pestañas visibles en este momento.
+    const TABS_LOOKUP_TODO = esAdmin ? [...TABS_ORDEN, ...TABS_SERVICIO] : TABS_SERVICIO;
 
     // Ordenes (Pendientes/En camino/En sitio) — mismo hook que ya usaba DespachoManager.jsx,
     // deshabilitado para técnicos (enabled: esAdmin) para no pegarle a /ordenes de más.
@@ -102,6 +114,7 @@ export default function ServicioManager({
     const [menuOverflow, setMenuOverflow]           = useState(false);
     const [tabCounts, setTabCounts]                 = useState({});
     const [tabAntesBusqueda, setTabAntesBusqueda]   = useState(null);
+    const [modoAntesBusqueda, setModoAntesBusqueda] = useState(null);
 
     // tabActual vive en estado propio (no en filtros.estado): los 3 tabs de Orden
     // (Pendientes/En camino/En sitio) no son estados válidos para /servicios, así que
@@ -116,12 +129,22 @@ export default function ServicioManager({
     useEffect(() => {
         if (filtros.busqueda && tabActual !== 'TODOS') {
             setTabAntesBusqueda(tabActual);
+            // 'TODOS' solo existe en modo Servicio — si buscás estando en Despacho,
+            // guardamos el modo para volver a él al limpiar la búsqueda.
+            if (modo !== 'SERVICIO') {
+                setModoAntesBusqueda(modo);
+                setModo('SERVICIO');
+            }
             setTabActual('TODOS');
             filtros.setEstado('TODOS');
         } else if (!filtros.busqueda && tabActual === 'TODOS' && tabAntesBusqueda) {
             setTabActual(tabAntesBusqueda);
             if (!esTabOrden(tabAntesBusqueda)) filtros.setEstado(tabAntesBusqueda);
             setTabAntesBusqueda(null);
+            if (modoAntesBusqueda) {
+                setModo(modoAntesBusqueda);
+                setModoAntesBusqueda(null);
+            }
         }
     }, [filtros.busqueda]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -205,6 +228,11 @@ export default function ServicioManager({
         if (!esTabOrden(id)) filtros.setEstado(id);
         setModoSeleccion(false);
         setSeleccionados(new Set());
+    };
+
+    const cambiarModo = (nuevoModo) => {
+        setModo(nuevoModo);
+        cambiarTab(nuevoModo === 'DESPACHO' ? TABS_ORDEN[0].id : TABS_SERVICIO_PILLS[0].id);
     };
 
     const toggleSeleccion = (id) => {
@@ -356,8 +384,30 @@ export default function ServicioManager({
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
+                {/* ═══ SELECTOR DE MODO (solo admin) ═══ */}
+                {esAdmin && (
+                    <div className="flex gap-1 bg-panel p-1 rounded-lg">
+                        {[{ id: 'DESPACHO', label: 'Despacho' }, { id: 'SERVICIO', label: 'Servicio' }].map(m => (
+                            <button key={m.id} onClick={() => cambiarModo(m.id)}
+                                className={`flex-1 py-1.5 rounded-md font-bold text-caption uppercase transition-all active:scale-95
+                                    ${modo === m.id ? 'bg-card text-ink shadow-sm' : 'text-muted'}`}>
+                                {m.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* ═══ SWIPE COLUMNS (mobile) / PIPELINE TABS (desktop) ═══ */}
                 <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
+
+                {/* ═══ ARCHIVADOS — acceso aparte, no compite con las pestañas de uso diario ═══ */}
+                {(!esAdmin || modo === 'SERVICIO') && (
+                    <button onClick={() => cambiarTab('ARCHIVADO')}
+                        className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-label font-bold uppercase tracking-wide active:scale-[0.99] transition-all
+                            ${tabActual === 'ARCHIVADO' ? 'bg-chip text-ink' : 'text-muted'}`}>
+                        <LuArchive size={13} /> Ver archivados{tabCounts.ARCHIVADO ? ` (${tabCounts.ARCHIVADO})` : ''}
+                    </button>
+                )}
 
                 {/* ═══ FILTROS COLAPSABLES ═══ (no aplica a los tabs de Orden — período/orden
                     de Servicio no tienen sentido ahí; fecha/técnico de Orden queda para más
@@ -464,8 +514,8 @@ export default function ServicioManager({
                     </div>
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                        {(() => { const EmptyIcon = TABS.find(t => t.id === tabActual)?.Icon || LuClipboardList; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
-                        <p className="text-body font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'resultados'}</p>
+                        {(() => { const EmptyIcon = TABS_LOOKUP_TODO.find(t => t.id === tabActual)?.Icon || LuClipboardList; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
+                        <p className="text-body font-bold text-muted">Sin {TABS_LOOKUP_TODO.find(t => t.id === tabActual)?.label?.toLowerCase() || 'resultados'}</p>
                         <p className="text-caption text-muted mt-1">Deslizá para ver otros estados</p>
                     </div>
                 ) : (
