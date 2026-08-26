@@ -68,7 +68,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
                         <button
                             type="button"
                             onClick={onRestar}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-brand-red active:scale-90 transition-all"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-lg text-brand-red active:scale-90 transition-all"
                         >−</button>
                         <input
                             type="text"
@@ -91,7 +91,7 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
                         <button
                             type="button"
                             onClick={onSumar}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-lg text-brand-red active:scale-90 transition-all"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-lg text-brand-red active:scale-90 transition-all"
                         >+</button>
                     </div>
                 ) : (
@@ -108,27 +108,38 @@ function CardRepuesto({ repuesto, cantidad, onSumar, onRestar, onCambiar }) {
     );
 }
 
+// Arma la entrada que se guarda en `seleccionados` (misma forma que ya esperaban
+// PasoProductosVenta.jsx/PasoEquipos.jsx: id/nombre/sku/descripcion/fotoUrl/
+// precio/costo/porcentajeGanancia/cantidad/subtotal).
+function armarEntrada(r, cantidad) {
+    const precio = parseFloat(r.precio) || 0;
+    return {
+        id: r.id,
+        nombre: r.nombre,
+        sku: r.sku,
+        descripcion: r.descripcion || null,
+        fotoUrl: r.fotoUrl || null,
+        precio,
+        costo: parseFloat(r.costo) || 0,
+        porcentajeGanancia: parseFloat(r.porcentajeGanancia) || 0,
+        cantidad,
+        subtotal: precio * cantidad,
+    };
+}
+
+// `seleccionados` es la fuente de verdad (viene del padre, ya en orden de
+// inserción) — cada +/-/cantidad se aplica al toque vía onChange, sin paso de
+// "Confirmar" aparte. Antes había que seleccionar, ajustar cantidad y ADEMÁS
+// tocar "Confirmar N repuestos" para que quedara guardado; si se cerraba el
+// sheet sin querer (backdrop, ✕) en el medio, se perdía todo lo tocado. Ahora
+// cada toque ya queda guardado en el presupuesto/servicio en el momento.
 export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], seleccionados = [], onChange, onCrearNuevo }) {
     const [busqueda, setBusqueda] = useState('');
 
-    // cantidades locales: { [repuestoId]: cantidad }
-    const [cantidades, setCantidades] = useState(() => {
-        const init = {};
-        seleccionados.forEach(r => { init[r.id] = r.cantidad || 1; });
-        return init;
-    });
-    // orden de inserción para preservar el orden del PDF (Object.entries ordena keys numéricos)
-    const [orden, setOrden] = useState(() => seleccionados.map(r => r.id));
-
-    // Resetear cantidades cuando se abre con nuevos seleccionados
+    // Al abrir, solo hace falta limpiar la búsqueda — la selección ya viene
+    // del padre (`seleccionados`), no hay estado local propio que resetear.
     React.useEffect(() => {
-        if (isOpen) {
-            const init = {};
-            seleccionados.forEach(r => { init[r.id] = r.cantidad || 1; });
-            setCantidades(init);
-            setOrden(seleccionados.map(r => r.id));
-            setBusqueda('');
-        }
+        if (isOpen) setBusqueda('');
     }, [isOpen]);
 
     const repuestosFiltrados = useMemo(() => {
@@ -140,50 +151,33 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
         );
     }, [repuestos, busqueda]);
 
+    const cantidadDe = (id) => seleccionados.find(x => x.id === id)?.cantidad || 0;
+
     const sumar = (r) => {
-        setCantidades(prev => ({ ...prev, [r.id]: (prev[r.id] || 0) + 1 }));
-        setOrden(prev => prev.includes(r.id) ? prev : [...prev, r.id]);
+        const actual = seleccionados.find(x => x.id === r.id);
+        const nuevos = actual
+            ? seleccionados.map(x => x.id === r.id ? { ...x, cantidad: x.cantidad + 1, subtotal: (x.cantidad + 1) * x.precio } : x)
+            : [...seleccionados, armarEntrada(r, 1)];
+        onChange(nuevos);
     };
     const restar = (r) => {
-        if ((cantidades[r.id] || 0) <= 1) {
-            setCantidades(prev => { const n = { ...prev }; delete n[r.id]; return n; });
-            setOrden(prev => prev.filter(id => id !== r.id));
-        } else {
-            setCantidades(prev => ({ ...prev, [r.id]: prev[r.id] - 1 }));
-        }
+        const actual = seleccionados.find(x => x.id === r.id);
+        if (!actual) return;
+        const nuevos = actual.cantidad <= 1
+            ? seleccionados.filter(x => x.id !== r.id)
+            : seleccionados.map(x => x.id === r.id ? { ...x, cantidad: x.cantidad - 1, subtotal: (x.cantidad - 1) * x.precio } : x);
+        onChange(nuevos);
     };
-    const cambiar = (r, val) => setCantidades(prev => {
-        if (val === '' || val < 1) return prev;
-        return { ...prev, [r.id]: val };
-    });
-
-    const totalSeleccionados = Object.values(cantidades).filter(c => c > 0).length;
-
-    const confirmar = () => {
-        // Usar `orden` para preservar el orden de inserción (Object.entries ordena keys numéricos)
-        const resultado = orden
-            .filter(id => (cantidades[id] || 0) > 0)
-            .map(id => {
-                const r = repuestos.find(x => x.id === id);
-                if (!r) return null;
-                const cantidad = cantidades[id];
-                return {
-                    id: r.id,
-                    nombre: r.nombre,
-                    sku: r.sku,
-                    descripcion: r.descripcion || null,
-                    fotoUrl: r.fotoUrl || null,
-                    precio: parseFloat(r.precio) || 0,
-                    costo: parseFloat(r.costo) || 0,
-                    porcentajeGanancia: parseFloat(r.porcentajeGanancia) || 0,
-                    cantidad,
-                    subtotal: (parseFloat(r.precio) || 0) * cantidad,
-                };
-            })
-            .filter(Boolean);
-        onChange(resultado);
-        onClose();
+    const cambiar = (r, val) => {
+        if (val === '' || val < 1) return;
+        const yaEsta = seleccionados.some(x => x.id === r.id);
+        const nuevos = yaEsta
+            ? seleccionados.map(x => x.id === r.id ? { ...x, cantidad: val, subtotal: val * x.precio } : x)
+            : [...seleccionados, armarEntrada(r, val)];
+        onChange(nuevos);
     };
+
+    const totalSeleccionados = seleccionados.length;
 
     if (!isOpen) return null;
 
@@ -204,8 +198,17 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                     <div>
                         <h3 className="text-title font-black text-ink">Repuestos</h3>
                         {totalSeleccionados > 0 && (
-                            <p className="text-caption text-brand-red font-bold">
-                                {totalSeleccionados} seleccionado{totalSeleccionados > 1 ? 's' : ''}
+                            <p className="text-caption font-bold flex items-center gap-2">
+                                <span className="text-brand-red">
+                                    {totalSeleccionados} seleccionado{totalSeleccionados > 1 ? 's' : ''}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => onChange([])}
+                                    className="text-muted underline underline-offset-2 font-bold"
+                                >
+                                    Vaciar selección
+                                </button>
                             </p>
                         )}
                     </div>
@@ -242,7 +245,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                                 <CardRepuesto
                                     key={r.id}
                                     repuesto={r}
-                                    cantidad={cantidades[r.id] || 0}
+                                    cantidad={cantidadDe(r.id)}
                                     onSumar={() => sumar(r)}
                                     onRestar={() => restar(r)}
                                     onCambiar={val => cambiar(r, val)}
@@ -263,16 +266,17 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
                     )}
                 </div>
 
-                {/* Footer confirmar */}
+                {/* Footer — ya no "confirma": las selecciones ya están aplicadas,
+                    esto solo cierra el sheet */}
                 <div className="px-4 pt-3 pb-6 border-t border-black/[0.07] dark:border-white/[0.07]">
                     <button
                         type="button"
-                        onClick={confirmar}
+                        onClick={onClose}
                         className="w-full py-4 rounded-2xl font-black text-body-lg text-white active:scale-[0.98] transition-all bg-brand-red"
                     >
                         {totalSeleccionados > 0
-                            ? `Confirmar ${totalSeleccionados} repuesto${totalSeleccionados > 1 ? 's' : ''}`
-                            : 'Confirmar sin repuestos'
+                            ? `Listo — ${totalSeleccionados} repuesto${totalSeleccionados > 1 ? 's' : ''}`
+                            : 'Cerrar'
                         }
                     </button>
                 </div>
