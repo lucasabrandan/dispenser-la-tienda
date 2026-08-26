@@ -16,15 +16,17 @@ const MENU_SERVICIO = [
     { id: 'despacho',         Icon: LuPin,    nombre: 'Despacho'         },
 ];
 const MENU_VENTAS = [
-    { id: 'venta', Icon: LuShoppingCart, nombre: 'Venta / Insumos' },
+    { id: 'venta',     Icon: LuShoppingCart,  nombre: 'Venta / Insumos' },
+    { id: 'historial', Icon: LuClipboardList, nombre: 'Historial'       },
 ];
-// Presupuestos e Historial quedan aparte de los grupos por dominio: un
-// "presupuesto" puede ser de Servicio o de Venta, así que agruparlo bajo
-// "Servicio" prometía algo que la pantalla no era — ahí adentro se
-// vuelve a separar por tipo, quedaba redundante con el propio menú.
+// Presupuestos queda aparte de los grupos por dominio: un "presupuesto"
+// puede ser de Servicio o de Venta, así que agruparlo bajo "Servicio"
+// prometía algo que la pantalla no era — ahí adentro se vuelve a
+// separar por tipo, quedaba redundante con el propio menú.
+// Historial dejó de ser transversal (26-ago): ahora que la pantalla
+// muestra solo Venta (ver ServicioList.jsx), se mudó al grupo "Ventas".
 const MENU_TRANSVERSAL = [
-    { id: 'presupuestos', Icon: LuBanknote,      nombre: 'Presupuestos' },
-    { id: 'historial',    Icon: LuClipboardList, nombre: 'Historial'    },
+    { id: 'presupuestos', Icon: LuBanknote, nombre: 'Presupuestos' },
 ];
 
 const MENU_OPERACIONES_TECNICO = [

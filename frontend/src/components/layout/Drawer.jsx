@@ -4,9 +4,11 @@ import { useBadges } from '../../hooks/useBadges';
 import { LuBanknote, LuClipboardList, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
-// (mismo criterio que Sidebar.jsx en desktop). Presupuestos e Historial quedan
-// juntos, aparte de cualquier dominio: un "presupuesto" puede ser de Servicio
-// o de Venta, así que meterlo bajo "Servicio" prometía algo que no era.
+// (mismo criterio que Sidebar.jsx en desktop). Presupuestos queda aparte de
+// cualquier dominio: un "presupuesto" puede ser de Servicio o de Venta, así
+// que meterlo bajo "Servicio" prometía algo que no era. Historial (ahora solo
+// Venta, 26-ago) no tiene tab propio en el BottomNav, así que se queda acá
+// para seguir siendo alcanzable — no porque sea transversal como Presupuestos.
 const MENU_TRANSVERSAL_DRAWER = [
     { id: 'presupuestos', nombre: 'Presupuestos', Icon: LuBanknote },
     { id: 'historial',    nombre: 'Historial',    Icon: LuClipboardList },
