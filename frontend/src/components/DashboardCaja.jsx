@@ -4,11 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { M } from './servicio/ServicioUI';
 import CierreCajaModal from './finanzas/CierreCajaModal';
-import PlanificadorBlock from './dashboard/PlanificadorBlock';
 import AgendaBlock from './dashboard/AgendaBlock';
 import AlertasBlock from './dashboard/AlertasBlock';
 import { calcTotal } from './dashboard/estadoConstants';
-import { LuWrench, LuShoppingCart, LuBanknote, LuTrendingUp } from 'react-icons/lu';
+import { LuWrench, LuShoppingCart } from 'react-icons/lu';
 import { getTodayISO, formatDateISO } from '../utils/dateUtils';
 
 export default function DashboardCaja({ setVistaActual }) {
@@ -57,10 +56,6 @@ export default function DashboardCaja({ setVistaActual }) {
             return Math.floor((Date.now() - new Date(s.fecha + 'T00:00:00').getTime()) / 86400000) > 7;
         });
 
-        const agendaHoy = servicios
-            .filter(s => s.fecha === hoyStr)
-            .sort((a, b) => (a.estado === 'PRESUPUESTO' ? -1 : 1));
-
         const ordenesActivas = ordenes.filter(o =>
             o.estado !== 'COMPLETADA' && o.estado !== 'CANCELADA'
         );
@@ -100,7 +95,7 @@ export default function DashboardCaja({ setVistaActual }) {
                 .reduce((a, s) => a + (s.items?.reduce((b, it) => b + Number(it.costoExtra || 0), 0) || 0), 0),
             pendientesCount: pendientes.length,
             pendientesVal: pendientes.reduce((a, s) => a + calcTotal(s), 0),
-            pptoVencidos, agendaHoy, ordenesActivas, planificador: dias,
+            pptoVencidos, ordenesActivas, planificador: dias,
         };
     }, [servicios, ordenes, notasAgenda]);
 
@@ -125,6 +120,10 @@ export default function DashboardCaja({ setVistaActual }) {
                     <M valor={data.moHoy} className="text-xl font-black text-brand-amber block" />
                 </div>
             )}
+            <button onClick={() => setVistaActual('finanzas')}
+                className="col-span-2 md:col-span-3 text-label font-bold text-brand-red hover:underline text-left -mt-1">
+                Ver en Finanzas →
+            </button>
         </div>
     );
 
@@ -166,8 +165,7 @@ export default function DashboardCaja({ setVistaActual }) {
                             <span className="text-body font-black">Nueva Venta</span>
                         </button>
                     </div>
-                    <PlanificadorBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
-                    <AgendaBlock agendaHoy={data.agendaHoy} setVistaActual={setVistaActual} cargando={cargando} />
+                    <AgendaBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
                     <StatsBlock />
                     <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
                     {data.pendientesCount > 0 && (
@@ -193,19 +191,17 @@ export default function DashboardCaja({ setVistaActual }) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div className="lg:col-span-2"><StatsBlock /></div>
                         <div className="flex flex-col gap-1.5">
-                            <div className="grid grid-cols-2 gap-1.5 flex-1">
-                                {[
-                                    { vista: 'servicio-tecnico', Icon: LuWrench, label: 'Servicio', border: 'border-l-[#D13A28] dark:border-l-[#E8422F]' },
-                                    { vista: 'venta', Icon: LuShoppingCart, label: 'Venta', border: 'border-l-[#D48800] dark:border-l-[#F0A500]' },
-                                    { vista: 'presupuestos', Icon: LuBanknote, label: 'Presupuestos', border: '' },
-                                    { vista: 'finanzas', Icon: LuTrendingUp, label: 'Finanzas', border: '' },
-                                ].map(({ vista, Icon, label, border }) => (
-                                    <button key={vista} onClick={() => setVistaActual(vista)}
-                                        className={`${card} flex items-center gap-2 p-2.5 text-left active:scale-[0.98] hover:shadow-md transition-shadow ${border ? `border-l-[3px] ${border}` : ''}`}>
-                                        <Icon size={15} />
-                                        <span className="text-label font-bold text-ink">{label}</span>
-                                    </button>
-                                ))}
+                            <div className="grid grid-cols-2 gap-1.5">
+                                <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
+                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-brand-red text-white">
+                                    <LuWrench size={16} />
+                                    <span className="text-label font-black">Nuevo Servicio</span>
+                                </button>
+                                <button onClick={() => setVistaActual('venta', { crear: true })}
+                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-brand-amber text-white">
+                                    <LuShoppingCart size={16} />
+                                    <span className="text-label font-black">Nueva Venta</span>
+                                </button>
                             </div>
                             {data.pendientesCount > 0 && (
                                 <div className={`${card} p-2.5 flex items-center justify-between`}>
@@ -221,9 +217,8 @@ export default function DashboardCaja({ setVistaActual }) {
                         </div>
                     </div>
                     <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                        <PlanificadorBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
-                        <AgendaBlock agendaHoy={data.agendaHoy} setVistaActual={setVistaActual} cargando={cargando} />
+                    <div className="max-w-3xl">
+                        <AgendaBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
                     </div>
                 </div>
             </div>

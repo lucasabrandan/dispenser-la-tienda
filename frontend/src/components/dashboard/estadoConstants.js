@@ -32,3 +32,16 @@ export function estadoPredominante(items) {
     items.forEach(s => { conteo[s.estado] = (conteo[s.estado] || 0) + 1; });
     return Object.entries(conteo).sort((a, b) => b[1] - a[1])[0]?.[0] || 'PRESUPUESTO';
 }
+
+// Agrupa una lista por la clave que devuelva keyFn — mismo criterio que antes
+// duplicaban a mano AgendaBlock.jsx y PlanificadorBlock.jsx (agrupar servicios
+// por tecnico, o notas por tecnicoNombre). Devuelve un objeto { clave: [items] }.
+export function agruparPor(items, keyFn) {
+    const grupos = {};
+    (items || []).forEach(item => {
+        const key = keyFn(item) || 'Sin asignar';
+        if (!grupos[key]) grupos[key] = [];
+        grupos[key].push(item);
+    });
+    return grupos;
+}
