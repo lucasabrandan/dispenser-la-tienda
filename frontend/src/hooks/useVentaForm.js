@@ -220,11 +220,18 @@ export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar =
         const clienteFinal = modoRapido
             ? { nombre: datosCliente.nombre?.trim() || 'Mostrador', telefono: datosCliente.telefono, email: datosCliente.email }
             : (clienteObj || { nombre: 'Mostrador' });
+        // Si el cliente tiene una direccion cargada (registrado con Calle/Numero/
+        // Localidad, o tipeada en el modo rapido), el PDF la muestra en vez de
+        // "Sede: Mostrador" fijo -- antes se ignoraba por completo la direccion
+        // real del cliente, aunque estuviera cargada.
+        const direccionCliente = !modoRapido
+            ? (clienteObj?.direccion || null)
+            : (datosCliente.calle ? `${datosCliente.calle} ${datosCliente.numero}, ${datosCliente.localidad}` : null);
         const tecnico = localStorage.getItem('tecnico_nombre') || 'Mostrador';
         generarRemitoPDFPremium({
             tipo:     'PRESUPUESTO_VENTA',
             cliente:  clienteFinal,
-            sede:     { nombreSede: 'Mostrador' },
+            sede:     direccionCliente ? { direccion: direccionCliente } : { nombreSede: 'Mostrador' },
             tecnico,
             ticketItems: [{
                 equipoSerial:    'MOSTRADOR',

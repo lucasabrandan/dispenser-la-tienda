@@ -98,27 +98,29 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
 
             {/* ── Barra fija de confirmación ── */}
             <div className="hide-on-keyboard fixed bottom-0 left-0 right-0 z-[100] px-3 pb-3">
-                <div className="p-4 rounded-2xl flex justify-between items-center shadow-2xl bg-[#1C1917] dark:bg-[#0F0F0F] border border-white/[0.06]">
-                    <div>
-                        <p className="text-label font-bold uppercase tracking-widest text-[#5C5954]">
-                            Total final
-                            {descuentoPorcentaje > 0 && (
-                                <span className="text-[#F5796C] ml-1">(-{descuentoPorcentaje}%)</span>
-                            )}
-                        </p>
-                        <M valor={totalFinal} className="text-3xl font-black text-white tracking-tighter block" />
-                    </div>
-                    <div className="flex gap-2">
+                <div className="p-4 rounded-2xl shadow-2xl bg-[#1C1917] dark:bg-[#0F0F0F] border border-white/[0.06]">
+                    <div className="flex justify-between items-center mb-3">
+                        <div>
+                            <p className="text-label font-bold uppercase tracking-widest text-[#5C5954]">
+                                Total final
+                                {descuentoPorcentaje > 0 && (
+                                    <span className="text-[#F5796C] ml-1">(-{descuentoPorcentaje}%)</span>
+                                )}
+                            </p>
+                            <M valor={totalFinal} className="text-3xl font-black text-white tracking-tighter block" />
+                        </div>
                         <button onClick={dispararPDF}
-                            className="h-11 px-3 rounded-xl font-bold text-label text-white flex items-center gap-1.5 active:scale-90 bg-[#2E2E2E]">
-                            <LuFileText size={14} /> PDF
+                            className="h-10 w-10 rounded-xl flex items-center justify-center text-white active:scale-90 bg-[#2E2E2E] shrink-0">
+                            <LuFileText size={16} />
                         </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => guardarVenta(false, mostrador.sedeId)}
-                            className="h-11 px-4 rounded-xl font-black text-label text-white active:scale-95 bg-[#2E2E2E]">
+                            className="h-11 rounded-xl font-black text-label text-white active:scale-95 bg-[#2E2E2E]">
                             Pendiente
                         </button>
                         <button onClick={() => guardarVenta(true, mostrador.sedeId)}
-                            className="h-11 px-5 rounded-xl font-black text-label text-white active:scale-95 bg-brand-red">
+                            className="h-11 rounded-xl font-black text-label text-white active:scale-95 bg-brand-red">
                             Confirmar
                         </button>
                     </div>
