@@ -60,7 +60,7 @@ export default function ServicioList({ onEditar }) {
     const [servicios, setServicios]       = useState([]);
     const [modalDetalle, setModalDetalle] = useState(null);
     const [tipoFiltro, setTipoFiltro]     = useState('TODOS');
-    const [mostrarFiltros, setMostrarFiltros] = useState(true);
+    const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [seleccionando, setSeleccionando] = useState(false);
     const [seleccionadas, setSeleccionadas] = useState(new Set());
     const [confirmMasivo, setConfirmMasivo] = useState(false);
@@ -246,7 +246,6 @@ export default function ServicioList({ onEditar }) {
                     {mostrarFiltros && (
                         <FiltrosPanel hook={filtros} estados={ESTADOS_HISTORIAL} conBusqueda={false} conRango />
                     )}
-                    <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
 
                     {/* Listado */}
                     <div className="flex flex-col gap-2">
