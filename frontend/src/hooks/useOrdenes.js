@@ -15,7 +15,10 @@ function rangoSemanaActual() {
     return { desde: formatDateISO(lunes), hasta: formatDateISO(domingo) };
 }
 
-export function useOrdenes({ tecnicoId = null } = {}) {
+// enabled=false: no dispara fetch (ni de ordenes ni de tecnicos) — lo usa
+// ServicioManager.jsx para no pegarle a /ordenes cuando el usuario no es admin
+// (los tecnicos no ven las tabs Pendientes/En camino/En sitio del hub).
+export function useOrdenes({ tecnicoId = null, enabled = true } = {}) {
     const [ordenes, setOrdenes]       = useState([]);
     const [tecnicos, setTecnicos]     = useState([]);
     const [cargando, setCargando]     = useState(true);
@@ -33,6 +36,7 @@ export function useOrdenes({ tecnicoId = null } = {}) {
     }, []);
 
     const cargar = useCallback(async () => {
+        if (!enabled) { setCargando(false); return; }
         setCargando(true);
         try {
             let res;
@@ -50,10 +54,10 @@ export function useOrdenes({ tecnicoId = null } = {}) {
         } finally {
             setCargando(false);
         }
-    }, [tecnicoId, desde, hasta]);
+    }, [tecnicoId, desde, hasta, enabled]);
 
     useEffect(() => { cargar(); },          [cargar]);
-    useEffect(() => { cargarTecnicos(); },  [cargarTecnicos]);
+    useEffect(() => { if (enabled) cargarTecnicos(); }, [cargarTecnicos, enabled]);
 
     const crear = async (form) => {
         const loading = toast.loading('Guardando...');
