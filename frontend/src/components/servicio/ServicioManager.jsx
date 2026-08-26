@@ -56,6 +56,7 @@ export default function ServicioManager({
     presupuestoOrigen = null, onPresupuestoOrigenConsumido,
     ordenOrigen = null, onOrdenOrigenConsumido,
     abrirCrearDirecto = false, onCrearConsumido,
+    modoInicial = null, onModoInicialConsumido,
 }) {
     const { esAdmin } = useAuth();
     const {
@@ -234,6 +235,15 @@ export default function ServicioManager({
         setModo(nuevoModo);
         cambiarTab(nuevoModo === 'DESPACHO' ? TABS_ORDEN[0].id : TABS_SERVICIO_PILLS[0].id);
     };
+
+    // Deep-link de modo (ej: alerta "N órdenes activas" del Panel) — abre
+    // directo en el modo pedido en vez de siempre arrancar en Servicio.
+    useEffect(() => {
+        if (modoInicial && esAdmin) {
+            cambiarModo(modoInicial);
+            onModoInicialConsumido?.();
+        }
+    }, [modoInicial]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const toggleSeleccion = (id) => {
         setSeleccionados(prev => {

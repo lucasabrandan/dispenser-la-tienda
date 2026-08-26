@@ -30,6 +30,7 @@ function AppInterna() {
     const [presupuestoOrigen, setPresupuestoOrigen] = useState(null);
     const [ordenOrigen, setOrdenOrigen] = useState(null);
     const [abrirCrear, setAbrirCrear] = useState(false);
+    const [modoInicialServicio, setModoInicialServicio] = useState(null);
 
     if (!autenticado) return <LoginPage />;
 
@@ -53,6 +54,7 @@ function AppInterna() {
             case 'caja':
                 return <DashboardCaja setVistaActual={(seccion, opts) => {
                     if (opts?.crear) setAbrirCrear(true);
+                    if (opts?.modo) setModoInicialServicio(opts.modo);
                     setSeccionActual(seccion);
                 }} />;
             case 'venta':
@@ -68,6 +70,8 @@ function AppInterna() {
                     onOrdenOrigenConsumido={() => setOrdenOrigen(null)}
                     abrirCrearDirecto={abrirCrear}
                     onCrearConsumido={() => setAbrirCrear(false)}
+                    modoInicial={modoInicialServicio}
+                    onModoInicialConsumido={() => setModoInicialServicio(null)}
                 />;
             case 'presupuestos':
                 return <PresupuestosManager />;

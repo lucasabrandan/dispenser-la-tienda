@@ -25,7 +25,7 @@ export default function AlertasBlock({ pptoVencidos, ordenesActivas, alertasRada
                     </button>
                 )}
                 {ordenesActivas.length > 0 && (
-                    <button onClick={() => setVistaActual('despacho')}
+                    <button onClick={() => setVistaActual('servicio-tecnico', { modo: 'DESPACHO' })}
                         className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left active:scale-[0.98] bg-[#FEF3C7] dark:bg-[#2E2207] border border-[#D48800]/15">
                         <LuPin size={16} />
                         <div className="flex-1 min-w-0">
