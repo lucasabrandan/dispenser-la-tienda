@@ -72,7 +72,7 @@ export default function FirmaPad({ value, onChange, label, height = 110 }) {
     return (
         <div className="flex flex-col gap-1">
             {label && (
-                <span className="text-xs font-semibold text-ink">
+                <span className="text-label font-semibold text-ink">
                     {label}
                 </span>
             )}
@@ -94,7 +94,7 @@ export default function FirmaPad({ value, onChange, label, height = 110 }) {
                 {/* Línea guía */}
                 <div className="absolute bottom-8 left-4 right-4 border-b border-dashed border-[#E8E5E0] pointer-events-none" />
                 {isEmpty && (
-                    <span className="absolute inset-0 flex items-center justify-center text-xs text-muted pointer-events-none select-none">
+                    <span className="absolute inset-0 flex items-center justify-center text-label text-muted pointer-events-none select-none">
                         Firmar aquí
                     </span>
                 )}

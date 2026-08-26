@@ -237,7 +237,7 @@ export default function PresupuestosManager() {
                                 autoFocus={mostrarBusqueda} />
                             {filtros.busqueda && (
                                 <button onClick={() => filtros.setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-xs font-bold">✕</button>
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
                             )}
                         </div>
                         {/* Período — chip que despliega FiltrosPanel; arranca colapsado en "Este mes" */}

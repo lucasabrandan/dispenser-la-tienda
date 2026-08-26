@@ -118,7 +118,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                             Pendiente
                         </button>
                         <button onClick={() => guardarVenta(true, mostrador.sedeId)}
-                            className="h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 bg-brand-red">
+                            className="h-11 px-5 rounded-xl font-black text-label text-white active:scale-95 bg-brand-red">
                             Confirmar
                         </button>
                     </div>

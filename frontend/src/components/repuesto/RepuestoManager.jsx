@@ -63,7 +63,7 @@ export default function RepuestoManager() {
                                 className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                             {busqueda && (
                                 <button onClick={() => setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-xs font-bold">✕</button>
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
                             )}
                         </div>
                         <button onClick={() => setStockSheetOpen(true)} title="Ajuste stock"

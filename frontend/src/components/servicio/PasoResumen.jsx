@@ -378,7 +378,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                 }
                                 onCerrarTicket();
                             }}
-                            className={`h-11 px-5 rounded-xl font-black text-xs text-white active:scale-95 ${esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado ? 'opacity-40 cursor-not-allowed bg-muted' : 'bg-brand-red'}`}>
+                            className={`h-11 px-5 rounded-xl font-black text-label text-white active:scale-95 ${esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado ? 'opacity-40 cursor-not-allowed bg-muted' : 'bg-brand-red'}`}>
                             {modoEjecucion ? 'Cerrar trabajo →' : 'Cerrar ticket →'}
                         </button>
                     </div>

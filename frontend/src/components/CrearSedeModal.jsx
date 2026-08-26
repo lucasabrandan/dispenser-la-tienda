@@ -89,7 +89,7 @@ export default function CrearSedeModal({
               <h2 className="text-2xl font-black text-ink flex items-center gap-2">
                 <LuMapPinPlus size={22} /> Nueva Sede
               </h2>
-              <p className="text-xs text-muted mt-1">
+              <p className="text-label text-muted mt-1">
                 Completa los datos de la nueva sede
               </p>
             </div>
@@ -105,7 +105,7 @@ export default function CrearSedeModal({
 
             {/* NOMBRE DE LA SEDE */}
             <div>
-              <label className="text-xs font-black text-muted uppercase tracking-wide">
+              <label className="text-label font-black text-muted uppercase tracking-wide">
                 Nombre de la Sede * (obligatorio)
               </label>
               <input
@@ -121,7 +121,7 @@ export default function CrearSedeModal({
                 }`}
               />
               {errores.nombreSede && (
-                <p className="text-xs text-[#D13A28] mt-1">El nombre es obligatorio</p>
+                <p className="text-label text-[#D13A28] mt-1">El nombre es obligatorio</p>
               )}
             </div>
 
@@ -133,7 +133,7 @@ export default function CrearSedeModal({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-black text-muted uppercase tracking-wide">
+                  <label className="text-label font-black text-muted uppercase tracking-wide">
                     Calle *
                   </label>
                   <input
@@ -151,7 +151,7 @@ export default function CrearSedeModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-muted uppercase tracking-wide">
+                  <label className="text-label font-black text-muted uppercase tracking-wide">
                     Número *
                   </label>
                   <input
@@ -169,7 +169,7 @@ export default function CrearSedeModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-muted uppercase tracking-wide">
+                  <label className="text-label font-black text-muted uppercase tracking-wide">
                     Piso (opcional)
                   </label>
                   <input
@@ -183,7 +183,7 @@ export default function CrearSedeModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-muted uppercase tracking-wide">
+                  <label className="text-label font-black text-muted uppercase tracking-wide">
                     Depto (opcional)
                   </label>
                   <input
@@ -197,7 +197,7 @@ export default function CrearSedeModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-muted uppercase tracking-wide">
+                  <label className="text-label font-black text-muted uppercase tracking-wide">
                     Localidad *
                   </label>
                   <input
@@ -215,7 +215,7 @@ export default function CrearSedeModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-black text-muted uppercase tracking-wide">
+                  <label className="text-label font-black text-muted uppercase tracking-wide">
                     Provincia
                   </label>
                   <select
@@ -236,7 +236,7 @@ export default function CrearSedeModal({
               {/* DIRECCIÓN AUTO-GENERADA */}
               {formData.direccion && (
                 <div className="p-3 bg-[var(--blue-bg)] rounded-lg border border-[var(--blue-tx)]/20">
-                  <p className="text-xs text-[var(--blue-tx)] font-bold flex items-center gap-1">
+                  <p className="text-label text-[var(--blue-tx)] font-bold flex items-center gap-1">
                     <LuMap size={12} /> Dirección: {formData.direccion}
                   </p>
                 </div>

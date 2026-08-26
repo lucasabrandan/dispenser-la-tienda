@@ -61,7 +61,7 @@ export default function FiltrosPanel({ estados = [], conBusqueda = false, conRan
                         className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-white dark:bg-[#2E2E2E] text-ink placeholder-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
                     {busqueda && (
                         <button onClick={() => setBusqueda('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-xs font-bold">✕</button>
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
                     )}
                 </div>
             )}

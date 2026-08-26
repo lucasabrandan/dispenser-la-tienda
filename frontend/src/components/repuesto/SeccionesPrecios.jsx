@@ -23,10 +23,10 @@ function Seccion({ id, titulo, Icono, children, color = 'blue', seccionAbierta, 
         <div className={`rounded-2xl border overflow-hidden transition-all ${abierta ? colores[color] : 'bg-[#F5F3F1] dark:bg-[#1C1C1C] border-black/[0.05] dark:border-white/[0.05]'}`}>
             <button type="button" onClick={() => onToggle(abierta ? '' : id)}
                 className="w-full flex items-center justify-between p-3 text-left">
-                <span className="text-xs font-black text-ink uppercase tracking-wide flex items-center gap-1.5">
+                <span className="text-label font-black text-ink uppercase tracking-wide flex items-center gap-1.5">
                     <Icono size={13} /> {titulo}
                 </span>
-                <span className={`text-xs text-muted transition-transform ${abierta ? 'rotate-180' : ''}`}>▼</span>
+                <span className={`text-label text-muted transition-transform ${abierta ? 'rotate-180' : ''}`}>▼</span>
             </button>
             {abierta && <div className="px-3 pb-3">{children}</div>}
         </div>
@@ -201,10 +201,10 @@ export default function SeccionesPrecios({
                                 className="w-4 h-4 accent-[#D13A28] shrink-0" />
                             <input type="text" value={c.nombre}
                                 onChange={e => cambiarCostoReal(idx, 'nombre', e.target.value)}
-                                placeholder="Nombre (ej: IIBB)" className={`${inputBase} mt-0 flex-1 text-xs`} />
+                                placeholder="Nombre (ej: IIBB)" className={`${inputBase} mt-0 flex-1 text-label`} />
                             <input type="text" inputMode="decimal" value={c.porcentaje}
                                 onChange={e => cambiarCostoReal(idx, 'porcentaje', e.target.value)}
-                                placeholder="%" className={`${inputBase} mt-0 w-16 text-xs text-center`} />
+                                placeholder="%" className={`${inputBase} mt-0 w-16 text-label text-center`} />
                             <button type="button" onClick={() => quitarCostoReal(idx)}
                                 className="text-muted text-lg leading-none px-1 shrink-0">×</button>
                         </div>
