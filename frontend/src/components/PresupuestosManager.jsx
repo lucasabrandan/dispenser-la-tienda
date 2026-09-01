@@ -269,9 +269,9 @@ export default function PresupuestosManager() {
                 <div className="flex items-center gap-2 px-1">
                     <span className="text-label font-semibold text-muted">Pendiente</span>
                     <M valor={stats.total} className="text-body font-black text-brand-amber" />
-                    <button onClick={() => abrirRuta(presupuestosFiltradosTipo)}
+                    <button onClick={() => setModoSeleccion(true)}
                         className="ml-auto text-label font-bold text-[#1A73E8] underline underline-offset-2 active:opacity-70">
-                        Ver ruta
+                        Elegir para ruta
                     </button>
                 </div>
 
