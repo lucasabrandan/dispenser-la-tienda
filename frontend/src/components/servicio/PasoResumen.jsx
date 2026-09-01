@@ -9,7 +9,7 @@ import DateInput from '../ui/DateInput';
 const QUICK_PCTS = [5, 10];
 
 // ── Panel de rentabilidad discreta ────────────────────────────────────────────
-function RentabilidadPanel({ resumen }) {
+function RentabilidadPanel({ resumen, desglose, onEditarCosto }) {
     const [abierto, setAbierto] = useState(false);
     if (resumen.gananciaBruta <= 0) return null;
 
@@ -57,6 +57,33 @@ function RentabilidadPanel({ resumen }) {
                                          style={{ width: `${Math.min(100, parseFloat(resumen.margenFinal))}%` }} />
                                 </div>
                             </div>
+                            {desglose.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-[#A8855A]/20">
+                                    <p className="text-label uppercase tracking-wide font-bold text-[#A8855A] mb-2">Desglose por repuesto</p>
+                                    <div className="space-y-2">
+                                        {desglose.map(d => (
+                                            <div key={d.key} className="bg-[#A8855A]/10 rounded-lg px-3 py-2">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <p className="text-caption font-bold text-[#1C1917] truncate">{d.repuesto.nombre}</p>
+                                                    <p className="text-caption text-[#A8855A] shrink-0">{d.repuesto.cantidad} u.</p>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2 mt-1.5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-label text-[#A8855A]">Costo</span>
+                                                        <input type="text" inputMode="decimal"
+                                                            value={d.repuesto.costo ?? ''}
+                                                            onChange={e => onEditarCosto(d.itemIdx, d.repIdx, e.target.value)}
+                                                            className="w-16 h-7 rounded-md text-center text-caption font-bold bg-white border border-[#A8855A]/30 text-[#1C1917] outline-none focus:border-[#A8855A]" />
+                                                    </div>
+                                                    <p className="text-caption font-black text-[#5C3D00]">
+                                                        <M valor={Math.round(d.ganancia.ganancia)} /> &middot; {d.ganancia.margen}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             <p className="text-caption text-muted mt-2">Solo visible para vos.</p>
                         </div>
                     </div>
@@ -81,6 +108,33 @@ function RentabilidadPanel({ resumen }) {
                             <div className="h-full rounded-full bg-[#2A9D5C]"
                                  style={{ width: `${Math.min(100, parseFloat(resumen.margenFinal))}%` }} />
                         </div>
+                        {desglose.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-[#2A9D5C]/20">
+                                <p className="text-label uppercase tracking-wide font-bold text-[#5C5954] mb-2">Desglose por repuesto</p>
+                                <div className="space-y-2">
+                                    {desglose.map(d => (
+                                        <div key={d.key} className="bg-white/[0.03] rounded-lg px-3 py-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-caption font-bold text-[#F0EEE9] truncate">{d.repuesto.nombre}</p>
+                                                <p className="text-caption text-[#5C5954] shrink-0">{d.repuesto.cantidad} u.</p>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-2 mt-1.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-label text-[#5C5954]">Costo</span>
+                                                    <input type="text" inputMode="decimal"
+                                                        value={d.repuesto.costo ?? ''}
+                                                        onChange={e => onEditarCosto(d.itemIdx, d.repIdx, e.target.value)}
+                                                        className="w-16 h-7 rounded-md text-center text-caption font-bold bg-[#141414] border border-[#2A9D5C]/30 text-[#F0EEE9] outline-none focus:border-[#2A9D5C]" />
+                                                </div>
+                                                <p className="text-caption font-black text-[#5DD68F]">
+                                                    <M valor={Math.round(d.ganancia.ganancia)} /> &middot; {d.ganancia.margen}%
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </>
             )}
@@ -91,7 +145,7 @@ function RentabilidadPanel({ resumen }) {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF, modoEjecucion = false }) {
     const {
-        ticketItems,
+        ticketItems, setTicketItems,
         descuentoPorcentaje, setDescuentoPorcentaje,
         leyenda, setLeyenda,
         calcularGananciaRepuesto, calcularResumenGanancia,
@@ -139,6 +193,31 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
     }, []); // eslint-disable-line
 
     const resumen        = calcularResumenGanancia();
+    // Desglose por repuesto para el panel de rentabilidad (Lucas, 31-ago): antes
+    // solo se veían los totales del ticket, no de dónde salían. El costo editado acá
+    // se guarda de verdad en ticketItems — no es una simulación — así que al confirmar
+    // el presupuesto viaja como el costo real de esa línea (el backend ya lo soporta,
+    // ver ítem 25 del roadmap).
+    const desglose = ticketItems.flatMap((item, itemIdx) =>
+        (item.repuestosUsados || []).map((r, repIdx) => ({
+            key: `${itemIdx}-${repIdx}`,
+            itemIdx, repIdx,
+            repuesto: r,
+            ganancia: calcularGananciaRepuesto(r, r.cantidad),
+        }))
+    );
+    const editarCostoRepuesto = (itemIdx, repIdx, valorTexto) => {
+        const nuevoCosto = parseFloat(valorTexto) || 0;
+        setTicketItems(prev => {
+            const copia = [...prev];
+            const item = { ...copia[itemIdx] };
+            const repuestos = [...(item.repuestosUsados || [])];
+            repuestos[repIdx] = { ...repuestos[repIdx], costo: nuevoCosto };
+            item.repuestosUsados = repuestos;
+            copia[itemIdx] = item;
+            return copia;
+        });
+    };
     const totalBruto     = ticketItems.reduce((a, b) => a + b.totalCalculado, 0);
     const descuentoMonto = Math.round((totalBruto * descuentoPorcentaje) / 100);
     const totalFinal     = totalBruto - descuentoMonto;
@@ -323,7 +402,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                     </div>
 
                     {/* Rentabilidad — solo admin */}
-                    {esAdmin && <RentabilidadPanel resumen={resumen} />}
+                    {esAdmin && <RentabilidadPanel resumen={resumen} desglose={desglose} onEditarCosto={editarCostoRepuesto} />}
 
                     {/* T&C */}
                     <div className="flex items-start gap-3 py-2">
