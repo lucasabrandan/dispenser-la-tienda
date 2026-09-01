@@ -386,7 +386,7 @@ export default function ServicioManager({
 
                         {esAdmin && (
                             <button onClick={abrirCrear}
-                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label text-white uppercase items-center transition-all active:scale-95 bg-brand-red shrink-0">
+                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label uppercase items-center transition-all active:scale-95 bg-card text-ink border border-black/[0.08] dark:border-white/[0.08] shrink-0">
                                 + Nuevo
                             </button>
                         )}
@@ -568,11 +568,13 @@ export default function ServicioManager({
                 )}
             </div>
 
-            {/* FAB — solo mobile, solo admin */}
+            {/* FAB — solo mobile, solo admin. Mismo peso visual que "Nueva Venta" en
+                VentaManager.jsx — Servicio y Venta son igual de importantes, ninguno
+                se resalta con el rojo de marca (ver Panel/ClienteCard). */}
             {esAdmin && (
                 <button
                     onClick={abrirCrear}
-                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-white bg-brand-red active:scale-90 transition-all z-20"
+                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-ink bg-card border border-black/[0.08] dark:border-white/[0.08] active:scale-90 transition-all z-20"
                     aria-label="Nuevo servicio"
                 >+</button>
             )}

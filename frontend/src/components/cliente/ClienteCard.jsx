@@ -119,7 +119,7 @@ export default function ClienteCard({
                     )}
                     {onNuevoServicio && (
                         <button onClick={() => onNuevoServicio(cliente)}
-                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-brand-red text-white rounded-xl font-black text-label active:scale-95 transition-all">
+                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-chip text-ink rounded-xl font-black text-label active:scale-95 transition-all">
                             <LuWrench size={14} /> Servicio
                         </button>
                     )}

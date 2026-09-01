@@ -169,7 +169,7 @@ export default function DashboardCaja({ setVistaActual }) {
                 <div className="md:hidden space-y-4">
                     <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
-                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-brand-red text-white">
+                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
                             <LuWrench size={18} />
                             <span className="text-body font-black">Nuevo Servicio</span>
                         </button>
@@ -207,7 +207,7 @@ export default function DashboardCaja({ setVistaActual }) {
                         <div className="flex flex-col gap-1.5">
                             <div className="grid grid-cols-2 gap-1.5">
                                 <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
-                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-brand-red text-white">
+                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
                                     <LuWrench size={16} />
                                     <span className="text-label font-black">Nuevo Servicio</span>
                                 </button>
