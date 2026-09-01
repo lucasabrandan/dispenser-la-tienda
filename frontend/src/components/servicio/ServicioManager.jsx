@@ -617,6 +617,7 @@ export default function ServicioManager({
                             presupuestoOrigen={presupuestoOrigen}
                             ordenOrigen={ordenOrigen}
                             modoEjecucion={!!servicioEjecutar}
+                            esDuplicado={!!servicioDuplicar}
                         />
                     </div>
                 </div>

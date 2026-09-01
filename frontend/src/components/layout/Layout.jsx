@@ -6,8 +6,10 @@ import BottomNav from './BottomNav';
 import NotificacionesPanel, { NotifBell } from './NotificacionesPanel';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { LuSun, LuMoon } from 'react-icons/lu';
+import { LuSun, LuMoon, LuLogOut } from 'react-icons/lu';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 // 'historial' y 'despacho' se sacaron (26-ago): sus funciones viven ahora
 // adentro de Venta ("Todo") y Servicio Técnico (modo Despacho), sin ruta propia.
@@ -32,6 +34,11 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     const [notifCount, setNotifCount] = useState(0);
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
+    const { logout } = useAuth();
+    // Cerrar sesión en mobile solo vivía 2 taps adentro del Drawer ("Más" → scroll
+    // hasta el final) — Lucas reportó que "sigue sin poderse ver". Se agrega acá,
+    // al lado del resto de los accesos rápidos del header, a un tap de distancia.
+    const [confirmLogoutAbierto, setConfirmLogoutAbierto] = useState(false);
 
     const pollNotifs = useCallback(async () => {
         try {
@@ -96,6 +103,13 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                         >
                             {isDark ? <LuSun size={18} /> : <LuMoon size={18} />}
                         </button>
+                        <button
+                            onClick={() => setConfirmLogoutAbierto(true)}
+                            title="Cerrar sesión"
+                            className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors text-[#9E9A94] active:scale-90"
+                        >
+                            <LuLogOut size={18} />
+                        </button>
                     </div>
                 </header>
 
@@ -121,6 +135,17 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
 
             {/* PANEL NOTIFICACIONES */}
             <NotificacionesPanel abierto={notifAbierto} onCerrar={() => { setNotifAbierto(false); pollNotifs(); }} />
+
+            {confirmLogoutAbierto && (
+                <ConfirmDialog
+                    titulo="¿Cerrar sesión?"
+                    mensaje="Vas a salir de la app — la próxima vez vas a tener que ingresar usuario y contraseña de nuevo."
+                    textoConfirmar="Sí, salir"
+                    textoCancelar="Cancelar"
+                    onConfirmar={() => { setConfirmLogoutAbierto(false); logout(); }}
+                    onCancelar={() => setConfirmLogoutAbierto(false)}
+                />
+            )}
         </div>
     );
 }

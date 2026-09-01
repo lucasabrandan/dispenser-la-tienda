@@ -12,6 +12,7 @@ import PasoCliente      from './PasoCliente';
 import PasoEquipos      from './PasoEquipos';
 import PasoResumen      from './PasoResumen';
 import CerrarTicketSheet from './CerrarTicketSheet';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 const TITULOS = [
     { titulo: 'Cliente',             subtitulo: '¿Para quién es el servicio?'         },
@@ -26,6 +27,7 @@ export default function ServicioForm({
     presupuestoOrigen  = null,
     ordenOrigen        = null,
     modoEjecucion      = false,
+    esDuplicado        = false,
 }) {
     const hook = useServicioForm(servicioParaEditar, clienteInicialId, presupuestoOrigen, ordenOrigen);
     const {
@@ -45,6 +47,9 @@ export default function ServicioForm({
 
     const [paso, setPaso]               = useState(0);
     const [sheetVisible, setSheetVisible] = useState(false);
+    // Duplicar presupuesto sin cambiar nada no debe crear una copia silenciosa
+    // (Lucas, 31-ago): se pide confirmación explícita antes de guardar en ese caso.
+    const [confirmarDuplicado, setConfirmarDuplicado] = useState(false);
     // Snapshot para PDF post-guardado (finalizar vacía ticketItems)
     const snapshotRef = useRef(null);
     // nombreLibre y dirLibre ahora viven en el hook para persistir entre pasos
@@ -177,7 +182,7 @@ export default function ServicioForm({
     };
 
     // Guardar presupuesto: guarda como PRESUPUESTO, devuelve datos para despacho
-    const handleGuardar = async () => {
+    const guardarPresupuestoReal = async () => {
         // Snapshot ANTES del reset para que dispararPDF pueda usarla
         const sedeObj = db.sedes?.find(s => s.id === itemActual.sedeId);
         snapshotRef.current = {
@@ -199,6 +204,16 @@ export default function ServicioForm({
             if (onSaved) onSaved();
         }
         return result;
+    };
+
+    // Si venimos de "Duplicar", guardar sin tocar nada generaba una copia
+    // idéntica sin ningún aviso — ahora se pide confirmación primero.
+    const handleGuardar = async () => {
+        if (esDuplicado) {
+            setConfirmarDuplicado(true);
+            return;
+        }
+        return guardarPresupuestoReal();
     };
 
     return (
@@ -282,6 +297,17 @@ export default function ServicioForm({
                     await refrescarDatos();
                 }}
             />
+
+            {confirmarDuplicado && (
+                <ConfirmDialog
+                    titulo="¿Guardar el presupuesto duplicado?"
+                    mensaje="Vas a crear un presupuesto nuevo. Si no cambiaste nada, va a quedar idéntico al original — confirmá solo si es lo que querés."
+                    textoConfirmar="Sí, guardar"
+                    textoCancelar="Volver"
+                    onConfirmar={async () => { setConfirmarDuplicado(false); await guardarPresupuestoReal(); }}
+                    onCancelar={() => setConfirmarDuplicado(false)}
+                />
+            )}
         </div>
     );
 }
