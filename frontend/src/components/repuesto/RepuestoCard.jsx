@@ -45,6 +45,12 @@ export default function RepuestoCard({
                         {estaSeleccionado && <span className="text-white text-[10px] font-black">✓</span>}
                     </div>
                 )}
+                {/* Stock bajo — antes se calculaba (stockBajo) pero nunca se mostraba */}
+                {stockBajo && (
+                    <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wide text-white bg-brand-red">
+                        Bajo
+                    </span>
+                )}
             </div>
 
             {/* Info */}
@@ -56,6 +62,12 @@ export default function RepuestoCard({
                 <p className="text-title font-black text-ink mt-1">
                     ${Math.round(precioNegro).toLocaleString('es-AR')}
                 </p>
+                <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] font-bold text-muted">Stock</span>
+                    <span className={`text-[10px] font-black ${stockBajo ? 'text-brand-red' : 'text-muted'}`}>
+                        {Number(r.stock) || 0} u.
+                    </span>
+                </div>
             </div>
         </div>
     );

@@ -114,8 +114,26 @@ export default function RepuestoManager() {
                         <option value="za">Z → A</option>
                         <option value="precio-asc">Precio ↑</option>
                         <option value="precio-desc">Precio ↓</option>
+                        <option value="stock">Stock ↑</option>
                     </select>
                 </div>
+
+                {/* Métricas — el hook ya las calculaba ("para el header", según su propio
+                    comentario) pero nunca se conectaron a la pantalla */}
+                {productos.length > 0 && (
+                    <div className="flex items-center justify-between px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-caption font-bold">
+                        <span className="flex items-center gap-1.5 text-muted">
+                            <span className="w-1.5 h-1.5 rounded-full bg-brand-amber" />
+                            ${Math.round(valorTotalInventario).toLocaleString('es-AR')} en mercadería
+                        </span>
+                        {itemsBajoStock > 0 && (
+                            <span className="flex items-center gap-1.5 text-brand-red">
+                                <span className="w-1.5 h-1.5 rounded-full bg-brand-red" />
+                                {itemsBajoStock} con stock bajo
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 {/* Barra selección masiva */}
                 {modoSeleccion && (

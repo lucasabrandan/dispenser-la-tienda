@@ -69,7 +69,10 @@ export default function TabInventario() {
                             const valorVenta = precio * Number(r.stock);
                             const ganancia   = valorVenta - valorCosto;
                             const margen = precio > 0 ? Math.round((precio - costo) / precio * 100) : 0;
-                            const stockBajo = r.stockMinimo && Number(r.stock) <= Number(r.stockMinimo);
+                            // Antes dependía de stockMinimo, un campo que no existe en ningún
+                            // lado (ni backend ni formulario) — el badge nunca podía prender. Mismo
+                            // umbral que ya usan RepuestoCard.jsx/useRepuestoManager.js en Productos.
+                            const stockBajo = Number(r.stock) <= 3;
                             return (
                                 <div key={r.id}
                                     className={`px-4 py-3 flex items-center gap-3 ${i < invPagina.length - 1 ? 'border-b border-black/[0.04] dark:border-white/[0.04]' : ''} ${stockBajo ? 'bg-[#FEE2E2]/50 dark:bg-[#3B1111]/30' : ''}`}>
