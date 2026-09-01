@@ -202,7 +202,7 @@ export default function CerrarTicketSheet({
                         </div>
 
                         <button onClick={handleGuardar} disabled={procesando}
-                            className="w-full p-4 rounded-2xl text-left transition-all active:scale-[0.98] bg-brand-amber text-white disabled:opacity-50">
+                            className="w-full p-4 rounded-2xl text-left transition-all active:scale-[0.98] bg-brand-red text-white disabled:opacity-50">
                             <p className="text-body-lg font-black leading-none mb-1 flex items-center gap-1.5">
                                 {procesando ? 'Guardando…' : (<><LuClipboardList size={16} /> Guardar presupuesto</>)}
                             </p>
@@ -286,7 +286,7 @@ export default function CerrarTicketSheet({
                                         Ahora no
                                     </button>
                                     <button onClick={handleCrearOrden} disabled={creandoOrden || !dispTecnico || !dispFecha}
-                                        className="flex-[2] py-3 rounded-2xl text-label font-black uppercase text-white active:scale-95 bg-brand-amber disabled:opacity-40 flex items-center justify-center gap-1.5">
+                                        className="flex-[2] py-3 rounded-2xl text-label font-black uppercase text-white active:scale-95 bg-brand-red disabled:opacity-40 flex items-center justify-center gap-1.5">
                                         {creandoOrden ? 'Creando…' : (<><LuRocket size={14} /> Despachar</>)}
                                     </button>
                                 </div>
@@ -330,7 +330,7 @@ export default function CerrarTicketSheet({
                                     onChange={v => setFirmaTecnico(v)} height={100} />
                                 <div className="flex items-center gap-2 mt-1.5">
                                     <button onClick={guardarFirmaTecnico} disabled={!firmaTecnico || guardandoFirma}
-                                        className="text-label px-3 py-1 rounded-full bg-[#D13A28] text-white font-bold disabled:opacity-40">
+                                        className="text-label px-3 py-1 rounded-full bg-brand-red text-white font-bold disabled:opacity-40">
                                         {guardandoFirma ? 'Guardando…' : 'Guardar mi firma'}
                                     </button>
                                     <span className="text-caption text-muted">Se usa automáticamente</span>

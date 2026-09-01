@@ -231,7 +231,7 @@ export default function ServicioForm({
                             Descartar
                         </button>
                         <button onClick={recuperarBorrador}
-                            className="px-3 py-1.5 rounded-lg text-[11px] font-black text-white bg-brand-amber active:scale-95">
+                            className="px-3 py-1.5 rounded-lg text-[11px] font-black text-white bg-brand-red active:scale-95">
                             Recuperar
                         </button>
                     </div>

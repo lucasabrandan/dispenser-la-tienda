@@ -124,7 +124,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                                 Completala con tus datos en Google Sheets o Excel y guardala como CSV.
                             </p>
                             <button onClick={descargarPlantilla}
-                                className="px-4 py-2 rounded-xl text-label font-black text-white bg-brand-amber active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                                className="px-4 py-2 rounded-xl text-label font-black text-ink bg-chip active:scale-95 transition-all flex items-center justify-center gap-1.5">
                                 <LuDownload size={14} /> Descargar plantilla CSV
                             </button>
                         </div>

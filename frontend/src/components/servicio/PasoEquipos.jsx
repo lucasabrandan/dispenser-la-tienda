@@ -103,7 +103,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         + Agregar equipo
                     </button>
                     <button type="button" onClick={() => setCargaRapida(true)}
-                        className="py-3.5 rounded-2xl font-black text-label uppercase text-white bg-brand-amber active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
+                        className="py-3.5 rounded-2xl font-black text-label uppercase text-ink bg-chip active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
                         <LuZap size={14} /> Carga rápida
                     </button>
                 </div>

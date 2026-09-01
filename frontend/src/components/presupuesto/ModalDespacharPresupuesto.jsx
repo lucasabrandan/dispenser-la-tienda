@@ -258,7 +258,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                             Cancelar
                                         </button>
                                         <button type="button" onClick={handleGuardar} disabled={guardando}
-                                            className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-amber active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                                            className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
                                             {guardando ? 'Creando orden…' : (<><LuSend size={14} /> Despachar</>)}
                                         </button>
                                     </div>

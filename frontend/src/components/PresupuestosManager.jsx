@@ -248,7 +248,7 @@ export default function PresupuestosManager() {
                             <LuCalendar size={12} /> {periodoLabel} {mostrarPeriodo ? '▴' : '▾'}
                         </button>
                         <button onClick={() => setModalCotizar(true)}
-                            className="h-9 px-3 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-amber shrink-0">
+                            className="h-9 px-3 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red shrink-0">
                             Cotizar
                         </button>
                     </div>
