@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { inicioMes, finMes } from '../utils/dateUtils';
+import { inicioMes, finMes, formatDateISO } from '../utils/dateUtils';
 
 const hoy = () => new Date();
 
@@ -60,38 +60,44 @@ export function useFiltros(items = [], { porPagina = 15, campoFecha = 'fecha', c
         let resultado = [...items];
 
         // Filtro período — se ignora si hay búsqueda activa (para encontrar en todo el historial)
+        // Comparación por STRING "YYYY-MM-DD" (no por Date/timestamp): antes `hastaFecha`
+        // salía de finMes() a las 00:00:00 del último día, pero el item se parseaba a las
+        // 12:00:00 de ese mismo día — 12:00 > 00:00, así que cualquier presupuesto fechado
+        // justo el último día del mes (o el 31/dic para "Este año") quedaba afuera de "Este
+        // mes"/"Mes anterior"/"Este año" aunque estuviera perfectamente dentro del rango.
+        // Comparar los strings ISO evita el problema de raíz (y de paso cualquier lío de huso horario).
         if (periodoRapido !== 'TODO' && !busqueda.trim()) {
-            let desdeFecha, hastaFecha;
+            let desdeStr, hastaStr;
 
             if (periodoRapido === 'MES') {
-                desdeFecha = inicioMes(now);
-                hastaFecha = finMes(now);
+                desdeStr = formatDateISO(inicioMes(now));
+                hastaStr = formatDateISO(finMes(now));
             } else if (periodoRapido === 'MES_ANT') {
                 const ant = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                desdeFecha = inicioMes(ant);
-                hastaFecha = finMes(ant);
+                desdeStr = formatDateISO(inicioMes(ant));
+                hastaStr = formatDateISO(finMes(ant));
             } else if (periodoRapido === 'ANO') {
-                desdeFecha = new Date(now.getFullYear(), 0, 1);
-                hastaFecha = new Date(now.getFullYear(), 11, 31);
+                desdeStr = `${now.getFullYear()}-01-01`;
+                hastaStr = `${now.getFullYear()}-12-31`;
             } else if (periodoRapido === 'CUSTOM') {
                 if (mesSelector) {
                     const [y, m] = mesSelector.split('-').map(Number);
                     const ref = new Date(y, m - 1, 1);
-                    desdeFecha = inicioMes(ref);
-                    hastaFecha = finMes(ref);
+                    desdeStr = formatDateISO(inicioMes(ref));
+                    hastaStr = formatDateISO(finMes(ref));
                 } else if (desde || hasta) {
-                    desdeFecha = desde ? new Date(desde + 'T00:00:00') : null;
-                    hastaFecha = hasta ? new Date(hasta + 'T23:59:59') : null;
+                    desdeStr = desde || null;
+                    hastaStr = hasta || null;
                 }
             }
 
-            if (desdeFecha || hastaFecha) {
+            if (desdeStr || hastaStr) {
                 resultado = resultado.filter(it => {
                     const f = it[campoFecha];
                     if (!f) return false;
-                    const fecha = new Date(f.includes('T') ? f : f + 'T12:00:00');
-                    if (desdeFecha && fecha < desdeFecha) return false;
-                    if (hastaFecha && fecha > hastaFecha) return false;
+                    const fechaStr = f.slice(0, 10);
+                    if (desdeStr && fechaStr < desdeStr) return false;
+                    if (hastaStr && fechaStr > hastaStr) return false;
                     return true;
                 });
             }
