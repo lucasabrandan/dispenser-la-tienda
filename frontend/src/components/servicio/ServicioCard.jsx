@@ -351,7 +351,7 @@ export default function ServicioCard({
                 {/* Derecha: accion principal del estado */}
                 {esPpto && (
                     <button onClick={() => onEjecutar(servicio)}
-                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-brand-amber">
+                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-brand-red">
                         Ejecutar
                     </button>
                 )}
@@ -363,13 +363,13 @@ export default function ServicioCard({
                 )}
                 {esPendFact && (
                     <button onClick={() => onCobrar(servicio.id, 'FACTURADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-[#6366F1]">
+                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-brand-red">
                         Factura enviada
                     </button>
                 )}
                 {esFact && (
                     <button onClick={() => onCobrar(servicio.id, 'COBRADO')}
-                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-[#16A34A]">
+                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-brand-red">
                         Cobrado
                     </button>
                 )}

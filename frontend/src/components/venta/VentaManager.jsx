@@ -164,7 +164,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
 
                         {esAdmin && (
                             <button onClick={() => setModalCrear(true)}
-                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label text-white uppercase items-center active:scale-95 bg-brand-amber shrink-0">
+                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label uppercase items-center active:scale-95 bg-card text-ink border border-black/[0.08] dark:border-white/[0.08] shrink-0">
                                 + Venta
                             </button>
                         )}
@@ -220,10 +220,12 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                 <Paginacion pagina={filtros.pagina} totalPaginas={filtros.totalPaginas} irA={filtros.irA} next={filtros.next} prev={filtros.prev} />
             </div>
 
-            {/* FAB — mobile */}
+            {/* FAB — mobile. Mismo tratamiento que "Nueva Venta" en el Panel y en el
+                header de esta pantalla: secundario, no ambar solido — el rojo de marca
+                queda como unico acento fuerte de la app (ver "Nuevo Servicio"). */}
             {esAdmin && (
                 <button onClick={() => setModalCrear(true)}
-                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-white bg-brand-amber active:scale-90 transition-all z-20"
+                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-ink bg-card border border-black/[0.08] dark:border-white/[0.08] active:scale-90 transition-all z-20"
                     aria-label="Nueva venta">+</button>
             )}
 

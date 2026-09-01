@@ -27,9 +27,12 @@ export const ESTADO_COLOR = {
 // tenías forma de empujar una orden si a Marcos se le corta la batería o se
 // olvida. Se corta en "En sitio" a propósito: cerrar el trabajo pide datos
 // (costo, modalidad de cobro) que no tiene sentido completar a ciegas por él.
+// El color del boton ya no varia por etapa (antes: azul/ambar) — mismo
+// criterio que MisOrdenes.jsx / ServicioCard.jsx: la etapa ya se lee en el
+// dot/borde de la card (ESTADO_COLOR), el boton es siempre la misma accion.
 export const SIGUIENTE_ESTADO_ADMIN = {
-    PENDIENTE: { estado: 'EN_CAMINO', label: 'Salió',  color: 'bg-[#3B82F6]', Icon: LuCar },
-    EN_CAMINO: { estado: 'EN_SITIO',  label: 'Llegó',  color: 'bg-brand-amber', Icon: LuMapPin },
+    PENDIENTE: { estado: 'EN_CAMINO', label: 'Salió',  color: 'bg-brand-red', Icon: LuCar },
+    EN_CAMINO: { estado: 'EN_SITIO',  label: 'Llegó',  color: 'bg-brand-red', Icon: LuMapPin },
 };
 
 export function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionando, seleccionada, onToggleSel }) {

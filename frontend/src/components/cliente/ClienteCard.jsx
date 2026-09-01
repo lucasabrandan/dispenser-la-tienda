@@ -125,7 +125,7 @@ export default function ClienteCard({
                     )}
                     {onNuevaVenta && (
                         <button onClick={() => onNuevaVenta(cliente)}
-                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-brand-amber text-white rounded-xl font-black text-label active:scale-95 transition-all">
+                            className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-chip text-ink rounded-xl font-black text-label active:scale-95 transition-all">
                             <LuShoppingCart size={14} /> Venta
                         </button>
                     )}

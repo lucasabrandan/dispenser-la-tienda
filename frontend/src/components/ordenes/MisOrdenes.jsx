@@ -25,10 +25,14 @@ const BORDER_COLOR = {
     NO_ATENDIDO: '#DC2626',
 };
 
+// El color del boton ya no varia por etapa (antes: azul/ambar/verde) — es
+// siempre la misma accion "avanzar el siguiente paso", y la etapa actual ya
+// se lee en el borde/dot de la card (BORDER_COLOR). Mismo criterio que se
+// aplico a ServicioCard.jsx.
 const SIGUIENTE_ESTADO = {
-    PENDIENTE:  { estado: 'EN_CAMINO', label: 'Salir', color: 'bg-[#3B82F6]', Icon: LuCar },
-    EN_CAMINO:  { estado: 'EN_SITIO',  label: 'Llegué', color: 'bg-brand-amber', Icon: LuMapPin },
-    EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', color: 'bg-[#16A34A]', Icon: LuCircleCheck },
+    PENDIENTE:  { estado: 'EN_CAMINO', label: 'Salir', color: 'bg-brand-red', Icon: LuCar },
+    EN_CAMINO:  { estado: 'EN_SITIO',  label: 'Llegué', color: 'bg-brand-red', Icon: LuMapPin },
+    EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', color: 'bg-brand-red', Icon: LuCircleCheck },
 };
 
 function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido, onVerServicio }) {
