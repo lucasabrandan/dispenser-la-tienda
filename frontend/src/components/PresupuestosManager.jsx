@@ -14,6 +14,7 @@ import ModalDespacharPresupuesto from './presupuesto/ModalDespacharPresupuesto';
 import IniciarTrabajoSheet from './presupuesto/IniciarTrabajoSheet';
 import EjecutarAdminSheet from './servicio/EjecutarAdminSheet';
 import ServicioForm from './servicio/ServicioForm';
+import VentaForm from './venta/VentaForm';
 import PresupuestoCard from './presupuesto/PresupuestoCard';
 import { M } from './servicio/ServicioUI';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
@@ -402,10 +403,17 @@ export default function PresupuestosManager() {
                             <button onClick={() => setPresupuestoEditar(null)}
                                 className="w-9 h-9 rounded-xl flex items-center justify-center text-muted bg-chip active:scale-90">✕</button>
                         </div>
-                        <ServicioForm
-                            servicioParaEditar={presupuestoEditar}
-                            onSaved={() => { setPresupuestoEditar(null); cargar(); }}
-                        />
+                        {presupuestoEditar.servicioTipo === 'VENTA' ? (
+                            <VentaForm
+                                ventaParaEditar={presupuestoEditar}
+                                onSaved={() => { setPresupuestoEditar(null); cargar(); }}
+                            />
+                        ) : (
+                            <ServicioForm
+                                servicioParaEditar={presupuestoEditar}
+                                onSaved={() => { setPresupuestoEditar(null); cargar(); }}
+                            />
+                        )}
                     </div>
                 </div>
             )}
