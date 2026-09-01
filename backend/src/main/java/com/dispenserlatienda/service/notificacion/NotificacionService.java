@@ -108,6 +108,12 @@ public class NotificacionService {
                 "\u2705 Todo al dia!", titulo, detalle != null ? detalle : "");
             case MENSAJE_LIBRE -> String.format(
                 "\uD83D\uDCE9 *MENSAJE DE %s*\n\n%s", from.toUpperCase(), detalle != null ? detalle : titulo);
+            case TRABAJO_ASIGNADO -> String.format(
+                "\uD83D\uDD27 *NUEVO TRABAJO ASIGNADO*\n\n" +
+                "\uD83D\uDC64 Asignado por: %s\n" +
+                "\uD83D\uDCCB %s\n\n" +
+                "%s\n\n" +
+                "\u2705 Revisalo en la app.", from, titulo, detalle != null ? detalle : "");
         };
     }
 

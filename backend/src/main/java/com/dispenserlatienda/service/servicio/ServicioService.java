@@ -24,6 +24,8 @@ import com.dispenserlatienda.repository.gasto.GastoRepository;
 import com.dispenserlatienda.repository.sede.SedeRepository;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
+import com.dispenserlatienda.domain.notificacion.TipoNotificacion;
+import com.dispenserlatienda.service.notificacion.NotificacionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,10 +58,12 @@ public class ServicioService {
     private final ConfiguracionGlobalRepository configRepo;
     private final VentaRepository ventaRepository;
     private final ObjectMapper objectMapper;
+    private final NotificacionService notificacionService;
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
                            UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
                            GastoRepository gastoRepository, ConfiguracionGlobalRepository configRepo,
-                           VentaRepository ventaRepository, ObjectMapper objectMapper) {
+                           VentaRepository ventaRepository, ObjectMapper objectMapper,
+                           NotificacionService notificacionService) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
@@ -68,6 +72,7 @@ public class ServicioService {
         this.configRepo = configRepo;
         this.ventaRepository = ventaRepository;
         this.objectMapper = objectMapper;
+        this.notificacionService = notificacionService;
     }
 
     @Transactional(readOnly = true)
@@ -371,6 +376,7 @@ public class ServicioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
 
         boolean esNuevo = servicio.getId() == null;
+        Long usuarioAnteriorId = servicio.getUsuario() != null ? servicio.getUsuario().getId() : null;
         servicio.setSede(sede);
         servicio.setUsuario(usuario);
         if (esNuevo) {
@@ -485,6 +491,20 @@ public class ServicioService {
 
         // El auto-despacho de ordenes lo maneja el frontend (CerrarTicketSheet)
         // con fecha obligatoria. No crear orden aquí para evitar duplicados.
+
+        // Notificar (in-app + push) al usuario asignado cuando es un trabajo tecnico
+        // nuevo, o cuando se reasigna a otra persona. No se notifica en ventas
+        // (ahi "usuario" es quien carga la venta, no alguien a quien se le asigna
+        // un trabajo) ni en ediciones que no cambian el responsable, para no generar
+        // ruido en cada guardado.
+        boolean seReasigno = usuarioAnteriorId != null && !usuarioAnteriorId.equals(usuario.getId());
+        if ((esNuevo || seReasigno) && saved.getServicioTipo() == ServicioTipo.TECNICA) {
+            String detalle = (saved.getClienteNombre() != null ? saved.getClienteNombre() : "")
+                    + (saved.getSedeNombre() != null ? " · " + saved.getSedeNombre() : "");
+            notificacionService.notificar(
+                    TipoNotificacion.TRABAJO_ASIGNADO, usuario.getId(), null,
+                    "Nuevo trabajo asignado", detalle, saved.getId(), false);
+        }
 
         return mapToDTO(saved);
     }

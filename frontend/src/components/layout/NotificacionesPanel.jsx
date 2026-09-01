@@ -13,6 +13,7 @@ const TIPO_CONFIG = {
     PRESUPUESTO_EJECUTADO: { emoji: '\uD83D\uDE80', label: 'Ejecutado',       color: 'text-[#8B5CF6]' },
     COBRO_REGISTRADO:      { emoji: '\uD83D\uDCB0', label: 'Cobro',           color: 'text-[#16A34A]' },
     MENSAJE_LIBRE:         { emoji: '\uD83D\uDCE9', label: 'Mensaje',         color: 'text-[#57534E]' },
+    TRABAJO_ASIGNADO:      { emoji: '\uD83D\uDD27', label: 'Trabajo asignado', color: 'text-[#3B82F6]' },
 };
 
 function tiempoRelativo(fecha) {
