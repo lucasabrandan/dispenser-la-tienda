@@ -42,24 +42,29 @@ export default function ClienteCard({
     // Dirección formateada
     const direccion = [cliente.calle, cliente.numero, cliente.localidad].filter(Boolean).join(' ');
 
-    // Tipo de cliente por servicios: ambar=servicio, rojo=venta, gris=ambos
+    // Tipo de cliente por servicios: se marca con un ícono, no con color
+    // (antes ámbar=servicio / rojo=venta hacía que un tipo "se destacara" más
+    // que el otro sin motivo — ver Panel/ServicioManager/VentaManager).
     const tieneTecnica = serviciosCli.some(s => s.servicioTipo === 'TECNICA');
     const tieneVenta   = serviciosCli.some(s => s.servicioTipo === 'VENTA');
     const iniciales = cliente.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 
     // Vista colapsada
     if (!isExpanded) {
-        const avatarBg = tieneTecnica && tieneVenta ? 'bg-[#A8A29E]'
-                        : tieneTecnica ? 'bg-brand-amber'
-                        : tieneVenta   ? 'bg-brand-red'
-                        : 'bg-chip';
-        const avatarText = (tieneTecnica || tieneVenta) ? 'text-white' : 'text-muted';
+        const pinCls = 'absolute -bottom-1 -right-1 flex items-center justify-center gap-0.5 rounded-full bg-ink text-white dark:text-[#1C1917] border-2 border-card';
 
         return (
             <div onClick={onToggleExpand}
                 className="bg-card rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-start gap-3">
-                <span className={`w-9 h-9 rounded-lg ${avatarBg} ${avatarText} flex items-center justify-center font-black text-label shrink-0 mt-0.5`}>
+                <span className="relative w-9 h-9 rounded-lg bg-chip text-ink flex items-center justify-center font-black text-label shrink-0 mt-0.5">
                     {iniciales}
+                    {(tieneTecnica || tieneVenta) && (
+                        <span className={`${pinCls} ${tieneTecnica && tieneVenta ? 'h-4 px-1' : 'w-4 h-4'}`}
+                            title={tieneTecnica && tieneVenta ? 'Servicio técnico y venta' : tieneTecnica ? 'Servicio técnico' : 'Venta'}>
+                            {tieneTecnica && <LuWrench size={9} />}
+                            {tieneVenta && <LuShoppingCart size={9} />}
+                        </span>
+                    )}
                 </span>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
