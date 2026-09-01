@@ -95,8 +95,13 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
         <div className="space-y-4">
             {/* Controles */}
             <div className="flex gap-2 flex-wrap items-center">
-                <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                {/* El input de mes solo aparece acá cuando TabSueldo se usa standalone
+                    (MiSueldo.jsx, sin header propio). Dentro de Finanzas el mes ya lo
+                    controla el selector único del header — no se pasa setFiltroMes ahí. */}
+                {setFiltroMes && (
+                    <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
+                        className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                )}
                 {esAdmin && usuarios.length > 1 && (
                     <select value={selectedUserId || ''} onChange={e => setSelectedUserId(e.target.value ? Number(e.target.value) : null)}
                         className="h-8 px-2 rounded-lg text-caption font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]">

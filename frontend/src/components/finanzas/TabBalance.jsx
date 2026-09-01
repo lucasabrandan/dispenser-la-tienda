@@ -12,7 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell
 
 const POR_PAGINA = 15;
 
-export default function TabBalance({ filtroMes, setFiltroMes }) {
+export default function TabBalance({ filtroMes }) {
     const { ocultar } = useMontos();
     const { isDark } = useTheme();
     // Recharts dibuja SVG puro — las clases dark: de Tailwind no le llegan,
@@ -70,8 +70,6 @@ export default function TabBalance({ filtroMes, setFiltroMes }) {
     return (
         <div className="space-y-4">
             <div className="flex gap-2 items-center">
-                <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 <button onClick={() => exportarBalanceCSV(stats, filtroMes)}
                     className="h-8 px-3 rounded-lg text-label font-bold uppercase bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                     CSV

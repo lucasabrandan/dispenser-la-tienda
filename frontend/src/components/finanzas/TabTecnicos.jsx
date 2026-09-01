@@ -6,7 +6,7 @@ import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnic
 import Paginacion from '../ui/Paginacion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function TabTecnicos({ filtroMes, setFiltroMes }) {
+export default function TabTecnicos({ filtroMes }) {
     const { ocultar } = useMontos();
     const [datos,      setDatos]      = useState([]);
     const [cargando,   setCargando]   = useState(false);
@@ -38,8 +38,6 @@ export default function TabTecnicos({ filtroMes, setFiltroMes }) {
     return (
         <div className="space-y-5">
             <div className="flex gap-2 flex-wrap items-center">
-                <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
-                    className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
                 <select value={filtroTec} onChange={e => setFiltroTec(e.target.value)}
                     className="h-8 px-2 rounded-lg text-label font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <option value="">Todos los técnicos</option>

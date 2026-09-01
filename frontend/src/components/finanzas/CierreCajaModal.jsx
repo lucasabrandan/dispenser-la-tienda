@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
 import { generarPDFCierreCaja } from '../../utils/pdf/cierreCaja';
 import DateInput from '../ui/DateInput';
-import { getTodayISO, formatDateISO } from '../../utils/dateUtils';
+import { getTodayISO, formatDateISO, inicioMes, finMes } from '../../utils/dateUtils';
 import { LuCircleCheck, LuWrench, LuShoppingCart, LuFileText } from 'react-icons/lu';
 
 function M({ valor, className = '' }) {
@@ -26,10 +26,26 @@ const PERIODOS_RAPIDOS = [
     { id: 'custom', label: 'Rango'    },
 ];
 
-function resolverRango(periodo) {
+function resolverRango(periodo, mesInicial) {
     const hoy = hoyISO();
     if (periodo === 'hoy') return { desde: hoy, hasta: hoy };
-    if (periodo === 'mes') return { desde: inicioMesISO(), hasta: hoy };
+    if (periodo === 'mes') {
+        // "Este mes" arranca del mes que ya estaba elegido en Finanzas (mesInicial),
+        // no siempre del mes calendario real — así el modal no contradice lo que
+        // se estaba mirando en las pestañas. Si coincide con el mes real, el
+        // "hasta" sigue siendo hoy (no el último día); si es un mes pasado, el
+        // rango cubre el mes completo.
+        if (mesInicial) {
+            const [y, m] = mesInicial.split('-').map(Number);
+            const ref = new Date(y, m - 1, 1);
+            const mesActualReal = new Date().toISOString().substring(0, 7);
+            return {
+                desde: formatDateISO(inicioMes(ref)),
+                hasta: mesInicial === mesActualReal ? hoy : formatDateISO(finMes(ref)),
+            };
+        }
+        return { desde: inicioMesISO(), hasta: hoy };
+    }
     if (periodo === 'semana') {
         const d = new Date();
         d.setDate(d.getDate() - 6);
@@ -38,7 +54,7 @@ function resolverRango(periodo) {
     return null;
 }
 
-export default function CierreCajaModal({ onClose, onArchivar }) {
+export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
     const [periodo, setPeriodo]         = useState('mes');
     const [desde, setDesde]             = useState(inicioMesISO());
     const [hasta, setHasta]             = useState(hoyISO());
@@ -54,9 +70,9 @@ export default function CierreCajaModal({ onClose, onArchivar }) {
     }, []);
 
     useEffect(() => {
-        const rango = resolverRango(periodo);
+        const rango = resolverRango(periodo, mesInicial);
         if (rango) { setDesde(rango.desde); setHasta(rango.hasta); }
-    }, [periodo]);
+    }, [periodo, mesInicial]); // eslint-disable-line
 
     useEffect(() => {
         if (desde && hasta) cargar();

@@ -52,14 +52,27 @@ export default function DashboardFinanzas() {
                             </button>
                         ))}
                     </div>
+                    {/* Selector de período — único, siempre en el mismo lugar (antes cada tab
+                        reimplementaba su propio <input type="month">, en una fila distinta cada vez). */}
+                    <div className="flex items-center gap-2">
+                        {tab === 'inventario' ? (
+                            <span className="h-7 px-2.5 rounded-lg inline-flex items-center gap-1.5 text-label font-bold uppercase text-white bg-brand-green">
+                                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                                Tiempo real
+                            </span>
+                        ) : (
+                            <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
+                                className="h-7 px-2 rounded-lg text-label font-bold outline-none bg-card text-ink shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
+                        )}
+                    </div>
                 </div>
             </div>
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
-                {tab === 'balance'    && <TabBalance    filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
-                {tab === 'sueldo'     && <TabSueldo     filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
-                {tab === 'tecnicos'   && <TabTecnicos   filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
-                {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} setFiltroMes={setFiltroMes} />}
+                {tab === 'balance'    && <TabBalance    filtroMes={filtroMes} />}
+                {tab === 'sueldo'     && <TabSueldo     filtroMes={filtroMes} />}
+                {tab === 'tecnicos'   && <TabTecnicos   filtroMes={filtroMes} />}
+                {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} />}
                 {tab === 'inventario' && <TabInventario />}
             </div>
 
@@ -67,6 +80,7 @@ export default function DashboardFinanzas() {
                 <CierreCajaModal
                     onClose={() => setModalCierre(false)}
                     onArchivar={() => setModalCierre(false)}
+                    mesInicial={filtroMes}
                 />
             )}
         </div>
