@@ -7,6 +7,7 @@ import com.dispenserlatienda.dto.notificacion.NotificacionDTO;
 import com.dispenserlatienda.repository.notificacion.NotificacionRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.service.common.WhatsAppService;
+import com.dispenserlatienda.service.push.WebPushService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,11 +24,14 @@ public class NotificacionService {
     private final NotificacionRepository repo;
     private final UsuarioRepository usuarioRepo;
     private final WhatsAppService whatsApp;
+    private final WebPushService webPush;
 
-    public NotificacionService(NotificacionRepository repo, UsuarioRepository usuarioRepo, WhatsAppService whatsApp) {
+    public NotificacionService(NotificacionRepository repo, UsuarioRepository usuarioRepo,
+                                WhatsAppService whatsApp, WebPushService webPush) {
         this.repo = repo;
         this.usuarioRepo = usuarioRepo;
         this.whatsApp = whatsApp;
+        this.webPush = webPush;
     }
 
     // ── Crear notificacion + WhatsApp ────────────────────────────────────────
@@ -47,6 +51,10 @@ public class NotificacionService {
         n.setOrigen(origen);
         n.setReferenciaId(referenciaId);
         repo.save(n);
+
+        // Push al celu/navegador — siempre que haya dispositivos suscriptos,
+        // a diferencia de WhatsApp esto no es opcional por tipo de evento.
+        webPush.enviarATodosLosDispositivos(destino);
 
         if (enviarWhatsApp) {
             String wpp = destino.getWhatsapp() != null ? destino.getWhatsapp() : destino.getTelefono();

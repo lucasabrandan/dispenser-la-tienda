@@ -21,6 +21,14 @@ if (window.visualViewport) {
     });
 }
 
+// Service worker — necesario para las notificaciones push (ver
+// utils/pushNotifications.js). No cachea nada de la app.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    });
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LuBellOff } from 'react-icons/lu';
+import { LuBellOff, LuBell } from 'react-icons/lu';
+import { toast } from 'react-hot-toast';
 import api from '../../services/api';
+import { pushSoportado, estaSuscripto, activarNotificaciones } from '../../utils/pushNotifications';
 
 const TIPO_CONFIG = {
     ORDEN_ASIGNADA:        { emoji: '\uD83D\uDCCB', label: 'Nueva orden',     color: 'text-[#3B82F6]' },
@@ -46,6 +48,8 @@ export function NotifBell({ count, onClick }) {
 export default function NotificacionesPanel({ abierto, onCerrar }) {
     const [notifs, setNotifs] = useState([]);
     const [cargando, setCargando] = useState(false);
+    const [pushDisponible, setPushDisponible] = useState(false); // soportado y todavía no suscripto en este dispositivo
+    const [activandoPush, setActivandoPush] = useState(false);
 
     const cargar = useCallback(async () => {
         setCargando(true);
@@ -56,8 +60,24 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
     }, []);
 
     useEffect(() => {
-        if (abierto) cargar();
+        if (!abierto) return;
+        cargar();
+        if (!pushSoportado() || Notification.permission === 'denied') { setPushDisponible(false); return; }
+        estaSuscripto().then(ya => setPushDisponible(!ya)).catch(() => {});
     }, [abierto, cargar]);
+
+    const activarPush = async () => {
+        setActivandoPush(true);
+        try {
+            await activarNotificaciones();
+            toast.success('Notificaciones activadas en este dispositivo');
+            setPushDisponible(false);
+        } catch (e) {
+            toast.error(e.message || 'No se pudo activar');
+        } finally {
+            setActivandoPush(false);
+        }
+    };
 
     const marcarLeida = async (id) => {
         try {
@@ -102,6 +122,20 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                         </button>
                     </div>
                 </div>
+
+                {/* Activar push — solo si el dispositivo todavia no esta suscripto */}
+                {pushDisponible && (
+                    <button onClick={activarPush} disabled={activandoPush}
+                        className="mx-4 mt-3 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-left bg-panel active:scale-[0.98] transition-all disabled:opacity-60 shrink-0">
+                        <LuBell size={16} className="text-brand-red shrink-0" />
+                        <span className="flex-1 min-w-0">
+                            <span className="block text-caption font-black text-ink">
+                                {activandoPush ? 'Activando…' : 'Activar notificaciones en este dispositivo'}
+                            </span>
+                            <span className="block text-label text-muted mt-0.5">Te avisa aunque tengas la app cerrada</span>
+                        </span>
+                    </button>
+                )}
 
                 {/* Lista */}
                 <div className="flex-1 overflow-y-auto">
