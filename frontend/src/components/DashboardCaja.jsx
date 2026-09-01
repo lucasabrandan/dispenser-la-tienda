@@ -7,12 +7,16 @@ import CierreCajaModal from './finanzas/CierreCajaModal';
 import AgendaBlock from './dashboard/AgendaBlock';
 import AlertasBlock from './dashboard/AlertasBlock';
 import { calcTotal } from './dashboard/estadoConstants';
-import { LuWrench, LuShoppingCart } from 'react-icons/lu';
+import { LuWrench, LuShoppingCart, LuChevronDown } from 'react-icons/lu';
 import { getTodayISO, formatDateISO } from '../utils/dateUtils';
 
 export default function DashboardCaja({ setVistaActual }) {
     const { esAdmin } = useAuth();
     const [modalCierre, setModalCierre] = useState(false);
+    // Colapsado por defecto (pedido de Lucas, coordinado 27-ago con otra sesión en
+    // paralelo — nunca se había llegado a programar): la plata de hoy/mes no es lo
+    // primero que se ve al entrar al Panel, hay que tocar para desplegarla.
+    const [statsAbierto, setStatsAbierto] = useState(false);
     const [cargando, setCargando] = useState(true);
     const [servicios, setServicios] = useState([]);
     const [ordenes, setOrdenes] = useState([]);
@@ -101,29 +105,39 @@ export default function DashboardCaja({ setVistaActual }) {
 
     const card = 'rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
 
-    // Stats inline (pequeno, no amerita archivo separado)
+    // Stats inline (pequeno, no amerita archivo separado). Colapsado por defecto —
+    // ver comentario junto a statsAbierto arriba.
     const StatsBlock = () => (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div className={`${card} p-3.5`}>
-                <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Hoy</p>
-                <M valor={data.totalHoy} className="text-xl font-black text-ink block" />
-                <p className="text-caption text-muted mt-0.5">{data.countHoy} operaciones</p>
-            </div>
-            <div className={`${card} p-3.5`}>
-                <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Mes</p>
-                <M valor={data.totalMes} className="text-xl font-black text-ink block" />
-                <p className="text-caption text-muted mt-0.5">{data.countMes} cobradas</p>
-            </div>
-            {data.moHoy > 0 && (
-                <div className={`${card} p-3.5 col-span-2 md:col-span-1`}>
-                    <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">MO Hoy</p>
-                    <M valor={data.moHoy} className="text-xl font-black text-brand-amber block" />
+        <div className={card}>
+            <button onClick={() => setStatsAbierto(v => !v)}
+                className="w-full flex items-center justify-between p-3.5 active:scale-[0.99] transition-all">
+                <span className="text-label font-bold uppercase tracking-wider text-muted">Caja de hoy y del mes</span>
+                <LuChevronDown size={14} className={`text-muted transition-transform duration-200 ${statsAbierto ? 'rotate-180' : ''}`} />
+            </button>
+            {statsAbierto && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-3.5 pb-3.5">
+                    <div>
+                        <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Hoy</p>
+                        <M valor={data.totalHoy} className="text-xl font-black text-ink block" />
+                        <p className="text-caption text-muted mt-0.5">{data.countHoy} operaciones</p>
+                    </div>
+                    <div>
+                        <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Mes</p>
+                        <M valor={data.totalMes} className="text-xl font-black text-ink block" />
+                        <p className="text-caption text-muted mt-0.5">{data.countMes} cobradas</p>
+                    </div>
+                    {data.moHoy > 0 && (
+                        <div className="col-span-2 md:col-span-1">
+                            <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">MO Hoy</p>
+                            <M valor={data.moHoy} className="text-xl font-black text-brand-amber block" />
+                        </div>
+                    )}
+                    <button onClick={() => setVistaActual('finanzas')}
+                        className="col-span-2 md:col-span-3 text-label font-bold text-brand-red hover:underline text-left -mt-1">
+                        Ver en Finanzas →
+                    </button>
                 </div>
             )}
-            <button onClick={() => setVistaActual('finanzas')}
-                className="col-span-2 md:col-span-3 text-label font-bold text-brand-red hover:underline text-left -mt-1">
-                Ver en Finanzas →
-            </button>
         </div>
     );
 
