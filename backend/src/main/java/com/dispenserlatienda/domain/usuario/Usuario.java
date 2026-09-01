@@ -41,6 +41,12 @@ public class Usuario {
     @Column(name = "sueldo_objetivo")
     private BigDecimal sueldoObjetivo;
 
+    // Mi Espacio (Lucas, 31-ago): tableros kanban de notas personales del admin.
+    // Un solo blob JSON por usuario, mismo patron que costosRealesJson en Repuesto -
+    // evita un esquema relacional completo para algo que es, en esencia, una lista anidada.
+    @Column(name = "espacio_json", columnDefinition = "TEXT")
+    private String espacioJson;
+
     protected Usuario() {
     }
 
@@ -89,4 +95,6 @@ public class Usuario {
     public void setFirma(String firma) { this.firma = firma; }
     public BigDecimal getSueldoObjetivo() { return sueldoObjetivo; }
     public void setSueldoObjetivo(BigDecimal sueldoObjetivo) { this.sueldoObjetivo = sueldoObjetivo; }
+    public String getEspacioJson() { return espacioJson; }
+    public void setEspacioJson(String espacioJson) { this.espacioJson = espacioJson; }
 }

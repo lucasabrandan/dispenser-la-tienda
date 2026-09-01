@@ -25,6 +25,7 @@ const NOMBRES_SECCION = {
     'usuarios':         'Usuarios',
     'mis-ordenes':      'Mis Ordenes',
     'mi-agenda':        'Mi Agenda',
+    'mi-espacio':       'Mi Espacio',
 };
 
 export default function Layout({ children, vistaActual, setVistaActual }) {

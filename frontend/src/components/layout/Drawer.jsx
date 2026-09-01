@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
-import { LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings } from 'react-icons/lu';
+import { LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
 // (mismo criterio que Sidebar.jsx en desktop). Presupuestos queda aparte de
@@ -12,11 +12,12 @@ const MENU_TRANSVERSAL_DRAWER = [
     { id: 'presupuestos', nombre: 'Presupuestos', Icon: LuBanknote },
 ];
 const MENU_GESTION_DRAWER = [
-    { id: 'clientes',  nombre: 'Clientes',  Icon: LuUsers },
-    { id: 'radar',     nombre: 'Radar',     Icon: LuSiren },
-    { id: 'productos', nombre: 'Productos', Icon: LuPackage },
-    { id: 'finanzas',  nombre: 'Finanzas',  Icon: LuTrendingUp },
-    { id: 'usuarios',  nombre: 'Usuarios',  Icon: LuLock },
+    { id: 'clientes',   nombre: 'Clientes',   Icon: LuUsers },
+    { id: 'radar',      nombre: 'Radar',      Icon: LuSiren },
+    { id: 'productos',  nombre: 'Productos',  Icon: LuPackage },
+    { id: 'finanzas',   nombre: 'Finanzas',   Icon: LuTrendingUp },
+    { id: 'usuarios',   nombre: 'Usuarios',   Icon: LuLock },
+    { id: 'mi-espacio', nombre: 'Mi Espacio', Icon: LuKanban },
 ];
 const MENU_ITEMS = [...MENU_TRANSVERSAL_DRAWER, ...MENU_GESTION_DRAWER];
 

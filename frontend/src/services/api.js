@@ -116,6 +116,10 @@ export const getGastos  = () => api.get(`/gastos?page=0&size=500`);
 export const crearGasto = (data) => api.post('/gastos', data);
 export const eliminarGasto = (id) => api.delete(`/gastos/${id}`);
 
+// ── Mi Espacio ────────────────────────────────────────────────────────────────
+export const getMiEspacio    = () => api.get('/mi-espacio');
+export const guardarMiEspacio = (espacioJson) => api.put('/mi-espacio', { espacioJson });
+
 // ── Admin: Usuarios ───────────────────────────────────────────────────────────
 export const getUsuarios        = () => api.get('/admin/usuarios');
 export const crearUsuario       = (data) => api.post('/admin/usuarios', data);

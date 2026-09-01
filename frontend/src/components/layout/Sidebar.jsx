@@ -4,7 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuCalendar, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut } from 'react-icons/lu';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuCalendar, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban } from 'react-icons/lu';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
 // para no mezclar todo en una sola lista larga.
@@ -43,11 +43,12 @@ const MENU_OPERACIONES_TECNICO = [
 ];
 
 const MENU_GESTION = [
-    { id: 'clientes',  Icon: LuUsers,      nombre: 'Clientes'  },
-    { id: 'radar',     Icon: LuSiren,      nombre: 'Radar'     },
-    { id: 'productos', Icon: LuPackage,    nombre: 'Productos' },
-    { id: 'finanzas',  Icon: LuTrendingUp, nombre: 'Finanzas'  },
-    { id: 'usuarios',  Icon: LuLock,       nombre: 'Usuarios'  },
+    { id: 'clientes',   Icon: LuUsers,      nombre: 'Clientes'   },
+    { id: 'radar',      Icon: LuSiren,      nombre: 'Radar'      },
+    { id: 'productos',  Icon: LuPackage,    nombre: 'Productos'  },
+    { id: 'finanzas',   Icon: LuTrendingUp, nombre: 'Finanzas'   },
+    { id: 'usuarios',   Icon: LuLock,       nombre: 'Usuarios'   },
+    { id: 'mi-espacio', Icon: LuKanban,     nombre: 'Mi Espacio' },
 ];
 
 const ChevronLeft  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;

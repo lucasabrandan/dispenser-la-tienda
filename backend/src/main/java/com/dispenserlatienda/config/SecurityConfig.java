@@ -44,6 +44,9 @@ public class SecurityConfig {
                 // Solo ADMIN: gestión de usuarios
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                // Solo ADMIN: Mi Espacio (notas kanban personales)
+                .requestMatchers("/api/mi-espacio/**").hasRole("ADMIN")
+
                 // Solo ADMIN: radar de mantenimiento
                 .requestMatchers("/api/radar/**").hasRole("ADMIN")
 
