@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LuInbox, LuWrench, LuShoppingCart, LuStickyNote, LuMapPin } from 'react-icons/lu';
 import { M } from '../servicio/ServicioUI';
 import AgendaCard from './AgendaCard';
-import { ESTADO_COLORS, DEFAULT_COLOR, MAX_TRABAJOS, calcTotal, getIniciales, estadoPredominante, agruparPor } from './estadoConstants';
+import { IDENTIDAD_COLOR, MAX_TRABAJOS, calcTotal, getIniciales, agruparPor } from './estadoConstants';
 
 const card = 'rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
 
@@ -143,7 +143,7 @@ export default function AgendaBlock({ planificador, setVistaActual, cargando }) 
                                 {tecnicos.map(tecNombre => {
                                     const tecItems = gruposItems[tecNombre] || [];
                                     const tecNotas = gruposNotas[tecNombre] || [];
-                                    const color = ESTADO_COLORS[estadoPredominante(tecItems)] || DEFAULT_COLOR;
+                                    const color = IDENTIDAD_COLOR;
                                     const totalTec = tecItems.reduce((sum, s) => sum + (calcTotal(s) || 0), 0);
                                     const servicios = tecItems.filter(s => s.servicioTipo === 'TECNICA');
                                     const ventas = tecItems.filter(s => s.servicioTipo === 'VENTA');

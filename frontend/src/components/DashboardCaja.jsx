@@ -174,7 +174,7 @@ export default function DashboardCaja({ setVistaActual }) {
                             <span className="text-body font-black">Nuevo Servicio</span>
                         </button>
                         <button onClick={() => setVistaActual('venta', { crear: true })}
-                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-brand-amber text-white">
+                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
                             <LuShoppingCart size={18} />
                             <span className="text-body font-black">Nueva Venta</span>
                         </button>
@@ -212,7 +212,7 @@ export default function DashboardCaja({ setVistaActual }) {
                                     <span className="text-label font-black">Nuevo Servicio</span>
                                 </button>
                                 <button onClick={() => setVistaActual('venta', { crear: true })}
-                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-brand-amber text-white">
+                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
                                     <LuShoppingCart size={16} />
                                     <span className="text-label font-black">Nueva Venta</span>
                                 </button>
