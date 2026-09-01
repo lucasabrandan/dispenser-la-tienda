@@ -48,7 +48,16 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                 nuevos[idx] = { ...nuevos[idx], cantidad: nuevos[idx].cantidad + 1, subtotal: (nuevos[idx].cantidad + 1) * nuevos[idx].precio };
                 return nuevos;
             }
-            return [...prev, { id: p.id, nombre: p.nombre, sku: p.sku, precio: p.precio, cantidad: 1, subtotal: p.precio, fotoUrl: p.fotoUrl || null }];
+            // Costo/ganancia se toman del catálogo vivo (repuestos), no del caché de
+            // "frecuentes" (que no los guarda) — mismo dato que ya usa RepuestosBottomSheet
+            // al agregar un producto, para que el panel de rentabilidad no quede en $0
+            // cuando el producto se agrega desde acá en vez del selector.
+            const full = repuestos.find(r => r.id === p.id);
+            return [...prev, {
+                id: p.id, nombre: p.nombre, sku: p.sku, precio: p.precio, cantidad: 1, subtotal: p.precio, fotoUrl: p.fotoUrl || null,
+                costo: parseFloat(full?.costo) || 0,
+                porcentajeGanancia: parseFloat(full?.porcentajeGanancia) || 0,
+            }];
         });
     };
 

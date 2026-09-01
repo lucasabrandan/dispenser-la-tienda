@@ -124,6 +124,65 @@ export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar =
     const totalFinal        = totalBruto - descuentoMonto;
     const clienteObj        = clientes.find(c => c.id.toString() === clienteId);
 
+    // Rentabilidad (Lucas, panel "Ver rentabilidad" pedido para Venta, mismo criterio
+    // que ya usa Servicio en useServicioForm.js — ver PasoResumen.jsx/RentabilidadPanel).
+    // Cada producto de "productos" ya trae costo/porcentajeGanancia desde que se agrega
+    // vía RepuestosBottomSheet (armarEntrada) — acá solo se calcula la ganancia con eso.
+    const calcularGananciaRepuesto = (repuesto, cantidad) => {
+        const precioVenta = parseFloat(repuesto.precio) || 0;
+        const costo       = parseFloat(repuesto.costo)  || 0;
+        const qty         = parseFloat(cantidad)         || 1;
+        const subtotal    = precioVenta * qty;
+
+        if (costo > 0) {
+            const costoTotal = costo * qty;
+            const ganancia   = subtotal - costoTotal;
+            const margen     = subtotal > 0 ? ((ganancia / subtotal) * 100).toFixed(1) : 0;
+            return { subtotal, costoTotal, ganancia, margen };
+        }
+
+        const pct = parseFloat(repuesto.porcentajeGanancia) || 0;
+        if (pct > 0) {
+            const costoImplicito = subtotal / (1 + pct / 100);
+            const ganancia = subtotal - costoImplicito;
+            return { subtotal, costoTotal: costoImplicito, ganancia, margen: pct.toFixed(1) };
+        }
+
+        return { subtotal, costoTotal: 0, ganancia: 0, margen: 0 };
+    };
+
+    const calcularResumenGanancia = () => {
+        let totalVenta = 0;
+        let totalCosto = 0;
+
+        productos.forEach(p => {
+            const g = calcularGananciaRepuesto(p, p.cantidad);
+            totalVenta += g.subtotal;
+            totalCosto += g.costoTotal;
+        });
+        // El envío se suma como venta pura, sin costo asociado — no hay dato de
+        // costo de envío en el modelo hoy (mismo criterio que costoExtra/mano de
+        // obra en Servicio, que tampoco resta costo).
+        totalVenta += envioNum;
+
+        const descuento         = (totalVenta * descuentoPorcentaje) / 100;
+        const totalConDescuento = totalVenta - descuento;
+        const gananciaBruta     = totalConDescuento - totalCosto;
+        const margenFinal       = totalConDescuento > 0
+            ? ((gananciaBruta / totalConDescuento) * 100).toFixed(1) : 0;
+
+        return { totalVenta, totalCosto, descuento, totalConDescuento, gananciaBruta, margenFinal };
+    };
+
+    const editarCostoProducto = (idx, valorTexto) => {
+        const nuevoCosto = parseFloat(valorTexto) || 0;
+        setProductos(prev => {
+            const copia = [...prev];
+            copia[idx] = { ...copia[idx], costo: nuevoCosto };
+            return copia;
+        });
+    };
+
     // Crea un cliente con datos mínimos antes de guardar la venta
     const crearClienteRapido = async () => {
         try {
@@ -270,6 +329,7 @@ export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar =
         activarRapido, activarNormal,
         agregarProducto, actualizarCantidad, quitarProducto, setProductos,
         modalRepuesto, setModalRepuesto, nombreRepuesto, repuestoCreado, abrirModalRepuesto,
+        calcularGananciaRepuesto, calcularResumenGanancia, editarCostoProducto,
         guardarVenta, dispararPDF, onClienteNuevo,
     };
 }

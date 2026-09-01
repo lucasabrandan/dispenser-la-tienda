@@ -1,6 +1,146 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Label, BackBtn, M } from '../servicio/ServicioUI';
+import { useAuth } from '../../context/AuthContext';
 import { LuTruck, LuFileText } from 'react-icons/lu';
+
+// ── Panel de rentabilidad discreta (solo admin) ──────────────────────────────
+// Mismo panel que ya tiene Servicio (PasoResumen.jsx) — se duplica en vez de
+// extraerse a un componente compartido porque la forma del desglose es distinta
+// (Servicio anida repuestos dentro de ticketItems, Venta tiene "productos" plano),
+// mismo criterio ya usado en el proyecto para no forzar una abstracción prematura
+// entre estructuras de datos distintas.
+function RentabilidadPanel({ resumen, desglose, onEditarCosto }) {
+    const [abierto, setAbierto] = useState(false);
+    if (resumen.gananciaBruta <= 0) return null;
+
+    return (
+        <div>
+            <button onClick={() => setAbierto(!abierto)}
+                className="w-full flex items-center justify-between py-2 px-0 transition-all active:scale-[0.99] dark:hidden">
+                <span className="text-label font-semibold tracking-wide text-[#A8855A]">Ver rentabilidad de la venta</span>
+                <span className={`text-label text-[#A8855A] transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`}>▾</span>
+            </button>
+            <button onClick={() => setAbierto(!abierto)}
+                className="hidden dark:flex items-center gap-2 py-2 px-0 transition-all active:scale-[0.99]">
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors duration-200 ${abierto ? 'bg-[#5DD68F]' : 'bg-[#5C5954]'}`} />
+                <span className={`text-label font-medium transition-colors duration-200 ${abierto ? 'text-[#9E9A94]' : 'text-[#5C5954]'}`}>
+                    rentabilidad de la venta
+                </span>
+            </button>
+
+            {abierto && (
+                <>
+                    <div className="dark:hidden mt-1 rounded-xl overflow-hidden border border-[#A8855A]/20">
+                        <div className="p-3 bg-[#FFF4D6]/60">
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                                {[
+                                    { label: 'Venta',    val: resumen.totalVenta,    green: false },
+                                    { label: 'Costo',    val: resumen.totalCosto,    green: false },
+                                    { label: 'Ganancia', val: resumen.gananciaBruta, green: true  },
+                                    { label: 'Margen',   val: null, pct: resumen.margenFinal, green: true },
+                                ].map((item, i) => (
+                                    <div key={i} className="bg-[#A8855A]/10 rounded-lg px-3 py-2">
+                                        <p className="text-label uppercase tracking-wide font-bold text-[#A8855A] mb-1">{item.label}</p>
+                                        {item.pct !== undefined
+                                            ? <p className="text-body-lg font-black text-[#5C3D00]">{item.pct}%</p>
+                                            : <M valor={Math.round(item.val)} className={`text-body-lg font-black ${item.green ? 'text-[#5C3D00]' : 'text-[#1C1917]'}`} />
+                                        }
+                                    </div>
+                                ))}
+                            </div>
+                            <div>
+                                <div className="flex justify-between text-label text-[#A8855A] mb-1">
+                                    <span>Margen</span><span>{resumen.margenFinal}%</span>
+                                </div>
+                                <div className="h-1 rounded-full bg-[#A8855A]/15 overflow-hidden">
+                                    <div className="h-full rounded-full bg-[#C47A00] transition-all"
+                                         style={{ width: `${Math.min(100, parseFloat(resumen.margenFinal))}%` }} />
+                                </div>
+                            </div>
+                            {desglose.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-[#A8855A]/20">
+                                    <p className="text-label uppercase tracking-wide font-bold text-[#A8855A] mb-2">Desglose por producto</p>
+                                    <div className="space-y-2">
+                                        {desglose.map(d => (
+                                            <div key={d.key} className="bg-[#A8855A]/10 rounded-lg px-3 py-2">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <p className="text-caption font-bold text-[#1C1917] truncate">{d.repuesto.nombre}</p>
+                                                    <p className="text-caption text-[#A8855A] shrink-0">{d.repuesto.cantidad} u.</p>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2 mt-1.5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-label text-[#A8855A]">Costo</span>
+                                                        <input type="text" inputMode="decimal"
+                                                            value={d.repuesto.costo ?? ''}
+                                                            onChange={e => onEditarCosto(d.idx, e.target.value)}
+                                                            className="w-16 h-7 rounded-md text-center text-caption font-bold bg-white border border-[#A8855A]/30 text-[#1C1917] outline-none focus:border-[#A8855A]" />
+                                                    </div>
+                                                    <p className="text-caption font-black text-[#5C3D00]">
+                                                        <M valor={Math.round(d.ganancia.ganancia)} /> &middot; {d.ganancia.margen}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <p className="text-caption text-muted mt-2">Solo visible para vos.</p>
+                        </div>
+                    </div>
+                    <div className="hidden dark:block mt-1 rounded-xl p-3 bg-[#0D2E1C] border border-[#2A9D5C]/20">
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                            {[
+                                { label: 'Venta',    val: resumen.totalVenta,    green: false },
+                                { label: 'Costo',    val: resumen.totalCosto,    green: false },
+                                { label: 'Ganancia', val: resumen.gananciaBruta, green: true  },
+                                { label: 'Margen',   val: null, pct: resumen.margenFinal, green: true },
+                            ].map((item, i) => (
+                                <div key={i}>
+                                    <p className="text-label uppercase tracking-wide font-bold text-[#5C5954] mb-1">{item.label}</p>
+                                    {item.pct !== undefined
+                                        ? <p className={`text-body-lg font-black ${item.green ? 'text-[#5DD68F]' : 'text-[#F0EEE9]'}`}>{item.pct}%</p>
+                                        : <M valor={Math.round(item.val)} className={`text-body-lg font-black ${item.green ? 'text-[#5DD68F]' : 'text-[#F0EEE9]'}`} />
+                                    }
+                                </div>
+                            ))}
+                        </div>
+                        <div className="h-0.5 rounded-full bg-white/5 overflow-hidden">
+                            <div className="h-full rounded-full bg-[#2A9D5C]"
+                                 style={{ width: `${Math.min(100, parseFloat(resumen.margenFinal))}%` }} />
+                        </div>
+                        {desglose.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-[#2A9D5C]/20">
+                                <p className="text-label uppercase tracking-wide font-bold text-[#5C5954] mb-2">Desglose por producto</p>
+                                <div className="space-y-2">
+                                    {desglose.map(d => (
+                                        <div key={d.key} className="bg-white/[0.03] rounded-lg px-3 py-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-caption font-bold text-[#F0EEE9] truncate">{d.repuesto.nombre}</p>
+                                                <p className="text-caption text-[#5C5954] shrink-0">{d.repuesto.cantidad} u.</p>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-2 mt-1.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-label text-[#5C5954]">Costo</span>
+                                                    <input type="text" inputMode="decimal"
+                                                        value={d.repuesto.costo ?? ''}
+                                                        onChange={e => onEditarCosto(d.idx, e.target.value)}
+                                                        className="w-16 h-7 rounded-md text-center text-caption font-bold bg-[#141414] border border-[#2A9D5C]/30 text-[#F0EEE9] outline-none focus:border-[#2A9D5C]" />
+                                                </div>
+                                                <p className="text-caption font-black text-[#5DD68F]">
+                                                    <M valor={Math.round(d.ganancia.ganancia)} /> &middot; {d.ganancia.margen}%
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PasoResumenVenta({ hook, mostrador, onBack }) {
@@ -9,8 +149,21 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
         descuentoPorcentaje, setDescuentoPorcentaje,
         descuentoMonto, totalFinal,
         leyenda, setLeyenda,
+        calcularGananciaRepuesto, calcularResumenGanancia, editarCostoProducto,
         guardarVenta, dispararPDF,
     } = hook;
+
+    const { esAdmin } = useAuth();
+    const resumen = calcularResumenGanancia();
+    // Desglose por producto para el panel de rentabilidad — mismo criterio que
+    // Servicio (PasoResumen.jsx): el costo editado acá se guarda de verdad en
+    // "productos", no es una simulación, viaja como costo real al confirmar.
+    const desglose = productos.map((p, idx) => ({
+        key: p.id ?? idx,
+        idx,
+        repuesto: p,
+        ganancia: calcularGananciaRepuesto(p, p.cantidad),
+    }));
 
     const textareaCls = `
         w-full block px-3.5 py-2.5 rounded-xl text-body font-medium outline-none resize-none
@@ -80,6 +233,10 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                     ))}
                 </div>
             </div>
+
+            {/* ── Rentabilidad — solo admin (mismo criterio que Servicio: sin card
+                propia, el panel se muestra colapsado como un link chico) ── */}
+            {esAdmin && <RentabilidadPanel resumen={resumen} desglose={desglose} onEditarCosto={editarCostoProducto} />}
 
             {/* ── Observaciones ── */}
             <div className="rounded-2xl p-4 bg-card border border-black/[0.07] dark:border-white/[0.07]">
