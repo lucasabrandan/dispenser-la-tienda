@@ -13,6 +13,8 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, Long
 
     List<Notificacion> findTop50ByDestinoIdOrderByCreadoEnDesc(Long destinoId);
 
+    List<Notificacion> findByReferenciaIdAndTipoOrderByCreadoEnAsc(Long referenciaId, com.dispenserlatienda.domain.notificacion.TipoNotificacion tipo);
+
     long countByDestinoIdAndLeidaFalse(Long destinoId);
 
     @Modifying

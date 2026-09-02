@@ -128,6 +128,24 @@ public class NotificacionService {
         return repo.countByDestinoIdAndLeidaFalse(usuarioId);
     }
 
+    // Historial de un trabajo (Servicio), para la pantalla de línea de tiempo
+    // del admin: se arma leyendo las notificaciones TRABAJO_ASIGNADO ya
+    // guardadas para ese servicio (asignación inicial, reasignaciones,
+    // horario confirmado por el técnico), sin agregar ningún registro nuevo.
+    // Cuando hay más de un admin activo, "horario confirmado" genera una fila
+    // por cada uno con el mismo contenido — acá interesa el evento, no cuántos
+    // admins lo recibieron, así que se deduplica por fecha+título+mensaje.
+    public List<NotificacionDTO> historialDeTrabajo(Long servicioId) {
+        List<Notificacion> eventos = repo.findByReferenciaIdAndTipoOrderByCreadoEnAsc(
+                servicioId, com.dispenserlatienda.domain.notificacion.TipoNotificacion.TRABAJO_ASIGNADO);
+        java.util.LinkedHashMap<String, Notificacion> unicos = new java.util.LinkedHashMap<>();
+        for (Notificacion n : eventos) {
+            String key = n.getCreadoEn() + "|" + n.getTitulo() + "|" + n.getMensaje();
+            unicos.putIfAbsent(key, n);
+        }
+        return unicos.values().stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
     @Transactional
     public void marcarLeida(Long id) {
         repo.findById(id).ifPresent(n -> { n.setLeida(true); repo.save(n); });

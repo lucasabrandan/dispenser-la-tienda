@@ -46,7 +46,7 @@ export function NotifBell({ count, onClick }) {
 }
 
 // Panel desplegable de notificaciones
-export default function NotificacionesPanel({ abierto, onCerrar }) {
+export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo }) {
     const [notifs, setNotifs] = useState([]);
     const [cargando, setCargando] = useState(false);
     // 'cargando' | 'no-soportado' | 'denegado' | 'inactivo' | 'activo'
@@ -204,7 +204,15 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                                 const cfg = TIPO_CONFIG[n.tipo] || TIPO_CONFIG.MENSAJE_LIBRE;
                                 return (
                                     <div key={n.id}
-                                        onClick={() => !n.leida && marcarLeida(n.id)}
+                                        onClick={() => {
+                                            if (!n.leida) marcarLeida(n.id);
+                                            // Solo TRABAJO_ASIGNADO esta ligado a un Servicio puntual — los
+                                            // demas tipos (ordenes) usan otro espacio de ids, no hay pantalla
+                                            // de detalle para ellos todavia.
+                                            if (n.tipo === 'TRABAJO_ASIGNADO' && n.referenciaId && onAbrirTrabajo) {
+                                                onAbrirTrabajo(n.referenciaId);
+                                            }
+                                        }}
                                         className={`px-4 py-3 flex gap-3 items-start transition-colors cursor-pointer active:bg-[#EFEDEA] dark:active:bg-[#242424] ${
                                             !n.leida ? 'bg-[#F0F4FF] dark:bg-[#1A2030]' : ''
                                         }`}>

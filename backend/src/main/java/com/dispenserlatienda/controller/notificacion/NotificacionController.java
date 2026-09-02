@@ -48,6 +48,13 @@ public class NotificacionController {
         return ResponseEntity.noContent().build();
     }
 
+    // Línea de tiempo de un trabajo puntual (Servicio) para la pantalla de
+    // historial del admin — ver NotificacionService.historialDeTrabajo().
+    @GetMapping("/por-trabajo/{servicioId}")
+    public ResponseEntity<List<NotificacionDTO>> historialDeTrabajo(@PathVariable Long servicioId) {
+        return ResponseEntity.ok(service.historialDeTrabajo(servicioId));
+    }
+
     private Long resolverUserId(Authentication auth) {
         String username = auth.getName();
         Usuario u = usuarioRepo.findByUsername(username)

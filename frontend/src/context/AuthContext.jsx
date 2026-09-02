@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { guardarTokenParaSW } from '../utils/pushTokenCache';
 
 const AuthContext = createContext(null);
 
@@ -24,6 +25,12 @@ export function AuthProvider({ children }) {
         setToken(null);
         setUsuario(null);
     }, []);
+
+    // Espeja el token en IndexedDB para que el service worker pueda leerlo
+    // cuando llega un push con la app cerrada (ver pushTokenCache.js).
+    useEffect(() => {
+        guardarTokenParaSW(token);
+    }, [token]);
 
     return (
         <AuthContext.Provider value={{

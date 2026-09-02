@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Drawer from './Drawer';
 import BottomNav from './BottomNav';
 import NotificacionesPanel, { NotifBell } from './NotificacionesPanel';
+import TrabajoDeepLink from '../servicio/TrabajoDeepLink';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
@@ -33,6 +34,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     const [sidebarColapsado, setSidebarColapsado] = useState(false);
     const [notifAbierto, setNotifAbierto] = useState(false);
     const [notifCount, setNotifCount] = useState(0);
+    const [trabajoDeepLinkId, setTrabajoDeepLinkId] = useState(null);
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
     const { logout } = useAuth();
@@ -54,16 +56,25 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
         return () => clearInterval(interval);
     }, [pollNotifs]);
 
-    // Si se llegó acá tocando una notificación push (ver service-worker.js),
-    // el push no trae el detalle (viaja sin contenido, ver WebPushService),
-    // así que en vez de dejar al usuario en el dashboard sin saber qué pasó,
-    // se abre directo el panel con el historial real — mismo comportamiento
-    // para admin y técnico, es el mismo panel para los dos roles.
+    // Si se llegó acá tocando una notificación push (ver service-worker.js)
+    // o una fila de la campanita (ver NotificacionesPanel), y se sabe a qué
+    // trabajo corresponde (servicioId), se abre directo la pantalla de ESE
+    // trabajo — sin pasar por la lista general — vía TrabajoDeepLink más
+    // abajo (detalle para el técnico, línea de tiempo para el admin). Si no
+    // se sabe a cuál (push viejo/degradado, sin token cacheado todavía), se
+    // cae al panel general como antes.
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('notif') === '1') {
-            setNotifAbierto(true);
+            const servicioId = params.get('servicioId');
+            if (servicioId) {
+                setTrabajoDeepLinkId(servicioId);
+            } else {
+                setNotifAbierto(true);
+            }
             params.delete('notif');
+            params.delete('servicioId');
+            params.delete('tipo');
             const resto = params.toString();
             window.history.replaceState({}, '', window.location.pathname + (resto ? `?${resto}` : ''));
         }
@@ -152,7 +163,13 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                 onMoreClick={() => setDrawerOpen(true)} />
 
             {/* PANEL NOTIFICACIONES */}
-            <NotificacionesPanel abierto={notifAbierto} onCerrar={() => { setNotifAbierto(false); pollNotifs(); }} />
+            <NotificacionesPanel abierto={notifAbierto}
+                onCerrar={() => { setNotifAbierto(false); pollNotifs(); }}
+                onAbrirTrabajo={(servicioId) => { setNotifAbierto(false); setTrabajoDeepLinkId(servicioId); }}
+            />
+            {trabajoDeepLinkId && (
+                <TrabajoDeepLink servicioId={trabajoDeepLinkId} onCerrar={() => setTrabajoDeepLinkId(null)} />
+            )}
 
             {confirmLogoutAbierto && (
                 <ConfirmDialog
