@@ -8,6 +8,7 @@ import { getTodayISO, MESES_ES } from '../../utils/dateUtils';
 import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
 import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
+import { buildGoogleMapsRouteUrl } from '../../utils/clienteUtils';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -35,7 +36,7 @@ const SIGUIENTE_ESTADO = {
     EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', color: 'bg-brand-red', Icon: LuCircleCheck },
 };
 
-function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido, onVerServicio }) {
+function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido, onVerServicio, seleccionando, seleccionada, onToggleSel }) {
     const [expandido, setExpandido] = useState(false);
 
     const pr  = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
@@ -43,10 +44,16 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
     const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
 
     return (
-        <div className="rounded-2xl overflow-hidden bg-card border-[0.5px] border-black/[0.07]"
-            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}>
+        <div className={`rounded-2xl overflow-hidden bg-card border-[0.5px] border-black/[0.07] transition-all ${seleccionando && seleccionada ? 'ring-2 ring-brand-red' : ''}`}
+            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}
+            onClick={seleccionando ? () => onToggleSel(orden.id) : undefined}>
             <div className="p-4">
                 <div className="flex items-start gap-2 mb-2">
+                    {seleccionando && (
+                        <div className={`w-5 h-5 mt-0.5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${seleccionada ? 'bg-brand-red border-brand-red' : 'border-muted bg-transparent'}`}>
+                            {seleccionada && <span className="text-white text-label font-black">✓</span>}
+                        </div>
+                    )}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                             <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
@@ -74,6 +81,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                 {!esFinal && orden.direccion && (
                     <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
                         target="_blank" rel="noreferrer"
+                        onClick={e => e.stopPropagation()}
                         className="text-body text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 flex items-center gap-1 hover:underline">
                         <LuMapPin size={14} />{orden.direccion}
                         <span className="text-label">↗</span>
@@ -111,8 +119,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                 )}
             </div>
 
-            {!esFinal && sig && (
-                <div className="flex flex-col gap-2 px-4 py-3 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]">
+            {!esFinal && sig && !seleccionando && (
+                <div className="flex flex-col gap-2 px-4 py-3 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]" onClick={e => e.stopPropagation()}>
                     {orden.estado === 'EN_SITIO' ? (
                         <>
                             {/* Un solo botón con un solo texto — antes decía "Registrar trabajo"
@@ -302,6 +310,25 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado, recargar } = useOrdenes({ tecnicoId });
     const [tab, setTab] = useState('activas');
 
+    // "Elegir para ruta": mismo patron que ya tiene Presupuestos (admin) —
+    // el tecnico marca varias visitas pendientes y arma una sola ruta con
+    // todas las paradas en Google Maps, en vez de abrir "Ver ruta" de a una
+    // y tener que adivinar el mejor orden a mano.
+    const [modoSeleccion, setModoSeleccion] = useState(false);
+    const [seleccionados, setSeleccionados] = useState(new Set());
+    const toggleSeleccion = (id) => {
+        setSeleccionados(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+    const abrirRuta = (items) => {
+        const url = buildGoogleMapsRouteUrl(items.map(o => o.direccion));
+        if (!url) { toast.error('Ninguna de las elegidas tiene dirección cargada'); return; }
+        window.open(url, '_blank');
+    };
+
     const [historial,        setHistorial]        = useState([]);
     const [cargandoHistorial, setCargandoHistorial] = useState(false);
 
@@ -411,21 +438,56 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     }));
 
     const tabIds = TAB_DEFS.map(t => t.id);
-    const swipeHandlers = useSwipeGesture(tabIds, tab, setTab);
+    // Envuelve setTab para salir del modo selección al cambiar de pestaña —
+    // "Elegir para ruta" solo tiene sentido en Activas (usado tanto por el
+    // swipe como por el tap directo en SwipeColumns más abajo).
+    const cambiarTab = (t) => { setTab(t); setModoSeleccion(false); setSeleccionados(new Set()); };
+    const swipeHandlers = useSwipeGesture(tabIds, tab, cambiarTab);
 
     return (
         <>
         <div className="min-h-screen pb-28 bg-page" {...swipeHandlers}>
             <div className="max-w-2xl mx-auto px-4 pt-4">
                 {/* Header */}
-                <div className="mb-4">
-                    <h1 className="text-body-lg font-black text-ink">Mis Órdenes</h1>
-                    <p className="text-caption text-muted">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
-                </div>
+                {modoSeleccion ? (
+                    <div className="mb-4 flex items-center justify-between gap-2">
+                        <div>
+                            <p className="text-body-lg font-black text-ink">
+                                {seleccionados.size} seleccionada{seleccionados.size !== 1 ? 's' : ''}
+                            </p>
+                            <p className="text-caption text-muted">Tocá las visitas que querés incluir</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            {seleccionados.size > 0 && (
+                                <button onClick={() => abrirRuta(activas.filter(o => seleccionados.has(o.id)))}
+                                    className="h-9 px-3 rounded-xl font-black text-label text-white bg-brand-red active:scale-95 transition-all flex items-center gap-1">
+                                    <LuMapPin size={14} /> Ver ruta
+                                </button>
+                            )}
+                            <button onClick={() => { setModoSeleccion(false); setSeleccionados(new Set()); }}
+                                className="h-9 px-3 rounded-xl font-bold text-label text-secondary bg-chip active:scale-95 transition-all">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="mb-4 flex items-center justify-between gap-2">
+                        <div>
+                            <h1 className="text-body-lg font-black text-ink">Mis Órdenes</h1>
+                            <p className="text-caption text-muted">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
+                        </div>
+                        {tab === 'activas' && activas.length > 0 && (
+                            <button onClick={() => setModoSeleccion(true)}
+                                className="h-9 px-3 rounded-xl font-bold text-label text-secondary bg-chip active:scale-95 transition-all shrink-0 flex items-center gap-1">
+                                <LuMapPin size={14} /> Elegir para ruta
+                            </button>
+                        )}
+                    </div>
+                )}
 
                 {/* SwipeColumns */}
                 <div className="mb-4">
-                    <SwipeColumns columns={columns} activeId={tab} onChangeColumn={setTab} />
+                    <SwipeColumns columns={columns} activeId={tab} onChangeColumn={cambiarTab} />
                 </div>
 
                 {/* Resumen del dia */}
@@ -475,7 +537,8 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             </p>
                             <div className="space-y-2">
                                 {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} onVerServicio={verServicio} />
+                                    <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} onVerServicio={verServicio}
+                                        seleccionando={modoSeleccion} seleccionada={seleccionados.has(o.id)} onToggleSel={toggleSeleccion} />
                                 ))}
                             </div>
                         </div>

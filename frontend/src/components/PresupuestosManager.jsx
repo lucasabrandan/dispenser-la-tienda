@@ -20,15 +20,9 @@ import { M } from './servicio/ServicioUI';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { mesKeyDeFecha, formatMesLargo } from '../utils/dateUtils';
 import ConfirmDialog from './ui/ConfirmDialog';
+import { buildGoogleMapsRouteUrl } from '../utils/clienteUtils';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function buildGoogleMapsRouteUrl(direcciones) {
-    const validas = direcciones.filter(d => d && d !== 'Sin dirección' && d !== 'Mostrador');
-    if (validas.length === 0) return null;
-    const encoded = validas.map(d => encodeURIComponent(d));
-    return `https://www.google.com/maps/dir/${encoded.join('/')}`;
-}
-
 function parseFechaSort(f) {
     if (!f) return 0;
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
