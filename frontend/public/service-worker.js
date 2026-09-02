@@ -71,11 +71,20 @@ self.addEventListener('push', (event) => {
             if (!ultima) {
                 return self.registration.showNotification(generico.title, generico.options);
             }
+            // El deep-link a "pantalla de ese trabajo" solo existe para
+            // TRABAJO_ASIGNADO (Servicio) — los tipos de Orden (Mis Órdenes /
+            // Despacho: ORDEN_ASIGNADA, ORDEN_EN_CAMINO, etc.) usan otro
+            // espacio de ids, así que referenciaId ahí NO es un id de
+            // Servicio. Mandarlo igual hacía que /servicios/{id} fallara, o
+            // peor, mostrara por casualidad un trabajo de otro cliente si el
+            // número coincidía. Para esos tipos se omite "data": el click
+            // cae al fallback seguro (abre la lista general).
+            const esDeTrabajo = ultima.tipo === 'TRABAJO_ASIGNADO';
             return self.registration.showNotification(ultima.titulo || generico.title, {
                 body: ultima.mensaje || generico.options.body,
                 tag: 'dlt-notificacion',
                 renotify: true,
-                data: { referenciaId: ultima.referenciaId, tipo: ultima.tipo },
+                data: esDeTrabajo ? { referenciaId: ultima.referenciaId, tipo: ultima.tipo } : undefined,
             });
         } catch {
             return self.registration.showNotification(generico.title, generico.options);
