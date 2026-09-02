@@ -107,11 +107,13 @@ public class WebPushService {
                 String aud = endpoint.getScheme() + "://" + endpoint.getHost();
                 String jwt = firmarVapid(aud);
 
+                // OJO: no setear "Content-Length" a mano — es un header restringido
+                // en java.net.http.HttpClient (lo calcula solo a partir del body) y
+                // agregarlo tira IllegalArgumentException en cada envio.
                 HttpRequest req = HttpRequest.newBuilder()
                         .uri(endpoint)
                         .header("Authorization", "vapid t=" + jwt + ", k=" + vapidPublicKeyB64)
                         .header("TTL", "2419200")
-                        .header("Content-Length", "0")
                         .POST(HttpRequest.BodyPublishers.noBody())
                         .timeout(Duration.ofSeconds(15))
                         .build();
