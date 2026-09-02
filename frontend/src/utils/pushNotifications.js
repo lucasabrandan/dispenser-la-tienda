@@ -49,6 +49,25 @@ export async function activarNotificaciones() {
     return true;
 }
 
+// Si el navegador ya tiene una suscripcion (se activo antes), la vuelve a
+// mandar al backend. Es idempotente (el backend hace upsert por endpoint),
+// asi que no rompe nada llamarla de mas — sirve para autocurar el caso en
+// que el navegador "cree" que ya esta suscripto pero el backend no llego a
+// guardar ese endpoint (o lo perdio), sin tener que borrar datos del sitio.
+export async function resincronizar() {
+    if (!pushSoportado()) return false;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return false;
+    const json = sub.toJSON();
+    try {
+        await api.post('/push/suscribir', { endpoint: json.endpoint, keys: json.keys });
+    } catch {
+        // No interrumpe el flujo de la campanita si el backend no responde.
+    }
+    return true;
+}
+
 export async function desactivarNotificaciones() {
     if (!pushSoportado()) return;
     const reg = await navigator.serviceWorker.ready;

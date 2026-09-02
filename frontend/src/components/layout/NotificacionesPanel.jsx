@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LuBellOff, LuBell } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
-import { pushSoportado, estaSuscripto, activarNotificaciones } from '../../utils/pushNotifications';
+import { pushSoportado, estaSuscripto, activarNotificaciones, resincronizar } from '../../utils/pushNotifications';
 
 const TIPO_CONFIG = {
     ORDEN_ASIGNADA:        { emoji: '\uD83D\uDCCB', label: 'Nueva orden',     color: 'text-[#3B82F6]' },
@@ -64,7 +64,16 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
         if (!abierto) return;
         cargar();
         if (!pushSoportado() || Notification.permission === 'denied') { setPushDisponible(false); return; }
-        estaSuscripto().then(ya => setPushDisponible(!ya)).catch(() => {});
+        estaSuscripto().then(async (ya) => {
+            if (ya) {
+                // El navegador ya esta suscripto — reconfirmamos con el backend por
+                // si ese endpoint no habia quedado guardado (el boton de activar no
+                // vuelve a aparecer nunca en ese caso, asi que sin esto no habia forma
+                // de recuperarlo sin borrar datos del sitio en el celu).
+                await resincronizar();
+            }
+            setPushDisponible(!ya);
+        }).catch(() => {});
     }, [abierto, cargar]);
 
     const activarPush = async () => {
