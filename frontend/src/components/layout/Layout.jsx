@@ -54,6 +54,21 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
         return () => clearInterval(interval);
     }, [pollNotifs]);
 
+    // Si se llegó acá tocando una notificación push (ver service-worker.js),
+    // el push no trae el detalle (viaja sin contenido, ver WebPushService),
+    // así que en vez de dejar al usuario en el dashboard sin saber qué pasó,
+    // se abre directo el panel con el historial real — mismo comportamiento
+    // para admin y técnico, es el mismo panel para los dos roles.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('notif') === '1') {
+            setNotifAbierto(true);
+            params.delete('notif');
+            const resto = params.toString();
+            window.history.replaceState({}, '', window.location.pathname + (resto ? `?${resto}` : ''));
+        }
+    }, []);
+
     return (
         <div className="min-h-screen flex flex-col md:flex-row transition-colors duration-300 antialiased bg-page">
 

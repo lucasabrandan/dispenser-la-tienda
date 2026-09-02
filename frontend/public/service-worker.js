@@ -25,12 +25,21 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+    // '?notif=1' le avisa a la app (ver Layout.jsx) que se abrió desde una
+    // notificación push, para que abra sola el panel de notificaciones en
+    // vez de dejar al usuario adivinar qué pasó y tener que ir a buscarlo.
+    const urlDestino = '/?notif=1';
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
             for (const client of clientList) {
-                if ('focus' in client) return client.focus();
+                if ('focus' in client) {
+                    if ('navigate' in client) {
+                        return client.navigate(urlDestino).then((c) => c && c.focus()).catch(() => client.focus());
+                    }
+                    return client.focus();
+                }
             }
-            if (self.clients.openWindow) return self.clients.openWindow('/');
+            if (self.clients.openWindow) return self.clients.openWindow(urlDestino);
         })
     );
 });
