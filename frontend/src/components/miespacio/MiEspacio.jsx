@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
-import { LuCopy, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
+import { LuCopy, LuX, LuArrowLeft, LuArrowRight, LuPlus } from 'react-icons/lu';
 import { getMiEspacio, guardarMiEspacio } from '../../services/api';
 
 // Mi Espacio (Lucas, 31-ago, items 2 y 5): un lugar propio del admin para notas
@@ -32,6 +32,50 @@ const espacioInicial = () => ({
         },
     ],
 });
+
+// Input para agregar una tarjeta a una columna. Antes era un <input> sin
+// estado propio que solo agregaba con Enter — en mobile el "Enter"/"Ir" del
+// teclado virtual no siempre dispara ese evento igual que en desktop, asi que
+// si el usuario tocaba afuera para cerrar el teclado, el texto escrito se
+// perdia sin ningun aviso. Ahora es controlado: guarda automaticamente al
+// perder el foco (igual patron que ya usan renombrarBoard/renombrarColumna
+// en este mismo archivo) y suma un boton "+" para no depender del todo de
+// la tecla Enter del teclado del celu. Despues de agregar con Enter, el
+// input se mantiene enfocado para poder seguir cargando tarjetas seguidas
+// en la misma columna.
+function AgregarNotaInput({ onAgregar }) {
+    const [valor, setValor] = useState('');
+
+    const submit = () => {
+        const texto = valor.trim();
+        if (!texto) return;
+        onAgregar(texto);
+        setValor('');
+    };
+
+    return (
+        <div className="flex items-center gap-1.5 mt-auto">
+            <input
+                placeholder="+ nota"
+                value={valor}
+                onChange={e => setValor(e.target.value)}
+                onKeyDown={e => {
+                    if (e.key === 'Enter') { e.preventDefault(); submit(); }
+                    if (e.key === 'Escape') { setValor(''); e.target.blur(); }
+                }}
+                onBlur={submit}
+                className="flex-1 min-w-0 text-body font-medium text-ink bg-card border border-dashed border-black/15 dark:border-white/15 rounded-xl px-3 py-2 outline-none focus:border-brand-red focus:border-solid placeholder:text-muted" />
+            <button
+                onMouseDown={e => e.preventDefault()}
+                onClick={submit}
+                disabled={!valor.trim()}
+                title="Agregar nota"
+                className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-brand-red text-white active:scale-90 disabled:opacity-30 transition-opacity">
+                <LuPlus size={16} />
+            </button>
+        </div>
+    );
+}
 
 export default function MiEspacio() {
     const [espacio, setEspacio] = useState(null);
@@ -271,14 +315,7 @@ export default function MiEspacio() {
                                 ))}
                             </div>
 
-                            <input placeholder="+ nota"
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter' && e.target.value.trim()) {
-                                        agregarNota(col.id, e.target.value);
-                                        e.target.value = '';
-                                    }
-                                }}
-                                className="w-full text-body font-medium text-ink bg-card border border-dashed border-black/15 dark:border-white/15 rounded-xl px-3 py-2 outline-none focus:border-brand-red focus:border-solid placeholder:text-muted mt-auto" />
+                            <AgregarNotaInput onAgregar={texto => agregarNota(col.id, texto)} />
                         </div>
                     ))}
                 </div>
