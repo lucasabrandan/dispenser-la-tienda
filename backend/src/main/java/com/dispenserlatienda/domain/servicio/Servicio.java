@@ -106,6 +106,27 @@ public class Servicio {
     @Column(name = "acepta_terminos")
     private Boolean aceptaTerminos;
 
+    // Disponibilidad tentativa (Lucas, 2-sep): el admin puede asignar un
+    // tecnico sin fecha/hora exacta todavia, marcando en cambio que dias y
+    // franjas horarias le sirven al cliente (hablado antes por telefono).
+    // El tecnico asignado confirma despues, dentro de esas franjas, el
+    // dia y hora exactos (ver Servicio.confirmarHorario en ServicioService).
+    @Column(name = "fecha_tentativa")
+    private Boolean fechaTentativa;
+
+    // JSON: [{"dia":"MIERCOLES","franja":"10:00-12:00"}, ...] — mismo patron
+    // que ServicioItem.repuestosUsados (blob JSON en un TEXT, sin tabla propia
+    // porque es informacion chica y de un solo uso, no se reutiliza en otro
+    // lado ni se filtra/busca por ella).
+    @Column(name = "ventanas_disponibles", columnDefinition = "TEXT")
+    private String ventanasDisponibles;
+
+    // Hora del servicio (HH:mm) — Servicio nunca tuvo horario, solo fecha;
+    // se completa cuando el tecnico confirma dentro de la ventana (o el
+    // admin la carga directo, si no uso fecha tentativa).
+    @Column(name = "hora_servicio", length = 5)
+    private String horaServicio;
+
     @Formula("(SELECT COALESCE(SUM(si.costo), 0) FROM servicio_items si WHERE si.servicio_id = id)")
     private BigDecimal total;
 
@@ -215,4 +236,13 @@ public class Servicio {
 
     public Boolean getAceptaTerminos() { return aceptaTerminos; }
     public void setAceptaTerminos(Boolean aceptaTerminos) { this.aceptaTerminos = aceptaTerminos; }
+
+    public Boolean getFechaTentativa() { return fechaTentativa; }
+    public void setFechaTentativa(Boolean fechaTentativa) { this.fechaTentativa = fechaTentativa; }
+
+    public String getVentanasDisponibles() { return ventanasDisponibles; }
+    public void setVentanasDisponibles(String ventanasDisponibles) { this.ventanasDisponibles = ventanasDisponibles; }
+
+    public String getHoraServicio() { return horaServicio; }
+    public void setHoraServicio(String horaServicio) { this.horaServicio = horaServicio; }
 }

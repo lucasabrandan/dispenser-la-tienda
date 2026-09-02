@@ -55,6 +55,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   const [leyenda, setLeyenda] = useState(LEYENDA_DEFAULT);
   const [fechaServicio, setFechaServicio] = useState(getTodayISO());
   const [duracionMinutos, setDuracionMinutos] = useState(null);
+  const [fechaTentativa, setFechaTentativa] = useState(false); // true = todavia no se coordino dia/hora exacto con el cliente
+  const [ventanasDisponibles, setVentanasDisponibles] = useState([]); // [{ dia, franja }] habilitados por el admin
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
   useEffect(() => {
@@ -190,6 +192,10 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             if (servicioParaEditar.usuarioId) setFechaVisita(fechaISO);
           }
           if (servicioParaEditar.duracionMinutos) setDuracionMinutos(servicioParaEditar.duracionMinutos);
+          if (servicioParaEditar.fechaTentativa) setFechaTentativa(true);
+          if (servicioParaEditar.ventanasDisponibles) {
+            try { setVentanasDisponibles(JSON.parse(servicioParaEditar.ventanasDisponibles)); } catch { /* ignora JSON invalido */ }
+          }
           // clienteId viene del backend ahora
           if (servicioParaEditar.clienteId) {
             setClienteId(servicioParaEditar.clienteId.toString());
@@ -692,6 +698,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         sedeId:             parseInt(sedeIdFinal),
         usuarioId:          tecnicoFinal.id,
         fecha:              fechaServicio,
+        fechaTentativa:     fechaTentativa || false,
+        ventanasDisponibles: fechaTentativa ? JSON.stringify(ventanasDisponibles || []) : null,
         servicioTipo:       tieneEquipo ? 'TECNICA' : 'VENTA',
         // Antes: si había presupuestoOrigen/ordenOrigen vinculado, forzaba REALIZADO
         // aunque confirmarTrabajo fuera false (el botón "Guardar presupuesto" terminaba
@@ -844,6 +852,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     leyenda, setLeyenda,
     fechaServicio, setFechaServicio,
     duracionMinutos, setDuracionMinutos,
+    fechaTentativa, setFechaTentativa,
+    ventanasDisponibles, setVentanasDisponibles,
     aceptaTerminos, setAceptaTerminos,
     borradorDisponible,
     recuperarBorrador,

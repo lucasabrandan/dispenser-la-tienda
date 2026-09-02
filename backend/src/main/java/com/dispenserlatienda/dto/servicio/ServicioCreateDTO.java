@@ -29,6 +29,8 @@ public class ServicioCreateDTO {
     private Long presupuestoVisitaId;
     private Integer duracionMinutos;
     private Boolean aceptaTerminos;
+    private Boolean fechaTentativa;
+    private String ventanasDisponibles; // JSON crudo, ver Servicio.ventanasDisponibles
 
     public ServicioCreateDTO() {}
 
@@ -73,4 +75,8 @@ public class ServicioCreateDTO {
     public void setDuracionMinutos(Integer duracionMinutos) { this.duracionMinutos = duracionMinutos; }
     public Boolean getAceptaTerminos() { return aceptaTerminos; }
     public void setAceptaTerminos(Boolean aceptaTerminos) { this.aceptaTerminos = aceptaTerminos; }
+    public Boolean getFechaTentativa() { return fechaTentativa; }
+    public void setFechaTentativa(Boolean fechaTentativa) { this.fechaTentativa = fechaTentativa; }
+    public String getVentanasDisponibles() { return ventanasDisponibles; }
+    public void setVentanasDisponibles(String ventanasDisponibles) { this.ventanasDisponibles = ventanasDisponibles; }
 }

@@ -37,5 +37,8 @@ public record ServicioDTO(
         java.math.BigDecimal abonoVisita,
         Long presupuestoVisitaId,
         Integer duracionMinutos,
-        Boolean aceptaTerminos
+        Boolean aceptaTerminos,
+        Boolean fechaTentativa,
+        String ventanasDisponibles,
+        String horaServicio
 ) {}

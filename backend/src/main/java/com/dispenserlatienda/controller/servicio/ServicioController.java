@@ -92,6 +92,15 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal, observaciones));
     }
 
+    // PATCH: el tecnico asignado confirma dia/hora exactos dentro de la
+    // disponibilidad tentativa que dejo el admin (body: {fecha, hora})
+    @PatchMapping("/{id}/confirmar-horario")
+    public ResponseEntity<ServicioDTO> confirmarHorario(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> payload) {
+        return ResponseEntity.ok(servicioService.confirmarHorario(id, payload.get("fecha"), payload.get("hora")));
+    }
+
     // PATCH: Guardar número de documento generado al crear el PDF
     @PatchMapping("/{id}/nro-doc")
     public ResponseEntity<Void> guardarNroDoc(

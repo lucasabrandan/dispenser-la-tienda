@@ -406,6 +406,13 @@ public class ServicioService {
         servicio.setObservaciones(dto.getObservaciones());
         servicio.setDuracionMinutos(dto.getDuracionMinutos());
         servicio.setAceptaTerminos(dto.getAceptaTerminos());
+        // Fecha tentativa: si viene marcada, guardamos las ventanas permitidas
+        // y dejamos hora_servicio en null hasta que el tecnico la confirme
+        // (confirmarHorario mas abajo). Si no es tentativa, se limpia por si
+        // una edicion posterior la desactiva.
+        boolean esTentativa = Boolean.TRUE.equals(dto.getFechaTentativa());
+        servicio.setFechaTentativa(esTentativa);
+        servicio.setVentanasDisponibles(esTentativa ? dto.getVentanasDisponibles() : null);
         if (dto.getPresupuestoOrigenId() != null) {
             servicio.setPresupuestoOrigenId(dto.getPresupuestoOrigenId());
         }
@@ -640,8 +647,100 @@ public class ServicioService {
                 s.getAbonoVisita(),
                 s.getPresupuestoVisitaId(),
                 s.getDuracionMinutos(),
-                s.getAceptaTerminos()
+                s.getAceptaTerminos(),
+                s.getFechaTentativa(),
+                s.getVentanasDisponibles(),
+                s.getHoraServicio()
         );
+    }
+
+    // Mapa de nombres de dia (como los manda el frontend, en mayusculas sin
+    // acentos) a java.time.DayOfWeek — para validar que la fecha elegida por
+    // el tecnico caiga en un dia habilitado dentro de ventanasDisponibles.
+    private static final Map<String, java.time.DayOfWeek> DIAS_SEMANA = Map.of(
+            "LUNES", java.time.DayOfWeek.MONDAY,
+            "MARTES", java.time.DayOfWeek.TUESDAY,
+            "MIERCOLES", java.time.DayOfWeek.WEDNESDAY,
+            "JUEVES", java.time.DayOfWeek.THURSDAY,
+            "VIERNES", java.time.DayOfWeek.FRIDAY,
+            "SABADO", java.time.DayOfWeek.SATURDAY,
+            "DOMINGO", java.time.DayOfWeek.SUNDAY
+    );
+
+    // El tecnico asignado confirma dia y hora exactos dentro de la ventana que
+    // el admin habilito (Servicio.ventanasDisponibles, JSON tipo
+    // [{"dia":"MIERCOLES","franja":"10:00-12:00"}]). Se valida server-side
+    // (no alcanza con que el frontend ya filtre las opciones) que la fecha
+    // elegida caiga en uno de los dias/horarios permitidos.
+    @Transactional
+    public ServicioDTO confirmarHorario(Long id, String fechaStr, String horaStr) {
+        Servicio s = servicioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe el servicio " + id));
+
+        if (!Boolean.TRUE.equals(s.getFechaTentativa())) {
+            throw new IllegalArgumentException("Este servicio no tiene una fecha tentativa pendiente de confirmar");
+        }
+
+        LocalDate fecha;
+        java.time.LocalTime hora;
+        try {
+            fecha = LocalDate.parse(fechaStr);
+            hora = java.time.LocalTime.parse(horaStr);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Fecha u hora invalida");
+        }
+
+        List<Map<String, String>> ventanas;
+        try {
+            ventanas = s.getVentanasDisponibles() != null
+                    ? objectMapper.readValue(s.getVentanasDisponibles(), new TypeReference<List<Map<String, String>>>() {})
+                    : List.of();
+        } catch (JsonProcessingException e) {
+            ventanas = List.of();
+        }
+
+        java.time.DayOfWeek diaElegido = fecha.getDayOfWeek();
+        boolean dentroDeVentana = ventanas.stream().anyMatch(v -> {
+            java.time.DayOfWeek diaVentana = DIAS_SEMANA.get(v.get("dia"));
+            if (diaVentana != diaElegido) return false;
+            String[] franja = (v.get("franja") != null ? v.get("franja") : "").split("-");
+            if (franja.length != 2) return false;
+            try {
+                java.time.LocalTime desde = java.time.LocalTime.parse(franja[0].trim());
+                java.time.LocalTime hasta = java.time.LocalTime.parse(franja[1].trim());
+                return !hora.isBefore(desde) && hora.isBefore(hasta);
+            } catch (Exception e) {
+                return false;
+            }
+        });
+
+        if (!dentroDeVentana) {
+            throw new IllegalArgumentException("Ese dia/horario no esta dentro de la disponibilidad habilitada para este trabajo");
+        }
+
+        s.setFechaServicio(fecha);
+        s.setHoraServicio(horaStr);
+        s.setFechaTentativa(false);
+        Servicio saved = servicioRepository.save(s);
+
+        // Avisar al admin que asigno el trabajo — reusa el mismo tipo de
+        // notificacion que ya se dispara al asignar (ver procesarGuardado):
+        // aca el sentido es inverso (tecnico -> admin), pero el frontend ya
+        // sabe mostrar TRABAJO_ASIGNADO con un icono/label genericos.
+        if (s.getUsuario() != null) {
+            List<Usuario> admins = usuarioRepository.findAll().stream()
+                    .filter(u -> u.getRol() == com.dispenserlatienda.domain.usuario.RolUsuario.ADMIN && u.isActivo())
+                    .toList();
+            String detalle = (s.getClienteNombre() != null ? s.getClienteNombre() : "")
+                    + " · " + fecha + " " + horaStr;
+            for (Usuario admin : admins) {
+                notificacionService.notificar(
+                        TipoNotificacion.TRABAJO_ASIGNADO, admin.getId(), s.getUsuario().getId(),
+                        "Horario confirmado", detalle, saved.getId(), false);
+            }
+        }
+
+        return mapToDTO(saved);
     }
 
     @Transactional

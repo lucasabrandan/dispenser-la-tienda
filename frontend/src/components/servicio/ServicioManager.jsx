@@ -557,6 +557,7 @@ export default function ServicioManager({
                                 onDetalle={setModalDetalle}
                                 calcularTotal={calcularTotal}
                                 onAbrirCobro={esAdmin ? setServicioCobro : null}
+                                onHorarioConfirmado={cargarServicios}
                             />
                             </div>
                         ))}

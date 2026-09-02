@@ -3,6 +3,7 @@ import { LuShieldCheck, LuHourglass, LuEye, LuFileText, LuEllipsis, LuClipboardL
 import { useMontos } from '../../context/MontosContext';
 import IconBtn from '../ui/IconBtn';
 import ActionSheet from '../ui/ActionSheet';
+import ConfirmarHorarioSheet from './ConfirmarHorarioSheet';
 import { useAuth } from '../../context/AuthContext';
 import { estadoGarantia } from '../../utils/dateUtils';
 
@@ -65,11 +66,12 @@ export default function ServicioCard({
     servicio, modoSeleccion, seleccionado,
     onToggleSelect, onEditar, onEjecutar, onCobrar, onDuplicar,
     onArchivar, onEliminar, onGenerarPDF, onDetalle, calcularTotal,
-    onAbrirCobro,
+    onAbrirCobro, onHorarioConfirmado,
 }) {
     const [expandido, setExpandido] = useState(false);
     const [menuAbierto, setMenuAbierto] = useState(false);
     const [verRentab, setVerRentab] = useState(false);
+    const [sheetHorarioAbierto, setSheetHorarioAbierto] = useState(false);
     const { esAdmin } = useAuth();
 
     const badge    = BADGE[servicio.estado] || { label: servicio.estado, cls: '' };
@@ -130,7 +132,11 @@ export default function ServicioCard({
                     </div>
                     <div className="text-right shrink-0">
                         <M valor={total} className="text-body-lg font-black leading-none text-ink block" />
-                        <p className="text-caption text-muted mt-0.5">{servicio.fecha}</p>
+                        {servicio.fechaTentativa ? (
+                            <p className="text-caption font-bold text-amber-500 mt-0.5">⏳ Tentativa</p>
+                        ) : (
+                            <p className="text-caption text-muted mt-0.5">{servicio.fecha}</p>
+                        )}
                     </div>
                 </div>
 
@@ -373,7 +379,23 @@ export default function ServicioCard({
                         Cobrado
                     </button>
                 )}
+                {servicio.fechaTentativa && (
+                    <button onClick={() => setSheetHorarioAbierto(true)}
+                        className="h-8 px-3 rounded-xl font-bold text-body text-white shrink-0 active:scale-95 transition-all bg-amber-500">
+                        Confirmar horario
+                    </button>
+                )}
             </div>
+            {sheetHorarioAbierto && (
+                <ConfirmarHorarioSheet
+                    servicio={servicio}
+                    onCerrar={() => setSheetHorarioAbierto(false)}
+                    onConfirmado={() => {
+                        setSheetHorarioAbierto(false);
+                        onHorarioConfirmado && onHorarioConfirmado();
+                    }}
+                />
+            )}
         </div>
     );
 }

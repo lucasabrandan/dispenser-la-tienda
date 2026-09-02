@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import { getTodayISO } from '../../utils/dateUtils';
 import DateInput from '../ui/DateInput';
+import SelectorVentanas from './SelectorVentanas';
 
 const QUICK_PCTS = [5, 10];
 
@@ -153,6 +154,8 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
         tecnicoSeleccionado, setTecnicoSeleccionado,
         fechaServicio, setFechaServicio,
         duracionMinutos, setDuracionMinutos,
+        fechaTentativa, setFechaTentativa,
+        ventanasDisponibles, setVentanasDisponibles,
         aceptaTerminos, setAceptaTerminos,
     } = hook;
 
@@ -289,26 +292,49 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
             <div className="rounded-2xl p-4 bg-panel border border-black/[0.07] dark:border-white/[0.07] space-y-3">
                 <p className="text-label font-black text-muted uppercase tracking-widest">Planificación</p>
 
-                {/* Fecha */}
-                <div>
-                    <Label>Fecha del servicio</Label>
-                    <DateInput
-                        value={fechaServicio}
-                        onChange={setFechaServicio}
-                        className={inputCls}
-                    />
-                    {fechaServicio && fechaServicio !== getTodayISO() && (
-                        <div className="flex justify-between mt-1">
-                            <span className={`text-label font-bold ${fechaServicio < getTodayISO() ? 'text-amber-500' : 'text-blue-500'}`}>
-                                {fechaServicio < getTodayISO() ? 'Carga histórica' : 'Fecha futura'}
-                            </span>
-                            <button onClick={() => setFechaServicio(getTodayISO())}
-                                className="text-label text-muted hover:text-[#D13A28]">
-                                Usar hoy
-                            </button>
-                        </div>
-                    )}
-                </div>
+                {/* Fecha tentativa: en vez de una fecha exacta, el admin habilita los días/franjas
+                    que el cliente aceptó por teléfono, y el técnico asignado confirma después
+                    el día y horario puntual dentro de eso. */}
+                {esAdmin && (
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={fechaTentativa}
+                            onChange={e => setFechaTentativa(e.target.checked)}
+                            className="w-4 h-4 rounded accent-[#D13A28]"
+                        />
+                        <span className="text-label font-bold text-secondary">
+                            Fecha tentativa (a coordinar con el técnico)
+                        </span>
+                    </label>
+                )}
+
+                {fechaTentativa ? (
+                    <div>
+                        <Label>Días y horarios habilitados</Label>
+                        <SelectorVentanas value={ventanasDisponibles} onChange={setVentanasDisponibles} />
+                    </div>
+                ) : (
+                    <div>
+                        <Label>Fecha del servicio</Label>
+                        <DateInput
+                            value={fechaServicio}
+                            onChange={setFechaServicio}
+                            className={inputCls}
+                        />
+                        {fechaServicio && fechaServicio !== getTodayISO() && (
+                            <div className="flex justify-between mt-1">
+                                <span className={`text-label font-bold ${fechaServicio < getTodayISO() ? 'text-amber-500' : 'text-blue-500'}`}>
+                                    {fechaServicio < getTodayISO() ? 'Carga histórica' : 'Fecha futura'}
+                                </span>
+                                <button onClick={() => setFechaServicio(getTodayISO())}
+                                    className="text-label text-muted hover:text-[#D13A28]">
+                                    Usar hoy
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Duración */}
                 <div>
@@ -449,15 +475,19 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                     </div>
                     <div className="flex gap-2">
                         <button
-                            disabled={esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado}
+                            disabled={(esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) || (fechaTentativa && ventanasDisponibles.length === 0)}
                             onClick={() => {
                                 if (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) {
                                     toast.error('⚠ Asigná un técnico antes de continuar', { duration: 3500 });
                                     return;
                                 }
+                                if (fechaTentativa && ventanasDisponibles.length === 0) {
+                                    toast.error('⚠ Marcá al menos un día y horario disponible', { duration: 3500 });
+                                    return;
+                                }
                                 onCerrarTicket();
                             }}
-                            className={`h-11 px-5 rounded-xl font-black text-label text-white active:scale-95 ${esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado ? 'opacity-40 cursor-not-allowed bg-muted' : 'bg-brand-red'}`}>
+                            className={`h-11 px-5 rounded-xl font-black text-label text-white active:scale-95 ${(esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) || (fechaTentativa && ventanasDisponibles.length === 0) ? 'opacity-40 cursor-not-allowed bg-muted' : 'bg-brand-red'}`}>
                             {modoEjecucion ? 'Cerrar trabajo →' : 'Cerrar ticket →'}
                         </button>
                     </div>
