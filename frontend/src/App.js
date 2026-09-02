@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Toaster } from 'react-hot-toast';
 
 import Layout from './components/layout/Layout';
@@ -32,6 +32,19 @@ function AppInterna() {
     const [ordenOrigen, setOrdenOrigen] = useState(null);
     const [abrirCrear, setAbrirCrear] = useState(false);
     const [modoInicialServicio, setModoInicialServicio] = useState(null);
+
+    // Bug: como AppInterna nunca se desmonta al cerrar sesión (solo cambia
+    // qué devuelve el render), seccionActual quedaba con el valor de la
+    // sesión anterior — al volver a entrar aparecía la última pantalla en
+    // vez del dashboard inicial. Se resetea a mano cada vez que autenticado
+    // pasa de false a true (un login real, no cada render).
+    const estabaAutenticado = useRef(autenticado);
+    useEffect(() => {
+        if (!estabaAutenticado.current && autenticado) {
+            setSeccionActual(esAdmin ? 'caja' : 'mis-ordenes');
+        }
+        estabaAutenticado.current = autenticado;
+    }, [autenticado, esAdmin]);
 
     if (!autenticado) return <LoginPage />;
 
