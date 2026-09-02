@@ -59,7 +59,9 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
 
             {/* SIDEBAR DESKTOP */}
             <Sidebar vistaActual={vistaActual} setVistaActual={setVistaActual}
-                colapsado={sidebarColapsado} setColapsado={setSidebarColapsado} />
+                colapsado={sidebarColapsado} setColapsado={setSidebarColapsado}
+                notifCount={notifCount}
+                onNotifClick={() => { setNotifAbierto(true); setNotifCount(0); }} />
 
             <div className="flex-1 flex flex-col min-w-0">
 

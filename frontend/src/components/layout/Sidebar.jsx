@@ -5,6 +5,7 @@ import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../hooks/useBadges';
 import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuCalendar, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban } from 'react-icons/lu';
+import { NotifBell } from './NotificacionesPanel';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
 // para no mezclar todo en una sola lista larga.
@@ -54,7 +55,7 @@ const MENU_GESTION = [
 const ChevronLeft  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
 const ChevronRight = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 
-export default function Sidebar({ vistaActual, setVistaActual, colapsado, setColapsado }) {
+export default function Sidebar({ vistaActual, setVistaActual, colapsado, setColapsado, notifCount, onNotifClick }) {
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
     const { usuario, logout, esAdmin } = useAuth();
@@ -212,6 +213,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                             className={`${iconBtn} text-secondary`}>
                             {isDark ? <LuSun size={16} /> : <LuMoon size={16} />}
                         </button>
+                        <NotifBell count={notifCount} onClick={onNotifClick} />
                         {colapsado && (
                             <button onClick={logout} title="Cerrar sesión"
                                 className={`${iconBtn} text-brand-red`}>
