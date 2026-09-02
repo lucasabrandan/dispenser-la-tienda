@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LuBellOff, LuBell } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
-import { pushSoportado, estaSuscripto, activarNotificaciones, resincronizar } from '../../utils/pushNotifications';
+import { pushSoportado, estaSuscripto, activarNotificaciones, desactivarNotificaciones, resincronizar } from '../../utils/pushNotifications';
 
 const TIPO_CONFIG = {
     ORDEN_ASIGNADA:        { emoji: '\uD83D\uDCCB', label: 'Nueva orden',     color: 'text-[#3B82F6]' },
@@ -49,8 +49,10 @@ export function NotifBell({ count, onClick }) {
 export default function NotificacionesPanel({ abierto, onCerrar }) {
     const [notifs, setNotifs] = useState([]);
     const [cargando, setCargando] = useState(false);
-    const [pushDisponible, setPushDisponible] = useState(false); // soportado y todavía no suscripto en este dispositivo
+    // 'cargando' | 'no-soportado' | 'denegado' | 'inactivo' | 'activo'
+    const [pushEstado, setPushEstado] = useState('cargando');
     const [activandoPush, setActivandoPush] = useState(false);
+    const [desactivandoPush, setDesactivandoPush] = useState(false);
 
     const cargar = useCallback(async () => {
         setCargando(true);
@@ -63,16 +65,17 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
     useEffect(() => {
         if (!abierto) return;
         cargar();
-        if (!pushSoportado() || Notification.permission === 'denied') { setPushDisponible(false); return; }
+        if (!pushSoportado()) { setPushEstado('no-soportado'); return; }
+        if (Notification.permission === 'denied') { setPushEstado('denegado'); return; }
         estaSuscripto().then(async (ya) => {
             if (ya) {
                 // El navegador ya esta suscripto — reconfirmamos con el backend por
-                // si ese endpoint no habia quedado guardado (el boton de activar no
-                // vuelve a aparecer nunca en ese caso, asi que sin esto no habia forma
-                // de recuperarlo sin borrar datos del sitio en el celu).
+                // si ese endpoint no habia quedado guardado (antes esto no dejaba
+                // ningun rastro visible: el boton de activar desaparecia para
+                // siempre y no habia forma de saber si de verdad estaba prendido).
                 await resincronizar();
             }
-            setPushDisponible(!ya);
+            setPushEstado(ya ? 'activo' : 'inactivo');
         }).catch(() => {});
     }, [abierto, cargar]);
 
@@ -81,11 +84,24 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
         try {
             await activarNotificaciones();
             toast.success('Notificaciones activadas en este dispositivo');
-            setPushDisponible(false);
+            setPushEstado('activo');
         } catch (e) {
             toast.error(e.message || 'No se pudo activar');
         } finally {
             setActivandoPush(false);
+        }
+    };
+
+    const desactivarPush = async () => {
+        setDesactivandoPush(true);
+        try {
+            await desactivarNotificaciones();
+            toast.success('Notificaciones desactivadas en este dispositivo');
+            setPushEstado('inactivo');
+        } catch {
+            toast.error('No se pudo desactivar');
+        } finally {
+            setDesactivandoPush(false);
         }
     };
 
@@ -133,8 +149,21 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                     </div>
                 </div>
 
-                {/* Activar push — solo si el dispositivo todavia no esta suscripto */}
-                {pushDisponible && (
+                {/* Estado de push en este dispositivo — siempre visible, no solo el boton de activar */}
+                {pushEstado === 'activo' && (
+                    <div className="mx-4 mt-3 px-3 py-2.5 rounded-xl flex items-center gap-2.5 bg-panel shrink-0">
+                        <LuBell size={16} className="text-[#16A34A] shrink-0" />
+                        <span className="flex-1 min-w-0">
+                            <span className="block text-caption font-black text-ink">Notificaciones activadas ✓</span>
+                            <span className="block text-label text-muted mt-0.5">Te avisa aunque tengas la app cerrada</span>
+                        </span>
+                        <button onClick={desactivarPush} disabled={desactivandoPush}
+                            className="text-label font-bold text-muted underline shrink-0 disabled:opacity-60">
+                            {desactivandoPush ? '...' : 'Desactivar'}
+                        </button>
+                    </div>
+                )}
+                {pushEstado === 'inactivo' && (
                     <button onClick={activarPush} disabled={activandoPush}
                         className="mx-4 mt-3 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-left bg-panel active:scale-[0.98] transition-all disabled:opacity-60 shrink-0">
                         <LuBell size={16} className="text-brand-red shrink-0" />
@@ -145,6 +174,17 @@ export default function NotificacionesPanel({ abierto, onCerrar }) {
                             <span className="block text-label text-muted mt-0.5">Te avisa aunque tengas la app cerrada</span>
                         </span>
                     </button>
+                )}
+                {pushEstado === 'denegado' && (
+                    <div className="mx-4 mt-3 px-3 py-2.5 rounded-xl bg-panel shrink-0">
+                        <span className="flex items-center gap-2.5">
+                            <LuBellOff size={16} className="text-muted shrink-0" />
+                            <span className="block text-caption font-black text-ink">Notificaciones bloqueadas</span>
+                        </span>
+                        <span className="block text-label text-muted mt-1">
+                            Las bloqueaste en este navegador — para activarlas, entrá a la configuración del sitio (candado en la barra de direcciones → Notificaciones → Permitir) y volvé a abrir la campanita.
+                        </span>
+                    </div>
                 )}
 
                 {/* Lista */}
