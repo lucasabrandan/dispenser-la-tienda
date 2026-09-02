@@ -37,12 +37,16 @@ public class UsuarioAdminController {
 
     @PostMapping
     public ResponseEntity<UsuarioDTO> crear(@Valid @RequestBody UsuarioCreateDTO dto) {
-        if (usuarioRepository.findByUsername(dto.username()).isPresent()) {
+        // Mismo motivo que en AuthController.login(): un usuario creado con
+        // un espacio de más (accidental) nunca iba a poder loguearse con el
+        // texto "visible" del username, sin ningún indicio de por qué.
+        String username = dto.username() == null ? null : dto.username().trim();
+        if (usuarioRepository.findByUsername(username).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
         Usuario nuevo = new Usuario(
                 dto.nombre(),
-                dto.username(),
+                username,
                 passwordEncoder.encode(dto.password()),
                 RolUsuario.valueOf(dto.rol())
         );

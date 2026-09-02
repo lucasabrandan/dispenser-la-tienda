@@ -29,11 +29,17 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
+        // El usuario reportó que un espacio de más (típico de autocompletar
+        // del teclado del celu, o copiar/pegar) hacía fallar el login sin
+        // ninguna pista de por qué — "admin " no es igual a "admin". Se
+        // recorta el usuario (no la contraseña: ahí sí puede ser intencional,
+        // no se toca).
+        String username = request.username() == null ? null : request.username().trim();
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.username(), request.password())
+            new UsernamePasswordAuthenticationToken(username, request.password())
         );
 
-        Usuario usuario = usuarioRepository.findByUsername(request.username()).orElseThrow();
+        Usuario usuario = usuarioRepository.findByUsername(username).orElseThrow();
         String token = jwtUtil.generarToken(usuario.getUsername(), usuario.getRol().name(), usuario.getNombre());
 
         return ResponseEntity.ok(new LoginResponseDTO(

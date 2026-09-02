@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -89,6 +90,32 @@ public class GlobalExceptionHandler {
         errorResponse.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    // Login fallido (usuario inexistente, contraseña incorrecta, cuenta
+    // desactivada — Spring Security tira BadCredentialsException,
+    // UsernameNotFoundException, DisabledException, todas subtipos de esta).
+    // Antes esto no tenía handler propio y caía en el genérico de más abajo,
+    // que devuelve 500 — el frontend interpreta cualquier cosa que no sea
+    // 401 como "error del servidor" y muestra un mensaje que no tiene nada
+    // que ver con lo que pasó (Lucas lo reportó: "si me equivoco de
+    // contraseña me dice error del servidor"). No se distingue a propósito
+    // cuál de los motivos fue — no hace falta que el usuario lo sepa, y
+    // evita que alguien use el login para adivinar qué usuarios existen.
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+            AuthenticationException ex,
+            WebRequest request) {
+        logger.warn("Login fallido: {}", ex.getMessage());
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                "Usuario o contraseña incorrectos",
+                "BAD_CREDENTIALS"
+        );
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
+
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

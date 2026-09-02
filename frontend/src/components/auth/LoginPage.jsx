@@ -19,9 +19,18 @@ export default function LoginPage() {
             const { data } = await api.post('/auth/login', form);
             login(data.token, { id: data.id, username: data.username, nombre: data.nombre, rol: data.rol, firma: data.firma, sueldoObjetivo: data.sueldoObjetivo });
         } catch (err) {
-            const msg = err.response?.status === 401
+            // 401 = credenciales incorrectas (el backend ya no distingue si
+            // fue el usuario o la contraseña — no hace falta que el usuario
+            // lo sepa). 400 = quedó algún campo vacío (caso raro: solo
+            // espacios en la contraseña, ya que el usuario no puede llevar
+            // espacios — ver onChange de abajo). Cualquier otra cosa sí es
+            // un problema real de conexión con el servidor.
+            const status = err.response?.status;
+            const msg = status === 401
                 ? 'Usuario o contraseña incorrectos'
-                : 'Error al conectar con el servidor';
+                : status === 400
+                    ? 'Completá usuario y contraseña'
+                    : 'Error al conectar con el servidor';
             toast.error(msg);
         } finally {
             setCargando(false);
@@ -58,7 +67,12 @@ export default function LoginPage() {
                                 type="text"
                                 autoComplete="username"
                                 value={form.username}
-                                onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                                // Ningún usuario del sistema lleva espacios (ver
+                                // UsuarioAdminController) — se descartan apenas se
+                                // tipean, en vez de dejar que arruinen el login en
+                                // silencio (típico: el teclado del celu agrega un
+                                // espacio solo al autocompletar).
+                                onChange={e => setForm(f => ({ ...f, username: e.target.value.replace(/\s+/g, '') }))}
                                 className="w-full px-4 py-3 rounded-xl text-sm font-bold outline-none bg-chip text-ink placeholder-muted border border-black/10 dark:border-white/10 focus:border-[#D13A28] dark:focus:border-[#E8422F] transition-all"
                                 placeholder="admin"
                                 disabled={cargando}

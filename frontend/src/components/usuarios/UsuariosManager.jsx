@@ -281,7 +281,10 @@ export default function UsuariosManager() {
                                         <input
                                             className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                             value={form.username}
-                                            onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                                            // Mismo fix que en el login: un usuario creado con un
+                                            // espacio de más después no puede loguearse con lo que
+                                            // ve escrito, sin ninguna pista de por qué.
+                                            onChange={e => setForm(f => ({ ...f, username: e.target.value.replace(/\s+/g, '') }))}
                                             placeholder="Ej: juan"
                                         />
                                     </div>
