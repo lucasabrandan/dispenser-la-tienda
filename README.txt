@@ -25,4 +25,6 @@ Validación Bean Validation Blindaje de datos desde la entrada del DTO.
 
 
 (Próximos Pasos)[ ] Migración a TypeScript: Para mayor robustez en el tipado de datos.[ ] Buscador Inteligente: Filtro por número de serie en el historial.[ ] Módulo de Reportes: Generación de PDFs de visitas y presupuestos.[ ] PWA: Instalación en móviles para uso en campo (técnicos).
+
+(Actualización 3-sep-2026) Autenticación / seguridad de sesión: se investigó y corrigió un bug real de notificaciones push para técnicos (el token de sesión cacheado para el service worker vencía a las 24hs y no se renovaba solo). Se implementó un refresh token real (revocable, ventana de 30 días) que además permite cortar el acceso de un usuario al instante al desactivarlo o resetearle la contraseña (antes tardaba hasta 24hs). Pendiente: pushear el commit y recompilar el backend para activarlo — ver el roadmap del proyecto para el detalle completo.
 ColaboradoresLucas - Lead Developer & Architect Marcos - Product Owner & Senior Field Tech
