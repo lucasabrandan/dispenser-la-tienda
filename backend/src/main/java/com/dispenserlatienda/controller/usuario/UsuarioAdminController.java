@@ -6,6 +6,7 @@ import com.dispenserlatienda.dto.usuario.*;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
+import com.dispenserlatienda.service.usuario.RefreshTokenService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +22,14 @@ public class UsuarioAdminController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final ServicioRepository servicioRepository;
+    private final RefreshTokenService refreshTokenService;
 
-    public UsuarioAdminController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, ServicioRepository servicioRepository) {
+    public UsuarioAdminController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder,
+                                   ServicioRepository servicioRepository, RefreshTokenService refreshTokenService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.servicioRepository = servicioRepository;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @GetMapping
@@ -61,12 +65,19 @@ public class UsuarioAdminController {
     public UsuarioDTO actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioUpdateDTO dto) {
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        boolean seDesactiva = u.isActivo() && !dto.activo();
         u.setNombre(dto.nombre());
         u.setRol(RolUsuario.valueOf(dto.rol()));
         u.setActivo(dto.activo());
         u.setTelefono(dto.telefono());
         u.setWhatsapp(dto.whatsapp());
         usuarioRepository.save(u);
+        // Al desactivar, cortar el acceso de verdad: sin el refresh token no
+        // puede renovar el access token vencido — en minutos u horas queda
+        // afuera, en vez de tener que esperar hasta 24hs a que expire solo.
+        if (seDesactiva) {
+            refreshTokenService.revocarTodosDeUsuario(u.getId());
+        }
         return new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo());
     }
 
@@ -85,6 +96,9 @@ public class UsuarioAdminController {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         u.setPasswordHash(passwordEncoder.encode(dto.nuevaPassword()));
         usuarioRepository.save(u);
+        // Cambiar la contraseña deberia cerrar las sesiones viejas — sin esto,
+        // alguien con el token/refresh token de antes seguia entrando igual.
+        refreshTokenService.revocarTodosDeUsuario(u.getId());
         return ResponseEntity.noContent().build();
     }
 

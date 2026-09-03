@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record LoginResponseDTO(
     Long id,
     String token,
+    String refreshToken,
     String username,
     String nombre,
     String rol,

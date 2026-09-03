@@ -3,8 +3,10 @@ package com.dispenserlatienda.controller.auth;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.auth.LoginRequestDTO;
 import com.dispenserlatienda.dto.auth.LoginResponseDTO;
+import com.dispenserlatienda.dto.auth.RefreshRequestDTO;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.security.JwtUtil;
+import com.dispenserlatienda.service.usuario.RefreshTokenService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,12 +21,14 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UsuarioRepository usuarioRepository;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                          UsuarioRepository usuarioRepository) {
+                          UsuarioRepository usuarioRepository, RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.usuarioRepository = usuarioRepository;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/login")
@@ -41,10 +45,12 @@ public class AuthController {
 
         Usuario usuario = usuarioRepository.findByUsername(username).orElseThrow();
         String token = jwtUtil.generarToken(usuario.getUsername(), usuario.getRol().name(), usuario.getNombre());
+        String refreshToken = refreshTokenService.crear(usuario);
 
         return ResponseEntity.ok(new LoginResponseDTO(
             usuario.getId(),
             token,
+            refreshToken,
             usuario.getUsername(),
             usuario.getNombre(),
             usuario.getRol().name(),
@@ -53,6 +59,23 @@ public class AuthController {
             usuario.getFirma(),
             usuario.getSueldoObjetivo()
         ));
+    }
+
+    // POST /api/auth/refresh — canjea un refresh token (guardado en base, ver
+    // RefreshTokenService) por un access token nuevo, sin pedir usuario/clave
+    // de nuevo. Lo llama el interceptor de axios cuando el access token
+    // vence, y además el frontend lo llama de forma proactiva de tanto en
+    // tanto mientras la app está abierta — eso es lo que evita que el token
+    // cacheado para las notificaciones push (ver pushTokenCache.js) quede
+    // vencido si el usuario no abre la app en más de 24hs.
+    @PostMapping("/refresh")
+    public ResponseEntity<java.util.Map<String, String>> refresh(@Valid @RequestBody RefreshRequestDTO request) {
+        return refreshTokenService.validarYRenovar(request.refreshToken())
+            .map(usuario -> {
+                String nuevoAccessToken = jwtUtil.generarToken(usuario.getUsername(), usuario.getRol().name(), usuario.getNombre());
+                return ResponseEntity.ok(java.util.Map.of("accessToken", nuevoAccessToken));
+            })
+            .orElseGet(() -> ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).build());
     }
 
     // GET /api/auth/mi-firma — devuelve la firma guardada del usuario logueado

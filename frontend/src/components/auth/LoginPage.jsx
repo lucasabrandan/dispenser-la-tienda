@@ -17,7 +17,7 @@ export default function LoginPage() {
         setCargando(true);
         try {
             const { data } = await api.post('/auth/login', form);
-            login(data.token, { id: data.id, username: data.username, nombre: data.nombre, rol: data.rol, firma: data.firma, sueldoObjetivo: data.sueldoObjetivo });
+            login(data.token, { id: data.id, username: data.username, nombre: data.nombre, rol: data.rol, firma: data.firma, sueldoObjetivo: data.sueldoObjetivo }, data.refreshToken);
         } catch (err) {
             // 401 = credenciales incorrectas (el backend ya no distingue si
             // fue el usuario o la contraseña — no hace falta que el usuario

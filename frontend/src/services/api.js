@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { guardarTokenParaSW } from '../utils/pushTokenCache';
 
 const api = axios.create({
     baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api',
@@ -27,10 +28,36 @@ api.interceptors.response.use(
     async error => {
         const config = error.config;
 
-        // Si recibimos 401, el token venció o es inválido — forzar logout
-        if (error.response?.status === 401 && !config.url?.includes('/auth/login')) {
+        // Si recibimos 401 en cualquier pedido normal (no en login ni en el
+        // propio refresh, para no entrar en loop), el access token venció o
+        // es inválido. Antes de forzar logout, se intenta UNA vez canjear el
+        // refresh token guardado (ver AuthContext/RefreshTokenService) por
+        // uno nuevo — así una sesión activa no se corta solo porque pasaron
+        // 24hs, y de paso se mantiene fresco el token que el service worker
+        // usa para las notificaciones push (ver pushTokenCache.js).
+        const esRefreshOLogin = config?.url?.includes('/auth/login') || config?.url?.includes('/auth/refresh');
+        if (error.response?.status === 401 && !esRefreshOLogin && !config._reintentoRefresh) {
+            config._reintentoRefresh = true;
+            const refreshToken = localStorage.getItem('auth_refresh_token');
+            if (refreshToken) {
+                try {
+                    const { data } = await axios.post(
+                        `${api.defaults.baseURL}/auth/refresh`,
+                        { refreshToken }
+                    );
+                    localStorage.setItem('auth_token', data.accessToken);
+                    guardarTokenParaSW(data.accessToken);
+                    config.headers['Authorization'] = `Bearer ${data.accessToken}`;
+                    return api(config);
+                } catch {
+                    // El refresh token también venció o fue revocado (ej.
+                    // usuario desactivado) — ahí sí, logout real.
+                }
+            }
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_usuario');
+            localStorage.removeItem('auth_refresh_token');
+            guardarTokenParaSW(null);
             window.location.reload();
             return Promise.reject(error);
         }
