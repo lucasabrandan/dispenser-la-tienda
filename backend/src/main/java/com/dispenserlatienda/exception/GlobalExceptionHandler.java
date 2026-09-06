@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -116,6 +117,26 @@ public class GlobalExceptionHandler {
         error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
 
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    // Un usuario autenticado pide algo que no es suyo y no tiene el rol para
+    // verlo igual (ej: un tecnico pidiendo el sueldo de otro por URL, hallazgo
+    // Critico #1 de la auditoria del 1-sep). Sin este handler, AccessDeniedException
+    // caia en el generico de mas abajo y devolvia 500 en vez de 403.
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex,
+            WebRequest request) {
+        logger.warn("Acceso denegado: {}", ex.getMessage());
+
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                "No tenés permiso para ver esto",
+                "ACCESS_DENIED"
+        );
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
+
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

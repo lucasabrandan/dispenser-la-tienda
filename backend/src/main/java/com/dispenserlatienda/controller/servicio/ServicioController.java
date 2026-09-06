@@ -8,12 +8,19 @@ import com.dispenserlatienda.dto.servicio.SueldoProgressDTO;
 import com.dispenserlatienda.dto.servicio.TecnicoRendimientoDTO;
 import com.dispenserlatienda.dto.servicio.TecnicoResumenMesDTO;
 import java.util.List;
+import com.dispenserlatienda.domain.servicio.Servicio;
+import com.dispenserlatienda.domain.usuario.RolUsuario;
+import com.dispenserlatienda.domain.usuario.Usuario;
+import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
+import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.service.servicio.ServicioService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,11 +36,14 @@ import jakarta.validation.Valid;
 public class ServicioController {
     private final ServicioService servicioService;
     private final ServicioRepository servicioRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public ServicioController(ServicioService servicioService,
-                              ServicioRepository servicioRepository) {
+                              ServicioRepository servicioRepository,
+                              UsuarioRepository usuarioRepository) {
         this.servicioService = servicioService;
         this.servicioRepository = servicioRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     // GET: Listar servicios con filtros opcionales (tipo, estado, busqueda, desde, hasta, usuarioId, clienteId)
@@ -59,7 +69,8 @@ public class ServicioController {
 
     // GET: Obtener servicio por ID
     @GetMapping("/{id}")
-    public ResponseEntity<ServicioDTO> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<ServicioDTO> obtenerPorId(@PathVariable Long id, Authentication auth) {
+        verificarAccesoServicio(id, auth);
         return ResponseEntity.ok(servicioService.buscarPorId(id));
     }
 
@@ -81,7 +92,9 @@ public class ServicioController {
     @PatchMapping("/{id}/estado")
     public ResponseEntity<ServicioDTO> cambiarEstado(
             @PathVariable Long id,
-            @RequestBody java.util.Map<String, Object> payload) {
+            @RequestBody java.util.Map<String, Object> payload,
+            Authentication auth) {
+        verificarAccesoServicio(id, auth);
         String nuevoEstado = (String) payload.get("estado");
         String modalidadCobro = (String) payload.get("modalidadCobro");
         java.math.BigDecimal montoFinal = null;
@@ -97,7 +110,9 @@ public class ServicioController {
     @PatchMapping("/{id}/confirmar-horario")
     public ResponseEntity<ServicioDTO> confirmarHorario(
             @PathVariable Long id,
-            @RequestBody java.util.Map<String, String> payload) {
+            @RequestBody java.util.Map<String, String> payload,
+            Authentication auth) {
+        verificarAccesoServicio(id, auth);
         return ResponseEntity.ok(servicioService.confirmarHorario(id, payload.get("fecha"), payload.get("hora")));
     }
 
@@ -139,12 +154,43 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.rendimientoMesActual(mes, tecnicoId));
     }
 
-    // GET: Progreso de sueldo mensual — admin ve todo, técnico ve su parte
+    // GET: Progreso de sueldo mensual — admin ve todo, técnico ve su parte.
+    // isAdmin ya NO viene del cliente (antes era un boolean spoofeable): se
+    // deriva del usuario autenticado. Un técnico solo puede consultar su
+    // propio usuarioId; un admin puede consultar el de cualquiera, pero solo
+    // ve la vista agregada (isAdmin=true) cuando consulta su propio id,
+    // igual que hacía el frontend hasta ahora.
     @GetMapping("/stats/sueldo")
     public ResponseEntity<SueldoProgressDTO> progresoSueldo(
             @RequestParam Long usuarioId,
             @RequestParam(required = false) String mes,
-            @RequestParam(defaultValue = "false") boolean isAdmin) {
+            Authentication auth) {
+        Usuario solicitante = resolverUsuario(auth);
+        boolean esAdminSolicitante = solicitante.getRol() == RolUsuario.ADMIN;
+        if (!esAdminSolicitante && !solicitante.getId().equals(usuarioId)) {
+            throw new AccessDeniedException("No podés ver el sueldo de otro usuario");
+        }
+        boolean isAdmin = esAdminSolicitante && solicitante.getId().equals(usuarioId);
         return ResponseEntity.ok(servicioService.calcularProgresoSueldo(usuarioId, mes, isAdmin));
+    }
+
+    private Usuario resolverUsuario(Authentication auth) {
+        String username = auth.getName();
+        return usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado: " + username));
+    }
+
+    // Antes cualquier técnico autenticado podía leer/cambiar el estado/
+    // confirmar el horario de un servicio ajeno con solo adivinar el id
+    // (no había ningún chequeo de dueño). Admin no tiene restricción; un
+    // técnico solo puede acceder a los servicios que tiene asignados.
+    private void verificarAccesoServicio(Long servicioId, Authentication auth) {
+        Usuario solicitante = resolverUsuario(auth);
+        if (solicitante.getRol() == RolUsuario.ADMIN) return;
+        Servicio servicio = servicioRepository.findById(servicioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado con ID: " + servicioId));
+        if (servicio.getUsuario() == null || !servicio.getUsuario().getId().equals(solicitante.getId())) {
+            throw new AccessDeniedException("No podés acceder a este servicio");
+        }
     }
 }
