@@ -169,12 +169,18 @@ export function useRepuestoManager() {
                     fd.append('porcentajeGanancia', g);
                     fd.append('porcentajeMarkup', m);
                     fd.append('porcentajeImpuestos', i);
+                    // Misma fórmula que RepuestoModal.jsx (calcularPrecios): Facturado
+                    // parte del precio efectivo (que YA tiene la ganancia/markup adentro)
+                    // y solo compensa el Impuestos% para mantener la misma ganancia neta.
+                    // Antes esta edición masiva volvía a aplicar ganancia y markup sobre
+                    // costoBlanco, duplicando el margen (Facturado salía ~80% más caro que
+                    // Efectivo sin justificación, y distinto del que daba editar uno solo).
                     const costo = parseFloat(producto.costo) || 0;
-                    const precioBase = costo * (1 + g / 100);
-                    const precioFinal = precioBase * (1 + m / 100);
-                    const costoBlanco = costo * 1.21;
-                    const facturado = costoBlanco * (1 + g / 100) * (1 + m / 100) * (1 + i / 100);
-                    const netoCliente = facturado / 1.21;
+                    const precioBase  = costo > 0 ? costo * (1 + g / 100) : 0;
+                    const precioFinal = precioBase > 0 ? precioBase * (1 + m / 100) : 0;
+                    const costoBlanco = costo > 0 ? costo * 1.21 : 0; // solo informativo
+                    const netoCliente = precioFinal > 0 && i < 100 ? precioFinal / (1 - i / 100) : 0;
+                    const facturado   = netoCliente > 0 ? netoCliente * 1.21 : 0;
                     fd.append('precio', precioFinal);
                     fd.append('precioLista', precioFinal);
                     fd.append('costoBlanco', costoBlanco);
