@@ -212,9 +212,20 @@ public class OrdenVisitaService {
         if (o.getPresupuestoId() != null) {
             // Caso 1: orden vinculada a presupuesto → marcar REALIZADO y asignar técnico para rendimientos
             servicioRepository.findById(o.getPresupuestoId()).ifPresent(s -> {
-                // Técnico terminó — ahora falta definir cobro
-                s.setEstado(EstadoServicio.COMPLETADO);
-                s.setFechaCompletado(java.time.LocalDateTime.now());
+                // Técnico terminó — ahora falta definir cobro.
+                // OJO: no pisar el estado si el servicio ya avanzó más allá
+                // de "trabajo terminado" (ya facturado/cobrado) — si no,
+                // cerrar la visita técnica (p.ej. reabrir y volver a cerrar)
+                // revertiría un cobro ya registrado a COMPLETADO.
+                boolean yaAvanzado = s.getEstado() == EstadoServicio.COMPLETADO
+                        || s.getEstado() == EstadoServicio.PENDIENTE_FACTURACION
+                        || s.getEstado() == EstadoServicio.FACTURADO
+                        || s.getEstado() == EstadoServicio.COBRADO
+                        || s.getEstado() == EstadoServicio.REALIZADO;
+                if (!yaAvanzado) {
+                    s.setEstado(EstadoServicio.COMPLETADO);
+                    s.setFechaCompletado(java.time.LocalDateTime.now());
+                }
                 if (o.getTecnico() != null) {
                     s.setUsuario(o.getTecnico());
                 }
