@@ -93,7 +93,7 @@ public class ClienteService {
         // Borrado en cascada de todas las entidades relacionadas
         // Primero elimina items de servicio, luego servicios, luego equipos, luego sedes
         entityManager.createNativeQuery("DELETE FROM servicio_items WHERE servicio_id IN (SELECT id FROM servicio WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ?))").setParameter(1, id).executeUpdate();
-        entityManager.createNativeQuery("DELETE FROM servicio_item WHERE equipo_id IN (SELECT id FROM equipo WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ?))").setParameter(1, id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM servicio_items WHERE equipo_id IN (SELECT id FROM equipo WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ?))").setParameter(1, id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM servicio WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ? )").setParameter(1, id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM equipo WHERE sede_id IN (SELECT id FROM sede WHERE cliente_id = ? )").setParameter(1, id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM sede WHERE cliente_id = ?").setParameter(1, id).executeUpdate();
