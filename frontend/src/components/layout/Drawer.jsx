@@ -22,8 +22,21 @@ const MENU_GESTION_DRAWER = [
 const MENU_ITEMS = [...MENU_TRANSVERSAL_DRAWER, ...MENU_GESTION_DRAWER];
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
-    const { usuario, logout } = useAuth();
+    const { usuario, logout, esAdmin } = useAuth();
     const { pendientes, ordenesActivas } = useBadges();
+    // Mismo criterio que Sidebar.jsx (desktop): Presupuestos y el grupo de
+    // Gestion (Clientes/Radar/Productos/Finanzas/Usuarios/Mi Espacio) son
+    // solo-admin. Hoy el tecnico no tiene boton "Mas" en su BottomNav, asi
+    // que esto era inalcanzable en la practica -- pero las pantallas y varios
+    // endpoints de esas secciones no chequean rol por su cuenta, asi que
+    // dejar el menu sin filtrar era un agujero listo para activarse solo con
+    // agregar cualquier otro camino de navegacion a futuro.
+    const gruposDrawer = esAdmin
+        ? [
+            { label: null,          items: MENU_TRANSVERSAL_DRAWER },
+            { label: 'Gestión',     icon: LuSettings, items: MENU_GESTION_DRAWER },
+        ]
+        : [];
 
     const handleClick = (id) => {
         setVistaActual(id);
@@ -65,10 +78,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
 
                 {/* Items */}
                 <div className="p-3 space-y-4 overflow-y-auto">
-                    {[
-                        { label: null,          items: MENU_TRANSVERSAL_DRAWER },
-                        { label: 'Gestión',     icon: LuSettings, items: MENU_GESTION_DRAWER },
-                    ].map((grupo, gi) => (
+                    {gruposDrawer.map((grupo, gi) => (
                         <div key={gi} className="space-y-0.5">
                             {grupo.label && (
                                 <p className="text-label font-bold text-muted/70 uppercase tracking-[0.15em] mb-1 px-3 flex items-center gap-1.5">
