@@ -62,12 +62,23 @@ public class UsuarioAdminController {
     }
 
     @PutMapping("/{id}")
-    public UsuarioDTO actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioUpdateDTO dto) {
+    public ResponseEntity<Object> actualizar(@PathVariable Long id, @Valid @RequestBody UsuarioUpdateDTO dto) {
         Usuario u = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         boolean seDesactiva = u.isActivo() && !dto.activo();
+        RolUsuario nuevoRol = RolUsuario.valueOf(dto.rol());
+        // Si este usuario es admin activo y el cambio lo deja sin serlo
+        // (se desactiva o se le cambia el rol), verificar que no sea el
+        // único admin activo — si no, la empresa se queda sin nadie que
+        // pueda administrar el sistema.
+        boolean dejaDeSerAdminActivo = u.getRol() == RolUsuario.ADMIN && u.isActivo()
+                && (nuevoRol != RolUsuario.ADMIN || !dto.activo());
+        if (dejaDeSerAdminActivo && usuarioRepository.countByRolAndActivoTrue(RolUsuario.ADMIN) <= 1) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(java.util.Map.of("mensaje", "No podés dejar el sistema sin ningún administrador activo."));
+        }
         u.setNombre(dto.nombre());
-        u.setRol(RolUsuario.valueOf(dto.rol()));
+        u.setRol(nuevoRol);
         u.setActivo(dto.activo());
         u.setTelefono(dto.telefono());
         u.setWhatsapp(dto.whatsapp());
@@ -78,7 +89,7 @@ public class UsuarioAdminController {
         if (seDesactiva) {
             refreshTokenService.revocarTodosDeUsuario(u.getId());
         }
-        return new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo());
+        return ResponseEntity.ok(new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo()));
     }
 
     @PutMapping("/{id}/firma")
@@ -114,12 +125,17 @@ public class UsuarioAdminController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> eliminar(@PathVariable Long id) {
-        if (!usuarioRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Usuario no encontrado");
-        }
+        Usuario u = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         if (servicioRepository.existsByUsuarioId(id)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(java.util.Map.of("mensaje", "El usuario tiene servicios registrados. Desactivalo en lugar de eliminarlo."));
+        }
+        // No dejar la empresa sin ningún admin activo.
+        if (u.getRol() == RolUsuario.ADMIN && u.isActivo()
+                && usuarioRepository.countByRolAndActivoTrue(RolUsuario.ADMIN) <= 1) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(java.util.Map.of("mensaje", "No podés eliminar al único administrador activo."));
         }
         usuarioRepository.deleteById(id);
         return ResponseEntity.noContent().build();

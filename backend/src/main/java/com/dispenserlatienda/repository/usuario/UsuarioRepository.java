@@ -1,5 +1,6 @@
 package com.dispenserlatienda.repository.usuario;
 
+import com.dispenserlatienda.domain.usuario.RolUsuario;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,4 +11,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByUsername(String username);
 
     Optional<Usuario> findFirstByNombreContainingIgnoreCase(String nombre);
+
+    long countByRolAndActivoTrue(RolUsuario rol);
 }

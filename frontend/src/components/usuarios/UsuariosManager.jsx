@@ -88,7 +88,11 @@ export default function UsuariosManager() {
             setModal(null);
             cargar();
         } catch (e) {
-            toast.error(e.response?.status === 409 ? 'El usuario ya existe' : 'Error al guardar');
+            if (e.response?.status === 409) {
+                toast.error(e.response?.data?.mensaje || 'El usuario ya existe');
+            } else {
+                toast.error('Error al guardar');
+            }
         } finally { setGuardando(false); }
     };
 
@@ -97,7 +101,9 @@ export default function UsuariosManager() {
             await editarUsuario(u.id, { nombre: u.nombre, rol: u.rol, activo: !u.activo, telefono: u.telefono || null, whatsapp: u.whatsapp || null });
             toast.success(u.activo ? 'Usuario desactivado' : 'Usuario activado');
             cargar();
-        } catch { toast.error('Error al actualizar'); }
+        } catch (e) {
+            toast.error(e.response?.data?.mensaje || 'Error al actualizar');
+        }
     };
 
     const eliminar = async () => {
