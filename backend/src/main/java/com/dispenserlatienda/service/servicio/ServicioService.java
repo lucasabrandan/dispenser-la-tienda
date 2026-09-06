@@ -24,6 +24,8 @@ import com.dispenserlatienda.repository.gasto.GastoRepository;
 import com.dispenserlatienda.repository.sede.SedeRepository;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
+import com.dispenserlatienda.repository.repuesto.RepuestoRepository;
+import com.dispenserlatienda.domain.repuesto.Repuesto;
 import com.dispenserlatienda.domain.notificacion.TipoNotificacion;
 import com.dispenserlatienda.service.notificacion.NotificacionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -59,11 +61,12 @@ public class ServicioService {
     private final VentaRepository ventaRepository;
     private final ObjectMapper objectMapper;
     private final NotificacionService notificacionService;
+    private final RepuestoRepository repuestoRepository;
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
                            UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
                            GastoRepository gastoRepository, ConfiguracionGlobalRepository configRepo,
                            VentaRepository ventaRepository, ObjectMapper objectMapper,
-                           NotificacionService notificacionService) {
+                           NotificacionService notificacionService, RepuestoRepository repuestoRepository) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
@@ -73,6 +76,7 @@ public class ServicioService {
         this.ventaRepository = ventaRepository;
         this.objectMapper = objectMapper;
         this.notificacionService = notificacionService;
+        this.repuestoRepository = repuestoRepository;
     }
 
     @Transactional(readOnly = true)
@@ -494,6 +498,7 @@ public class ServicioService {
 
         servicio.setServicioTipo(tipoDetectado);
 
+        descontarStockSiCorresponde(servicio);
         Servicio saved = servicioRepository.save(servicio);
 
         // El auto-despacho de ordenes lo maneja el frontend (CerrarTicketSheet)
@@ -524,6 +529,46 @@ public class ServicioService {
                 || e == EstadoServicio.PENDIENTE_FACTURACION
                 || e == EstadoServicio.FACTURADO
                 || e == EstadoServicio.COBRADO;
+    }
+
+    // Bug real encontrado 6-sep (auditoria masiva 1-sep, critico #4): el stock
+    // de un repuesto nunca se restaba al confirmar una venta ni un servicio con
+    // repuestos usados -- "Productos" nunca reflejaba lo vendido/usado.
+    //
+    // Se descuenta una sola vez por servicio (guardia servicio.stockDescontado,
+    // ver Servicio.java) apenas el servicio entra a un estado de "trabajo
+    // terminado" -- mismo concepto que ya usa la garantia (esEstadoTrabajoTerminado).
+    // El flag vive en Servicio y no en ServicioItem porque editar un servicio
+    // borra y recrea sus items (ver actualizarServicio) -- un flag por item se
+    // perderia en cada edicion y volveria a descontar de mas.
+    //
+    // A proposito, no bloquea ni valida stock insuficiente (puede quedar
+    // negativo) -- eso es un problema aparte (falta validacion de cantidad
+    // disponible, ya relevado por separado), y frenar el guardado del
+    // servicio por stock insuficiente sin poder probarlo en vivo primero es
+    // mas riesgo del que vale la pena correr en esta pasada.
+    private void descontarStockSiCorresponde(Servicio servicio) {
+        if (Boolean.TRUE.equals(servicio.getStockDescontado())) return;
+        if (!esEstadoTrabajoTerminado(servicio.getEstado())) return;
+
+        for (ServicioItem item : servicio.getItems()) {
+            String json = item.getRepuestosUsados();
+            if (json == null || json.isEmpty()) continue;
+            try {
+                List<RepuestoUsadoDTO> usados = objectMapper.readValue(json, new TypeReference<List<RepuestoUsadoDTO>>() {});
+                for (RepuestoUsadoDTO r : usados) {
+                    if (r.id() == null || r.cantidad() == null || r.cantidad() <= 0) continue;
+                    repuestoRepository.findById(r.id()).ifPresent(repuesto -> {
+                        int actual = repuesto.getStock() != null ? repuesto.getStock() : 0;
+                        repuesto.setStock(actual - r.cantidad());
+                        repuestoRepository.save(repuesto);
+                    });
+                }
+            } catch (JsonProcessingException e) {
+                log.warn("No se pudo leer repuestosUsados para descontar stock (servicio {}): {}", servicio.getId(), e.getMessage());
+            }
+        }
+        servicio.setStockDescontado(true);
     }
 
     @Transactional
@@ -574,6 +619,7 @@ public class ServicioService {
             }
         }
 
+        descontarStockSiCorresponde(s);
         return mapToDTO(servicioRepository.save(s));
     }
 
@@ -756,10 +802,17 @@ public class ServicioService {
         LocalDate inicioMes = LocalDate.parse(mes + "-01");
         LocalDate finMes = inicioMes.plusMonths(1).minusDays(1);
 
+        // Bug real (auditoria 1-sep, critico #7): antes no filtraba por estado --
+        // mezclaba presupuestos no aprobados y servicios cancelados en el total del
+        // mes, con tal de que la fecha cayera en rango. Mismo filtro de estado que
+        // ya usa calcularMesSueldo/calcularGananciaNetaServicio (COBRADO + el legacy
+        // REALIZADO) para que Balance y Sueldo/Tecnicos coincidan sobre que cuenta
+        // como facturacion real.
         List<Servicio> serviciosMes = servicioRepository.findAll().stream()
                 .filter(s -> s.getFechaServicio() != null
                         && !s.getFechaServicio().isBefore(inicioMes)
-                        && !s.getFechaServicio().isAfter(finMes))
+                        && !s.getFechaServicio().isAfter(finMes)
+                        && (s.getEstado() == EstadoServicio.COBRADO || s.getEstado() == EstadoServicio.REALIZADO))
                 .toList();
 
         BigDecimal facturacion = BigDecimal.ZERO;
@@ -767,11 +820,21 @@ public class ServicioService {
         List<EstadisticasMensualDTO.TransaccionDTO> transacciones = new ArrayList<>();
 
         for (Servicio servicio : serviciosMes) {
+            // Bug real (mismo hallazgo #7): el descuento se restaba desde
+            // item.getDescuento(), un campo a nivel item que el frontend nunca
+            // completa (siempre cero) -- el descuento real vive a nivel servicio
+            // (descuentoPorcentaje), aplicado aca igual que en
+            // calcularGananciaNetaServicio.
+            BigDecimal descPct = servicio.getDescuentoPorcentaje();
+            BigDecimal factorDescuento = (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0)
+                    ? BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP))
+                    : BigDecimal.ONE;
             for (ServicioItem item : servicio.getItems()) {
                 BigDecimal costoBase = item.getCosto() != null ? item.getCosto() : BigDecimal.ZERO;
                 BigDecimal venta = costoBase
                         .add(item.getCostoExtra() != null ? item.getCostoExtra() : BigDecimal.ZERO)
-                        .subtract(item.getDescuento() != null ? item.getDescuento() : BigDecimal.ZERO);
+                        .multiply(factorDescuento)
+                        .setScale(2, java.math.RoundingMode.HALF_UP);
 
                 facturacion = facturacion.add(venta);
 

@@ -22,7 +22,7 @@ public interface ServicioItemRepository extends JpaRepository<ServicioItem, Long
     void deleteByEquipoId(@Param("equipoId") Long equipoId);
 
     /**
-     * Devuelve, por cada equipo con al menos un servicio REALIZADO:
+     * Devuelve, por cada equipo con al menos un servicio REALIZADO o COBRADO:
      *  - la fecha del último servicio (para calcular alerta SANITIZACION)
      *  - la fecha del último servicio con texto 'filtro' (para alerta FILTRO)
      * Usa CTE con DISTINCT ON para obtener el cliente/sede del servicio más reciente.
@@ -41,7 +41,7 @@ public interface ServicioItemRepository extends JpaRepository<ServicioItem, Long
             JOIN equipo   e  ON si.equipo_id   = e.id
             JOIN sede     sd ON e.sede_id       = sd.id
             JOIN cliente  cl ON sd.cliente_id   = cl.id
-            WHERE s.estado = 'REALIZADO'
+            WHERE s.estado IN ('REALIZADO', 'COBRADO')
               AND e.numero_serie IS NOT NULL
               AND LOWER(e.numero_serie) <> 'mostrador'
             ORDER BY e.id, s.fecha_servicio DESC
@@ -50,7 +50,7 @@ public interface ServicioItemRepository extends JpaRepository<ServicioItem, Long
             SELECT si.equipo_id, MAX(s.fecha_servicio) AS ultimoFiltro
             FROM servicio_items si
             JOIN servicio s ON si.servicio_id = s.id
-            WHERE s.estado = 'REALIZADO'
+            WHERE s.estado IN ('REALIZADO', 'COBRADO')
               AND LOWER(si.trabajo_realizado) LIKE '%filtro%'
             GROUP BY si.equipo_id
         )

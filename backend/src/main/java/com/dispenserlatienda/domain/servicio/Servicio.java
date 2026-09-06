@@ -127,6 +127,17 @@ public class Servicio {
     @Column(name = "hora_servicio", length = 5)
     private String horaServicio;
 
+    // Idempotencia del descuento de stock (bug real encontrado 6-sep: el stock
+    // de un repuesto nunca se restaba al confirmar una venta o un servicio con
+    // repuestos usados). Se marca en true la primera vez que el servicio entra
+    // a un estado de "trabajo terminado" y ya se descontó -- a nivel Servicio,
+    // no de ServicioItem, porque editar un servicio borra y recrea sus items
+    // (ver ServicioService.actualizarServicio), y un flag por item se perdería
+    // en cada edición, provocando un doble descuento. Ver
+    // ServicioService.descontarStockSiCorresponde().
+    @Column(name = "stock_descontado")
+    private Boolean stockDescontado = false;
+
     @Formula("(SELECT COALESCE(SUM(si.costo), 0) FROM servicio_items si WHERE si.servicio_id = id)")
     private BigDecimal total;
 
@@ -242,6 +253,9 @@ public class Servicio {
 
     public String getVentanasDisponibles() { return ventanasDisponibles; }
     public void setVentanasDisponibles(String ventanasDisponibles) { this.ventanasDisponibles = ventanasDisponibles; }
+
+    public Boolean getStockDescontado() { return stockDescontado; }
+    public void setStockDescontado(Boolean stockDescontado) { this.stockDescontado = stockDescontado; }
 
     public String getHoraServicio() { return horaServicio; }
     public void setHoraServicio(String horaServicio) { this.horaServicio = horaServicio; }
