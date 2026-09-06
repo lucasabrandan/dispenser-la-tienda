@@ -81,17 +81,24 @@ export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
     const cargar = async () => {
         setCargando(true);
         try {
-            const paramsServ = { estado: 'REALIZADO', tipo: 'TECNICA', desde, hasta, page: 0, size: 500, sort: 'fechaServicio,desc' };
-            const paramsVenta = { estado: 'REALIZADO', tipo: 'VENTA', desde, hasta, page: 0, size: 500, sort: 'fechaServicio,desc' };
-            if (tecnicoFiltro) { paramsServ.usuarioId = tecnicoFiltro; paramsVenta.usuarioId = tecnicoFiltro; }
+            // Bug real (auditoria 1-sep, critico #8): filtraba solo por el estado
+            // legacy REALIZADO -- el flujo moderno de Despacho termina en COBRADO,
+            // asi que un mes con caja real cobrada podia mostrar "sin movimientos".
+            // Se pide cada tipo en los dos estados y se combina (misma dualidad
+            // REALIZADO+COBRADO que ya usa ServicioService.calcularMesSueldo).
+            const base = { desde, hasta, page: 0, size: 500, sort: 'fechaServicio,desc' };
+            if (tecnicoFiltro) base.usuarioId = tecnicoFiltro;
 
-            const [resServ, resVenta, resGastos] = await Promise.all([
-                api.get('/servicios', { params: paramsServ }),
-                api.get('/servicios', { params: paramsVenta }),
+            const [servR, servC, ventR, ventC, resGastos] = await Promise.all([
+                api.get('/servicios', { params: { ...base, estado: 'REALIZADO', tipo: 'TECNICA' } }),
+                api.get('/servicios', { params: { ...base, estado: 'COBRADO',   tipo: 'TECNICA' } }),
+                api.get('/servicios', { params: { ...base, estado: 'REALIZADO', tipo: 'VENTA' } }),
+                api.get('/servicios', { params: { ...base, estado: 'COBRADO',   tipo: 'VENTA' } }),
                 api.get('/gastos/mes?mes=' + desde.substring(0, 7)).catch(() => ({ data: [] })),
             ]);
-            setServicios(resServ.data.content || resServ.data || []);
-            setVentas(resVenta.data.content || resVenta.data || []);
+            const contenido = (r) => r.data.content || r.data || [];
+            setServicios([...contenido(servR), ...contenido(servC)]);
+            setVentas([...contenido(ventR), ...contenido(ventC)]);
             // Filtrar gastos por rango de fechas
             const todosGastos = resGastos.data || [];
             setGastos(todosGastos.filter(g => g.fecha >= desde && g.fecha <= hasta));
@@ -101,7 +108,13 @@ export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
 
     const PCT_IMPUESTOS = 30;
 
-    const calcTotal     = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
+    // Bug real (mismo hallazgo #8): no aplicaba el descuento real de la venta/
+    // servicio (descuentoPorcentaje) -- mismo fix que Balance en el backend.
+    const calcTotal = (s) => {
+        const bruto = s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
+        const descPct = Number(s.descuentoPorcentaje || 0);
+        return descPct > 0 ? bruto * (1 - descPct / 100) : bruto;
+    };
     const calcMO        = (s) => s.items?.reduce((a, i) => a + Number(i.costoExtra || 0), 0) || 0;
     const calcRepuestos = (s) => s.items?.reduce((a, i) =>
         a + (i.repuestosUsados || []).reduce((b, r) => b + Number(r.subtotal ?? (r.precio * r.cantidad) ?? 0), 0), 0
