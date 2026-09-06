@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,16 +35,61 @@ public class RepuestoController {
         this.fileStorageService = fileStorageService;
     }
 
-    // GET: Listar repuestos con búsqueda opcional por nombre o SKU
+    // GET: Listar repuestos con búsqueda opcional por nombre o SKU.
+    // Esta entidad se devuelve completa (no un DTO), y traía costo, márgenes
+    // (%ganancia/%markup), costoBlanco, %impuestos y costosRealesJson — datos
+    // internos del negocio — para CUALQUIER rol autenticado, técnico incluido.
+    // El frontend ya ocultaba esos campos en pantalla solo para admin
+    // (PasoResumen.jsx), pero los seguía recibiendo igual en la respuesta:
+    // alcanzaba con mirar la pestaña de red del navegador para verlos.
+    // Un técnico solo necesita nombre/sku/stock/fotos y los precios que se
+    // le cobran al cliente (precio, precioLista, precioFacturado, etc.) para
+    // armar un ticket — nunca el costo real ni el margen.
     @GetMapping
     public ResponseEntity<Page<Repuesto>> listar(
             @RequestParam(required = false) String busqueda,
-            Pageable pageable) {
-        if (busqueda != null && !busqueda.isBlank()) {
-            return ResponseEntity.ok(repuestoRepository
-                    .findByNombreContainingIgnoreCaseOrSkuContainingIgnoreCase(busqueda, busqueda, pageable));
+            Pageable pageable,
+            Authentication auth) {
+        Page<Repuesto> pagina = (busqueda != null && !busqueda.isBlank())
+                ? repuestoRepository.findByNombreContainingIgnoreCaseOrSkuContainingIgnoreCase(busqueda, busqueda, pageable)
+                : repuestoRepository.findAll(pageable);
+        if (!esAdmin(auth)) {
+            pagina = pagina.map(this::ocultarDatosInternos);
         }
-        return ResponseEntity.ok(repuestoRepository.findAll(pageable));
+        return ResponseEntity.ok(pagina);
+    }
+
+    private boolean esAdmin(Authentication auth) {
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    // Devuelve una copia SIN persistir (no es la entidad manejada por JPA,
+    // así que nunca se puede llegar a grabar sola por dirty-checking) con
+    // los campos de costo/margen vacíos.
+    private Repuesto ocultarDatosInternos(Repuesto r) {
+        Repuesto copia = new Repuesto();
+        copia.setId(r.getId());
+        copia.setSku(r.getSku());
+        copia.setNombre(r.getNombre());
+        copia.setDescripcion(r.getDescripcion());
+        copia.setPrecio(r.getPrecio());
+        copia.setPrecioLista(r.getPrecioLista());
+        copia.setPrecioFacturado(r.getPrecioFacturado());
+        copia.setPrecioNetoCliente(r.getPrecioNetoCliente());
+        copia.setPrecioCantidad(r.getPrecioCantidad());
+        copia.setCantidadMinima(r.getCantidadMinima());
+        copia.setPorcentajeCuotas3(r.getPorcentajeCuotas3());
+        copia.setPorcentajeCuotas6(r.getPorcentajeCuotas6());
+        copia.setStock(r.getStock());
+        copia.setFotoUrl(r.getFotoUrl());
+        copia.setFotoUrl2(r.getFotoUrl2());
+        copia.setFotoUrl3(r.getFotoUrl3());
+        copia.setImagen(r.getImagen());
+        // costo, porcentajeGanancia, porcentajeMarkup, costoBlanco,
+        // porcentajeImpuestos y costosRealesJson quedan sin setear (null)
+        // a propósito.
+        return copia;
     }
 
     // POST: Crear repuesto con foto (FormData) ← AGREGADO consumes
