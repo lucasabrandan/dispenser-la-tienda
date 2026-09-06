@@ -242,7 +242,7 @@ export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar =
             }
 
             const authUsuario = (() => { try { return JSON.parse(localStorage.getItem('auth_usuario')); } catch { return null; } })();
-            await api.post('/servicios', {
+            const ventaData = {
                 sedeId:            parseInt(mostradorSid || 1),
                 usuarioId:         authUsuario?.id || 1,
                 fecha:             fechaVenta,
@@ -264,7 +264,17 @@ export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar =
                     repuestosUsados:  productos,
                     garantiaHasta:    null
                 }]
-            });
+            };
+
+            // Editar una venta ya guardada actualiza el registro existente en vez de
+            // crear un duplicado -- mismo patron que ya usa useServicioForm.js
+            // (idEdicion ? PUT : POST). Antes esto siempre hacia POST, sin importar
+            // que el modal dijera "Editar Venta #123".
+            if (ventaParaEditar?.id) {
+                await api.put(`/servicios/${ventaParaEditar.id}`, ventaData);
+            } else {
+                await api.post('/servicios', ventaData);
+            }
 
             toast.success('¡Venta guardada!', { id: loading });
             registrarProductosVendidos(productos);
