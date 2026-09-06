@@ -182,6 +182,16 @@ export default function PresupuestosManager() {
         ).join(' ') ?? '',
     });
 
+    // "Todos"/"Ninguno" — mismo patrón que useRepuestoManager.js: selecciona todo lo
+    // visible en la página/filtro actual (no la tabla completa sin filtrar).
+    const todosSeleccionados = filtros.itemsPagina.length > 0 &&
+        seleccionados.size === filtros.itemsPagina.length;
+    const seleccionarTodos = () => {
+        setSeleccionados(
+            todosSeleccionados ? new Set() : new Set(filtros.itemsPagina.map(s => s.id))
+        );
+    };
+
     const stats = useMemo(() => ({
         total:     presupuestos.reduce((a, p) => a + calcularTotal(p), 0),
         count:     presupuestos.length,
@@ -280,6 +290,10 @@ export default function PresupuestosManager() {
                         <span className="text-caption font-bold text-ink flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
+                        <button onClick={seleccionarTodos}
+                            className="h-7 px-3 rounded-lg font-bold text-label bg-chip text-secondary active:scale-95">
+                            {todosSeleccionados ? 'Ninguno' : 'Todos'}
+                        </button>
                         {seleccionados.size > 0 && (<>
                             <button onClick={() => abrirRuta(presupuestosFiltradosTipo.filter(p => seleccionados.has(p.id)))}
                                 className="h-7 px-3 rounded-lg font-bold text-label text-white bg-[#1A73E8] active:scale-95">

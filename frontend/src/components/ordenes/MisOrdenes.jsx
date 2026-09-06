@@ -410,6 +410,13 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA','NO_ATENDIDO'].includes(o.estado));
     const lista   = tab === 'activas' ? activas : historial;
 
+    // "Todos"/"Ninguno" — mismo patrón que useRepuestoManager.js / ServicioManager.jsx:
+    // selecciona todas las visitas activas visibles, no un listado sin filtrar.
+    const todosSeleccionados = activas.length > 0 && seleccionados.size === activas.length;
+    const seleccionarTodos = () => {
+        setSeleccionados(todosSeleccionados ? new Set() : new Set(activas.map(o => o.id)));
+    };
+
     // Resumen del dia
     const ordenesHoy = activas.filter(o => o.fechaProgramada === getTodayISO());
     const completadasHoy = historial.filter(o => o.estado === 'COMPLETADA' && o.fechaProgramada === getTodayISO());
@@ -458,6 +465,10 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             <p className="text-caption text-muted">Tocá las visitas que querés incluir</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
+                            <button onClick={seleccionarTodos}
+                                className="h-9 px-3 rounded-xl font-bold text-label text-secondary bg-chip active:scale-95 transition-all">
+                                {todosSeleccionados ? 'Ninguno' : 'Todos'}
+                            </button>
                             {seleccionados.size > 0 && (
                                 <button onClick={() => abrirRuta(activas.filter(o => seleccionados.has(o.id)))}
                                     className="h-9 px-3 rounded-xl font-black text-label text-white bg-brand-red active:scale-95 transition-all flex items-center gap-1">

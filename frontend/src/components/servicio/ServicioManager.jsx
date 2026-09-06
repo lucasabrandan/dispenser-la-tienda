@@ -254,6 +254,16 @@ export default function ServicioManager({
         });
     };
 
+    // "Todos"/"Ninguno" — mismo patrón que useRepuestoManager.js: selecciona todo lo
+    // visible en la página/filtro actual (no la tabla completa sin filtrar).
+    const todosSeleccionados = filtros.itemsPagina.length > 0 &&
+        seleccionados.size === filtros.itemsPagina.length;
+    const seleccionarTodos = () => {
+        setSeleccionados(
+            todosSeleccionados ? new Set() : new Set(filtros.itemsPagina.map(s => s.id))
+        );
+    };
+
     const ejecutarMasiva = async (accion) => {
         setConfirmMasivo(null);
         await accionMasiva([...seleccionados], accion);
@@ -459,6 +469,10 @@ export default function ServicioManager({
                         <span className="text-caption font-bold text-ink flex-1">
                             {seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}
                         </span>
+                        <button onClick={seleccionarTodos}
+                            className="h-7 px-3 rounded-lg font-bold text-label bg-chip text-secondary active:scale-95">
+                            {todosSeleccionados ? 'Ninguno' : 'Todos'}
+                        </button>
                         {seleccionados.size > 0 && tabActual !== 'ARCHIVADO' && (
                             <button onClick={() => setConfirmMasivo('ARCHIVADO')}
                                 className="h-7 px-3 rounded-lg font-bold text-label bg-chip text-secondary active:scale-95">
