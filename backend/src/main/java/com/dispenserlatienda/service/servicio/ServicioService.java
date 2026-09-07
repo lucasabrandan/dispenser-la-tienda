@@ -89,22 +89,37 @@ public class ServicioService {
     public Page<ServicioDTO> listarFiltrado(String tipoStr, String estadoStr,
                                              String busqueda, String desde, String hasta,
                                              Long usuarioId, Long clienteId, Pageable pageable) {
-        // @Formula fields no están en el metamodel de JPA — Spring Data falla al resolver "total"
-        // JpaSort.unsafe() bypasses esa validación y pasa la expresión directo a la query
-        Pageable safePageable = pageable;
-        if (pageable.getSort().stream().anyMatch(o -> o.getProperty().equals("total"))) {
-            Sort newSort = Sort.unsorted();
-            for (Sort.Order order : pageable.getSort()) {
-                if (order.getProperty().equals("total")) {
-                    newSort = newSort.and(JpaSort.unsafe(order.getDirection(), "total"));
-                } else {
-                    newSort = newSort.and(Sort.by(order));
-                }
-            }
-            safePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
-        }
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                agregarDesempatePorId(pageable.getSort()));
         return servicioRepository.findAll(buildSpec(tipoStr, estadoStr, busqueda, desde, hasta, usuarioId, clienteId), safePageable)
                 .map(this::mapToDTO);
+    }
+
+    // Bug real (reportado 7-sep): la lista "bailaba" entre recargas -- dos servicios
+    // con la misma fechaServicio (muy común, se crean varios el mismo día) no tenían
+    // ningún criterio de desempate, así que Postgres podía devolverlos en cualquier
+    // orden relativo de una consulta a otra, aunque nada hubiera cambiado. Se agrega
+    // "id" como segundo criterio, en la misma dirección que el orden elegido, para
+    // que el orden quede siempre determinístico -- mismo criterio de coherencia que
+    // ya usa Presupuestos (desempata por id en el frontend, PresupuestosManager.jsx).
+    private Sort agregarDesempatePorId(Sort sortOriginal) {
+        Sort.Direction direccion = sortOriginal.stream().findFirst()
+                .map(Sort.Order::getDirection).orElse(Sort.Direction.DESC);
+        Sort nuevoSort = Sort.unsorted();
+        for (Sort.Order order : sortOriginal) {
+            if (order.getProperty().equals("total")) {
+                // @Formula fields no están en el metamodel de JPA — Spring Data falla al
+                // resolver "total"; JpaSort.unsafe() bypasea esa validación y pasa la
+                // expresión directo a la query
+                nuevoSort = nuevoSort.and(JpaSort.unsafe(order.getDirection(), "total"));
+            } else {
+                nuevoSort = nuevoSort.and(Sort.by(order));
+            }
+        }
+        if (sortOriginal.stream().noneMatch(o -> o.getProperty().equals("id"))) {
+            nuevoSort = nuevoSort.and(Sort.by(direccion, "id"));
+        }
+        return nuevoSort;
     }
 
     // Stats resumen para el panel (totalMes, hoy, pendientes, ganancia MO)
