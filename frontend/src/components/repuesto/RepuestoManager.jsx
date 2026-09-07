@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { LuSearch, LuPackage, LuEllipsis, LuListChecks, LuDownload, LuFileText } from 'react-icons/lu';
+import { LuPackage, LuEllipsis, LuListChecks, LuDownload, LuFileText, LuArrowUpDown } from 'react-icons/lu';
+import BusquedaBar from '../ui/BusquedaBar';
+import ChipFiltro from '../ui/ChipFiltro';
 import { useRepuestoManager } from '../../hooks/useRepuestoManager';
 import RepuestoCard from './RepuestoCard';
 import RepuestoModal from './RepuestoModal';
@@ -9,9 +11,22 @@ import ModalPrecioMasivo from '../productos/Modalpreciomasivo';
 import Paginacion from '../ui/Paginacion';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
+// Opciones de orden (Lucas, 7-sep-2026: antes un <select> suelto al lado del
+// contador -- ahora un chip "Orden" con el mismo look que el chip de período
+// que ya usan Servicio/Venta/Presupuestos, para que las 5 pantallas de
+// listados se sientan iguales).
+const ORDEN_OPTIONS = [
+    { value: 'az', label: 'A → Z' },
+    { value: 'za', label: 'Z → A' },
+    { value: 'precio-asc', label: 'Precio ↑' },
+    { value: 'precio-desc', label: 'Precio ↓' },
+    { value: 'stock', label: 'Stock ↑' },
+];
+
 export default function RepuestoManager() {
     const [stockSheetOpen, setStockSheetOpen] = useState(false);
     const [menuOverflow, setMenuOverflow] = useState(false);
+    const [mostrarOrden, setMostrarOrden] = useState(false);
 
     const {
         productos, productosFiltrados, productosPagina,
@@ -57,16 +72,11 @@ export default function RepuestoManager() {
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
                     <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink mb-2.5">Productos</h2>
                     <div className="flex gap-1.5 items-center">
-                        <div className="relative flex-1">
-                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                            <input placeholder="Buscar..."
-                                value={busqueda} onChange={e => setBusqueda(e.target.value)}
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]" />
-                            {busqueda && (
-                                <button onClick={() => setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
-                            )}
-                        </div>
+                        {/* Búsqueda y Filtros — mismo componente que usan Servicio, Venta,
+                            Presupuestos y Clientes (Lucas, 7-sep-2026: unificar look y comportamiento) */}
+                        <BusquedaBar valor={busqueda} onChange={setBusqueda} placeholder="Buscar..." />
+                        <ChipFiltro label={ORDEN_OPTIONS.find(o => o.value === ordenProductos)?.label || 'Orden'}
+                            icono={LuArrowUpDown} activo={mostrarOrden} onClick={() => setMostrarOrden(v => !v)} />
                         <button onClick={() => setStockSheetOpen(true)} title="Ajuste stock"
                             className="h-9 w-9 rounded-lg flex items-center justify-center bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuPackage size={15} /></button>
 
@@ -105,18 +115,24 @@ export default function RepuestoManager() {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-                {/* Stats + orden */}
-                <div className="flex items-center justify-between px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                {/* Stats */}
+                <div className="flex items-center px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
                     <span className="text-caption font-bold text-muted">{productosFiltrados.length} productos</span>
-                    <select value={ordenProductos} onChange={e => setOrdenProductos(e.target.value)}
-                        className="h-6 px-2 rounded text-label font-bold outline-none bg-transparent text-muted cursor-pointer">
-                        <option value="az">A → Z</option>
-                        <option value="za">Z → A</option>
-                        <option value="precio-asc">Precio ↑</option>
-                        <option value="precio-desc">Precio ↓</option>
-                        <option value="stock">Stock ↑</option>
-                    </select>
                 </div>
+
+                {/* Orden — colapsado por defecto, se abre desde el chip del header */}
+                {mostrarOrden && (
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
+                        {ORDEN_OPTIONS.map(o => (
+                            <button key={o.value} onClick={() => { setOrdenProductos(o.value); setMostrarOrden(false); }}
+                                className={`h-8 rounded-lg text-label font-bold transition-all active:scale-95 ${
+                                    ordenProductos === o.value ? 'bg-brand-red text-white' : 'bg-panel text-secondary'
+                                }`}>
+                                {o.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Métricas — el hook ya las calculaba ("para el header", según su propio
                     comentario) pero nunca se conectaron a la pantalla */}

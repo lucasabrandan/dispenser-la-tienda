@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { LuClipboardList, LuWrench, LuShoppingCart, LuCircleCheck, LuSearch, LuCalendar, LuPencil } from 'react-icons/lu';
+import { LuClipboardList, LuWrench, LuShoppingCart, LuCircleCheck, LuPencil } from 'react-icons/lu';
+import BusquedaBar from './ui/BusquedaBar';
+import ChipFiltro from './ui/ChipFiltro';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { useFiltros } from '../hooks/useFiltros';
@@ -18,7 +20,7 @@ import VentaForm from './venta/VentaForm';
 import PresupuestoCard from './presupuesto/PresupuestoCard';
 import { M } from './servicio/ServicioUI';
 import { useSwipeGesture } from '../hooks/useSwipeGesture';
-import { mesKeyDeFecha, formatMesLargo } from '../utils/dateUtils';
+import { mesKeyDeFecha, formatMesLargo, periodoLabelDe } from '../utils/dateUtils';
 import ConfirmDialog from './ui/ConfirmDialog';
 import { buildGoogleMapsRouteUrl } from '../utils/clienteUtils';
 
@@ -38,7 +40,6 @@ const TIPO_TABS = [
     { id: 'VENTA',   label: 'Ventas',    fullLabel: 'Ventas',    color: '#D48800', Icon: LuShoppingCart },
 ];
 
-const PERIODO_LABELS = { MES: 'Este mes', MES_ANT: 'Mes ant.', ANO: 'Este año', TODO: 'Todo' };
 
 // ─── Componente principal ────────────────────────────────────────────────────
 export default function PresupuestosManager() {
@@ -214,9 +215,7 @@ export default function PresupuestosManager() {
     }));
 
     // Label del chip de período — mes elegido a mano tiene prioridad sobre el rápido
-    const periodoLabel = filtros.mesSelector
-        ? formatMesLargo(filtros.mesSelector)
-        : (PERIODO_LABELS[filtros.periodoRapido] || 'Período');
+    const periodoLabel = periodoLabelDe(filtros);
 
     return (
         <div className="min-h-screen pb-28 font-sans bg-page transition-colors"
@@ -229,29 +228,12 @@ export default function PresupuestosManager() {
                         Presupuestos
                     </h2>
                     <div className="flex items-center gap-1.5">
-                        {/* Búsqueda — mobile: toggle */}
-                        <button onClick={() => setMostrarBusqueda(v => !v)}
-                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-card text-muted'}`}>
-                            <LuSearch size={15} />
-                        </button>
-                        <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
-                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                            <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
-                                placeholder="Cliente, teléfono, S/N, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
-                                autoFocus={mostrarBusqueda} />
-                            {filtros.busqueda && (
-                                <button onClick={() => filtros.setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
-                            )}
-                        </div>
-                        {/* Período — chip que despliega FiltrosPanel; arranca colapsado en "Este mes" */}
-                        <button onClick={() => setMostrarPeriodo(v => !v)}
-                            className={`${mostrarBusqueda ? 'hidden md:flex' : 'flex'} h-9 px-2.5 rounded-lg items-center gap-1 shrink-0 active:scale-95 shadow-sm border text-label font-bold whitespace-nowrap ${
-                                mostrarPeriodo ? 'bg-brand-red text-white border-transparent' : 'bg-card text-secondary border-black/[0.05] dark:border-white/[0.05]'
-                            }`}>
-                            <LuCalendar size={12} /> {periodoLabel} {mostrarPeriodo ? '▴' : '▾'}
-                        </button>
+                        {/* Búsqueda y Filtros — mismo componente que usan Servicio, Venta,
+                            Clientes y Productos (Lucas, 7-sep-2026: unificar look y comportamiento) */}
+                        <BusquedaBar valor={filtros.busqueda} onChange={filtros.setBusqueda}
+                            placeholder="Cliente, teléfono, S/N, sede..." onExpandChange={setMostrarBusqueda} />
+                        <ChipFiltro label={periodoLabel} activo={mostrarPeriodo} onClick={() => setMostrarPeriodo(v => !v)}
+                            className={mostrarBusqueda ? 'hidden md:flex' : ''} />
                         <button onClick={() => setModalCotizar(true)}
                             className="h-9 px-3 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red shrink-0">
                             Cotizar

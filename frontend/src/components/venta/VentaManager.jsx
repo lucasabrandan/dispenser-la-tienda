@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuSearch, LuEllipsis, LuDownload } from 'react-icons/lu';
+import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuEllipsis, LuDownload } from 'react-icons/lu';
+import BusquedaBar from '../ui/BusquedaBar';
+import ChipFiltro from '../ui/ChipFiltro';
+import { periodoLabelDe } from '../../utils/dateUtils';
 import { useVentaManager } from '../../hooks/useVentaManager';
 import { useAuth } from '../../context/AuthContext';
 import VentaList   from './VentaList';
@@ -43,7 +46,6 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     } = useVentaManager();
 
     const [ventaDuplicar, setVentaDuplicar] = useState(null);
-    const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
     const [menuOverflow, setMenuOverflow] = useState(false);
     const [tabCounts, setTabCounts] = useState({});
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
@@ -128,21 +130,9 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                         Ventas
                     </h2>
                     <div className="flex items-center gap-1.5">
-                        <button onClick={() => setMostrarBusqueda(v => !v)}
-                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-amber text-white' : 'bg-card text-muted'}`}>
-                            <LuSearch size={15} />
-                        </button>
-                        <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
-                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                            <input value={filtros.busqueda} onChange={e => filtros.setBusqueda(e.target.value)}
-                                placeholder="Cliente, producto, sede..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
-                                autoFocus={mostrarBusqueda} />
-                            {filtros.busqueda && (
-                                <button onClick={() => filtros.setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
-                            )}
-                        </div>
+                        {/* Búsqueda — mismo componente que usan Servicio, Presupuestos, Clientes
+                            y Productos (Lucas, 7-sep-2026: unificar look y comportamiento) */}
+                        <BusquedaBar valor={filtros.busqueda} onChange={filtros.setBusqueda} placeholder="Cliente, producto, sede..." accent="amber" />
 
                         <div className="relative">
                             <button onClick={() => setMenuOverflow(v => !v)}
@@ -181,11 +171,10 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                     por estado, acá es donde tiene sentido acotar por fecha */}
                 {tabActual === 'TODOS' && (
                     <>
-                        <button onClick={() => setMostrarFiltros(v => !v)}
-                            className="w-full flex items-center justify-between px-3 h-7 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-[0.99]">
-                            <span className="text-label font-bold uppercase text-muted">{mostrarFiltros ? '▲' : '▼'} Filtros</span>
+                        <div className="flex items-center justify-between">
+                            <ChipFiltro label={periodoLabelDe(filtros)} activo={mostrarFiltros} onClick={() => setMostrarFiltros(v => !v)} />
                             <span className="text-label font-bold text-muted">{filtros.totalItems} resultados</span>
-                        </button>
+                        </div>
                         {mostrarFiltros && (
                             <FiltrosPanel hook={filtros} conBusqueda={false} conRango />
                         )}

@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuSearch, LuSettings2, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil, LuLayers, LuHourglass, LuCar, LuMapPin, LuUser } from 'react-icons/lu';
+import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil, LuLayers, LuHourglass, LuCar, LuMapPin, LuUser } from 'react-icons/lu';
+import BusquedaBar from '../ui/BusquedaBar';
+import ChipFiltro from '../ui/ChipFiltro';
+import { periodoLabelDe } from '../../utils/dateUtils';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import { useAuth } from '../../context/AuthContext';
@@ -112,7 +115,6 @@ export default function ServicioManager({
     const [modoSeleccion, setModoSeleccion]         = useState(false);
     const [seleccionados, setSeleccionados]         = useState(new Set());
     const [mostrarFiltros, setMostrarFiltros]       = useState(false);
-    const [mostrarBusqueda, setMostrarBusqueda]     = useState(false);
     const [menuOverflow, setMenuOverflow]           = useState(false);
     const [tabCounts, setTabCounts]                 = useState({});
     const [tabAntesBusqueda, setTabAntesBusqueda]   = useState(null);
@@ -342,31 +344,10 @@ export default function ServicioManager({
 
                     {/* Barra de acciones */}
                     <div className="flex items-center gap-1.5">
-                        {/* Búsqueda — mobile: toggle, desktop: siempre visible */}
-                        <button onClick={() => setMostrarBusqueda(v => !v)}
-                            className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${mostrarBusqueda || filtros.busqueda ? 'bg-brand-red text-white' : 'bg-card text-muted'}`}>
-                            <LuSearch size={15} />
-                        </button>
-                        <div className={`${mostrarBusqueda ? 'flex' : 'hidden'} md:flex relative flex-1`}>
-                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                            <input
-                                value={filtros.busqueda}
-                                onChange={e => filtros.setBusqueda(e.target.value)}
-                                placeholder="Cliente, S/N, ubicación..."
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]"
-                                autoFocus={mostrarBusqueda}
-                            />
-                            {filtros.busqueda && (
-                                <button onClick={() => filtros.setBusqueda('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
-                            )}
-                        </div>
-
-                        {/* Filtros toggle */}
-                        <button onClick={() => setMostrarFiltros(v => !v)}
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-sm ${mostrarFiltros ? 'bg-brand-red text-white' : 'bg-card text-muted'}`}>
-                            <LuSettings2 size={15} />
-                        </button>
+                        {/* Búsqueda y Filtros — mismo componente que usan Venta, Presupuestos,
+                            Clientes y Productos (Lucas, 7-sep-2026: unificar look y comportamiento) */}
+                        <BusquedaBar valor={filtros.busqueda} onChange={filtros.setBusqueda} placeholder="Cliente, S/N, ubicación..." />
+                        <ChipFiltro label={periodoLabelDe(filtros)} activo={mostrarFiltros} onClick={() => setMostrarFiltros(v => !v)} />
 
                         {/* Menú overflow */}
                         <div className="relative">

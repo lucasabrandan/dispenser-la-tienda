@@ -5,7 +5,8 @@ import { useClienteData } from '../../hooks/useClienteData';
 import { useEquipoActions } from '../../hooks/useEquipoActions';
 import { filtrarClientesPorBusqueda } from '../../utils/clienteUtils';
 import { toTitleCase } from '../../utils/titleCase';
-import { LuSearch, LuTriangleAlert } from 'react-icons/lu';
+import { LuTriangleAlert } from 'react-icons/lu';
+import BusquedaBar from '../ui/BusquedaBar';
 import ClienteCard        from './ClienteCard';
 import ClienteForm        from './ClienteForm';
 import CrearClienteModal  from './CrearClienteModal';
@@ -87,14 +88,11 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                     <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink">
                         Clientes
                     </h2>
-                    <div className="flex gap-1.5">
-                        <div className="relative flex-1">
-                            <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                            <input placeholder="Cliente, sede, teléfono, S/N..."
-                                value={busqueda}
-                                onChange={e => { setBusqueda(e.target.value); setPagina(1); }}
-                                className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]" />
-                        </div>
+                    <div className="flex gap-1.5 items-center">
+                        {/* Búsqueda — mismo componente que usan Servicio, Venta, Presupuestos
+                            y Productos (Lucas, 7-sep-2026: unificar look y comportamiento) */}
+                        <BusquedaBar valor={busqueda} onChange={v => { setBusqueda(v); setPagina(1); }}
+                            placeholder="Cliente, sede, teléfono, S/N..." />
                         <button onClick={() => setModalOpen('nuevo')}
                             className="h-9 px-4 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red shrink-0">
                             + Nuevo

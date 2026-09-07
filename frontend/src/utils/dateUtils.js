@@ -61,6 +61,21 @@ export function formatMesLargo(mesKey) {
     return `${MESES_LARGO[idx] || ''} ${y}`.trim();
 }
 
+// Etiquetas cortas del selector rápido de período (Este mes/Mes ant./Este
+// año/Todo) -- antes vivía como const suelta solo en PresupuestosManager.jsx.
+export const PERIODO_LABELS = { MES: 'Este mes', MES_ANT: 'Mes ant.', ANO: 'Este año', TODO: 'Todo' };
+
+// Label del chip de período para el hook de filtros compartido (busqueda,
+// periodoRapido, mesSelector, ...) -- mes elegido a mano tiene prioridad
+// sobre el período rápido. Antes esta cuenta solo existía en Presupuestos;
+// se comparte acá para que Servicio Técnico y Venta usen el mismo chip
+// (Lucas, 7-sep-2026: "los filtros se ven todos distintos").
+export function periodoLabelDe(filtrosHook) {
+    return filtrosHook.mesSelector
+        ? formatMesLargo(filtrosHook.mesSelector)
+        : (PERIODO_LABELS[filtrosHook.periodoRapido] || 'Período');
+}
+
 // Estado de garantía respecto de hoy, a partir de una fecha "hasta" (YYYY-MM-DD).
 // dias >= 0 y vigente = true  → días que quedan de garantía
 // dias <  0 y vigente = false → días que pasaron desde que venció
