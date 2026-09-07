@@ -173,13 +173,24 @@ public class ServicioService {
                 jakarta.persistence.criteria.Join<Object,Object> items  = root.join("items",  jakarta.persistence.criteria.JoinType.LEFT);
                 jakarta.persistence.criteria.Join<Object,Object> equipo = items.join("equipo", jakarta.persistence.criteria.JoinType.LEFT);
                 query.distinct(true);
-                predicates.add(cb.or(
+                List<Predicate> matchTexto = new ArrayList<>(List.of(
                         cb.like(cb.lower(root.get("clienteNombre")), like),
                         cb.like(cb.lower(root.get("sedeNombre")), like),
                         cb.like(cb.lower(equipo.get("numeroSerie")), like),
                         cb.like(cb.lower(cb.coalesce(equipo.get("ubicacion"), "")), like),
                         cb.like(cb.lower(cb.coalesce(equipo.get("modelo"), "")), like)
                 ));
+                // Bug real (reportado 7-sep): a todo presupuesto/trabajo/venta se le
+                // muestra su número de id como "#123" en toda la app (ServicioCard,
+                // PresupuestoCard, VentaList), pero el buscador nunca lo comparaba
+                // contra el id real -- buscar "123" o "#123" no encontraba nada.
+                String soloNumero = busqueda.trim().replaceFirst("^#", "");
+                if (soloNumero.matches("\\d+")) {
+                    try {
+                        matchTexto.add(cb.equal(root.get("id"), Long.parseLong(soloNumero)));
+                    } catch (NumberFormatException ignored) { /* numero demasiado largo, se ignora */ }
+                }
+                predicates.add(cb.or(matchTexto.toArray(new Predicate[0])));
             }
             if (desde != null && !desde.isBlank())
                 predicates.add(cb.greaterThanOrEqualTo(root.get("fechaServicio"), LocalDate.parse(desde)));

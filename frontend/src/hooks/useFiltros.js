@@ -111,10 +111,17 @@ export function useFiltros(items = [], { porPagina = 15, campoFecha = 'fecha', c
         // Filtro búsqueda texto
         if (busqueda.trim() && (campoBusqueda || campoBusquedaFn)) {
             const q = busqueda.toLowerCase().trim();
+            // Bug real (reportado 7-sep): se le muestra a cada item su número de id
+            // como "#123" en toda la app (tarjetas de Servicio/Presupuesto/Venta),
+            // pero buscar "123" o "#123" nunca lo encontraba -- ningún campoBusqueda
+            // incluía el id. Se agrega el match acá, una sola vez, en vez de en cada
+            // pantalla que use este hook.
+            const qId = q.replace(/^#/, '');
             resultado = resultado.filter(it => {
                 const enCampos = campoBusqueda?.some(campo => it[campo]?.toString().toLowerCase().includes(q)) ?? false;
                 const enExtra  = campoBusquedaFn ? campoBusquedaFn(it).toLowerCase().includes(q) : false;
-                return enCampos || enExtra;
+                const enId     = qId !== '' && it.id != null && String(it.id).includes(qId);
+                return enCampos || enExtra || enId;
             });
         }
 
