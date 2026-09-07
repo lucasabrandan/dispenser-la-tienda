@@ -134,8 +134,12 @@ export default function AgendaBlock({ planificador, setVistaActual, cargando }) 
                         </div>
 
                         {sinNada ? (
-                            <div className={`${card} text-center py-8`}>
-                                <LuInbox size={24} className="mb-1 text-muted inline-block" />
+                            // Chico cuando no hay nada que mostrar (Lucas, 7-sep-2026:
+                            // el cuadro grande no ameritaba tanto espacio solo para decir
+                            // que no hay actividad). Con contenido real, el bloque de abajo
+                            // ocupa el espacio que necesite.
+                            <div className={`${card} flex items-center justify-center gap-2 py-3`}>
+                                <LuInbox size={14} className="text-muted" />
                                 <p className="text-caption font-bold text-muted">Sin actividad este dia</p>
                             </div>
                         ) : (

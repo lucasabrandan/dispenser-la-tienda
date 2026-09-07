@@ -136,11 +136,24 @@ export default function DashboardCaja({ setVistaActual }) {
                         <MiEspacioBoard />
                     </div>
 
-                    {/* Tira al pie: alertas + accesos directos + pendientes + cierre */}
-                    <div className={`${card} px-3.5 py-2.5 flex items-center justify-between gap-3 flex-wrap`}>
-                        <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
-                            {hayAlertas && (
-                                <>
+                    {/* Tira al pie: accesos directos en su propia fila, el resto
+                        (alertas + pendientes + cierre) en otra -- Lucas, 7-sep-2026:
+                        en el celu, Servicio/Venta mezclados con las alertas en la misma
+                        linea quedaba muy apretado. */}
+                    <div className={`${card} p-3`}>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
+                                className="flex items-center justify-center gap-1.5 h-9 rounded-lg text-label font-bold uppercase bg-chip text-ink active:scale-95">
+                                <LuWrench size={14} /> Servicio
+                            </button>
+                            <button onClick={() => setVistaActual('venta', { crear: true })}
+                                className="flex items-center justify-center gap-1.5 h-9 rounded-lg text-label font-bold uppercase bg-chip text-ink active:scale-95">
+                                <LuShoppingCart size={14} /> Venta
+                            </button>
+                        </div>
+                        {(hayAlertas || data.pendientesCount > 0 || esAdmin) && (
+                            <div className="flex items-center justify-between gap-3 flex-wrap mt-2.5 pt-2.5 border-t border-black/[0.05] dark:border-white/[0.05]">
+                                <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
                                     {data.pptoVencidos.length > 0 && (
                                         <button onClick={() => setVistaActual('presupuestos')}
                                             className="flex items-center gap-1.5 active:opacity-70">
@@ -168,30 +181,22 @@ export default function DashboardCaja({ setVistaActual }) {
                                             </span>
                                         </button>
                                     )}
-                                </>
-                            )}
-                            <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
-                                className="flex items-center gap-1 h-6 px-2 rounded-md text-label font-bold uppercase bg-chip text-ink active:scale-95 shrink-0">
-                                <LuWrench size={11} /> Servicio
-                            </button>
-                            <button onClick={() => setVistaActual('venta', { crear: true })}
-                                className="flex items-center gap-1 h-6 px-2 rounded-md text-label font-bold uppercase bg-chip text-ink active:scale-95 shrink-0">
-                                <LuShoppingCart size={11} /> Venta
-                            </button>
-                            {data.pendientesCount > 0 && (
-                                <button onClick={() => setVistaActual('presupuestos')}
-                                    className="flex items-center gap-1 active:opacity-70">
-                                    <span className="text-caption font-bold text-brand-amber whitespace-nowrap">
-                                        {data.pendientesCount} pend. — <M valor={data.pendientesVal} />
-                                    </span>
-                                </button>
-                            )}
-                        </div>
-                        {esAdmin && (
-                            <button onClick={() => setModalCierre(true)}
-                                className="text-label font-bold text-muted hover:text-brand-red whitespace-nowrap shrink-0">
-                                Cierre de caja →
-                            </button>
+                                    {data.pendientesCount > 0 && (
+                                        <button onClick={() => setVistaActual('presupuestos')}
+                                            className="flex items-center gap-1 active:opacity-70">
+                                            <span className="text-caption font-bold text-brand-amber whitespace-nowrap">
+                                                {data.pendientesCount} pend. — <M valor={data.pendientesVal} />
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
+                                {esAdmin && (
+                                    <button onClick={() => setModalCierre(true)}
+                                        className="text-label font-bold text-muted hover:text-brand-red whitespace-nowrap shrink-0">
+                                        Cierre de caja →
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
