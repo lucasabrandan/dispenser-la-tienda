@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil, LuLayers, LuHourglass, LuCar, LuMapPin, LuUser } from 'react-icons/lu';
 import BusquedaBar from '../ui/BusquedaBar';
 import ChipFiltro from '../ui/ChipFiltro';
@@ -31,9 +30,9 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 // Servicio Tecnico arranca directamente en lo que ya esta aprobado / en curso de cobro.
 const TABS_SERVICIO = [
     { id: 'PENDIENTE_FACTURACION', label: 'Por cobrar',   short: 'x Cobrar', color: '#8B5CF6', Icon: LuClipboardList },
-    { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact.',    color: '#6366F1', Icon: LuFileText },
+    { id: 'FACTURADO',             label: 'Facturados',   short: 'Fact',    color: '#6366F1', Icon: LuFileText },
     { id: 'COBRADO',               label: 'Cobrados',     short: 'Cobrado',  color: '#16A34A', Icon: LuCircleCheck },
-    { id: 'ARCHIVADO',             label: 'Archivados',   short: 'Arch.',    color: '#A8A29E', Icon: LuArchive },
+    { id: 'ARCHIVADO',             label: 'Archivados',   short: 'Arch',    color: '#A8A29E', Icon: LuArchive },
     // "Todo" — hub único (ítem 4 paso 3 / ítem 17 opción 3): un solo lugar para ver
     // cualquier servicio técnico sin importar el estado, en vez de ir a buscarlo a Historial.
     { id: 'TODOS',                 label: 'Todo',         short: 'Todo',     color: '#1C1917', Icon: LuLayers },
@@ -45,7 +44,7 @@ const TABS_SERVICIO = [
 // por eso quedan separados de TABS_SERVICIO en vez de mezclarse en un solo array.
 // Solo para admin: los técnicos ya tienen su propia vista de órdenes (Mis Órdenes).
 const TABS_ORDEN = [
-    { id: 'PENDIENTE', label: 'Pendientes', short: 'Pend.',     color: '#A8A29E', Icon: LuHourglass },
+    { id: 'PENDIENTE', label: 'Pendientes', short: 'Pend',     color: '#A8A29E', Icon: LuHourglass },
     { id: 'EN_CAMINO', label: 'En camino',  short: 'En camino', color: '#3B82F6', Icon: LuCar },
     { id: 'EN_SITIO',  label: 'En sitio',   short: 'En sitio',  color: '#D48800', Icon: LuMapPin },
 ];
@@ -115,7 +114,6 @@ export default function ServicioManager({
     const [modoSeleccion, setModoSeleccion]         = useState(false);
     const [seleccionados, setSeleccionados]         = useState(new Set());
     const [mostrarFiltros, setMostrarFiltros]       = useState(false);
-    const [menuOverflow, setMenuOverflow]           = useState(false);
     const [tabCounts, setTabCounts]                 = useState({});
     const [tabAntesBusqueda, setTabAntesBusqueda]   = useState(null);
     const [modoAntesBusqueda, setModoAntesBusqueda] = useState(null);
@@ -349,31 +347,19 @@ export default function ServicioManager({
                         <BusquedaBar valor={filtros.busqueda} onChange={filtros.setBusqueda} placeholder="Cliente, S/N, ubicación..." />
                         <ChipFiltro label={periodoLabelDe(filtros)} activo={mostrarFiltros} onClick={() => setMostrarFiltros(v => !v)} />
 
-                        {/* Menú overflow */}
-                        <div className="relative">
-                            <button onClick={() => setMenuOverflow(v => !v)}
-                                className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
-                                ⋯
-                            </button>
-                            {menuOverflow && createPortal(
-                                <>
-                                    <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
-                                    {/* Mobile: bottom-sheet, Desktop: dropdown */}
-                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
-                                        <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
-                                        <button onClick={() => { exportarServiciosCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
-                                            <LuDownload size={15} /> Exportar CSV
-                                        </button>
-                                        <button onClick={() => { setModalImportar(true); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink hover:bg-[#F5F3F1] dark:hover:bg-[#2E2E2E] active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
-                                            <LuUpload size={15} /> Importar históricos
-                                        </button>
-                                    </div>
-                                </>,
-                                document.body
-                            )}
-                        </div>
+                        {/* Antes escondia Exportar/Importar detras de un menu "..."
+                            (Lucas, 7-sep-2026: no se entendia que llevara a algo) — ahora
+                            son 2 botones directos, con tooltip, sin clic intermedio */}
+                        <button onClick={() => exportarServiciosCSV(filtros.itemsFiltrados)}
+                            title="Exportar CSV"
+                            className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                            <LuDownload size={15} />
+                        </button>
+                        <button onClick={() => setModalImportar(true)}
+                            title="Importar históricos"
+                            className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
+                            <LuUpload size={15} />
+                        </button>
 
                         {esAdmin && (
                             <button onClick={abrirCrear}

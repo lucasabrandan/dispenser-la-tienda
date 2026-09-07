@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuEllipsis, LuDownload } from 'react-icons/lu';
+import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuDownload } from 'react-icons/lu';
 import BusquedaBar from '../ui/BusquedaBar';
 import ChipFiltro from '../ui/ChipFiltro';
 import { periodoLabelDe } from '../../utils/dateUtils';
@@ -16,9 +15,9 @@ import { exportarVentasCSV } from '../../utils/exportarCSV';
 import api from '../../services/api';
 
 const TABS = [
-    { id: 'PRESUPUESTO', label: 'Pendientes', short: 'Pend.',   color: '#D48800', Icon: LuBanknote },
+    { id: 'PRESUPUESTO', label: 'Pendientes', short: 'Pend',   color: '#D48800', Icon: LuBanknote },
     { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#16A34A', Icon: LuCircleCheck },
-    { id: 'ARCHIVADO',   label: 'Archivadas', short: 'Arch.',   color: '#A8A29E', Icon: LuArchive },
+    { id: 'ARCHIVADO',   label: 'Archivadas', short: 'Arch',   color: '#A8A29E', Icon: LuArchive },
     // "Todo" — mismo patrón que ya tiene Servicio Técnico: búsqueda libre sin
     // filtro de estado, con rango de fechas. Jubila a "Historial" como pantalla
     // aparte (ver ServicioList.jsx, ahora sin uso — 26-ago).
@@ -46,7 +45,6 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     } = useVentaManager();
 
     const [ventaDuplicar, setVentaDuplicar] = useState(null);
-    const [menuOverflow, setMenuOverflow] = useState(false);
     const [tabCounts, setTabCounts] = useState({});
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [tabAntesBusqueda, setTabAntesBusqueda] = useState(null);
@@ -134,23 +132,12 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                             y Productos (Lucas, 7-sep-2026: unificar look y comportamiento) */}
                         <BusquedaBar valor={filtros.busqueda} onChange={filtros.setBusqueda} placeholder="Cliente, producto, sede..." accent="amber" />
 
-                        <div className="relative">
-                            <button onClick={() => setMenuOverflow(v => !v)}
-                                className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuEllipsis size={15} /></button>
-                            {menuOverflow && createPortal(
-                                <>
-                                    <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
-                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
-                                        <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
-                                        <button onClick={() => { exportarVentasCSV(filtros.itemsFiltrados); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
-                                            <LuDownload size={15} /> Exportar CSV
-                                        </button>
-                                    </div>
-                                </>,
-                                document.body
-                            )}
-                        </div>
+                        {/* Antes escondia "Exportar CSV" detras de un menu "..." de un
+                            solo boton (Lucas, 7-sep-2026: no tenia sentido el clic extra
+                            para la unica accion que habia adentro) */}
+                        <button onClick={() => exportarVentasCSV(filtros.itemsFiltrados)}
+                            title="Exportar CSV"
+                            className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuDownload size={15} /></button>
 
                         {esAdmin && (
                             <button onClick={() => setModalCrear(true)}

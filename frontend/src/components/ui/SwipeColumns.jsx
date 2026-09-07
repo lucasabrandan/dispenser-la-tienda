@@ -136,6 +136,7 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                             } ${i > 0 ? 'border-l border-black/[0.05] dark:border-white/[0.05]' : ''}`}
                             style={activo ? { backgroundColor: col.color || '#D13A28' } : {}}
                         >
+                            {col.Icon && <col.Icon size={13} className={activo ? 'text-white' : ''} />}
                             <span>{col.label}</span>
                             {col.count != null && (
                                 <span className={`text-[10px] ${activo ? 'text-white/70' : ''}`}>({col.count})</span>
