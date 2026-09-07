@@ -53,9 +53,18 @@ export default function ClienteCard({
     if (!isExpanded) {
         const pinCls = 'absolute -bottom-1 -right-1 flex items-center justify-center gap-0.5 rounded-full bg-ink text-white dark:text-[#1C1917] border-2 border-card';
 
+        // Borde izquierdo de color, mismo criterio que ServicioCard/PresupuestoCard
+        // (Lucas, 7-sep-2026: "Clientes quedó súper raro, viejo" -- esta tarjeta era
+        // la única sin ningún acento de color, plana e igual sin importar el cliente).
+        // Ámbar cuando hace más de 90 días que no se lo visita (mismo color que ya
+        // usa el badge de abajo); gris neutro en el resto -- no reintroduce color por
+        // categoría en el avatar, esa fue una decisión a propósito (commit 3b6359a).
+        const bordeAcento = alertaSinServicio ? '#D48800' : '#A8A29E';
+
         return (
             <div onClick={onToggleExpand}
-                className="bg-card rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-start gap-3">
+                style={{ borderLeft: `3px solid ${bordeAcento}` }}
+                className="bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-start gap-3">
                 <span className="relative w-9 h-9 rounded-lg bg-chip text-ink flex items-center justify-center font-black text-label shrink-0 mt-0.5">
                     {iniciales}
                     {(tieneTecnica || tieneVenta) && (
