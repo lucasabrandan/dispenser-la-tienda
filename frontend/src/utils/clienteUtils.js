@@ -24,6 +24,31 @@ export function buildGoogleMapsRouteUrl(direcciones) {
     return `https://www.google.com/maps/dir/${encoded.join('/')}`;
 }
 
+// Fecha corta (dd/mm/aa) usada por ClienteCard y ClienteRow -- una sola
+// implementación para que no queden dos formatos de fecha distintos.
+export function formatFecha(fecha) {
+    if (!fecha) return null;
+    return new Date(fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+// Datos derivados de un cliente que ClienteCard (mobile) y ClienteRow
+// (desktop, 7-sep-2026) necesitan por igual -- centralizado acá para que
+// las dos vistas no puedan desincronizarse calculando cada una lo suyo.
+export function resumenCliente(cliente, sedes, equipos, servicios = []) {
+    const serviciosCli = [...servicios.filter(s => (s.clienteId || s.cliente?.id) === cliente.id)]
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || (b.id || 0) - (a.id || 0));
+    const ultimoServicio = serviciosCli[0] || null;
+    const diasSinAtender = ultimoServicio
+        ? Math.floor((new Date() - new Date(ultimoServicio.fecha)) / (1000 * 60 * 60 * 24))
+        : null;
+    const alertaSinServicio = diasSinAtender !== null && diasSinAtender > 90;
+    const esEmpresa = (cliente.clienteTipo || cliente.tipo) === 'EMPRESA';
+    const tieneTecnica = serviciosCli.some(s => s.servicioTipo === 'TECNICA');
+    const tieneVenta   = serviciosCli.some(s => s.servicioTipo === 'VENTA');
+    const iniciales = cliente.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+    return { serviciosCli, ultimoServicio, diasSinAtender, alertaSinServicio, esEmpresa, tieneTecnica, tieneVenta, iniciales };
+}
+
 export const filtrarClientesPorBusqueda = (clientes, sedes, equipos, busqueda) => {
     return clientes.filter(c => {
         const term = busqueda.toLowerCase();

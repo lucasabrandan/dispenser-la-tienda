@@ -8,6 +8,7 @@ import { toTitleCase } from '../../utils/titleCase';
 import { LuTriangleAlert } from 'react-icons/lu';
 import BusquedaBar from '../ui/BusquedaBar';
 import ClienteCard        from './ClienteCard';
+import ClienteRow         from './ClienteRow';
 import ClienteForm        from './ClienteForm';
 import CrearClienteModal  from './CrearClienteModal';
 import SedeModal          from '../SedeModal';
@@ -106,8 +107,8 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
-            {/* Lista mobile (1 col) / Grid desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {/* Mobile (< md): stack de tarjetas -- Opción B del rediseño */}
+            <div className="md:hidden space-y-2">
                 {clientesPagina.map(cliente => (
                     <ClienteCard
                         key={cliente.id} cliente={cliente} sedes={sedes} equipos={equipos} servicios={servicios}
@@ -123,6 +124,24 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                         onAddEquipo={(c) => { setSelectedCliente(c); setSelectedEquipo(null); setModalOpen('equipo'); }}
                         onNuevoServicio={onNuevoServicio}
                         onNuevaVenta={onNuevaVenta}
+                    />
+                ))}
+            </div>
+
+            {/* Desktop (>= md): lista densa de filas -- Opción C del rediseño
+                (Lucas, 7-sep-2026: mobile opción B + desktop opción C) */}
+            <div className="hidden md:block bg-card rounded-2xl border border-black/[0.07] dark:border-white/[0.07] overflow-hidden">
+                <div className="flex items-center gap-3 px-3 pt-2.5 pb-2 border-b border-black/[0.07] dark:border-white/[0.07] text-label font-bold uppercase tracking-wide text-muted">
+                    <span className="w-6 shrink-0" />
+                    <span className="flex-[1.6]">Cliente</span>
+                    <span className="flex-[0.4] text-center shrink-0">Tipo</span>
+                    <span className="flex-[1.4]">Estado</span>
+                    <span className="w-6 shrink-0" />
+                </div>
+                {clientesPagina.map(cliente => (
+                    <ClienteRow
+                        key={cliente.id} cliente={cliente} sedes={sedes} equipos={equipos} servicios={servicios}
+                        onToggleExpand={() => setExpandedId(cliente.id)}
                     />
                 ))}
             </div>

@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import ActionSheet from '../ui/ActionSheet';
 import HistorialEquipoModal from '../equipo/HistorialEquipoModal';
-import { abrirMaps, abrirWhatsApp } from '../../utils/clienteUtils';
+import { abrirMaps, abrirWhatsApp, resumenCliente, formatFecha } from '../../utils/clienteUtils';
 import HistorialClienteModal from './HistorialClienteModal';
-import { LuMapPin, LuMessageCircle, LuWrench, LuShoppingCart, LuPencil, LuClipboardList, LuTrash2, LuHouse, LuTriangleAlert } from 'react-icons/lu';
-
-function formatFecha(fecha) {
-    if (!fecha) return null;
-    return new Date(fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-}
+import { LuMapPin, LuMessageCircle, LuWrench, LuShoppingCart, LuPencil, LuClipboardList, LuTrash2, LuHouse, LuTriangleAlert, LuBuilding2, LuUser } from 'react-icons/lu';
 
 export default function ClienteCard({
     cliente, sedes, equipos, servicios = [],
@@ -30,43 +25,35 @@ export default function ClienteCard({
     const eqCli          = equipos.filter(eq => sedeIds.includes(String(eq.sedeId)));
     const equiposActivos = eqCli.filter(eq => eq.activo !== false);
 
-    const serviciosCli   = [...servicios.filter(s => (s.clienteId || s.cliente?.id) === cliente.id)]
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha) || (b.id || 0) - (a.id || 0));
-    const ultimoServicio = serviciosCli[0];
-    const diasSinAtender = ultimoServicio
-        ? Math.floor((new Date() - new Date(ultimoServicio.fecha)) / (1000 * 60 * 60 * 24))
-        : null;
-    const alertaSinServicio = diasSinAtender !== null && diasSinAtender > 90;
-    const esEmpresa = (cliente.clienteTipo || cliente.tipo) === 'EMPRESA';
+    // Cálculos compartidos con ClienteRow (desktop) — centralizados en
+    // clienteUtils.js para que las dos vistas no puedan desincronizarse.
+    const {
+        serviciosCli, ultimoServicio, diasSinAtender, alertaSinServicio,
+        esEmpresa, tieneTecnica, tieneVenta, iniciales,
+    } = resumenCliente(cliente, sedes, equipos, servicios);
 
     // Dirección formateada
     const direccion = [cliente.calle, cliente.numero, cliente.localidad].filter(Boolean).join(' ');
 
-    // Tipo de cliente por servicios: se marca con un ícono, no con color
-    // (antes ámbar=servicio / rojo=venta hacía que un tipo "se destacara" más
-    // que el otro sin motivo — ver Panel/ServicioManager/VentaManager).
-    const tieneTecnica = serviciosCli.some(s => s.servicioTipo === 'TECNICA');
-    const tieneVenta   = serviciosCli.some(s => s.servicioTipo === 'VENTA');
-    const iniciales = cliente.nombre?.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
-
-    // Vista colapsada
+    // Vista colapsada — Opción B del rediseño (Lucas, 7-sep-2026): sin borde
+    // de color aparte, avatar redondo con un pin de tipo (empresa/particular,
+    // reemplaza el chip de texto "Empresa") y el estado en un punto de color
+    // junto a la fecha en vez de una franja/badge aparte. El pin de abajo a
+    // la derecha (tieneTecnica/tieneVenta) se deja como estaba.
     if (!isExpanded) {
         const pinCls = 'absolute -bottom-1 -right-1 flex items-center justify-center gap-0.5 rounded-full bg-ink text-white dark:text-[#1C1917] border-2 border-card';
-
-        // Borde izquierdo de color, mismo criterio que ServicioCard/PresupuestoCard
-        // (Lucas, 7-sep-2026: "Clientes quedó súper raro, viejo" -- esta tarjeta era
-        // la única sin ningún acento de color, plana e igual sin importar el cliente).
-        // Ámbar cuando hace más de 90 días que no se lo visita (mismo color que ya
-        // usa el badge de abajo); gris neutro en el resto -- no reintroduce color por
-        // categoría en el avatar, esa fue una decisión a propósito (commit 3b6359a).
-        const bordeAcento = alertaSinServicio ? '#D48800' : '#A8A29E';
+        const PinTipo = esEmpresa ? LuBuilding2 : LuUser;
+        const dotColor = alertaSinServicio ? 'bg-brand-amber' : (ultimoServicio ? 'bg-brand-green' : 'bg-muted');
 
         return (
             <div onClick={onToggleExpand}
-                style={{ borderLeft: `3px solid ${bordeAcento}` }}
-                className="bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-start gap-3">
-                <span className="relative w-9 h-9 rounded-lg bg-chip text-ink flex items-center justify-center font-black text-label shrink-0 mt-0.5">
+                className="bg-card rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all border border-black/[0.07] dark:border-white/[0.07] px-3 py-2.5 flex items-center gap-3">
+                <span className="relative w-10 h-10 rounded-full bg-chip text-ink flex items-center justify-center font-black text-label shrink-0">
                     {iniciales}
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-panel border-2 border-card flex items-center justify-center text-muted"
+                        title={esEmpresa ? 'Empresa' : 'Particular'}>
+                        <PinTipo size={8} />
+                    </span>
                     {(tieneTecnica || tieneVenta) && (
                         <span className={`${pinCls} ${tieneTecnica && tieneVenta ? 'h-4 px-1' : 'w-4 h-4'}`}
                             title={tieneTecnica && tieneVenta ? 'Servicio técnico y venta' : tieneTecnica ? 'Servicio técnico' : 'Venta'}>
@@ -76,31 +63,25 @@ export default function ClienteCard({
                     )}
                 </span>
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-body font-black text-ink leading-tight">
-                            {cliente.nombre}
-                        </p>
-                        {esEmpresa && (
-                            <span className="text-label font-bold px-1.5 py-0.5 rounded-md uppercase bg-chip text-muted shrink-0">
-                                Empresa
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-caption text-muted mt-0.5">
-                        {ultimoServicio ? `Últ: ${formatFecha(ultimoServicio.fecha)}` : 'Sin servicios'}
+                    <p className="text-body font-black text-ink leading-tight truncate">
+                        {cliente.nombre}
                     </p>
-                    {alertaSinServicio && (
-                        <span className="inline-flex items-center gap-1 text-label font-bold text-brand-amber bg-[#D48800]/10 px-2 py-0.5 rounded-lg mt-1.5">
-                            <LuTriangleAlert size={11} /> {diasSinAtender} días sin visita
+                    <p className="text-caption text-muted mt-0.5 flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+                        <span className="truncate">
+                            {ultimoServicio ? `Últ: ${formatFecha(ultimoServicio.fecha)}` : 'Sin servicios'}
+                            {alertaSinServicio && (
+                                <span className="text-brand-amber font-bold"> · {diasSinAtender} días sin visita</span>
+                            )}
                         </span>
-                    )}
+                    </p>
                 </div>
                 {cliente.telefono && (
                     <button
                         onClick={(e) => { e.stopPropagation(); abrirWhatsApp(cliente.telefono, cliente.nombre); }}
                         title="WhatsApp"
-                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#25D366] text-white shrink-0 active:scale-90 transition-all">
-                        <LuMessageCircle size={14} />
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#25D366] text-white shrink-0 active:scale-90 transition-all">
+                        <LuMessageCircle size={13} />
                     </button>
                 )}
             </div>
