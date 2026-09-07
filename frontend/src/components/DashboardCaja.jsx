@@ -6,6 +6,7 @@ import { M } from './servicio/ServicioUI';
 import CierreCajaModal from './finanzas/CierreCajaModal';
 import AgendaBlock from './dashboard/AgendaBlock';
 import AlertasBlock from './dashboard/AlertasBlock';
+import MiEspacioBoard from './miespacio/MiEspacioBoard';
 import { calcTotal } from './dashboard/estadoConstants';
 import { LuWrench, LuShoppingCart, LuChevronDown } from 'react-icons/lu';
 import { getTodayISO, formatDateISO } from '../utils/dateUtils';
@@ -198,6 +199,10 @@ export default function DashboardCaja({ setVistaActual }) {
                             </div>
                         </div>
                     )}
+                    <div className={`${card} p-3.5`}>
+                        <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Mi Espacio</p>
+                        <MiEspacioBoard />
+                    </div>
                 </div>
 
                 {/* DESKTOP -- una sola columna, como siempre (Lucas probó el sidebar
@@ -237,6 +242,10 @@ export default function DashboardCaja({ setVistaActual }) {
                     <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
                     <div className={`${card} p-4`}>
                         <AgendaBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
+                    </div>
+                    <div className={`${card} p-4`}>
+                        <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Mi Espacio</p>
+                        <MiEspacioBoard />
                     </div>
                 </div>
             </div>

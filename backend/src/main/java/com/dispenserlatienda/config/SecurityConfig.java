@@ -44,8 +44,12 @@ public class SecurityConfig {
                 // Solo ADMIN: gestión de usuarios
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // Solo ADMIN: Mi Espacio (notas kanban personales)
-                .requestMatchers("/api/mi-espacio/**").hasRole("ADMIN")
+                // Mi Espacio (notas kanban personales) -- antes solo ADMIN, ahora
+                // cualquier usuario autenticado (Lucas, 7-sep-2026: sumarlo tambien a
+                // Mi Agenda del tecnico). El controller ya resuelve el usuario por
+                // auth.getName() y guarda un blob propio por usuario -- no hacia falta
+                // ningun cambio ahi, cada uno ya tenia su espacio aislado.
+                .requestMatchers("/api/mi-espacio/**").authenticated()
 
                 // Solo ADMIN: radar de mantenimiento
                 .requestMatchers("/api/radar/**").hasRole("ADMIN")

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { LuInbox, LuPin, LuMapPin } from 'react-icons/lu';
 import api from '../../services/api';
+import MiEspacioBoard from '../miespacio/MiEspacioBoard';
 import { toast } from 'react-hot-toast';
 import { formatDateISO, lunesDeLaSemana } from '../../utils/dateUtils';
 
@@ -373,6 +374,16 @@ export default function MiAgenda({ tecnicoId }) {
                         )}
                     </div>
                 )}
+
+                {/* Mi Espacio (Lucas, 7-sep-2026: mismo patrón que en el Panel del
+                    admin -- agenda arriba, tablero de notas propias abajo). Antes
+                    era solo para ADMIN; el backend ya resuelve el espacio por
+                    usuario autenticado, así que cada técnico tiene el suyo,
+                    separado del admin y de los demás técnicos. */}
+                <div className="mt-4 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07] p-3.5">
+                    <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Mi Espacio</p>
+                    <MiEspacioBoard />
+                </div>
             </div>
         </div>
 

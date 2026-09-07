@@ -1,0 +1,311 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { toast } from 'react-hot-toast';
+import { LuCopy, LuX, LuArrowLeft, LuArrowRight, LuPlus } from 'react-icons/lu';
+import { getMiEspacio, guardarMiEspacio } from '../../services/api';
+
+// Tablero de Mi Espacio (Lucas, 31-ago, items 2 y 5) -- extraido de MiEspacio.jsx
+// (7-sep-2026) para poder embeberlo en mas de un lugar sin duplicar la logica:
+// la pantalla completa (MiEspacio.jsx), el Panel del admin (DashboardCaja.jsx)
+// y Mi Agenda del tecnico (MiAgenda.jsx). Cada uno arma su propio encabezado/
+// card alrededor; este componente es autosuficiente -- carga y guarda su
+// propio estado, no recibe nada por afuera.
+//
+// Todo se guarda como un solo blob JSON en Usuario.espacioJson (ver
+// MiEspacioController en el backend) -- ya resuelto por usuario autenticado,
+// asi que cada tecnico tiene su propio espacio, separado del admin y de los
+// demas tecnicos, sin ningun cambio de modelo.
+
+let contadorId = 0;
+const uid = () => `${Date.now().toString(36)}-${(contadorId++).toString(36)}`;
+
+const COLOR_PENDIENTE = '#D13A28';
+const COLOR_HACIENDO  = '#D48800';
+const COLOR_HECHO     = '#16A34A';
+
+const espacioInicial = () => ({
+    boards: [
+        {
+            id: uid(),
+            nombre: 'Notas',
+            columnas: [
+                { id: uid(), nombre: 'Pendiente', color: COLOR_PENDIENTE, tarjetas: [] },
+                { id: uid(), nombre: 'Haciendo',  color: COLOR_HACIENDO,  tarjetas: [] },
+                { id: uid(), nombre: 'Hecho',     color: COLOR_HECHO,     tarjetas: [] },
+            ],
+        },
+    ],
+});
+
+// Input para agregar una tarjeta a una columna. Guarda automaticamente al
+// perder el foco (igual patron que renombrarBoard/renombrarColumna mas abajo)
+// y suma un boton "+" para no depender del todo de la tecla Enter del
+// teclado del celu.
+function AgregarNotaInput({ onAgregar }) {
+    const [valor, setValor] = useState('');
+
+    const submit = () => {
+        const texto = valor.trim();
+        if (!texto) return;
+        onAgregar(texto);
+        setValor('');
+    };
+
+    return (
+        <div className="flex items-center gap-1.5 mt-auto">
+            <input
+                placeholder="+ nota"
+                value={valor}
+                onChange={e => setValor(e.target.value)}
+                onKeyDown={e => {
+                    if (e.key === 'Enter') { e.preventDefault(); submit(); }
+                    if (e.key === 'Escape') { setValor(''); e.target.blur(); }
+                }}
+                onBlur={submit}
+                className="flex-1 min-w-0 text-body font-medium text-ink bg-card border border-dashed border-black/15 dark:border-white/15 rounded-xl px-3 py-2 outline-none focus:border-brand-red focus:border-solid placeholder:text-muted" />
+            <button
+                onMouseDown={e => e.preventDefault()}
+                onClick={submit}
+                disabled={!valor.trim()}
+                title="Agregar nota"
+                className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-brand-red text-white active:scale-90 disabled:opacity-30 transition-opacity">
+                <LuPlus size={16} />
+            </button>
+        </div>
+    );
+}
+
+export default function MiEspacioBoard() {
+    const [espacio, setEspacio] = useState(null);
+    const [cargando, setCargando] = useState(true);
+    const [boardActivoId, setBoardActivoId] = useState(null);
+    const [renombrandoBoard, setRenombrandoBoard] = useState(null); // id del board en edición de nombre
+    const [renombrandoCol, setRenombrandoCol] = useState(null);     // id de la columna en edición de nombre
+    const guardarTimeout = useRef(null);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await getMiEspacio();
+                const crudo = res.data?.espacioJson;
+                let parsed = null;
+                if (crudo) {
+                    try { parsed = JSON.parse(crudo); } catch { parsed = null; }
+                }
+                const inicial = (parsed && Array.isArray(parsed.boards) && parsed.boards.length > 0)
+                    ? parsed
+                    : espacioInicial();
+                setEspacio(inicial);
+                setBoardActivoId(inicial.boards[0].id);
+            } catch {
+                toast.error('No se pudo cargar Mi Espacio');
+                const inicial = espacioInicial();
+                setEspacio(inicial);
+                setBoardActivoId(inicial.boards[0].id);
+            } finally {
+                setCargando(false);
+            }
+        })();
+    }, []);
+
+    // Persistencia: cada mutación actualiza el estado local al toque (UI instantánea)
+    // y dispara un guardado en el backend con un pequeño debounce para no encadenar
+    // requests cuando hay varios cambios seguidos.
+    const actualizar = (nuevoEspacio) => {
+        setEspacio(nuevoEspacio);
+        clearTimeout(guardarTimeout.current);
+        guardarTimeout.current = setTimeout(async () => {
+            try {
+                await guardarMiEspacio(JSON.stringify(nuevoEspacio));
+            } catch {
+                toast.error('No se pudo guardar el cambio en Mi Espacio');
+            }
+        }, 500);
+    };
+
+    if (cargando) {
+        return (
+            <p className="text-caption font-black text-muted animate-pulse uppercase tracking-widest py-6 text-center">
+                Cargando...
+            </p>
+        );
+    }
+
+    const boardActivo = espacio.boards.find(b => b.id === boardActivoId) || espacio.boards[0];
+
+    const renombrarBoard = (boardId, nombre) => {
+        const nombreLimpio = nombre.trim();
+        if (!nombreLimpio) { setRenombrandoBoard(null); return; }
+        actualizar({
+            ...espacio,
+            boards: espacio.boards.map(b => b.id === boardId ? { ...b, nombre: nombreLimpio } : b),
+        });
+        setRenombrandoBoard(null);
+    };
+
+    const duplicarBoardActual = () => {
+        const copia = {
+            id: uid(),
+            nombre: `${boardActivo.nombre} (copia)`,
+            columnas: boardActivo.columnas.map(c => ({
+                id: uid(),
+                nombre: c.nombre,
+                color: c.color,
+                tarjetas: c.tarjetas.map(t => ({ id: uid(), texto: t.texto })),
+            })),
+        };
+        actualizar({ ...espacio, boards: [...espacio.boards, copia] });
+        setBoardActivoId(copia.id);
+        setRenombrandoBoard(copia.id); // el nombre generado queda editable al toque, sin prompt()
+    };
+
+    const renombrarColumna = (colId, nombre) => {
+        const nombreLimpio = nombre.trim();
+        setRenombrandoCol(null);
+        if (!nombreLimpio) return;
+        actualizar({
+            ...espacio,
+            boards: espacio.boards.map(b => b.id !== boardActivo.id ? b : {
+                ...b,
+                columnas: b.columnas.map(c => c.id === colId ? { ...c, nombre: nombreLimpio } : c),
+            }),
+        });
+    };
+
+    const agregarNota = (colId, texto) => {
+        const textoLimpio = texto.trim();
+        if (!textoLimpio) return;
+        actualizar({
+            ...espacio,
+            boards: espacio.boards.map(b => b.id !== boardActivo.id ? b : {
+                ...b,
+                columnas: b.columnas.map(c => c.id === colId
+                    ? { ...c, tarjetas: [...c.tarjetas, { id: uid(), texto: textoLimpio }] }
+                    : c),
+            }),
+        });
+    };
+
+    const borrarNota = (colId, tarjetaId) => {
+        actualizar({
+            ...espacio,
+            boards: espacio.boards.map(b => b.id !== boardActivo.id ? b : {
+                ...b,
+                columnas: b.columnas.map(c => c.id === colId
+                    ? { ...c, tarjetas: c.tarjetas.filter(t => t.id !== tarjetaId) }
+                    : c),
+            }),
+        });
+    };
+
+    const moverNota = (colIdx, tarjetaId, direccion) => {
+        const columnas = boardActivo.columnas;
+        const destinoIdx = colIdx + direccion;
+        if (destinoIdx < 0 || destinoIdx >= columnas.length) return;
+        const origen = columnas[colIdx];
+        const tarjeta = origen.tarjetas.find(t => t.id === tarjetaId);
+        if (!tarjeta) return;
+        const nuevasColumnas = columnas.map((c, i) => {
+            if (i === colIdx) return { ...c, tarjetas: c.tarjetas.filter(t => t.id !== tarjetaId) };
+            if (i === destinoIdx) return { ...c, tarjetas: [...c.tarjetas, tarjeta] };
+            return c;
+        });
+        actualizar({
+            ...espacio,
+            boards: espacio.boards.map(b => b.id !== boardActivo.id ? b : { ...b, columnas: nuevasColumnas }),
+        });
+    };
+
+    return (
+        <div>
+            {/* Pestañas de tableros */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 mb-3">
+                {espacio.boards.map(b => (
+                    <button key={b.id}
+                        onClick={() => {
+                            if (b.id === boardActivoId) { setRenombrandoBoard(b.id); return; }
+                            setBoardActivoId(b.id);
+                        }}
+                        title={b.id === boardActivoId ? 'Tocá de nuevo para renombrar este tablero' : b.nombre}
+                        className={`shrink-0 px-3.5 py-1.5 rounded-full text-caption font-black whitespace-nowrap transition-colors ${
+                            b.id === boardActivoId ? 'bg-brand-red text-white' : 'bg-chip text-secondary'
+                        }`}>
+                        {renombrandoBoard === b.id ? (
+                            <input autoFocus defaultValue={b.nombre}
+                                onClick={e => e.stopPropagation()}
+                                onBlur={e => renombrarBoard(b.id, e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') e.target.blur();
+                                    if (e.key === 'Escape') setRenombrandoBoard(null);
+                                }}
+                                className="bg-transparent outline-none border-b border-white/70 w-24 text-white placeholder:text-white/70" />
+                        ) : b.nombre}
+                    </button>
+                ))}
+                <button onClick={duplicarBoardActual} title="Duplicar tablero actual"
+                    className="shrink-0 px-3.5 py-1.5 rounded-full text-caption font-black whitespace-nowrap border border-dashed border-black/20 dark:border-white/20 text-muted flex items-center gap-1.5">
+                    <LuCopy size={12} /> Duplicar
+                </button>
+            </div>
+
+            {/* Tablero kanban */}
+            <div className="flex gap-3 md:gap-4 overflow-x-auto pb-1">
+                {boardActivo.columnas.map((col, colIdx) => (
+                    <div key={col.id} className="flex-1 min-w-[220px] flex flex-col">
+                        <div className="flex items-center gap-2 mb-2.5 px-0.5">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: col.color }} />
+                            {renombrandoCol === col.id ? (
+                                <input autoFocus defaultValue={col.nombre}
+                                    onBlur={e => renombrarColumna(col.id, e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') e.target.blur();
+                                        if (e.key === 'Escape') setRenombrandoCol(null);
+                                    }}
+                                    className="text-label font-black uppercase tracking-wide bg-transparent outline-none border-b border-brand-red text-muted flex-1 min-w-0" />
+                            ) : (
+                                <span onClick={() => setRenombrandoCol(col.id)}
+                                    title="Tocá para renombrar esta columna"
+                                    className="text-label font-black uppercase tracking-wide text-muted truncate cursor-text hover:border-b hover:border-dashed hover:border-muted">
+                                    {col.nombre}
+                                </span>
+                            )}
+                            <span className="ml-auto shrink-0 text-label font-black text-muted bg-chip rounded-md px-1.5 py-0.5">
+                                {col.tarjetas.length}
+                            </span>
+                        </div>
+
+                        <div className="space-y-2 mb-2">
+                            {col.tarjetas.map(t => (
+                                <div key={t.id}
+                                    className="bg-card border border-black/[0.05] dark:border-white/[0.05] rounded-xl px-3 py-2.5 shadow-sm">
+                                    <p className="text-body text-ink break-words">{t.texto}</p>
+                                    <div className="flex items-center justify-end gap-1 mt-2">
+                                        {colIdx > 0 && (
+                                            <button onClick={() => moverNota(colIdx, t.id, -1)}
+                                                title={`Mover a "${boardActivo.columnas[colIdx - 1].nombre}"`}
+                                                className="w-6 h-6 rounded-md bg-chip text-muted flex items-center justify-center active:scale-90">
+                                                <LuArrowLeft size={11} />
+                                            </button>
+                                        )}
+                                        {colIdx < boardActivo.columnas.length - 1 && (
+                                            <button onClick={() => moverNota(colIdx, t.id, 1)}
+                                                title={`Mover a "${boardActivo.columnas[colIdx + 1].nombre}"`}
+                                                className="w-6 h-6 rounded-md bg-chip text-muted flex items-center justify-center active:scale-90">
+                                                <LuArrowRight size={11} />
+                                            </button>
+                                        )}
+                                        <button onClick={() => borrarNota(col.id, t.id)} title="Borrar nota"
+                                            className="w-6 h-6 rounded-md bg-chip text-muted flex items-center justify-center active:scale-90">
+                                            <LuX size={12} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <AgregarNotaInput onAgregar={texto => agregarNota(col.id, texto)} />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
