@@ -5,19 +5,14 @@ import api from '../services/api';
 import { M } from './servicio/ServicioUI';
 import CierreCajaModal from './finanzas/CierreCajaModal';
 import AgendaBlock from './dashboard/AgendaBlock';
-import AlertasBlock from './dashboard/AlertasBlock';
 import MiEspacioBoard from './miespacio/MiEspacioBoard';
 import { calcTotal } from './dashboard/estadoConstants';
-import { LuWrench, LuShoppingCart, LuChevronDown } from 'react-icons/lu';
+import { LuWrench, LuShoppingCart } from 'react-icons/lu';
 import { getTodayISO, formatDateISO } from '../utils/dateUtils';
 
 export default function DashboardCaja({ setVistaActual }) {
     const { esAdmin } = useAuth();
     const [modalCierre, setModalCierre] = useState(false);
-    // Colapsado por defecto (pedido de Lucas, coordinado 27-ago con otra sesión en
-    // paralelo — nunca se había llegado a programar): la plata de hoy/mes no es lo
-    // primero que se ve al entrar al Panel, hay que tocar para desplegarla.
-    const [statsAbierto, setStatsAbierto] = useState(false);
     const [cargando, setCargando] = useState(true);
     const [servicios, setServicios] = useState([]);
     const [ordenes, setOrdenes] = useState([]);
@@ -48,7 +43,6 @@ export default function DashboardCaja({ setVistaActual }) {
 
     const hoyStr = getTodayISO();
     const mesStr = hoyStr.substring(0, 7);
-    const hoyLabel = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 
     const data = useMemo(() => {
         const realizados = servicios.filter(s => s.estado === 'REALIZADO');
@@ -106,146 +100,99 @@ export default function DashboardCaja({ setVistaActual }) {
 
     const card = 'rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
 
-    // Stats inline (pequeno, no amerita archivo separado). Colapsado por defecto —
-    // ver comentario junto a statsAbierto arriba.
-    const StatsBlock = () => (
-        <div className={card}>
-            <button onClick={() => setStatsAbierto(v => !v)}
-                className="w-full flex items-center justify-between p-3.5 active:scale-[0.99] transition-all">
-                <span className="text-label font-bold uppercase tracking-wider text-muted">Caja de hoy y del mes</span>
-                <LuChevronDown size={14} className={`text-muted transition-transform duration-200 ${statsAbierto ? 'rotate-180' : ''}`} />
-            </button>
-            {statsAbierto && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 px-3.5 pb-3.5">
-                    <div>
-                        <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Hoy</p>
-                        <M valor={data.totalHoy} className="text-xl font-black text-ink block" />
-                        <p className="text-caption text-muted mt-0.5">{data.countHoy} operaciones</p>
-                    </div>
-                    <div>
-                        <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Mes</p>
-                        <M valor={data.totalMes} className="text-xl font-black text-ink block" />
-                        <p className="text-caption text-muted mt-0.5">{data.countMes} cobradas</p>
-                    </div>
-                    {data.moHoy > 0 && (
-                        <div className="col-span-2 md:col-span-1">
-                            <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">MO Hoy</p>
-                            <M valor={data.moHoy} className="text-xl font-black text-brand-amber block" />
-                        </div>
-                    )}
-                    <button onClick={() => setVistaActual('finanzas')}
-                        className="col-span-2 md:col-span-3 text-label font-bold text-brand-red hover:underline text-left -mt-1">
-                        Ver en Finanzas →
-                    </button>
-                </div>
-            )}
-        </div>
-    );
+    // "Caja de hoy y del mes" ya no vive en el Panel (Lucas, 7-sep-2026,
+    // rediseno "opcion 1": redundaba con Finanzas > Balance, que ya cubre el
+    // mes completo con mas detalle). data.totalHoy/totalMes/moHoy quedan
+    // calculados igual por si se necesitan en otro lado, pero no se muestran
+    // aca.
+
+    // Tira al pie: todo lo que no es Agenda/Mi Espacio, comprimido en una sola
+    // fila angosta (Lucas, 7-sep-2026, rediseno "opcion 1" -- ver mockup
+    // "Rediseño del Panel"). Antes cada cosa (accesos directos, alertas,
+    // pendientes, cierre) era su propio bloque grande arriba de todo.
+    const hayAlertas = data.pptoVencidos.length + data.ordenesActivas.length + alertasRadar.length > 0;
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page">
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6">
 
-                {/* Header */}
+                {/* Header -- sin fecha (queda una sola vez, en la Agenda) */}
                 <div className="flex justify-between items-center mb-5">
-                    <div>
-                        <h2 className="text-2xl font-black uppercase tracking-tight text-ink">Panel</h2>
-                        <p className="text-caption font-medium capitalize text-muted">{hoyLabel}</p>
-                    </div>
-                    <div className="flex gap-2">
-                        {esAdmin && (
-                            <button onClick={() => setModalCierre(true)}
-                                className="h-8 px-3 rounded-lg flex items-center gap-1.5 font-bold text-label uppercase active:scale-95 bg-brand-red text-white">
-                                Cierre
-                            </button>
-                        )}
-                        <button onClick={cargar} disabled={cargando}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-95 disabled:opacity-40 bg-chip">
-                            <span className={`text-sm ${cargando ? 'animate-spin' : ''}`}>↻</span>
-                        </button>
-                    </div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight text-ink">Panel</h2>
+                    <button onClick={cargar} disabled={cargando}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-95 disabled:opacity-40 bg-chip">
+                        <span className={`text-sm ${cargando ? 'animate-spin' : ''}`}>↻</span>
+                    </button>
                 </div>
 
-                {/* MOBILE */}
-                <div className="md:hidden space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
-                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
-                            <LuWrench size={18} />
-                            <span className="text-body font-black">Nuevo Servicio</span>
-                        </button>
-                        <button onClick={() => setVistaActual('venta', { crear: true })}
-                            className="flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl shadow-sm active:scale-95 bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
-                            <LuShoppingCart size={18} />
-                            <span className="text-body font-black">Nueva Venta</span>
-                        </button>
-                    </div>
-                    <AgendaBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
-                    <StatsBlock />
-                    <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
-                    {data.pendientesCount > 0 && (
-                        <div className={`${card} p-3.5`}>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-label font-bold uppercase tracking-wider text-muted mb-1">Pendientes</p>
-                                    <p className="text-sm font-bold text-brand-amber">
-                                        {data.pendientesCount} — <M valor={data.pendientesVal} />
-                                    </p>
-                                </div>
-                                <button onClick={() => setVistaActual('presupuestos')}
-                                    className="text-label font-black uppercase text-brand-red hover:underline">
-                                    Ver →
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                    <div className={`${card} p-3.5`}>
-                        <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Mi Espacio</p>
-                        <MiEspacioBoard />
-                    </div>
-                </div>
-
-                {/* DESKTOP -- una sola columna, como siempre (Lucas probó el sidebar
-                    de dos columnas en pantalla grande y no le convenció, 7-sep-2026).
-                    Se mantiene el arreglo real: la Agenda ahora va en una card con el
-                    mismo ancho que el resto, ya no en un contenedor mas angosto
-                    (max-w-3xl) que la dejaba descolgada de Alertas y Caja de hoy. */}
-                <div className="hidden md:block space-y-5">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <div className="lg:col-span-2"><StatsBlock /></div>
-                        <div className="flex flex-col gap-1.5">
-                            <div className="grid grid-cols-2 gap-1.5">
-                                <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
-                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
-                                    <LuWrench size={16} />
-                                    <span className="text-label font-black">Nuevo Servicio</span>
-                                </button>
-                                <button onClick={() => setVistaActual('venta', { crear: true })}
-                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
-                                    <LuShoppingCart size={16} />
-                                    <span className="text-label font-black">Nueva Venta</span>
-                                </button>
-                            </div>
-                            {data.pendientesCount > 0 && (
-                                <div className={`${card} p-2.5 flex items-center justify-between`}>
-                                    <p className="text-body font-bold text-brand-amber">
-                                        {data.pendientesCount} pendientes — <M valor={data.pendientesVal} />
-                                    </p>
-                                    <button onClick={() => setVistaActual('presupuestos')}
-                                        className="text-label font-black text-brand-red">
-                                        Ver →
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
-                    <div className={`${card} p-4`}>
+                {/* Agenda primero, despues Mi Espacio -- igual en mobile y desktop */}
+                <div className="space-y-4 md:space-y-5">
+                    <div className={`${card} p-3.5 md:p-4`}>
                         <AgendaBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
                     </div>
-                    <div className={`${card} p-4`}>
+
+                    <div className={`${card} p-3.5 md:p-4`}>
                         <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Mi Espacio</p>
                         <MiEspacioBoard />
+                    </div>
+
+                    {/* Tira al pie: alertas + accesos directos + pendientes + cierre */}
+                    <div className={`${card} px-3.5 py-2.5 flex items-center justify-between gap-3 flex-wrap`}>
+                        <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
+                            {hayAlertas && (
+                                <>
+                                    {data.pptoVencidos.length > 0 && (
+                                        <button onClick={() => setVistaActual('presupuestos')}
+                                            className="flex items-center gap-1.5 active:opacity-70">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-brand-red shrink-0" />
+                                            <span className="text-caption font-bold text-ink whitespace-nowrap">
+                                                {data.pptoVencidos.length} presupuesto{data.pptoVencidos.length !== 1 ? 's' : ''} vencido{data.pptoVencidos.length !== 1 ? 's' : ''}
+                                            </span>
+                                        </button>
+                                    )}
+                                    {data.ordenesActivas.length > 0 && (
+                                        <button onClick={() => setVistaActual('servicio-tecnico', { modo: 'DESPACHO' })}
+                                            className="flex items-center gap-1.5 active:opacity-70">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-brand-amber shrink-0" />
+                                            <span className="text-caption font-bold text-ink whitespace-nowrap">
+                                                {data.ordenesActivas.length} orden{data.ordenesActivas.length !== 1 ? 'es' : ''} activa{data.ordenesActivas.length !== 1 ? 's' : ''}
+                                            </span>
+                                        </button>
+                                    )}
+                                    {alertasRadar.length > 0 && (
+                                        <button onClick={() => setVistaActual('radar')}
+                                            className="flex items-center gap-1.5 active:opacity-70">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shrink-0" />
+                                            <span className="text-caption font-bold text-ink whitespace-nowrap">
+                                                {alertasRadar.length} equipo{alertasRadar.length !== 1 ? 's' : ''} sin mantenim.
+                                            </span>
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                            <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
+                                className="flex items-center gap-1 h-6 px-2 rounded-md text-label font-bold uppercase bg-chip text-ink active:scale-95 shrink-0">
+                                <LuWrench size={11} /> Servicio
+                            </button>
+                            <button onClick={() => setVistaActual('venta', { crear: true })}
+                                className="flex items-center gap-1 h-6 px-2 rounded-md text-label font-bold uppercase bg-chip text-ink active:scale-95 shrink-0">
+                                <LuShoppingCart size={11} /> Venta
+                            </button>
+                            {data.pendientesCount > 0 && (
+                                <button onClick={() => setVistaActual('presupuestos')}
+                                    className="flex items-center gap-1 active:opacity-70">
+                                    <span className="text-caption font-bold text-brand-amber whitespace-nowrap">
+                                        {data.pendientesCount} pend. — <M valor={data.pendientesVal} />
+                                    </span>
+                                </button>
+                            )}
+                        </div>
+                        {esAdmin && (
+                            <button onClick={() => setModalCierre(true)}
+                                className="text-label font-bold text-muted hover:text-brand-red whitespace-nowrap shrink-0">
+                                Cierre de caja →
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
