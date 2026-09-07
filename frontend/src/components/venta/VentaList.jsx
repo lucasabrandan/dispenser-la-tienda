@@ -1,6 +1,7 @@
 import React from 'react';
 import { LuInbox, LuPencil, LuFileText, LuClipboardList, LuCopy, LuMessageCircle, LuTrash2 } from 'react-icons/lu';
 import { useMontos } from '../../context/MontosContext';
+import { useAuth } from '../../context/AuthContext';
 
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
@@ -31,11 +32,114 @@ const Accion = ({ onClick, Icon, label, className = '', href, ...rest }) => {
     return <button onClick={onClick} className={cls}>{Icon && <Icon size={13} />} <span className="hidden sm:inline">{label}</span></button>;
 };
 
+// ── Rentabilidad histórica de una venta ya confirmada (Lucas, 7-sep-2026) ──
+// Cada producto de una venta ya guarda su costo/% de ganancia reales al momento
+// de vender (RepuestoUsadoDTO.costo/porcentajeGanancia, ver 72b555a) -- acá solo
+// se lee ese dato guardado, no se recalcula nada en vivo. Ventas confirmadas
+// ANTES de ese cambio no van a tener el dato (nullable a propósito) y se avisa
+// en vez de mostrar 0% como si no hubiera ganancia.
+function calcularRentabilidadVenta(v) {
+    const items = v.items?.flatMap(it => it.repuestosUsados || []) || [];
+    let totalVenta = 0;
+    let totalCosto = 0;
+    let tieneDatos = false;
+
+    const desglose = items.map((r, idx) => {
+        const precioVenta = parseFloat(r.precio)   || 0;
+        const cantidad    = parseFloat(r.cantidad) || 1;
+        const subtotal    = precioVenta * cantidad;
+        const costoUnit   = parseFloat(r.costo)    || 0;
+        const pct         = parseFloat(r.porcentajeGanancia) || 0;
+
+        let costoTotal = 0;
+        let conDato    = false;
+        if (costoUnit > 0) {
+            costoTotal = costoUnit * cantidad;
+            conDato    = true;
+        } else if (pct > 0) {
+            costoTotal = subtotal / (1 + pct / 100);
+            conDato    = true;
+        }
+        if (conDato) tieneDatos = true;
+
+        totalVenta += subtotal;
+        totalCosto += costoTotal;
+
+        const ganancia = subtotal - costoTotal;
+        const margen   = conDato && subtotal > 0 ? ((ganancia / subtotal) * 100).toFixed(1) : null;
+        return { key: r.id ?? idx, nombre: r.nombre, cantidad, subtotal, ganancia, margen, conDato };
+    });
+
+    // El descuento real de la venta se aplica sobre el total de productos --
+    // el envío no tiene costo asociado en el modelo (mismo criterio que la
+    // ganancia "en vivo" de useVentaForm.calcularResumenGanancia).
+    const descuentoPct      = parseFloat(v.descuentoPorcentaje) || 0;
+    const descuentoMonto    = (totalVenta * descuentoPct) / 100;
+    const totalConDescuento = totalVenta - descuentoMonto;
+    const gananciaBruta     = totalConDescuento - totalCosto;
+    const margenFinal       = totalConDescuento > 0
+        ? ((gananciaBruta / totalConDescuento) * 100).toFixed(1) : 0;
+
+    return { desglose, totalConDescuento, totalCosto, gananciaBruta, margenFinal, tieneDatos };
+}
+
+function RentabilidadVenta({ venta }) {
+    const [abierto, setAbierto] = React.useState(false);
+    const calculo = React.useMemo(() => calcularRentabilidadVenta(venta), [venta]);
+    if (calculo.desglose.length === 0) return null;
+
+    return (
+        <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
+            <button onClick={() => setAbierto(!abierto)}
+                className="w-full flex items-center justify-between py-1 transition-all active:scale-[0.99]">
+                <span className="text-label font-semibold tracking-wide text-[#A8855A]">Ver rentabilidad</span>
+                <span className={`text-label text-[#A8855A] transition-transform duration-200 ${abierto ? 'rotate-180' : ''}`}>▾</span>
+            </button>
+            {abierto && (
+                calculo.tieneDatos ? (
+                    <div className="mt-1 rounded-xl overflow-hidden border border-[#A8855A]/20 p-3 bg-[#A8855A]/10">
+                        {/* Total de la venta */}
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                            <div>
+                                <p className="text-label uppercase tracking-wide font-bold text-[#A8855A] mb-1">Costo</p>
+                                <M valor={Math.round(calculo.totalCosto)} className="text-body font-black text-ink" />
+                            </div>
+                            <div>
+                                <p className="text-label uppercase tracking-wide font-bold text-[#A8855A] mb-1">Ganancia</p>
+                                <M valor={Math.round(calculo.gananciaBruta)} className="text-body font-black text-ink" />
+                            </div>
+                            <div>
+                                <p className="text-label uppercase tracking-wide font-bold text-[#A8855A] mb-1">Margen</p>
+                                <p className="text-body font-black text-ink">{calculo.margenFinal}%</p>
+                            </div>
+                        </div>
+                        {/* Desglose por producto */}
+                        <div className="space-y-1.5">
+                            {calculo.desglose.map(d => (
+                                <div key={d.key} className="flex items-center justify-between gap-2">
+                                    <span className="text-caption font-bold text-ink truncate">{d.cantidad}× {d.nombre}</span>
+                                    <span className="text-caption font-black text-ink shrink-0">
+                                        {d.conDato ? <>{d.margen}%</> : <span className="text-muted font-medium">sin dato</span>}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-caption text-muted mt-1">Sin datos de costo para esta venta (vendida antes de habilitar el margen histórico).</p>
+                )
+            )}
+        </div>
+    );
+}
+
 export default function VentaList({
     ventas, cargando,
     calcularTotal,
     onEditar, onConfirmar, onEliminar, onPDF, onDuplicar,
 }) {
+    const { esAdmin } = useAuth();
+
     if (cargando) return <div className="text-center py-16 text-muted font-bold">Cargando ventas...</div>;
 
     if (ventas.length === 0) return (
@@ -100,6 +204,8 @@ export default function VentaList({
                                 const preview = prods.slice(0, 3).join(', ') + (prods.length > 3 ? ` +${prods.length - 3} más` : '');
                                 return <p className="text-caption text-muted mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">{preview}</p>;
                             })()}
+
+                            {esAdmin && !esPendiente && <RentabilidadVenta venta={v} />}
                         </div>
 
                         {/* Acciones */}
