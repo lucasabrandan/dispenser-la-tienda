@@ -141,8 +141,12 @@ public class ServicioController {
     }
 
     // GET: Rendimiento mensual del técnico (solo meses cerrados, sin info de clientes)
+    // Antes cualquier tecnico autenticado podia ver el rendimiento de otro
+    // con solo cambiar el tecnicoId en la URL (no habia chequeo de dueño).
+    // Mismo patron que verificarAccesoServicio. Hallazgo Alto #12, auditoria 1-sep.
     @GetMapping("/tecnico/{tecnicoId}/rendimiento")
-    public ResponseEntity<List<TecnicoRendimientoDTO>> rendimientoTecnico(@PathVariable Long tecnicoId) {
+    public ResponseEntity<List<TecnicoRendimientoDTO>> rendimientoTecnico(@PathVariable Long tecnicoId, Authentication auth) {
+        verificarAccesoTecnico(tecnicoId, auth);
         return ResponseEntity.ok(servicioService.rendimientoTecnico(tecnicoId));
     }
 
@@ -191,6 +195,14 @@ public class ServicioController {
                 .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado con ID: " + servicioId));
         if (servicio.getUsuario() == null || !servicio.getUsuario().getId().equals(solicitante.getId())) {
             throw new AccessDeniedException("No podés acceder a este servicio");
+        }
+    }
+
+    private void verificarAccesoTecnico(Long tecnicoId, Authentication auth) {
+        Usuario solicitante = resolverUsuario(auth);
+        if (solicitante.getRol() == RolUsuario.ADMIN) return;
+        if (!solicitante.getId().equals(tecnicoId)) {
+            throw new AccessDeniedException("No podés ver el rendimiento de otro técnico");
         }
     }
 }

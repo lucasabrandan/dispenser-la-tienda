@@ -59,6 +59,11 @@ public class SecurityConfig {
                 // Sueldo accesible para todos (cada user ve el suyo)
                 .requestMatchers("/api/servicios/stats/sueldo").authenticated()
                 .requestMatchers("/api/servicios/stats/**").hasRole("ADMIN")
+                // Solo ADMIN: vista comparativa de rendimiento de todos los tecnicos
+                // (el rendimiento individual de cada tecnico sigue en
+                // /api/servicios/tecnico/{id}/rendimiento, chequeado por dueño
+                // dentro del controller, no aca)
+                .requestMatchers("/api/servicios/rendimiento/**").hasRole("ADMIN")
                 .requestMatchers("/api/ventas/**").hasRole("ADMIN")
 
                 // Solo ADMIN: operaciones destructivas
