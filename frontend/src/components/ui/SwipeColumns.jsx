@@ -127,7 +127,7 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                         <button
                             key={col.id}
                             onClick={() => onChangeColumn(col.id)}
-                            className={`flex-1 h-10 flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase transition-all active:scale-[0.98] ${
+                            className={`flex-1 min-h-10 py-1.5 px-1 flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase text-center transition-all active:scale-[0.98] ${
                                 activo
                                     ? 'text-white z-[1]'
                                     : completado
@@ -137,7 +137,7 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                             style={activo ? { backgroundColor: col.color || '#D13A28' } : {}}
                         >
                             {col.Icon && <col.Icon size={13} className={activo ? 'text-white' : ''} />}
-                            <span>{col.label}</span>
+                            <span>{col.fullLabel || col.label}</span>
                             {col.count != null && (
                                 <span className={`text-[10px] ${activo ? 'text-white/70' : ''}`}>({col.count})</span>
                             )}
