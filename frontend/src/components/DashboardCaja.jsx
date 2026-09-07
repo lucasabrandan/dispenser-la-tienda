@@ -143,7 +143,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page">
-            <div className="max-w-6xl xl:max-w-[1400px] mx-auto px-4 md:px-6 pt-5 md:pt-6">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6">
 
                 {/* Header */}
                 <div className="flex justify-between items-center mb-5">
@@ -200,47 +200,43 @@ export default function DashboardCaja({ setVistaActual }) {
                     )}
                 </div>
 
-                {/* DESKTOP -- rediseñado 7-sep-2026 (Lucas: "se ve desordenado" en
-                    pantalla grande). Antes: todo apilado en una sola columna centrada,
-                    con la Agenda en un contenedor mas angosto (max-w-3xl) que el resto
-                    -- quedaba descolgada. Ahora, de md a lg sigue apilado en el mismo
-                    orden de siempre (acciones+caja, alertas, agenda); recien en xl+
-                    pasa a sidebar fijo (acciones, caja, pendientes) + columna principal
-                    (alertas, agenda) para aprovechar el ancho de un monitor grande. */}
-                <div className="hidden md:block space-y-5 xl:space-y-0 xl:flex xl:gap-5 xl:items-start">
-
-                    <div className="xl:w-[320px] xl:shrink-0 space-y-3">
-                        <div className="grid grid-cols-2 gap-1.5">
-                            <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
-                                className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
-                                <LuWrench size={16} />
-                                <span className="text-label font-black">Nuevo Servicio</span>
-                            </button>
-                            <button onClick={() => setVistaActual('venta', { crear: true })}
-                                className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
-                                <LuShoppingCart size={16} />
-                                <span className="text-label font-black">Nueva Venta</span>
-                            </button>
-                        </div>
-                        <StatsBlock />
-                        {data.pendientesCount > 0 && (
-                            <div className={`${card} p-2.5 flex items-center justify-between`}>
-                                <p className="text-body font-bold text-brand-amber">
-                                    {data.pendientesCount} pendientes — <M valor={data.pendientesVal} />
-                                </p>
-                                <button onClick={() => setVistaActual('presupuestos')}
-                                    className="text-label font-black text-brand-red">
-                                    Ver →
+                {/* DESKTOP -- una sola columna, como siempre (Lucas probó el sidebar
+                    de dos columnas en pantalla grande y no le convenció, 7-sep-2026).
+                    Se mantiene el arreglo real: la Agenda ahora va en una card con el
+                    mismo ancho que el resto, ya no en un contenedor mas angosto
+                    (max-w-3xl) que la dejaba descolgada de Alertas y Caja de hoy. */}
+                <div className="hidden md:block space-y-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="lg:col-span-2"><StatsBlock /></div>
+                        <div className="flex flex-col gap-1.5">
+                            <div className="grid grid-cols-2 gap-1.5">
+                                <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
+                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
+                                    <LuWrench size={16} />
+                                    <span className="text-label font-black">Nuevo Servicio</span>
+                                </button>
+                                <button onClick={() => setVistaActual('venta', { crear: true })}
+                                    className="flex items-center justify-center gap-2 px-3 py-3.5 rounded-xl shadow-sm active:scale-[0.98] hover:shadow-md transition-all bg-card text-ink border border-black/[0.08] dark:border-white/[0.08]">
+                                    <LuShoppingCart size={16} />
+                                    <span className="text-label font-black">Nueva Venta</span>
                                 </button>
                             </div>
-                        )}
-                    </div>
-
-                    <div className="xl:flex-1 xl:min-w-0 space-y-5">
-                        <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
-                        <div className={`${card} p-4`}>
-                            <AgendaBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
+                            {data.pendientesCount > 0 && (
+                                <div className={`${card} p-2.5 flex items-center justify-between`}>
+                                    <p className="text-body font-bold text-brand-amber">
+                                        {data.pendientesCount} pendientes — <M valor={data.pendientesVal} />
+                                    </p>
+                                    <button onClick={() => setVistaActual('presupuestos')}
+                                        className="text-label font-black text-brand-red">
+                                        Ver →
+                                    </button>
+                                </div>
+                            )}
                         </div>
+                    </div>
+                    <AlertasBlock pptoVencidos={data.pptoVencidos} ordenesActivas={data.ordenesActivas} alertasRadar={alertasRadar} setVistaActual={setVistaActual} />
+                    <div className={`${card} p-4`}>
+                        <AgendaBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
                     </div>
                 </div>
             </div>
