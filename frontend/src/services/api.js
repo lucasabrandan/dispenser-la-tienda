@@ -146,6 +146,9 @@ export const eliminarGasto = (id) => api.delete(`/gastos/${id}`);
 // ── Mi Espacio ────────────────────────────────────────────────────────────────
 export const getMiEspacio    = () => api.get('/mi-espacio');
 export const guardarMiEspacio = (espacioJson) => api.put('/mi-espacio', { espacioJson });
+// Checklists de todos los tecnicos (solo admin) -- Lucas, 8-sep-2026, para poder ver
+// el bloc de notas de cada uno sin tener que pedirselo. Ver MiEspacioController.java.
+export const getMiEspacioTecnicos = () => api.get('/mi-espacio/admin/tecnicos');
 
 // ── Admin: Usuarios ───────────────────────────────────────────────────────────
 export const getUsuarios        = () => api.get('/admin/usuarios');

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { LuInbox, LuPin, LuMapPin } from 'react-icons/lu';
 import api from '../../services/api';
-import MiEspacioBoard from '../miespacio/MiEspacioBoard';
+import MiEspacioChecklist from '../miespacio/MiEspacioChecklist';
+import { useMiEspacio } from '../miespacio/useMiEspacio';
 import { toast } from 'react-hot-toast';
 import { formatDateISO, lunesDeLaSemana } from '../../utils/dateUtils';
 
@@ -226,6 +227,7 @@ export default function MiAgenda({ tecnicoId }) {
     const [notas, setNotas] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [creandoNota, setCreandoNota] = useState(false);
+    const miEspacio = useMiEspacio();
 
     const semana = useMemo(() => generarSemana(semanaOffset), [semanaOffset]);
     const desde = semana[0].fecha;
@@ -376,13 +378,15 @@ export default function MiAgenda({ tecnicoId }) {
                 )}
 
                 {/* Mi Espacio (Lucas, 7-sep-2026: mismo patrón que en el Panel del
-                    admin -- agenda arriba, tablero de notas propias abajo). Antes
-                    era solo para ADMIN; el backend ya resuelve el espacio por
-                    usuario autenticado, así que cada técnico tiene el suyo,
-                    separado del admin y de los demás técnicos. */}
+                    admin -- agenda arriba, notas propias abajo). Antes era solo para
+                    ADMIN; el backend ya resuelve el espacio por usuario autenticado,
+                    así que cada técnico tiene el suyo, separado del admin y de los
+                    demás técnicos. (8-sep-2026: acá se muestra el checklist, no el
+                    tablero Trello -- el tablero completo quedó solo en la pantalla
+                    completa de Mi Espacio, ver MiEspacioChecklist.jsx.) */}
                 <div className="mt-4 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07] p-3.5">
                     <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Mi Espacio</p>
-                    <MiEspacioBoard />
+                    <MiEspacioChecklist espacio={miEspacio.espacio} actualizar={miEspacio.actualizar} cargando={miEspacio.cargando} />
                 </div>
             </div>
         </div>

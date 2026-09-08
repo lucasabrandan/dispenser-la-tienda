@@ -1,128 +1,41 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
-import { LuCopy, LuX, LuArrowLeft, LuArrowRight, LuPlus } from 'react-icons/lu';
-import { getMiEspacio, guardarMiEspacio } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { LuCopy, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
+import { uid } from './useMiEspacio';
+import AgregarInput from './AgregarInput';
 
 // Tablero de Mi Espacio (Lucas, 31-ago, items 2 y 5) -- extraido de MiEspacio.jsx
 // (7-sep-2026) para poder embeberlo en mas de un lugar sin duplicar la logica:
-// la pantalla completa (MiEspacio.jsx), el Panel del admin (DashboardCaja.jsx)
-// y Mi Agenda del tecnico (MiAgenda.jsx). Cada uno arma su propio encabezado/
-// card alrededor; este componente es autosuficiente -- carga y guarda su
-// propio estado, no recibe nada por afuera.
+// la pantalla completa (MiEspacio.jsx) y Mi Agenda del tecnico (MiAgenda.jsx).
+//
+// (8-sep-2026) A pedido de Lucas, el Trello dejo de vivir en el Panel del admin
+// y en Mi Agenda del tecnico -- ahi ahora se muestra el checklist nuevo
+// (MiEspacioChecklist.jsx). El tablero queda solo en la pantalla completa de
+// Mi Espacio. De paso, este componente paso de manejar su propia carga/guardado
+// a ser puramente presentacional: recibe espacio/actualizar/cargando como
+// props (ver useMiEspacio.js) -- necesario porque en la pantalla de Mi Espacio
+// convive con el checklist nuevo, y los dos necesitan compartir una sola
+// fuente de verdad para no pisarse el guardado entre si.
 //
 // Todo se guarda como un solo blob JSON en Usuario.espacioJson (ver
 // MiEspacioController en el backend) -- ya resuelto por usuario autenticado,
 // asi que cada tecnico tiene su propio espacio, separado del admin y de los
 // demas tecnicos, sin ningun cambio de modelo.
 
-let contadorId = 0;
-const uid = () => `${Date.now().toString(36)}-${(contadorId++).toString(36)}`;
-
-const COLOR_PENDIENTE = '#D13A28';
-const COLOR_HACIENDO  = '#D48800';
-const COLOR_HECHO     = '#16A34A';
-
-const espacioInicial = () => ({
-    boards: [
-        {
-            id: uid(),
-            nombre: 'Notas',
-            columnas: [
-                { id: uid(), nombre: 'Pendiente', color: COLOR_PENDIENTE, tarjetas: [] },
-                { id: uid(), nombre: 'Haciendo',  color: COLOR_HACIENDO,  tarjetas: [] },
-                { id: uid(), nombre: 'Hecho',     color: COLOR_HECHO,     tarjetas: [] },
-            ],
-        },
-    ],
-});
-
-// Input para agregar una tarjeta a una columna. Guarda automaticamente al
-// perder el foco (igual patron que renombrarBoard/renombrarColumna mas abajo)
-// y suma un boton "+" para no depender del todo de la tecla Enter del
-// teclado del celu.
-function AgregarNotaInput({ onAgregar }) {
-    const [valor, setValor] = useState('');
-
-    const submit = () => {
-        const texto = valor.trim();
-        if (!texto) return;
-        onAgregar(texto);
-        setValor('');
-    };
-
-    return (
-        <div className="flex items-center gap-1.5 mt-auto">
-            <input
-                placeholder="+ nota"
-                value={valor}
-                onChange={e => setValor(e.target.value)}
-                onKeyDown={e => {
-                    if (e.key === 'Enter') { e.preventDefault(); submit(); }
-                    if (e.key === 'Escape') { setValor(''); e.target.blur(); }
-                }}
-                onBlur={submit}
-                className="flex-1 min-w-0 text-body font-medium text-ink bg-card border border-dashed border-black/15 dark:border-white/15 rounded-xl px-3 py-2 outline-none focus:border-brand-red focus:border-solid placeholder:text-muted" />
-            <button
-                onMouseDown={e => e.preventDefault()}
-                onClick={submit}
-                disabled={!valor.trim()}
-                title="Agregar nota"
-                className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-brand-red text-white active:scale-90 disabled:opacity-30 transition-opacity">
-                <LuPlus size={16} />
-            </button>
-        </div>
-    );
-}
-
-export default function MiEspacioBoard() {
-    const [espacio, setEspacio] = useState(null);
-    const [cargando, setCargando] = useState(true);
+export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
     const [boardActivoId, setBoardActivoId] = useState(null);
     const [renombrandoBoard, setRenombrandoBoard] = useState(null); // id del board en edición de nombre
     const [renombrandoCol, setRenombrandoCol] = useState(null);     // id de la columna en edición de nombre
-    const guardarTimeout = useRef(null);
 
+    // Arranca en el primer board apenas el espacio termina de cargar (o si el
+    // board activo dejo de existir, ej. despues de que otra pestaña lo borre).
     useEffect(() => {
-        (async () => {
-            try {
-                const res = await getMiEspacio();
-                const crudo = res.data?.espacioJson;
-                let parsed = null;
-                if (crudo) {
-                    try { parsed = JSON.parse(crudo); } catch { parsed = null; }
-                }
-                const inicial = (parsed && Array.isArray(parsed.boards) && parsed.boards.length > 0)
-                    ? parsed
-                    : espacioInicial();
-                setEspacio(inicial);
-                setBoardActivoId(inicial.boards[0].id);
-            } catch {
-                toast.error('No se pudo cargar Mi Espacio');
-                const inicial = espacioInicial();
-                setEspacio(inicial);
-                setBoardActivoId(inicial.boards[0].id);
-            } finally {
-                setCargando(false);
-            }
-        })();
-    }, []);
+        if (!espacio) return;
+        if (!boardActivoId || !espacio.boards.some(b => b.id === boardActivoId)) {
+            setBoardActivoId(espacio.boards[0]?.id ?? null);
+        }
+    }, [espacio, boardActivoId]);
 
-    // Persistencia: cada mutación actualiza el estado local al toque (UI instantánea)
-    // y dispara un guardado en el backend con un pequeño debounce para no encadenar
-    // requests cuando hay varios cambios seguidos.
-    const actualizar = (nuevoEspacio) => {
-        setEspacio(nuevoEspacio);
-        clearTimeout(guardarTimeout.current);
-        guardarTimeout.current = setTimeout(async () => {
-            try {
-                await guardarMiEspacio(JSON.stringify(nuevoEspacio));
-            } catch {
-                toast.error('No se pudo guardar el cambio en Mi Espacio');
-            }
-        }, 500);
-    };
-
-    if (cargando) {
+    if (cargando || !espacio) {
         return (
             <p className="text-caption font-black text-muted animate-pulse uppercase tracking-widest py-6 text-center">
                 Cargando...
@@ -172,14 +85,12 @@ export default function MiEspacioBoard() {
     };
 
     const agregarNota = (colId, texto) => {
-        const textoLimpio = texto.trim();
-        if (!textoLimpio) return;
         actualizar({
             ...espacio,
             boards: espacio.boards.map(b => b.id !== boardActivo.id ? b : {
                 ...b,
                 columnas: b.columnas.map(c => c.id === colId
-                    ? { ...c, tarjetas: [...c.tarjetas, { id: uid(), texto: textoLimpio }] }
+                    ? { ...c, tarjetas: [...c.tarjetas, { id: uid(), texto }] }
                     : c),
             }),
         });
@@ -302,7 +213,7 @@ export default function MiEspacioBoard() {
                             ))}
                         </div>
 
-                        <AgregarNotaInput onAgregar={texto => agregarNota(col.id, texto)} />
+                        <AgregarInput placeholder="+ nota" onAgregar={texto => agregarNota(col.id, texto)} />
                     </div>
                 ))}
             </div>

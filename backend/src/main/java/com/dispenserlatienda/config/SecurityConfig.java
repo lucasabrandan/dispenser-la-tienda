@@ -49,6 +49,12 @@ public class SecurityConfig {
                 // Mi Agenda del tecnico). El controller ya resuelve el usuario por
                 // auth.getName() y guarda un blob propio por usuario -- no hacia falta
                 // ningun cambio ahi, cada uno ya tenia su espacio aislado.
+                //
+                // Solo ADMIN: ver el checklist de cada tecnico (Lucas, 8-sep-2026) --
+                // esta regla mas especifica tiene que ir ANTES que la general de abajo,
+                // Spring Security evalua los matchers en orden y usa el primero que
+                // matchea.
+                .requestMatchers("/api/mi-espacio/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/mi-espacio/**").authenticated()
 
                 // Solo ADMIN: radar de mantenimiento

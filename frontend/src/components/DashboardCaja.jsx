@@ -5,7 +5,8 @@ import api from '../services/api';
 import { M } from './servicio/ServicioUI';
 import CierreCajaModal from './finanzas/CierreCajaModal';
 import AgendaBlock from './dashboard/AgendaBlock';
-import MiEspacioBoard from './miespacio/MiEspacioBoard';
+import MiEspacioChecklist from './miespacio/MiEspacioChecklist';
+import { useMiEspacio } from './miespacio/useMiEspacio';
 import { calcTotal } from './dashboard/estadoConstants';
 import { LuWrench, LuShoppingCart } from 'react-icons/lu';
 import { getTodayISO, formatDateISO } from '../utils/dateUtils';
@@ -18,6 +19,7 @@ export default function DashboardCaja({ setVistaActual }) {
     const [ordenes, setOrdenes] = useState([]);
     const [notasAgenda, setNotasAgenda] = useState([]);
     const [alertasRadar, setAlertasRadar] = useState([]);
+    const miEspacio = useMiEspacio();
 
     const cargar = async () => {
         setCargando(true);
@@ -133,7 +135,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
                     <div className={`${card} p-3.5 md:p-4`}>
                         <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Mi Espacio</p>
-                        <MiEspacioBoard />
+                        <MiEspacioChecklist espacio={miEspacio.espacio} actualizar={miEspacio.actualizar} cargando={miEspacio.cargando} />
                     </div>
 
                     {/* Tira al pie: accesos directos en su propia fila, el resto
