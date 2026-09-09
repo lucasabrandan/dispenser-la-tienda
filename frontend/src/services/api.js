@@ -23,6 +23,23 @@ api.interceptors.request.use(config => {
 const MAX_REINTENTOS = 8;
 const DELAY_MS       = 5000;
 
+// Bug real (9-sep): cuando el JWT vencía, CADA pedido que fallaba en simultáneo
+// (badges, notificaciones, radar, mi-espacio...) disparaba su propio POST a
+// /auth/refresh por separado -- no rompía nada (el backend tolera refresh
+// concurrente bien, ver RefreshTokenService.validarYRenovar), pero eran N
+// llamadas redundantes al mismo tiempo y N líneas de 401 en la consola de
+// Chrome (que loguea el intento fallido original aunque el reintento después
+// sea exitoso). Ahora todos los pedidos que fallan a la vez esperan el MISMO
+// refresh en curso en vez de disparar uno cada uno.
+let refreshEnCurso = null;
+function refrescarToken(refreshToken) {
+    if (!refreshEnCurso) {
+        refreshEnCurso = axios.post(`${api.defaults.baseURL}/auth/refresh`, { refreshToken })
+            .finally(() => { refreshEnCurso = null; });
+    }
+    return refreshEnCurso;
+}
+
 api.interceptors.response.use(
     res => res,
     async error => {
@@ -41,10 +58,7 @@ api.interceptors.response.use(
             const refreshToken = localStorage.getItem('auth_refresh_token');
             if (refreshToken) {
                 try {
-                    const { data } = await axios.post(
-                        `${api.defaults.baseURL}/auth/refresh`,
-                        { refreshToken }
-                    );
+                    const { data } = await refrescarToken(refreshToken);
                     localStorage.setItem('auth_token', data.accessToken);
                     guardarTokenParaSW(data.accessToken);
                     config.headers['Authorization'] = `Bearer ${data.accessToken}`;
