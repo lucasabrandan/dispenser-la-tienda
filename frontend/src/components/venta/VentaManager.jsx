@@ -109,6 +109,15 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
         fetchTabCounts();
     };
 
+    // Bug real (9-sep): eliminarVenta borraba la venta pero nunca refrescaba
+    // tabCounts -- a diferencia de confirmar/crear, que sí lo hacen -- así que
+    // "Cobradas"/"Archivadas"/"Todo" quedaban con el número viejo hasta recargar
+    // la página entera. Mismo criterio que confirmarConRefresh.
+    const eliminarConRefresh = async (...args) => {
+        await eliminarVenta(...args);
+        fetchTabCounts();
+    };
+
     const columns = TABS.map(t => ({
         id: t.id, label: t.short, fullLabel: t.label,
         count: tabCounts[t.id] ?? null, color: t.color, Icon: t.Icon,
@@ -187,7 +196,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                         calcularTotal={calcularTotal}
                         onEditar={abrirEditar}
                         onConfirmar={confirmarConRefresh}
-                        onEliminar={eliminarVenta}
+                        onEliminar={eliminarConRefresh}
                         onPDF={generarPDF}
                         onDuplicar={duplicarVenta}
                     />
