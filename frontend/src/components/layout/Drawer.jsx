@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useBadges } from '../../hooks/useBadges';
+import { useBadges } from '../../context/BadgesContext';
 import { LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo

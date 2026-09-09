@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 
 import Layout from './components/layout/Layout';
 import { MontosProvider } from './context/MontosContext';
+import { BadgesProvider } from './context/BadgesContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/auth/LoginPage';
 
@@ -121,9 +122,11 @@ function AppInterna() {
 
     return (
         <MontosProvider>
-            <Layout vistaActual={seccionActual} setVistaActual={setSeccionActual}>
-                {renderSeccion()}
-            </Layout>
+            <BadgesProvider>
+                <Layout vistaActual={seccionActual} setVistaActual={setSeccionActual}>
+                    {renderSeccion()}
+                </Layout>
+            </BadgesProvider>
         </MontosProvider>
     );
 }

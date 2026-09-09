@@ -3,7 +3,7 @@ import logo from '../../assets/logo-dispenser.svg';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
-import { useBadges } from '../../hooks/useBadges';
+import { useBadges } from '../../context/BadgesContext';
 import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuCalendar, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban } from 'react-icons/lu';
 import { NotifBell } from './NotificacionesPanel';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useBadges } from '../../hooks/useBadges';
+import { useBadges } from '../../context/BadgesContext';
 import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuCalendar, LuBanknote } from 'react-icons/lu';
 
 // Reordenado: las acciones más frecuentes accesibles directamente.
