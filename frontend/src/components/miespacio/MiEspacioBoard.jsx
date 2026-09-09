@@ -20,11 +20,20 @@ import AgregarInput from './AgregarInput';
 // MiEspacioController en el backend) -- ya resuelto por usuario autenticado,
 // asi que cada tecnico tiene su propio espacio, separado del admin y de los
 // demas tecnicos, sin ningun cambio de modelo.
+//
+// (9-sep-2026) Drag-and-drop para mover tarjetas entre columnas (Lucas: "que
+// me permita hacer un drag and drop"), ademas de los botones de flecha que
+// ya existian. Se implemento con la API nativa de HTML5 (draggable +
+// eventos onDrag*) para no sumar una libreria nueva -- funciona con mouse
+// (desktop) pero NO con touch (celu), asi que en mobile las flechas siguen
+// siendo el unico camino; se dejaron sin tocar a proposito por eso.
 
 export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
     const [boardActivoId, setBoardActivoId] = useState(null);
     const [renombrandoBoard, setRenombrandoBoard] = useState(null); // id del board en edición de nombre
     const [renombrandoCol, setRenombrandoCol] = useState(null);     // id de la columna en edición de nombre
+    const [arrastrando, setArrastrando] = useState(null);           // { colId, tarjetaId } de la tarjeta que se está arrastrando
+    const [colSobrevolada, setColSobrevolada] = useState(null);     // id de la columna bajo el cursor mientras se arrastra
 
     // Arranca en el primer board apenas el espacio termina de cargar (o si el
     // board activo dejo de existir, ej. despues de que otra pestaña lo borre).
@@ -108,22 +117,45 @@ export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
         });
     };
 
-    const moverNota = (colIdx, tarjetaId, direccion) => {
+    const moverNotaAColumna = (origenColId, tarjetaId, destinoColId) => {
+        if (origenColId === destinoColId) return;
         const columnas = boardActivo.columnas;
-        const destinoIdx = colIdx + direccion;
-        if (destinoIdx < 0 || destinoIdx >= columnas.length) return;
-        const origen = columnas[colIdx];
-        const tarjeta = origen.tarjetas.find(t => t.id === tarjetaId);
+        const origen = columnas.find(c => c.id === origenColId);
+        const tarjeta = origen?.tarjetas.find(t => t.id === tarjetaId);
         if (!tarjeta) return;
-        const nuevasColumnas = columnas.map((c, i) => {
-            if (i === colIdx) return { ...c, tarjetas: c.tarjetas.filter(t => t.id !== tarjetaId) };
-            if (i === destinoIdx) return { ...c, tarjetas: [...c.tarjetas, tarjeta] };
+        const nuevasColumnas = columnas.map(c => {
+            if (c.id === origenColId) return { ...c, tarjetas: c.tarjetas.filter(t => t.id !== tarjetaId) };
+            if (c.id === destinoColId) return { ...c, tarjetas: [...c.tarjetas, tarjeta] };
             return c;
         });
         actualizar({
             ...espacio,
             boards: espacio.boards.map(b => b.id !== boardActivo.id ? b : { ...b, columnas: nuevasColumnas }),
         });
+    };
+
+    const moverNota = (colIdx, tarjetaId, direccion) => {
+        const columnas = boardActivo.columnas;
+        const destinoIdx = colIdx + direccion;
+        if (destinoIdx < 0 || destinoIdx >= columnas.length) return;
+        moverNotaAColumna(columnas[colIdx].id, tarjetaId, columnas[destinoIdx].id);
+    };
+
+    // Drag-and-drop (mouse, HTML5 nativo -- ver comentario de cabecera).
+    const handleDragStart = (colId, tarjetaId) => {
+        setArrastrando({ colId, tarjetaId });
+    };
+
+    const handleDragEnd = () => {
+        setArrastrando(null);
+        setColSobrevolada(null);
+    };
+
+    const handleDrop = (e, destinoColId) => {
+        e.preventDefault();
+        if (arrastrando) moverNotaAColumna(arrastrando.colId, arrastrando.tarjetaId, destinoColId);
+        setArrastrando(null);
+        setColSobrevolada(null);
     };
 
     return (
@@ -161,7 +193,13 @@ export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
             {/* Tablero kanban */}
             <div className="flex gap-3 md:gap-4 overflow-x-auto pb-1">
                 {boardActivo.columnas.map((col, colIdx) => (
-                    <div key={col.id} className="flex-1 min-w-[220px] flex flex-col">
+                    <div key={col.id}
+                        onDragOver={e => { e.preventDefault(); if (arrastrando) setColSobrevolada(col.id); }}
+                        onDragLeave={() => setColSobrevolada(c => c === col.id ? null : c)}
+                        onDrop={e => handleDrop(e, col.id)}
+                        className={`flex-1 min-w-[220px] flex flex-col rounded-xl transition-colors ${
+                            colSobrevolada === col.id ? 'bg-[#D13A28]/5 ring-2 ring-[#D13A28]/30' : ''
+                        }`}>
                         <div className="flex items-center gap-2 mb-2.5 px-0.5">
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: col.color }} />
                             {renombrandoCol === col.id ? (
@@ -187,7 +225,12 @@ export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
                         <div className="space-y-2 mb-2">
                             {col.tarjetas.map(t => (
                                 <div key={t.id}
-                                    className="bg-card border border-black/[0.05] dark:border-white/[0.05] rounded-xl px-3 py-2.5 shadow-sm">
+                                    draggable
+                                    onDragStart={() => handleDragStart(col.id, t.id)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`bg-card border border-black/[0.05] dark:border-white/[0.05] rounded-xl px-3 py-2.5 shadow-sm cursor-grab active:cursor-grabbing transition-opacity ${
+                                        arrastrando?.tarjetaId === t.id ? 'opacity-40' : ''
+                                    }`}>
                                     <p className="text-body text-ink break-words">{t.texto}</p>
                                     <div className="flex items-center justify-end gap-1 mt-2">
                                         {colIdx > 0 && (

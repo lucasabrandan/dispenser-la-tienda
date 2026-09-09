@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from 'react-hot-toast';
 import { LuX } from 'react-icons/lu';
 import { uid } from './useMiEspacio';
 import AgregarInput from './AgregarInput';
@@ -15,6 +16,14 @@ import AgregarInput from './AgregarInput';
 // Recibe espacio/actualizar/cargando como props siempre (ver useMiEspacio.js)
 // -- quien lo embebe decide si llama al hook el mismo (Panel, Mi Agenda) o si
 // lo comparte con el tablero (pantalla Mi Espacio).
+//
+// (9-sep-2026, Lucas: "que al tildarlas pasen automaticamente al Trello")
+// Tachar un item ya no lo deja tachado en la lista -- lo saca de la lista y
+// lo suma como tarjeta nueva en la columna "Hecho" del primer tablero (el
+// mismo espacio.boards[0] que usa MiEspacioBoard.jsx). Esto funciona aunque
+// el tablero no este visible en esta pantalla (Panel/Mi Agenda) porque el
+// checklist y el tablero viven en el mismo blob -- basta con actualizar
+// espacio.boards ademas de espacio.checklist en el mismo actualizar().
 export default function MiEspacioChecklist({ espacio, actualizar, cargando }) {
     if (cargando || !espacio) {
         return (
@@ -30,7 +39,43 @@ export default function MiEspacioChecklist({ espacio, actualizar, cargando }) {
         actualizar({ ...espacio, checklist: [...checklist, { id: uid(), texto, hecho: false }] });
     };
 
+    // Busca la columna "Hecho" del primer tablero por nombre (case-insensitive,
+    // por si alguien la renombro con mayusculas/espacios distintos); si no la
+    // encuentra (columnas renombradas del todo), usa la ultima columna del
+    // tablero como destino -- en un Kanban Pendiente/Haciendo/Hecho esa
+    // siempre es la de "terminado".
+    const marcarHechaYPasarATrello = (item) => {
+        const boards = espacio.boards || [];
+        const board = boards[0];
+        let nuevosBoards = boards;
+        if (board && board.columnas?.length > 0) {
+            const colDestino = board.columnas.find(c => c.nombre.trim().toLowerCase() === 'hecho')
+                || board.columnas[board.columnas.length - 1];
+            nuevosBoards = boards.map(b => b.id !== board.id ? b : {
+                ...b,
+                columnas: b.columnas.map(c => c.id !== colDestino.id ? c : {
+                    ...c,
+                    tarjetas: [...c.tarjetas, { id: uid(), texto: item.texto }],
+                }),
+            });
+        }
+        actualizar({
+            ...espacio,
+            boards: nuevosBoards,
+            checklist: checklist.filter(it => it.id !== item.id),
+        });
+        toast.success(board ? `"${item.texto}" pasó al Trello` : 'Tarea completada');
+    };
+
     const toggle = (id) => {
+        const item = checklist.find(it => it.id === id);
+        if (!item) return;
+        if (!item.hecho) {
+            marcarHechaYPasarATrello(item);
+            return;
+        }
+        // No debería alcanzarse en el uso normal -- el item ya sale del
+        // checklist apenas se tacha (ver arriba). Se deja por robustez.
         actualizar({
             ...espacio,
             checklist: checklist.map(it => it.id === id ? { ...it, hecho: !it.hecho } : it),
