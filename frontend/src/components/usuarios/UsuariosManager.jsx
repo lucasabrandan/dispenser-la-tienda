@@ -20,8 +20,11 @@ export default function UsuariosManager() {
     const [filtroRol, setFiltroRol]   = useState('TODOS');
     const [confirmEliminar, setConfirmEliminar] = useState(null); // null | usuario
 
-    // Configuracion de empresa (solo en localStorage, solo ADMIN)
-    const CONDICIONES_DEFAULT = 'Precio incluye IVA (efectivo sin factura: precio sin IVA)  ·  Visita sin reparacion: 50% MO  ·  Garantia 90 dias MO  ·  Valido 7 dias';
+    // Configuracion de empresa (solo en localStorage, solo ADMIN). Lucas,
+    // 15-sep-2026: el descuento por efectivo/sin factura es 10%, no "precio
+    // sin IVA" (eso era descontar el 21%) -- debe coincidir con el default
+    // de utils/pdf/bloques/condiciones.js (dibujarCondicionesCompactas).
+    const CONDICIONES_DEFAULT = 'Precio incluye IVA. Pagando en efectivo y sin factura: 10% de descuento.  ·  Visita sin reparacion: 50% de la mano de obra.  ·  Garantia 90 dias sobre mano de obra.  ·  Valido 7 dias.';
     const [condicionesPDF, setCondicionesPDF] = useState(() => localStorage.getItem('empresa_condiciones_pdf') || CONDICIONES_DEFAULT);
     const [condGuardado, setCondGuardado] = useState(false);
 
