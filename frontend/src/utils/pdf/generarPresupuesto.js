@@ -237,7 +237,7 @@ export async function generarSinglePresupuesto(doc, {
     }
 
     // Condiciones compactas — siempre en la misma página que el contenido
-    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita: item.esVisita || false });
+    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita: item.esVisita || false, sinPrecios });
 
     return y;
 }
@@ -451,7 +451,7 @@ export async function generarMultiPresupuesto(doc, {
     // Condiciones compactas (presupuesto no lleva QR ni firmas)
     const todosVisita = ticketItems.every(it => it.esVisita);
     y = checkSalto(doc, y, 20);
-    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita: todosVisita });
+    y = dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita: todosVisita, sinPrecios });
 
     // Fotos — inline si caben, nueva página si no
     await dibujarPaginaEvidencia(doc, ticketItems, fecha, nroDoc, {

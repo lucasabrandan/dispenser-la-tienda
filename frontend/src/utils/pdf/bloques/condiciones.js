@@ -79,7 +79,7 @@ export function dibujarCondicionesYCTA(doc, { y, pageW, empresa, nroDoc, esVisit
     return yRef + 6;
 }
 
-export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita = false }) {
+export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, esVisita = false, sinPrecios = false }) {
     // Línea divisora sutil
     doc.setDrawColor(...C.grayBorder);
     doc.setLineWidth(0.15);
@@ -92,10 +92,20 @@ export function dibujarCondicionesCompactas(doc, { y, pageW, empresa, nroDoc, es
     // (antes decia "precio sin IVA", que era el 21%, no lo que se cobra hoy).
     const defaultRep = 'Precio incluye IVA. Pagando en efectivo y sin factura: 10% de descuento.  ·  Visita sin reparacion: 50% de la mano de obra.  ·  Garantia 90 dias sobre mano de obra.  ·  Valido 7 dias.';
     const defaultVis = 'Precio incluye IVA. Pagando en efectivo y sin factura: 10% de descuento.  ·  Garantia 90 dias sobre mano de obra.  ·  Valido 7 dias.';
-    let textoCond = empresa.condicionesPDF || (esVisita ? defaultVis : defaultRep);
+    // Sin precios: es un documento informativo (ej. remito de informacion tecnica
+    // para un tercero, como el detalle de repuestos que se manda sin el costo de
+    // Lucas) -- la leyenda de IVA/efectivo/descuento no tiene sentido ahi porque
+    // no hay ningun precio al que aplicarle nada. Se ignora tambien el texto
+    // personalizado (empresa.condicionesPDF), que esta pensado para presupuestos
+    // con precio. (Lucas, 18-sep-2026)
+    const defaultSinPreciosRep = 'Documento informativo, sin precios ni validez como presupuesto formal.  ·  Garantia 90 dias sobre mano de obra en las reparaciones que se realicen.  ·  Valido 7 dias.';
+    const defaultSinPreciosVis = 'Documento informativo, sin precios ni validez como presupuesto formal.  ·  Valido 7 dias.';
+    let textoCond = sinPrecios
+        ? (esVisita ? defaultSinPreciosVis : defaultSinPreciosRep)
+        : (empresa.condicionesPDF || (esVisita ? defaultVis : defaultRep));
     // Si es visita, quitar mención de "50% de la mano de obra" de condiciones custom también
     // (soporta tanto la redaccion nueva como la vieja "50% MO")
-    if (esVisita) textoCond = textoCond.replace(/[·\s]*Visita sin reparacion:?\s*50%\s*(de la )?\s*(mano de obra|MO)\.?/gi, '');
+    if (esVisita && !sinPrecios) textoCond = textoCond.replace(/[·\s]*Visita sin reparacion:?\s*50%\s*(de la )?\s*(mano de obra|MO)\.?/gi, '');
     // Texto mas grande y mas oscuro -- a 6pt no se distinguia (Lucas, 15-sep-2026)
     doc.setFontSize(T.sm);
     doc.setFont(undefined, 'normal');
