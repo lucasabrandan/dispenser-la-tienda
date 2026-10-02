@@ -7,7 +7,7 @@ import { getTodayISO } from '../../utils/dateUtils';
 // "Cerrar mi día" (2-oct-2026): resumen del día del técnico + rendición de efectivo.
 // Visitas de hoy por estado, trabajos cerrados hoy y cuánta plata en efectivo cobró
 // (= lo que tiene que entregar). Al enviar le llega al admin como aviso (app + push + WA)
-// por el mismo canal que "Avisar al admin" (POST /ordenes/mensaje-admin, máx 1000 caracteres).
+// como rendición (POST /rendiciones) — ver RendicionesBlock en el Panel del admin.
 
 const fmt = v => `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
 const HECHOS = 'COMPLETADO,PENDIENTE_FACTURACION,FACTURADO,COBRADO,REALIZADO';
@@ -59,11 +59,13 @@ export default function CerrarDiaSheet({ ordenesHoy = [], onClose }) {
     const enviar = async () => {
         setEnviando(true);
         try {
-            await api.post('/ordenes/mensaje-admin', { mensaje: armarMensaje() });
+            // Queda registrada como rendición (el admin la marca "Recibido" en su Panel)
+            // y el backend le manda el aviso al admin con este mismo texto.
+            await api.post('/rendiciones', { fecha: hoy, monto: Math.round(totalEfectivo), detalle: armarMensaje(), nota: nota.trim() || null });
             toast.success('Cierre enviado al admin');
             onClose();
-        } catch {
-            toast.error('No se pudo enviar. Si no tenés señal, probá en un rato.');
+        } catch (e) {
+            toast.error(e?.response?.data?.mensaje || 'No se pudo enviar. Si no tenés señal, probá en un rato.');
         } finally {
             setEnviando(false);
         }

@@ -64,10 +64,15 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, usuarioId, clienteId, pageable));
     }
 
-    // GET: Stats resumen (totalMes, hoy, pendientes, ganancia MO) — accesible a todos los roles
+    // GET: Stats resumen (totalMes, hoy, pendientes, ganancia MO). Solo el admin ve los
+    // números (2-oct-2026): antes cualquier técnico podía pedir la facturación y la
+    // ganancia del mes. Al técnico se le devuelve todo en 0 (su menú no usa estos valores).
     @GetMapping("/resumen")
     public ResponseEntity<ServicioResumenDTO> resumen(
-            @RequestParam(required = false) String tipo) {
+            @RequestParam(required = false) String tipo, Authentication auth) {
+        if (resolverUsuario(auth).getRol() != RolUsuario.ADMIN) {
+            return ResponseEntity.ok(new ServicioResumenDTO(0, 0, 0, 0, 0, 0, 0));
+        }
         return ResponseEntity.ok(servicioService.calcularResumen(tipo));
     }
 

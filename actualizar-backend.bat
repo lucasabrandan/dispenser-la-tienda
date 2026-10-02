@@ -98,6 +98,6 @@ echo.
 echo  ==============================================
 echo   LISTO: backend actualizado y funcionando.
 echo  ==============================================
-git -C "%RAIZ%" log --oneline -1
+git -C "%RAIZ%." log --oneline -1
 pause
 exit /b 0
