@@ -6,6 +6,7 @@ import { M } from './servicio/ServicioUI';
 import CierreCajaModal from './finanzas/CierreCajaModal';
 import AgendaBlock from './dashboard/AgendaBlock';
 import RendicionesBlock from './dashboard/RendicionesBlock';
+import BackupIndicador from './dashboard/BackupIndicador';
 import MiEspacioChecklist from './miespacio/MiEspacioChecklist';
 import { useMiEspacio } from './miespacio/useMiEspacio';
 import { calcTotal } from './dashboard/estadoConstants';
@@ -137,6 +138,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
                 {/* Agenda primero, despues Mi Espacio -- igual en mobile y desktop */}
                 <div className="space-y-4 md:space-y-5">
+                    {esAdmin && <BackupIndicador />}
                     {esAdmin && <RendicionesBlock card={card} />}
 
                     <div className={`${card} p-3.5 md:p-4`}>

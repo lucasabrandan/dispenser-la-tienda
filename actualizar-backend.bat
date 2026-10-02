@@ -46,6 +46,16 @@ if errorlevel 1 (
 )
 
 echo.
+echo      Revisando la clave de los backups (backup.clave)...
+findstr /b /c:"backup.clave=" "%LOCAL%" >nul 2>&1
+if errorlevel 1 (
+    powershell -NoProfile -Command "$b = New-Object byte[] 24; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); $k = [Convert]::ToBase64String($b).Replace('+','A').Replace('/','B').Replace('=',''); Add-Content -Path '%LOCAL%' -Value ''; Add-Content -Path '%LOCAL%' -Value '# Clave de los backups cifrados en R2 - GUARDALA FUERA DE ESTA PC'; Add-Content -Path '%LOCAL%' -Value ('backup.clave=' + $k); Write-Host ''; Write-Host '  ************************************************************'; Write-Host '  CLAVE DE BACKUPS (anotala en un lugar seguro FUERA de esta PC):'; Write-Host ('     ' + $k); Write-Host '  Sin esta clave no se pueden abrir los backups de la nube.'; Write-Host '  ************************************************************'"
+    pause
+) else (
+    echo  OK, ya existe.
+)
+
+echo.
 echo [3/6] Frenando el backend...
 net stop %SERVICIO% >nul 2>&1
 timeout /t 3 /nobreak >nul
