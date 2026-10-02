@@ -206,25 +206,36 @@ export default function PresupuestosManager() {
         tecnicoAsignado: tecnicoPorPresu[p.id] || (p.estado === 'EN_PROGRESO' ? p.usuarioNombre : null) || null,
     })).map(p => ({ ...p, seccion: seccionDe(p) })), [presupuestos, tecnicoPorPresu]);
 
-    // Chips "por técnico" (admin): Todos · Sin asignar · Marcos · ...
+    // Chips "por técnico" (admin) — 2-oct-2026: cambian según la pestaña.
+    //  · En curso: quién lo tiene asignado (técnico de la orden abierta).
+    //  · Realizados: quién lo hizo (el usuario que cerró el trabajo). Antes salían todos
+    //    como "Sin asignar" porque al completarse la orden ya no estaba abierta.
+    //  · Pendientes / En espera: sin chips (nada tiene técnico ahí).
+    // Los números cuentan solo lo de la pestaña actual.
+    const conChips = seccion === 'EN_CURSO' || seccion === 'REALIZADOS';
+    const personaDe = useCallback((p) => (seccion === 'REALIZADOS' ? (p.usuarioNombre || null) : p.tecnicoAsignado), [seccion]);
+    const enSeccion = useMemo(() => presupuestosConNro
+        .filter(p => p.seccion === seccion)
+        .filter(p => !tipoFiltro || p.servicioTipo === tipoFiltro), [presupuestosConNro, seccion, tipoFiltro]);
+
     const chipsTecnico = useMemo(() => {
+        if (!conChips) return [];
         const cuenta = {};
-        presupuestosConNro.forEach(p => { if (p.tecnicoAsignado) cuenta[p.tecnicoAsignado] = (cuenta[p.tecnicoAsignado] || 0) + 1; });
+        let sin = 0;
+        enSeccion.forEach(p => { const n = personaDe(p); if (n) cuenta[n] = (cuenta[n] || 0) + 1; else sin++; });
         return [
-            { id: '', label: 'Todos', count: presupuestosConNro.length },
-            { id: '__SIN__', label: 'Sin asignar', count: presupuestosConNro.filter(p => !p.tecnicoAsignado).length },
+            { id: '', label: 'Todos', count: enSeccion.length },
             ...Object.keys(cuenta).sort().map(n => ({ id: n, label: n.split(' ')[0], count: cuenta[n], color: colorTecnico(n) })),
+            ...(sin ? [{ id: '__SIN__', label: seccion === 'REALIZADOS' ? 'Sin técnico' : 'Sin asignar', count: sin }] : []),
         ];
-    }, [presupuestosConNro]);
+    }, [enSeccion, personaDe, conChips, seccion]);
 
     const presupuestosFiltradosTipo = useMemo(() => {
-        const porTecnico = filtroTecnico === '' ? presupuestosConNro
-            : filtroTecnico === '__SIN__' ? presupuestosConNro.filter(p => !p.tecnicoAsignado)
-            : presupuestosConNro.filter(p => p.tecnicoAsignado === filtroTecnico);
-        const porTipo = tipoFiltro ? porTecnico.filter(p => p.servicioTipo === tipoFiltro) : porTecnico;
-        const items = porTipo.filter(p => p.seccion === seccion);
+        const items = !conChips || filtroTecnico === '' ? enSeccion
+            : filtroTecnico === '__SIN__' ? enSeccion.filter(p => !personaDe(p))
+            : enSeccion.filter(p => personaDe(p) === filtroTecnico);
         return [...items].sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha) || (b.id || 0) - (a.id || 0));
-    }, [presupuestosConNro, tipoFiltro, filtroTecnico, seccion]);
+    }, [enSeccion, filtroTecnico, personaDe, conChips]);
 
     const filtros = useFiltros(presupuestosFiltradosTipo, {
         // Un presupuesto pendiente de agosto sigue pendiente: por defecto se ve todo.
@@ -248,13 +259,12 @@ export default function PresupuestosManager() {
     const conteoSeccion = useMemo(() => {
         const c = { PENDIENTES: 0, EN_CURSO: 0, EN_ESPERA: 0, REALIZADOS: 0 };
         presupuestosConNro
-            .filter(p => filtroTecnico === '' ? true : filtroTecnico === '__SIN__' ? !p.tecnicoAsignado : p.tecnicoAsignado === filtroTecnico)
             .filter(p => !tipoFiltro || p.servicioTipo === tipoFiltro)
             .forEach(p => { c[p.seccion]++; });
         return c;
-    }, [presupuestosConNro, filtroTecnico, tipoFiltro]);
+    }, [presupuestosConNro, tipoFiltro]);
 
-    const cambiarSeccion = (id) => { setSeccion(id); setModoSeleccion(false); setSeleccionados(new Set()); };
+    const cambiarSeccion = (id) => { setSeccion(id); setFiltroTecnico(''); setModoSeleccion(false); setSeleccionados(new Set()); };
 
     // Swipe en contenido para cambiar de sección
     const columnIds = SECCIONES.map(t => t.id);
@@ -315,7 +325,10 @@ export default function PresupuestosManager() {
 
                 {/* Por técnico: acceso directo a lo que tiene asignado cada uno */}
                 {esAdmin && chipsTecnico.length > 2 && (
-                    <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1" role="group" aria-label="Filtrar por técnico">
+                    <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 items-center" role="group" aria-label="Filtrar por técnico">
+                        <span className="text-label font-bold text-muted shrink-0 pr-1">
+                            {seccion === 'REALIZADOS' ? 'Hecho por' : 'Lo tiene'}
+                        </span>
                         {chipsTecnico.map(c => {
                             const activo = filtroTecnico === c.id;
                             return (
