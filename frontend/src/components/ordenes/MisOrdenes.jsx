@@ -16,6 +16,7 @@ import SalidaTecnicoSheet from './SalidaTecnicoSheet';
 import MiAgenda from './MiAgenda';
 import { enviarOEncolar } from '../../utils/pendientesOffline';
 import HistorialSerieSheet from './HistorialSerieSheet';
+import CerrarDiaSheet from './CerrarDiaSheet';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -396,6 +397,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [ordenRegistrando, setOrdenRegistrando] = useState(null);
     const [noAtendidoOrden, setNoAtendidoOrden] = useState(null);
     const [buscarSerie, setBuscarSerie] = useState(false);
+    const [cerrarDia, setCerrarDia] = useState(false);
     const [salida, setSalida] = useState(null); // { modo: 'orden'|'hoy'|'mensaje', orden? }
     const [notaNoAtendido, setNotaNoAtendido] = useState('');
     const [servicioDetalle, setServicioDetalle] = useState(null);
@@ -593,6 +595,10 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             className="h-11 rounded-xl text-label font-bold text-muted border border-black/10 dark:border-line active:scale-95">
                             No puedo trabajar hoy
                         </button>
+                        <button onClick={() => setCerrarDia(true)}
+                            className="col-span-2 h-11 rounded-xl text-label font-black uppercase text-white bg-ink dark:text-[#1C1917] active:scale-95">
+                            Cerrar mi día
+                        </button>
                     </div>
                 )}
 
@@ -673,6 +679,12 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         )}
 
         {buscarSerie && <HistorialSerieSheet onClose={() => setBuscarSerie(false)} />}
+        {cerrarDia && (
+            <CerrarDiaSheet
+                ordenesHoy={[...ordenes, ...historial.filter(h => !ordenes.some(o => o.id === h.id))]
+                    .filter(o => o.fechaProgramada === getTodayISO())}
+                onClose={() => setCerrarDia(false)} />
+        )}
 
         {servicioEjecutando && (
             <EjecutarOrdenSheet
