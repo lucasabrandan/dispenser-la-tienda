@@ -80,10 +80,17 @@ self.addEventListener('push', (event) => {
             // número coincidía. Para esos tipos se omite "data": el click
             // cae al fallback seguro (abre la lista general).
             const esDeTrabajo = ultima.tipo === 'TRABAJO_ASIGNADO';
+            // El push llega vacío y acá se muestra "la última" notificación. Si llegan
+            // dos pushes seguidos (o el usuario tiene el celu registrado dos veces), los
+            // dos leían la misma y el celu sonaba dos veces con el mismo texto. Ahora:
+            // si esa notificación ya está en pantalla, se reemplaza en silencio.
+            const tag = `dlt-${ultima.id ?? 'notificacion'}`;
+            const yaMostrada = (await self.registration.getNotifications({ tag })).length > 0;
             return self.registration.showNotification(ultima.titulo || generico.title, {
                 body: ultima.mensaje || generico.options.body,
-                tag: 'dlt-notificacion',
-                renotify: true,
+                tag,
+                renotify: !yaMostrada,
+                silent: yaMostrada,
                 data: esDeTrabajo ? { referenciaId: ultima.referenciaId, tipo: ultima.tipo } : undefined,
             });
         } catch {

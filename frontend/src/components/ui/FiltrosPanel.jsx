@@ -18,7 +18,7 @@ function SegmentBar({ items, value, onChange }) {
                     className={`flex-1 h-8 text-label font-bold uppercase transition-all active:scale-[0.98] ${
                         value === item.value
                             ? 'bg-brand-red text-white z-[1]'
-                            : 'bg-white dark:bg-[#1C1C1C] text-muted'
+                            : 'bg-white dark:bg-[#161615] text-muted'
                     } ${i > 0 ? 'border-l border-black/[0.05] dark:border-white/[0.05]' : ''}`}>
                     {item.label}
                 </button>

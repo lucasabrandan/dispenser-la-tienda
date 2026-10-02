@@ -72,7 +72,11 @@ export function useOrdenes({ tecnicoId = null, enabled = true } = {}) {
     const actualizar = async (id, form) => {
         const loading = toast.loading('Guardando...');
         try {
-            await api.put(`/ordenes/${id}`, form);
+            const { estadoNuevo, ...datos } = form;
+            await api.put(`/ordenes/${id}`, datos);
+            if (estadoNuevo) {
+                await api.patch(`/ordenes/${id}/estado`, { estado: estadoNuevo });
+            }
             toast.success('Orden actualizada', { id: loading });
             setOrdenEditar(null);
             cargar();

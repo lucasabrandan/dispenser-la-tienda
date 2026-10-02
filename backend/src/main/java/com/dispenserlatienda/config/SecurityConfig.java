@@ -84,6 +84,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/servicios/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/clientes/**").hasRole("ADMIN")
 
+                // Órdenes: el técnico solo usa /mias, /historial y /{id}/estado (chequeados
+                // por dueño en el controller). Listar TODAS, editar o borrar es de admin.
+                .requestMatchers(HttpMethod.GET, "/api/ordenes").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/ordenes/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/ordenes/**").hasRole("ADMIN")
+
                 // Resto: cualquier usuario autenticado
                 .anyRequest().authenticated()
             )

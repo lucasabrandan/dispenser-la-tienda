@@ -22,5 +22,9 @@ public record OrdenVisitaDTO(
     LocalDateTime creadoEn,
     java.math.BigDecimal montoEstimado,
     String formaPago,
-    Long presupuestoId
+    Long presupuestoId,
+    // Del presupuesto vinculado: si el día/hora todavía está "a coordinar" y qué
+    // días/franjas aceptó el cliente (JSON [{dia, franja}]), para que el técnico lo vea.
+    Boolean horarioACoordinar,
+    String ventanasCliente
 ) {}

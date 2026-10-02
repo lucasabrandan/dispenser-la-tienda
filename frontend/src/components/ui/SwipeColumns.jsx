@@ -132,7 +132,7 @@ export default function SwipeColumns({ columns, activeId, onChangeColumn }) {
                                     ? 'text-white z-[1]'
                                     : completado
                                         ? 'bg-chip text-secondary'
-                                        : 'bg-white dark:bg-[#1C1C1C] text-muted'
+                                        : 'bg-white dark:bg-[#161615] text-muted'
                             } ${i > 0 ? 'border-l border-black/[0.05] dark:border-white/[0.05]' : ''}`}
                             style={activo ? { backgroundColor: col.color || '#D13A28' } : {}}
                         >

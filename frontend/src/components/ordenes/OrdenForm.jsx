@@ -6,6 +6,7 @@ import { buildSelectStyles } from '../servicio/ServicioUI';
 import { useTheme } from '../../hooks/useTheme';
 import DateInput from '../ui/DateInput';
 
+import { filtroMultiTermino } from '../../utils/busqueda';
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
     { value: 'NORMAL',  label: 'Normal'  },
@@ -27,7 +28,18 @@ const EMPTY = {
     montoEstimado: '',
     formaPago: 'EFECTIVO',
     presupuestoId: '',
+    estado: '',
 };
+
+// Estados que el admin puede poner a mano desde "Editar orden". COMPLETADA no:
+// cerrar una orden genera/actualiza el servicio y eso se hace desde "Cerrar trabajo".
+const ESTADOS_EDITABLES = [
+    { value: 'PENDIENTE',   label: 'Pendiente' },
+    { value: 'EN_CAMINO',   label: 'En camino' },
+    { value: 'EN_SITIO',    label: 'En sitio' },
+    { value: 'NO_ATENDIDO', label: 'No atendido (reprogramar)' },
+    { value: 'CANCELADA',   label: 'Cancelada' },
+];
 
 export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
     const [form, setForm]             = useState(EMPTY);
@@ -36,7 +48,9 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
     const { isDark } = useTheme();
 
     useEffect(() => {
-        api.get('/servicios', { params: { estado: 'PRESUPUESTO', size: 500 } })
+        // PRESUPUESTO + EN_PROGRESO: el presupuesto ya vinculado a esta orden está EN_PROGRESO
+        // y antes no aparecía en la lista → se veía "Sin presupuesto vinculado" aunque lo estuviera.
+        api.get('/servicios', { params: { estado: 'PRESUPUESTO,EN_PROGRESO', size: 500 } })
             .then(r => setPresupuestos(r.data.content || r.data || []))
             .catch(() => {});
         api.get('/clientes', { params: { size: 1000 } })
@@ -60,11 +74,29 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                 montoEstimado:   orden.montoEstimado || '',
                 formaPago:       orden.formaPago || 'EFECTIVO',
                 presupuestoId:   orden.presupuestoId || '',
+                estado:          orden.estado || '',
             });
         } else {
             setForm(EMPTY);
         }
     }, [orden]);
+
+    // Órdenes viejas creadas desde el asistente quedaron sin dirección ni monto:
+    // al editarlas se completan con los datos del presupuesto vinculado.
+    useEffect(() => {
+        if (!orden?.presupuestoId || presupuestos.length === 0) return;
+        const p = presupuestos.find(x => String(x.id) === String(orden.presupuestoId));
+        if (!p) return;
+        const total = (p.items || []).reduce((a, i) => a + Number(i.costo || 0), 0);
+        setForm(f => ({
+            ...f,
+            direccion:       f.direccion || p.sedeDireccion || '',
+            montoEstimado:   f.montoEstimado || total || '',
+            clienteTelefono: f.clienteTelefono || p.clienteTelefono || '',
+            clienteId:       f.clienteId || p.clienteId || null,
+            descripcion:     f.descripcion || (p.items || []).map(it => it.trabajoRealizado).filter(Boolean).join(' · '),
+        }));
+    }, [orden, presupuestos]);
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -102,6 +134,8 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
             clienteId:     form.clienteId || null,
             montoEstimado: form.montoEstimado ? Number(form.montoEstimado) : null,
             presupuestoId: form.presupuestoId ? Number(form.presupuestoId) : null,
+            // Solo se manda si el admin lo cambió; el hook lo aplica con PATCH /estado
+            estadoNuevo:   orden && form.estado && form.estado !== orden.estado ? form.estado : null,
         });
     };
 
@@ -115,7 +149,10 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
         cliente: c,
     }));
 
-    const clienteSeleccionado = clienteOpciones.find(o => o.value === form.clienteId) || null;
+    // Si la orden tiene nombre de cliente pero no id (o el cliente no vino en la lista),
+    // se muestra igual el nombre en vez de "Buscar cliente..." vacío.
+    const clienteSeleccionado = clienteOpciones.find(o => o.value === form.clienteId)
+        || (form.clienteNombre ? { value: form.clienteId || '__manual__', label: form.clienteNombre, sublabel: form.clienteTelefono || '' } : null);
 
     const presupuestoSeleccionado = presupuestos.find(p => String(p.id) === String(form.presupuestoId));
 
@@ -134,10 +171,24 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                 </select>
             </div>
 
+            {/* Estado (solo al editar) */}
+            {orden && (
+                <div>
+                    <label className={labelCls}>Estado</label>
+                    {orden.estado === 'COMPLETADA' ? (
+                        <p className="text-body font-bold text-ink px-1">Completada — se corrige desde el servicio</p>
+                    ) : (
+                        <select value={form.estado} onChange={e => set('estado', e.target.value)} className={inputCls}>
+                            {ESTADOS_EDITABLES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                    )}
+                </div>
+            )}
+
             {/* Cliente desde BD */}
             <div>
                 <label className={labelCls}>Cliente</label>
-                <Select
+                <Select filterOption={filtroMultiTermino}
                     options={clienteOpciones}
                     value={clienteSeleccionado}
                     onChange={handleClienteSelect}
@@ -174,7 +225,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
             <div>
                 <label className={labelCls}>Dirección</label>
                 <input value={form.direccion} onChange={e => set('direccion', e.target.value)}
-                    placeholder="Av. Corrientes 1234, CABA" className={inputCls} />
+                    placeholder="Calle y número, localidad" className={inputCls} />
             </div>
 
             {/* Vincular presupuesto existente */}

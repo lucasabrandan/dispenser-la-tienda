@@ -67,7 +67,7 @@ export default function PasoDetalle({
                                 className={`px-3 py-2.5 flex items-center gap-3 ${i < repuestosAgregados.length - 1 ? 'border-b border-black/[0.07] dark:border-white/[0.07]' : ''}`}>
                                 {r.fotoUrl && (
                                     <img src={r.fotoUrl} alt={r.nombre}
-                                        className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#E8E5E0] dark:bg-[#242424]"
+                                        className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#E8E5E0] dark:bg-[#1C1C1B]"
                                         onError={e => { e.target.style.display = 'none'; }} />
                                 )}
                                 <div className="flex-1 min-w-0">
@@ -99,7 +99,7 @@ export default function PasoDetalle({
                     onChange={e => setObservaciones(e.target.value)}
                     placeholder="Anota cualquier detalle del trabajo realizado..."
                     rows={3}
-                    className="w-full px-3 py-2.5 rounded-xl text-body border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2E2E2E] text-ink placeholder:text-muted outline-none resize-none"
+                    className="w-full px-3 py-2.5 rounded-xl text-body border border-black/[0.08] dark:border-white/[0.08] bg-[#FFFFFF] dark:bg-[#2A2A28] text-ink placeholder:text-muted outline-none resize-none"
                 />
             </section>
 

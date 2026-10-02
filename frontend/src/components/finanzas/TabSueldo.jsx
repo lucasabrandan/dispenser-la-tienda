@@ -132,7 +132,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
                         <span className="text-body-lg font-black text-muted">$</span>
                         <input type="text" inputMode="decimal" value={metaInput} onChange={e => setMetaInput(e.target.value)}
                             placeholder="1200000"
-                            className="flex-1 h-9 px-3 rounded-lg text-body-lg font-bold outline-none bg-[#F5F3F1] dark:bg-[#2E2E2E] text-ink border border-black/[0.05] dark:border-white/[0.05]" />
+                            className="flex-1 h-9 px-3 rounded-lg text-body-lg font-bold outline-none bg-[#F5F3F1] dark:bg-[#2A2A28] text-ink border border-black/[0.05] dark:border-white/[0.05]" />
                         <button onClick={guardarMeta}
                             className="h-9 px-4 rounded-lg font-bold text-label uppercase text-white bg-brand-red active:scale-95">
                             Guardar

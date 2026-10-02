@@ -26,8 +26,8 @@ export default function CalculadoraMO({ desglose, esVisita, pctIVA, itemActual, 
                 <span className="text-label">{abierto ? '▲' : '▼'}</span>
             </button>
             {abierto && (
-                <div className="p-3 rounded-xl bg-[#E8E5E0]/50 dark:bg-[#2E2E2E]/50 space-y-3">
-                    <div className="p-3 rounded-xl bg-[#FFFFFF]/50 dark:bg-[#242424]/50 space-y-1.5">
+                <div className="p-3 rounded-xl bg-[#E8E5E0]/50 dark:bg-[#2A2A28]/50 space-y-3">
+                    <div className="p-3 rounded-xl bg-[#FFFFFF]/50 dark:bg-[#1C1C1B]/50 space-y-1.5">
                         <p className="text-label font-black text-muted uppercase mb-1">Al cliente</p>
                         <div className="flex justify-between text-body">
                             <span className="text-secondary">Con factura (IVA inc.)</span>

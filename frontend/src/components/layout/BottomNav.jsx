@@ -29,11 +29,15 @@ const SECCIONES_MAS = ['presupuestos', 'clientes', 'radar', 'productos', 'finanz
 
 export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) {
     const { esAdmin } = useAuth();
-    const { pendientes, ordenesActivas } = useBadges();
+    const { ordenesActivas } = useBadges();
     const NAV_ITEMS = esAdmin ? NAV_ADMIN : NAV_TECNICO;
     // Mismo criterio que Sidebar.jsx: admin ve Despacho fusionado adentro de
     // "Técnico" (modo), el badge suma las dos señales.
-    const servicioTecnicoBadge = esAdmin ? pendientes + ordenesActivas : pendientes;
+    // Badge = lo que pide acción HOY: órdenes de hoy o atrasadas sin cerrar.
+    // Antes sumaba además TODOS los presupuestos pendientes de la historia
+    // (daba 122 con 2 visitas en el día). Los presupuestos tienen su propio
+    // badge en "Presupuestos"; el técnico ve lo suyo en "Mis órdenes".
+    const servicioTecnicoBadge = esAdmin ? ordenesActivas : 0;
 
     return (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-panel transition-colors border-t border-black/[0.08] dark:border-white/[0.07]">

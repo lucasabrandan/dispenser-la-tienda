@@ -106,4 +106,25 @@ public class EquipoService {
         equipo.setActive(true);  // ✅ CAMBIO: setActivo → setActive
         equipoRepository.save(equipo);
     }
+
+    /**
+     * Próximo N/S libre para la base dada (ej. "MS290926"): devuelve la base si está libre,
+     * si no MS290926A, MS290926B... `ocupados` son series ya usadas en el ticket actual
+     * que todavía no se guardaron.
+     */
+    public String siguienteSerie(String base, java.util.Collection<String> ocupados) {
+        String b = base == null ? "" : base.trim().toUpperCase().replaceAll("[^A-Z0-9]", "");
+        if (b.isEmpty()) throw new IllegalArgumentException("Base de serie vacía");
+        java.util.Set<String> usados = new java.util.HashSet<>();
+        equipoRepository.seriesQueEmpiezanCon(b).forEach(x -> usados.add(x.toUpperCase()));
+        if (ocupados != null) ocupados.forEach(x -> { if (x != null) usados.add(x.trim().toUpperCase()); });
+        if (!usados.contains(b)) return b;
+        for (char c = 'A'; c <= 'Z'; c++) {
+            if (!usados.contains(b + c)) return b + c;
+        }
+        for (char c1 = 'A'; c1 <= 'Z'; c1++)
+            for (char c2 = 'A'; c2 <= 'Z'; c2++)
+                if (!usados.contains(b + c1 + c2)) return b + c1 + c2;
+        throw new IllegalStateException("No quedan series libres para " + b);
+    }
 }

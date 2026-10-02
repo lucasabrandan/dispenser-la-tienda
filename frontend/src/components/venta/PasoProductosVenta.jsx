@@ -117,7 +117,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                 <img
                                     src={p.fotoUrl}
                                     alt={p.nombre}
-                                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#E8E5E0] dark:bg-[#242424]"
+                                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-[#E8E5E0] dark:bg-[#1C1C1B]"
                                     onError={e => { e.target.style.display = 'none'; }}
                                 />
                             )}
@@ -130,7 +130,7 @@ export default function PasoProductosVenta({ hook, onNext, onBack }) {
                                 <p className="font-bold text-sm text-ink truncate">{p.nombre}</p>
                                 <p className="text-caption text-muted">${Math.round(Number(p.precio)).toLocaleString('es-AR')} c/u</p>
                             </div>
-                            <div className="flex items-center gap-1 bg-[#E8E5E0] dark:bg-[#1C1C1C] rounded-xl px-2 py-1">
+                            <div className="flex items-center gap-1 bg-[#E8E5E0] dark:bg-[#161615] rounded-xl px-2 py-1">
                                 <button
                                     type="button"
                                     onClick={() => {

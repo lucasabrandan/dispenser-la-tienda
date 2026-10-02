@@ -125,7 +125,7 @@ function RentabilidadPanel({ resumen, desglose, onEditarCosto }) {
                                                     <input type="text" inputMode="decimal"
                                                         value={d.repuesto.costo ?? ''}
                                                         onChange={e => onEditarCosto(d.itemIdx, d.repIdx, e.target.value)}
-                                                        className="w-16 h-7 rounded-md text-center text-caption font-bold bg-[#141414] border border-[#2A9D5C]/30 text-[#F0EEE9] outline-none focus:border-[#2A9D5C]" />
+                                                        className="w-16 h-7 rounded-md text-center text-caption font-bold bg-[#111110] border border-[#2A9D5C]/30 text-[#F0EEE9] outline-none focus:border-[#2A9D5C]" />
                                                 </div>
                                                 <p className="text-caption font-black text-[#5DD68F]">
                                                     <M valor={Math.round(d.ganancia.ganancia)} /> &middot; {d.ganancia.margen}%
@@ -227,7 +227,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
 
     const inputCls = `
         w-full block px-3.5 py-2.5 rounded-xl text-body font-medium outline-none
-        bg-[#E8E5E0] dark:bg-[#1C1C1C]
+        bg-[#E8E5E0] dark:bg-[#161615]
         text-ink
         border border-black/10 dark:border-white/[0.08]
         placeholder-muted

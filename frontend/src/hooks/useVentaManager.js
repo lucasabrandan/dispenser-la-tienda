@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import { resolverFechas } from '../utils/dateUtils';
+import { POR_PAGINA } from '../utils/paginacion';
 
 /**
  * useVentaManager
@@ -58,6 +59,18 @@ export function useVentaManager() {
         setPeriodoRapido('CUSTOM'); setMesSelector(''); setPagina(0);
     };
 
+    // Mismos filtros para la lista y para los contadores de pestañas (ver useServicioManager).
+    const paramsBase = useMemo(() => {
+        const fechas = resolverFechas(periodoRapido, mesSelector, desde, hasta);
+        const p = { tipo: 'VENTA' };
+        if (busquedaApi) p.busqueda = busquedaApi;
+        else {
+            if (fechas.desde) p.desde = fechas.desde;
+            if (fechas.hasta) p.hasta = fechas.hasta;
+        }
+        return p;
+    }, [busquedaApi, periodoRapido, mesSelector, desde, hasta]);
+
     // ── Fetch lista ──────────────────────────────────────────────────────────────
     const cargarVentas = useCallback(async () => {
         setCargando(true);
@@ -66,7 +79,7 @@ export function useVentaManager() {
             const params = {
                 tipo: 'VENTA',
                 page: pagina,
-                size: 20,
+                size: POR_PAGINA,
                 sort: 'fechaServicio,desc',
             };
             if (estado !== 'TODOS') params.estado   = estado;
@@ -185,6 +198,7 @@ export function useVentaManager() {
         mesSelector, aplicarMesSelector,
         desde, hasta, aplicarRango,
         mesesDisponibles: [],
+        paramsBase,
         totalItems,
         pagina: pagina + 1,
         totalPaginas,

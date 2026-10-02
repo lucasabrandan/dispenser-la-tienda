@@ -31,6 +31,13 @@ public class EquipoController {
         return ResponseEntity.ok(equipoService.listarTodos(pageable));
     }
 
+    // GET /api/equipos/siguiente-serie?base=MS290926&ocupados=MS290926A,MS290926B
+    @GetMapping("/siguiente-serie")
+    public java.util.Map<String, String> siguienteSerie(@RequestParam String base,
+                                                        @RequestParam(required = false) java.util.List<String> ocupados) {
+        return java.util.Map.of("serie", equipoService.siguienteSerie(base, ocupados));
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Equipo crear(@Valid @RequestBody EquipoCreateDTO dto) {

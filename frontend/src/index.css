@@ -49,6 +49,15 @@
   --blue-tx:    #1D4ED8;
   --indigo-bg:  #E0E7FF;
   --indigo-tx:  #4338CA;
+
+  /* ── Sistema "cada color, una función" (rediseño 29-sep-2026) ──
+     4 estados, siempre como punto/texto chico, nunca fondo lleno. */
+  --estado-pendiente: #78716C;
+  --estado-camino:    #2563EB;
+  --estado-curso:     #B45309;
+  --estado-listo:     #15803D;
+  /* Separador entre filas dentro de una tarjeta (reemplaza cajas anidadas) */
+  --color-line: rgba(0, 0, 0, 0.07);
 }
 
 /* Cuando se activa el modo oscuro (.dark en el HTML) */
@@ -59,11 +68,11 @@
 
   --color-ink: #F0EEE9;
   --color-muted: #9E9A94;
-  --color-bg-page: #141414;
-  --color-bg-card: #242424;
+  --color-bg-page: #111110;
+  --color-bg-card: #1C1C1B;
 
-  --color-chip-bg: #2E2E2E;
-  --color-panel-bg: #1C1C1C;
+  --color-chip-bg: #2A2A28;
+  --color-panel-bg: #161615;
   --color-text-secondary: #9E9A94;
 
   --warning-bg: #2E2207;
@@ -85,6 +94,12 @@
   --blue-tx:    #60A5FA;
   --indigo-bg:  rgba(49, 46, 129, 0.3);
   --indigo-tx:  #818CF8;
+
+  --estado-pendiente: #A8A29E;
+  --estado-camino:    #60A5FA;
+  --estado-curso:     #F0A500;
+  --estado-listo:     #4ADE80;
+  --color-line: rgba(255, 255, 255, 0.06);
 }
 
 /* =========================================

@@ -59,12 +59,16 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
     const { usuario, logout, esAdmin } = useAuth();
-    const { pendientes, ordenesActivas } = useBadges();
+    const { ordenesActivas } = useBadges();
     const menuOperaciones = esAdmin ? null : MENU_OPERACIONES_TECNICO; // null = admin usa los grupos por dominio, se renderiza aparte
     // Admin ve Despacho fusionado adentro de "Servicio Técnico" (modo), así que
     // el badge de acá suma las dos señales; el técnico no tiene ese modo, sigue
     // viendo solo sus pendientes (sus órdenes activas ya están en "Mis Ordenes").
-    const servicioTecnicoBadge = esAdmin ? pendientes + ordenesActivas : pendientes;
+    // Badge = lo que pide acción HOY: órdenes de hoy o atrasadas sin cerrar.
+    // Antes sumaba además TODOS los presupuestos pendientes de la historia
+    // (daba 122 con 2 visitas en el día). Los presupuestos tienen su propio
+    // badge en "Presupuestos"; el técnico ve lo suyo en "Mis órdenes".
+    const servicioTecnicoBadge = esAdmin ? ordenesActivas : 0;
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
@@ -74,7 +78,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
             null;
         const baseBtn = activa
             ? 'bg-brand-red text-white font-black shadow-lg'
-            : 'text-secondary hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] font-bold';
+            : 'text-secondary hover:bg-[#E8E5E0] dark:hover:bg-[#2A2A28] font-bold';
 
         if (colapsado) {
             return (
@@ -104,7 +108,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
         );
     };
 
-    const iconBtn = 'p-2 rounded-xl transition-all hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]';
+    const iconBtn = 'p-2 rounded-xl transition-all hover:bg-[#E8E5E0] dark:hover:bg-[#2A2A28]';
 
     return (
         <aside className={`hidden md:flex flex-col h-screen sticky top-0 bg-panel border-r border-black/[0.07] dark:border-white/[0.07] transition-all duration-300 z-50 overflow-hidden ${colapsado ? 'w-[64px]' : 'w-[270px]'}`}>
@@ -124,7 +128,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
                 )}
                 <button onClick={() => setColapsado(!colapsado)}
                     title={colapsado ? 'Expandir sidebar' : 'Colapsar sidebar'}
-                    className={`${colapsado ? '' : 'absolute top-3 right-3'} w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] text-muted transition-all`}>
+                    className={`${colapsado ? '' : 'absolute top-3 right-3'} w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#E8E5E0] dark:hover:bg-[#2A2A28] text-muted transition-all`}>
                     {colapsado ? <ChevronRight /> : <ChevronLeft />}
                 </button>
             </div>

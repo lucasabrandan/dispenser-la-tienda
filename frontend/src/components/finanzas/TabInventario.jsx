@@ -6,8 +6,8 @@ import { formatearPrecio } from '../../utils/formatearPrecio';
 import Paginacion from '../ui/Paginacion';
 import StatCard from './StatCard';
 import { LuPackage } from 'react-icons/lu';
+import { POR_PAGINA } from '../../utils/paginacion';
 
-const POR_PAGINA = 15;
 
 export default function TabInventario() {
     const { ocultar } = useMontos();
@@ -103,7 +103,7 @@ export default function TabInventario() {
                         </div>
                     )}
 
-                    <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
+                    <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#161615]/50">
                         <p className="text-label font-black text-muted uppercase">Totales</p>
                         <div className="text-right">
                             <p className="text-body-lg font-black text-brand-amber">

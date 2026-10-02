@@ -83,8 +83,9 @@ export function estadoGarantia(fechaHastaISO) {
     if (!fechaHastaISO) return null;
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const hasta = new Date(fechaHastaISO);
-    hasta.setHours(0, 0, 0, 0);
+    // 'YYYY-MM-DD' sin hora se lee como UTC y en Argentina queda en el día
+    // anterior: se fuerza medianoche local para no contar un día de menos.
+    const hasta = new Date(String(fechaHastaISO).slice(0, 10) + 'T00:00:00');
     const dias = Math.round((hasta - hoy) / 86400000);
     return { dias, vigente: dias >= 0, hasta: fechaHastaISO };
 }

@@ -333,8 +333,16 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     return { totalVenta, totalCosto, descuento, totalConDescuento, gananciaBruta, margenFinal };
   };
 
+  // ¿Existe este N/S en el inventario pero en una sede de otro cliente?
+  const serialDeOtroCliente = serial => {
+    const eq = db.equipos?.find(e => e.numeroSerie?.toUpperCase() === serial?.toUpperCase());
+    if (!eq || !clienteId) return false;
+    const sede = db.sedes?.find(sd => sd.id === eq.sedeId);
+    return !!sede && sede.cliente?.id?.toString() !== clienteId;
+  };
+
   const consultarAntecedentes = async serial => {
-    if (!serial || serial === 'MOSTRADOR') { setHistorialEquipo(null); return; }
+    if (!serial || serial === 'MOSTRADOR') { setHistorialEquipo(null); return true; }
     try {
       // El endpoint /servicios no tiene filtro "equipoSerial" — el filtro real es
       // "busqueda" (busca por N/S, cliente, sede, etc. via LIKE), y devuelve un
@@ -342,12 +350,36 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       // de serie porque "busqueda" matchea por substring.
       const res = await api.get(`/servicios?busqueda=${encodeURIComponent(serial)}&sort=fechaServicio,desc&size=50`);
       const lista = res.data?.content || res.data || [];
-      const coincidencias = lista.filter(s => s.items?.some(i => i.equipoSerial === serial));
+      const conEseSerial = lista.filter(s => s.items?.some(i => i.equipoSerial === serial));
+      // Solo historial de ESTE cliente: el de otro cliente no se muestra (no tiene
+      // sentido y expone datos ajenos). Si el N/S es de otro, se avisa y listo.
+      const coincidencias = conEseSerial.filter(s => clienteId && s.clienteId?.toString() === clienteId);
+      if (coincidencias.length === 0 && (conEseSerial.length > 0 || serialDeOtroCliente(serial))) {
+        setHistorialEquipo(null);
+        toast.error(`El N/S ${serial} ya está registrado en otro cliente. Usá otro o tocá "Generar".`, { duration: 6000 });
+        return false;
+      }
       if (coincidencias.length > 0) {
         const ultimo = coincidencias[0];
-        const itemGarantia = ultimo.items?.find(i => i.equipoSerial === serial && i.garantiaHasta);
-        const garantiaInfo = itemGarantia ? estadoGarantia(itemGarantia.garantiaHasta) : null;
-        setHistorialEquipo({ ...ultimo, garantiaInfo });
+        // La garantía sale del último trabajo HECHO (no de un presupuesto). Si ese
+        // ítem no tiene la fecha cargada (datos viejos), se estima con la regla del
+        // backend: 3 meses desde la fecha del servicio.
+        const TERMINADOS = ['COMPLETADO', 'PENDIENTE_FACTURACION', 'FACTURADO', 'COBRADO', 'REALIZADO'];
+        const ultimoHecho = coincidencias.find(c => TERMINADOS.includes(c.estado)) || null;
+        const itemGarantia = ultimoHecho?.items?.find(i => i.equipoSerial === serial && i.garantiaHasta);
+        let garantiaHasta = itemGarantia?.garantiaHasta || null;
+        let estimada = false;
+        if (!garantiaHasta && ultimoHecho?.fecha) {
+          const f = new Date(String(ultimoHecho.fecha).slice(0, 10) + 'T00:00:00');
+          f.setMonth(f.getMonth() + 3);
+          garantiaHasta = formatDateISO(f);
+          estimada = true;
+        }
+        const garantiaInfo = garantiaHasta ? { ...estadoGarantia(garantiaHasta), estimada } : null;
+        const diasDesde = ultimo.fecha
+          ? Math.max(0, Math.round((new Date(getTodayISO() + 'T00:00:00') - new Date(String(ultimo.fecha).slice(0, 10) + 'T00:00:00')) / 86400000))
+          : null;
+        setHistorialEquipo({ ...ultimo, garantiaInfo, diasDesde, esPresupuesto: !TERMINADOS.includes(ultimo.estado) });
         if (garantiaInfo) {
           const dias = Math.abs(garantiaInfo.dias);
           if (garantiaInfo.vigente) {
@@ -359,7 +391,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       } else {
         setHistorialEquipo(null);
       }
-    } catch { console.error('Error antecedentes'); }
+      return true;
+    } catch { console.error('Error antecedentes'); return true; }
   };
 
   const enviarWhatsAppMantenimiento = () => {
@@ -736,7 +769,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             trabajoTipo:      it.esVisita ? 'VISITA' : (tieneEquipo ? (esFiltro ? 'CAMBIO_FILTRO' : 'REPARACION') : 'VENTA'),
             repuestosUsados:  it.repuestosUsados || [],
             garantiaHasta:    confirmarTrabajo && tieneEquipo
-              ? formatDateISO(new Date(new Date().setMonth(new Date().getMonth() + (esFiltro ? 6 : 3))))
+              ? formatDateISO(new Date(new Date().setMonth(new Date().getMonth() + 3))) // garantía: 3 meses siempre (Lucas, 29-sep-2026)
               : null,
             // Prioridad: filename de subida nueva > filename existente del backend
             // Las data URLs no se mandan al backend (ya se subieron arriba)

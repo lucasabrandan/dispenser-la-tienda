@@ -7,6 +7,7 @@ import RepuestosBottomSheet from '../repuesto/RepuestosBottomSheet';
 import { useTheme } from '../../hooks/useTheme';
 import { LuZap, LuCamera, LuImage, LuPackage, LuPencil } from 'react-icons/lu';
 
+import { filtroMultiTermino } from '../../utils/busqueda';
 async function comprimirFoto(file) {
     try {
         return await imageCompression(file, {
@@ -219,7 +220,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                                 Equipo *
                                 {opcionesSerial.length > 0 && <span className="text-[#D48800] ml-1">({opcionesSerial.length} disponibles)</span>}
                             </label>
-                            <CreatableSelect
+                            <CreatableSelect filterOption={filtroMultiTermino}
                                 ref={serialRef}
                                 styles={selectStyles}
                                 menuPosition="fixed"

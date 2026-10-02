@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getTodayISO } from '../../utils/dateUtils';
 import DateInput from '../ui/DateInput';
 import { LuClipboardList, LuCircleCheck, LuFileText, LuRocket } from 'react-icons/lu';
+import { datosOrdenDesdePresupuesto } from '../../utils/ordenes';
 
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
@@ -119,15 +120,12 @@ export default function CerrarTicketSheet({
                 if (result.tecnicoId && result.fechaVisita) {
                     setCreandoOrden(true);
                     try {
-                        await api.post('/ordenes', {
-                            titulo:          `Visita — ${result.clienteNombre || 'Cliente'}`,
-                            clienteId:       result.clienteId ? parseInt(result.clienteId) : null,
-                            clienteNombre:   result.clienteNombre || '',
-                            presupuestoId:   result.id,
-                            tecnicoId:       Number(result.tecnicoId),
-                            fechaProgramada: result.fechaVisita,
-                            prioridad:       'NORMAL',
-                        });
+                        // Se relee el presupuesto recién guardado para mandarle al técnico
+                        // dirección, monto y teléfono (antes iba solo el título).
+                        const { data: presu } = await api.get(`/servicios/${result.id}`);
+                        await api.post('/ordenes', datosOrdenDesdePresupuesto(presu, {
+                            tecnicoId: result.tecnicoId, fechaProgramada: result.fechaVisita,
+                        }));
                         setOrdenCreada(true);
                         toast.success('Presupuesto guardado y orden creada');
                     } catch {
@@ -154,17 +152,11 @@ export default function CerrarTicketSheet({
         if (!dispFecha)   { toast.error('Ingresá una fecha');      return; }
         setCreandoOrden(true);
         try {
-            await api.post('/ordenes', {
-                titulo:          `Visita — ${savedResult.clienteNombre || 'Cliente'}`,
-                clienteId:       savedResult.clienteId ? parseInt(savedResult.clienteId) : null,
-                clienteNombre:   savedResult.clienteNombre || '',
-                presupuestoId:   savedResult.id,
-                tecnicoId:       Number(dispTecnico),
-                fechaProgramada: dispFecha,
-                horaEstimada:    dispHora || null,
-                prioridad:       dispPrioridad,
-                descripcion:     '',
-            });
+            const { data: presu } = await api.get(`/servicios/${savedResult.id}`);
+            await api.post('/ordenes', datosOrdenDesdePresupuesto(presu, {
+                tecnicoId: dispTecnico, fechaProgramada: dispFecha,
+                horaEstimada: dispHora, prioridad: dispPrioridad,
+            }));
             setOrdenCreada(true);
             toast.success('Orden de visita creada');
         } catch {

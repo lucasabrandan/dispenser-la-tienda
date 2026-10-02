@@ -213,7 +213,7 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo 
                                                 onAbrirTrabajo(n.referenciaId);
                                             }
                                         }}
-                                        className={`px-4 py-3 flex gap-3 items-start transition-colors cursor-pointer active:bg-[#EFEDEA] dark:active:bg-[#242424] ${
+                                        className={`px-4 py-3 flex gap-3 items-start transition-colors cursor-pointer active:bg-[#EFEDEA] dark:active:bg-[#1C1C1B] ${
                                             !n.leida ? 'bg-[#F0F4FF] dark:bg-[#1A2030]' : ''
                                         }`}>
                                         <span className="text-[20px] mt-0.5 shrink-0">{cfg.emoji}</span>

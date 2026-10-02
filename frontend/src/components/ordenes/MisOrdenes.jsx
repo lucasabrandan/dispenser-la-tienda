@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuBuilding2, LuBanknote, LuStickyNote } from 'react-icons/lu';
+import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -9,6 +9,10 @@ import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
 import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { buildGoogleMapsRouteUrl } from '../../utils/clienteUtils';
+import DireccionMapa from '../ui/DireccionMapa';
+import ConfirmarHorarioSheet from '../servicio/ConfirmarHorarioSheet';
+import { resumenVentanas } from '../../utils/ordenes';
+import SalidaTecnicoSheet from './SalidaTecnicoSheet';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -18,12 +22,12 @@ const PRIORIDAD_COLOR = {
 };
 
 const BORDER_COLOR = {
-    PENDIENTE:   '#A8A29E',
-    EN_CAMINO:   '#3B82F6',
-    EN_SITIO:    '#D48800',
-    COMPLETADA:  '#16A34A',
-    CANCELADA:   '#D13A28',
-    NO_ATENDIDO: '#DC2626',
+    PENDIENTE:   'var(--estado-pendiente)',
+    EN_CAMINO:   'var(--estado-camino)',
+    EN_SITIO:    'var(--estado-curso)',
+    COMPLETADA:  'var(--estado-listo)',
+    CANCELADA:   'var(--estado-pendiente)',
+    NO_ATENDIDO: 'var(--color-brand-red)',
 };
 
 // El color del boton ya no varia por etapa (antes: azul/ambar/verde) — es
@@ -36,8 +40,16 @@ const SIGUIENTE_ESTADO = {
     EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', color: 'bg-brand-red', Icon: LuCircleCheck },
 };
 
-function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido, onVerServicio, seleccionando, seleccionada, onToggleSel }) {
+// Paso atrás por si el técnico tocó la orden equivocada (solo uno, y nunca desde COMPLETADA)
+const ESTADO_ANTERIOR = {
+    EN_CAMINO: { estado: 'PENDIENTE', label: 'Deshacer "Salí"' },
+    EN_SITIO:  { estado: 'EN_CAMINO', label: 'Deshacer "Llegué"' },
+};
+
+function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido, onNoPuedo, onVerServicio, onHorarioConfirmado, seleccionando, seleccionada, onToggleSel }) {
     const [expandido, setExpandido] = useState(false);
+    const [confirmandoHorario, setConfirmandoHorario] = useState(false);
+    const aCoordinar = !!orden.horarioACoordinar;
 
     const pr  = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
     const sig = SIGUIENTE_ESTADO[orden.estado];
@@ -63,7 +75,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                         <p className="font-black text-body-lg text-ink leading-tight">{orden.titulo}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-body font-black text-ink">{orden.horaEstimada || '—'}</p>
+                        <p className="text-body font-black text-ink">{aCoordinar ? 'A coordinar' : (orden.horaEstimada || '—')}</p>
                         <p className="text-caption text-muted">{orden.fechaProgramada}</p>
                     </div>
                 </div>
@@ -79,13 +91,30 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                 )}
 
                 {!esFinal && orden.direccion && (
-                    <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
-                        target="_blank" rel="noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="text-body text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 flex items-center gap-1 hover:underline">
-                        <LuMapPin size={14} />{orden.direccion}
-                        <span className="text-label">↗</span>
-                    </a>
+                    <DireccionMapa direccion={orden.direccion} className="mt-1.5" />
+                )}
+
+                {/* Horario pedido por el cliente (presupuesto con fecha tentativa):
+                    antes el técnico no lo veía en ningún lado. Confirmar acá fija
+                    día y hora en el presupuesto y en esta orden. */}
+                {!esFinal && aCoordinar && (
+                    <div className="mt-2.5 p-3 rounded-xl border border-[var(--estado-curso)] bg-[var(--warning-bg)]">
+                        <p className="text-label font-bold text-[var(--warning-tx)]">El cliente puede</p>
+                        {resumenVentanas(orden.ventanasCliente).map(linea => (
+                            <p key={linea} className="text-body font-bold text-ink">{linea}</p>
+                        ))}
+                        <button onClick={e => { e.stopPropagation(); setConfirmandoHorario(true); }}
+                            className="mt-2 w-full h-10 rounded-lg font-bold text-body text-ink border border-black/10 dark:border-white/[0.12] active:scale-95">
+                            Confirmar día y hora
+                        </button>
+                    </div>
+                )}
+                {confirmandoHorario && (
+                    <ConfirmarHorarioSheet
+                        servicio={{ id: orden.presupuestoId, ventanasDisponibles: orden.ventanasCliente, clienteNombre: orden.clienteNombre }}
+                        onCerrar={() => setConfirmandoHorario(false)}
+                        onConfirmado={() => { setConfirmandoHorario(false); onHorarioConfirmado && onHorarioConfirmado(); }}
+                    />
                 )}
 
                 {!esFinal && orden.descripcion && (
@@ -143,7 +172,20 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                     {(orden.estado === 'EN_CAMINO' || orden.estado === 'EN_SITIO') && (
                         <button onClick={() => onNoAtendido(orden)}
                             className="w-full py-2 rounded-xl font-bold text-label text-muted bg-chip active:scale-95 transition-all">
-                            No atendido
+                            El cliente no atendió
+                        </button>
+                    )}
+                    {/* Motivo del técnico, no del cliente: la visita vuelve al admin */}
+                    {onNoPuedo && (
+                        <button onClick={() => onNoPuedo(orden)}
+                            className="w-full py-2 rounded-xl font-bold text-label text-muted border border-black/10 dark:border-line active:scale-95 transition-all">
+                            No puedo ir
+                        </button>
+                    )}
+                    {ESTADO_ANTERIOR[orden.estado] && (
+                        <button onClick={() => onAvanzar(orden.id, ESTADO_ANTERIOR[orden.estado].estado)}
+                            className="w-full py-1.5 flex items-center justify-center gap-1 font-bold text-caption text-muted active:opacity-60">
+                            <LuUndo2 size={13} /> {ESTADO_ANTERIOR[orden.estado].label}
                         </button>
                     )}
                 </div>
@@ -158,7 +200,7 @@ function MesCard({ d, fmt, labelMes }) {
         <div className="rounded-2xl overflow-hidden bg-card border-[0.5px] border-black/[0.07]"
             >
             <button onClick={() => setAbierto(v => !v)}
-                className="w-full flex items-center justify-between px-4 py-3 active:bg-[#EFEDEA] dark:active:bg-[#1C1C1C] transition-colors">
+                className="w-full flex items-center justify-between px-4 py-3 active:bg-[#EFEDEA] dark:active:bg-[#161615] transition-colors">
                 <div className="flex items-center gap-2">
                     <p className="text-body-lg font-black text-ink capitalize">
                         {labelMes(d.periodo)}
@@ -348,6 +390,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);
     const [ordenRegistrando, setOrdenRegistrando] = useState(null);
     const [noAtendidoOrden, setNoAtendidoOrden] = useState(null);
+    const [salida, setSalida] = useState(null); // { modo: 'orden'|'hoy'|'mensaje', orden? }
     const [notaNoAtendido, setNotaNoAtendido] = useState('');
     const [servicioDetalle, setServicioDetalle] = useState(null);
     const [cargandoDetalle, setCargandoDetalle] = useState(false);
@@ -526,6 +569,20 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                     </div>
                 )}
 
+                {/* Vía de salida: siempre a mano, no escondida en cada tarjeta */}
+                {tab === 'activas' && (
+                    <div className="mb-4 grid grid-cols-2 gap-2">
+                        <button onClick={() => setSalida({ modo: 'mensaje' })}
+                            className="h-11 rounded-xl text-label font-bold text-ink border border-black/10 dark:border-line active:scale-95">
+                            Avisar al admin
+                        </button>
+                        <button onClick={() => setSalida({ modo: 'hoy' })}
+                            className="h-11 rounded-xl text-label font-bold text-muted border border-black/10 dark:border-line active:scale-95">
+                            No puedo trabajar hoy
+                        </button>
+                    </div>
+                )}
+
                 {/* Contenido */}
                 {tab === 'rendimiento' ? (
                     <RendimientoTab tecnicoId={tecnicoId} />
@@ -548,7 +605,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             </p>
                             <div className="space-y-2">
                                 {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} onVerServicio={verServicio}
+                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} onNoPuedo={(o) => setSalida({ modo: 'orden', orden: o })} onVerServicio={verServicio}
                                         seleccionando={modoSeleccion} seleccionada={seleccionados.has(o.id)} onToggleSel={toggleSeleccion} />
                                 ))}
                             </div>
@@ -583,6 +640,12 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                     </div>
                 </div>
             </div>
+        )}
+
+        {salida && (
+            <SalidaTecnicoSheet modo={salida.modo} orden={salida.orden}
+                onCerrar={() => setSalida(null)}
+                onListo={() => { setSalida(null); if (recargar) recargar(); }} />
         )}
 
         {ordenRegistrando && (

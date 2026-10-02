@@ -4,6 +4,7 @@ import HistorialEquipoModal from '../equipo/HistorialEquipoModal';
 import { abrirMaps, abrirWhatsApp, resumenCliente, formatFecha } from '../../utils/clienteUtils';
 import HistorialClienteModal from './HistorialClienteModal';
 import { LuMapPin, LuMessageCircle, LuWrench, LuShoppingCart, LuPencil, LuClipboardList, LuTrash2, LuHouse, LuTriangleAlert, LuBuilding2, LuUser } from 'react-icons/lu';
+import DireccionMapa from '../ui/DireccionMapa';
 
 export default function ClienteCard({
     cliente, sedes, equipos, servicios = [],
@@ -95,13 +96,7 @@ export default function ClienteCard({
 
                 {/* Dirección clickeable */}
                 {direccion && direccion !== 'Sin dirección 0' && (
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`}
-                        target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-panel active:opacity-70 transition-opacity">
-                        <LuMapPin size={13} className="text-caption" />
-                        <span className="text-caption font-bold text-ink flex-1 truncate">{direccion}</span>
-                        <span className="text-label text-muted">↗</span>
-                    </a>
+                    <DireccionMapa direccion={direccion} />
                 )}
 
                 {/* Acciones principales */}

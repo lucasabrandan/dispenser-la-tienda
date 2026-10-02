@@ -105,6 +105,19 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal, observaciones));
     }
 
+    // PATCH: poner/sacar "en espera" (body: {enEspera: true|false}) — solo admin
+    @PatchMapping("/{id}/espera")
+    public ResponseEntity<ServicioDTO> espera(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Object> payload,
+            Authentication auth) {
+        if (resolverUsuario(auth).getRol() != RolUsuario.ADMIN) {
+            throw new AccessDeniedException("Solo el admin puede poner un presupuesto en espera");
+        }
+        boolean enEspera = Boolean.TRUE.equals(payload.get("enEspera"));
+        return ResponseEntity.ok(servicioService.marcarEnEspera(id, enEspera));
+    }
+
     // PATCH: el tecnico asignado confirma dia/hora exactos dentro de la
     // disponibilidad tentativa que dejo el admin (body: {fecha, hora})
     @PatchMapping("/{id}/confirmar-horario")

@@ -124,7 +124,7 @@ function RentabilidadPanel({ resumen, desglose, onEditarCosto }) {
                                                     <input type="text" inputMode="decimal"
                                                         value={d.repuesto.costo ?? ''}
                                                         onChange={e => onEditarCosto(d.idx, e.target.value)}
-                                                        className="w-16 h-7 rounded-md text-center text-caption font-bold bg-[#141414] border border-[#2A9D5C]/30 text-[#F0EEE9] outline-none focus:border-[#2A9D5C]" />
+                                                        className="w-16 h-7 rounded-md text-center text-caption font-bold bg-[#111110] border border-[#2A9D5C]/30 text-[#F0EEE9] outline-none focus:border-[#2A9D5C]" />
                                                 </div>
                                                 <p className="text-caption font-black text-[#5DD68F]">
                                                     <M valor={Math.round(d.ganancia.ganancia)} /> &middot; {d.ganancia.margen}%
@@ -208,7 +208,7 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                         type="text" inputMode="decimal"
                         value={descuentoPorcentaje}
                         onChange={e => setDescuentoPorcentaje(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                        className="w-20 h-12 rounded-xl text-center font-black text-2xl outline-none bg-[#E8E5E0] dark:bg-[#1C1C1C] text-ink border border-black/10 dark:border-white/[0.08] focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
+                        className="w-20 h-12 rounded-xl text-center font-black text-2xl outline-none bg-[#E8E5E0] dark:bg-[#161615] text-ink border border-black/10 dark:border-white/[0.08] focus:border-[#D13A28] focus:ring-2 focus:ring-[#D13A28]/20"
                     />
                     <span className="font-black text-xl text-muted">%</span>
                     {descuentoPorcentaje > 0 && (
@@ -267,13 +267,13 @@ export default function PasoResumenVenta({ hook, mostrador, onBack }) {
                             <M valor={totalFinal} className="text-3xl font-black text-white tracking-tighter block" />
                         </div>
                         <button onClick={dispararPDF}
-                            className="h-10 w-10 rounded-xl flex items-center justify-center text-white active:scale-90 bg-[#2E2E2E] shrink-0">
+                            className="h-10 w-10 rounded-xl flex items-center justify-center text-white active:scale-90 bg-[#2A2A28] shrink-0">
                             <LuFileText size={16} />
                         </button>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => guardarVenta(false, mostrador.sedeId)}
-                            className="h-11 rounded-xl font-black text-label text-white active:scale-95 bg-[#2E2E2E]">
+                            className="h-11 rounded-xl font-black text-label text-white active:scale-95 bg-[#2A2A28]">
                             Pendiente
                         </button>
                         <button onClick={() => guardarVenta(true, mostrador.sedeId)}

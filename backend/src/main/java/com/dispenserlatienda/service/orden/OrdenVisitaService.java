@@ -61,6 +61,13 @@ public class OrdenVisitaService {
         Usuario tecnico = usuarioRepo.findById(dto.tecnicoId())
             .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado: " + dto.tecnicoId()));
 
+        // Un presupuesto no puede tener dos órdenes vivas a la vez (antes pasaba: se
+        // despachaba desde el asistente y después se volvía a despachar desde Presupuestos).
+        if (dto.presupuestoId() != null && repo.existsByPresupuestoIdAndEstadoNotIn(
+                dto.presupuestoId(), List.of(EstadoOrden.CANCELADA, EstadoOrden.NO_ATENDIDO))) {
+            throw new IllegalArgumentException("Ese presupuesto ya tiene una orden asignada");
+        }
+
         OrdenVisita o = new OrdenVisita();
         o.setTecnico(tecnico);
         o.setTitulo(dto.titulo().trim());
@@ -77,6 +84,19 @@ public class OrdenVisitaService {
         o.setPresupuestoId(dto.presupuestoId());
 
         OrdenVisitaDTO saved = toDTO(repo.save(o));
+
+        // El presupuesto pasa a "trabajo a realizar" (EN_PROGRESO) apenas tiene orden,
+        // venga de donde venga (asistente, Presupuestos u Órdenes). Antes solo lo hacía
+        // el modal de Presupuestos, y el del asistente lo dejaba como presupuesto suelto.
+        if (dto.presupuestoId() != null) {
+            servicioRepository.findById(dto.presupuestoId()).ifPresent(s -> {
+                if (s.getEstado() == EstadoServicio.PRESUPUESTO) {
+                    s.setEstado(EstadoServicio.EN_PROGRESO);
+                }
+                s.setEnEspera(false); // despacharlo = retomarlo
+                servicioRepository.save(s);
+            });
+        }
         notificarTecnico(tecnico, saved);
         // Notificacion in-app al tecnico
         notificacionService.notificar(
@@ -84,7 +104,7 @@ public class OrdenVisitaService {
             saved.titulo(),
             (saved.clienteNombre() != null ? saved.clienteNombre() : "") +
             (saved.fechaProgramada() != null ? " · " + saved.fechaProgramada().format(DateTimeFormatter.ofPattern("dd/MM")) : ""),
-            saved.id(), true);
+            saved.id(), false); // el WhatsApp ya lo manda notificarTecnico(), con más detalle
         return saved;
     }
 
@@ -97,6 +117,7 @@ public class OrdenVisitaService {
         Usuario tecnico = usuarioRepo.findById(dto.tecnicoId())
             .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado: " + dto.tecnicoId()));
 
+        boolean cambioTecnico = o.getTecnico() != null && !o.getTecnico().getId().equals(tecnico.getId());
         o.setTecnico(tecnico);
         o.setTitulo(dto.titulo().trim());
         o.setDescripcion(dto.descripcion());
@@ -117,7 +138,14 @@ public class OrdenVisitaService {
             o.setFechaCompletada(null);
         }
 
-        return toDTO(repo.save(o));
+        OrdenVisitaDTO guardada = toDTO(repo.save(o));
+        if (cambioTecnico) {
+            notificarTecnico(tecnico, guardada);
+            notificacionService.notificar(TipoNotificacion.ORDEN_ASIGNADA, tecnico.getId(), null,
+                guardada.titulo(), guardada.clienteNombre() != null ? guardada.clienteNombre() : "",
+                guardada.id(), false);
+        }
+        return guardada;
     }
 
     // ── Admin: eliminar ────────────────────────────────────────────────────────
@@ -160,6 +188,13 @@ public class OrdenVisitaService {
             throw new IllegalArgumentException("Estado inválido: " + dto.estado());
         }
 
+        EstadoOrden estadoAnterior = o.getEstado();
+        boolean esRetroceso = esRetrocesoPermitido(estadoAnterior, nuevoEstado);
+        if (estadoAnterior == EstadoOrden.COMPLETADA && nuevoEstado != EstadoOrden.COMPLETADA) {
+            // Al completar ya se generó/actualizó el servicio: volver atrás acá lo dejaría colgado.
+            throw new IllegalArgumentException("La orden ya está completada; corregila desde el admin");
+        }
+
         o.setEstado(nuevoEstado);
         if (dto.notasTecnico() != null && !dto.notasTecnico().isBlank()) {
             o.setNotasTecnico(dto.notasTecnico());
@@ -175,8 +210,31 @@ public class OrdenVisitaService {
 
         OrdenVisitaDTO resultado = toDTO(repo.save(o));
         // Notificar admins cuando un tecnico cambia estado
-        notificarCambioEstado(o, nuevoEstado);
+        if (esRetroceso) {
+            notificarRetroceso(o, estadoAnterior, nuevoEstado);
+        } else {
+            notificarCambioEstado(o, nuevoEstado);
+        }
         return resultado;
+    }
+
+    // "Deshacer" del técnico: solo un paso atrás (Salí → Pendiente, Llegué → En camino)
+    private static boolean esRetrocesoPermitido(EstadoOrden desde, EstadoOrden hacia) {
+        return (desde == EstadoOrden.EN_CAMINO && hacia == EstadoOrden.PENDIENTE)
+            || (desde == EstadoOrden.EN_SITIO && hacia == EstadoOrden.EN_CAMINO);
+    }
+
+    // Se usa MENSAJE_LIBRE (y no un tipo nuevo) porque la columna del enum en la base
+    // puede tener un CHECK con los valores viejos y ddl-auto=update no lo actualiza.
+    private void notificarRetroceso(OrdenVisita o, EstadoOrden desde, EstadoOrden hacia) {
+        Long tecnicoId = o.getTecnico().getId();
+        String titulo = "Deshecho: " + (o.getTitulo() != null ? o.getTitulo() : "orden #" + o.getId());
+        String detalle = o.getTecnico().getNombre() + " volvió la orden de "
+            + desde.name().replace('_', ' ') + " a " + hacia.name().replace('_', ' ');
+        usuarioRepo.findAll().stream()
+            .filter(u -> u.getRol() == RolUsuario.ADMIN && u.isActivo())
+            .forEach(admin -> notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE,
+                admin.getId(), tecnicoId, titulo, detalle, o.getId(), false));
     }
 
     // Notifica a todos los admins sobre cambios de estado del tecnico
@@ -202,8 +260,11 @@ public class OrdenVisitaService {
             .filter(u -> u.getRol() == RolUsuario.ADMIN && u.isActivo())
             .collect(Collectors.toList());
         for (Usuario admin : admins) {
+            // WhatsApp solo cuando el admin tiene que hacer algo (cerrar/cobrar o
+            // reprogramar). "Salió" y "Llegó" quedan en la app, sin WhatsApp.
+            boolean requiereAccion = estado == EstadoOrden.COMPLETADA || estado == EstadoOrden.NO_ATENDIDO;
             notificacionService.notificar(tipo, admin.getId(), tecnicoId,
-                o.getTitulo(), detalle, o.getId(), true);
+                o.getTitulo(), detalle, o.getId(), requiereAccion);
         }
     }
 
@@ -221,7 +282,10 @@ public class OrdenVisitaService {
                         || s.getEstado() == EstadoServicio.PENDIENTE_FACTURACION
                         || s.getEstado() == EstadoServicio.FACTURADO
                         || s.getEstado() == EstadoServicio.COBRADO
-                        || s.getEstado() == EstadoServicio.REALIZADO;
+                        || s.getEstado() == EstadoServicio.REALIZADO
+                        // Un presupuesto archivado/cancelado no se "revive" al cerrar la orden
+                        || s.getEstado() == EstadoServicio.ARCHIVADO
+                        || s.getEstado() == EstadoServicio.CANCELADO;
                 if (!yaAvanzado) {
                     s.setEstado(EstadoServicio.COMPLETADO);
                     s.setFechaCompletado(java.time.LocalDateTime.now());
@@ -328,6 +392,7 @@ public class OrdenVisitaService {
 
     // ── Mapper ─────────────────────────────────────────────────────────────────
     private OrdenVisitaDTO toDTO(OrdenVisita o) {
+        Servicio tentativo = presupuestoTentativo(o);
         return new OrdenVisitaDTO(
             o.getId(),
             o.getTecnico().getId(),
@@ -347,7 +412,99 @@ public class OrdenVisitaService {
             o.getCreadoEn(),
             o.getMontoEstimado(),
             o.getFormaPago(),
-            o.getPresupuestoId()
+            o.getPresupuestoId(),
+            tentativo != null,
+            tentativo != null ? tentativo.getVentanasDisponibles() : null
         );
+    }
+
+    // Presupuesto vinculado con fecha "a coordinar" (o null). Solo mientras la orden
+    // sigue abierta: una cerrada ya no necesita coordinar nada.
+    private Servicio presupuestoTentativo(OrdenVisita o) {
+        if (o.getPresupuestoId() == null) return null;
+        if (o.getEstado() != EstadoOrden.PENDIENTE && o.getEstado() != EstadoOrden.EN_CAMINO
+                && o.getEstado() != EstadoOrden.EN_SITIO && o.getEstado() != EstadoOrden.NO_ATENDIDO) return null;
+        return servicioRepository.findById(o.getPresupuestoId())
+                .filter(sv -> Boolean.TRUE.equals(sv.getFechaTentativa()))
+                .orElse(null);
+    }
+
+    // ── Vía de salida del técnico (29-sep-2026) ───────────────────────────────
+    // Hasta ahora el técnico solo podía decir "el cliente no atendió". Faltaba
+    // "no puedo ir YO" (salud, transporte, un problema personal) y un canal para
+    // avisarle al admin. Cada caso manda UN aviso urgente (app + push + WhatsApp).
+
+    private static final List<EstadoOrden> ABIERTAS =
+        List.of(EstadoOrden.PENDIENTE, EstadoOrden.EN_CAMINO, EstadoOrden.EN_SITIO);
+
+    // Devuelve la orden: con presupuesto → se cancela y el presupuesto vuelve a
+    // "Pendientes" para reasignarlo; sin presupuesto → queda "para reprogramar".
+    private String devolverOrden(OrdenVisita o, String nota) {
+        o.setNotasTecnico(nota);
+        o.setFechaCompletada(null);
+        if (o.getPresupuestoId() != null) {
+            o.setEstado(EstadoOrden.CANCELADA);
+            servicioRepository.findById(o.getPresupuestoId()).ifPresent(sv -> {
+                if (sv.getEstado() == EstadoServicio.EN_PROGRESO) {
+                    sv.setEstado(EstadoServicio.PRESUPUESTO);
+                    servicioRepository.save(sv);
+                }
+            });
+            repo.save(o);
+            return "volvió a Pendientes para reasignar";
+        }
+        o.setEstado(EstadoOrden.NO_ATENDIDO);
+        repo.save(o);
+        return "quedó para reprogramar";
+    }
+
+    private void avisarAdmins(TipoNotificacion tipo, Usuario tecnico, String titulo, String detalle, Long refId) {
+        usuarioRepo.findAll().stream()
+            .filter(u -> u.getRol() == RolUsuario.ADMIN && u.isActivo())
+            .forEach(admin -> notificacionService.notificar(tipo, admin.getId(), tecnico.getId(),
+                titulo, detalle, refId, true));
+    }
+
+    @Transactional
+    public OrdenVisitaDTO noPuedoAsistir(Long id, String motivo, String detalle) {
+        OrdenVisita o = repo.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
+        if (!ABIERTAS.contains(o.getEstado())) {
+            throw new IllegalArgumentException("Esta orden ya no está abierta");
+        }
+        String texto = "No puede ir (" + (motivo != null && !motivo.isBlank() ? motivo : "sin motivo") + ")"
+            + (detalle != null && !detalle.isBlank() ? ": " + detalle.trim() : "");
+        String destino = devolverOrden(o, texto);
+        String cliente = o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo();
+        avisarAdmins(TipoNotificacion.ORDEN_NO_ATENDIDO, o.getTecnico(),
+            o.getTecnico().getNombre() + " no puede ir · " + cliente,
+            texto + " — la visita " + destino + ". Avisale al cliente.", o.getId());
+        return toDTO(o);
+    }
+
+    @Transactional
+    public int noPuedoHoy(Usuario tecnico, String motivo, String detalle) {
+        LocalDate hoy = LocalDate.now();
+        List<OrdenVisita> deHoy = repo.findByTecnicoIdOrderByFechaProgramadaAscHoraEstimadaAsc(tecnico.getId()).stream()
+            .filter(o -> ABIERTAS.contains(o.getEstado()))
+            .filter(o -> o.getFechaProgramada() == null || !o.getFechaProgramada().isAfter(hoy))
+            .toList();
+        String texto = "No puede trabajar hoy (" + (motivo != null && !motivo.isBlank() ? motivo : "sin motivo") + ")"
+            + (detalle != null && !detalle.isBlank() ? ": " + detalle.trim() : "");
+        deHoy.forEach(o -> devolverOrden(o, texto));
+        String clientes = deHoy.stream()
+            .map(o -> o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo())
+            .collect(Collectors.joining(", "));
+        avisarAdmins(TipoNotificacion.ORDEN_NO_ATENDIDO, tecnico,
+            tecnico.getNombre() + " no puede trabajar hoy",
+            texto + (deHoy.isEmpty() ? "" : " — " + deHoy.size() + " visita(s) para reasignar: " + clientes + ". Avisales a los clientes."),
+            null);
+        return deHoy.size();
+    }
+
+    public void mensajeAlAdmin(Usuario tecnico, String mensaje) {
+        if (mensaje == null || mensaje.isBlank()) throw new IllegalArgumentException("Escribí el mensaje");
+        avisarAdmins(TipoNotificacion.MENSAJE_LIBRE, tecnico,
+            "Mensaje de " + tecnico.getNombre(), mensaje.trim(), null);
     }
 }

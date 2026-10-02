@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { LuInbox, LuPin, LuMapPin } from 'react-icons/lu';
+import { LuInbox, LuPin } from 'react-icons/lu';
 import api from '../../services/api';
 import MiEspacioChecklist from '../miespacio/MiEspacioChecklist';
 import { useMiEspacio } from '../miespacio/useMiEspacio';
 import { toast } from 'react-hot-toast';
 import { formatDateISO, lunesDeLaSemana } from '../../utils/dateUtils';
+import DireccionMapa from '../ui/DireccionMapa';
 
 const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-body font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
 const labelCls = 'block text-label font-black text-muted uppercase tracking-wider mb-1';
@@ -71,11 +72,7 @@ function OrdenAgendaCard({ orden }) {
                 </span>
             </div>
             {orden.direccion && (
-                <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
-                    target="_blank" rel="noreferrer"
-                    className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-1 block truncate hover:underline">
-                    <LuMapPin size={11} className="inline -mt-0.5 mr-0.5" />{orden.direccion}
-                </a>
+                <DireccionMapa direccion={orden.direccion} className="mt-1" />
             )}
         </div>
     );
@@ -122,11 +119,7 @@ function NotaCard({ nota, onToggle, onEliminar }) {
                 <p className="text-caption text-muted mt-1 line-clamp-2">{nota.descripcion}</p>
             )}
             {nota.direccion && (
-                <a href={`https://maps.google.com/?q=${encodeURIComponent(nota.direccion)}`}
-                    target="_blank" rel="noreferrer"
-                    className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-1 block truncate hover:underline">
-                    <LuMapPin size={11} className="inline -mt-0.5 mr-0.5" />{nota.direccion}
-                </a>
+                <DireccionMapa direccion={nota.direccion} className="mt-1" />
             )}
         </div>
     );

@@ -144,7 +144,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                         {/* Paso 3 — Subir CSV */}
                         <div>
                             <label className={LABEL}>Paso 3 — Subí tu CSV</label>
-                            <label className="flex flex-col items-center justify-center w-full py-6 rounded-xl border-2 border-dashed border-chip cursor-pointer hover:border-[#D13A28]/40 transition-all bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
+                            <label className="flex flex-col items-center justify-center w-full py-6 rounded-xl border-2 border-dashed border-chip cursor-pointer hover:border-[#D13A28]/40 transition-all bg-[#EFEDEA]/50 dark:bg-[#161615]/50">
                                 <LuFolderOpen size={24} className="mb-1" />
                                 <span className="text-body font-black text-ink">
                                     {archivo ? archivo.name : 'Tocá para seleccionar archivo'}
@@ -173,7 +173,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                                         </thead>
                                         <tbody>
                                             {preview.map((r, i) => (
-                                                <tr key={i} className={i % 2 === 0 ? 'bg-card' : 'bg-[#E8E4E0] dark:bg-[#1C1C1C]'}>
+                                                <tr key={i} className={i % 2 === 0 ? 'bg-card' : 'bg-[#E8E4E0] dark:bg-[#161615]'}>
                                                     <td className="px-2 py-1.5 text-ink">{r.fecha}</td>
                                                     <td className="px-2 py-1.5 text-ink font-bold">{r.cliente}</td>
                                                     <td className="px-2 py-1.5 text-muted">{r.modelo}</td>

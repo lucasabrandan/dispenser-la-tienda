@@ -55,7 +55,7 @@ export default function PasoCobro({
                             value={costoMOExtra || ''}
                             onChange={e => setCostoMOExtra(Math.max(0, Number(e.target.value) || 0))}
                             placeholder="0"
-                            className="flex-1 px-3 py-2 rounded-lg text-body bg-[#F5F3F1] dark:bg-[#2E2E2E] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                            className="flex-1 px-3 py-2 rounded-lg text-body bg-[#F5F3F1] dark:bg-[#2A2A28] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                         />
                     </div>
                 </div>

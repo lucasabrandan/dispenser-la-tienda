@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { LuClipboardList, LuMapPin, LuUser, LuBuilding2, LuStickyNote, LuPencil, LuTrash2, LuCar } from 'react-icons/lu';
 import { formatFechaCorta } from '../../utils/dateUtils';
+import DireccionMapa from '../ui/DireccionMapa';
+import { resumenVentanas } from '../../utils/ordenes';
 
 // Extraído de DespachoManager.jsx (hub único de Servicio Técnico — ítem 4 paso 3 /
 // ítem 17 opción 3): ServicioManager.jsx también necesita esta misma tarjeta para
@@ -15,12 +17,12 @@ export const PRIORIDAD_COLOR = {
 };
 
 export const ESTADO_COLOR = {
-    PENDIENTE:   { dot: '#A8A29E', label: 'Pendiente'    },
-    EN_CAMINO:   { dot: '#3B82F6', label: 'En camino'    },
-    EN_SITIO:    { dot: '#D48800', label: 'En sitio'     },
-    COMPLETADA:  { dot: '#16A34A', label: 'Completada'   },
-    CANCELADA:   { dot: '#D13A28', label: 'Cancelada'    },
-    NO_ATENDIDO: { dot: '#DC2626', label: 'No atendido'  },
+    PENDIENTE:   { dot: 'var(--estado-pendiente)', label: 'Pendiente'    },
+    EN_CAMINO:   { dot: 'var(--estado-camino)', label: 'En camino'    },
+    EN_SITIO:    { dot: 'var(--estado-curso)', label: 'En sitio'     },
+    COMPLETADA:  { dot: 'var(--estado-listo)', label: 'Completada'   },
+    CANCELADA:   { dot: 'var(--estado-pendiente)', label: 'Cancelada'    },
+    NO_ATENDIDO: { dot: 'var(--color-brand-red)', label: 'No atendido'  },
 };
 
 // Mismo atajo que ya tiene el técnico en su celu (Salir/Llegué) — antes vos no
@@ -85,11 +87,12 @@ export function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionand
                     <p className="text-caption text-muted mt-0.5 flex items-center gap-1"><LuBuilding2 size={11} />{orden.clienteNombre}{orden.clienteTelefono ? ` · ${orden.clienteTelefono}` : ''}</p>
                 )}
                 {orden.direccion && (
-                    <a href={`https://maps.google.com/?q=${encodeURIComponent(orden.direccion)}`}
-                        target="_blank" rel="noreferrer"
-                        className="text-caption text-[#3B82F6] dark:text-[#60A5FA] mt-0.5 flex items-center gap-1 hover:underline">
-                        <LuMapPin size={11} />{orden.direccion}
-                    </a>
+                    <DireccionMapa direccion={orden.direccion} className="mt-1" />
+                )}
+                {orden.horarioACoordinar && (
+                    <p className="text-caption font-bold text-[var(--warning-tx)] mt-1">
+                        A coordinar · {resumenVentanas(orden.ventanasCliente).join(' / ')}
+                    </p>
                 )}
                 {orden.presupuestoId && (
                     <p className="text-label font-bold text-brand-amber mt-0.5 flex items-center gap-1">

@@ -9,8 +9,8 @@ import { useTheme } from '../../hooks/useTheme';
 import Paginacion from '../ui/Paginacion';
 import StatCard from './StatCard';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { POR_PAGINA } from '../../utils/paginacion';
 
-const POR_PAGINA = 15;
 
 export default function TabBalance({ filtroMes }) {
     const { ocultar } = useMontos();

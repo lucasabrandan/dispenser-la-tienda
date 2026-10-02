@@ -33,6 +33,13 @@ module.exports = {
         success: { bg: 'var(--success-bg)', tx: 'var(--success-tx)' },
         danger:  { bg: 'var(--danger-bg)',  tx: 'var(--danger-tx)'  },
         info:    { bg: 'var(--info-bg)',    tx: 'var(--info-tx)'    },
+        estado: {
+          pendiente: 'var(--estado-pendiente)',
+          camino:    'var(--estado-camino)',
+          curso:     'var(--estado-curso)',
+          listo:     'var(--estado-listo)',
+        },
+        line: 'var(--color-line)',
       }
     },
   },

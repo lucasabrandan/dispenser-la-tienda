@@ -17,9 +17,11 @@ import java.util.TreeMap;
 import com.dispenserlatienda.domain.servicio.*;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.servicio.*;
+import com.dispenserlatienda.exception.BusinessException;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
 import com.dispenserlatienda.repository.common.ConfiguracionGlobalRepository;
 import com.dispenserlatienda.repository.equipo.EquipoRepository;
+import com.dispenserlatienda.repository.orden.OrdenVisitaRepository;
 import com.dispenserlatienda.repository.gasto.GastoRepository;
 import com.dispenserlatienda.repository.sede.SedeRepository;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
@@ -62,11 +64,13 @@ public class ServicioService {
     private final ObjectMapper objectMapper;
     private final NotificacionService notificacionService;
     private final RepuestoRepository repuestoRepository;
+    private final OrdenVisitaRepository ordenVisitaRepository;
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
                            UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
                            GastoRepository gastoRepository, ConfiguracionGlobalRepository configRepo,
                            VentaRepository ventaRepository, ObjectMapper objectMapper,
-                           NotificacionService notificacionService, RepuestoRepository repuestoRepository) {
+                           NotificacionService notificacionService, RepuestoRepository repuestoRepository,
+                           OrdenVisitaRepository ordenVisitaRepository) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
@@ -77,6 +81,7 @@ public class ServicioService {
         this.objectMapper = objectMapper;
         this.notificacionService = notificacionService;
         this.repuestoRepository = repuestoRepository;
+        this.ordenVisitaRepository = ordenVisitaRepository;
     }
 
     @Transactional(readOnly = true)
@@ -183,29 +188,31 @@ public class ServicioService {
                 }
             }
             if (busqueda != null && !busqueda.isBlank()) {
-                String like = "%" + busqueda.toLowerCase() + "%";
                 // JOIN items→equipo para buscar por número de serie
                 jakarta.persistence.criteria.Join<Object,Object> items  = root.join("items",  jakarta.persistence.criteria.JoinType.LEFT);
                 jakarta.persistence.criteria.Join<Object,Object> equipo = items.join("equipo", jakarta.persistence.criteria.JoinType.LEFT);
                 query.distinct(true);
-                List<Predicate> matchTexto = new ArrayList<>(List.of(
-                        cb.like(cb.lower(root.get("clienteNombre")), like),
-                        cb.like(cb.lower(root.get("sedeNombre")), like),
-                        cb.like(cb.lower(equipo.get("numeroSerie")), like),
-                        cb.like(cb.lower(cb.coalesce(equipo.get("ubicacion"), "")), like),
-                        cb.like(cb.lower(cb.coalesce(equipo.get("modelo"), "")), like)
-                ));
-                // Bug real (reportado 7-sep): a todo presupuesto/trabajo/venta se le
-                // muestra su número de id como "#123" en toda la app (ServicioCard,
-                // PresupuestoCard, VentaList), pero el buscador nunca lo comparaba
-                // contra el id real -- buscar "123" o "#123" no encontraba nada.
-                String soloNumero = busqueda.trim().replaceFirst("^#", "");
-                if (soloNumero.matches("\\d+")) {
-                    try {
-                        matchTexto.add(cb.equal(root.get("id"), Long.parseLong(soloNumero)));
-                    } catch (NumberFormatException ignored) { /* numero demasiado largo, se ignora */ }
+                // Búsqueda multi-término: "ma nicolas" o "ma+nicolas" → cada palabra tiene
+                // que aparecer en algún campo (AND entre palabras, OR entre campos).
+                for (String termino : busqueda.trim().split("[\\s+]+")) {
+                    if (termino.isBlank()) continue;
+                    String like = "%" + termino.toLowerCase() + "%";
+                    List<Predicate> matchTexto = new ArrayList<>(List.of(
+                            cb.like(cb.lower(root.get("clienteNombre")), like),
+                            cb.like(cb.lower(root.get("sedeNombre")), like),
+                            cb.like(cb.lower(equipo.get("numeroSerie")), like),
+                            cb.like(cb.lower(cb.coalesce(equipo.get("ubicacion"), "")), like),
+                            cb.like(cb.lower(cb.coalesce(equipo.get("modelo"), "")), like)
+                    ));
+                    // Buscar "123" o "#123" también matchea el id que se muestra como "#123".
+                    String soloNumero = termino.replaceFirst("^#", "");
+                    if (soloNumero.matches("\\d+")) {
+                        try {
+                            matchTexto.add(cb.equal(root.get("id"), Long.parseLong(soloNumero)));
+                        } catch (NumberFormatException ignored) { /* numero demasiado largo, se ignora */ }
+                    }
+                    predicates.add(cb.or(matchTexto.toArray(new Predicate[0])));
                 }
-                predicates.add(cb.or(matchTexto.toArray(new Predicate[0])));
             }
             if (desde != null && !desde.isBlank())
                 predicates.add(cb.greaterThanOrEqualTo(root.get("fechaServicio"), LocalDate.parse(desde)));
@@ -477,6 +484,13 @@ public class ServicioService {
 
             Equipo equipo = equipoRepository.findFirstByNumeroSerie(itemDto.equipoSerial()).orElse(null);
 
+            // Un N/S es único en todo el sistema: si ya pertenece a otro cliente no se
+            // engancha a este servicio (antes se mezclaba el historial entre clientes).
+            if (equipo != null && perteneceAOtroCliente(equipo, servicio)) {
+                throw new BusinessException("EQUIPO_DE_OTRO_CLIENTE",
+                        "El N/S " + itemDto.equipoSerial() + " ya está registrado en otro cliente. Usá otro número.");
+            }
+
             // Garantia: 3 meses desde la fecha del servicio, para todo item con equipo real (no MOSTRADOR),
             // una vez que el servicio queda REALIZADO. Se calcula siempre en el backend para que aplique
             // sin importar si el servicio se cerro directo ("Cobrar ahora") o via aprobacion de presupuesto.
@@ -530,18 +544,36 @@ public class ServicioService {
         // El auto-despacho de ordenes lo maneja el frontend (CerrarTicketSheet)
         // con fecha obligatoria. No crear orden aquí para evitar duplicados.
 
-        // Notificar (in-app + push) al usuario asignado cuando es un trabajo tecnico
-        // nuevo, o cuando se reasigna a otra persona. No se notifica en ventas
-        // (ahi "usuario" es quien carga la venta, no alguien a quien se le asigna
-        // un trabajo) ni en ediciones que no cambian el responsable, para no generar
-        // ruido en cada guardado.
-        boolean seReasigno = usuarioAnteriorId != null && !usuarioAnteriorId.equals(usuario.getId());
-        if ((esNuevo || seReasigno) && saved.getServicioTipo() == ServicioTipo.TECNICA) {
+        // Mismo cierre de órdenes que en cambiarEstado(): el técnico confirma el trabajo
+        // con un PUT (EjecutarOrdenSheet) y si salía de la pantalla antes del último
+        // botón, la orden quedaba abierta para siempre.
+        if (saved.getId() != null) {
+            if (esEstadoTrabajoTerminado(saved.getEstado()) && saved.isEnEspera()) {
+                saved.setEnEspera(false);
+                saved = servicioRepository.save(saved);
+            }
+            if (esEstadoTrabajoTerminado(saved.getEstado())) {
+                ordenVisitaRepository.completarActivasDePresupuesto(saved.getId());
+            } else if (saved.getEstado() == EstadoServicio.ARCHIVADO || saved.getEstado() == EstadoServicio.CANCELADO) {
+                ordenVisitaRepository.cancelarActivasDePresupuesto(saved.getId());
+            }
+        }
+
+        // Notificaciones de asignación (29-sep-2026, "se repiten"): una asignación = UN
+        // aviso, y lo manda la ORDEN (OrdenVisitaService.crear), que es lo que el técnico
+        // trabaja. Antes el presupuesto avisaba "Nuevo trabajo asignado" y un segundo
+        // después la orden avisaba "Nueva orden" → dos pushes y dos WhatsApp por lo mismo.
+        // Acá solo queda la REASIGNACIÓN: la orden abierta pasa al técnico nuevo (antes
+        // quedaba en la agenda del anterior) y se avisa una sola vez.
+        boolean seReasigno = !esNuevo && usuarioAnteriorId != null && !usuarioAnteriorId.equals(usuario.getId());
+        if (seReasigno && saved.getServicioTipo() == ServicioTipo.TECNICA) {
+            int movidas = ordenVisitaRepository.reasignarActivasDePresupuesto(saved.getId(), usuario);
             String detalle = (saved.getClienteNombre() != null ? saved.getClienteNombre() : "")
                     + (saved.getSedeNombre() != null ? " · " + saved.getSedeNombre() : "");
             notificacionService.notificar(
-                    TipoNotificacion.TRABAJO_ASIGNADO, usuario.getId(), null,
-                    "Nuevo trabajo asignado", detalle, saved.getId(), false);
+                    movidas > 0 ? TipoNotificacion.ORDEN_ASIGNADA : TipoNotificacion.TRABAJO_ASIGNADO,
+                    usuario.getId(), null,
+                    "Te asignaron un trabajo", detalle, saved.getId(), false);
         }
 
         return mapToDTO(saved);
@@ -597,6 +629,24 @@ public class ServicioService {
         servicio.setStockDescontado(true);
     }
 
+    // Poner / sacar un presupuesto "en espera". Cierre sincronizado: al ponerlo en
+    // espera se cancela la orden abierta del técnico (sale de su agenda) y vuelve a
+    // PRESUPUESTO; al retomarlo queda "sin asignar", listo para despachar de nuevo.
+    @Transactional
+    public ServicioDTO marcarEnEspera(Long id, boolean enEspera) {
+        Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
+        if (esEstadoTrabajoTerminado(s.getEstado()) || s.getEstado() == EstadoServicio.ARCHIVADO
+                || s.getEstado() == EstadoServicio.CANCELADO) {
+            throw new BusinessException("ESTADO_INVALIDO", "Solo un presupuesto pendiente o en curso puede ponerse en espera");
+        }
+        s.setEnEspera(enEspera);
+        if (enEspera) {
+            ordenVisitaRepository.cancelarActivasDePresupuesto(s.getId());
+            if (s.getEstado() == EstadoServicio.EN_PROGRESO) s.setEstado(EstadoServicio.PRESUPUESTO);
+        }
+        return mapToDTO(servicioRepository.save(s));
+    }
+
     @Transactional
     public ServicioDTO cambiarEstado(Long id, String nuevoEstado, String modalidadCobro, BigDecimal montoFinal, String observaciones) {
         Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
@@ -643,6 +693,18 @@ public class ServicioService {
                     item.setGarantiaHasta(fechaGarantia);
                 }
             }
+        }
+
+        // Un trabajo hecho, archivado o cancelado ya no está "en espera"
+        if (esEstadoTrabajoTerminado(estado) || estado == EstadoServicio.ARCHIVADO || estado == EstadoServicio.CANCELADO) {
+            s.setEnEspera(false);
+        }
+
+        // Cerrar la orden del técnico si el trabajo se cerró/archivó por fuera de ella
+        if (esEstadoTrabajoTerminado(estado)) {
+            ordenVisitaRepository.completarActivasDePresupuesto(s.getId());
+        } else if (estado == EstadoServicio.ARCHIVADO || estado == EstadoServicio.CANCELADO) {
+            ordenVisitaRepository.cancelarActivasDePresupuesto(s.getId());
         }
 
         descontarStockSiCorresponde(s);
@@ -722,7 +784,8 @@ public class ServicioService {
                 s.getAceptaTerminos(),
                 s.getFechaTentativa(),
                 s.getVentanasDisponibles(),
-                s.getHoraServicio()
+                s.getHoraServicio(),
+                s.isEnEspera()
         );
     }
 
@@ -794,6 +857,8 @@ public class ServicioService {
         s.setHoraServicio(horaStr);
         s.setFechaTentativa(false);
         Servicio saved = servicioRepository.save(s);
+        // Antes la orden del técnico se quedaba con la fecha vieja y sin hora
+        ordenVisitaRepository.reprogramarActivasDePresupuesto(saved.getId(), fecha, horaStr);
 
         // Avisar al admin que asigno el trabajo — reusa el mismo tipo de
         // notificacion que ya se dispara al asignar (ver procesarGuardado):
@@ -1079,5 +1144,11 @@ public class ServicioService {
 
         BigDecimal imp = facturado.multiply(pctImp).divide(BigDecimal.valueOf(100), 2, rm);
         return facturado.subtract(imp).subtract(repuestos).max(BigDecimal.ZERO);
+    }
+
+    private static boolean perteneceAOtroCliente(Equipo equipo, Servicio servicio) {
+        if (equipo.getSede() == null || equipo.getSede().getCliente() == null) return false;
+        if (servicio.getSede() == null || servicio.getSede().getCliente() == null) return false;
+        return !equipo.getSede().getCliente().getId().equals(servicio.getSede().getCliente().getId());
     }
 }

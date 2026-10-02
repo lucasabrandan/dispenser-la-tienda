@@ -71,7 +71,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
             const results = await Promise.all(
                 TABS.map(t => api.get('/servicios', {
                     params: {
-                        tipo: 'VENTA',
+                        ...filtros.paramsBase,
                         ...(t.id !== 'TODOS' ? { estado: ESTADO_API_MAP[t.id] || t.id } : {}),
                         page: 0, size: 1,
                     }
@@ -81,7 +81,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
             TABS.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
             setTabCounts(counts);
         } catch (err) { console.warn('Ventas: error cargando conteos tabs', err); }
-    }, []);
+    }, [filtros.paramsBase]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => { fetchTabCounts(); }, [fetchTabCounts]);
     useEffect(() => {

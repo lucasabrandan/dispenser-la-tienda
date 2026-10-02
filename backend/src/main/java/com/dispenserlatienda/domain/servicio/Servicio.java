@@ -127,6 +127,12 @@ public class Servicio {
     @Column(name = "hora_servicio", length = 5)
     private String horaServicio;
 
+    // "En espera" (standby): el cliente pospuso o hay que esperar algo (repuesto,
+    // confirmación). Es una marca aparte del estado, no un estado nuevo: así la base
+    // no necesita tocar su lista de estados permitidos (ddl-auto agrega la columna sola).
+    @Column(name = "en_espera")
+    private Boolean enEspera;
+
     // Idempotencia del descuento de stock (bug real encontrado 6-sep: el stock
     // de un repuesto nunca se restaba al confirmar una venta o un servicio con
     // repuestos usados). Se marca en true la primera vez que el servicio entra
@@ -259,4 +265,7 @@ public class Servicio {
 
     public String getHoraServicio() { return horaServicio; }
     public void setHoraServicio(String horaServicio) { this.horaServicio = horaServicio; }
+
+    public boolean isEnEspera() { return Boolean.TRUE.equals(enEspera); }
+    public void setEnEspera(Boolean enEspera) { this.enEspera = enEspera; }
 }

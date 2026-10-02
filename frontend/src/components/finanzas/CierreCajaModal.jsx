@@ -259,7 +259,7 @@ export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
                                         const { impuestos, ganancia, porPartes } = liquidacion(tec.total, tec.repuestos);
                                         return (
                                             <div key={tec.nombre} className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
-                                                <div className="px-4 py-3 bg-[#F5F3F1] dark:bg-[#2E2E2E] flex justify-between items-center">
+                                                <div className="px-4 py-3 bg-[#F5F3F1] dark:bg-[#2A2A28] flex justify-between items-center">
                                                     <div>
                                                         <span className="font-black text-body text-ink">{tec.nombre}</span>
                                                         <span className="text-label text-muted ml-2">{tec.servicios.length} serv.</span>

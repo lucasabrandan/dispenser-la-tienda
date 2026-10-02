@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import WeekDatePicker from '../ui/WeekDatePicker';
 import { LuCircleCheck, LuCalendar, LuClock, LuMessageCircle, LuSend } from 'react-icons/lu';
+import { datosOrdenDesdePresupuesto } from '../../utils/ordenes';
 
 const PRIORIDADES = [
     { value: 'NORMAL',  label: 'Normal'  },
@@ -64,21 +65,10 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
         if (!form.fechaProgramada) { toast.error('Ingresá la fecha');        return; }
         setGuardando(true);
         try {
-            const res = await api.post('/ordenes', {
-                tecnicoId:       Number(form.tecnicoId),
-                titulo:          `Visita · ${presupuesto.clienteNombre || 'Cliente'}`,
-                descripcion:     presupuesto.items?.map(it => it.trabajoRealizado).filter(Boolean).join(' · ') || '',
-                clienteId:       presupuesto.clienteId    || null,
-                clienteNombre:   presupuesto.clienteNombre || '',
-                clienteTelefono: presupuesto.clienteTelefono || '',
-                direccion:       presupuesto.sedeDireccion  || presupuesto.sedeNombre || '',
-                prioridad:       form.prioridad,
-                fechaProgramada: form.fechaProgramada,
-                horaEstimada:    form.horaEstimada || null,
-                montoEstimado:   total || null,
-                formaPago:       'EFECTIVO',
-                presupuestoId:   presupuesto.id,
-            });
+            const res = await api.post('/ordenes', datosOrdenDesdePresupuesto(presupuesto, {
+                tecnicoId: form.tecnicoId, fechaProgramada: form.fechaProgramada,
+                horaEstimada: form.horaEstimada, prioridad: form.prioridad,
+            }));
             setOrdenCreada(res.data);
             toast.success('Orden de visita creada');
             // El presupuesto pasa a "en progreso": ya no es un pendiente suelto, está

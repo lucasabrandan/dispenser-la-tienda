@@ -139,7 +139,7 @@ export function buildSelectStyles(isDark) {
     return {
         control: (base, state) => ({
             ...base,
-            background:  isDark ? '#2E2E2E' : '#E8E5E0',
+            background:  isDark ? '#2A2A28' : '#E8E5E0',
             border:      state.isFocused
                 ? `1.5px solid ${isDark ? '#E8422F' : '#D13A28'}`
                 : isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
@@ -154,7 +154,7 @@ export function buildSelectStyles(isDark) {
                 ? (isDark ? '#E8422F' : '#D13A28')
                 : state.isFocused
                     ? (isDark ? '#3A3A3A' : '#EFEDEA')
-                    : (isDark ? '#2E2E2E' : '#E8E5E0'),
+                    : (isDark ? '#2A2A28' : '#E8E5E0'),
             color:       state.isSelected ? '#fff' : isDark ? '#F0EEE9' : '#1C1917',
             padding:     '6px 12px',
             fontSize:    '13px',
@@ -162,7 +162,7 @@ export function buildSelectStyles(isDark) {
         }),
         menu:        b => ({
             ...b,
-            background:   isDark ? '#2E2E2E' : '#E8E5E0',
+            background:   isDark ? '#2A2A28' : '#E8E5E0',
             borderRadius: '12px',
             border:       isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
             boxShadow:    '0 8px 24px rgba(0,0,0,0.2)',

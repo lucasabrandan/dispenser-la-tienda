@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import { resolverFechas } from '../utils/dateUtils';
+import { POR_PAGINA } from '../utils/paginacion';
 
 /**
  * useServicioManager
@@ -67,6 +68,22 @@ export function useServicioManager() {
         setPeriodoRapido('CUSTOM'); setMesSelector(''); setPagina(0);
     };
 
+    // Filtros comunes a la lista Y a los contadores de las pestañas (período, técnico,
+    // búsqueda). Antes los contadores ignoraban el período y contaban TODO el historial:
+    // la pestaña decía "125" y la lista, filtrada al mes, mostraba 2.
+    const paramsBase = useMemo(() => {
+        const fechas = resolverFechas(periodoRapido, mesSelector, desde, hasta);
+        const p = { tipo: 'TECNICA' };
+        if (busquedaApi) p.busqueda = busquedaApi;
+        else {
+            if (fechas.desde) p.desde = fechas.desde;
+            if (fechas.hasta) p.hasta = fechas.hasta;
+        }
+        if (!esAdmin && usuario?.id) p.usuarioId = usuario.id;
+        else if (usuarioId)           p.usuarioId = usuarioId;
+        return p;
+    }, [busquedaApi, periodoRapido, mesSelector, desde, hasta, usuarioId, esAdmin, usuario?.id]);
+
     // ── Fetch lista ──────────────────────────────────────────────────────────────
     const cargarServicios = useCallback(async () => { // eslint-disable-line
         setCargando(true);
@@ -75,12 +92,13 @@ export function useServicioManager() {
             const params = {
                 tipo: 'TECNICA',
                 page: pagina,
-                size: 20,
+                size: POR_PAGINA,
                 sort: ordenServicio,
             };
             // Tabs compuestos: mapear a estados reales del backend
             const estadoMap = {
                 COBRADO:   'COBRADO,REALIZADO',
+                PENDIENTE_FACTURACION: 'PENDIENTE_FACTURACION,COMPLETADO',
                 HISTORIAL: 'COMPLETADO,CANCELADO,ARCHIVADO',
             };
             if (estado !== 'TODOS')  params.estado = estadoMap[estado] || estado;
@@ -270,6 +288,7 @@ export function useServicioManager() {
         mesSelector, aplicarMesSelector,
         desde, hasta, aplicarRango,
         mesesDisponibles: [], // sin dropdown de meses en modo server-side
+        paramsBase,
         totalItems,
         pagina: pagina + 1,       // FiltrosPanel y Paginacion usan 1-based
         totalPaginas,

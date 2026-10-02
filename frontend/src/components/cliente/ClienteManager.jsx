@@ -14,8 +14,8 @@ import CrearClienteModal  from './CrearClienteModal';
 import SedeModal          from '../SedeModal';
 import EquipoModal        from '../EquipoModal';
 import Paginacion         from '../ui/Paginacion';
+import { POR_PAGINA } from '../../utils/paginacion';
 
-const POR_PAGINA = 18;
 
 
 export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {

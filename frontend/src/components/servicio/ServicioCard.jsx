@@ -6,6 +6,7 @@ import ActionSheet from '../ui/ActionSheet';
 import ConfirmarHorarioSheet from './ConfirmarHorarioSheet';
 import { useAuth } from '../../context/AuthContext';
 import { estadoGarantia } from '../../utils/dateUtils';
+import { estadoLabel, estadoColor } from '../../utils/estados';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -13,16 +14,9 @@ function M({ valor, className = '' }) {
     return <span className={className}>${typeof valor === 'number' ? Math.round(valor).toLocaleString('es-AR') : valor}</span>;
 }
 
-const BADGE = {
-    PRESUPUESTO:           { label: 'Pendiente',       cls: 'bg-[var(--warning-bg)] text-[var(--warning-tx)]' },
-    EN_PROGRESO:           { label: 'En curso',        cls: 'bg-[var(--cyan-bg)] text-[var(--cyan-tx)]' },
-    COMPLETADO:            { label: 'Realizado',       cls: 'bg-[var(--blue-bg)] text-[var(--blue-tx)]' },
-    PENDIENTE_FACTURACION: { label: 'Por cobrar',      cls: 'bg-[var(--info-bg)] text-[var(--info-tx)]' },
-    FACTURADO:             { label: 'Facturado',       cls: 'bg-[var(--indigo-bg)] text-[var(--indigo-tx)]' },
-    COBRADO:               { label: 'Cobrado',         cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
-    REALIZADO:             { label: 'Anterior',        cls: 'bg-[var(--success-bg)] text-[var(--success-tx)]' },
-    ARCHIVADO:             { label: 'Archivado',       cls: 'bg-[var(--color-chip-bg)] text-[var(--color-text-secondary)]' },
-};
+// Estado: punto + texto en uno de los 4 colores de estado (utils/estados.js).
+// Antes cada estado tenía su propio fondo de color (7 tonos distintos).
+const LABEL_ESTADO_CARD = { PRESUPUESTO: 'Pendiente', REALIZADO: 'Anterior' };
 
 const MODALIDAD_LABELS = {
     EFECTIVO_SIN_FACTURA: 'Efectivo',
@@ -30,16 +24,6 @@ const MODALIDAD_LABELS = {
     PENDIENTE:            'Pendiente',
 };
 
-const BORDER = {
-    PRESUPUESTO:           '#D48800',
-    EN_PROGRESO:           '#0891B2',
-    COMPLETADO:            '#3B82F6',
-    PENDIENTE_FACTURACION: '#8B5CF6',
-    FACTURADO:             '#6366F1',
-    COBRADO:               '#16A34A',
-    REALIZADO:             '#16A34A',
-    ARCHIVADO:             '#A8A29E',
-};
 
 // Calcula ganancia desde los datos del servicio guardado
 function calcGanancia(servicio) {
@@ -74,7 +58,7 @@ export default function ServicioCard({
     const [sheetHorarioAbierto, setSheetHorarioAbierto] = useState(false);
     const { esAdmin } = useAuth();
 
-    const badge    = BADGE[servicio.estado] || { label: servicio.estado, cls: '' };
+    const badge    = { label: LABEL_ESTADO_CARD[servicio.estado] || estadoLabel(servicio.estado), color: estadoColor(servicio.estado) };
     const total    = calcularTotal(servicio);
     const esPpto   = servicio.estado === 'PRESUPUESTO';
     const esComp   = servicio.estado === 'COMPLETADO';
@@ -103,7 +87,7 @@ export default function ServicioCard({
     return (
         <div
             className={`rounded-2xl overflow-hidden bg-card border border-black/[0.07] transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
-            style={{ borderLeft: `3px solid ${BORDER[servicio.estado] || '#A8A29E'}` }}
+            style={{ borderLeft: `3px solid ${badge.color}` }}
         >
             <div className="p-3">
                 {/* Fila 1: checkbox + badge + id + monto + fecha */}
@@ -117,7 +101,8 @@ export default function ServicioCard({
                         </button>
                     )}
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase shrink-0 ${badge.cls}`}>
+                        <span className="text-label font-bold shrink-0 inline-flex items-center gap-1" style={{ color: badge.color }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: badge.color }} />
                             {badge.label}
                         </span>
                         {esPpto && diasPendiente > 0 && (
@@ -156,7 +141,7 @@ export default function ServicioCard({
                         </p>
                     )}
                     {servicio.modalidadCobro && (
-                        <span className={`shrink-0 text-label font-bold px-1.5 py-0.5 rounded-md ${servicio.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'bg-[var(--success-bg)] text-[var(--success-tx)]' : servicio.modalidadCobro === 'CON_FACTURA' ? 'bg-[var(--info-bg)] text-[var(--info-tx)]' : 'bg-[var(--color-chip-bg)] text-[var(--color-text-secondary)]'}`}>
+                        <span className={`shrink-0 text-label font-bold px-1.5 py-0.5 rounded-md bg-chip text-secondary`}>
                             {MODALIDAD_LABELS[servicio.modalidadCobro] || servicio.modalidadCobro}
                         </span>
                     )}
@@ -166,27 +151,27 @@ export default function ServicioCard({
                 {(servicio.fechaCompletado || servicio.fechaFacturacion || servicio.fechaCobro || servicio.montoFinal) && (
                     <div className="flex flex-wrap gap-1.5 mt-1">
                         {servicio.montoFinal && Number(servicio.montoFinal) !== total && (
-                            <span className="text-label font-bold px-1.5 py-0.5 rounded-md bg-[var(--success-bg)] text-[var(--success-tx)]">
+                            <span className="text-label font-bold px-1.5 py-0.5 rounded-md bg-chip text-secondary">
                                 Final: ${Math.round(Number(servicio.montoFinal)).toLocaleString('es-AR')}
                             </span>
                         )}
                         {servicio.fechaCompletado && (
-                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[var(--blue-bg)] text-[var(--blue-tx)]">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-chip text-secondary">
                                 Hecho {servicio.fechaCompletado.slice(0, 10)}
                             </span>
                         )}
                         {servicio.fechaFacturacion && (
-                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[var(--info-bg)] text-[var(--info-tx)]">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-chip text-secondary">
                                 Fact. {servicio.fechaFacturacion.slice(0, 10)}
                             </span>
                         )}
                         {servicio.fechaCobro && (
-                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[var(--success-bg)] text-[var(--success-tx)]">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-chip text-secondary">
                                 Cobrado {servicio.fechaCobro.slice(0, 10)}
                             </span>
                         )}
                         {servicio.datosBancariosEnviados && (
-                            <span className="text-label px-1.5 py-0.5 rounded-md bg-[var(--indigo-bg)] text-[var(--indigo-tx)]">
+                            <span className="text-label px-1.5 py-0.5 rounded-md bg-chip text-secondary">
                                 Datos enviados
                             </span>
                         )}
@@ -313,6 +298,12 @@ export default function ServicioCard({
                     cls="bg-chip text-secondary"><LuEye size={15} /></IconBtn>
                 <IconBtn onClick={() => onGenerarPDF(servicio)} title="PDF"
                     cls="bg-chip text-secondary"><LuFileText size={15} /></IconBtn>
+                {/* En Archivados el borrado definitivo queda a la vista (antes solo estaba
+                    escondido en el menú "..."), así no se acumulan registros que nadie encuentra. */}
+                {esArch && onEliminar && (
+                    <IconBtn onClick={() => onEliminar(servicio.id)} title="Eliminar definitivamente"
+                        cls="bg-[#FEE2E2] dark:bg-[#3A1414] text-brand-red"><LuTrash2 size={15} /></IconBtn>
+                )}
 
                 {/* Menu overflow para acciones secundarias */}
                 <div className="relative">

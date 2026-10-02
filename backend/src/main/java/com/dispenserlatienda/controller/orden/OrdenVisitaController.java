@@ -87,6 +87,30 @@ public class OrdenVisitaController {
         return ResponseEntity.ok(service.avanzarEstado(id, dto));
     }
 
+    // Técnico: "no puedo ir" a esta visita (motivo propio, no del cliente)
+    @PostMapping("/{id}/no-puedo")
+    public ResponseEntity<OrdenVisitaDTO> noPuedo(@PathVariable Long id,
+                                                 @RequestBody Map<String, String> body,
+                                                 Authentication auth) {
+        verificarAccesoOrden(id, auth);
+        return ResponseEntity.ok(service.noPuedoAsistir(id, body.get("motivo"), body.get("detalle")));
+    }
+
+    // Técnico: no puede trabajar hoy → devuelve todas sus visitas de hoy (y atrasadas)
+    @PostMapping("/no-puedo-hoy")
+    public ResponseEntity<Map<String, Integer>> noPuedoHoy(@RequestBody Map<String, String> body,
+                                                          Authentication auth) {
+        int n = service.noPuedoHoy(resolverUsuario(auth), body.get("motivo"), body.get("detalle"));
+        return ResponseEntity.ok(Map.of("devueltas", n));
+    }
+
+    // Técnico → admin: mensaje libre (app + push + WhatsApp)
+    @PostMapping("/mensaje-admin")
+    public ResponseEntity<Void> mensajeAdmin(@RequestBody Map<String, String> body, Authentication auth) {
+        service.mensajeAlAdmin(resolverUsuario(auth), body.get("mensaje"));
+        return ResponseEntity.noContent().build();
+    }
+
     // Badge: count activas totales (admin) o por técnico
     @GetMapping("/count-activas")
     public ResponseEntity<Map<String, Long>> countActivas(

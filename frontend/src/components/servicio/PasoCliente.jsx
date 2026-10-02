@@ -3,6 +3,7 @@ import CreatableSelect from 'react-select/creatable';
 import { Label, NextBtn, buildSelectStyles } from './ServicioUI';
 import DateInput from '../ui/DateInput';
 
+import { filtroMultiTermino } from '../../utils/busqueda';
 function InfoCard({ children }) {
     return (
         <div className="rounded-xl p-3 bg-chip border border-black/10 dark:border-white/10">
@@ -47,7 +48,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                 <div className="flex flex-col gap-3">
                     <div>
                         <Label>Cliente</Label>
-                        <CreatableSelect
+                        <CreatableSelect filterOption={filtroMultiTermino}
                             styles={selectStyles}
                             menuPosition="fixed"
                             menuPlacement="auto"
@@ -103,7 +104,7 @@ export default function PasoCliente({ hook, onNext, selectStyles }) {
                             ) : (
                                 <div>
                                     <Label>Sede / Domicilio</Label>
-                                    <CreatableSelect
+                                    <CreatableSelect filterOption={filtroMultiTermino}
                                         styles={selectStyles}
                                         menuPosition="fixed"
                                         menuPlacement="auto"

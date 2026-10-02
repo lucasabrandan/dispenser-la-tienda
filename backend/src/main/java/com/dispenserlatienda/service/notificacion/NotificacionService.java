@@ -11,7 +11,10 @@ import com.dispenserlatienda.service.push.WebPushService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,32 +28,46 @@ public class NotificacionService {
     private final UsuarioRepository usuarioRepo;
     private final WhatsAppService whatsApp;
     private final WebPushService webPush;
+    // La notificación se guarda en su PROPIA transacción: si falla (ej. la base
+    // rechaza un tipo nuevo por un CHECK viejo, como pasó con TRABAJO_ASIGNADO el
+    // 1-sep), no tiene que tirar abajo la operación principal (guardar un
+    // presupuesto, crear una orden). Antes el error de la notificación hacía
+    // rollback de todo.
+    private final TransactionTemplate txAparte;
 
     public NotificacionService(NotificacionRepository repo, UsuarioRepository usuarioRepo,
-                                WhatsAppService whatsApp, WebPushService webPush) {
+                                WhatsAppService whatsApp, WebPushService webPush,
+                                PlatformTransactionManager txManager) {
         this.repo = repo;
         this.usuarioRepo = usuarioRepo;
         this.whatsApp = whatsApp;
         this.webPush = webPush;
+        this.txAparte = new TransactionTemplate(txManager);
+        this.txAparte.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     // ── Crear notificacion + WhatsApp ────────────────────────────────────────
 
-    @Transactional
     public void notificar(TipoNotificacion tipo, Long destinoId, Long origenId,
                           String titulo, String mensaje, Long referenciaId, boolean enviarWhatsApp) {
         Usuario destino = usuarioRepo.findById(destinoId).orElse(null);
         if (destino == null) return;
         Usuario origen = origenId != null ? usuarioRepo.findById(origenId).orElse(null) : null;
 
-        Notificacion n = new Notificacion();
-        n.setTipo(tipo);
-        n.setTitulo(titulo);
-        n.setMensaje(mensaje);
-        n.setDestino(destino);
-        n.setOrigen(origen);
-        n.setReferenciaId(referenciaId);
-        repo.save(n);
+        try {
+            txAparte.executeWithoutResult(status -> {
+                Notificacion n = new Notificacion();
+                n.setTipo(tipo);
+                n.setTitulo(titulo);
+                n.setMensaje(mensaje);
+                n.setDestino(usuarioRepo.getReferenceById(destino.getId()));
+                n.setOrigen(origen != null ? usuarioRepo.getReferenceById(origen.getId()) : null);
+                n.setReferenciaId(referenciaId);
+                repo.save(n);
+            });
+        } catch (Exception e) {
+            log.warn("No se pudo guardar la notificación {} para usuario {}: {}", tipo, destinoId, e.getMessage());
+        }
 
         // Push al celu/navegador — siempre que haya dispositivos suscriptos,
         // a diferencia de WhatsApp esto no es opcional por tipo de evento.

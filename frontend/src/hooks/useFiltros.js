@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { inicioMes, finMes, formatDateISO } from '../utils/dateUtils';
+import { POR_PAGINA } from '../utils/paginacion';
 
 const hoy = () => new Date();
 
@@ -9,7 +10,7 @@ const hoy = () => new Date();
  * Recibe un array de items con campo `fecha` (YYYY-MM-DD) y `estado` opcional.
  * Devuelve los items filtrados y paginados + helpers para los controles.
  */
-export function useFiltros(items = [], { porPagina = 15, campoFecha = 'fecha', campoEstado = 'estado', campoBusqueda = null, campoBusquedaFn = null, periodoInicial = 'TODO' } = {}) {
+export function useFiltros(items = [], { porPagina = POR_PAGINA, campoFecha = 'fecha', campoEstado = 'estado', campoBusqueda = null, campoBusquedaFn = null, periodoInicial = 'TODO' } = {}) {
 
     const [pagina,       setPagina]       = useState(1);
     const [busqueda,     setBusqueda]     = useState('');

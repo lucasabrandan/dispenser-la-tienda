@@ -1,12 +1,12 @@
-export const ESTADO_BORDER = {
-    PRESUPUESTO: 'var(--color-brand-amber)', COMPLETADO: 'var(--blue-tx)', PENDIENTE_FACTURACION: 'var(--info-tx)',
-    FACTURADO: 'var(--indigo-tx)', COBRADO: 'var(--success-tx)', REALIZADO: 'var(--success-tx)', ARCHIVADO: 'var(--color-muted)',
-};
+import { ESTADO_UI, GRUPO_COLOR } from '../../utils/estados';
 
-export const ESTADO_LABEL = {
-    PRESUPUESTO: 'Pendiente', COMPLETADO: 'Realizado', PENDIENTE_FACTURACION: 'Por cobrar',
-    FACTURADO: 'Facturado', COBRADO: 'Cobrado', REALIZADO: 'Cobrado', ARCHIVADO: 'Archivado',
-};
+// Derivados del sistema único de estados (utils/estados.js): 4 colores en total.
+export const ESTADO_BORDER = Object.fromEntries(
+    Object.entries(ESTADO_UI).map(([k, v]) => [k, GRUPO_COLOR[v.grupo]])
+);
+export const ESTADO_LABEL = Object.fromEntries(
+    Object.entries(ESTADO_UI).map(([k, v]) => [k, v.label])
+);
 
 // Color de identidad del header de tecnico en la Agenda. Antes tomaba
 // ESTADO_COLORS[estadoPredominante(...)] — el estado de un trabajo cualquiera

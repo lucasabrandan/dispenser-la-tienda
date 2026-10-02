@@ -5,6 +5,7 @@ import DateInput from '../ui/DateInput';
 import { getTodayISO } from '../../utils/dateUtils';
 import { useTheme } from '../../hooks/useTheme';
 
+import { filtroMultiTermino } from '../../utils/busqueda';
 const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucumán','Salta','Neuquén'];
 
 const inputCls = `
@@ -184,7 +185,7 @@ export default function PasoClienteVenta({ hook, mostrador, onNext }) {
             {!modoRapido && (
                 <div>
                     <Label>Buscar cliente</Label>
-                    <CreatableSelect
+                    <CreatableSelect filterOption={filtroMultiTermino}
                         styles={selectStyles}
                         menuPosition="fixed"
                         menuPlacement="auto"

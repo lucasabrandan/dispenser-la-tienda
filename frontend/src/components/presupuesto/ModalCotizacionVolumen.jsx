@@ -5,15 +5,16 @@ import api from '../../services/api';
 import { generarPDFCotizacion } from '../../utils/generadorPDFCotizacion';
 import { useTheme } from '../../hooks/useTheme';
 
+import { filtroMultiTermino } from '../../utils/busqueda';
 function buildSelectStyles(isDark) {
-    const bg      = isDark ? '#2E2E2E' : '#E8E5E0';
-    const bgMenu  = isDark ? '#242424' : '#FFFFFF';
+    const bg      = isDark ? '#2A2A28' : '#E8E5E0';
+    const bgMenu  = isDark ? '#1C1C1B' : '#FFFFFF';
     const text    = isDark ? '#F0EEE9' : '#1C1917';
     const muted   = '#A8A29E';
     return {
         control:      (b, s) => ({ ...b, background: bg, border: s.isFocused ? '1px solid #D13A28' : '1px solid rgba(0,0,0,0.07)', borderRadius: 12, boxShadow: 'none', minHeight: 44, cursor: 'pointer' }),
         menu:         (b)    => ({ ...b, background: bgMenu, borderRadius: 12, border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 20 }),
-        option:       (b, s) => ({ ...b, background: s.isFocused ? (isDark ? '#2E2E2E' : '#EFEDEA') : 'transparent', color: text, fontSize: 13, cursor: 'pointer' }),
+        option:       (b, s) => ({ ...b, background: s.isFocused ? (isDark ? '#2A2A28' : '#EFEDEA') : 'transparent', color: text, fontSize: 13, cursor: 'pointer' }),
         singleValue:  (b)    => ({ ...b, color: text, fontSize: 13, fontWeight: 700 }),
         placeholder:  (b)    => ({ ...b, color: muted, fontSize: 13 }),
         input:        (b)    => ({ ...b, color: text }),
@@ -237,7 +238,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                                 {/* Cliente */}
                                 <div>
                                     <label className={LABEL}>Cliente</label>
-                                    <Select
+                                    <Select filterOption={filtroMultiTermino}
                                         options={clientes}
                                         value={clienteOpt}
                                         onChange={onClienteChange}

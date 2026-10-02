@@ -40,5 +40,6 @@ public record ServicioDTO(
         Boolean aceptaTerminos,
         Boolean fechaTentativa,
         String ventanasDisponibles,
-        String horaServicio
+        String horaServicio,
+        Boolean enEspera
 ) {}

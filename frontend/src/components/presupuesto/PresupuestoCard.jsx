@@ -2,13 +2,27 @@ import React, { useState } from 'react';
 import { M } from '../servicio/ServicioUI';
 import IconBtn from '../ui/IconBtn';
 import ActionSheet from '../ui/ActionSheet';
-import { LuFileText, LuPencil, LuEllipsisVertical, LuClipboardList, LuArchive, LuZap, LuWrench, LuShoppingCart, LuMapPin, LuUser } from 'react-icons/lu';
+import { LuFileText, LuPencil, LuEllipsisVertical, LuClipboardList, LuArchive, LuZap, LuWrench, LuShoppingCart, LuMapPin, LuUser, LuCheck, LuPause, LuPlay, LuBanknote } from 'react-icons/lu';
 import { formatFechaCorta } from '../../utils/dateUtils';
 
-export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, onIniciar, onEditar, modoSeleccion, seleccionado, onToggleSelect }) {
+export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, onIniciar, onEditar, onRealizado, onEspera, onCobrar, modoSeleccion, seleccionado, onToggleSelect }) {
     const [expandido, setExpandido] = useState(false);
     const [menuAbierto, setMenuAbierto] = useState(false);
     const total    = calcularTotal(s);
+    // Sección calculada en PresupuestosManager: PENDIENTES · EN_CURSO · EN_ESPERA · REALIZADOS
+    const seccion  = s.seccion || 'PENDIENTES';
+    const asignado = seccion === 'EN_CURSO';
+    const color    = seccion === 'EN_ESPERA' ? 'var(--estado-pendiente)'
+                   : seccion === 'REALIZADOS' ? 'var(--estado-listo)'
+                   : asignado ? 'var(--estado-curso)' : 'var(--estado-pendiente)';
+    const quien    = s.tecnicoAsignado || s.usuarioNombre;
+    const etiqueta = seccion === 'EN_ESPERA' ? 'En espera'
+                   : seccion === 'REALIZADOS' ? `Realizado${quien ? ` por ${quien.split(' ')[0]}` : ''}`
+                   : asignado ? `Asignado${s.tecnicoAsignado ? ` a ${s.tecnicoAsignado.split(' ')[0]}` : ''}`
+                   : 'Sin asignar';
+    const btnPrim  = 'h-10 px-4 rounded-xl font-bold text-label text-white shrink-0 active:scale-95 transition-all bg-brand-red flex items-center gap-1.5';
+    const btnSec   = 'h-10 px-3.5 rounded-xl font-bold text-label text-ink shrink-0 active:scale-95 transition-all border border-black/10 dark:border-white/[0.12] flex items-center gap-1.5';
+    const itemMenu = 'w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5';
     const esTecnico = s.servicioTipo === 'TECNICA';
     const items     = s.items || [];
     const seriales  = items.map(it => it.equipoSerial).filter(Boolean);
@@ -19,7 +33,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
     return (
         <div className={`rounded-2xl overflow-hidden bg-card transition-all ${seleccionado ? 'ring-2 ring-[#D13A28]' : ''}`}
-            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: '3px solid #D48800' }}>
+            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${color}` }}>
             <div className="p-3">
                 <div className="flex items-start gap-2 mb-1.5">
                     {modoSeleccion && (
@@ -29,8 +43,12 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                         </button>
                     )}
                     <div className="flex items-center gap-1.5 flex-1 min-w-0 flex-wrap">
-                        <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase shrink-0 flex items-center gap-1 ${esTecnico ? 'bg-[#D13A28]/10 text-brand-red' : 'bg-[#D48800]/10 text-brand-amber'}`}>
+                        <span className="text-label font-bold px-2 py-0.5 rounded-md shrink-0 flex items-center gap-1 bg-chip text-secondary">
                             {esTecnico ? <><LuWrench size={11} /> Servicio</> : <><LuShoppingCart size={11} /> Venta</>}
+                        </span>
+                        <span className="text-label font-bold shrink-0 inline-flex items-center gap-1" style={{ color }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+                            {etiqueta}
                         </span>
                         <span className="text-caption font-bold text-muted shrink-0">#{s.id}</span>
                     </div>
@@ -115,6 +133,11 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
                                     className="w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
                                     <LuClipboardList size={15} /> PDF sin precios
                                 </button>
+                                {onEspera && (seccion === 'PENDIENTES' || seccion === 'EN_CURSO') && (
+                                    <button onClick={() => { onEspera(s, true); setMenuAbierto(false); }} className={itemMenu}>
+                                        <LuPause size={15} /> Poner en espera{asignado ? ' (saca la orden del técnico)' : ''}
+                                    </button>
+                                )}
                                 <button onClick={() => { onArchivar(s.id); setMenuAbierto(false); }}
                                     className="w-full px-5 py-3.5 text-left text-label font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
                                     <LuArchive size={15} /> Archivar
@@ -124,10 +147,34 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
 
                 <div className="flex-1" />
 
-                <button onClick={() => onIniciar(s)}
-                    className="h-9 px-4 rounded-xl font-bold text-label text-white shrink-0 active:scale-95 transition-all bg-brand-red flex items-center gap-1.5">
-                    <LuZap size={14} /> Iniciar
-                </button>
+                {seccion === 'PENDIENTES' && (
+                    <button onClick={() => onIniciar(s)} className={btnPrim}>
+                        <LuZap size={14} /> Iniciar
+                    </button>
+                )}
+                {seccion === 'EN_CURSO' && (
+                    <>
+                        {/* Un toque: pasa a Realizados y cierra la orden del técnico (backend) */}
+                        {onRealizado && (
+                            <button onClick={() => onRealizado(s)} className={btnSec} aria-label="Marcar como realizado">
+                                <LuCheck size={14} /> Realizado
+                            </button>
+                        )}
+                        <button onClick={() => onIniciar(s)} className={btnPrim}>
+                            <LuBanknote size={14} /> Cerrar y cobrar
+                        </button>
+                    </>
+                )}
+                {seccion === 'EN_ESPERA' && onEspera && (
+                    <button onClick={() => onEspera(s, false)} className={btnSec}>
+                        <LuPlay size={14} /> Retomar
+                    </button>
+                )}
+                {seccion === 'REALIZADOS' && onCobrar && (
+                    <button onClick={() => onCobrar(s)} className={btnPrim}>
+                        <LuBanknote size={14} /> Cobrar
+                    </button>
+                )}
             </div>
         </div>
     );

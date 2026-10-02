@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { LuClipboardList, LuWrench, LuShoppingCart, LuCircleCheck, LuPencil } from 'react-icons/lu';
+import { LuClipboardList, LuWrench, LuShoppingCart, LuCircleCheck, LuPencil, LuPause } from 'react-icons/lu';
 import BusquedaBar from './ui/BusquedaBar';
 import ChipFiltro from './ui/ChipFiltro';
 import api from '../services/api';
@@ -23,6 +23,8 @@ import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import { mesKeyDeFecha, formatMesLargo, periodoLabelDe } from '../utils/dateUtils';
 import ConfirmDialog from './ui/ConfirmDialog';
 import { buildGoogleMapsRouteUrl } from '../utils/clienteUtils';
+import { POR_PAGINA } from '../utils/paginacion';
+import { colorTecnico } from '../utils/estados';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function parseFechaSort(f) {
@@ -40,11 +42,30 @@ const TIPO_TABS = [
     { id: 'VENTA',   label: 'Ventas',    fullLabel: 'Ventas',    color: '#D48800', Icon: LuShoppingCart },
 ];
 
+// Secciones de Presupuestos (29-sep-2026): cada presupuesto cae solo en una,
+// según su estado real y su orden — nadie lo mueve a mano salvo "En espera".
+const SECCIONES = [
+    { id: 'PENDIENTES', label: 'Pendientes', fullLabel: 'Pendientes', color: '#78716C', Icon: LuClipboardList },
+    { id: 'EN_CURSO',   label: 'En curso',   fullLabel: 'En curso',   color: '#F0A500', Icon: LuWrench },
+    { id: 'EN_ESPERA',  label: 'En espera',  fullLabel: 'En espera',  color: '#A8A29E', Icon: LuPause },
+    { id: 'REALIZADOS', label: 'Realizados', fullLabel: 'Realizados', color: '#16A34A', Icon: LuCircleCheck },
+];
+
+const seccionDe = (p) =>
+    p.enEspera ? 'EN_ESPERA'
+    : p.estado === 'COMPLETADO' ? 'REALIZADOS'
+    : (p.estado === 'EN_PROGRESO' || p.tecnicoAsignado) ? 'EN_CURSO'
+    : 'PENDIENTES';
+
 
 // ─── Componente principal ────────────────────────────────────────────────────
 export default function PresupuestosManager() {
     const { esAdmin, usuario } = useAuth();
     const [presupuestos, setPresupuestos]   = useState([]);
+    // presupuestoId → técnico de su orden abierta (quién lo tiene asignado de verdad)
+    const [tecnicoPorPresu, setTecnicoPorPresu] = useState({});
+    // '' = todos · '__SIN__' = sin asignar · '<nombre>' = ese técnico
+    const [filtroTecnico, setFiltroTecnico] = useState('');
     const [cargando, setCargando]           = useState(true);
     const [modoSeleccion, setModoSeleccion]     = useState(false);
     const [seleccionados, setSeleccionados]     = useState(new Set());
@@ -61,6 +82,7 @@ export default function PresupuestosManager() {
     };
     const cancelarLongPress = () => { if (longPressRef.current) clearTimeout(longPressRef.current); };
     const [tipoFiltro, setTipoFiltro]             = useState('');
+    const [seccion, setSeccion]                   = useState('PENDIENTES');
     const [modalCotizar, setModalCotizar]         = useState(false);
     const [presupuestoDespachar, setPresupuestoDespachar] = useState(null);
     const [presupuestoEjecutar, setPresupuestoEjecutar] = useState(null);
@@ -75,11 +97,24 @@ export default function PresupuestosManager() {
         setCargando(true);
         const filtroUsuario = (!esAdmin && usuario?.id) ? { usuarioId: usuario.id } : {};
         try {
-            // Solo PRESUPUESTO: apenas se despacha o se ejecuta, el registro cambia de
-            // estado (EN_PROGRESO / COBRADO / etc.) y sale de esta lista solo — ya no hace
-            // falta cruzar contra todos los servicios para marcar "Ejecutado" a mano.
-            const resPresu = await api.get('/servicios', { params: { estado: 'PRESUPUESTO', page: 0, size: 200, sort: 'fechaServicio,desc', ...filtroUsuario } });
+            // PRESUPUESTO (sin asignar) + EN_PROGRESO (ya asignado a un técnico, todavía
+            // sin hacer). Antes solo traía PRESUPUESTO: apenas se asignaba a Marcos, el
+            // presupuesto desaparecía de esta pantalla y el admin veía la lista vacía
+            // aunque hubiera trabajo pendiente. Sale de la lista recién al completarse.
+            const resPresu = await api.get('/servicios', { params: { estado: 'PRESUPUESTO,EN_PROGRESO,COMPLETADO', page: 0, size: 300, sort: 'fechaServicio,desc', ...filtroUsuario } });
             const data = resPresu.data.content || resPresu.data || [];
+            if (esAdmin) {
+                try {
+                    // /ordenes por defecto trae solo -7/+30 días: se pide un rango amplio
+                    const hasta = new Date(); hasta.setFullYear(hasta.getFullYear() + 1);
+                    const resOrd = await api.get('/ordenes', { params: { desde: '2020-01-01', hasta: hasta.toISOString().slice(0, 10) } });
+                    const mapa = {};
+                    (resOrd.data || [])
+                        .filter(o => o.presupuestoId && ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO', 'NO_ATENDIDO'].includes(o.estado))
+                        .forEach(o => { mapa[o.presupuestoId] = o.tecnicoNombre; });
+                    setTecnicoPorPresu(mapa);
+                } catch { /* sin órdenes: se usa el usuario del presupuesto */ }
+            }
             setPresupuestos(Array.isArray(data)
                 ? data.sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha) || (b.id || 0) - (a.id || 0))
                 : []);
@@ -168,15 +203,32 @@ export default function PresupuestosManager() {
     const presupuestosConNro = useMemo(() => presupuestos.map(p => ({
         ...p,
         nroDocPdf: p.nroDocumento || localStorage.getItem(`pdf_nro_${p.id}`) || '',
-    })), [presupuestos]);
+        tecnicoAsignado: tecnicoPorPresu[p.id] || (p.estado === 'EN_PROGRESO' ? p.usuarioNombre : null) || null,
+    })).map(p => ({ ...p, seccion: seccionDe(p) })), [presupuestos, tecnicoPorPresu]);
+
+    // Chips "por técnico" (admin): Todos · Sin asignar · Marcos · ...
+    const chipsTecnico = useMemo(() => {
+        const cuenta = {};
+        presupuestosConNro.forEach(p => { if (p.tecnicoAsignado) cuenta[p.tecnicoAsignado] = (cuenta[p.tecnicoAsignado] || 0) + 1; });
+        return [
+            { id: '', label: 'Todos', count: presupuestosConNro.length },
+            { id: '__SIN__', label: 'Sin asignar', count: presupuestosConNro.filter(p => !p.tecnicoAsignado).length },
+            ...Object.keys(cuenta).sort().map(n => ({ id: n, label: n.split(' ')[0], count: cuenta[n], color: colorTecnico(n) })),
+        ];
+    }, [presupuestosConNro]);
 
     const presupuestosFiltradosTipo = useMemo(() => {
-        const items = tipoFiltro ? presupuestosConNro.filter(p => p.servicioTipo === tipoFiltro) : presupuestosConNro;
+        const porTecnico = filtroTecnico === '' ? presupuestosConNro
+            : filtroTecnico === '__SIN__' ? presupuestosConNro.filter(p => !p.tecnicoAsignado)
+            : presupuestosConNro.filter(p => p.tecnicoAsignado === filtroTecnico);
+        const porTipo = tipoFiltro ? porTecnico.filter(p => p.servicioTipo === tipoFiltro) : porTecnico;
+        const items = porTipo.filter(p => p.seccion === seccion);
         return [...items].sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha) || (b.id || 0) - (a.id || 0));
-    }, [presupuestosConNro, tipoFiltro]);
+    }, [presupuestosConNro, tipoFiltro, filtroTecnico, seccion]);
 
     const filtros = useFiltros(presupuestosFiltradosTipo, {
-        porPagina: 10, campoFecha: 'fecha', periodoInicial: 'MES',
+        // Un presupuesto pendiente de agosto sigue pendiente: por defecto se ve todo.
+        porPagina: POR_PAGINA, campoFecha: 'fecha', periodoInicial: 'TODO',
         campoBusqueda: ['clienteNombre', 'sedeNombre', 'clienteTelefono', 'observaciones', 'nroDocPdf'],
         campoBusquedaFn: (s) => s.items?.map(it =>
             [it.equipoSerial, it.equipoModelo, it.equipoUbicacion].filter(Boolean).join(' ')
@@ -193,26 +245,36 @@ export default function PresupuestosManager() {
         );
     };
 
-    const stats = useMemo(() => ({
-        total:     presupuestos.reduce((a, p) => a + calcularTotal(p), 0),
-        count:     presupuestos.length,
-        servicios: presupuestos.filter(p => p.servicioTipo === 'TECNICA').length,
-        ventas:    presupuestos.filter(p => p.servicioTipo === 'VENTA').length,
-    }), [presupuestos]); // eslint-disable-line
+    const conteoSeccion = useMemo(() => {
+        const c = { PENDIENTES: 0, EN_CURSO: 0, EN_ESPERA: 0, REALIZADOS: 0 };
+        presupuestosConNro
+            .filter(p => filtroTecnico === '' ? true : filtroTecnico === '__SIN__' ? !p.tecnicoAsignado : p.tecnicoAsignado === filtroTecnico)
+            .filter(p => !tipoFiltro || p.servicioTipo === tipoFiltro)
+            .forEach(p => { c[p.seccion]++; });
+        return c;
+    }, [presupuestosConNro, filtroTecnico, tipoFiltro]);
 
-    // Swipe en contenido para cambiar tab
-    const columnIds = TIPO_TABS.map(t => t.id);
-    const swipeHandlers = useSwipeGesture(columnIds, tipoFiltro, (id) => { setTipoFiltro(id); setModoSeleccion(false); setSeleccionados(new Set()); });
+    const cambiarSeccion = (id) => { setSeccion(id); setModoSeleccion(false); setSeleccionados(new Set()); };
+
+    // Swipe en contenido para cambiar de sección
+    const columnIds = SECCIONES.map(t => t.id);
+    const swipeHandlers = useSwipeGesture(columnIds, seccion, cambiarSeccion);
+
+    // Acciones de un toque — el cierre de la orden del técnico lo hace el backend
+    const marcarRealizado = (p) => patchEstado(p.id, 'COMPLETADO', 'Pasó a Realizados — la orden del técnico quedó cerrada');
+    const cambiarEspera = async (p, enEspera) => {
+        const t = toast.loading('Guardando...');
+        try {
+            await api.patch(`/servicios/${p.id}/espera`, { enEspera });
+            toast.success(enEspera ? 'En espera' + (p.tecnicoAsignado ? ' — se sacó de la agenda del técnico' : '') : 'Retomado: quedó en Pendientes para asignar', { id: t });
+            cargar();
+        } catch (e) {
+            toast.error(e?.response?.data?.mensaje || 'No se pudo cambiar', { id: t });
+        }
+    };
 
     // Columnas para SwipeColumns
-    const columns = TIPO_TABS.map(t => ({
-        id: t.id,
-        label: t.label,
-        fullLabel: t.fullLabel,
-        color: t.color,
-        Icon: t.Icon,
-        count: t.id === '' ? stats.count : t.id === 'TECNICA' ? stats.servicios : stats.ventas,
-    }));
+    const columns = SECCIONES.map(t => ({ ...t, count: conteoSeccion[t.id] }));
 
     // Label del chip de período — mes elegido a mano tiene prioridad sobre el rápido
     const periodoLabel = periodoLabelDe(filtros);
@@ -247,14 +309,43 @@ export default function PresupuestosManager() {
                 {/* ═══ SWIPE COLUMNS — tipo ═══ */}
                 <SwipeColumns
                     columns={columns}
-                    activeId={tipoFiltro}
-                    onChangeColumn={(id) => { setTipoFiltro(id); setModoSeleccion(false); setSeleccionados(new Set()); }}
+                    activeId={seccion}
+                    onChangeColumn={cambiarSeccion}
                 />
+
+                {/* Por técnico: acceso directo a lo que tiene asignado cada uno */}
+                {esAdmin && chipsTecnico.length > 2 && (
+                    <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1" role="group" aria-label="Filtrar por técnico">
+                        {chipsTecnico.map(c => {
+                            const activo = filtroTecnico === c.id;
+                            return (
+                                <button key={c.id || 'todos'} onClick={() => { setFiltroTecnico(c.id); filtros.irA?.(1); }}
+                                    aria-pressed={activo}
+                                    className={`h-10 px-3.5 rounded-full shrink-0 inline-flex items-center gap-2 text-label font-bold border transition-all active:scale-95 ${
+                                        activo ? 'border-brand-red text-ink bg-[rgba(232,66,47,0.10)]' : 'border-black/10 dark:border-line text-secondary'
+                                    }`}>
+                                    {c.color && <span className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />}
+                                    {c.label}
+                                    <span className="text-muted">{c.count}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* Subline — pendiente + ver ruta, discreto (reemplaza la barra de stats) */}
                 <div className="flex items-center gap-2 px-1">
-                    <span className="text-label font-semibold text-muted">Pendiente</span>
-                    <M valor={stats.total} className="text-body font-black text-brand-amber" />
+                    <span className="text-label font-semibold text-muted">{seccion === 'REALIZADOS' ? 'A cobrar' : 'Total'}</span>
+                    <M valor={filtros.itemsFiltrados.reduce((a, p) => a + calcularTotal(p), 0)} className="text-body font-black text-ink" />
+                    {/* Tipo: ahora un filtro chico; las columnas grandes son las secciones */}
+                    <div className="flex rounded-lg border border-black/10 dark:border-line overflow-hidden ml-2" role="group" aria-label="Tipo">
+                        {TIPO_TABS.map(t => (
+                            <button key={t.id || 'todos'} onClick={() => setTipoFiltro(t.id)} aria-pressed={tipoFiltro === t.id}
+                                className={`h-8 px-2.5 text-label font-bold ${tipoFiltro === t.id ? 'bg-chip text-ink' : 'text-muted'}`}>
+                                {t.label}
+                            </button>
+                        ))}
+                    </div>
                     <button onClick={() => setModoSeleccion(true)}
                         className="ml-auto text-label font-bold text-[#1A73E8] underline underline-offset-2 active:opacity-70">
                         Elegir para ruta
@@ -301,7 +392,12 @@ export default function PresupuestosManager() {
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         <LuCircleCheck size={32} className="mb-2 text-muted inline-block" />
-                        <p className="text-body font-bold text-muted">Sin presupuestos pendientes</p>
+                        <p className="text-body font-bold text-muted">{{
+                            PENDIENTES: 'Nada pendiente de asignar',
+                            EN_CURSO:   'Ningún trabajo en curso',
+                            EN_ESPERA:  'Nada en espera',
+                            REALIZADOS: 'Nada realizado sin cobrar',
+                        }[seccion]}</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-2">
@@ -323,8 +419,11 @@ export default function PresupuestosManager() {
                                 calcularTotal={calcularTotal}
                                 onPDF={generarPDF}
                                 onArchivar={setConfirmArchivarId}
-                                onIniciar={(serv) => serv.servicioTipo === 'TECNICA' ? setPresupuestoIniciar(serv) : setPresupuestoEjecutar(serv)}
+                                onIniciar={(serv) => (serv.servicioTipo === 'TECNICA' && serv.estado !== 'EN_PROGRESO' && !serv.tecnicoAsignado) ? setPresupuestoIniciar(serv) : setPresupuestoEjecutar(serv)}
                                 onEditar={esAdmin ? setPresupuestoEditar : null}
+                                onRealizado={esAdmin ? marcarRealizado : null}
+                                onEspera={esAdmin ? cambiarEspera : null}
+                                onCobrar={esAdmin ? setPresupuestoEjecutar : null}
                                 modoSeleccion={modoSeleccion}
                                 seleccionado={seleccionados.has(s.id)}
                                 onToggleSelect={toggleSeleccion}

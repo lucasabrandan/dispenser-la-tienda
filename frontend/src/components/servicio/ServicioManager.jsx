@@ -52,6 +52,8 @@ const TABS_ORDEN_IDS = new Set(TABS_ORDEN.map(t => t.id));
 
 const ESTADO_API_MAP = {
     COBRADO: 'COBRADO,REALIZADO',
+    // COMPLETADO = el técnico terminó y falta cobrar: antes solo aparecía en "Todo"
+    PENDIENTE_FACTURACION: 'PENDIENTE_FACTURACION,COMPLETADO',
 };
 
 export default function ServicioManager({
@@ -158,7 +160,7 @@ export default function ServicioManager({
             const results = await Promise.all(
                 TABS_SERVICIO.map(t => api.get('/servicios', {
                     params: {
-                        tipo: 'TECNICA', page: 0, size: 1,
+                        ...filtros.paramsBase, page: 0, size: 1,
                         // "Todo" no filtra por estado — cuenta todos los servicios técnicos
                         ...(t.id !== 'TODOS' ? { estado: ESTADO_API_MAP[t.id] || t.id } : {}),
                     }
@@ -168,7 +170,7 @@ export default function ServicioManager({
             TABS_SERVICIO.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
             setTabCounts(counts);
         } catch (err) { console.warn('Servicios: error cargando conteos tabs', err); }
-    }, []);
+    }, [filtros.paramsBase]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => { fetchTabCounts(); }, [fetchTabCounts]);
 

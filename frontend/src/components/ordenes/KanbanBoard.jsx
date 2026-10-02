@@ -16,7 +16,7 @@ function KanbanCard({ orden, onEditar }) {
     const priColor = PRIORIDAD_BORDER[orden.prioridad] || '#A8A29E';
     return (
         <div onClick={() => onEditar?.(orden)}
-            className="rounded-xl p-3 bg-white dark:bg-[#242424] shadow-sm border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform"
+            className="rounded-xl p-3 bg-white dark:bg-[#1C1C1B] shadow-sm border border-black/[0.05] dark:border-white/[0.05] cursor-pointer active:scale-[0.98] transition-transform"
             style={{ borderLeft: `3px solid ${priColor}` }}>
             <p className="text-body font-black text-ink leading-tight truncate">
                 {orden.titulo}
@@ -74,7 +74,7 @@ export default function KanbanBoard({ ordenes, filtroTecnico, onEditar }) {
                                 className={`shrink-0 flex items-center gap-1.5 h-9 px-3 rounded-xl text-label font-bold transition-all active:scale-95 ${
                                     sel
                                         ? 'text-white'
-                                        : 'bg-white dark:bg-[#242424] text-secondary border border-black/[0.05] dark:border-white/[0.05]'
+                                        : 'bg-white dark:bg-[#1C1C1B] text-secondary border border-black/[0.05] dark:border-white/[0.05]'
                                 }`}
                                 style={sel ? { backgroundColor: col.color } : {}}>
                                 <span>{col.emoji}</span>

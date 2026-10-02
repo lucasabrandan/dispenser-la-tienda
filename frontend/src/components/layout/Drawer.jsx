@@ -68,7 +68,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E] transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:bg-[#E8E5E0] dark:hover:bg-[#2A2A28] transition-colors"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -97,7 +97,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-body font-bold transition-all active:scale-[0.98] ${
                                             activa
                                                 ? 'bg-brand-red text-white shadow-md'
-                                                : 'text-ink hover:bg-[#E8E5E0] dark:hover:bg-[#2E2E2E]'
+                                                : 'text-ink hover:bg-[#E8E5E0] dark:hover:bg-[#2A2A28]'
                                         }`}
                                     >
                                         <item.Icon size={18} className="shrink-0" />

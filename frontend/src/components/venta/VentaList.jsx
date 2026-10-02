@@ -16,7 +16,7 @@ function M({ valor, prefix = '$', className = '' }) {
 const badgeClass = (v) => {
     if (v.estado === 'PRESUPUESTO') return 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]';
     if (v.estado === 'REALIZADO')   return 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]';
-    return 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2E2E2E] dark:text-[#9E9A94]';
+    return 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2A2A28] dark:text-[#9E9A94]';
 };
 
 const badgeLabel = (v) => {
@@ -209,7 +209,7 @@ export default function VentaList({
                         </div>
 
                         {/* Acciones */}
-                        <div className="flex items-center gap-1.5 px-3.5 py-2 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#1C1C1C]/50">
+                        <div className="flex items-center gap-1.5 px-3.5 py-2 border-t border-black/[0.04] dark:border-white/[0.04] bg-[#F5F3F1]/50 dark:bg-[#161615]/50">
                             {esPendiente && (
                                 <Accion onClick={() => onEditar(v)} Icon={LuPencil} label="Editar"
                                     className="bg-chip text-ink" />

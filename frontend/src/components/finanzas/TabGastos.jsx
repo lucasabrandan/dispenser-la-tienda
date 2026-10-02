@@ -8,8 +8,8 @@ import Paginacion from '../ui/Paginacion';
 import DateInput from '../ui/DateInput';
 import { LuPencil, LuTrash2 } from 'react-icons/lu';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { POR_PAGINA } from '../../utils/paginacion';
 
-const POR_PAGINA = 15;
 const COLORES = ['#D48800', '#D13A28', '#A8A29E', '#16A34A', '#8B5CF6', '#3B82F6', '#EC4899', '#F59E0B', '#6366F1', '#14B8A6'];
 
 const inputCls = `
@@ -162,7 +162,7 @@ export default function TabGastos({ filtroMes }) {
                             <Paginacion pagina={pagGastos} totalPaginas={totalPagGastos} irA={setPagGastos} next={() => setPagGastos(p => Math.min(p + 1, totalPagGastos))} prev={() => setPagGastos(p => Math.max(p - 1, 1))} />
                         </div>
                     )}
-                    <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#1C1C1C]/50">
+                    <div className="flex justify-between items-center px-5 py-3 bg-[#EFEDEA]/50 dark:bg-[#161615]/50">
                         <p className="text-label font-black text-muted uppercase">Total</p>
                         <p className="text-body-lg font-black text-brand-amber">
                             ${fmt(gastos.reduce((s, g) => s + parseFloat(g.monto || 0), 0))}

@@ -49,7 +49,7 @@ export default function RepuestoRapidoModal({ isOpen, onClose, nombreInicial = '
 
     const inputCls =
         'w-full mt-1 p-3 rounded-xl text-sm font-bold outline-none ' +
-        'bg-[#FFFFFF] dark:bg-[#2E2E2E] text-ink ' +
+        'bg-[#FFFFFF] dark:bg-[#2A2A28] text-ink ' +
         'border border-black/[0.07] dark:border-white/[0.07] ' +
         'focus:ring-2 focus:ring-[#D13A28] dark:focus:ring-[#E8422F]';
 

@@ -8,8 +8,11 @@ import CargaRapidaSheet from './CargaRapidaSheet';
 import FotoUpload from './FotoUpload';
 import TicketItemsList from './TicketItemsList';
 import CalculadoraMO from './CalculadoraMO';
-import { LuZap, LuWrench, LuShieldCheck, LuHourglass, LuPackage, LuCamera } from 'react-icons/lu';
+import { LuZap, LuWrench, LuShieldCheck, LuHourglass, LuPackage, LuCamera, LuWandSparkles } from 'react-icons/lu';
+import api from '../../services/api';
+import { toast } from 'react-hot-toast';
 
+import { filtroMultiTermino } from '../../utils/busqueda';
 export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const {
         db, setDb, clienteId, ticketItems, setTicketItems,
@@ -18,6 +21,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
         agregarAlTicket, calcularGananciaRepuesto,
         consultarAntecedentes, historialEquipo,
         configGlobal, editarItem, eliminarItem,
+        tecnicoSeleccionado,
     } = hook;
 
     const moBase = Number(configGlobal?.manoDeObraBase) || 72600;
@@ -27,7 +31,34 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     const precioReparacion = moBase;
     const precioVisita = Math.round(moBase / 2);
     const [tipoMO, setTipoMO] = useState('REPARACION');
-    const { esAdmin } = useAuth();
+    const { esAdmin, usuario } = useAuth();
+    const [generandoSerie, setGenerandoSerie] = useState(false);
+
+    // N/S automático: inicial del técnico + "S" (Service) + fecha ddmmaa, y si ya
+    // existe el backend le agrega A, B, C... (ej. Marcos hoy → MS290926, MS290926A).
+    const generarSerie = async () => {
+        const nombre = (tecnicoSeleccionado?.nombre || usuario?.nombre || 'X').trim();
+        const inicial = (nombre.normalize('NFD').replace(/[^A-Za-z]/g, '')[0] || 'X').toUpperCase();
+        const hoy = new Date();
+        const dd = String(hoy.getDate()).padStart(2, '0');
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        const aa = String(hoy.getFullYear()).slice(-2);
+        const base = `${inicial}S${dd}${mm}${aa}`;
+        const ocupados = ticketItems.map(i => i.equipoSerial).filter(Boolean).join(',');
+        setGenerandoSerie(true);
+        try {
+            const res = await api.get('/equipos/siguiente-serie', { params: { base, ...(ocupados ? { ocupados } : {}) } });
+            const serie = res.data?.serie;
+            if (!serie) throw new Error('sin serie');
+            setItemActual({ ...itemActual, equipoSerial: serie, esNuevoEquipo: true });
+            setMostrarEquipo(true);
+            toast.success(`N/S generado: ${serie}`);
+        } catch {
+            toast.error('No se pudo generar el N/S');
+        } finally {
+            setGenerandoSerie(false);
+        }
+    };
     const [mostrarFotos, setMostrarFotos] = useState(false);
     const [mostrarEquipo, setMostrarEquipo] = useState(false);
     const [formVisible, setFormVisible] = useState(true);
@@ -86,7 +117,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
 
     const inputClass = `
         w-full block px-3.5 py-2.5 rounded-xl text-body font-medium outline-none
-        bg-[#E8E5E0] dark:bg-[#1C1C1C] text-ink
+        bg-[#E8E5E0] dark:bg-[#161615] text-ink
         border border-black/10 dark:border-white/[0.08] placeholder-muted
         focus:border-[#D13A28] dark:focus:border-[#E8422F]
         focus:ring-2 focus:ring-[#D13A28]/20 transition-all
@@ -139,12 +170,12 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                         <div className="flex gap-2">
                             <button type="button"
                                 onClick={() => { setTipoMO('REPARACION'); setItemActual({ ...itemActual, costoExtra: precioReparacion, esVisita: false }); }}
-                                className={`flex-1 py-2.5 rounded-xl text-label font-black uppercase transition-all active:scale-95 ${tipoMO === 'REPARACION' ? 'bg-[#D13A28] text-white' : 'bg-[#2E2E2E] text-[#9E9A94]'}`}>
+                                className={`flex-1 py-2.5 rounded-xl text-label font-black uppercase transition-all active:scale-95 ${tipoMO === 'REPARACION' ? 'bg-[#D13A28] text-white' : 'bg-[#2A2A28] text-[#9E9A94]'}`}>
                                 Reparación · ${precioReparacion.toLocaleString('es-AR')}
                             </button>
                             <button type="button"
                                 onClick={() => { setTipoMO('VISITA'); setItemActual({ ...itemActual, costoExtra: precioVisita, esVisita: true }); }}
-                                className={`flex-1 py-2.5 rounded-xl text-label font-black uppercase transition-all active:scale-95 ${tipoMO === 'VISITA' ? 'bg-[#D48800] text-white' : 'bg-[#2E2E2E] text-[#9E9A94]'}`}>
+                                className={`flex-1 py-2.5 rounded-xl text-label font-black uppercase transition-all active:scale-95 ${tipoMO === 'VISITA' ? 'bg-[#D48800] text-white' : 'bg-[#2A2A28] text-[#9E9A94]'}`}>
                                 Visita · ${precioVisita.toLocaleString('es-AR')}
                             </button>
                         </div>
@@ -167,10 +198,10 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                             <span className="text-label">{mostrarEquipo ? '▲' : '▼'}</span>
                         </button>
                         {mostrarEquipo && (
-                            <div className="space-y-3 p-3 rounded-xl bg-[#E8E5E0]/50 dark:bg-[#2E2E2E]/50">
+                            <div className="space-y-3 p-3 rounded-xl bg-[#E8E5E0]/50 dark:bg-[#2A2A28]/50">
                                 <div>
                                     <Label>N/S Dispenser</Label>
-                                    <CreatableSelect styles={selectStyles} menuPosition="fixed" menuPlacement="auto" menuPortalTarget={document.body}
+                                    <CreatableSelect filterOption={filtroMultiTermino} styles={selectStyles} menuPosition="fixed" menuPlacement="auto" menuPortalTarget={document.body}
                                         options={opcionesSerial}
                                         value={itemActual.equipoSerial ? { label: itemActual.equipoSerial, value: itemActual.equipoSerial } : null}
                                         onChange={s => {
@@ -181,26 +212,56 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                                 ubicacionEquipo: itemActual.ubicacionEquipo || equipoDB?.ubicacion || '' });
                                             consultarAntecedentes(s.value);
                                         }}
-                                        onCreateOption={val => { setItemActual({ ...itemActual, equipoSerial: val, esNuevoEquipo: true }); consultarAntecedentes(val); }}
+                                        onCreateOption={async val => {
+                                            const serie = val.trim().toUpperCase();
+                                            const ok = await consultarAntecedentes(serie);
+                                            if (ok === false) return; // es de otro cliente: no se carga
+                                            setItemActual({ ...itemActual, equipoSerial: serie, esNuevoEquipo: true });
+                                        }}
                                         isClearable placeholder="Buscar o escribir S/N..." noOptionsMessage={() => 'Escribí el S/N manualmente'} />
+                                    <button type="button" onClick={generarSerie} disabled={generandoSerie}
+                                        className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-label font-bold bg-chip text-secondary active:scale-[0.98] transition-all disabled:opacity-50">
+                                        <LuWandSparkles size={13} /> {generandoSerie ? 'Generando...' : 'Generar N/S automático'}
+                                    </button>
                                 </div>
-                                {historialEquipo && (
-                                    <div className="p-2.5 rounded-xl bg-[#FFF4D6] dark:bg-[#2A1E00] border border-[#D48800]/30">
-                                        <p className="text-label font-bold text-brand-amber">Último servicio</p>
-                                        <p className="text-caption text-secondary">{historialEquipo.fecha} — {historialEquipo.items?.[0]?.trabajoRealizado}</p>
-                                        {historialEquipo.garantiaInfo && (
-                                            historialEquipo.garantiaInfo.vigente ? (
-                                                <p className="text-caption font-black mt-1 text-brand-green flex items-center gap-1">
-                                                    <LuShieldCheck size={12} /> Garantía vigente · {historialEquipo.garantiaInfo.dias} día{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'} restante{historialEquipo.garantiaInfo.dias === 1 ? '' : 's'}
-                                                </p>
+                                {historialEquipo && (() => {
+                                    // Lo primero que se lee es si está en garantía (dato que decide
+                                    // si se cobra); abajo, cuándo fue el último servicio y qué se hizo.
+                                    const g = historialEquipo.garantiaInfo;
+                                    const dd = (iso) => { const [y, m, d] = String(iso).slice(0, 10).split('-'); return `${d}/${m}/${y}`; };
+                                    const plural = (n, pal) => `${n} ${pal}${n === 1 ? '' : 's'}`;
+                                    const hace = (n) => n == null ? '' : n === 0 ? 'hoy' : n < 60 ? `hace ${plural(n, 'día')}` : `hace ${Math.round(n / 30)} meses`;
+                                    const vigente = g?.vigente;
+                                    return (
+                                        <div className={`p-3 rounded-xl border ${vigente
+                                            ? 'bg-[var(--success-bg)] border-[var(--estado-listo)]'
+                                            : 'bg-panel border-black/10 dark:border-line'}`}>
+                                            {g ? (
+                                                vigente ? (
+                                                    <p className="text-body-lg font-black text-[var(--success-tx)] flex items-center gap-1.5">
+                                                        <LuShieldCheck size={16} /> En garantía · quedan {plural(g.dias, 'día')}
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-body-lg font-black text-ink flex items-center gap-1.5">
+                                                        <LuHourglass size={16} className="text-muted" /> Sin garantía · venció {hace(Math.abs(g.dias))}
+                                                    </p>
+                                                )
                                             ) : (
-                                                <p className="text-caption font-black mt-1 text-brand-red flex items-center gap-1">
-                                                    <LuHourglass size={12} /> Garantía vencida hace {Math.abs(historialEquipo.garantiaInfo.dias)} día{Math.abs(historialEquipo.garantiaInfo.dias) === 1 ? '' : 's'}
+                                                <p className="text-body-lg font-black text-ink">Sin trabajos realizados registrados</p>
+                                            )}
+                                            {g && (
+                                                <p className="text-caption text-muted mt-0.5">
+                                                    {vigente ? 'Hasta' : 'Vencía el'} {dd(g.hasta)}{g.estimada ? ' · estimada (3 meses desde el servicio)' : ''}
                                                 </p>
-                                            )
-                                        )}
-                                    </div>
-                                )}
+                                            )}
+                                            <p className="text-caption text-secondary mt-2">
+                                                <span className="font-bold">Último {historialEquipo.esPresupuesto ? 'presupuesto' : 'servicio'}:</span>{' '}
+                                                {dd(historialEquipo.fecha)} ({hace(historialEquipo.diasDesde)})
+                                                {historialEquipo.items?.[0]?.trabajoRealizado ? ` — ${historialEquipo.items[0].trabajoRealizado}` : ''}
+                                            </p>
+                                        </div>
+                                    );
+                                })()}
                                 <input className={inputClass} value={itemActual.modeloEquipo || ''}
                                     onChange={e => setItemActual({ ...itemActual, modeloEquipo: e.target.value })}
                                     placeholder="Modelo (ej: Bacope frío/calor)" />

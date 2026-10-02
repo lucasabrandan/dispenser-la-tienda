@@ -3,8 +3,8 @@ import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { generarPDFListaPrecios } from '../utils/generadorPDFListaPrecios';
 import { generarPDFCatalogo } from '../utils/generadorPDFCatalogo';
+import { POR_PAGINA } from '../utils/paginacion';
 
-const POR_PAGINA = 20;
 
 /**
  * useRepuestoManager

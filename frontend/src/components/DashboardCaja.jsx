@@ -57,9 +57,16 @@ export default function DashboardCaja({ setVistaActual }) {
             return Math.floor((Date.now() - new Date(s.fecha + 'T00:00:00').getTime()) / 86400000) > 7;
         });
 
+        // Antes "activas" = todo lo que no estuviera completado/cancelado, de
+        // cualquier fecha: sumaba órdenes viejas que nadie cerró y daba 19 con 2
+        // visitas en el día. Ahora se separa lo de hoy de lo atrasado.
+        const EN_CURSO = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO'];
+        const fechaOrden = (o) => String(o.fechaProgramada || '').substring(0, 10);
         const ordenesActivas = ordenes.filter(o =>
-            o.estado !== 'COMPLETADA' && o.estado !== 'CANCELADA'
-        );
+            EN_CURSO.includes(o.estado) && (!fechaOrden(o) || fechaOrden(o) === hoyStr));
+        const ordenesAtrasadas = ordenes.filter(o =>
+            (EN_CURSO.includes(o.estado) && fechaOrden(o) && fechaOrden(o) < hoyStr)
+            || o.estado === 'NO_ATENDIDO');
 
         // Planificador: 12 dias habiles
         const HORAS_DIA = 8, H_TECNICA = 2, H_VENTA = 1;
@@ -96,11 +103,11 @@ export default function DashboardCaja({ setVistaActual }) {
                 .reduce((a, s) => a + (s.items?.reduce((b, it) => b + Number(it.costoExtra || 0), 0) || 0), 0),
             pendientesCount: pendientes.length,
             pendientesVal: pendientes.reduce((a, s) => a + calcTotal(s), 0),
-            pptoVencidos, ordenesActivas, planificador: dias,
+            pptoVencidos, ordenesActivas, ordenesAtrasadas, planificador: dias,
         };
     }, [servicios, ordenes, notasAgenda]);
 
-    const card = 'rounded-xl bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]';
+    const card = 'rounded-2xl bg-card border border-black/[0.05] dark:border-line';
 
     // "Caja de hoy y del mes" ya no vive en el Panel (Lucas, 7-sep-2026,
     // rediseno "opcion 1": redundaba con Finanzas > Balance, que ya cubre el
@@ -112,7 +119,7 @@ export default function DashboardCaja({ setVistaActual }) {
     // fila angosta (Lucas, 7-sep-2026, rediseno "opcion 1" -- ver mockup
     // "Rediseño del Panel"). Antes cada cosa (accesos directos, alertas,
     // pendientes, cierre) era su propio bloque grande arriba de todo.
-    const hayAlertas = data.pptoVencidos.length + data.ordenesActivas.length + alertasRadar.length > 0;
+    const hayAlertas = data.pptoVencidos.length + data.ordenesActivas.length + data.ordenesAtrasadas.length + alertasRadar.length > 0;
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page">
@@ -120,9 +127,9 @@ export default function DashboardCaja({ setVistaActual }) {
 
                 {/* Header -- sin fecha (queda una sola vez, en la Agenda) */}
                 <div className="flex justify-between items-center mb-5">
-                    <h2 className="text-2xl font-black uppercase tracking-tight text-ink">Panel</h2>
+                    <h2 className="text-2xl font-black tracking-tight text-ink">Panel</h2>
                     <button onClick={cargar} disabled={cargando}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center active:scale-95 disabled:opacity-40 bg-chip">
+                        aria-label="Recargar" className="w-11 h-11 rounded-xl flex items-center justify-center active:scale-95 disabled:opacity-40 text-muted">
                         <span className={`text-sm ${cargando ? 'animate-spin' : ''}`}>↻</span>
                     </button>
                 </div>
@@ -134,7 +141,7 @@ export default function DashboardCaja({ setVistaActual }) {
                     </div>
 
                     <div className={`${card} p-3.5 md:p-4`}>
-                        <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Mi Espacio</p>
+                        <p className="text-caption font-bold text-muted mb-3">Mi espacio</p>
                         <MiEspacioChecklist espacio={miEspacio.espacio} actualizar={miEspacio.actualizar} cargando={miEspacio.cargando} />
                     </div>
 
@@ -144,13 +151,14 @@ export default function DashboardCaja({ setVistaActual }) {
                         linea quedaba muy apretado. */}
                     <div className={`${card} p-3`}>
                         <div className="grid grid-cols-2 gap-2">
+                            {/* Único botón rojo del Panel: la acción principal */}
                             <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
-                                className="flex items-center justify-center gap-1.5 h-9 rounded-lg text-label font-bold uppercase bg-chip text-ink active:scale-95">
-                                <LuWrench size={14} /> Servicio
+                                className="flex items-center justify-center gap-2 h-12 rounded-xl text-body font-extrabold bg-brand-red text-white active:scale-95">
+                                <LuWrench size={16} /> Nuevo servicio
                             </button>
                             <button onClick={() => setVistaActual('venta', { crear: true })}
-                                className="flex items-center justify-center gap-1.5 h-9 rounded-lg text-label font-bold uppercase bg-chip text-ink active:scale-95">
-                                <LuShoppingCart size={14} /> Venta
+                                className="flex items-center justify-center gap-2 h-12 rounded-xl text-body font-bold border border-black/10 dark:border-white/[0.12] text-ink active:scale-95">
+                                <LuShoppingCart size={16} /> Venta
                             </button>
                         </div>
                         {(hayAlertas || data.pendientesCount > 0 || esAdmin) && (
@@ -170,7 +178,16 @@ export default function DashboardCaja({ setVistaActual }) {
                                             className="flex items-center gap-1.5 active:opacity-70">
                                             <span className="w-1.5 h-1.5 rounded-full bg-brand-amber shrink-0" />
                                             <span className="text-caption font-bold text-ink whitespace-nowrap">
-                                                {data.ordenesActivas.length} orden{data.ordenesActivas.length !== 1 ? 'es' : ''} activa{data.ordenesActivas.length !== 1 ? 's' : ''}
+                                                {data.ordenesActivas.length} orden{data.ordenesActivas.length !== 1 ? 'es' : ''} hoy
+                                            </span>
+                                        </button>
+                                    )}
+                                    {data.ordenesAtrasadas.length > 0 && (
+                                        <button onClick={() => setVistaActual('servicio-tecnico', { modo: 'DESPACHO' })}
+                                            className="flex items-center gap-1.5 active:opacity-70">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-brand-red shrink-0" />
+                                            <span className="text-caption font-bold text-ink whitespace-nowrap">
+                                                {data.ordenesAtrasadas.length} para reprogramar
                                             </span>
                                         </button>
                                     )}
