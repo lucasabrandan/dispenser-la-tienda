@@ -17,6 +17,8 @@ import MiAgenda from './MiAgenda';
 import { enviarOEncolar } from '../../utils/pendientesOffline';
 import HistorialSerieSheet from './HistorialSerieSheet';
 import CerrarDiaSheet from './CerrarDiaSheet';
+import QueLlevarHoy from './QueLlevarHoy';
+import CargaPorSerieSheet from './CargaPorSerieSheet';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -398,6 +400,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [noAtendidoOrden, setNoAtendidoOrden] = useState(null);
     const [buscarSerie, setBuscarSerie] = useState(false);
     const [cerrarDia, setCerrarDia] = useState(false);
+    const [cargaSerie, setCargaSerie] = useState(false);
     const [salida, setSalida] = useState(null); // { modo: 'orden'|'hoy'|'mensaje', orden? }
     const [notaNoAtendido, setNotaNoAtendido] = useState('');
     const [servicioDetalle, setServicioDetalle] = useState(null);
@@ -578,7 +581,15 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                     </div>
                 )}
 
+                {tab === 'activas' && <QueLlevarHoy ordenesHoy={ordenesHoy} />}
+
                 {/* Vía de salida: siempre a mano, no escondida en cada tarjeta */}
+                {tab === 'activas' && (
+                    <button onClick={() => setCargaSerie(true)}
+                        className="mb-2 w-full h-11 rounded-xl text-label font-black uppercase text-white bg-brand-red active:scale-95 flex items-center justify-center gap-1.5">
+                        <LuPin size={14} /> Cargar equipos por N° de serie
+                    </button>
+                )}
                 {tab === 'activas' && (
                     <button onClick={() => setBuscarSerie(true)}
                         className="mb-2 w-full h-11 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-line active:scale-95 flex items-center justify-center gap-1.5">
@@ -679,6 +690,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         )}
 
         {buscarSerie && <HistorialSerieSheet onClose={() => setBuscarSerie(false)} />}
+        {cargaSerie && <CargaPorSerieSheet onClose={() => setCargaSerie(false)} onGuardado={() => cargarHistorial()} />}
         {cerrarDia && (
             <CerrarDiaSheet
                 ordenesHoy={[...ordenes, ...historial.filter(h => !ordenes.some(o => o.id === h.id))]

@@ -75,6 +75,18 @@ public class CierreMensualController {
         }
     }
 
+    /**
+     * Reglas del cliente que necesita ver el técnico (sin precios): si trabaja con
+     * tarifa mensual por volumen, sus trabajos se cargan sin precio (los cierra el
+     * cierre mensual) y con foto de antes y después obligatoria.
+     */
+    @GetMapping("/reglas")
+    @Transactional(readOnly = true)
+    public Map<String, Object> reglas(@PathVariable Long id) {
+        boolean tarifa = !leerTramos(cliente(id)).isEmpty();
+        return Map.of("tarifaVolumen", tarifa, "exigeFotos", tarifa);
+    }
+
     @GetMapping("/tarifa-volumen")
     public List<Tramo> getTarifa(@PathVariable Long id, Authentication auth) {
         soloAdmin(auth);

@@ -65,6 +65,8 @@ public class HistorialSerieController {
         eq.put("modelo", e.getModelo());
         eq.put("ubicacion", e.getUbicacion());
         eq.put("cliente", sede != null && sede.getCliente() != null ? sede.getCliente().getNombre() : null);
+        eq.put("clienteId", sede != null && sede.getCliente() != null ? sede.getCliente().getId() : null);
+        eq.put("sedeId", sede != null ? sede.getId() : null);
         eq.put("sede", sede != null ? sede.getNombreSede() : null);
         eq.put("direccion", sede != null ? sede.getDireccion() : null);
         out.put("encontrado", true);
