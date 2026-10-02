@@ -250,6 +250,15 @@ export default function ServicioManager({
         }
     }, [modoInicial]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Criterio de orden (2-oct-2026): en Por cobrar y Facturados va primero la deuda
+    // más vieja; en Cobrados, Archivados y Todo, lo más nuevo primero (historial).
+    // Solo cambia el orden por fecha; si el usuario eligió ordenar por monto, se respeta.
+    useEffect(() => {
+        if (!ordenServicio?.startsWith('fechaServicio')) return;
+        const quiere = ['PENDIENTE_FACTURACION', 'FACTURADO'].includes(tabActual) ? 'fechaServicio,asc' : 'fechaServicio,desc';
+        if (ordenServicio !== quiere) setOrdenServicio(quiere);
+    }, [tabActual]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // 2-oct-2026: el número del menú son las visitas activas (Despacho), pero la
     // pantalla abría en "Servicio" y no se veía nada. Si hay visitas activas, se
     // arranca en Despacho, en la primera pestaña que tenga algo. Solo la primera vez.

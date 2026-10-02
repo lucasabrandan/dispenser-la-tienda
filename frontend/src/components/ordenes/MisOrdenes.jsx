@@ -480,7 +480,11 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     };
 
     const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA','NO_ATENDIDO'].includes(o.estado));
-    const lista   = tab === 'activas' ? activas : historial;
+    // Criterio de orden (2-oct-2026): lo pendiente como agenda (próximo primero, ya viene
+    // así del backend); lo terminado como historial (lo más nuevo primero).
+    const historialOrdenado = [...historial].sort((a, b) =>
+        `${b.fechaProgramada || ''} ${b.horaEstimada || ''}`.localeCompare(`${a.fechaProgramada || ''} ${a.horaEstimada || ''}`));
+    const lista   = tab === 'activas' ? activas : historialOrdenado;
 
     // "Todos"/"Ninguno" — mismo patrón que useRepuestoManager.js / ServicioManager.jsx:
     // selecciona todas las visitas activas visibles, no un listado sin filtrar.

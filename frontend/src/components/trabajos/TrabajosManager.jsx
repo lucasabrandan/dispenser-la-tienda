@@ -126,8 +126,10 @@ export default function TrabajosManager() {
                 esVenta: s.servicioTipo === 'VENTA',
             };
             let fila;
+            // fechaOrden: la fecha que manda en el orden dentro de su etapa
+            const fo = (...fs) => String(fs.find(Boolean) || '').replace(' ', 'T');
             if (s.enEspera) {
-                fila = { ...base, etapa: 'PRESUPUESTO', tecnico: '', fecha: fechaCorta(s.fecha), nota: 'En espera', accion: 'asignar' };
+                fila = { ...base, etapa: 'PRESUPUESTO', tecnico: '', fecha: fechaCorta(s.fecha), nota: 'En espera', accion: 'asignar', fechaOrden: fo(s.fecha) };
             } else if (['PRESUPUESTO', 'APROBADO', 'EN_PROGRESO'].includes(s.estado)) {
                 if (ord) {
                     const et = ETAPA_DE_ORDEN[ord.estado];
@@ -138,12 +140,13 @@ export default function TrabajosManager() {
                         nota: atr ? `Atrasada ${diasDesde(ord.fechaProgramada)} días` : (et === 'CAMINO' ? 'Salió' : et === 'LUGAR' ? 'Trabajando' : ''),
                         alerta: atr,
                         accion: atr ? 'atrasada' : et === 'ASIGNADO' ? 'reprogramar' : 'seguimiento',
+                        fechaOrden: fo(ord.fechaProgramada) + ' ' + (ord.horaEstimada || ''),
                     };
                 } else if (s.estado === 'EN_PROGRESO') {
-                    fila = { ...base, etapa: 'ASIGNADO', tecnico: s.usuarioNombre || '', fecha: fechaCorta(s.fecha), nota: 'Sin visita agendada', alerta: true, accion: 'ejecutar' };
+                    fila = { ...base, etapa: 'ASIGNADO', tecnico: s.usuarioNombre || '', fecha: fechaCorta(s.fecha), nota: 'Sin visita agendada', alerta: true, accion: 'ejecutar', fechaOrden: fo(s.fecha) };
                 } else {
                     const d = diasDesde(s.fecha);
-                    fila = { ...base, etapa: 'PRESUPUESTO', tecnico: '', fecha: fechaCorta(s.fecha), nota: d > 14 ? `Hace ${d} días` : '', alerta: d > 30, accion: 'asignar' };
+                    fila = { ...base, etapa: 'PRESUPUESTO', tecnico: '', fecha: fechaCorta(s.fecha), nota: d > 14 ? `Hace ${d} días` : '', alerta: d > 30, accion: 'asignar', fechaOrden: fo(s.fecha) };
                 }
             } else if (s.estado === 'COMPLETADO' || s.estado === 'PENDIENTE_FACTURACION') {
                 if (esCierreMensual(s) && s.clienteId) {
@@ -163,14 +166,15 @@ export default function TrabajosManager() {
                     nota: s.estado === 'PENDIENTE_FACTURACION' ? 'Falta emitir la factura' : (d > 7 ? `Hace ${d} días sin cobrar` : 'Falta cobrar'),
                     alerta: d > 7,
                     accion: s.estado === 'PENDIENTE_FACTURACION' ? 'facturado' : 'cobrar',
+                    fechaOrden: fo(s.fechaCompletado, s.fecha),
                 };
             } else if (s.estado === 'FACTURADO') {
                 const d = diasDesde(s.fechaFacturacion || s.fecha);
                 fila = { ...base, etapa: 'FACTURADO', tecnico: s.usuarioNombre || '', fecha: fechaCorta(s.fechaFacturacion || s.fecha),
-                    nota: d > 7 ? `Hace ${d} días sin cobrar` : 'Esperando el pago', alerta: d > 7, accion: 'cobrado' };
+                    nota: d > 7 ? `Hace ${d} días sin cobrar` : 'Esperando el pago', alerta: d > 7, accion: 'cobrado', fechaOrden: fo(s.fechaFacturacion, s.fecha) };
             } else if (s.estado === 'COBRADO' || s.estado === 'REALIZADO') {
                 fila = { ...base, etapa: 'COBRADO', tecnico: s.usuarioNombre || '', fecha: fechaCorta(s.fechaCobro || s.fecha),
-                    nota: s.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'Efectivo' : s.modalidadCobro === 'CON_FACTURA' ? 'Con factura' : '', accion: 'pdf' };
+                    nota: s.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'Efectivo' : s.modalidadCobro === 'CON_FACTURA' ? 'Con factura' : '', accion: 'pdf', fechaOrden: fo(s.fechaCobro, s.fecha) };
             }
             if (fila) out.push(fila);
         });
@@ -190,6 +194,7 @@ export default function TrabajosManager() {
                     nota: atr ? `Atrasada ${diasDesde(o.fechaProgramada)} días` : 'Visita sin presupuesto',
                     alerta: atr, monto: Number(o.montoEstimado) || 0,
                     accion: atr ? 'atrasada' : et === 'ASIGNADO' ? 'reprogramar' : 'seguimiento',
+                    fechaOrden: String(o.fechaProgramada || '') + ' ' + (o.horaEstimada || ''),
                 });
             });
 
@@ -199,8 +204,18 @@ export default function TrabajosManager() {
                 detalle: `${g.equipos} equipo${g.equipos !== 1 ? 's' : ''} · tarifa por volumen` });
         });
 
+        // Criterio de orden (2-oct-2026), igual en toda la app:
+        //  1. alertas arriba de todo;
+        //  2. por etapa (en el recorrido del trabajo);
+        //  3. dentro de la etapa: lo pendiente, lo más viejo primero (nada queda olvidado
+        //     abajo); lo agendado, por fecha y hora; lo cobrado, lo más nuevo primero.
         const ordenEtapa = Object.fromEntries(ETAPAS.map((e, i) => [e.id, i]));
-        return out.sort((a, b) => (b.alerta ? 1 : 0) - (a.alerta ? 1 : 0) || ordenEtapa[a.etapa] - ordenEtapa[b.etapa]);
+        return out.sort((a, b) =>
+            (b.alerta ? 1 : 0) - (a.alerta ? 1 : 0)
+            || ordenEtapa[a.etapa] - ordenEtapa[b.etapa]
+            || (a.etapa === 'COBRADO'
+                ? String(b.fechaOrden || '').localeCompare(String(a.fechaOrden || ''))
+                : String(a.fechaOrden || '').localeCompare(String(b.fechaOrden || ''))));
     }, [servicios, ordenes]);
 
     // ── Filtros ──────────────────────────────────────────────────────────────

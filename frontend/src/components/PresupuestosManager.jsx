@@ -234,7 +234,10 @@ export default function PresupuestosManager() {
         const items = !conChips || filtroTecnico === '' ? enSeccion
             : filtroTecnico === '__SIN__' ? enSeccion.filter(p => !personaDe(p))
             : enSeccion.filter(p => personaDe(p) === filtroTecnico);
-        return [...items].sort((a, b) => parseFechaSort(b.fecha) - parseFechaSort(a.fecha) || (b.id || 0) - (a.id || 0));
+        // Criterio de orden (2-oct-2026): todo lo de esta pantalla está pendiente
+        // (sin asignar, en curso, en espera o realizado sin cobrar) → lo más viejo primero,
+        // para que nada quede olvidado al fondo de la lista.
+        return [...items].sort((a, b) => parseFechaSort(a.fecha) - parseFechaSort(b.fecha) || (a.id || 0) - (b.id || 0));
     }, [enSeccion, filtroTecnico, personaDe, conChips]);
 
     const filtros = useFiltros(presupuestosFiltradosTipo, {
