@@ -63,22 +63,20 @@ export default function CargaPorSerieSheet({ onClose, onGuardado }) {
         if (items.some(i => i.serie.toUpperCase() === s)) { toast('Ese equipo ya está en la lista'); return; }
         setBuscando(true); setNoEncontrado(null);
         try {
-            const r = await api.get('/equipos/historial', { params: { serie: s } });
+            const r = await api.get('/equipos/historial/para-carga', { params: { serie: s } });
             if (!r.data?.encontrado) { setNoEncontrado(s); return; }
+            if (!r.data.tarifaVolumen) {
+                toast.error(`${r.data.cliente || 'Ese cliente'} no trabaja con tarifa mensual: cargá el trabajo desde su orden.`, { duration: 6000 });
+                return;
+            }
             const eq = r.data.equipo;
             if (cliente && eq.clienteId !== cliente.id) {
                 toast.error(`Ese equipo es de ${eq.cliente}. En una carga va un solo cliente.`);
                 return;
             }
-            let cli = cliente;
-            if (!cli) {
-                const reglas = (await api.get(`/clientes/${eq.clienteId}/reglas`)).data;
-                if (!reglas?.tarifaVolumen) {
-                    toast.error(`${eq.cliente} no trabaja con tarifa mensual: cargá el trabajo desde su orden.`, { duration: 6000 });
-                    return;
-                }
-                cli = { id: eq.clienteId, nombre: eq.cliente, exigeFotos: !!reglas.exigeFotos };
-                setCliente(cli);
+            if (!cliente) {
+                // Clientes con tarifa mensual: foto de antes y después obligatorias
+                setCliente({ id: eq.clienteId, nombre: eq.cliente, exigeFotos: true });
             }
             agregar(eq);
             setSerie('');
