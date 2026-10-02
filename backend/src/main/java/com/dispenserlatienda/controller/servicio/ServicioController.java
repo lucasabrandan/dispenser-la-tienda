@@ -56,7 +56,11 @@ public class ServicioController {
             @RequestParam(required = false) String hasta,
             @RequestParam(required = false) Long usuarioId,
             @RequestParam(required = false) Long clienteId,
-            Pageable pageable) {
+            Pageable pageable,
+            Authentication auth) {
+        // Un técnico solo ve sus propios servicios, mande lo que mande el frontend.
+        Usuario solicitante = resolverUsuario(auth);
+        if (solicitante.getRol() != RolUsuario.ADMIN) usuarioId = solicitante.getId();
         return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, usuarioId, clienteId, pageable));
     }
 

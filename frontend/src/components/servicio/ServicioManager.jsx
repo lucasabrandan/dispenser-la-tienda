@@ -124,7 +124,8 @@ export default function ServicioManager({
     // (Pendientes/En camino/En sitio) no son estados válidos para /servicios, así que
     // filtros.estado solo se actualiza cuando el tab activo es de tipo Servicio — evita
     // que useServicioManager dispare un fetch con un estado que el backend no reconoce.
-    const [tabActual, setTabActual] = useState('PENDIENTE_FACTURACION');
+    // Técnico: sin pestañas de cobranza (eso es del admin) — ve una sola lista "Mis trabajos".
+    const [tabActual, setTabActual] = useState(esAdmin ? 'PENDIENTE_FACTURACION' : 'TODOS');
     const esTabOrden = (id) => TABS_ORDEN_IDS.has(id);
     const esTabOrdenActual = esTabOrden(tabActual);
     const enBusquedaGlobal = tabActual === 'TODOS' && !!filtros.busqueda;
@@ -156,6 +157,7 @@ export default function ServicioManager({
     // los de Orden (Pendientes/En camino/En sitio) se cuentan abajo con ordenCounts,
     // a partir de la misma lista que ya trae useOrdenes (sin pegarle de nuevo a la API).
     const fetchTabCounts = useCallback(async () => {
+        if (!esAdmin) return; // el técnico no tiene pestañas que contar
         try {
             const results = await Promise.all(
                 TABS_SERVICIO.map(t => api.get('/servicios', {
@@ -170,7 +172,7 @@ export default function ServicioManager({
             TABS_SERVICIO.forEach((t, i) => { counts[t.id] = results[i].data.totalElements || 0; });
             setTabCounts(counts);
         } catch (err) { console.warn('Servicios: error cargando conteos tabs', err); }
-    }, [filtros.paramsBase]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [filtros.paramsBase, esAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => { fetchTabCounts(); }, [fetchTabCounts]);
 
@@ -339,7 +341,7 @@ export default function ServicioManager({
                 <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
                     {/* Desktop: título */}
                     <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink mb-2.5">
-                        Servicio Técnico
+                        {esAdmin ? 'Servicio Técnico' : 'Mis trabajos'}
                     </h2>
 
                     {/* Barra de acciones */}
@@ -352,6 +354,7 @@ export default function ServicioManager({
                         {/* Antes escondia Exportar/Importar detras de un menu "..."
                             (Lucas, 7-sep-2026: no se entendia que llevara a algo) — ahora
                             son 2 botones directos, con tooltip, sin clic intermedio */}
+                        {esAdmin && (<>
                         <button onClick={() => exportarServiciosCSV(filtros.itemsFiltrados)}
                             title="Exportar CSV"
                             className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
@@ -362,6 +365,7 @@ export default function ServicioManager({
                             className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95">
                             <LuUpload size={15} />
                         </button>
+                        </>)}
 
                         {esAdmin && (
                             <button onClick={abrirCrear}
@@ -389,11 +393,17 @@ export default function ServicioManager({
                 )}
 
                 {/* ═══ SWIPE COLUMNS (mobile) / PIPELINE TABS (desktop) ═══ */}
-                <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
+                {esAdmin ? (
+                    <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
+                ) : (
+                    <p className="md:hidden text-caption font-bold uppercase tracking-wide text-muted">
+                        Mis trabajos{filtros.totalItems ? ` (${filtros.totalItems})` : ''}
+                    </p>
+                )}
 
                 {/* ═══ ARCHIVADOS — link chico y discreto, no un botón más: es algo que
                     se consulta de vez en cuando, no debe competir con las pestañas de uso diario ═══ */}
-                {(!esAdmin || modo === 'SERVICIO') && (
+                {esAdmin && modo === 'SERVICIO' && (
                     <button onClick={() => cambiarTab('ARCHIVADO')}
                         className={`w-full flex items-center gap-1.5 pt-2 mt-0.5 border-t border-dashed border-black/10 dark:border-white/10
                             text-label font-bold uppercase tracking-wide transition-colors
@@ -423,8 +433,8 @@ export default function ServicioManager({
                                 className="flex-1 h-8 px-2 rounded-lg text-label font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]">
                                 <option value="fechaServicio,desc">Más reciente primero</option>
                                 <option value="fechaServicio,asc">Más antiguo primero</option>
-                                <option value="total,desc">Mayor monto primero</option>
-                                <option value="total,asc">Menor monto primero</option>
+                                {esAdmin && <option value="total,desc">Mayor monto primero</option>}
+                                {esAdmin && <option value="total,asc">Menor monto primero</option>}
                             </select>
                         </div>
                         <p className="text-caption text-center text-muted font-bold">{filtros.totalItems} resultados</p>

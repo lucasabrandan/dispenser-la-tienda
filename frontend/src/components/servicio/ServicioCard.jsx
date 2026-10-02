@@ -116,7 +116,7 @@ export default function ServicioCard({
                         )}
                     </div>
                     <div className="text-right shrink-0">
-                        <M valor={total} className="text-body-lg font-black leading-none text-ink block" />
+                        {esAdmin && <M valor={total} className="text-body-lg font-black leading-none text-ink block" />}
                         {servicio.fechaTentativa ? (
                             <p className="text-caption font-bold text-amber-500 mt-0.5">⏳ Tentativa</p>
                         ) : (
@@ -150,7 +150,7 @@ export default function ServicioCard({
                 {/* Fila 3b: info de cobro — fechas y monto final */}
                 {(servicio.fechaCompletado || servicio.fechaFacturacion || servicio.fechaCobro || servicio.montoFinal) && (
                     <div className="flex flex-wrap gap-1.5 mt-1">
-                        {servicio.montoFinal && Number(servicio.montoFinal) !== total && (
+                        {esAdmin && servicio.montoFinal && Number(servicio.montoFinal) !== total && (
                             <span className="text-label font-bold px-1.5 py-0.5 rounded-md bg-chip text-secondary">
                                 Final: ${Math.round(Number(servicio.montoFinal)).toLocaleString('es-AR')}
                             </span>

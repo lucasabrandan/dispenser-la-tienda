@@ -31,7 +31,7 @@ export function useServicioManager() {
     // ── Filtros (interfaz compatible con FiltrosPanel) ──────────────────────────
     const [busquedaInput, setBusquedaInput]   = useState('');
     const [busquedaApi, setBusquedaApi]       = useState('');
-    const [estado, setEstadoInternal]         = useState('PENDIENTE_FACTURACION');
+    const [estado, setEstadoInternal]         = useState(esAdmin ? 'PENDIENTE_FACTURACION' : 'TODOS'); // técnico: lista única "Mis trabajos"
     const [periodoRapido, setPeriodoRapido]   = useState('MES');
     const [mesSelector, setMesSelector]       = useState('');
     const [desde, setDesde]                   = useState('');
