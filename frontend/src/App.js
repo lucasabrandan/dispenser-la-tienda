@@ -13,6 +13,7 @@ import DashboardCaja from './components/DashboardCaja';
 import ServicioManager     from './components/servicio/ServicioManager';
 import VentaManager        from './components/venta/VentaManager';
 import PresupuestosManager from './components/PresupuestosManager';
+import TrabajosManager     from './components/trabajos/TrabajosManager';
 
 // Admin
 import ClienteManager     from './components/cliente/ClienteManager';
@@ -75,6 +76,8 @@ function AppInterna() {
             case 'venta':
                 return <VentaManager clienteInicial={clientePreload} onClienteConsumido={() => setClientePreload(null)}
                     abrirCrearDirecto={abrirCrear} onCrearConsumido={() => setAbrirCrear(false)} />;
+            case 'trabajos':
+                return esAdmin ? <TrabajosManager /> : null;
             case 'servicio-tecnico':
                 return <ServicioManager
                     clienteInicial={clientePreload}

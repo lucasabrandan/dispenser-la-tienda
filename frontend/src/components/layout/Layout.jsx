@@ -18,6 +18,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 const NOMBRES_SECCION = {
     'caja':             'Panel',
     'venta':            'Ventas',
+    'trabajos':         'Trabajos',
     'servicio-tecnico': 'Servicio Técnico',
     'presupuestos':     'Presupuestos',
     'clientes':         'Clientes',

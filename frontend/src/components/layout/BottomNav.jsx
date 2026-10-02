@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuBanknote } from 'react-icons/lu';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuBanknote, LuLayers } from 'react-icons/lu';
 
 // Reordenado: las acciones más frecuentes accesibles directamente.
 // 'despacho' (ítem propio, 26-ago) se saco de acá: el modo Despacho/Servicio
@@ -9,7 +9,7 @@ import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuBanknote } from
 // también acá era dos caminos al mismo lugar. Ver Sidebar.jsx (mismo criterio).
 const NAV_ADMIN = [
     { id: 'caja',             nombre: 'Panel',    Icon: LuHouse        },
-    { id: 'servicio-tecnico', nombre: 'Técnico',  Icon: LuWrench       },
+    { id: 'trabajos',         nombre: 'Trabajos', Icon: LuLayers       },
     { id: 'venta',            nombre: 'Venta',    Icon: LuShoppingCart },
     { id: '_more',            nombre: 'Más',      Icon: LuEllipsis     },
 ];
@@ -25,7 +25,7 @@ const NAV_TECNICO = [
 ];
 
 // Secciones accesibles desde "Más"
-const SECCIONES_MAS = ['presupuestos', 'clientes', 'radar', 'productos', 'finanzas', 'usuarios'];
+const SECCIONES_MAS = ['servicio-tecnico', 'presupuestos', 'clientes', 'radar', 'productos', 'finanzas', 'usuarios'];
 
 export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) {
     const { esAdmin } = useAuth();
@@ -63,7 +63,7 @@ export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) 
                         ? SECCIONES_MAS.includes(vistaActual)
                         : vistaActual === item.id;
                     const badge =
-                        item.id === 'servicio-tecnico' && servicioTecnicoBadge > 0 ? servicioTecnicoBadge :
+                        item.id === 'trabajos' && servicioTecnicoBadge > 0 ? servicioTecnicoBadge :
                         item.id === 'mis-ordenes' && ordenesActivas > 0 ? ordenesActivas :
                         null;
                     return (

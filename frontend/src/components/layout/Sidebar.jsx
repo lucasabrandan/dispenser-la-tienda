@@ -4,7 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban } from 'react-icons/lu';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban, LuLayers } from 'react-icons/lu';
 import { NotifBell } from './NotificacionesPanel';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
@@ -17,6 +17,9 @@ const MENU_PANEL = [
 // sitio) adentro de "Servicio Técnico" — tenerlo también acá era dos
 // caminos al mismo lugar.
 const MENU_SERVICIO = [
+    // Trabajos (2-oct-2026): pantalla unificada presupuesto → cobrado. Servicio
+    // Técnico y Presupuestos siguen hasta que se confirme que Trabajos los reemplaza.
+    { id: 'trabajos', Icon: LuLayers, nombre: 'Trabajos' },
     { id: 'servicio-tecnico', Icon: LuWrench, nombre: 'Servicio Técnico' },
 ];
 // 'historial' (ítem propio, 26-ago) se saco de acá: la pestaña "Todo" de
@@ -73,7 +76,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;
         const badge =
-            item.id === 'servicio-tecnico' && servicioTecnicoBadge > 0 ? servicioTecnicoBadge :
+            item.id === 'trabajos' && servicioTecnicoBadge > 0 ? servicioTecnicoBadge :
             item.id === 'mis-ordenes' && ordenesActivas > 0 ? ordenesActivas :
             null;
         const baseBtn = activa

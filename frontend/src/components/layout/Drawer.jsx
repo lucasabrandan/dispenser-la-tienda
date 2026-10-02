@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban } from 'react-icons/lu';
+import { LuWrench, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
 // (mismo criterio que Sidebar.jsx en desktop). Presupuestos queda aparte de
@@ -9,6 +9,8 @@ import { LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut
 // que meterlo bajo "Servicio" prometía algo que no era. 'historial' se retiró
 // (26-ago) — la pestaña "Todo" de Venta cubre lo mismo.
 const MENU_TRANSVERSAL_DRAWER = [
+    // Servicio Técnico pasó acá en el celular: la barra de abajo ahora tiene "Trabajos"
+    { id: 'servicio-tecnico', nombre: 'Servicio Técnico', Icon: LuWrench },
     { id: 'presupuestos', nombre: 'Presupuestos', Icon: LuBanknote },
 ];
 const MENU_GESTION_DRAWER = [
