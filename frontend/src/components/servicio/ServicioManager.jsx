@@ -250,6 +250,20 @@ export default function ServicioManager({
         }
     }, [modoInicial]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // 2-oct-2026: el número del menú son las visitas activas (Despacho), pero la
+    // pantalla abría en "Servicio" y no se veía nada. Si hay visitas activas, se
+    // arranca en Despacho, en la primera pestaña que tenga algo. Solo la primera vez.
+    const autoDespacho = React.useRef(false);
+    useEffect(() => {
+        if (autoDespacho.current || !esAdmin || modoInicial || cargandoOrdenes) return;
+        autoDespacho.current = true;
+        const primera = ['EN_SITIO', 'EN_CAMINO', 'PENDIENTE'].find(e => ordenCounts[e] > 0);
+        if (primera && modo === 'SERVICIO' && !filtros.busqueda) {
+            setModo('DESPACHO');
+            cambiarTab(primera);
+        }
+    }, [cargandoOrdenes]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const toggleSeleccion = (id) => {
         setSeleccionados(prev => {
             const s = new Set(prev);

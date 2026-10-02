@@ -28,6 +28,11 @@ public interface OrdenVisitaRepository extends JpaRepository<OrdenVisita, Long> 
     @Query("SELECT COUNT(o) FROM OrdenVisita o WHERE o.estado IN ('PENDIENTE', 'EN_CAMINO', 'EN_SITIO') AND (o.fechaProgramada IS NULL OR o.fechaProgramada <= CURRENT_DATE)")
     long countTodasActivas();
 
+    // Activas de días anteriores al rango que se está mirando (atrasadas) o sin fecha:
+    // el contador del menú las cuenta, así que el Despacho también tiene que mostrarlas.
+    @Query("SELECT o FROM OrdenVisita o WHERE o.estado IN ('PENDIENTE', 'EN_CAMINO', 'EN_SITIO') AND (o.fechaProgramada IS NULL OR o.fechaProgramada < :desde) ORDER BY o.fechaProgramada ASC")
+    List<OrdenVisita> findActivasAtrasadas(@Param("desde") LocalDate desde);
+
     boolean existsByPresupuestoId(Long presupuestoId);
     boolean existsByPresupuestoIdAndEstadoNotIn(Long presupuestoId, List<EstadoOrden> estados);
 

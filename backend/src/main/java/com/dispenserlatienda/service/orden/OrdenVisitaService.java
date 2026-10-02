@@ -158,8 +158,13 @@ public class OrdenVisitaService {
     public List<OrdenVisitaDTO> listarTodas(LocalDate desde, LocalDate hasta) {
         LocalDate d = desde != null ? desde : LocalDate.now().minusDays(7);
         LocalDate h = hasta != null ? hasta : LocalDate.now().plusDays(30);
-        return repo.findByFechaProgramadaBetweenOrderByTecnicoIdAscFechaProgramadaAsc(d, h)
-            .stream().map(this::toDTO).collect(Collectors.toList());
+        // 2-oct-2026: el badge del menú contaba órdenes activas de semanas anteriores que
+        // el Despacho (solo esta semana) no mostraba — "dice 5 y no veo nada". Se suman
+        // las activas atrasadas adelante de todo.
+        List<OrdenVisita> atrasadas = repo.findActivasAtrasadas(d);
+        List<OrdenVisita> rango = repo.findByFechaProgramadaBetweenOrderByTecnicoIdAscFechaProgramadaAsc(d, h);
+        return java.util.stream.Stream.concat(atrasadas.stream(), rango.stream())
+            .map(this::toDTO).collect(Collectors.toList());
     }
 
     // ── Técnico: listar mis órdenes activas ────────────────────────────────────
