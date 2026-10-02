@@ -14,6 +14,7 @@ import ConfirmarHorarioSheet from '../servicio/ConfirmarHorarioSheet';
 import { resumenVentanas } from '../../utils/ordenes';
 import SalidaTecnicoSheet from './SalidaTecnicoSheet';
 import MiAgenda from './MiAgenda';
+import { enviarOEncolar } from '../../utils/pendientesOffline';
 import HistorialSerieSheet from './HistorialSerieSheet';
 
 const PRIORIDAD_COLOR = {
@@ -441,8 +442,9 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const handleConfirmado = async () => {
         if (ordenEjecutandoId) {
             try {
-                await api.patch(`/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' });
-                toast.success('¡Trabajo completado! Revisá tu rendimiento.');
+                const r = await enviarOEncolar('patch', `/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' }, `Visita #${ordenEjecutandoId} → COMPLETADA`);
+                if (r.encolado) toast('Sin señal: la visita se marca completada cuando vuelva la conexión', { icon: '📶' });
+                else toast.success('¡Trabajo completado! Revisá tu rendimiento.');
             } catch (e) {
                 const det = e?.response?.data?.mensaje || e?.message || '';
                 toast.error(`No se pudo completar la orden${det ? ': ' + det : ''}. Avisá al admin.`);

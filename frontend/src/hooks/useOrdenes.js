@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { formatDateISO } from '../utils/dateUtils';
+import { enviarOEncolar } from '../utils/pendientesOffline';
 
 // Rango por defecto: lunes de esta semana hasta domingo
 function rangoSemanaActual() {
@@ -98,7 +99,13 @@ export function useOrdenes({ tecnicoId = null, enabled = true } = {}) {
     const avanzarEstado = async (id, estado, notasTecnico = '') => {
         const loading = toast.loading('Actualizando...');
         try {
-            await api.patch(`/ordenes/${id}/estado`, { estado, notasTecnico });
+            const r = await enviarOEncolar('patch', `/ordenes/${id}/estado`, { estado, notasTecnico }, `Visita #${id} → ${estado}`);
+            if (r.encolado) {
+                // Sin señal: se refleja ya en pantalla y se manda solo después
+                setOrdenes(os => os.map(o => o.id === id ? { ...o, estado } : o));
+                toast('Sin señal: quedó guardado, se manda solo', { id: loading, icon: '📶' });
+                return;
+            }
             toast.success('Estado actualizado', { id: loading });
             cargar();
         } catch { toast.error('Error al actualizar estado', { id: loading }); }

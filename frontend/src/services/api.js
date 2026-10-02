@@ -82,7 +82,9 @@ api.interceptors.response.use(
         }
 
         // Solo reintentar si no hubo respuesta del servidor (red caída / servidor no listo)
-        if (!error.response && config) {
+        // _sinReintento: pedidos que van por la cola sin señal (utils/pendientesOffline.js)
+        // — no hacer esperar 40s al técnico, se guardan y se mandan después.
+        if (!error.response && config && !config._sinReintento) {
             config._reintento = (config._reintento || 0) + 1;
             if (config._reintento <= MAX_REINTENTOS) {
                 await new Promise(r => setTimeout(r, DELAY_MS));

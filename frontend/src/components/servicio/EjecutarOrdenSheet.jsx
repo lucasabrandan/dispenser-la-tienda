@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
+import { enviarOEncolar } from '../../utils/pendientesOffline';
 import { useAuth } from '../../context/AuthContext';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import PasoDetalle from './ejecutar/PasoDetalle';
@@ -114,15 +115,16 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
             const nuevoEstado = modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'COBRADO' : 'COMPLETADO';
             const montoFinal = modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? pricing.totalEfectivo : pricing.totalFacturado;
 
-            await api.put(`/servicios/${servicio.id}`, {
+            const envio = await enviarOEncolar('put', `/servicios/${servicio.id}`, {
                 sedeId: servicio.sedeId, usuarioId: usuario?.id || servicio.usuarioId,
                 fecha: servicio.fecha, servicioTipo: servicio.servicioTipo || 'TECNICA',
                 estado: nuevoEstado, clienteNombre: servicio.clienteNombre,
                 sedeNombre: servicio.sedeNombre, descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
                 observaciones, items: itemsActualizados,
                 modalidadCobro, montoFinal, esVisita: pricing.esVisita || false,
-            });
-            toast.success('Trabajo confirmado', { id: loading });
+            }, `Trabajo ${servicio.clienteNombre || ''} #${servicio.id}`);
+            if (envio.encolado) toast('Sin señal: el trabajo quedó guardado en el celular y se manda solo', { id: loading, icon: '📶', duration: 6000 });
+            else toast.success('Trabajo confirmado', { id: loading });
 
             const extraNeto = Number(costoMOExtra || 0);
             const netoBase = pricing.esVisita ? (pricing.moBase / 2) : (pricing.moBase + extraNeto);

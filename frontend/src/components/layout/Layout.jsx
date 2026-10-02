@@ -5,6 +5,7 @@ import Drawer from './Drawer';
 import BottomNav from './BottomNav';
 import NotificacionesPanel, { NotifBell } from './NotificacionesPanel';
 import TrabajoDeepLink from '../servicio/TrabajoDeepLink';
+import PendientesOfflineBanner from '../ui/PendientesOfflineBanner';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
@@ -82,6 +83,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
 
     return (
         <div className="min-h-screen flex flex-col md:flex-row transition-colors duration-300 antialiased bg-page">
+            <PendientesOfflineBanner />
 
             {/* SIDEBAR DESKTOP */}
             <Sidebar vistaActual={vistaActual} setVistaActual={setVistaActual}
