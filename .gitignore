@@ -1,3 +1,5 @@
 uploads/
-backup/
+/backup/
 backend/service-*.log
+backend/service-*.log.old
+backend/target/*.backup
