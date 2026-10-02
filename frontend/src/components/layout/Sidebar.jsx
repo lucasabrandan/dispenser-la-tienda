@@ -4,7 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuCalendar, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban } from 'react-icons/lu';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban } from 'react-icons/lu';
 import { NotifBell } from './NotificacionesPanel';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
@@ -37,9 +37,9 @@ const MENU_TRANSVERSAL = [
 // nunca genera una Venta por su cuenta (ModalRegistrarTrabajo.jsx siempre crea
 // servicioTipo TECNICA) — quedaba vacio de adorno para este rol.
 const MENU_OPERACIONES_TECNICO = [
-    { id: 'mis-ordenes',      Icon: LuPin,           nombre: 'Mis Ordenes'      },
-    { id: 'mi-agenda',        Icon: LuCalendar,      nombre: 'Mi Agenda'        },
-    { id: 'servicio-tecnico', Icon: LuWrench,        nombre: 'Servicio Tecnico' },
+    // Agenda (calendario) vive ahora como pestaña adentro de "Hoy" (2-oct-2026)
+    { id: 'mis-ordenes',      Icon: LuPin,           nombre: 'Hoy'              },
+    { id: 'servicio-tecnico', Icon: LuWrench,        nombre: 'Mis Trabajos'     },
     { id: 'mi-sueldo',        Icon: LuBanknote,      nombre: 'Mi Sueldo'        },
 ];
 

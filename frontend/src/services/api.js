@@ -63,7 +63,12 @@ api.interceptors.response.use(
                     guardarTokenParaSW(data.accessToken);
                     config.headers['Authorization'] = `Bearer ${data.accessToken}`;
                     return api(config);
-                } catch {
+                } catch (errRefresh) {
+                    // Sin señal / backend reiniciando (2-oct-2026): el refresh ni
+                    // llegó al servidor. NO cerrar la sesión — el técnico en la calle
+                    // perdía todo lo que tenía abierto. Se rechaza este pedido y el
+                    // próximo vuelve a intentar el refresh cuando haya conexión.
+                    if (!errRefresh?.response) return Promise.reject(error);
                     // El refresh token también venció o fue revocado (ej.
                     // usuario desactivado) — ahí sí, logout real.
                 }

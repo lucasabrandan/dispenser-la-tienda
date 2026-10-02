@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuCalendar, LuBanknote } from 'react-icons/lu';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuBanknote } from 'react-icons/lu';
 
 // Reordenado: las acciones más frecuentes accesibles directamente.
 // 'despacho' (ítem propio, 26-ago) se saco de acá: el modo Despacho/Servicio
@@ -18,9 +18,9 @@ const NAV_ADMIN = [
 // nunca genera una Venta por su cuenta (ModalRegistrarTrabajo.jsx siempre crea
 // servicioTipo TECNICA) — quedaba vacio de adorno para este rol.
 const NAV_TECNICO = [
-    { id: 'mis-ordenes',      nombre: 'Ordenes',  Icon: LuPin           },
-    { id: 'mi-agenda',        nombre: 'Agenda',   Icon: LuCalendar      },
-    { id: 'servicio-tecnico', nombre: 'Tecnico',  Icon: LuWrench        },
+    // Agenda (calendario) vive ahora como pestaña adentro de "Hoy" (2-oct-2026)
+    { id: 'mis-ordenes',      nombre: 'Hoy',      Icon: LuPin           },
+    { id: 'servicio-tecnico', nombre: 'Trabajos', Icon: LuWrench        },
     { id: 'mi-sueldo',        nombre: 'Sueldo',   Icon: LuBanknote      },
 ];
 

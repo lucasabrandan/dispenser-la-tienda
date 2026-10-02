@@ -213,7 +213,7 @@ function CrearNotaSheet({ fecha, tecnicoId, onCreada, onCerrar }) {
     );
 }
 
-export default function MiAgenda({ tecnicoId }) {
+export default function MiAgenda({ tecnicoId, embebido = false }) {
     const [semanaOffset, setSemanaOffset] = useState(0);
     const [diaSel, setDiaSel] = useState(formatDateISO(new Date()));
     const [ordenes, setOrdenes] = useState([]);
@@ -290,10 +290,11 @@ export default function MiAgenda({ tecnicoId }) {
 
     return (
         <>
-        <div className="min-h-screen pb-28 bg-page">
-            <div className="max-w-2xl mx-auto px-4 pt-4">
+        {/* embebido: se muestra como pestaña "Agenda" adentro de "Hoy" (MisOrdenes.jsx) */}
+        <div className={embebido ? '' : 'min-h-screen pb-28 bg-page'}>
+            <div className={embebido ? '' : 'max-w-2xl mx-auto px-4 pt-4'}>
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className={`flex items-center justify-between mb-4 ${embebido ? 'hidden' : ''}`}>
                     <div>
                         <h1 className="text-title font-black text-ink">Mi Agenda</h1>
                         <p className="text-caption text-muted capitalize">{mesLabel}</p>

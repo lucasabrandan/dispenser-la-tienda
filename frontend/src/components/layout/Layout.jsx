@@ -24,7 +24,7 @@ const NOMBRES_SECCION = {
     'radar':            'Radar',
     'finanzas':         'Finanzas',
     'usuarios':         'Usuarios',
-    'mis-ordenes':      'Mis Ordenes',
+    'mis-ordenes':      'Hoy',
     'mi-agenda':        'Mi Agenda',
     'mi-espacio':       'Mi Espacio',
 };

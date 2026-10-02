@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote } from 'react-icons/lu';
+import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote, LuCalendar } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -13,6 +13,8 @@ import DireccionMapa from '../ui/DireccionMapa';
 import ConfirmarHorarioSheet from '../servicio/ConfirmarHorarioSheet';
 import { resumenVentanas } from '../../utils/ordenes';
 import SalidaTecnicoSheet from './SalidaTecnicoSheet';
+import MiAgenda from './MiAgenda';
+import HistorialSerieSheet from './HistorialSerieSheet';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -344,6 +346,8 @@ function RendimientoTab({ tecnicoId }) {
 
 const TAB_DEFS = [
     { id: 'activas',     label: 'Activas',     fullLabel: 'Activas',     color: '#D13A28', Icon: LuPin },
+    // Agenda (calendario) fusionada acá — antes era su propia pantalla en el menú (2-oct-2026)
+    { id: 'agenda',      label: 'Agenda',      fullLabel: 'Agenda',      color: '#3B82F6', Icon: LuCalendar },
     { id: 'historial',   label: 'Completadas', fullLabel: 'Completadas', color: '#16A34A', Icon: LuCircleCheck },
     { id: 'rendimiento', label: 'Rendimiento', fullLabel: 'Rendimiento', color: '#D48800', Icon: LuChartColumn },
 ];
@@ -390,6 +394,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);
     const [ordenRegistrando, setOrdenRegistrando] = useState(null);
     const [noAtendidoOrden, setNoAtendidoOrden] = useState(null);
+    const [buscarSerie, setBuscarSerie] = useState(false);
     const [salida, setSalida] = useState(null); // { modo: 'orden'|'hoy'|'mensaje', orden? }
     const [notaNoAtendido, setNotaNoAtendido] = useState('');
     const [servicioDetalle, setServicioDetalle] = useState(null);
@@ -527,7 +532,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 ) : (
                     <div className="mb-4 flex items-center justify-between gap-2">
                         <div>
-                            <h1 className="text-body-lg font-black text-ink">Mis Órdenes</h1>
+                            <h1 className="text-body-lg font-black text-ink">Hoy</h1>
                             <p className="text-caption text-muted">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
                         </div>
                         {tab === 'activas' && activas.length > 0 && (
@@ -571,6 +576,12 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
 
                 {/* Vía de salida: siempre a mano, no escondida en cada tarjeta */}
                 {tab === 'activas' && (
+                    <button onClick={() => setBuscarSerie(true)}
+                        className="mb-2 w-full h-11 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-line active:scale-95 flex items-center justify-center gap-1.5">
+                        <LuClipboardList size={14} /> Historial de un equipo (por N° de serie)
+                    </button>
+                )}
+                {tab === 'activas' && (
                     <div className="mb-4 grid grid-cols-2 gap-2">
                         <button onClick={() => setSalida({ modo: 'mensaje' })}
                             className="h-11 rounded-xl text-label font-bold text-ink border border-black/10 dark:border-line active:scale-95">
@@ -584,7 +595,9 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 )}
 
                 {/* Contenido */}
-                {tab === 'rendimiento' ? (
+                {tab === 'agenda' ? (
+                    <MiAgenda tecnicoId={tecnicoId} embebido />
+                ) : tab === 'rendimiento' ? (
                     <RendimientoTab tecnicoId={tecnicoId} />
                 ) : (tab === 'activas' ? cargando : cargandoHistorial) ? (
                     <div className="flex flex-col gap-2">
@@ -656,6 +669,8 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 onCerrar={() => setOrdenRegistrando(null)}
             />
         )}
+
+        {buscarSerie && <HistorialSerieSheet onClose={() => setBuscarSerie(false)} />}
 
         {servicioEjecutando && (
             <EjecutarOrdenSheet
