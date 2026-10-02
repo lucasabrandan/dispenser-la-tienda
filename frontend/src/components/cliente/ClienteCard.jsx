@@ -3,7 +3,8 @@ import ActionSheet from '../ui/ActionSheet';
 import HistorialEquipoModal from '../equipo/HistorialEquipoModal';
 import { abrirMaps, abrirWhatsApp, resumenCliente, formatFecha } from '../../utils/clienteUtils';
 import HistorialClienteModal from './HistorialClienteModal';
-import { LuMapPin, LuMessageCircle, LuWrench, LuShoppingCart, LuPencil, LuClipboardList, LuTrash2, LuHouse, LuTriangleAlert, LuBuilding2, LuUser } from 'react-icons/lu';
+import CierreMensualModal from './CierreMensualModal';
+import { LuMapPin, LuMessageCircle, LuWrench, LuShoppingCart, LuPencil, LuClipboardList, LuTrash2, LuHouse, LuTriangleAlert, LuBuilding2, LuUser, LuFileText } from 'react-icons/lu';
 import DireccionMapa from '../ui/DireccionMapa';
 
 export default function ClienteCard({
@@ -17,6 +18,7 @@ export default function ClienteCard({
 }) {
     const [equipoHistorial, setEquipoHistorial] = useState(null);
     const [modalHistorial, setModalHistorial] = useState(false);
+    const [modalCierre, setModalCierre] = useState(false);
     const [menuCliente, setMenuCliente] = useState(false);
     const [menuEquipo, setMenuEquipo] = useState(null); // id del equipo con menú abierto
     const [confirmEliminar, setConfirmEliminar] = useState(null); // 'cliente' | equipoId
@@ -131,6 +133,10 @@ export default function ClienteCard({
                                     <button onClick={() => { setModalHistorial(true); setMenuCliente(false); }}
                                         className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
                                         <LuClipboardList size={15} /> Ver historial
+                                    </button>
+                                    <button onClick={() => { setModalCierre(true); setMenuCliente(false); }}
+                                        className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                        <LuFileText size={15} /> Cierre mensual
                                     </button>
                                     <button onClick={() => { abrirMaps(cliente); setMenuCliente(false); }}
                                         className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
@@ -255,6 +261,9 @@ export default function ClienteCard({
             )}
             {modalHistorial && (
                 <HistorialClienteModal cliente={cliente} servicios={serviciosCli} onClose={() => setModalHistorial(false)} />
+            )}
+            {modalCierre && (
+                <CierreMensualModal cliente={cliente} onClose={() => setModalCierre(false)} />
             )}
         </div>
     );

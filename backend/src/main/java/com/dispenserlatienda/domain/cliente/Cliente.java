@@ -44,6 +44,12 @@ public class Cliente extends BaseEntity {
     private String provincia;
     private String direccion;
 
+    // Tarifa por volumen mensual (ej. MODO AGUA): JSON con tramos
+    // [{"desde":0,"precio":33000},{"desde":60,"precio":30000},{"desde":80,"precio":28000}]
+    // "precio" = mano de obra por equipo, SIN IVA. Null = el cliente no tiene tarifa por volumen.
+    @Column(name = "tarifa_volumen", columnDefinition = "TEXT")
+    private String tarifaVolumen;
+
     protected Cliente() {}
 
     public Cliente(ClienteTipo clienteTipo, String nombre, String cuilDni, String telefono,
@@ -104,4 +110,6 @@ public class Cliente extends BaseEntity {
     public void setProvincia(String provincia) { this.provincia = provincia; }
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
+    public String getTarifaVolumen() { return tarifaVolumen; }
+    public void setTarifaVolumen(String tarifaVolumen) { this.tarifaVolumen = tarifaVolumen; }
 }
