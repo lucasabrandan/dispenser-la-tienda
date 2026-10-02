@@ -22,6 +22,8 @@ export default function CierreMensualModal({ cliente, onClose }) {
     const [mes, setMes] = useState(mesActual());
     const [cierre, setCierre] = useState(null);
     const [calculando, setCalculando] = useState(false);
+    const [factura, setFactura] = useState('');
+    const [marcando, setMarcando] = useState(false);
 
     useEffect(() => {
         api.get(`/clientes/${cliente.id}/tarifa-volumen`)
@@ -75,6 +77,32 @@ export default function CierreMensualModal({ cliente, onClose }) {
             toast.error('No se pudo calcular el cierre');
         } finally {
             setCalculando(false);
+        }
+    };
+
+    // Estados de los servicios del cierre (uno por servicio, no por equipo)
+    const estados = (() => {
+        if (!cierre) return null;
+        const porServ = {};
+        cierre.filas.forEach(f => { porServ[f.servicioId] = f.estado; });
+        const v = Object.values(porServ);
+        return {
+            sinFacturar: v.filter(e => e === 'COMPLETADO' || e === 'PENDIENTE_FACTURACION').length,
+            facturados: v.filter(e => e === 'FACTURADO').length,
+            cobrados: v.filter(e => e === 'COBRADO' || e === 'REALIZADO').length,
+        };
+    })();
+
+    const marcar = async (estado) => {
+        setMarcando(true);
+        try {
+            const r = await api.post(`/clientes/${cliente.id}/cierre-mensual/marcar`, { estado, factura }, { params: { mes } });
+            toast.success(`${r.data.actualizados} servicio(s) marcados como ${estado === 'FACTURADO' ? 'facturados' : 'cobrados'}`);
+            await calcular();
+        } catch (e) {
+            toast.error(e?.response?.data?.mensaje || 'No se pudo actualizar');
+        } finally {
+            setMarcando(false);
         }
     };
 
@@ -174,6 +202,29 @@ export default function CierreMensualModal({ cliente, onClose }) {
                                 className="w-full mt-3 h-11 rounded-xl font-black text-label uppercase bg-ink text-page active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40">
                                 <LuFileText size={15} /> Descargar PDF
                             </button>
+
+                            {estados && cierre.cantidadEquipos > 0 && (
+                                <div className="mt-4 pt-3 border-t border-black/10 dark:border-white/10 space-y-2">
+                                    <p className="text-caption text-secondary">
+                                        Servicios: <b>{estados.sinFacturar}</b> sin facturar · <b>{estados.facturados}</b> facturados · <b>{estados.cobrados}</b> cobrados
+                                    </p>
+                                    {estados.sinFacturar > 0 && (
+                                        <div className="flex gap-1.5">
+                                            <input value={factura} onChange={e => setFactura(e.target.value)} placeholder="N° de factura (opcional)" className={INPUT} />
+                                            <button onClick={() => marcar('FACTURADO')} disabled={marcando || !cierre.precioUnitario}
+                                                className="h-9 px-3 shrink-0 rounded-lg font-black text-label uppercase bg-[#6366F1] text-white active:scale-95 disabled:opacity-40">
+                                                Facturado
+                                            </button>
+                                        </div>
+                                    )}
+                                    {(estados.facturados > 0 || estados.sinFacturar > 0) && (
+                                        <button onClick={() => marcar('COBRADO')} disabled={marcando}
+                                            className="w-full h-10 rounded-xl font-black text-label uppercase bg-[#16A34A] text-white active:scale-95 disabled:opacity-40">
+                                            Marcar todo como cobrado
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

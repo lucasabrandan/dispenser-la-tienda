@@ -166,6 +166,7 @@ public class CierreMensualController {
             f.put("fecha", s.getFechaServicio());
             f.put("servicioId", s.getId());
             f.put("nroDocumento", s.getNroDocumento());
+            f.put("estado", s.getEstado());
             f.put("serie", e != null ? e.getNumeroSerie() : null);
             f.put("equipo", e != null ? String.join(" ", Objects.toString(e.getMarca(), ""), Objects.toString(e.getModelo(), "")).trim() : null);
             f.put("ubicacion", e != null ? e.getUbicacion() : null);
@@ -213,6 +214,71 @@ public class CierreMensualController {
         out.put("total", subtotal.add(iva));
         out.put("filas", filas);
         return out;
+    }
+
+    /**
+     * Marca todos los servicios del cierre como FACTURADO (con N° de factura) o COBRADO,
+     * de una sola vez (2-oct-2026). Al facturar también fija el montoFinal de cada
+     * servicio (equipos × precio del tramo + repuestos, con IVA) para que Finanzas
+     * cuente esos ingresos — hasta acá esos servicios estaban en $0.
+     */
+    @PostMapping("/cierre-mensual/marcar")
+    @Transactional
+    public Map<String, Object> marcar(@PathVariable Long id, @RequestParam String mes,
+                                      @RequestBody Map<String, String> body, Authentication auth) {
+        soloAdmin(auth);
+        String destino = body.getOrDefault("estado", "");
+        if (!destino.equals("FACTURADO") && !destino.equals("COBRADO"))
+            throw new IllegalArgumentException("estado debe ser FACTURADO o COBRADO");
+        String factura = Optional.ofNullable(body.get("factura")).map(String::trim).orElse("");
+
+        Map<String, Object> cierre = cierre(id, mes, auth);
+        BigDecimal precioUnit = (BigDecimal) cierre.get("precioUnitario");
+        if (destino.equals("FACTURADO") && precioUnit == null)
+            throw new IllegalArgumentException("El cliente no tiene tarifa cargada");
+
+        // equipos y repuestos (con IVA) por servicio
+        Map<Long, int[]> equipos = new HashMap<>();
+        Map<Long, BigDecimal> reps = new HashMap<>();
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> filas = (List<Map<String, Object>>) cierre.get("filas");
+        for (Map<String, Object> f : filas) {
+            Long sid = (Long) f.get("servicioId");
+            equipos.computeIfAbsent(sid, k -> new int[1])[0]++;
+            reps.merge(sid, (BigDecimal) f.get("repuestosTotal"), BigDecimal::add);
+        }
+
+        int n = 0;
+        java.time.LocalDateTime ahora = java.time.LocalDateTime.now();
+        for (Long sid : equipos.keySet()) {
+            Servicio s = em.find(Servicio.class, sid);
+            if (s == null) continue;
+            EstadoServicio est = s.getEstado();
+            if (destino.equals("FACTURADO")) {
+                if (est != EstadoServicio.COMPLETADO && est != EstadoServicio.PENDIENTE_FACTURACION) continue;
+                BigDecimal mo = precioUnit.multiply(BigDecimal.valueOf(equipos.get(sid)[0]));
+                BigDecimal repNeto = reps.get(sid).divide(BigDecimal.ONE.add(IVA), 2, RoundingMode.HALF_UP);
+                s.setMontoFinal(mo.add(repNeto).multiply(BigDecimal.ONE.add(IVA)).setScale(2, RoundingMode.HALF_UP));
+                s.setModalidadCobro(com.dispenserlatienda.domain.servicio.ModalidadCobro.CON_FACTURA);
+                s.setEstado(EstadoServicio.FACTURADO);
+                if (s.getFechaFacturacion() == null) s.setFechaFacturacion(ahora);
+                String nota = "Cierre mensual " + mes + (factura.isEmpty() ? "" : " · Factura " + factura);
+                s.setObservaciones(s.getObservaciones() == null || s.getObservaciones().isBlank()
+                    ? nota : s.getObservaciones() + " | " + nota);
+            } else {
+                if (est == EstadoServicio.COBRADO || est == EstadoServicio.REALIZADO) continue;
+                // Si se cobra sin haber pasado por "facturado", igual se fija el monto
+                if (precioUnit != null && (s.getMontoFinal() == null || s.getMontoFinal().signum() == 0)) {
+                    BigDecimal mo = precioUnit.multiply(BigDecimal.valueOf(equipos.get(sid)[0]));
+                    BigDecimal repNeto = reps.get(sid).divide(BigDecimal.ONE.add(IVA), 2, RoundingMode.HALF_UP);
+                    s.setMontoFinal(mo.add(repNeto).multiply(BigDecimal.ONE.add(IVA)).setScale(2, RoundingMode.HALF_UP));
+                }
+                s.setEstado(EstadoServicio.COBRADO);
+                if (s.getFechaCobro() == null) s.setFechaCobro(ahora);
+            }
+            n++;
+        }
+        return Map.of("actualizados", n, "estado", destino);
     }
 
     private static BigDecimal num(Object o, BigDecimal def) {
