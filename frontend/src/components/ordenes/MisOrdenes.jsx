@@ -27,6 +27,11 @@ const PRIORIDAD_COLOR = {
     URGENTE: { bg: 'bg-[var(--danger-bg)]',            tx: 'text-[var(--danger-tx)]' },
 };
 
+const ESTADO_LABEL = {
+    PENDIENTE: 'Pendiente', EN_CAMINO: 'En camino', EN_SITIO: 'En el lugar',
+    COMPLETADA: 'Completada', CANCELADA: 'Devuelta', NO_ATENDIDO: 'No atendió',
+};
+
 const BORDER_COLOR = {
     PENDIENTE:   'var(--estado-pendiente)',
     EN_CAMINO:   'var(--estado-camino)',
@@ -41,9 +46,10 @@ const BORDER_COLOR = {
 // se lee en el borde/dot de la card (BORDER_COLOR). Mismo criterio que se
 // aplico a ServicioCard.jsx.
 const SIGUIENTE_ESTADO = {
-    PENDIENTE:  { estado: 'EN_CAMINO', label: 'Salir', color: 'bg-brand-red', Icon: LuCar },
-    EN_CAMINO:  { estado: 'EN_SITIO',  label: 'Llegué', color: 'bg-brand-red', Icon: LuMapPin },
-    EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', color: 'bg-brand-red', Icon: LuCircleCheck },
+    // Un color por paso (2-oct-2026: todo rojo se confundía): azul salir, ámbar llegué, verde cerrar
+    PENDIENTE:  { estado: 'EN_CAMINO', label: 'Salir', bg: '#2563EB', Icon: LuCar },
+    EN_CAMINO:  { estado: 'EN_SITIO',  label: 'Llegué', bg: '#B45309', Icon: LuMapPin },
+    EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', bg: '#15803D', Icon: LuCircleCheck },
 };
 
 // Paso atrás por si el técnico tocó la orden equivocada (solo uno, y nunca desde COMPLETADA)
@@ -62,8 +68,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
     const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
 
     return (
-        <div className={`rounded-2xl overflow-hidden bg-card border-[0.5px] border-black/[0.07] transition-all ${seleccionando && seleccionada ? 'ring-2 ring-brand-red' : ''}`}
-            style={{ border: '0.5px solid rgba(0,0,0,0.07)', borderLeft: `3px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}
+        <div className={`rounded-2xl overflow-hidden bg-card border border-black/10 dark:border-white/[0.12] transition-all ${seleccionando && seleccionada ? 'ring-2 ring-brand-red' : ''} ${['EN_CAMINO', 'EN_SITIO'].includes(orden.estado) ? 'shadow-lg' : ''}`}
+            style={{ borderLeft: `6px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}
             onClick={seleccionando ? () => onToggleSel(orden.id) : undefined}>
             <div className="p-4">
                 <div className="flex items-start gap-2 mb-2">
@@ -74,9 +80,17 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                     )}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
-                                {orden.prioridad}
-                            </span>
+                            {ESTADO_LABEL[orden.estado] && (
+                                <span className="text-label font-black px-2 py-0.5 rounded-md uppercase text-white"
+                                    style={{ background: BORDER_COLOR[orden.estado] }}>
+                                    {ESTADO_LABEL[orden.estado]}
+                                </span>
+                            )}
+                            {orden.prioridad && orden.prioridad !== 'NORMAL' && (
+                                <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
+                                    {orden.prioridad}
+                                </span>
+                            )}
                         </div>
                         <p className="font-black text-body-lg text-ink leading-tight">{orden.titulo}</p>
                     </div>
@@ -162,7 +176,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                                 o "Ejecutar trabajo" según un dato invisible (si venía de un
                                 presupuesto). Adentro se decide solo qué formulario abrir. */}
                             <button onClick={() => orden.presupuestoId ? onEjecutar(orden) : onRegistrarTrabajo(orden)}
-                                className="w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all bg-brand-red">
+                                style={{ background: '#15803D' }}
+                                className="w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all">
                                 Cerrar trabajo
                             </button>
                             <p className="text-caption text-center text-muted font-bold">
@@ -171,7 +186,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                         </>
                     ) : (
                         <button onClick={() => onAvanzar(orden.id, sig.estado)}
-                            className={`w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all flex items-center justify-center gap-1.5 ${sig.color}`}>
+                            style={{ background: sig.bg }}
+                            className="w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all flex items-center justify-center gap-1.5">
                             <sig.Icon size={16} /> {sig.label}
                         </button>
                     )}
@@ -401,6 +417,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [buscarSerie, setBuscarSerie] = useState(false);
     const [cerrarDia, setCerrarDia] = useState(false);
     const [cargaSerie, setCargaSerie] = useState(false);
+    const [masAcciones, setMasAcciones] = useState(false);
     const [salida, setSalida] = useState(null); // { modo: 'orden'|'hoy'|'mensaje', orden? }
     const [notaNoAtendido, setNotaNoAtendido] = useState('');
     const [servicioDetalle, setServicioDetalle] = useState(null);
@@ -583,33 +600,34 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
 
                 {tab === 'activas' && <QueLlevarHoy ordenesHoy={ordenesHoy} />}
 
-                {/* Vía de salida: siempre a mano, no escondida en cada tarjeta */}
+                {/* Herramientas del día — una sola fila compacta (2-oct-2026: antes eran 5
+                    botones grandes apilados que empujaban las órdenes para abajo). */}
                 {tab === 'activas' && (
-                    <button onClick={() => setCargaSerie(true)}
-                        className="mb-2 w-full h-11 rounded-xl text-label font-black uppercase text-white bg-brand-red active:scale-95 flex items-center justify-center gap-1.5">
-                        <LuPin size={14} /> Cargar equipos por N° de serie
-                    </button>
-                )}
-                {tab === 'activas' && (
-                    <button onClick={() => setBuscarSerie(true)}
-                        className="mb-2 w-full h-11 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-line active:scale-95 flex items-center justify-center gap-1.5">
-                        <LuClipboardList size={14} /> Historial de un equipo (por N° de serie)
-                    </button>
-                )}
-                {tab === 'activas' && (
-                    <div className="mb-4 grid grid-cols-2 gap-2">
-                        <button onClick={() => setSalida({ modo: 'mensaje' })}
-                            className="h-11 rounded-xl text-label font-bold text-ink border border-black/10 dark:border-line active:scale-95">
-                            Avisar al admin
+                    <div className="mb-4 grid grid-cols-3 gap-2">
+                        <button onClick={() => setCargaSerie(true)}
+                            className="h-10 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-white/10 active:scale-95 flex items-center justify-center gap-1">
+                            <LuPin size={13} /> Cargar N/S
                         </button>
-                        <button onClick={() => setSalida({ modo: 'hoy' })}
-                            className="h-11 rounded-xl text-label font-bold text-muted border border-black/10 dark:border-line active:scale-95">
-                            No puedo trabajar hoy
+                        <button onClick={() => setBuscarSerie(true)}
+                            className="h-10 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-white/10 active:scale-95 flex items-center justify-center gap-1">
+                            <LuClipboardList size={13} /> Historial N/S
                         </button>
-                        <button onClick={() => setCerrarDia(true)}
-                            className="col-span-2 h-11 rounded-xl text-label font-black uppercase text-white bg-ink dark:text-[#1C1917] active:scale-95">
-                            Cerrar mi día
+                        <button onClick={() => setMasAcciones(v => !v)}
+                            className={`h-10 rounded-xl text-label font-bold border active:scale-95 ${masAcciones ? 'bg-chip text-ink border-transparent' : 'bg-card text-muted border-black/10 dark:border-white/10'}`}>
+                            Más {masAcciones ? '▲' : '▼'}
                         </button>
+                        {masAcciones && (
+                            <div className="col-span-3 grid grid-cols-2 gap-2">
+                                <button onClick={() => { setMasAcciones(false); setSalida({ modo: 'mensaje' }); }}
+                                    className="h-10 rounded-xl text-label font-bold text-ink border border-black/10 dark:border-white/10 active:scale-95">
+                                    Avisar al admin
+                                </button>
+                                <button onClick={() => { setMasAcciones(false); setSalida({ modo: 'hoy' }); }}
+                                    className="h-10 rounded-xl text-label font-bold text-muted border border-black/10 dark:border-white/10 active:scale-95">
+                                    No puedo trabajar hoy
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -635,7 +653,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             <p className="text-label font-black text-muted uppercase tracking-wider mb-2 capitalize">
                                 {formatFecha(fecha)}
                             </p>
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                                 {items.map(o => (
                                     <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} onNoPuedo={(o) => setSalida({ modo: 'orden', orden: o })} onVerServicio={verServicio}
                                         seleccionando={modoSeleccion} seleccionada={seleccionados.has(o.id)} onToggleSel={toggleSeleccion} />
@@ -643,6 +661,14 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             </div>
                         </div>
                     ))
+                )}
+
+                {/* Cerrar mi día va al final: es lo último que se hace en el día */}
+                {tab === 'activas' && !cargando && (
+                    <button onClick={() => setCerrarDia(true)}
+                        className="mt-2 w-full h-12 rounded-xl text-label font-black uppercase text-white bg-ink dark:text-[#1C1917] active:scale-95">
+                        Cerrar mi día
+                    </button>
                 )}
             </div>
         </div>

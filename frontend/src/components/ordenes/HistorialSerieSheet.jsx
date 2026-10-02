@@ -50,7 +50,7 @@ export default function HistorialSerieSheet({ onClose }) {
 
                 <form onSubmit={e => { e.preventDefault(); buscar(); }} className="flex gap-1.5 mb-4">
                     <input autoFocus value={serie} onChange={e => setSerie(e.target.value.toUpperCase())}
-                        placeholder="N° de serie"
+                        placeholder="N° de serie (o una parte)"
                         className="flex-1 h-11 px-3 rounded-xl text-body font-bold outline-none bg-panel text-ink border border-black/[0.05] dark:border-white/[0.05]" />
                     <button type="submit" disabled={cargando || !serie.trim()}
                         className="h-11 px-4 rounded-xl font-black text-label uppercase bg-brand-red text-white active:scale-95 flex items-center gap-1.5 disabled:opacity-40">
@@ -62,10 +62,13 @@ export default function HistorialSerieSheet({ onClose }) {
 
                 {data && !data.encontrado && (
                     <div className="text-caption text-muted">
-                        <p className="font-bold text-ink mb-1">No hay ningún equipo cargado con esa serie.</p>
+                        <p className="font-bold text-ink mb-1">
+                            {data.sugerencias?.length > 0
+                                ? 'Hay varios equipos que coinciden. Elegí uno:'
+                                : 'No encontré ningún equipo en el que hayas trabajado con esa serie.'}
+                        </p>
                         {data.sugerencias?.length > 0 && (
                             <div className="flex flex-wrap gap-1.5 mt-2">
-                                <span>¿Quisiste decir?</span>
                                 {data.sugerencias.map(s => (
                                     <button key={s} onClick={() => { setSerie(s); buscar(s); }}
                                         className="px-2 py-0.5 rounded-md bg-chip text-secondary font-bold">{s}</button>

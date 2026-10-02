@@ -114,14 +114,21 @@ public class HistorialSerieController {
         Usuario u = usuario(auth);
         boolean admin = u.getRol() == RolUsuario.ADMIN;
         Equipo e = buscarExacto(s);
-        if (e == null || (!admin && !trabajoEnEquipo(u.getId(), e.getId()))) {
-            out.put("encontrado", false);
-            // Sugerencias de series parecidas: solo admin (al técnico le mostraba equipos ajenos)
-            out.put("sugerencias", admin
-                ? equipoRepository.findByNumeroSerieContainingIgnoreCase(s, org.springframework.data.domain.PageRequest.of(0, 5))
-                    .stream().map(Equipo::getNumeroSerie).toList()
-                : List.of());
-            return out;
+        if (e != null && !admin && !trabajoEnEquipo(u.getId(), e.getId())) e = null;
+        if (e == null) {
+            // Búsqueda por parte de la serie (ej. "2909" → MS290926). Al técnico solo le
+            // aparecen equipos en los que trabajó. Si queda uno solo, se muestra directo.
+            List<Equipo> parecidos = equipoRepository.findByNumeroSerieContainingIgnoreCase(s,
+                    org.springframework.data.domain.PageRequest.of(0, 40)).stream()
+                .filter(x -> admin || trabajoEnEquipo(u.getId(), x.getId()))
+                .limit(8).toList();
+            if (parecidos.size() == 1) {
+                e = parecidos.get(0);
+            } else {
+                out.put("encontrado", false);
+                out.put("sugerencias", parecidos.stream().map(Equipo::getNumeroSerie).toList());
+                return out;
+            }
         }
 
         out.put("encontrado", true);
