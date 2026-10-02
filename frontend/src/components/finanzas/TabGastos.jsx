@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { exportarGastosCSV } from '../../utils/exportarCSV';
-import { getTodayISO } from '../../utils/dateUtils';
+import { getTodayISO, fechaAR } from '../../utils/dateUtils';
 import { formatearPrecio } from '../../utils/formatearPrecio';
 import Paginacion from '../ui/Paginacion';
 import DateInput from '../ui/DateInput';
@@ -144,7 +144,7 @@ export default function TabGastos({ filtroMes }) {
                         <div key={`g-${g.id}-${i}`} className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
                             <div className="flex-1 min-w-0">
                                 <p className="text-body font-black text-ink truncate">{g.descripcion}</p>
-                                <p className="text-caption font-bold text-muted uppercase">{g.fecha} · {g.categoria}</p>
+                                <p className="text-caption font-bold text-muted uppercase">{fechaAR(g.fecha)} · {g.categoria}</p>
                             </div>
                             <p className="text-body font-black text-brand-red shrink-0">${fmt(g.monto)}</p>
                             <button onClick={() => editarGasto(g)}

@@ -5,7 +5,7 @@ import IconBtn from '../ui/IconBtn';
 import ActionSheet from '../ui/ActionSheet';
 import ConfirmarHorarioSheet from './ConfirmarHorarioSheet';
 import { useAuth } from '../../context/AuthContext';
-import { estadoGarantia } from '../../utils/dateUtils';
+import { estadoGarantia, fechaAR } from '../../utils/dateUtils';
 import { estadoLabel, estadoColor } from '../../utils/estados';
 
 function M({ valor, className = '' }) {
@@ -120,7 +120,7 @@ export default function ServicioCard({
                         {servicio.fechaTentativa ? (
                             <p className="text-caption font-bold text-amber-500 mt-0.5">⏳ Tentativa</p>
                         ) : (
-                            <p className="text-caption text-muted mt-0.5">{servicio.fecha}</p>
+                            <p className="text-caption text-muted mt-0.5">{fechaAR(servicio.fecha)}</p>
                         )}
                     </div>
                 </div>
@@ -157,17 +157,17 @@ export default function ServicioCard({
                         )}
                         {servicio.fechaCompletado && (
                             <span className="text-label px-1.5 py-0.5 rounded-md bg-chip text-secondary">
-                                Hecho {servicio.fechaCompletado.slice(0, 10)}
+                                Hecho {fechaAR(servicio.fechaCompletado)}
                             </span>
                         )}
                         {servicio.fechaFacturacion && (
                             <span className="text-label px-1.5 py-0.5 rounded-md bg-chip text-secondary">
-                                Fact. {servicio.fechaFacturacion.slice(0, 10)}
+                                Fact. {fechaAR(servicio.fechaFacturacion)}
                             </span>
                         )}
                         {servicio.fechaCobro && (
                             <span className="text-label px-1.5 py-0.5 rounded-md bg-chip text-secondary">
-                                Cobrado {servicio.fechaCobro.slice(0, 10)}
+                                Cobrado {fechaAR(servicio.fechaCobro)}
                             </span>
                         )}
                         {servicio.datosBancariosEnviados && (

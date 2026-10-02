@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
 import { exportarBalanceCSV } from '../../utils/exportarCSV';
 import { formatearPrecio, formatearPrecioCompacto } from '../../utils/formatearPrecio';
-import { MESES_ES } from '../../utils/dateUtils';
+import { MESES_ES, fechaAR } from '../../utils/dateUtils';
 import { useTheme } from '../../hooks/useTheme';
 import Paginacion from '../ui/Paginacion';
 import StatCard from './StatCard';
@@ -137,7 +137,7 @@ export default function TabBalance({ filtroMes }) {
                             <div key={`tx-${t.id}-${idx}`} className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
                                 <div className="flex-1 min-w-0">
                                     <p className="text-body font-black text-ink truncate">{t.concepto}</p>
-                                    <p className="text-caption font-bold text-muted uppercase">{t.fecha} · {t.tipo}</p>
+                                    <p className="text-caption font-bold text-muted uppercase">{fechaAR(t.fecha)} · {t.tipo}</p>
                                 </div>
                                 <span className="text-label font-black px-2 py-0.5 rounded-full bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500] shrink-0">{margen}%</span>
                                 <p className="text-body font-black text-ink shrink-0">{fmt(venta - costo)}</p>

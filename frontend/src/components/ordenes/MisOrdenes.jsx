@@ -4,7 +4,7 @@ import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
-import { getTodayISO, MESES_ES } from '../../utils/dateUtils';
+import { getTodayISO, MESES_ES, fechaAR } from '../../utils/dateUtils';
 import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
 import SwipeColumns from '../ui/SwipeColumns';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
@@ -96,7 +96,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                     </div>
                     <div className="text-right shrink-0">
                         <p className="text-body font-black text-ink">{aCoordinar ? 'A coordinar' : (orden.horaEstimada || '—')}</p>
-                        <p className="text-caption text-muted">{orden.fechaProgramada}</p>
+                        <p className="text-caption text-muted">{fechaAR(orden.fechaProgramada)}</p>
                     </div>
                 </div>
 
@@ -745,7 +745,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             <h3 className="text-body-lg font-black mb-1 text-ink">
                                 Servicio — {servicioDetalle.clienteNombre}
                             </h3>
-                            <p className="text-caption text-muted mb-4">#{servicioDetalle.id} · {servicioDetalle.fecha}</p>
+                            <p className="text-caption text-muted mb-4">#{servicioDetalle.id} · {fechaAR(servicioDetalle.fecha)}</p>
                             <div className="max-h-[50vh] overflow-y-auto space-y-2 mb-4">
                                 {(servicioDetalle.items || []).map((it, idx) => (
                                     <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-page border border-black/[0.04] dark:border-white/[0.04]">

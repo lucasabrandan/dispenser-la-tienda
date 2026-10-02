@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { LuDownload, LuFolderOpen, LuCircleCheck, LuTriangleAlert, LuUpload } from 'react-icons/lu';
+import { fechaAR } from '../../utils/dateUtils';
 
 const LABEL = 'block text-label font-black text-muted uppercase tracking-widest mb-1.5';
 
@@ -174,7 +175,7 @@ export default function ImportadorServiciosModal({ onCerrar, onImportado }) {
                                         <tbody>
                                             {preview.map((r, i) => (
                                                 <tr key={i} className={i % 2 === 0 ? 'bg-card' : 'bg-[#E8E4E0] dark:bg-[#161615]'}>
-                                                    <td className="px-2 py-1.5 text-ink">{r.fecha}</td>
+                                                    <td className="px-2 py-1.5 text-ink">{fechaAR(r.fecha)}</td>
                                                     <td className="px-2 py-1.5 text-ink font-bold">{r.cliente}</td>
                                                     <td className="px-2 py-1.5 text-muted">{r.modelo}</td>
                                                     <td className="px-2 py-1.5 text-muted">{r.serial || '—'}</td>

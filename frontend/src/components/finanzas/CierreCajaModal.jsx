@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useMontos } from '../../context/MontosContext';
 import { generarPDFCierreCaja } from '../../utils/pdf/cierreCaja';
 import DateInput from '../ui/DateInput';
-import { getTodayISO, formatDateISO, inicioMes, finMes } from '../../utils/dateUtils';
+import { getTodayISO, formatDateISO, inicioMes, finMes, fechaAR } from '../../utils/dateUtils';
 import { LuCircleCheck, LuWrench, LuShoppingCart, LuFileText } from 'react-icons/lu';
 
 function M({ valor, className = '' }) {
@@ -307,7 +307,7 @@ export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
                                             <div key={g.id || i} className="flex justify-between px-4 py-2 text-body border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
                                                 <div className="min-w-0 flex-1">
                                                     <span className="text-ink font-bold truncate block">{g.descripcion}</span>
-                                                    <span className="text-caption text-muted">{g.fecha} · {g.categoria}</span>
+                                                    <span className="text-caption text-muted">{fechaAR(g.fecha)} · {g.categoria}</span>
                                                 </div>
                                                 <span className="font-black text-brand-red shrink-0 ml-2">
                                                     −${Math.round(Number(g.monto)).toLocaleString('es-AR')}
@@ -331,7 +331,7 @@ export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
                                     <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
                                         {servicios.map(s => (
                                             <div key={s.id} className="flex justify-between px-4 py-2 text-body border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
-                                                <span className="text-secondary truncate mr-2">{s.clienteNombre} · {s.fecha}</span>
+                                                <span className="text-secondary truncate mr-2">{s.clienteNombre} · {fechaAR(s.fecha)}</span>
                                                 <M valor={calcTotal(s)} className="font-bold text-ink shrink-0" />
                                             </div>
                                         ))}
@@ -346,7 +346,7 @@ export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
                                     <div className="rounded-2xl overflow-hidden border border-black/[0.07] dark:border-white/[0.07]">
                                         {ventas.map(v => (
                                             <div key={v.id} className="flex justify-between px-4 py-2 text-body border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
-                                                <span className="text-secondary truncate mr-2">{v.clienteNombre} · {v.fecha}</span>
+                                                <span className="text-secondary truncate mr-2">{v.clienteNombre} · {fechaAR(v.fecha)}</span>
                                                 <M valor={calcTotal(v)} className="font-bold text-ink shrink-0" />
                                             </div>
                                         ))}

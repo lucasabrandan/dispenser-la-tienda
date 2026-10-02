@@ -2,6 +2,7 @@ import React from 'react';
 import { LuInbox, LuPencil, LuFileText, LuClipboardList, LuCopy, LuMessageCircle, LuTrash2 } from 'react-icons/lu';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
+import { fechaAR } from '../../utils/dateUtils';
 
 function M({ valor, prefix = '$', className = '' }) {
     const { montosVisibles } = useMontos();
@@ -187,7 +188,7 @@ export default function VentaList({
                                         )}
                                     </div>
                                     <p className="text-body font-bold text-ink truncate">{v.clienteNombre}</p>
-                                    <p className="text-caption text-muted mt-0.5">{v.sedeNombre} · {v.fecha}</p>
+                                    <p className="text-caption text-muted mt-0.5">{v.sedeNombre} · {fechaAR(v.fecha)}</p>
                                 </div>
                                 <div className="text-right shrink-0 ml-3">
                                     <M valor={calcularTotal(v)} className="text-body-lg font-black text-ink block" />

@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import WeekDatePicker from '../ui/WeekDatePicker';
 import { LuCircleCheck, LuCalendar, LuClock, LuMessageCircle, LuSend } from 'react-icons/lu';
 import { datosOrdenDesdePresupuesto } from '../../utils/ordenes';
+import { fechaAR } from '../../utils/dateUtils';
 
 const PRIORIDADES = [
     { value: 'NORMAL',  label: 'Normal'  },
@@ -96,7 +97,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
             `🔧 *Nuevo trabajo asignado*\n` +
             `Cliente: ${presupuesto.clienteNombre || '-'}\n` +
             (presupuesto.sedeDireccion ? `Dirección: ${presupuesto.sedeDireccion}\n` : '') +
-            `Fecha: ${form.fechaProgramada}${form.horaEstimada ? ` a las ${form.horaEstimada}` : ''}\n` +
+            `Fecha: ${fechaAR(form.fechaProgramada)}${form.horaEstimada ? ` a las ${form.horaEstimada}` : ''}\n` +
             `Prioridad: ${form.prioridad}\n` +
             `Monto estimado: $${total.toLocaleString('es-AR')}`
         );
@@ -140,7 +141,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                     Orden creada
                                 </p>
                                 <p className="text-caption text-muted mt-1">
-                                    {tecnicoAsignado?.nombre || 'Técnico'} — {form.fechaProgramada}{form.horaEstimada ? ` a las ${form.horaEstimada}` : ''}
+                                    {tecnicoAsignado?.nombre || 'Técnico'} — {fechaAR(form.fechaProgramada)}{form.horaEstimada ? ` a las ${form.horaEstimada}` : ''}
                                 </p>
                             </div>
 
@@ -151,7 +152,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                     Visita · {presupuesto.clienteNombre}
                                 </p>
                                 <div className="flex items-center gap-3 text-caption text-muted">
-                                    <span className="inline-flex items-center gap-1"><LuCalendar size={12} />{form.fechaProgramada}</span>
+                                    <span className="inline-flex items-center gap-1"><LuCalendar size={12} />{fechaAR(form.fechaProgramada)}</span>
                                     {form.horaEstimada && <span className="inline-flex items-center gap-1"><LuClock size={12} />{form.horaEstimada}</span>}
                                     <span className="capitalize">{form.prioridad.toLowerCase()}</span>
                                 </div>
@@ -236,7 +237,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                                 {tecnicos.find(t => String(t.id) === String(form.tecnicoId))?.nombre}
                                             </p>
                                             <p className="text-caption text-muted mt-0.5 flex items-center gap-1 flex-wrap">
-                                                <LuCalendar size={12} />{form.fechaProgramada}{form.horaEstimada ? (<> · <LuClock size={12} className="ml-0.5" />{form.horaEstimada}</>) : ''}
+                                                <LuCalendar size={12} />{fechaAR(form.fechaProgramada)}{form.horaEstimada ? (<> · <LuClock size={12} className="ml-0.5" />{form.horaEstimada}</>) : ''}
                                             </p>
                                         </div>
                                     )}

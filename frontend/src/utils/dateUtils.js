@@ -23,6 +23,15 @@ export function formatFechaCorta(fechaISO) {
     return `${d}/${m}`;
 }
 
+// Fecha para MOSTRAR en pantalla (2-oct-2026: "las fechas están al revés").
+// "2026-10-15" o "2026-10-15T13:30:00" → "15/10/2026". Cualquier otro formato
+// (ya formateado, vacío) se devuelve tal cual. Sin Date() para no correr el día por el huso.
+export function fechaAR(f) {
+    if (!f) return '';
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(f));
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(f);
+}
+
 // Lunes de la semana que contiene "fecha" (Date), a las 00:00. Antes esta
 // misma cuenta vivía copiada por separado en WeekDatePicker.jsx y MiAgenda.jsx.
 export function lunesDeLaSemana(fecha) {
