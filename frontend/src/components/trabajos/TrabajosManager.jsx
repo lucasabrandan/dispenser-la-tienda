@@ -438,13 +438,13 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
 
     return (
         <div className="min-h-screen pb-28 md:pb-10 bg-page font-sans">
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6 space-y-4">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-3 md:space-y-4">
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                     <div>
                         <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-ink">Trabajos</h2>
-                        <p className="text-caption text-muted">Cada trabajo, de presupuesto a cobrado, en una sola lista</p>
+                        <p className="hidden md:block text-caption text-muted">Cada trabajo, de presupuesto a cobrado, en una sola lista</p>
                     </div>
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="flex-1 md:w-80">
@@ -468,13 +468,30 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     </div>
                 )}
 
-                {/* Etapas */}
-                {!verArchivados && <div className="flex md:grid md:grid-cols-7 gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-1">
+                {/* Etapas — celular: pastillas chicas en una sola línea (antes eran
+                    tarjetas grandes y había que deslizar mucho para verlas) */}
+                {!verArchivados && (
+                    <div className="md:hidden flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-0.5 [scrollbar-width:none]">
+                        {[{ id: null, label: 'En curso', color: '#E8422F', n: filas.filter(f => f.etapa !== 'COBRADO' && pasaBusqueda(f) && pasaTec(f)).length },
+                          ...ETAPAS.map(e => ({ ...e, n: conteo[e.id] }))].map(e => {
+                            const activo = etapa === e.id;
+                            return (
+                                <button key={e.id || 'curso'} onClick={() => (e.id ? elegirEtapa(e.id) : (setEtapa(null), setTec('')))} aria-pressed={activo}
+                                    className={`h-9 px-3 shrink-0 rounded-full inline-flex items-center gap-1.5 text-label font-bold border-2 active:scale-95 ${activo ? 'bg-card text-ink' : 'bg-panel border-transparent text-secondary'}`}
+                                    style={activo ? { borderColor: e.color } : undefined}>
+                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: e.color }} />
+                                    {e.label}<span className="font-black text-ink">{cargando ? '·' : e.n}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
+                {!verArchivados && <div className="hidden md:grid md:grid-cols-7 gap-2">
                     {ETAPAS.map(e => {
                         const activo = etapa === e.id;
                         return (
                             <button key={e.id} onClick={() => elegirEtapa(e.id)} aria-pressed={activo}
-                                className={`shrink-0 min-w-[112px] md:min-w-0 text-left px-3.5 py-3 rounded-2xl border-2 transition-all active:scale-95 ${activo ? 'bg-card' : 'bg-panel border-transparent'}`}
+                                className={`text-left px-3.5 py-3 rounded-2xl border-2 transition-all active:scale-95 ${activo ? 'bg-card' : 'bg-panel border-transparent'}`}
                                 style={activo ? { borderColor: e.color } : undefined}>
                                 <span className="flex items-center gap-1.5 text-label font-bold uppercase tracking-wide text-muted">
                                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: e.color }} />{e.label}
@@ -490,22 +507,22 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     <div className="flex shrink-0 rounded-xl bg-panel p-1">
                         {[['lista', 'Lista', LuList], ['tecnico', 'Por técnico', LuUsers]].map(([id, label, Ic]) => (
                             <button key={id} type="button" onClick={() => setVista(id)} aria-pressed={vista === id}
-                                className={`h-9 px-3 rounded-lg inline-flex items-center gap-1.5 text-label font-bold ${vista === id ? 'bg-card text-ink shadow-sm' : 'text-muted'}`}>
-                                <Ic size={14} />{label}
+                                className={`h-8 md:h-9 px-2.5 md:px-3 rounded-lg inline-flex items-center gap-1.5 text-label font-bold ${vista === id ? 'bg-card text-ink shadow-sm' : 'text-muted'}`}>
+                                <Ic size={14} /><span className="hidden sm:inline">{label}</span>
                             </button>
                         ))}
                     </div>
                     <button type="button" onClick={() => (seleccionando ? salirSeleccion() : setSeleccionando(true))}
-                        className={`h-10 px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${seleccionando ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
-                        <LuRoute size={14} />{seleccionando ? 'Cancelar' : 'Armar ruta'}
+                        className={`h-9 md:h-10 px-2.5 md:px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${seleccionando ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
+                        <LuRoute size={14} />{seleccionando ? 'Cancelar' : <><span className="sm:hidden">Ruta</span><span className="hidden sm:inline">Armar ruta</span></>}
                     </button>
                     <button type="button" onClick={exportar}
-                        className="h-10 px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border border-black/10 dark:border-white/10 text-secondary">
-                        <LuDownload size={14} />Exportar
+                        className="h-9 md:h-10 px-2.5 md:px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border border-black/10 dark:border-white/10 text-secondary">
+                        <LuDownload size={14} /><span className="hidden sm:inline">Exportar</span>
                     </button>
                     <button type="button" onClick={() => { setVerArchivados(v => !v); setEtapa(null); setTec(''); }}
-                        className={`h-10 px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${verArchivados ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
-                        <LuArchive size={14} />{verArchivados ? 'Volver a trabajos' : 'Archivados'}
+                        className={`h-9 md:h-10 px-2.5 md:px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${verArchivados ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
+                        <LuArchive size={14} /><span className={verArchivados ? '' : 'hidden sm:inline'}>{verArchivados ? 'Volver' : 'Archivados'}</span>
                     </button>
                     {etapa === 'COBRADO' && !verArchivados && (
                         <select value={periodo} onChange={e => setPeriodo(e.target.value)} aria-label="Período de cobrados"
@@ -524,14 +541,14 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 )}
 
                 {/* Técnico + total */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div className="flex gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 items-center">
-                        <span className="text-label font-bold text-muted shrink-0 pr-1">Técnico</span>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-3">
+                    <div className="flex gap-1.5 md:gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 items-center">
+                        <span className="hidden md:inline text-label font-bold text-muted shrink-0 pr-1">Técnico</span>
                         {chips.map(c => {
                             const activo = tec === c.id;
                             return (
                                 <button key={c.id || 'todos'} onClick={() => setTec(c.id)} aria-pressed={activo}
-                                    className={`h-10 px-3.5 rounded-full shrink-0 inline-flex items-center gap-2 text-label font-bold border transition-all active:scale-95 ${activo ? 'border-brand-red text-ink bg-[rgba(232,66,47,0.10)]' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
+                                    className={`h-8 md:h-10 px-3 md:px-3.5 rounded-full shrink-0 inline-flex items-center gap-2 text-label font-bold border transition-all active:scale-95 ${activo ? 'border-brand-red text-ink bg-[rgba(232,66,47,0.10)]' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
                                     {c.color && <span className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />}
                                     {c.label}<span className="text-muted">{c.count}</span>
                                 </button>
