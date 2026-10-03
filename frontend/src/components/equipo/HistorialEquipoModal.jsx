@@ -4,8 +4,8 @@ import { LuMapPin } from 'react-icons/lu';
 // Badge de estado
 function Badge({ estado }) {
     const map = {
-        REALIZADO:   { label: 'Realizado',  cls: 'bg-[#16A34A]/10 text-[#16A34A]' },
-        PRESUPUESTO: { label: 'Pendiente',  cls: 'bg-[#D48800]/10 text-[#D48800]' },
+        REALIZADO:   { label: 'Cobrado',    cls: 'bg-[#16A34A]/10 text-[#16A34A]' },
+        PRESUPUESTO: { label: 'Presupuesto', cls: 'bg-[#D48800]/10 text-[#D48800]' },
         ARCHIVADO:   { label: 'Archivado',  cls: 'bg-muted/10 text-muted' },
     };
     const { label, cls } = map[estado] || { label: estado, cls: 'bg-[#E8E5E0] text-[#57534E]' };

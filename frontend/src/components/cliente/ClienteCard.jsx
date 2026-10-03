@@ -35,6 +35,13 @@ export default function ClienteCard({
         esEmpresa, tieneTecnica, tieneVenta, iniciales,
     } = resumenCliente(cliente, sedes, equipos, servicios);
 
+    // Último service de cada equipo (para mostrarlo en la ficha)
+    const ultimoPorEquipo = {};
+    serviciosCli.forEach(s => (s.items || []).forEach(it => {
+        if (it.equipoId && !ultimoPorEquipo[it.equipoId]) ultimoPorEquipo[it.equipoId] = s.fecha;
+    }));
+    const IVA_LABEL = { CONSUMIDOR_FINAL: 'Consumidor final', RESPONSABLE_INSCRIPTO: 'Responsable inscripto', MONOTRIBUTO: 'Monotributo', EXENTO: 'Exento' };
+
     // Dirección formateada
     const direccion = [cliente.calle, cliente.numero, cliente.localidad].filter(Boolean).join(' ');
 
@@ -66,8 +73,11 @@ export default function ClienteCard({
                     )}
                 </span>
                 <div className="flex-1 min-w-0">
-                    <p className="text-body font-black text-ink leading-tight truncate">
-                        {cliente.nombre}
+                    <p className="text-body font-black text-ink leading-tight truncate flex items-center gap-1.5">
+                        <span className="truncate">{cliente.nombre}</span>
+                        {cliente.tieneTarifa && (
+                            <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-[#818CF8]/15 text-[#4F46E5] dark:text-[#A5B4FC] text-label font-black">Tarifa mensual</span>
+                        )}
                     </p>
                     <p className="text-caption text-muted mt-0.5 flex items-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
@@ -83,8 +93,9 @@ export default function ClienteCard({
                     <button
                         onClick={(e) => { e.stopPropagation(); abrirWhatsApp(cliente.telefono, cliente.nombre); }}
                         title="WhatsApp"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#25D366] text-white shrink-0 active:scale-90 transition-all">
-                        <LuMessageCircle size={13} />
+                        aria-label={`WhatsApp a ${cliente.nombre}`}
+                        className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#25D366] text-white shrink-0 active:scale-90 transition-all">
+                        <LuMessageCircle size={18} />
                     </button>
                 )}
             </div>
@@ -136,7 +147,7 @@ export default function ClienteCard({
                                     </button>
                                     <button onClick={() => { setModalCierre(true); setMenuCliente(false); }}
                                         className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
-                                        <LuFileText size={15} /> Cierre mensual
+                                        <LuFileText size={15} /> {cliente.tieneTarifa ? 'Cierre mensual' : 'Configurar tarifa mensual'}
                                     </button>
                                     <button onClick={() => { abrirMaps(cliente); setMenuCliente(false); }}
                                         className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
@@ -149,6 +160,28 @@ export default function ClienteCard({
                         </ActionSheet>
                     </div>
                 </div>
+
+                {/* Datos fiscales y de contacto, a la vista */}
+                {(cliente.cuilDni || cliente.condicionIva || cliente.telefono || cliente.email) && (
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-2 px-3 py-2.5 rounded-xl bg-panel text-caption">
+                        {[['CUIT / DNI', cliente.cuilDni], ['IVA', IVA_LABEL[cliente.condicionIva] || cliente.condicionIva],
+                          ['Teléfono', cliente.telefono], ['Email', cliente.email]].filter(([, v]) => v).map(([k, v]) => (
+                            <div key={k} className="min-w-0">
+                                <p className="text-label font-bold text-muted uppercase tracking-wide">{k}</p>
+                                <p className="font-bold text-ink truncate select-all">{v}</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Clientes con tarifa: el cierre del mes a mano */}
+                {cliente.tieneTarifa && (
+                    <button onClick={() => setModalCierre(true)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#818CF8]/10 text-left active:scale-[0.99]">
+                        <span className="text-caption font-black text-[#4F46E5] dark:text-[#A5B4FC] flex items-center gap-1.5"><LuFileText size={14} /> Cierre mensual · tarifa por volumen</span>
+                        <span className="text-label text-muted">Abrir →</span>
+                    </button>
+                )}
 
                 {/* Sedes + Equipos */}
                 <div className="space-y-2">
@@ -172,14 +205,14 @@ export default function ClienteCard({
                                     <div className="border-t border-black/[0.05] dark:border-white/[0.05]">
                                         {eqSede.map(eq => (
                                             <div key={eq.id} className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
-                                                <div className="flex-1 min-w-0">
+                                                <button type="button" onClick={() => setEquipoHistorial(eq)} className="flex-1 min-w-0 text-left">
                                                     <p className="text-caption font-bold text-ink truncate">
                                                         {eq.modelo || 'Equipo'} <span className="text-muted">· {eq.numeroSerie}</span>
                                                     </p>
-                                                    {eq.ubicacion && (
-                                                        <p className="text-caption text-muted truncate">{eq.ubicacion}</p>
-                                                    )}
-                                                </div>
+                                                    <p className="text-caption text-muted truncate">
+                                                        {[eq.ubicacion, ultimoPorEquipo[eq.id] ? `Último service ${formatFecha(ultimoPorEquipo[eq.id])}` : 'Sin services'].filter(Boolean).join(' · ')}
+                                                    </p>
+                                                </button>
                                                 <div className="relative">
                                                     <button onClick={() => setMenuEquipo(menuEquipo === eq.id ? null : eq.id)}
                                                         className="w-7 h-7 rounded-lg flex items-center justify-center text-muted active:scale-90 text-label">⋯</button>

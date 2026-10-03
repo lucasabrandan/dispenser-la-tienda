@@ -54,6 +54,7 @@ public class RadarService {
                 dto.setClienteNombre(d.getClienteNombre());
                 dto.setSedeNombre(d.getSedeNombre());
                 dto.setClienteTelefono(d.getClienteTelefono());
+                dto.setClienteId(d.getClienteId());
                 dto.setFechaUltimoServicio(ultimoServicio);
                 dto.setFechaUltimoFiltro(ultimoFiltro);
                 dto.setTipoAlerta(tipoAlerta);

@@ -137,7 +137,9 @@ public class ClienteService {
                 cliente.getLocalidad(),
                 cliente.getProvincia(),
                 cliente.getDireccion(),
-                sedesDTO
+                sedesDTO,
+                cliente.getTarifaVolumen() != null && !cliente.getTarifaVolumen().isBlank()
+                        && !cliente.getTarifaVolumen().trim().equals("[]")
         );
     }
 }

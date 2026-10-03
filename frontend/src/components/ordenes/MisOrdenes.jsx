@@ -19,6 +19,8 @@ import HistorialSerieSheet from './HistorialSerieSheet';
 import CerrarDiaSheet from './CerrarDiaSheet';
 import QueLlevarHoy from './QueLlevarHoy';
 import CargaPorSerieSheet from './CargaPorSerieSheet';
+import { etapaColor, colorTecnico } from '../../utils/estados';
+import { useAuth } from '../../context/AuthContext';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -28,17 +30,18 @@ const PRIORIDAD_COLOR = {
 };
 
 const ESTADO_LABEL = {
-    PENDIENTE: 'Pendiente', EN_CAMINO: 'En camino', EN_SITIO: 'En el lugar',
-    COMPLETADA: 'Completada', CANCELADA: 'Devuelta', NO_ATENDIDO: 'No atendió',
+    PENDIENTE: 'Asignado', EN_CAMINO: 'En camino', EN_SITIO: 'En el lugar',
+    COMPLETADA: 'Hecho', CANCELADA: 'Devuelta', NO_ATENDIDO: 'No atendió',
 };
 
+// Mismos colores de etapa que ve el admin en Trabajos (utils/estados.js · ETAPAS)
 const BORDER_COLOR = {
-    PENDIENTE:   'var(--estado-pendiente)',
-    EN_CAMINO:   'var(--estado-camino)',
-    EN_SITIO:    'var(--estado-curso)',
-    COMPLETADA:  'var(--estado-listo)',
-    CANCELADA:   'var(--estado-pendiente)',
-    NO_ATENDIDO: 'var(--color-brand-red)',
+    PENDIENTE:   etapaColor('PENDIENTE'),
+    EN_CAMINO:   etapaColor('EN_CAMINO'),
+    EN_SITIO:    etapaColor('EN_SITIO'),
+    COMPLETADA:  etapaColor('COMPLETADA'),
+    CANCELADA:   '#A8A29E',
+    NO_ATENDIDO: '#F87171',
 };
 
 // El color del boton ya no varia por etapa (antes: azul/ambar/verde) — es
@@ -81,7 +84,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                             {ESTADO_LABEL[orden.estado] && (
-                                <span className="text-label font-black px-2 py-0.5 rounded-md uppercase text-white"
+                                <span className="text-label font-black px-2 py-0.5 rounded-md uppercase text-[#1C1917]"
                                     style={{ background: BORDER_COLOR[orden.estado] }}>
                                     {ESTADO_LABEL[orden.estado]}
                                 </span>
@@ -374,6 +377,7 @@ const TAB_DEFS = [
 
 export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado, recargar } = useOrdenes({ tecnicoId });
+    const { usuario } = useAuth();
     const [tab, setTab] = useState('activas');
 
     // "Elegir para ruta": mismo patron que ya tiene Presupuestos (admin) —
@@ -560,7 +564,15 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 ) : (
                     <div className="mb-4 flex items-center justify-between gap-2">
                         <div>
-                            <h1 className="text-body-lg font-black text-ink">Hoy</h1>
+                            <h1 className="text-body-lg font-black text-ink flex items-center gap-2">
+                                Hoy
+                                {usuario?.nombre && (
+                                    <span className="flex items-center gap-1.5 text-caption font-bold text-secondary">
+                                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: colorTecnico(usuario.nombre) }} />
+                                        {usuario.nombre.split(' ')[0]}
+                                    </span>
+                                )}
+                            </h1>
                             <p className="text-caption text-muted">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
                         </div>
                         {tab === 'activas' && activas.length > 0 && (

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { useClienteData } from '../../hooks/useClienteData';
@@ -18,13 +18,17 @@ import { POR_PAGINA } from '../../utils/paginacion';
 
 
 
-export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
+export default function ClienteManager({ onNuevoServicio, onNuevaVenta, abrirCrearDirecto = false, onCrearConsumido }) {
     const { clientes, sedes, equipos, servicios, cargarDatos } = useClienteData();
     const { handleArchivar, handleRestaurar, handleEliminarDefinitivo } = useEquipoActions(cargarDatos);
 
     const [busqueda, setBusqueda]               = useState('');
     const [pagina, setPagina]                   = useState(1);
     const [modalOpen, setModalOpen]             = useState(null);
+    // "+ Cliente" desde el Panel: abre directo el alta
+    useEffect(() => {
+        if (abrirCrearDirecto) { setModalOpen('nuevo'); onCrearConsumido && onCrearConsumido(); }
+    }, [abrirCrearDirecto, onCrearConsumido]);
     const [selectedCliente, setSelectedCliente] = useState(null);
     const [selectedEquipo, setSelectedEquipo]   = useState(null);
     const [expandedId, setExpandedId]           = useState(null);
@@ -35,8 +39,20 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
         notas: '', condicionIva: 'CONSUMIDOR_FINAL', clienteTipo: 'PARTICULAR'
     });
 
+    // Orden: por última visita (lo más reciente arriba) o alfabético
+    const [orden, setOrden] = useState('visita');
+    const ultimaVisita = useMemo(() => {
+        const m = {};
+        servicios.forEach(s => {
+            const id = s.clienteId || s.cliente?.id;
+            if (id && s.fecha && (!m[id] || s.fecha > m[id])) m[id] = s.fecha;
+        });
+        return m;
+    }, [servicios]);
     const filtrados      = filtrarClientesPorBusqueda(clientes, sedes, equipos, busqueda)
-        .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+        .sort((a, b) => orden === 'visita'
+            ? String(ultimaVisita[b.id] || '').localeCompare(String(ultimaVisita[a.id] || '')) || (a.nombre || '').localeCompare(b.nombre || '', 'es')
+            : (a.nombre || '').localeCompare(b.nombre || '', 'es'));
     const totalPaginas   = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
     const paginaActual   = Math.min(pagina, totalPaginas);
     const clientesPagina = useMemo(() =>
@@ -99,9 +115,13 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                             + Nuevo
                         </button>
                     </div>
-                    <span className="text-label font-bold text-muted">
-                        {filtrados.length} clientes · A-Z
-                    </span>
+                    <div className="flex items-center gap-2 text-label font-bold text-muted">
+                        <span>{filtrados.length} clientes ·</span>
+                        {[['visita', 'Última visita'], ['az', 'A-Z']].map(([id, l]) => (
+                            <button key={id} type="button" onClick={() => { setOrden(id); setPagina(1); }} aria-pressed={orden === id}
+                                className={`h-7 px-2.5 rounded-lg ${orden === id ? 'bg-chip text-ink' : 'text-muted'}`}>{l}</button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -185,9 +205,21 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta }) {
                 );
             })()}
 
+            {filtrados.length === 0 && (
+                <div className="py-12 px-6 text-center rounded-2xl border border-dashed border-black/10 dark:border-white/10 space-y-4">
+                    <p className="text-body text-muted">{busqueda ? 'Ningún cliente coincide con la búsqueda' : 'Todavía no hay clientes'}</p>
+                    <button onClick={() => setModalOpen('nuevo')}
+                        className="h-11 px-5 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">+ Nuevo cliente</button>
+                </div>
+            )}
+
             <Paginacion pagina={paginaActual} totalPaginas={totalPaginas}
                 irA={irA} next={() => irA(paginaActual + 1)} prev={() => irA(paginaActual - 1)} />
             </div>{/* cierre max-w-6xl */}
+
+            {/* FAB "+" (celular) — mismo lugar que en Trabajos, Venta y Productos */}
+            <button onClick={() => setModalOpen('nuevo')} aria-label="Nuevo cliente"
+                className="md:hidden fixed right-4 bottom-24 z-30 w-14 h-14 rounded-2xl bg-[#C9341F] text-white shadow-xl flex items-center justify-center text-3xl font-black active:scale-90">+</button>
 
             {/* MODALES */}
             <CrearClienteModal isOpen={modalOpen === 'nuevo'} onClose={() => setModalOpen(null)}

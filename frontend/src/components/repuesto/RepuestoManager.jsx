@@ -217,7 +217,7 @@ export default function RepuestoManager() {
 
             {/* FAB Nuevo — mobile */}
             <button onClick={abrirNuevo}
-                className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-white bg-brand-red active:scale-90 transition-all z-20"
+                className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center text-3xl font-black text-white bg-[#C9341F] active:scale-90 transition-all z-40"
                 aria-label="Nuevo producto">+</button>
 
             {/* Modales */}

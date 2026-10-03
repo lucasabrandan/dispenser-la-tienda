@@ -20,5 +20,7 @@ public record ClienteDTO(
         String localidad,
         String provincia,
         String direccion,
-        List<SedeDTO> sedes
+        List<SedeDTO> sedes,
+        // true si tiene tarifa mensual por volumen (cierre mensual) — 3-oct-2026
+        Boolean tieneTarifa
 ) {}

@@ -8,12 +8,16 @@ public class RadarAlertaDTO {
     private String clienteNombre;
     private String sedeNombre;
     private String clienteTelefono;
+    private Long clienteId;
     private LocalDate fechaUltimoServicio;
     private LocalDate fechaUltimoFiltro;
     private String tipoAlerta;   // "FILTRO" | "SANITIZACION"
     private int meses;
 
     public RadarAlertaDTO() {}
+
+    public Long getClienteId()                     { return clienteId; }
+    public void setClienteId(Long v)               { this.clienteId = v; }
 
     public String getSerial()                      { return serial; }
     public void   setSerial(String v)              { this.serial = v; }

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { LuClipboardList, LuMapPin, LuUser, LuBuilding2, LuStickyNote, LuPencil, LuTrash2, LuCar } from 'react-icons/lu';
+import { LuClipboardList, LuMapPin, LuBuilding2, LuStickyNote, LuPencil, LuTrash2, LuCar } from 'react-icons/lu';
 import { formatFechaCorta } from '../../utils/dateUtils';
 import DireccionMapa from '../ui/DireccionMapa';
 import { resumenVentanas } from '../../utils/ordenes';
+import { colorTecnico } from '../../utils/estados';
 
 // Extraído de DespachoManager.jsx (hub único de Servicio Técnico — ítem 4 paso 3 /
 // ítem 17 opción 3): ServicioManager.jsx también necesita esta misma tarjeta para
@@ -17,10 +18,10 @@ export const PRIORIDAD_COLOR = {
 };
 
 export const ESTADO_COLOR = {
-    PENDIENTE:   { dot: 'var(--estado-pendiente)', label: 'Pendiente'    },
+    PENDIENTE:   { dot: 'var(--estado-pendiente)', label: 'Asignado'     },
     EN_CAMINO:   { dot: 'var(--estado-camino)', label: 'En camino'    },
-    EN_SITIO:    { dot: 'var(--estado-curso)', label: 'En sitio'     },
-    COMPLETADA:  { dot: 'var(--estado-listo)', label: 'Completada'   },
+    EN_SITIO:    { dot: 'var(--estado-curso)', label: 'En el lugar'  },
+    COMPLETADA:  { dot: 'var(--estado-listo)', label: 'Hecho'        },
     CANCELADA:   { dot: 'var(--estado-pendiente)', label: 'Cancelada'    },
     NO_ATENDIDO: { dot: 'var(--color-brand-red)', label: 'No atendido'  },
 };
@@ -75,7 +76,7 @@ export function OrdenCard({ orden, onEditar, onEliminar, onAvanzar, seleccionand
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <p className="text-caption font-bold text-muted flex items-center gap-1"><LuUser size={11} />{orden.tecnicoNombre}</p>
+                    <p className="text-caption font-bold text-muted flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorTecnico(orden.tecnicoNombre) }} />{orden.tecnicoNombre}</p>
                     {orden.montoEstimado && (
                         <span className="text-body font-black text-brand-amber">
                             ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transf.' : 'Efectivo'}

@@ -1,229 +1,157 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useMontos } from '../context/MontosContext';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { M } from './servicio/ServicioUI';
 import CierreCajaModal from './finanzas/CierreCajaModal';
-import AgendaBlock from './dashboard/AgendaBlock';
 import RendicionesBlock from './dashboard/RendicionesBlock';
 import BackupIndicador from './dashboard/BackupIndicador';
+import AgendaSemana from './dashboard/AgendaSemana';
+import { Seccion, ParaResolver, PlataBlock } from './dashboard/PanelBloques';
 import MiEspacioChecklist from './miespacio/MiEspacioChecklist';
 import { useMiEspacio } from './miespacio/useMiEspacio';
 import { calcTotal } from './dashboard/estadoConstants';
-import { LuWrench, LuShoppingCart } from 'react-icons/lu';
-import { getTodayISO, formatDateISO } from '../utils/dateUtils';
+import { LuWrench, LuShoppingCart, LuUserPlus } from 'react-icons/lu';
+import { getTodayISO } from '../utils/dateUtils';
+
+// Panel (inicio) — 3-oct-2026, diseño "Panel completo". De arriba hacia abajo:
+// saludo · Para resolver · Agenda de la semana · Crear · Mis tareas · Rendiciones ·
+// Plata (plegada, sin montos a la vista) · backup. La plata ya no está grande arriba.
+
+const ABIERTAS = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO'];
+const diasDesde = (f) => Math.floor((Date.now() - new Date(String(f).slice(0, 10) + 'T00:00:00').getTime()) / 86400000);
 
 export default function DashboardCaja({ setVistaActual }) {
-    const { esAdmin } = useAuth();
+    const { esAdmin, usuario } = useAuth();
     const [modalCierre, setModalCierre] = useState(false);
     const [cargando, setCargando] = useState(true);
     const [servicios, setServicios] = useState([]);
     const [ordenes, setOrdenes] = useState([]);
-    const [notasAgenda, setNotasAgenda] = useState([]);
     const [alertasRadar, setAlertasRadar] = useState([]);
+    const [stockBajo, setStockBajo] = useState(0);
     const miEspacio = useMiEspacio();
 
-    const cargar = async () => {
+    const cargar = useCallback(async () => {
         setCargando(true);
         try {
-            const calls = [api.get('/servicios?page=0&size=500&sort=fechaServicio,desc')];
-            if (esAdmin) {
-                calls.push(api.get('/ordenes'));
-                calls.push(api.get('/radar/alertas').catch(() => ({ data: [] })));
-                const desde = formatDateISO(new Date());
-                const h = new Date(); h.setDate(h.getDate() + 20);
-                const hasta = formatDateISO(h);
-                calls.push(api.get(`/notas-agenda/all?desde=${desde}&hasta=${hasta}`).catch(() => ({ data: [] })));
-            }
-            const [sRes, oRes, rRes, nRes] = await Promise.all(calls);
-            setServicios(sRes.data.content || sRes.data || []);
-            if (oRes) setOrdenes(oRes.data || []);
-            if (rRes) setAlertasRadar(rRes.data || []);
-            if (nRes) setNotasAgenda(nRes.data || []);
-        } catch (err) { console.warn('Dashboard: error cargando datos', err); } finally { setCargando(false); }
-    };
+            const enDosMeses = new Date(); enDosMeses.setDate(enDosMeses.getDate() + 60);
+            const [sRes, oRes, rRes, pRes] = await Promise.all([
+                api.get('/servicios', { params: { estado: 'PRESUPUESTO,APROBADO,EN_PROGRESO,COMPLETADO,PENDIENTE_FACTURACION,FACTURADO', page: 0, size: 500, sort: 'fechaServicio,desc' } }),
+                esAdmin ? api.get('/ordenes', { params: { desde: '2020-01-01', hasta: enDosMeses.toISOString().slice(0, 10) } }) : Promise.resolve({ data: [] }),
+                esAdmin ? api.get('/radar/alertas').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                esAdmin ? api.get('/repuestos?page=0&size=500').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+            ]);
+            setServicios(sRes.data?.content || sRes.data || []);
+            setOrdenes(Array.isArray(oRes.data) ? oRes.data : []);
+            setAlertasRadar(rRes.data || []);
+            const reps = pRes.data?.content || pRes.data || [];
+            setStockBajo(reps.filter(r => r.stock != null && Number(r.stock) <= 3).length);
+        } catch (err) { console.warn('Panel: error cargando datos', err); } finally { setCargando(false); }
+    }, [esAdmin]);
 
-    useEffect(() => { cargar(); }, []);
+    useEffect(() => { cargar(); }, [cargar]);
 
-    const hoyStr = getTodayISO();
-    const mesStr = hoyStr.substring(0, 7);
+    const hoy = getTodayISO();
 
-    const data = useMemo(() => {
-        const realizados = servicios.filter(s => s.estado === 'REALIZADO');
-        const pendientes = servicios.filter(s => s.estado === 'PRESUPUESTO');
-        const hoyItems = realizados.filter(s => s.fecha === hoyStr);
-        const mesItems = realizados.filter(s => s.fecha?.startsWith(mesStr));
+    // Para resolver: lo que pide una acción, cada cosa lleva a donde se arregla
+    const alertas = useMemo(() => {
+        const atrasadas = ordenes.filter(o => (ABIERTAS.includes(o.estado) && o.fechaProgramada && String(o.fechaProgramada).slice(0, 10) < hoy) || o.estado === 'NO_ATENDIDO').length;
+        const sinRespuesta = servicios.filter(s => s.estado === 'PRESUPUESTO' && !s.enEspera && s.fecha && diasDesde(s.fecha) > 7);
+        const masViejo = sinRespuesta.reduce((m, s) => Math.max(m, diasDesde(s.fecha)), 0);
+        const out = [];
+        if (atrasadas) out.push({ id: 'atr', color: '#FBBF24', link: 'Ver', onClick: () => setVistaActual('trabajos'),
+            texto: `${atrasadas} visita${atrasadas !== 1 ? 's' : ''} atrasada${atrasadas !== 1 ? 's' : ''}` });
+        if (sinRespuesta.length) out.push({ id: 'ppto', color: '#A8A29E', link: 'Ver', onClick: () => setVistaActual('trabajos'),
+            texto: `${sinRespuesta.length} presupuesto${sinRespuesta.length !== 1 ? 's' : ''} sin respuesta (el más viejo, hace ${masViejo} días)` });
+        if (alertasRadar.length) out.push({ id: 'radar', color: '#60A5FA', link: 'Radar', onClick: () => setVistaActual('radar'),
+            texto: `${alertasRadar.length} equipo${alertasRadar.length !== 1 ? 's' : ''} con mantenimiento vencido` });
+        if (stockBajo) out.push({ id: 'stock', color: '#F87171', link: 'Ver', onClick: () => setVistaActual('productos'),
+            texto: `${stockBajo} producto${stockBajo !== 1 ? 's' : ''} con stock bajo` });
+        return out;
+    }, [ordenes, servicios, alertasRadar, stockBajo, hoy, setVistaActual]);
 
-        const pptoVencidos = pendientes.filter(s => {
-            if (!s.fecha) return false;
-            return Math.floor((Date.now() - new Date(s.fecha + 'T00:00:00').getTime()) / 86400000) > 7;
-        });
-
-        // Antes "activas" = todo lo que no estuviera completado/cancelado, de
-        // cualquier fecha: sumaba órdenes viejas que nadie cerró y daba 19 con 2
-        // visitas en el día. Ahora se separa lo de hoy de lo atrasado.
-        const EN_CURSO = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO'];
-        const fechaOrden = (o) => String(o.fechaProgramada || '').substring(0, 10);
-        const ordenesActivas = ordenes.filter(o =>
-            EN_CURSO.includes(o.estado) && (!fechaOrden(o) || fechaOrden(o) === hoyStr));
-        const ordenesAtrasadas = ordenes.filter(o =>
-            (EN_CURSO.includes(o.estado) && fechaOrden(o) && fechaOrden(o) < hoyStr)
-            || o.estado === 'NO_ATENDIDO');
-
-        // Planificador: 12 dias habiles
-        const HORAS_DIA = 8, H_TECNICA = 2, H_VENTA = 1;
-        const hoy = new Date();
-        const dias = [];
-        let offset = 0;
-        while (dias.length < 12) {
-            const d = new Date(hoy);
-            d.setDate(hoy.getDate() + offset);
-            offset++;
-            if (d.getDay() === 0) continue;
-            const fechaStr = formatDateISO(d);
-            const items = servicios.filter(s => s.fecha === fechaStr && !['ARCHIVADO','CANCELADO'].includes(s.estado));
-            const horasUsadas = items.reduce((a, s) => {
-                if (s.duracionMinutos) return a + s.duracionMinutos / 60;
-                return a + (s.servicioTipo === 'TECNICA' ? H_TECNICA : H_VENTA);
-            }, 0);
-            const notasDia = notasAgenda.filter(n => n.fecha === fechaStr);
-            dias.push({
-                fecha: fechaStr, dia: new Date(d), items, horasUsadas,
-                horasTotal: HORAS_DIA,
-                esHoy: fechaStr === hoyStr,
-                esPasado: fechaStr < hoyStr,
-                notas: notasDia,
-            });
-        }
-
+    const cobranza = useMemo(() => {
+        const suma = (l) => ({ n: l.length, total: l.reduce((a, s) => a + (Number(s.montoFinal) > 0 ? Number(s.montoFinal) : calcTotal(s)), 0) });
         return {
-            totalHoy: hoyItems.reduce((a, s) => a + calcTotal(s), 0),
-            countHoy: hoyItems.length,
-            totalMes: mesItems.reduce((a, s) => a + calcTotal(s), 0),
-            countMes: mesItems.length,
-            moHoy: hoyItems.filter(s => s.servicioTipo === 'TECNICA')
-                .reduce((a, s) => a + (s.items?.reduce((b, it) => b + Number(it.costoExtra || 0), 0) || 0), 0),
-            pendientesCount: pendientes.length,
-            pendientesVal: pendientes.reduce((a, s) => a + calcTotal(s), 0),
-            pptoVencidos, ordenesActivas, ordenesAtrasadas, planificador: dias,
+            porCobrar:   suma(servicios.filter(s => s.estado === 'COMPLETADO')),
+            porFacturar: suma(servicios.filter(s => s.estado === 'PENDIENTE_FACTURACION')),
+            facturados:  suma(servicios.filter(s => s.estado === 'FACTURADO')),
         };
-    }, [servicios, ordenes, notasAgenda]);
+    }, [servicios]);
 
-    const card = 'rounded-2xl bg-card border border-black/[0.05] dark:border-line';
-
-    // "Caja de hoy y del mes" ya no vive en el Panel (Lucas, 7-sep-2026,
-    // rediseno "opcion 1": redundaba con Finanzas > Balance, que ya cubre el
-    // mes completo con mas detalle). data.totalHoy/totalMes/moHoy quedan
-    // calculados igual por si se necesitan en otro lado, pero no se muestran
-    // aca.
-
-    // Tira al pie: todo lo que no es Agenda/Mi Espacio, comprimido en una sola
-    // fila angosta (Lucas, 7-sep-2026, rediseno "opcion 1" -- ver mockup
-    // "Rediseño del Panel"). Antes cada cosa (accesos directos, alertas,
-    // pendientes, cierre) era su propio bloque grande arriba de todo.
-    const hayAlertas = data.pptoVencidos.length + data.ordenesActivas.length + data.ordenesAtrasadas.length + alertasRadar.length > 0;
+    const nombre = (usuario?.nombre || '').split(' ')[0];
+    const fechaLarga = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const rapido = 'h-16 rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.08] flex flex-col items-center justify-center gap-1 text-caption font-black text-ink active:scale-95';
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page">
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6">
+            <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 md:pt-6 space-y-5">
 
-                {/* Header -- sin fecha (queda una sola vez, en la Agenda) */}
-                <div className="flex justify-between items-center mb-5">
-                    <h2 className="text-2xl font-black tracking-tight text-ink">Panel</h2>
+                {/* 1. Saludo */}
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h2 className="text-2xl font-black tracking-tight text-ink">Hola{nombre ? `, ${nombre}` : ''}</h2>
+                        <p className="text-caption text-muted first-letter:uppercase">{fechaLarga}</p>
+                    </div>
                     <button onClick={cargar} disabled={cargando}
                         aria-label="Recargar" className="w-11 h-11 rounded-xl flex items-center justify-center active:scale-95 disabled:opacity-40 text-muted">
                         <span className={`text-sm ${cargando ? 'animate-spin' : ''}`}>↻</span>
                     </button>
                 </div>
 
-                {/* Agenda primero, despues Mi Espacio -- igual en mobile y desktop */}
-                <div className="space-y-4 md:space-y-5">
-                    {esAdmin && <BackupIndicador />}
-                    {esAdmin && <RendicionesBlock card={card} />}
+                {/* 2. Para resolver */}
+                {esAdmin && (
+                    <Seccion titulo="Para resolver">
+                        {cargando ? <div className="h-12 rounded-xl bg-card animate-pulse" /> : <ParaResolver alertas={alertas} />}
+                    </Seccion>
+                )}
 
-                    <div className={`${card} p-3.5 md:p-4`}>
-                        <AgendaBlock planificador={data.planificador} setVistaActual={setVistaActual} cargando={cargando} />
-                    </div>
+                {/* 3. Agenda */}
+                {esAdmin && (
+                    <Seccion titulo="Agenda" link="Ver en Trabajos" onLink={() => setVistaActual('trabajos')}>
+                        <div className="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06] p-3">
+                            <AgendaSemana ordenes={ordenes} cargando={cargando} onVerTrabajos={() => setVistaActual('trabajos')} />
+                        </div>
+                    </Seccion>
+                )}
 
-                    <div className={`${card} p-3.5 md:p-4`}>
-                        <p className="text-caption font-bold text-muted mb-3">Mi espacio</p>
-                        <MiEspacioChecklist espacio={miEspacio.espacio} actualizar={miEspacio.actualizar} cargando={miEspacio.cargando} />
-                    </div>
-
-                    {/* Tira al pie: accesos directos en su propia fila, el resto
-                        (alertas + pendientes + cierre) en otra -- Lucas, 7-sep-2026:
-                        en el celu, Servicio/Venta mezclados con las alertas en la misma
-                        linea quedaba muy apretado. */}
-                    <div className={`${card} p-3`}>
-                        <div className="grid grid-cols-2 gap-2">
-                            {/* Único botón rojo del Panel: la acción principal */}
-                            <button onClick={() => setVistaActual('servicio-tecnico', { crear: true })}
-                                className="flex items-center justify-center gap-2 h-12 rounded-xl text-body font-extrabold bg-brand-red text-white active:scale-95">
-                                <LuWrench size={16} /> Nuevo servicio
+                {/* 4. Crear */}
+                {esAdmin && (
+                    <Seccion titulo="Crear">
+                        <div className="grid grid-cols-3 gap-2">
+                            <button type="button" onClick={() => setVistaActual('trabajos', { crear: 'nuevo' })} className={rapido}>
+                                <LuWrench size={18} className="text-brand-red" /> Trabajo
                             </button>
-                            <button onClick={() => setVistaActual('venta', { crear: true })}
-                                className="flex items-center justify-center gap-2 h-12 rounded-xl text-body font-bold border border-black/10 dark:border-white/[0.12] text-ink active:scale-95">
-                                <LuShoppingCart size={16} /> Venta
+                            <button type="button" onClick={() => setVistaActual('trabajos', { crear: 'venta' })} className={rapido}>
+                                <LuShoppingCart size={18} className="text-brand-red" /> Venta
+                            </button>
+                            <button type="button" onClick={() => setVistaActual('clientes', { crear: true })} className={rapido}>
+                                <LuUserPlus size={18} className="text-brand-red" /> Cliente
                             </button>
                         </div>
-                        {(hayAlertas || data.pendientesCount > 0 || esAdmin) && (
-                            <div className="flex items-center justify-between gap-3 flex-wrap mt-2.5 pt-2.5 border-t border-black/[0.05] dark:border-white/[0.05]">
-                                <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
-                                    {data.pptoVencidos.length > 0 && (
-                                        <button onClick={() => setVistaActual('presupuestos')}
-                                            className="flex items-center gap-1.5 active:opacity-70">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-brand-red shrink-0" />
-                                            <span className="text-caption font-bold text-ink whitespace-nowrap">
-                                                {data.pptoVencidos.length} presupuesto{data.pptoVencidos.length !== 1 ? 's' : ''} vencido{data.pptoVencidos.length !== 1 ? 's' : ''}
-                                            </span>
-                                        </button>
-                                    )}
-                                    {data.ordenesActivas.length > 0 && (
-                                        <button onClick={() => setVistaActual('servicio-tecnico', { modo: 'DESPACHO' })}
-                                            className="flex items-center gap-1.5 active:opacity-70">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-brand-amber shrink-0" />
-                                            <span className="text-caption font-bold text-ink whitespace-nowrap">
-                                                {data.ordenesActivas.length} orden{data.ordenesActivas.length !== 1 ? 'es' : ''} hoy
-                                            </span>
-                                        </button>
-                                    )}
-                                    {data.ordenesAtrasadas.length > 0 && (
-                                        <button onClick={() => setVistaActual('servicio-tecnico', { modo: 'DESPACHO' })}
-                                            className="flex items-center gap-1.5 active:opacity-70">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-brand-red shrink-0" />
-                                            <span className="text-caption font-bold text-ink whitespace-nowrap">
-                                                {data.ordenesAtrasadas.length} para reprogramar
-                                            </span>
-                                        </button>
-                                    )}
-                                    {alertasRadar.length > 0 && (
-                                        <button onClick={() => setVistaActual('radar')}
-                                            className="flex items-center gap-1.5 active:opacity-70">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shrink-0" />
-                                            <span className="text-caption font-bold text-ink whitespace-nowrap">
-                                                {alertasRadar.length} equipo{alertasRadar.length !== 1 ? 's' : ''} sin mantenim.
-                                            </span>
-                                        </button>
-                                    )}
-                                    {data.pendientesCount > 0 && (
-                                        <button onClick={() => setVistaActual('presupuestos')}
-                                            className="flex items-center gap-1 active:opacity-70">
-                                            <span className="text-caption font-bold text-brand-amber whitespace-nowrap">
-                                                {data.pendientesCount} pend. — <M valor={data.pendientesVal} />
-                                            </span>
-                                        </button>
-                                    )}
-                                </div>
-                                {esAdmin && (
-                                    <button onClick={() => setModalCierre(true)}
-                                        className="text-label font-bold text-muted hover:text-brand-red whitespace-nowrap shrink-0">
-                                        Cierre de caja →
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                    </Seccion>
+                )}
+
+                {/* 5. Mis tareas */}
+                <Seccion titulo="Mis tareas" link="Mi espacio" onLink={() => setVistaActual('mi-espacio')}>
+                    <div className="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06] p-3.5">
+                        <MiEspacioChecklist espacio={miEspacio.espacio} actualizar={miEspacio.actualizar} cargando={miEspacio.cargando} />
                     </div>
-                </div>
+                </Seccion>
+
+                {/* 6. Rendiciones (solo aparece si hay algo para recibir) */}
+                {esAdmin && <RendicionesBlock card="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06]" />}
+
+                {/* 7. Plata — plegada */}
+                {esAdmin && (
+                    <Seccion titulo="Plata">
+                        <PlataBlock cobranza={cobranza}
+                            onVerTrabajos={() => setVistaActual('trabajos')}
+                            onFinanzas={() => setVistaActual('finanzas')}
+                            onCierreCaja={() => setModalCierre(true)} />
+                    </Seccion>
+                )}
+
+                {/* 8. Sistema */}
+                {esAdmin && <BackupIndicador />}
             </div>
 
             {modalCierre && (

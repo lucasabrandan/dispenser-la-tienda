@@ -15,7 +15,7 @@ function badgeEstado(estado) {
     return 'bg-[#E8E5E0] text-[#57534E]';
 }
 function labelEstado(estado) {
-    if (estado === 'REALIZADO')   return 'Realizado';
+    if (estado === 'REALIZADO')   return 'Cobrado';
     if (estado === 'PRESUPUESTO') return 'Presupuesto';
     if (estado === 'ARCHIVADO')   return 'Archivado';
     return estado;

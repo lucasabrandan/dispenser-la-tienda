@@ -7,7 +7,7 @@ import { pushSoportado, estaSuscripto, activarNotificaciones, desactivarNotifica
 const TIPO_CONFIG = {
     ORDEN_ASIGNADA:        { emoji: '\uD83D\uDCCB', label: 'Nueva orden',     color: 'text-[#3B82F6]' },
     ORDEN_EN_CAMINO:       { emoji: '\uD83D\uDE97', label: 'En camino',       color: 'text-[#3B82F6]' },
-    ORDEN_EN_SITIO:        { emoji: '\uD83D\uDCCD', label: 'En sitio',        color: 'text-[#D48800]' },
+    ORDEN_EN_SITIO:        { emoji: '\uD83D\uDCCD', label: 'En el lugar',     color: 'text-[#D48800]' },
     ORDEN_COMPLETADA:      { emoji: '\u2705',       label: 'Completado',      color: 'text-[#16A34A]' },
     ORDEN_NO_ATENDIDO:     { emoji: '\u26A0\uFE0F', label: 'No atendido',     color: 'text-[#D13A28]' },
     PRESUPUESTO_EJECUTADO: { emoji: '\uD83D\uDE80', label: 'Ejecutado',       color: 'text-[#8B5CF6]' },

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword, eliminarUsuario } from '../../services/api';
-import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { LuShieldCheck, LuWrench, LuKey, LuPencil, LuLock, LuCircleCheck, LuTrash2, LuEyeOff, LuEye } from 'react-icons/lu';
 
@@ -20,20 +19,9 @@ export default function UsuariosManager() {
     const [filtroRol, setFiltroRol]   = useState('TODOS');
     const [confirmEliminar, setConfirmEliminar] = useState(null); // null | usuario
 
-    // Configuracion de empresa (solo en localStorage, solo ADMIN). Lucas,
-    // 15-sep-2026: el descuento por efectivo/sin factura es 10%, no "precio
-    // sin IVA" (eso era descontar el 21%) -- debe coincidir con el default
-    // de utils/pdf/bloques/condiciones.js (dibujarCondicionesCompactas).
-    const CONDICIONES_DEFAULT = 'Precio incluye IVA. Pagando en efectivo y sin factura: 10% de descuento.  ·  Visita sin reparacion: 50% de la mano de obra.  ·  Garantia 90 dias sobre mano de obra.  ·  Valido 7 dias.';
-    const [condicionesPDF, setCondicionesPDF] = useState(() => localStorage.getItem('empresa_condiciones_pdf') || CONDICIONES_DEFAULT);
-    const [condGuardado, setCondGuardado] = useState(false);
-
-    const guardarCondiciones = () => {
-        localStorage.setItem('empresa_condiciones_pdf', condicionesPDF.trim() || CONDICIONES_DEFAULT);
-        setCondGuardado(true);
-        toast.success('Condiciones guardadas');
-        setTimeout(() => setCondGuardado(false), 2000);
-    };
+    // Las condiciones del PDF se mudaron a Más › Configuración (3-oct-2026).
+    // Los inactivos quedan ocultos hasta tocar "Ver inactivos".
+    const [verInactivos, setVerInactivos] = useState(false);
 
     // Modal crear/editar
     const [modal, setModal]           = useState(null); // null | 'crear' | usuario
@@ -133,9 +121,9 @@ export default function UsuariosManager() {
         } catch { toast.error('Error al cambiar contraseña'); }
     };
 
-    const usuariosFiltrados = filtroRol === 'TODOS'
-        ? usuarios
-        : usuarios.filter(u => u.rol === filtroRol);
+    const inactivos = usuarios.filter(u => !u.activo).length;
+    const usuariosFiltrados = (filtroRol === 'TODOS' ? usuarios : usuarios.filter(u => u.rol === filtroRol))
+        .filter(u => verInactivos || u.activo);
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page transition-colors">
@@ -166,35 +154,11 @@ export default function UsuariosManager() {
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
 
-                {/* CONFIGURACIÓN DE EMPRESA — solo ADMIN */}
-                {usuarioActual?.rol === 'ADMIN' && (
-                    <div className="rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07] p-4 space-y-3">
-                        <p className="text-label font-bold text-muted uppercase tracking-wider">Configuración de empresa</p>
-                        <div>
-                            <label className="text-label font-bold text-muted uppercase tracking-wider">
-                                Condiciones del presupuesto (texto que aparece al pie del PDF)
-                            </label>
-                            <div className="mt-1 flex gap-2">
-                                <textarea
-                                    className="flex-1 h-16 px-3 py-2 rounded-xl text-body bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none resize-none"
-                                    value={condicionesPDF}
-                                    onChange={e => setCondicionesPDF(e.target.value)}
-                                    placeholder="Garantía 90 días mano de obra · Repuestos según fabricante..."
-                                />
-                                <button
-                                    onClick={guardarCondiciones}
-                                    className={`h-10 px-4 rounded-xl font-bold text-label text-white transition-all active:scale-95 self-start ${
-                                        condGuardado ? 'bg-[#16a34a]' : 'bg-brand-red hover:opacity-90'
-                                    }`}
-                                >
-                                    {condGuardado ? '✓' : 'Guardar'}
-                                </button>
-                            </div>
-                            <p className="text-caption text-muted mt-1">
-                                Se muestra en presupuestos y órdenes de servicio.
-                            </p>
-                        </div>
-                    </div>
+                {inactivos > 0 && (
+                    <button type="button" onClick={() => setVerInactivos(v => !v)}
+                        className="text-caption font-bold text-muted underline">
+                        {verInactivos ? 'Ocultar inactivos' : `Ver inactivos (${inactivos})`}
+                    </button>
                 )}
 
                 {/* LISTA */}

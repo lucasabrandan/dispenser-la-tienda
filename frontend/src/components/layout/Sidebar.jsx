@@ -4,7 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban, LuLayers } from 'react-icons/lu';
+import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban, LuLayers, LuSettings } from 'react-icons/lu';
 import { NotifBell } from './NotificacionesPanel';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
@@ -19,8 +19,9 @@ const MENU_PANEL = [
 const MENU_SERVICIO = [
     // Trabajos (2-oct-2026): pantalla unificada presupuesto → cobrado. Servicio
     // Técnico y Presupuestos siguen hasta que se confirme que Trabajos los reemplaza.
+    // 3-oct-2026: Trabajos absorbió Servicio Técnico y Presupuestos (Opción A).
+    // Las pantallas viejas siguen en el código pero ya no están en el menú.
     { id: 'trabajos', Icon: LuLayers, nombre: 'Trabajos' },
-    { id: 'servicio-tecnico', Icon: LuWrench, nombre: 'Servicio Técnico' },
 ];
 // 'historial' (ítem propio, 26-ago) se saco de acá: la pestaña "Todo" de
 // VentaManager.jsx ya cubre esa misma búsqueda libre sin filtro de estado
@@ -32,9 +33,7 @@ const MENU_VENTAS = [
 // puede ser de Servicio o de Venta, así que agruparlo bajo "Servicio"
 // prometía algo que la pantalla no era — ahí adentro se vuelve a
 // separar por tipo, quedaba redundante con el propio menú.
-const MENU_TRANSVERSAL = [
-    { id: 'presupuestos', Icon: LuBanknote, nombre: 'Presupuestos' },
-];
+const MENU_TRANSVERSAL = [];
 
 // 'historial' (ahora solo Venta, 26-ago) se saco de este menu: el tecnico
 // nunca genera una Venta por su cuenta (ModalRegistrarTrabajo.jsx siempre crea
@@ -53,6 +52,7 @@ const MENU_GESTION = [
     { id: 'finanzas',   Icon: LuTrendingUp, nombre: 'Finanzas'   },
     { id: 'usuarios',   Icon: LuLock,       nombre: 'Usuarios'   },
     { id: 'mi-espacio', Icon: LuKanban,     nombre: 'Mi Espacio' },
+    { id: 'configuracion', Icon: LuSettings, nombre: 'Configuración' },
 ];
 
 const ChevronLeft  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;

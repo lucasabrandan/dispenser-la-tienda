@@ -23,6 +23,7 @@ export default function ClienteRow({ cliente, sedes, equipos, servicios = [], on
             </span>
             <span className="flex-[1.6] min-w-0 text-caption font-bold text-ink truncate">
                 {cliente.nombre}
+                {cliente.tieneTarifa && <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-[#818CF8]/15 text-[#4F46E5] dark:text-[#A5B4FC] text-label font-black">Tarifa mensual</span>}
             </span>
             <span className="flex-[0.4] text-muted flex items-center justify-center shrink-0" title={esEmpresa ? 'Empresa' : 'Particular'}>
                 <PinTipo size={13} />

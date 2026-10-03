@@ -16,7 +16,7 @@ function M({ valor, className = '' }) {
 
 // Estado: punto + texto en uno de los 4 colores de estado (utils/estados.js).
 // Antes cada estado tenía su propio fondo de color (7 tonos distintos).
-const LABEL_ESTADO_CARD = { PRESUPUESTO: 'Pendiente', REALIZADO: 'Anterior' };
+const LABEL_ESTADO_CARD = { PRESUPUESTO: 'Presupuesto', REALIZADO: 'Anterior' };
 
 const MODALIDAD_LABELS = {
     EFECTIVO_SIN_FACTURA: 'Efectivo',

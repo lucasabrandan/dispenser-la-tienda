@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { LuTriangleAlert, LuX, LuMapPin } from 'react-icons/lu';
+import { LuTriangleAlert, LuX, LuMapPin, LuPlus, LuRoute, LuDownload, LuArchive, LuList, LuUsers } from 'react-icons/lu';
 import api from '../../services/api';
 import BusquedaBar from '../ui/BusquedaBar';
 import { M } from '../servicio/ServicioUI';
-import { colorTecnico } from '../../utils/estados';
+import { colorTecnico, ETAPAS } from '../../utils/estados';
 import { getTodayISO } from '../../utils/dateUtils';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import IniciarTrabajoSheet from '../presupuesto/IniciarTrabajoSheet';
@@ -14,6 +14,13 @@ import CobroSheet from '../servicio/CobroSheet';
 import DetalleSheet from '../servicio/DetalleSheet';
 import OrdenForm from '../ordenes/OrdenForm';
 import CierreMensualModal from '../cliente/CierreMensualModal';
+import ModalCotizacionVolumen from '../presupuesto/ModalCotizacionVolumen';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import { exportarServiciosCSV } from '../../utils/exportarCSV';
+import { buildGoogleMapsRouteUrl } from '../../utils/clienteUtils';
+import TrabajoFila, { ENCABEZADO_GRID } from './TrabajoFila';
+import TrabajoEditorModal from './TrabajoEditorModal';
+import { NuevoSheet, TrabajoMenu } from './TrabajoMenus';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Trabajos (2-oct-2026) — una sola pantalla para todo el recorrido de un trabajo:
@@ -24,16 +31,7 @@ import CierreMensualModal from '../cliente/CierreMensualModal';
 // Cada fila tiene un solo botón: el próximo paso que le toca al admin.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ETAPAS = [
-    { id: 'PRESUPUESTO', label: 'Presupuesto', color: '#A8A29E' },
-    { id: 'ASIGNADO',    label: 'Asignado',    color: '#A78BFA' },
-    { id: 'CAMINO',      label: 'En camino',   color: '#60A5FA' },
-    { id: 'LUGAR',       label: 'En el lugar', color: '#F0A500' },
-    { id: 'HECHO',       label: 'Hecho',       color: '#2DD4BF' },
-    { id: 'FACTURADO',   label: 'Facturado',   color: '#818CF8' },
-    { id: 'COBRADO',     label: 'Cobrado',     color: '#4ADE80' },
-];
-const ETAPA = Object.fromEntries(ETAPAS.map(e => [e.id, e]));
+const ETAPA = { ...Object.fromEntries(ETAPAS.map(e => [e.id, e])), ARCHIVADO: { id: 'ARCHIVADO', label: 'Archivado', color: '#78716C' } };
 const ETAPA_DE_ORDEN = { PENDIENTE: 'ASIGNADO', EN_CAMINO: 'CAMINO', EN_SITIO: 'LUGAR' };
 const ABIERTAS = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO'];
 
@@ -55,7 +53,23 @@ const totalItems = (s) => (s.items || []).reduce((a, i) => a + Number(i.costo ||
 const esCierreMensual = (s) =>
     (s.items || []).length > 0 && totalItems(s) === 0 && /cierre mensual/i.test(s.observaciones || '');
 
-export default function TrabajosManager() {
+// Desde cuándo se traen los cobrados (el resto de las etapas siempre viene completo)
+const PERIODOS = [
+    { id: 'mes',  label: 'Este mes' },
+    { id: 'prev', label: 'Desde el mes pasado' },
+    { id: '3m',   label: 'Últimos 3 meses' },
+    { id: 'anio', label: 'Este año' },
+];
+const desdePeriodo = (p) => {
+    const h = new Date();
+    const d = p === 'prev' ? new Date(h.getFullYear(), h.getMonth() - 1, 1)
+        : p === '3m' ? new Date(h.getFullYear(), h.getMonth() - 2, 1)
+        : p === 'anio' ? new Date(h.getFullYear(), 0, 1)
+        : new Date(h.getFullYear(), h.getMonth(), 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+};
+
+export default function TrabajosManager({ nuevoInicial = null, clienteInicial = null, onInicialConsumido }) {
     const [servicios, setServicios] = useState([]);
     const [ordenes, setOrdenes]     = useState([]);
     const [tecnicos, setTecnicos]   = useState([]);
@@ -75,11 +89,31 @@ export default function TrabajosManager() {
     const [atrasada, setAtrasada]     = useState(null);
     const [cierreCliente, setCierreCliente] = useState(null);
 
+    // Lo que antes vivía en Servicio Técnico y Presupuestos
+    const [nuevoAbierto, setNuevoAbierto] = useState(false);
+    const [editor, setEditor]         = useState(null);   // { modo, servicio, clienteId }
+    const [cotizar, setCotizar]       = useState(false);
+    const [nuevaVisita, setNuevaVisita] = useState(false);
+    const [menuFila, setMenuFila]     = useState(null);
+    const [confirmar, setConfirmar]   = useState(null);   // { tipo: 'archivar'|'eliminar', servicio }
+    const [vista, setVista]           = useState('lista'); // 'lista' | 'tecnico'
+    const [seleccionando, setSeleccionando] = useState(false);
+    const [seleccion, setSeleccion]   = useState(() => new Set());
+    const [verArchivados, setVerArchivados] = useState(false);
+    const [archivados, setArchivados] = useState([]);
+    const [periodo, setPeriodo]       = useState('mes');
+
+    // Entrar con algo para crear (desde el Panel o desde Clientes)
+    useEffect(() => {
+        if (!nuevoInicial) return;
+        setEditor({ modo: nuevoInicial, servicio: null, clienteId: clienteInicial?.id || null });
+        onInicialConsumido && onInicialConsumido();
+    }, [nuevoInicial, clienteInicial, onInicialConsumido]);
+
     const cargar = useCallback(async () => {
         setCargando(true);
         try {
-            const hoy = new Date();
-            const inicioMes = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-01`;
+            const inicioMes = desdePeriodo(periodo);
             const enUnAno = new Date(); enUnAno.setFullYear(enUnAno.getFullYear() + 1);
             const [abiertos, cobrados, ords] = await Promise.all([
                 api.get('/servicios', { params: { estado: 'PRESUPUESTO,APROBADO,EN_PROGRESO,COMPLETADO,PENDIENTE_FACTURACION,FACTURADO', page: 0, size: 500, sort: 'fechaServicio,desc' } }),
@@ -89,12 +123,16 @@ export default function TrabajosManager() {
             const lista = (r) => r.data?.content || (Array.isArray(r.data) ? r.data : []);
             setServicios([...lista(abiertos), ...lista(cobrados)]);
             setOrdenes(Array.isArray(ords.data) ? ords.data : []);
+            if (verArchivados) {
+                const ar = await api.get('/servicios', { params: { estado: 'ARCHIVADO', page: 0, size: 300, sort: 'fechaServicio,desc' } });
+                setArchivados(lista(ar));
+            }
         } catch {
             toast.error('No se pudieron cargar los trabajos');
         } finally {
             setCargando(false);
         }
-    }, []);
+    }, [periodo, verArchivados]);
 
     useEffect(() => { cargar(); }, [cargar]);
     useEffect(() => {
@@ -224,7 +262,20 @@ export default function TrabajosManager() {
     const pasaTec = (f) => !tec || (tec === '__SIN__' ? !f.tecnico : f.tecnico === tec);
     const enEtapa = (f) => (etapa ? f.etapa === etapa : f.etapa !== 'COBRADO');
 
-    const base = filas.filter(f => pasaBusqueda(f) && enEtapa(f));
+    // Archivados: lista aparte, fuera del recorrido (se ven solo con "Ver archivados")
+    const filasArchivadas = useMemo(() => archivados.map(s => ({
+        key: `a${s.id}`, servicio: s, orden: null, etapa: 'ARCHIVADO',
+        cliente: s.clienteNombre || `#${s.id}`,
+        detalle: [s.sedeNombre, s.sedeDireccion].filter(Boolean).join(' · '),
+        busca: [s.clienteNombre, s.sedeNombre, s.sedeDireccion, s.usuarioNombre].filter(Boolean).join(' ').toLowerCase(),
+        tecnico: s.usuarioNombre || '', fecha: fechaCorta(s.fecha),
+        monto: Number(s.montoFinal) > 0 ? Number(s.montoFinal) : totalItems(s), esVenta: s.servicioTipo === 'VENTA',
+        accion: null,
+    })), [archivados]);
+
+    const base = verArchivados
+        ? filasArchivadas.filter(pasaBusqueda)
+        : filas.filter(f => pasaBusqueda(f) && enEtapa(f));
     const visibles = base.filter(pasaTec);
     const conteo = Object.fromEntries(ETAPAS.map(e => [e.id, filas.filter(f => f.etapa === e.id && pasaBusqueda(f) && pasaTec(f)).length]));
     const atrasadas = filas.filter(f => f.accion === 'atrasada');
@@ -240,7 +291,7 @@ export default function TrabajosManager() {
     }, [base]);
 
     const totalVisible = visibles.reduce((a, f) => a + (f.monto || 0), 0);
-    const tituloTotal = { HECHO: 'Para cobrar', FACTURADO: 'Para cobrar', COBRADO: 'Cobrado este mes', PRESUPUESTO: 'Presupuestado' }[etapa] || 'En curso';
+    const tituloTotal = { HECHO: 'Para cobrar', FACTURADO: 'Para cobrar', COBRADO: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}`, PRESUPUESTO: 'Presupuestado' }[etapa] || 'En curso';
 
     const elegirEtapa = (id) => { setEtapa(e => (e === id ? null : id)); setTec(''); };
 
@@ -308,6 +359,83 @@ export default function TrabajosManager() {
 
     const calcularTotal = (s) => totalItems(s);
 
+    // ⋯ de cada fila
+    const duplicar = (s) => setEditor({ modo: 'duplicar', servicio: {
+        ...s, id: undefined, estado: 'PRESUPUESTO', nroDocumento: undefined,
+        fecha: getTodayISO(), presupuestoOrigenId: undefined, ordenId: undefined,
+    } });
+    const cambiarEspera = async (s, enEspera) => {
+        const t = toast.loading('Guardando…');
+        try {
+            await api.patch(`/servicios/${s.id}/espera`, { enEspera });
+            toast.success(enEspera ? 'Quedó en espera' : 'Retomado: vuelve a Presupuesto', { id: t });
+            cargar();
+        } catch { toast.error('No se pudo actualizar', { id: t }); }
+    };
+    const eliminar = async (s) => {
+        const t = toast.loading('Eliminando…');
+        try {
+            await api.delete(`/servicios/${s.id}`);
+            toast.success('Eliminado', { id: t });
+            cargar();
+        } catch { toast.error('No se pudo eliminar', { id: t }); }
+    };
+    const accionesMenu = {
+        detalle: (s) => setDetalle(s),
+        editar: (s) => setEditor({ modo: 'editar', servicio: s }),
+        duplicar,
+        pdf,
+        espera: cambiarEspera,
+        archivar: (s) => setConfirmar({ tipo: 'archivar', servicio: s }),
+        recuperar: (s) => patchServicio(s.id, 'PRESUPUESTO', 'Recuperado como presupuesto'),
+        eliminar: (s) => setConfirmar({ tipo: 'eliminar', servicio: s }),
+        editarOrden: (o) => setOrdenEditar(o),
+    };
+
+    const elegirNuevo = (q) => {
+        if (q === 'volumen') setCotizar(true);
+        else if (q === 'visita') setNuevaVisita(true);
+        else setEditor({ modo: q, servicio: null });
+    };
+    const crearVisita = async (form) => {
+        const t = toast.loading('Guardando…');
+        try {
+            const { estadoNuevo, ...datos } = form;
+            await api.post('/ordenes', datos);
+            toast.success('Visita agendada', { id: t });
+            setNuevaVisita(false);
+            cargar();
+        } catch { toast.error('No se pudo guardar', { id: t }); }
+    };
+
+    // Selección para armar la ruta del día
+    const toggleSel = (key) => setSeleccion(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+    const salirSeleccion = () => { setSeleccionando(false); setSeleccion(new Set()); };
+    const abrirRuta = () => {
+        const dirs = visibles.filter(f => seleccion.has(f.key))
+            .map(f => f.servicio?.sedeDireccion || f.orden?.direccion).filter(Boolean);
+        const url = buildGoogleMapsRouteUrl(dirs);
+        if (!url) { toast.error('Ninguno de los elegidos tiene dirección cargada'); return; }
+        window.open(url, '_blank');
+    };
+    const exportar = () => {
+        const ss = visibles.map(f => f.servicio).filter(Boolean);
+        if (!ss.length) { toast.error('No hay trabajos para exportar'); return; }
+        exportarServiciosCSV(ss);
+    };
+
+    // Vista "Por técnico": un bloque por persona, sin asignar al final
+    const grupos = useMemo(() => {
+        if (vista !== 'tecnico') return null;
+        const m = new Map();
+        visibles.forEach(f => {
+            const k = f.tecnico || '';
+            if (!m.has(k)) m.set(k, []);
+            m.get(k).push(f);
+        });
+        return [...m.entries()].sort((a, b) => (a[0] ? 0 : 1) - (b[0] ? 0 : 1) || a[0].localeCompare(b[0]));
+    }, [vista, visibles]);
+
     return (
         <div className="min-h-screen pb-28 md:pb-10 bg-page font-sans">
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-5 md:pt-6 space-y-4">
@@ -318,13 +446,19 @@ export default function TrabajosManager() {
                         <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-ink">Trabajos</h2>
                         <p className="text-caption text-muted">Cada trabajo, de presupuesto a cobrado, en una sola lista</p>
                     </div>
-                    <div className="w-full md:w-80">
-                        <BusquedaBar valor={busqueda} onChange={setBusqueda} placeholder="Cliente, N/S, dirección…" />
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                        <div className="flex-1 md:w-80">
+                            <BusquedaBar valor={busqueda} onChange={setBusqueda} placeholder="Cliente, N/S, dirección…" />
+                        </div>
+                        <button type="button" onClick={() => setNuevoAbierto(true)}
+                            className="hidden md:inline-flex h-11 px-4 rounded-xl items-center gap-1.5 bg-[#C9341F] text-white text-label font-black active:scale-95">
+                            <LuPlus size={16} /> Nuevo
+                        </button>
                     </div>
                 </div>
 
                 {/* Atrasadas */}
-                {atrasadas.length > 0 && etapa !== 'ASIGNADO' && (
+                {atrasadas.length > 0 && etapa !== 'ASIGNADO' && !verArchivados && (
                     <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#FEF3C7] text-[#92400E] dark:bg-[#2A1A0A] dark:text-[#FBBF24] border border-[#F0A500]/40 text-caption font-bold">
                         <LuTriangleAlert size={16} className="shrink-0" />
                         <span className="flex-1">
@@ -335,7 +469,7 @@ export default function TrabajosManager() {
                 )}
 
                 {/* Etapas */}
-                <div className="flex md:grid md:grid-cols-7 gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-1">
+                {!verArchivados && <div className="flex md:grid md:grid-cols-7 gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-1">
                     {ETAPAS.map(e => {
                         const activo = etapa === e.id;
                         return (
@@ -349,7 +483,45 @@ export default function TrabajosManager() {
                             </button>
                         );
                     })}
+                </div>}
+
+                {/* Herramientas: vista, ruta, exportar, archivados */}
+                <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                    <div className="flex shrink-0 rounded-xl bg-panel p-1">
+                        {[['lista', 'Lista', LuList], ['tecnico', 'Por técnico', LuUsers]].map(([id, label, Ic]) => (
+                            <button key={id} type="button" onClick={() => setVista(id)} aria-pressed={vista === id}
+                                className={`h-9 px-3 rounded-lg inline-flex items-center gap-1.5 text-label font-bold ${vista === id ? 'bg-card text-ink shadow-sm' : 'text-muted'}`}>
+                                <Ic size={14} />{label}
+                            </button>
+                        ))}
+                    </div>
+                    <button type="button" onClick={() => (seleccionando ? salirSeleccion() : setSeleccionando(true))}
+                        className={`h-10 px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${seleccionando ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
+                        <LuRoute size={14} />{seleccionando ? 'Cancelar' : 'Armar ruta'}
+                    </button>
+                    <button type="button" onClick={exportar}
+                        className="h-10 px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border border-black/10 dark:border-white/10 text-secondary">
+                        <LuDownload size={14} />Exportar
+                    </button>
+                    <button type="button" onClick={() => { setVerArchivados(v => !v); setEtapa(null); setTec(''); }}
+                        className={`h-10 px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${verArchivados ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
+                        <LuArchive size={14} />{verArchivados ? 'Volver a trabajos' : 'Archivados'}
+                    </button>
+                    {etapa === 'COBRADO' && !verArchivados && (
+                        <select value={periodo} onChange={e => setPeriodo(e.target.value)} aria-label="Período de cobrados"
+                            className="h-10 px-3 shrink-0 rounded-xl text-label font-bold bg-panel text-ink border border-black/10 dark:border-white/10">
+                            {PERIODOS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                        </select>
+                    )}
                 </div>
+
+                {seleccionando && (
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-panel text-caption">
+                        <span className="flex-1 text-secondary">Tocá los trabajos que querés visitar · {seleccion.size} elegido{seleccion.size !== 1 ? 's' : ''}</span>
+                        <button type="button" disabled={!seleccion.size} onClick={abrirRuta}
+                            className="h-10 px-4 rounded-xl bg-[#C9341F] text-white font-black disabled:opacity-40">Ver ruta</button>
+                    </div>
+                )}
 
                 {/* Técnico + total */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -367,7 +539,7 @@ export default function TrabajosManager() {
                         })}
                     </div>
                     <div className="flex items-baseline gap-2 text-caption text-muted shrink-0">
-                        <span>{tituloTotal}</span>
+                        <span>{verArchivados ? 'Archivados' : tituloTotal}</span>
                         <M valor={totalVisible} className="text-body-lg font-black text-ink" />
                         <span>· {visibles.length} trabajo{visibles.length !== 1 ? 's' : ''}</span>
                     </div>
@@ -377,58 +549,51 @@ export default function TrabajosManager() {
                 {cargando ? (
                     <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-20 rounded-2xl bg-card animate-pulse" />)}</div>
                 ) : visibles.length === 0 ? (
-                    <div className="py-14 text-center rounded-2xl border border-dashed border-black/10 dark:border-white/10 text-body text-muted">
-                        No hay trabajos {etapa ? `en "${ETAPA[etapa].label}"` : 'en curso'}{tec ? ' con este técnico' : ''}{q ? ' para esa búsqueda' : ''}
+                    <div className="py-12 px-6 text-center rounded-2xl border border-dashed border-black/10 dark:border-white/10 space-y-4">
+                        <p className="text-body text-muted">
+                            {verArchivados ? 'No hay trabajos archivados' : `No hay trabajos ${etapa ? `en "${ETAPA[etapa].label}"` : 'en curso'}`}{tec ? ' con este técnico' : ''}{q ? ' para esa búsqueda' : ''}
+                        </p>
+                        {!verArchivados && (
+                            <button type="button" onClick={() => setNuevoAbierto(true)}
+                                className="h-11 px-5 rounded-xl inline-flex items-center gap-1.5 bg-[#C9341F] text-white text-label font-black active:scale-95">
+                                <LuPlus size={16} /> Cargar un trabajo
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        <div className="hidden md:grid grid-cols-[140px_minmax(0,1fr)_140px_110px_120px_160px] gap-4 px-4 text-label font-bold uppercase tracking-wider text-muted">
-                            <span>Etapa</span><span>Cliente</span><span>Técnico</span><span>Fecha</span><span className="text-right">Monto</span><span className="text-right">Próximo paso</span>
+                        <div className={`hidden md:grid ${ENCABEZADO_GRID} gap-4 px-4 text-label font-bold uppercase tracking-wider text-muted`}>
+                            <span>Etapa</span><span>Cliente</span><span>Técnico</span><span>Fecha</span><span className="text-right">Monto</span><span className="text-right">Próximo paso</span><span />
                         </div>
-                        {visibles.map(f => {
-                            const e = ETAPA[f.etapa];
-                            const b = BOTON[f.accion];
-                            const tecTxt = f.tecnicoTexto || (f.tecnico ? primerNombre(f.tecnico) : 'Sin técnico');
-                            const tecColor = f.tecnico ? colorTecnico(f.tecnico) : '#78716C';
-                            const abrir = () => { if (f.servicio) setDetalle(f.servicio); };
-                            return (
-                                <div key={f.key} className="rounded-2xl bg-card border border-black/10 dark:border-white/[0.08] p-3.5 md:px-4 md:py-3 grid grid-cols-1 md:grid-cols-[140px_minmax(0,1fr)_140px_110px_120px_160px] gap-2 md:gap-4 md:items-center">
-                                    <span className="flex items-center gap-2 text-label font-black uppercase tracking-wide" style={{ color: e.color }}>
-                                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: e.color }} />{e.label}
-                                        {f.esVenta && <span className="ml-1 px-1.5 py-0.5 rounded bg-chip text-muted normal-case tracking-normal">Venta</span>}
-                                    </span>
-                                    <button type="button" onClick={abrir} disabled={!f.servicio}
-                                        className="min-w-0 text-left disabled:cursor-default">
-                                        <span className="block font-bold text-body text-ink truncate">{f.cliente}</span>
-                                        <span className="block text-caption text-muted truncate">{f.detalle || '—'}</span>
-                                    </button>
-                                    <span className="flex items-center gap-2 text-caption text-secondary">
-                                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: tecColor }} />{tecTxt}
-                                    </span>
-                                    <span className="flex md:flex-col gap-2 md:gap-0.5 text-caption">
-                                        <span className="text-ink">{f.fecha || '—'}</span>
-                                        {f.nota && <span className={f.alerta ? 'font-bold text-[#B45309] dark:text-[#FBBF24]' : 'text-muted'}>{f.nota}</span>}
-                                    </span>
-                                    <span className="md:text-right font-black text-body text-ink">
-                                        {f.monto == null ? <span className="text-muted font-bold text-caption">Cierre mensual</span>
-                                            : f.monto > 0 ? <M valor={f.monto} className="font-black" /> : <span className="text-muted">—</span>}
-                                    </span>
-                                    <div className="flex md:justify-end">
-                                        {f.accion === 'seguimiento' ? (
-                                            <span className="text-caption text-muted md:text-right">{textoSeguimiento(f)}</span>
-                                        ) : b && (
-                                            <button type="button" onClick={() => b.run(f)}
-                                                className={`w-full md:w-auto h-11 md:h-10 px-4 rounded-xl text-label font-black active:scale-95 transition-all ${b.primaria ? 'bg-[#C9341F] text-white' : 'bg-chip text-ink border border-black/10 dark:border-white/10'}`}>
-                                                {b.label}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        {(grupos || [[null, visibles]]).map(([nombre, items]) => (
+                            <div key={nombre ?? '__todos'} className="space-y-2">
+                                {grupos && (
+                                    <p className="flex items-center gap-2 pt-3 px-1 text-label font-black uppercase tracking-widest text-secondary">
+                                        <span className="w-3 h-3 rounded-full" style={{ background: nombre ? colorTecnico(nombre) : '#78716C' }} />
+                                        {nombre || 'Sin técnico'} <span className="text-muted">{items.length}</span>
+                                    </p>
+                                )}
+                                {items.map(f => (
+                                    <TrabajoFila key={f.key} f={f} etapa={ETAPA[f.etapa]} boton={BOTON[f.accion]}
+                                        textoSeguimiento={textoSeguimiento}
+                                        onAbrir={() => f.servicio && setDetalle(f.servicio)}
+                                        onMenu={() => setMenuFila(f)}
+                                        seleccionando={seleccionando} seleccionado={seleccion.has(f.key)}
+                                        onToggle={() => toggleSel(f.key)} />
+                                ))}
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
+
+            {/* FAB "+" (celular) — mismo lugar en Trabajos, Venta, Clientes y Productos */}
+            {!seleccionando && (
+                <button type="button" onClick={() => setNuevoAbierto(true)} aria-label="Nuevo trabajo"
+                    className="md:hidden fixed right-4 bottom-24 z-40 w-14 h-14 rounded-2xl bg-[#C9341F] text-white shadow-xl flex items-center justify-center active:scale-90">
+                    <LuPlus size={26} />
+                </button>
+            )}
 
             {/* ── Modales ── */}
             {iniciar && (
@@ -457,6 +622,34 @@ export default function TrabajosManager() {
                         setCobrar(null);
                     }}
                     onCerrar={() => setCobrar(null)} />
+            )}
+            <NuevoSheet open={nuevoAbierto} onClose={() => setNuevoAbierto(false)} onElegir={elegirNuevo} />
+            <TrabajoMenu fila={menuFila} onClose={() => setMenuFila(null)} on={accionesMenu} />
+            {editor && (
+                <TrabajoEditorModal modo={editor.modo} servicio={editor.servicio} clienteInicialId={editor.clienteId}
+                    onCerrar={() => setEditor(null)} onGuardado={cargar} />
+            )}
+            {cotizar && <ModalCotizacionVolumen onCerrar={() => { setCotizar(false); cargar(); }} />}
+            {nuevaVisita && (
+                <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
+                    <div className="w-full max-w-lg bg-card rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-body-lg font-black text-ink mb-5">Nueva visita</h2>
+                        <OrdenForm orden={null} tecnicos={tecnicos} onGuardar={crearVisita} onCancelar={() => setNuevaVisita(false)} />
+                    </div>
+                </div>
+            )}
+            {confirmar && (
+                <ConfirmDialog
+                    titulo={confirmar.tipo === 'eliminar' ? 'Eliminar trabajo' : 'Archivar trabajo'}
+                    mensaje={confirmar.tipo === 'eliminar' ? 'No se puede deshacer: se borra el trabajo con sus ítems y repuestos.' : 'Sale de la lista. Lo podés recuperar desde Archivados.'}
+                    textoConfirmar={confirmar.tipo === 'eliminar' ? 'Sí, eliminar' : 'Sí, archivar'}
+                    onCancelar={() => setConfirmar(null)}
+                    onConfirmar={() => {
+                        const { tipo, servicio } = confirmar;
+                        setConfirmar(null);
+                        if (tipo === 'eliminar') eliminar(servicio);
+                        else patchServicio(servicio.id, 'ARCHIVADO', 'Archivado');
+                    }} />
             )}
             {detalle && <DetalleSheet servicio={detalle} onCerrar={() => setDetalle(null)} />}
             {cierreCliente && <CierreMensualModal cliente={cierreCliente} onClose={() => { setCierreCliente(null); cargar(); }} />}

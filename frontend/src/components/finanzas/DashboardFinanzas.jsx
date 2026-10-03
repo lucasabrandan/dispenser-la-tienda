@@ -5,10 +5,12 @@ import TabSueldo from './TabSueldo';
 import TabTecnicos from './TabTecnicos';
 import TabGastos from './TabGastos';
 import TabInventario from './TabInventario';
+import TabCobranza from './TabCobranza';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 const TABS = [
     { id: 'balance',    label: 'Balance'    },
+    { id: 'cobranza',   label: 'Cobranza'   },
     { id: 'sueldo',     label: 'Sueldo'     },
     { id: 'tecnicos',   label: 'Técnicos'   },
     { id: 'gastos',     label: 'Gastos'     },
@@ -55,7 +57,7 @@ export default function DashboardFinanzas() {
                     {/* Selector de período — único, siempre en el mismo lugar (antes cada tab
                         reimplementaba su propio <input type="month">, en una fila distinta cada vez). */}
                     <div className="flex items-center gap-2">
-                        {tab === 'inventario' ? (
+                        {tab === 'inventario' || tab === 'cobranza' ? (
                             <span className="h-7 px-2.5 rounded-lg inline-flex items-center gap-1.5 text-label font-bold uppercase text-white bg-brand-green">
                                 <span className="w-1.5 h-1.5 rounded-full bg-white" />
                                 Tiempo real
@@ -74,6 +76,7 @@ export default function DashboardFinanzas() {
                 {tab === 'tecnicos'   && <TabTecnicos   filtroMes={filtroMes} />}
                 {tab === 'gastos'     && <TabGastos     filtroMes={filtroMes} />}
                 {tab === 'inventario' && <TabInventario />}
+                {tab === 'cobranza'   && <TabCobranza />}
             </div>
 
             {modalCierre && (

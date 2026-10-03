@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuInbox, LuPencil, LuFileText, LuClipboardList, LuCopy, LuMessageCircle, LuTrash2 } from 'react-icons/lu';
+import { LuInbox, LuPencil, LuFileText, LuClipboardList, LuCopy, LuMessageCircle, LuTrash2, LuPackage } from 'react-icons/lu';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { fechaAR } from '../../utils/dateUtils';
@@ -21,7 +21,7 @@ const badgeClass = (v) => {
 };
 
 const badgeLabel = (v) => {
-    if (v.estado === 'PRESUPUESTO') return 'Pendiente';
+    if (v.estado === 'PRESUPUESTO') return 'En curso';
     if (v.estado === 'REALIZADO')   return 'Cobrada';
     return v.estado;
 };
@@ -199,11 +199,22 @@ export default function VentaList({
                             </div>
 
                             {/* Productos preview */}
+                            {/* Productos: una línea por producto, con cantidad */}
                             {v.items?.length > 0 && (() => {
-                                const prods = v.items.flatMap(it => it.repuestosUsados || []).map(r => r.nombre);
+                                const prods = v.items.flatMap(it => it.repuestosUsados || []);
                                 if (prods.length === 0) return null;
-                                const preview = prods.slice(0, 3).join(', ') + (prods.length > 3 ? ` +${prods.length - 3} más` : '');
-                                return <p className="text-caption text-muted mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] truncate">{preview}</p>;
+                                return (
+                                    <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] space-y-1">
+                                        {prods.slice(0, 4).map((r, i) => (
+                                            <p key={r.id ?? i} className="flex items-center gap-2 text-caption text-secondary min-w-0">
+                                                <LuPackage size={13} className="shrink-0 text-muted" />
+                                                <span className="font-black text-ink shrink-0">{Number(r.cantidad) || 1} ×</span>
+                                                <span className="truncate">{r.nombre}</span>
+                                            </p>
+                                        ))}
+                                        {prods.length > 4 && <p className="text-caption text-muted pl-5">+{prods.length - 4} más</p>}
+                                    </div>
+                                );
                             })()}
 
                             {esAdmin && !esPendiente && <RentabilidadVenta venta={v} />}

@@ -25,6 +25,7 @@ import MisOrdenes         from './components/ordenes/MisOrdenes';
 import MiAgenda           from './components/ordenes/MiAgenda';
 import MiSueldo           from './components/finanzas/MiSueldo';
 import MiEspacio          from './components/miespacio/MiEspacio';
+import Configuracion      from './components/configuracion/Configuracion';
 
 function AppInterna() {
     const { autenticado, esAdmin, usuario } = useAuth();
@@ -34,6 +35,8 @@ function AppInterna() {
     const [ordenOrigen, setOrdenOrigen] = useState(null);
     const [abrirCrear, setAbrirCrear] = useState(false);
     const [modoInicialServicio, setModoInicialServicio] = useState(null);
+    // Trabajos: abrir directo el formulario de alta ('nuevo' | 'venta')
+    const [trabajoNuevo, setTrabajoNuevo] = useState(null);
 
     // Bug: como AppInterna nunca se desmonta al cerrar sesión (solo cambia
     // qué devuelve el render), seccionActual quedaba con el valor de la
@@ -69,7 +72,8 @@ function AppInterna() {
         switch (seccionActual) {
             case 'caja':
                 return <DashboardCaja setVistaActual={(seccion, opts) => {
-                    if (opts?.crear) setAbrirCrear(true);
+                    if (opts?.crear && seccion === 'trabajos') setTrabajoNuevo(opts.crear === true ? 'nuevo' : opts.crear);
+                    else if (opts?.crear) setAbrirCrear(true);
                     if (opts?.modo) setModoInicialServicio(opts.modo);
                     setSeccionActual(seccion);
                 }} />;
@@ -77,7 +81,8 @@ function AppInterna() {
                 return <VentaManager clienteInicial={clientePreload} onClienteConsumido={() => setClientePreload(null)}
                     abrirCrearDirecto={abrirCrear} onCrearConsumido={() => setAbrirCrear(false)} />;
             case 'trabajos':
-                return esAdmin ? <TrabajosManager /> : null;
+                return esAdmin ? <TrabajosManager nuevoInicial={trabajoNuevo} clienteInicial={clientePreload}
+                    onInicialConsumido={() => { setTrabajoNuevo(null); setClientePreload(null); }} /> : null;
             case 'servicio-tecnico':
                 return <ServicioManager
                     clienteInicial={clientePreload}
@@ -95,13 +100,18 @@ function AppInterna() {
                 return <PresupuestosManager />;
             case 'clientes':
                 return <ClienteManager
-                    onNuevoServicio={(c) => irASeccionConCliente('servicio-tecnico', c)}
+                    abrirCrearDirecto={abrirCrear} onCrearConsumido={() => setAbrirCrear(false)}
+                    onNuevoServicio={(c) => {
+                        // Admin: el alta va a Trabajos (Servicio Técnico ya no está en el menú)
+                        if (esAdmin) { setTrabajoNuevo('nuevo'); irASeccionConCliente('trabajos', c); }
+                        else irASeccionConCliente('servicio-tecnico', c);
+                    }}
                     onNuevaVenta={(c) => irASeccionConCliente('venta', c)}
                 />;
             case 'productos':
                 return <GestorProductos />;
             case 'radar':
-                return <RadarMantenimiento />;
+                return <RadarMantenimiento onCrearTrabajo={esAdmin ? (c) => { setTrabajoNuevo('nuevo'); irASeccionConCliente('trabajos', c); } : null} />;
             case 'finanzas':
                 return <DashboardFinanzas />;
             case 'usuarios':
@@ -114,6 +124,8 @@ function AppInterna() {
                 return <MiSueldo />;
             case 'mi-espacio':
                 return <MiEspacio />;
+            case 'configuracion':
+                return esAdmin ? <Configuracion /> : null;
             default:
                 return (
                     <div className="flex items-center justify-center h-64 text-muted font-black text-sm uppercase tracking-widest">

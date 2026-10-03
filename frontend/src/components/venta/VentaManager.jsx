@@ -15,8 +15,8 @@ import { exportarVentasCSV } from '../../utils/exportarCSV';
 import api from '../../services/api';
 
 const TABS = [
-    { id: 'PRESUPUESTO', label: 'Pendientes', short: 'Pend',   color: '#D48800', Icon: LuBanknote },
-    { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#16A34A', Icon: LuCircleCheck },
+    { id: 'PRESUPUESTO', label: 'En curso',   short: 'En curso', color: '#F0A500', Icon: LuBanknote },
+    { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#4ADE80', Icon: LuCircleCheck },
     { id: 'ARCHIVADO',   label: 'Archivadas', short: 'Arch',   color: '#A8A29E', Icon: LuArchive },
     // "Todo" — mismo patrón que ya tiene Servicio Técnico: búsqueda libre sin
     // filtro de estado, con rango de fechas. Jubila a "Historial" como pantalla
@@ -185,7 +185,11 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         {(() => { const EmptyIcon = TABS.find(t => t.id === tabActual)?.Icon || LuShoppingCart; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
-                        <p className="text-body font-bold text-muted">Sin {TABS.find(t => t.id === tabActual)?.label?.toLowerCase() || 'ventas'}</p>
+                        <p className="text-body font-bold text-muted">Sin ventas {(TABS.find(t => t.id === tabActual)?.label || '').toLowerCase()}</p>
+                        {esAdmin && (
+                            <button onClick={() => setModalCrear(true)}
+                                className="mt-4 h-11 px-5 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">+ Cargar una venta</button>
+                        )}
                     </div>
                 ) : (
                     <VentaList
@@ -210,7 +214,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                 queda como unico acento fuerte de la app (ver "Nuevo Servicio"). */}
             {esAdmin && (
                 <button onClick={() => setModalCrear(true)}
-                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-black text-ink bg-card border border-black/[0.08] dark:border-white/[0.08] active:scale-90 transition-all z-20"
+                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center text-3xl font-black text-white bg-[#C9341F] active:scale-90 transition-all z-40"
                     aria-label="Nueva venta">+</button>
             )}
 

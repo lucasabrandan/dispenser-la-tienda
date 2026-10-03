@@ -35,6 +35,7 @@ public interface ServicioItemRepository extends JpaRepository<ServicioItem, Long
                 s.cliente_nombre   AS clienteNombre,
                 s.sede_nombre      AS sedeNombre,
                 cl.telefono        AS clienteTelefono,
+                cl.id              AS clienteId,
                 s.fecha_servicio   AS ultimoServicio
             FROM servicio_items si
             JOIN servicio s  ON si.servicio_id = s.id
@@ -59,6 +60,7 @@ public interface ServicioItemRepository extends JpaRepository<ServicioItem, Long
             u.clienteNombre     AS clienteNombre,
             u.sedeNombre        AS sedeNombre,
             u.clienteTelefono   AS clienteTelefono,
+            u.clienteId         AS clienteId,
             u.ultimoServicio    AS ultimoServicio,
             f.ultimoFiltro      AS ultimoFiltro
         FROM ultimo_srv u

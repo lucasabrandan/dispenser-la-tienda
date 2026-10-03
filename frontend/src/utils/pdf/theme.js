@@ -45,7 +45,9 @@ export const T = {
 export function getEmpresa() {
     try {
         const u = JSON.parse(localStorage.getItem('auth_usuario') || '{}');
-        return {
+        // Datos editables desde Más › Configuración (si no hay, quedan los de siempre)
+        const d = JSON.parse(localStorage.getItem('empresa_datos') || '{}');
+        const base = {
             nombre:           'DISPENSER LA TIENDA',
             eslogan:          'SERVICIO TÉCNICO ESPECIALIZADO',
             telefono:         u.telefono         || '',
@@ -56,6 +58,8 @@ export function getEmpresa() {
             tiktok:           '@dispenserlatienda',
             condicionesPDF:   localStorage.getItem('empresa_condiciones_pdf') || '',
         };
+        Object.keys(d).forEach(k => { if (d[k]) base[k] = d[k]; });
+        return base;
     } catch {
         return {
             nombre: 'DISPENSER LA TIENDA', eslogan: 'SERVICIO TÉCNICO ESPECIALIZADO',

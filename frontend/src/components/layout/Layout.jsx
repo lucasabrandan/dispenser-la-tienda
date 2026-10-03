@@ -21,6 +21,7 @@ const NOMBRES_SECCION = {
     'trabajos':         'Trabajos',
     'servicio-tecnico': 'Servicio Técnico',
     'presupuestos':     'Presupuestos',
+    'configuracion':    'Configuración',
     'clientes':         'Clientes',
     'productos':        'Productos',
     'radar':            'Radar',

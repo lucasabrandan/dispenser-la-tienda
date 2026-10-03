@@ -66,6 +66,13 @@ export default function TabBalance({ filtroMes }) {
     const txPagina = stats.transacciones.slice((pagTx - 1) * POR_PAGINA, pagTx * POR_PAGINA);
     const gananciaNeta = stats.facturacion - imp - stats.costoRepuestos - stats.gastosVarios;
     const margenNeto = stats.facturacion > 0 ? Math.round(gananciaNeta / stats.facturacion * 100) : 0;
+    // Comparación con el mes anterior (sale de la misma serie de "Evolución mensual")
+    const anterior = evolucion.length >= 2 ? evolucion[evolucion.length - 2] : null;
+    const vsAnt = (actual, prev) => {
+        if (!anterior || !prev) return '';
+        const d = Math.round((actual - prev) / Math.abs(prev) * 100);
+        return ` · ${d >= 0 ? '+' : ''}${d}% vs mes ant.`;
+    };
 
     return (
         <div className="space-y-4">
@@ -78,10 +85,10 @@ export default function TabBalance({ filtroMes }) {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard label="Facturación"    value={stats.facturacion}    sub="Total bruto"        variante="gold"    ocultar={ocultar} />
+                <StatCard label="Facturación"    value={stats.facturacion}    sub={`Total bruto${vsAnt(stats.facturacion, anterior?.['Facturación'])}`} variante="gold"    ocultar={ocultar} />
                 <StatCard label="Impuestos 30%"  value={imp}                  sub="Estimado fiscal"    variante="red"     ocultar={ocultar} />
                 <StatCard label="Costos"         value={stats.costoRepuestos + stats.gastosVarios} sub="Repuestos + gastos" variante="muted" ocultar={ocultar} />
-                <StatCard label="Ganancia neta"  value={gananciaNeta}         sub={`Margen neto: ${margenNeto}%`} variante="redBold" ocultar={ocultar} />
+                <StatCard label="Ganancia neta"  value={gananciaNeta}         sub={`Margen ${margenNeto}%${vsAnt(gananciaNeta, anterior?.['Ganancia neta'])}`} variante="redBold" ocultar={ocultar} />
             </div>
 
             <div className="rounded-xl bg-card p-4 shadow-sm border border-black/[0.05] dark:border-white/[0.05]">

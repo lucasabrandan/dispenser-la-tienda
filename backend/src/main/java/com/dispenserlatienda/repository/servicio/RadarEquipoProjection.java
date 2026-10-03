@@ -7,6 +7,7 @@ public interface RadarEquipoProjection {
     String getClienteNombre();
     String getSedeNombre();
     String getClienteTelefono();
+    Long getClienteId();
     LocalDate getUltimoServicio();
     LocalDate getUltimoFiltro();
 }

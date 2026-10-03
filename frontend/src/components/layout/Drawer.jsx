@@ -1,18 +1,14 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuWrench, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban } from 'react-icons/lu';
+import { LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
 // (mismo criterio que Sidebar.jsx en desktop). Presupuestos queda aparte de
 // cualquier dominio: un "presupuesto" puede ser de Servicio o de Venta, así
 // que meterlo bajo "Servicio" prometía algo que no era. 'historial' se retiró
 // (26-ago) — la pestaña "Todo" de Venta cubre lo mismo.
-const MENU_TRANSVERSAL_DRAWER = [
-    // Servicio Técnico pasó acá en el celular: la barra de abajo ahora tiene "Trabajos"
-    { id: 'servicio-tecnico', nombre: 'Servicio Técnico', Icon: LuWrench },
-    { id: 'presupuestos', nombre: 'Presupuestos', Icon: LuBanknote },
-];
+// 3-oct-2026: Servicio Técnico y Presupuestos quedaron adentro de Trabajos.
 const MENU_GESTION_DRAWER = [
     { id: 'clientes',   nombre: 'Clientes',   Icon: LuUsers },
     { id: 'radar',      nombre: 'Radar',      Icon: LuSiren },
@@ -20,12 +16,12 @@ const MENU_GESTION_DRAWER = [
     { id: 'finanzas',   nombre: 'Finanzas',   Icon: LuTrendingUp },
     { id: 'usuarios',   nombre: 'Usuarios',   Icon: LuLock },
     { id: 'mi-espacio', nombre: 'Mi Espacio', Icon: LuKanban },
+    { id: 'configuracion', nombre: 'Configuración', Icon: LuSettings },
 ];
-const MENU_ITEMS = [...MENU_TRANSVERSAL_DRAWER, ...MENU_GESTION_DRAWER];
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
     const { usuario, logout, esAdmin } = useAuth();
-    const { pendientes, ordenesActivas } = useBadges();
+    const { pendientes } = useBadges();
     // Mismo criterio que Sidebar.jsx (desktop): Presupuestos y el grupo de
     // Gestion (Clientes/Radar/Productos/Finanzas/Usuarios/Mi Espacio) son
     // solo-admin. Hoy el tecnico no tiene boton "Mas" en su BottomNav, asi
@@ -35,7 +31,6 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
     // agregar cualquier otro camino de navegacion a futuro.
     const gruposDrawer = esAdmin
         ? [
-            { label: null,          items: MENU_TRANSVERSAL_DRAWER },
             { label: 'Gestión',     icon: LuSettings, items: MENU_GESTION_DRAWER },
         ]
         : [];

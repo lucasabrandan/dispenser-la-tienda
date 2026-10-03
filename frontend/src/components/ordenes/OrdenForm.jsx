@@ -34,9 +34,9 @@ const EMPTY = {
 // Estados que el admin puede poner a mano desde "Editar orden". COMPLETADA no:
 // cerrar una orden genera/actualiza el servicio y eso se hace desde "Cerrar trabajo".
 const ESTADOS_EDITABLES = [
-    { value: 'PENDIENTE',   label: 'Pendiente' },
+    { value: 'PENDIENTE',   label: 'Asignado' },
     { value: 'EN_CAMINO',   label: 'En camino' },
-    { value: 'EN_SITIO',    label: 'En sitio' },
+    { value: 'EN_SITIO',    label: 'En el lugar' },
     { value: 'NO_ATENDIDO', label: 'No atendido (reprogramar)' },
     { value: 'CANCELADA',   label: 'Cancelada' },
 ];
