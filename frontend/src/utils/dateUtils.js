@@ -34,6 +34,14 @@ export function fechaAR(f) {
 
 // Lunes de la semana que contiene "fecha" (Date), a las 00:00. Antes esta
 // misma cuenta vivía copiada por separado en WeekDatePicker.jsx y MiAgenda.jsx.
+// Lunes con el que arrancan las agendas (5-oct-2026): igual que lunesDeLaSemana,
+// pero un domingo ya muestra la semana que empieza mañana (no la que terminó).
+export function lunesAgenda() {
+    const d = new Date();
+    if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+    return lunesDeLaSemana(d);
+}
+
 export function lunesDeLaSemana(fecha) {
     const d = new Date(fecha);
     const dow = d.getDay(); // 0=domingo, 1=lunes...

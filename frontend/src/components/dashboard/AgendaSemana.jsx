@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { colorTecnico, etapaColor, estadoLabel } from '../../utils/estados';
-import { formatDateISO, getTodayISO, lunesDeLaSemana } from '../../utils/dateUtils';
+import { formatDateISO, getTodayISO, lunesAgenda } from '../../utils/dateUtils';
 import AvatarTecnico from '../ui/AvatarTecnico';
 import { useBloqueos, labelFranja } from '../../utils/bloqueos';
 
@@ -16,12 +16,13 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
     const [dia, setDia] = useState(hoy);
 
     const semana = useMemo(() => {
-        const l = lunesDeLaSemana(new Date());
+        const l = lunesAgenda();
         l.setDate(l.getDate() + offset * 7);
-        return DIAS.map((n, i) => {
-            const d = new Date(l); d.setDate(l.getDate() + i);
+        // 2 semanas (5-oct-2026): esta y la próxima, una fila cada una
+        return [0, 7].flatMap(base => DIAS.map((n, i) => {
+            const d = new Date(l); d.setDate(l.getDate() + base + i);
             return { nombre: n, num: d.getDate(), iso: formatDateISO(d) };
-        });
+        }));
     }, [offset]);
 
     const porDia = useMemo(() => {
@@ -43,7 +44,7 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
         <div className="space-y-3">
             <div className="flex items-center gap-1.5">
                 <button type="button" onClick={() => setOffset(o => o - 1)} aria-label="Semana anterior"
-                    className="w-8 h-12 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronLeft size={16} /></button>
+                    className="w-8 h-28 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronLeft size={16} /></button>
                 <div className="flex-1 grid grid-cols-6 gap-1.5">
                     {semana.map(d => {
                         const sel = d.iso === dia;
@@ -59,7 +60,7 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
                     })}
                 </div>
                 <button type="button" onClick={() => setOffset(o => o + 1)} aria-label="Semana siguiente"
-                    className="w-8 h-12 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronRight size={16} /></button>
+                    className="w-8 h-28 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronRight size={16} /></button>
             </div>
 
             {ocupadosDia.map((b, i) => (

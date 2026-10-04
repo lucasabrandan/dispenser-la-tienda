@@ -4,7 +4,7 @@ import api from '../../services/api';
 import MiEspacioChecklist from '../miespacio/MiEspacioChecklist';
 import { useMiEspacio } from '../miespacio/useMiEspacio';
 import { toast } from 'react-hot-toast';
-import { formatDateISO, lunesDeLaSemana } from '../../utils/dateUtils';
+import { formatDateISO, lunesAgenda } from '../../utils/dateUtils';
 import DireccionMapa from '../ui/DireccionMapa';
 
 const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-body font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
@@ -13,10 +13,12 @@ const labelCls = 'block text-label font-black text-muted uppercase tracking-wide
 // Generar dias de la semana (lunes a sabado) — misma cuenta de "lunes de la
 // semana" que usa WeekDatePicker.jsx, centralizada en dateUtils.js.
 function generarSemana(offset = 0) {
-    const lunes = lunesDeLaSemana(new Date());
+    const lunes = lunesAgenda();
     lunes.setDate(lunes.getDate() + offset * 7);
     const dias = [];
-    for (let i = 0; i < 6; i++) {
+    // 2 semanas (5-oct-2026): lun–sáb de esta y de la próxima, para organizarse
+    for (let i = 0; i < 13; i++) {
+        if (i === 6) continue; // domingo
         const d = new Date(lunes);
         d.setDate(lunes.getDate() + i);
         dias.push({
@@ -317,13 +319,29 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
                     </div>
                 </div>
 
-                {/* Dias de la semana */}
-                <div className="grid grid-cols-6 gap-1.5 mb-4">
-                    {semana.map(d => (
-                        <DiaBtn key={d.fecha} d={d}
-                            seleccionado={d.fecha === diaSel}
-                            count={conteosPorDia[d.fecha] || 0}
-                            onClick={() => setDiaSel(d.fecha)} />
+                {/* Navegación compacta cuando va embebida (en "Lo mío") */}
+                {embebido && (
+                    <div className="flex items-center justify-between mb-2">
+                        <button onClick={() => setSemanaOffset(v => v - 1)} aria-label="Semana anterior"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-card text-secondary border border-black/[0.05] dark:border-white/[0.05] active:scale-90">←</button>
+                        <button onClick={() => setSemanaOffset(0)} className="text-label font-black text-muted uppercase tracking-wider">
+                            {semanaOffset === 0 ? 'Esta semana y la próxima' : mesLabel}
+                        </button>
+                        <button onClick={() => setSemanaOffset(v => v + 1)} aria-label="Semana siguiente"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-card text-secondary border border-black/[0.05] dark:border-white/[0.05] active:scale-90">→</button>
+                    </div>
+                )}
+                {/* Dos semanas, una fila cada una */}
+                <div className="space-y-1.5 mb-4">
+                    {[semana.slice(0, 6), semana.slice(6)].map((fila, i) => (
+                        <div key={i} className="grid grid-cols-6 gap-1.5">
+                            {fila.map(d => (
+                                <DiaBtn key={d.fecha} d={d}
+                                    seleccionado={d.fecha === diaSel}
+                                    count={conteosPorDia[d.fecha] || 0}
+                                    onClick={() => setDiaSel(d.fecha)} />
+                            ))}
+                        </div>
                     ))}
                 </div>
 
