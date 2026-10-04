@@ -8,7 +8,10 @@ import { useAuth } from '../../context/AuthContext';
 // Presupuesto propio (5-oct-2026): PDF simple a nombre del técnico/socio para
 // SUS clientes. Sin marca de Dispenser La Tienda, no se guarda en el sistema ni
 // entra en la liquidación. Solo se anota una línea en la libreta del cliente.
-const INPUT = 'w-full h-10 px-3 rounded-xl bg-chip text-ink text-body outline-none placeholder:text-muted';
+// Sin w-full en la base: en la fila de ítem, w-full le ganaba a w-28 y el campo
+// del precio aplastaba al de la descripción (bug 5-oct-2026).
+const BASE = 'h-10 px-3 rounded-xl bg-chip text-ink text-body outline-none placeholder:text-muted';
+const INPUT = `w-full ${BASE}`;
 const fmt = v => `$ ${Math.round(Number(v) || 0).toLocaleString('es-AR')}`;
 const leer = (k, d = '') => { try { return localStorage.getItem(k) || d; } catch { return d; } };
 const guardarLS = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
@@ -77,8 +80,8 @@ export default function PresupuestoPropio({ cliente, onCerrar, onHecho }) {
 
                 {items.map((it, i) => (
                     <div key={i} className="flex gap-2">
-                        <input value={it.desc} onChange={e => setItem(i, 'desc', e.target.value)} placeholder="Qué vas a hacer o vender" className={`${INPUT} flex-1`} />
-                        <input value={it.precio} onChange={e => setItem(i, 'precio', e.target.value)} placeholder="$" inputMode="numeric" className={`${INPUT} w-28 text-right`} />
+                        <input value={it.desc} onChange={e => setItem(i, 'desc', e.target.value)} placeholder="Qué vas a hacer o vender" className={`${BASE} flex-1 min-w-0`} />
+                        <input value={it.precio} onChange={e => setItem(i, 'precio', e.target.value)} placeholder="$" inputMode="numeric" className={`${BASE} w-28 shrink-0 text-right`} />
                     </div>
                 ))}
                 <button onClick={() => setItems(p => [...p, { desc: '', precio: '' }])} className="h-9 px-3 rounded-xl bg-chip text-label font-bold text-secondary flex items-center gap-1">
