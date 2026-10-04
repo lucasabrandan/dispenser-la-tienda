@@ -40,6 +40,7 @@ public class EquipoService {
         Sede sede = sedeRepository.findById(dto.sedeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada con ID: " + dto.sedeId()));
 
+        exigirSerieLibre(dto.numeroSerie(), null);
         Equipo nuevoEquipo = new Equipo(
                 sede, dto.marca(), dto.modelo(), dto.numeroSerie(),
                 dto.ubicacion(), dto.piso(), dto.sector(), dto.observaciones()
@@ -59,6 +60,7 @@ public class EquipoService {
         equipo.setSede(sede);
         equipo.setMarca(dto.marca());
         equipo.setModelo(dto.modelo());
+        exigirSerieLibre(dto.numeroSerie(), id);
         equipo.setNumeroSerie(dto.numeroSerie());
         equipo.setUbicacion(dto.ubicacion());
         equipo.setPiso(dto.piso());
@@ -112,6 +114,17 @@ public class EquipoService {
      * si no MS290926A, MS290926B... `ocupados` son series ya usadas en el ticket actual
      * que todavía no se guardaron.
      */
+    // Un N/S no se repite en todo el sistema (5-oct-2026)
+    private void exigirSerieLibre(String serie, Long idPropio) {
+        String s = Equipo.normalizarSerie(serie);
+        if (s == null || s.equals("S/N") || s.equals("MOSTRADOR")) return;
+        equipoRepository.findFirstByNumeroSerie(s).ifPresent(otro -> {
+            if (idPropio == null || !otro.getId().equals(idPropio))
+                throw new com.dispenserlatienda.exception.BusinessException("SERIE_DUPLICADA",
+                        "El N/S " + s + " ya existe. Usá \"Generar N/S\" para obtener uno libre.");
+        });
+    }
+
     public String siguienteSerie(String base, java.util.Collection<String> ocupados) {
         String b = base == null ? "" : base.trim().toUpperCase().replaceAll("[^A-Z0-9]", "");
         if (b.isEmpty()) throw new IllegalArgumentException("Base de serie vacía");

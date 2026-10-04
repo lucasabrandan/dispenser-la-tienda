@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { limpiarSerie } from '../../utils/serie';
 import { toast } from 'react-hot-toast';
 import { getTodayISO } from '../../utils/dateUtils';
 import FotoUpload from '../servicio/FotoUpload';
@@ -224,7 +225,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                 {/* Serie del equipo */}
                 <div>
                     <label className={labelCls}>N Serie equipo</label>
-                    <input type="text" value={serial} onChange={e => setSerial(e.target.value)}
+                    <input type="text" value={serial} onChange={e => setSerial(limpiarSerie(e.target.value))}
                         placeholder="S/N" className={inputCls} />
                 </div>
 

@@ -9,7 +9,7 @@ import FotoUpload from './FotoUpload';
 import TicketItemsList from './TicketItemsList';
 import CalculadoraMO from './CalculadoraMO';
 import { LuZap, LuWrench, LuShieldCheck, LuHourglass, LuPackage, LuCamera, LuWandSparkles } from 'react-icons/lu';
-import api from '../../services/api';
+import { generarSerie as generarSerieAuto, limpiarSerie } from '../../utils/serie';
 import { toast } from 'react-hot-toast';
 
 import { filtroMultiTermino } from '../../utils/busqueda';
@@ -38,18 +38,9 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
     // existe el backend le agrega A, B, C... (ej. Marcos hoy → MS290926, MS290926A).
     const generarSerie = async () => {
         const nombre = (tecnicoSeleccionado?.nombre || usuario?.nombre || 'X').trim();
-        const inicial = (nombre.normalize('NFD').replace(/[^A-Za-z]/g, '')[0] || 'X').toUpperCase();
-        const hoy = new Date();
-        const dd = String(hoy.getDate()).padStart(2, '0');
-        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-        const aa = String(hoy.getFullYear()).slice(-2);
-        const base = `${inicial}S${dd}${mm}${aa}`;
-        const ocupados = ticketItems.map(i => i.equipoSerial).filter(Boolean).join(',');
         setGenerandoSerie(true);
         try {
-            const res = await api.get('/equipos/siguiente-serie', { params: { base, ...(ocupados ? { ocupados } : {}) } });
-            const serie = res.data?.serie;
-            if (!serie) throw new Error('sin serie');
+            const serie = await generarSerieAuto(nombre, ticketItems.map(i => i.equipoSerial));
             setItemActual({ ...itemActual, equipoSerial: serie, esNuevoEquipo: true });
             setMostrarEquipo(true);
             toast.success(`N/S generado: ${serie}`);
@@ -213,7 +204,7 @@ export default function PasoEquipos({ hook, onNext, onBack, selectStyles }) {
                                             consultarAntecedentes(s.value);
                                         }}
                                         onCreateOption={async val => {
-                                            const serie = val.trim().toUpperCase();
+                                            const serie = limpiarSerie(val);
                                             const ok = await consultarAntecedentes(serie);
                                             if (ok === false) return; // es de otro cliente: no se carga
                                             setItemActual({ ...itemActual, equipoSerial: serie, esNuevoEquipo: true });

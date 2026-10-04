@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
+import { limpiarSerie, generarSerie } from '../utils/serie';
 
 const MARCAS  = ['BACOPE', 'HUMMA', 'TERMOPLAST', 'TRIA', 'USHUAIA', 'OTRA'];
 const MODELOS = ['RED', 'BIDÓN', 'MESADA + RED', 'MESADA + BIDÓN', 'OTROS'];
@@ -24,6 +26,7 @@ const fieldCls = `
 
 export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEditar, onRefresh, onClose }) {
     const [form, setForm] = React.useState(INITIAL_FORM);
+    const { usuario } = useAuth();
     const [cargando, setCargando] = React.useState(false);
 
     useEffect(() => {
@@ -147,7 +150,12 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
                         <div className="space-y-1">
                             <label className="text-label font-black text-muted uppercase ml-1">Nro de Serie</label>
                             <input className={fieldCls} placeholder="S/N..."
-                                value={form.numeroSerie} onChange={e => setForm({ ...form, numeroSerie: e.target.value })} />
+                                value={form.numeroSerie} onChange={e => setForm({ ...form, numeroSerie: limpiarSerie(e.target.value) })} />
+                            <button type="button" onClick={async () => {
+                                    try { setForm(f => ({ ...f, numeroSerie: '' })); const s = await generarSerie(usuario?.nombre); setForm(f => ({ ...f, numeroSerie: s })); }
+                                    catch { toast.error('No se pudo generar el N/S'); }
+                                }}
+                                className="ml-1 text-caption font-bold text-secondary underline">Generar N/S</button>
                         </div>
                         <div className="space-y-1">
                             <label className="text-label font-black text-muted uppercase ml-1">Marca</label>

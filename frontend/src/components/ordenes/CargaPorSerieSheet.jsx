@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { LuX, LuSearch, LuTrash2, LuPackage, LuCamera } from 'react-icons/lu';
 import api from '../../services/api';
+import { limpiarSerie, generarSerie } from '../../utils/serie';
 import { useAuth } from '../../context/AuthContext';
 import { getTodayISO } from '../../utils/dateUtils';
 import FotoUpload from '../servicio/FotoUpload';
@@ -83,8 +84,20 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
         serie: eq.serie, equipo: eq, trabajo: '', repuestos: [], fotoAntes: null, fotoDespues: null,
     }, ...its]);
 
+    // N/S nuevo para un equipo sin número: queda listo para darlo de alta
+    const [generando, setGenerando] = useState(false);
+    const generarNuevo = async () => {
+        setGenerando(true);
+        try {
+            const s = await generarSerie(orden?.tecnicoNombre || usuario?.nombre, items.map(i => i.serie));
+            setSerie(''); setNoEncontrado(s);
+            toast.success(`N/S generado: ${s}. Elegí dónde está y tocá Alta.`);
+        } catch { toast.error('No se pudo generar el N/S'); }
+        finally { setGenerando(false); }
+    };
+
     const buscar = async (valor = serie) => {
-        const s = valor.trim().toUpperCase();
+        const s = limpiarSerie(valor);
         if (!s) return;
         if (itemsRef.current.some(i => i.serie.toUpperCase() === s)) { toast('Ese equipo ya está en la lista'); return; }
         setBuscando(true); setNoEncontrado(null);
@@ -217,16 +230,23 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
                 </p>
 
                 <form onSubmit={e => { e.preventDefault(); buscar(); }} className="flex gap-1.5 mb-3">
-                    <input value={serie} onChange={e => setSerie(e.target.value.toUpperCase())} placeholder="N° de serie del equipo" className={INPUT} />
+                    <input value={serie} onChange={e => setSerie(limpiarSerie(e.target.value))} placeholder="N° de serie del equipo" className={INPUT} />
                     <button type="submit" disabled={buscando || !serie.trim()}
                         className="px-4 rounded-xl font-black text-label uppercase bg-brand-red text-white active:scale-95 flex items-center gap-1.5 disabled:opacity-40">
                         <LuSearch size={15} /> {buscando ? '…' : 'Agregar'}
                     </button>
                 </form>
+                {/* Equipo sin N/S: se genera con la regla de siempre (inicial + S + fecha, y A, B, C…) */}
+                {(esAdmin || cliente) && !noEncontrado && (
+                    <button type="button" onClick={generarNuevo} disabled={generando}
+                        className="mb-3 -mt-1 text-caption font-bold text-secondary underline disabled:opacity-50">
+                        {generando ? 'Generando…' : '¿El equipo no tiene N/S? Generar uno nuevo'}
+                    </button>
+                )}
 
                 {noEncontrado && (
                     <div className="p-3 rounded-xl bg-page border border-black/[0.06] dark:border-white/[0.06] mb-3 text-caption">
-                        <p className="font-bold text-ink mb-2">{noEncontrado} no está cargado.</p>
+                        <p className="font-bold text-ink mb-2">{noEncontrado} es nuevo, todavía no está cargado.</p>
                         {cliente ? (
                             <>
                                 <p className="text-muted mb-1.5">Darlo de alta en una dirección de {cliente.nombre}:</p>

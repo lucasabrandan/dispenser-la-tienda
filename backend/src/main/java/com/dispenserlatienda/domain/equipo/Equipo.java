@@ -34,7 +34,7 @@ public class Equipo extends BaseEntity {
         this.sede = sede;
         this.marca = marca;
         this.modelo = modelo;
-        this.numeroSerie = numeroSerie;
+        this.numeroSerie = normalizarSerie(numeroSerie);
         this.ubicacion = ubicacion;
         this.piso = piso;
         this.sector = sector;
@@ -76,7 +76,14 @@ public class Equipo extends BaseEntity {
     }
 
     public void setNumeroSerie(String numeroSerie) {
-        this.numeroSerie = numeroSerie;
+        this.numeroSerie = normalizarSerie(numeroSerie);
+    }
+
+    // N/S siempre sin espacios y en mayúsculas (5-oct-2026): "ls 041026" → "LS041026".
+    public static String normalizarSerie(String s) {
+        if (s == null) return null;
+        String n = s.replaceAll("\\s+", "").toUpperCase();
+        return n.isEmpty() ? null : n;
     }
 
     public String getUbicacion() {

@@ -559,7 +559,7 @@ public class ServicioService {
                 tipoDetectado = ServicioTipo.TECNICA;
             }
 
-            Equipo equipo = equipoRepository.findFirstByNumeroSerie(itemDto.equipoSerial()).orElse(null);
+            Equipo equipo = equipoRepository.findFirstByNumeroSerie(Equipo.normalizarSerie(itemDto.equipoSerial())).orElse(null);
 
             // Un N/S es único en todo el sistema: si ya pertenece a otro cliente no se
             // engancha a este servicio (antes se mezclaba el historial entre clientes).

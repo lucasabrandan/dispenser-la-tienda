@@ -54,7 +54,9 @@ public class HistorialSerieController {
             .orElseThrow(() -> new IllegalStateException("Usuario no encontrado"));
     }
 
-    private Equipo buscarExacto(String s) {
+    private Equipo buscarExacto(String crudo) {
+        final String s = Equipo.normalizarSerie(crudo);
+        if (s == null) return null;
         Equipo e = equipoRepository.findFirstByNumeroSerie(s).orElse(null);
         if (e != null) return e;
         return equipoRepository.findByNumeroSerieContainingIgnoreCase(s,
@@ -87,7 +89,7 @@ public class HistorialSerieController {
     @GetMapping("/para-carga")
     @Transactional(readOnly = true)
     public Map<String, Object> paraCarga(@RequestParam String serie) {
-        String s = serie == null ? "" : serie.trim();
+        String s = serie == null ? "" : serie.replaceAll("\\s+", "").toUpperCase();
         if (s.isEmpty()) throw new IllegalArgumentException("Falta el N° de serie");
         Map<String, Object> out = new LinkedHashMap<>();
         Equipo e = buscarExacto(s);
@@ -108,7 +110,7 @@ public class HistorialSerieController {
     @GetMapping
     @Transactional(readOnly = true)
     public Map<String, Object> porSerie(@RequestParam String serie, Authentication auth) {
-        String s = serie == null ? "" : serie.trim();
+        String s = serie == null ? "" : serie.replaceAll("\\s+", "").toUpperCase();
         if (s.isEmpty()) throw new IllegalArgumentException("Falta el N° de serie");
 
         Map<String, Object> out = new LinkedHashMap<>();

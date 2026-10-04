@@ -8,6 +8,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { LuZap, LuCamera, LuImage, LuPackage, LuPencil } from 'react-icons/lu';
 
 import { filtroMultiTermino } from '../../utils/busqueda';
+import { limpiarSerie } from '../../utils/serie';
 async function comprimirFoto(file) {
     try {
         return await imageCompression(file, {
@@ -236,13 +237,13 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
                                     if (eq?.ubicacion) setUbicacion(eq.ubicacion);
                                 }}
                                 onCreateOption={val => {
-                                    setSerial(val);
+                                    setSerial(limpiarSerie(val));
                                     setEsNuevo(true);
                                 }}
                                 isClearable
                                 placeholder="Buscar equipo o escribir S/N..."
                                 noOptionsMessage={() => 'Escribí el S/N manualmente'}
-                                formatCreateLabel={v => `Nuevo: ${v}`}
+                                formatCreateLabel={v => `Nuevo: ${limpiarSerie(v)}`}
                             />
                         </div>
 
