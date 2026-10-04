@@ -87,6 +87,13 @@ public class OrdenVisitaController {
         return ResponseEntity.ok(service.avanzarEstado(id, dto));
     }
 
+    // Técnico: "Ok, voy" — confirma la visita asignada (5-oct-2026)
+    @PatchMapping("/{id}/confirmar")
+    public ResponseEntity<OrdenVisitaDTO> confirmar(@PathVariable Long id, Authentication auth) {
+        verificarAccesoOrden(id, auth);
+        return ResponseEntity.ok(service.confirmar(id));
+    }
+
     // Técnico: "no puedo ir" a esta visita (motivo propio, no del cliente)
     @PostMapping("/{id}/no-puedo")
     public ResponseEntity<OrdenVisitaDTO> noPuedo(@PathVariable Long id,

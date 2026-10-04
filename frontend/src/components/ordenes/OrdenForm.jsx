@@ -41,7 +41,12 @@ const ESTADOS_EDITABLES = [
     { value: 'CANCELADA',   label: 'Cancelada' },
 ];
 
-export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
+// formId: si viene, los botones van afuera (pie fijo de ModalShell) y se conectan
+// con <button form={formId}>. onReprogramar: al editar, día/hora/técnico se cambian
+// con el mismo "Elegí el hueco" de toda la app en vez de campos sueltos (5-oct-2026).
+export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar, formId, onReprogramar }) {
+    const [masOpciones, setMasOpciones] = useState(false);
+    const compacto = !!(orden && onReprogramar);
     const [form, setForm]             = useState(EMPTY);
     const [presupuestos, setPresupuestos] = useState([]);
     const [clientes, setClientes]     = useState([]);
@@ -157,10 +162,26 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
     const presupuestoSeleccionado = presupuestos.find(p => String(p.id) === String(form.presupuestoId));
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id={formId} onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Al editar: cuándo y quién en una línea; se cambia con Reprogramar */}
+            {compacto && (
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-chip">
+                    <div className="flex-1 min-w-0">
+                        <p className="text-label font-black text-muted uppercase tracking-wider">Cuándo y quién</p>
+                        <p className="text-body font-black text-ink truncate">
+                            {(tecnicos.find(t => String(t.id) === String(form.tecnicoId))?.nombre || 'Sin técnico').split(' ')[0]}
+                            {' · '}{form.fechaProgramada ? new Date(form.fechaProgramada + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'numeric' }) : 'sin día'}
+                            {form.horaEstimada ? ` · ${form.horaEstimada}` : ''}
+                        </p>
+                    </div>
+                    <button type="button" onClick={onReprogramar}
+                        className="h-9 px-3 rounded-xl bg-card text-label font-black text-ink shrink-0 active:scale-95">Cambiar</button>
+                </div>
+            )}
 
             {/* Técnico */}
-            <div>
+            {!compacto && <div>
                 <label className={labelCls}>Técnico asignado *</label>
                 <select value={form.tecnicoId} onChange={e => set('tecnicoId', e.target.value)}
                     required className={inputCls}>
@@ -169,10 +190,10 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                         <option key={t.id} value={t.id}>{t.nombre}</option>
                     ))}
                 </select>
-            </div>
+            </div>}
 
-            {/* Estado (solo al editar) */}
-            {orden && (
+            {/* Estado (solo al editar; en modo compacto va en "Más opciones") */}
+            {orden && !compacto && (
                 <div>
                     <label className={labelCls}>Estado</label>
                     {orden.estado === 'COMPLETADA' ? (
@@ -208,8 +229,8 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                         </div>
                     )}
                 />
-                {/* Campos editables post-selección o para cliente no registrado */}
-                <div className="grid grid-cols-2 gap-3 mt-2">
+                {/* Nombre/teléfono a mano: solo si no se eligió un cliente de la lista */}
+                {!form.clienteId && <div className="grid grid-cols-2 gap-3 mt-2">
                     <input value={form.clienteNombre}
                         onChange={e => set('clienteNombre', e.target.value)}
                         placeholder="Nombre (manual si no está en lista)"
@@ -218,7 +239,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                         onChange={e => set('clienteTelefono', e.target.value)}
                         placeholder="Teléfono"
                         className={inputCls} />
-                </div>
+                </div>}
             </div>
 
             {/* Dirección */}
@@ -229,7 +250,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
             </div>
 
             {/* Vincular presupuesto existente */}
-            <div>
+            {(!compacto || masOpciones) && <div>
                 <label className={labelCls}>Vincular presupuesto existente (opcional)</label>
                 <select value={form.presupuestoId}
                     onChange={e => handlePresupuesto(e.target.value)}
@@ -246,7 +267,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                         ✓ El técnico verá el botón "Ejecutar presupuesto" en la orden
                     </p>
                 )}
-            </div>
+            </div>}
 
             {/* Título */}
             <div>
@@ -285,22 +306,36 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
             </div>
 
             {/* Día y horario — igual que Nueva visita y Reprogramar (3-oct-2026) */}
-            <div>
+            {!compacto && <div>
                 <label className={labelCls}>Día y horario *</label>
                 <FechaFranja fecha={form.fechaProgramada} hora={form.horaEstimada}
                     onFecha={v => set('fechaProgramada', v)} onHora={v => set('horaEstimada', v)} />
-            </div>
-            <div>
+            </div>}
+            {compacto && masOpciones && orden.estado !== 'COMPLETADA' && (
+                <div>
+                    <label className={labelCls}>Estado</label>
+                    <select value={form.estado} onChange={e => set('estado', e.target.value)} className={inputCls}>
+                        {ESTADOS_EDITABLES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                </div>
+            )}
+            {(!compacto || masOpciones) && <div>
                 <label className={labelCls}>Prioridad</label>
                 <select value={form.prioridad} onChange={e => set('prioridad', e.target.value)} className={inputCls}>
                     {PRIORIDADES.map(p => (
                         <option key={p.value} value={p.value}>{p.label}</option>
                     ))}
                 </select>
-            </div>
+            </div>}
+            {compacto && (
+                <button type="button" onClick={() => setMasOpciones(v => !v)}
+                    className="text-caption font-bold text-secondary underline">
+                    {masOpciones ? 'Menos opciones' : 'Más opciones (presupuesto, prioridad, estado)'}
+                </button>
+            )}
 
-            {/* Botones */}
-            <div className="flex gap-3 pt-2">
+            {/* Botones (si hay formId van en el pie fijo de la ventana) */}
+            {!formId && <div className="flex gap-3 pt-2">
                 <button type="button" onClick={onCancelar}
                     className="flex-1 py-3 rounded-xl font-bold text-body bg-chip text-secondary active:scale-95 transition-all">
                     Cancelar
@@ -309,7 +344,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                     className="flex-1 py-3 rounded-xl font-bold text-body bg-brand-red text-white active:scale-95 transition-all">
                     {orden ? 'Guardar cambios' : 'Crear orden'}
                 </button>
-            </div>
+            </div>}
         </form>
     );
 }

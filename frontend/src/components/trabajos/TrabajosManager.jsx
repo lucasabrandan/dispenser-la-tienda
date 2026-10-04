@@ -16,6 +16,7 @@ import DetalleSheet from '../servicio/DetalleSheet';
 import OrdenForm from '../ordenes/OrdenForm';
 import VisitaForm from '../ordenes/VisitaForm';
 import ReprogramarSheet from '../ordenes/ReprogramarSheet';
+import ModalShell from '../ui/ModalShell';
 import CierreMensualModal from '../cliente/CierreMensualModal';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
@@ -186,7 +187,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     fila = {
                         ...base, etapa: et, tecnico: ord.tecnicoNombre || '',
                         fecha: fechaCorta(ord.fechaProgramada) + (ord.horaEstimada ? ` ${ord.horaEstimada}` : ''),
-                        nota: atr ? `Atrasada ${diasDesde(ord.fechaProgramada)} días` : (et === 'CAMINO' ? 'Salió' : et === 'LUGAR' ? 'Trabajando' : ''),
+                        nota: atr ? `Atrasada ${diasDesde(ord.fechaProgramada)} días` : (et === 'CAMINO' ? 'Salió' : et === 'LUGAR' ? 'Trabajando' : et === 'ASIGNADO' ? (ord.confirmadaEn ? '✓ Confirmó' : 'Sin confirmar') : ''),
                         alerta: atr,
                         accion: atr ? 'atrasada' : et === 'ASIGNADO' ? 'reprogramar' : 'seguimiento',
                         fechaOrden: fo(ord.fechaProgramada) + ' ' + (ord.horaEstimada || ''),
@@ -243,7 +244,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     busca: [o.clienteNombre, o.titulo, o.direccion, o.tecnicoNombre].filter(Boolean).join(' ').toLowerCase(),
                     tecnico: o.tecnicoNombre || '',
                     fecha: fechaCorta(o.fechaProgramada) + (o.horaEstimada ? ` ${o.horaEstimada}` : ''),
-                    nota: atr ? `Atrasada ${diasDesde(o.fechaProgramada)} días` : (o.equiposSerie ? `${o.equiposSerie.split(',').filter(Boolean).length} equipos · cierre mensual` : 'Visita sin presupuesto'),
+                    nota: atr ? `Atrasada ${diasDesde(o.fechaProgramada)} días` : [o.equiposSerie ? `${o.equiposSerie.split(',').filter(Boolean).length} equipos · cierre mensual` : 'Visita sin presupuesto', et === 'ASIGNADO' ? (o.confirmadaEn ? '✓ Confirmó' : 'Sin confirmar') : null].filter(Boolean).join(' · '),
                     alerta: atr, monto: Number(o.montoEstimado) || 0,
                     accion: atr ? 'atrasada' : et === 'ASIGNADO' ? 'reprogramar' : 'seguimiento',
                     fechaOrden: String(o.fechaProgramada || '') + ' ' + (o.horaEstimada || ''),
@@ -678,14 +679,18 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     onEditarTodo={() => { setOrdenEditar(reprogramar); setReprogramar(null); }} />
             )}
             {ordenEditar && (
-                <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
-                    <div className="w-full max-w-lg bg-card rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-body-lg font-black text-ink mb-5">Editar visita</h2>
-                        <OrdenForm orden={ordenEditar} tecnicos={tecnicos}
-                            onGuardar={(form) => guardarOrden(ordenEditar.id, form)}
-                            onCancelar={() => setOrdenEditar(null)} />
-                    </div>
-                </div>
+                <ModalShell titulo="Editar visita" subtitulo={ordenEditar.clienteNombre || ordenEditar.titulo} onCerrar={() => setOrdenEditar(null)}
+                    pie={(
+                        <div className="grid grid-cols-2 gap-3">
+                            <button type="button" onClick={() => setOrdenEditar(null)} className="h-12 rounded-xl font-bold text-body bg-chip text-secondary active:scale-95">Cancelar</button>
+                            <button type="submit" form="form-editar-visita" className="h-12 rounded-xl font-black text-body bg-brand-red text-white active:scale-95">Guardar cambios</button>
+                        </div>
+                    )}>
+                    <OrdenForm orden={ordenEditar} tecnicos={tecnicos} formId="form-editar-visita"
+                        onReprogramar={() => { setReprogramar(ordenEditar); setOrdenEditar(null); }}
+                        onGuardar={(form) => guardarOrden(ordenEditar.id, form)}
+                        onCancelar={() => setOrdenEditar(null)} />
+                </ModalShell>
             )}
 
             {atrasada && (

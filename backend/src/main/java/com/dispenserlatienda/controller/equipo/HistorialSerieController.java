@@ -1,6 +1,7 @@
 package com.dispenserlatienda.controller.equipo;
 
 import com.dispenserlatienda.domain.equipo.Equipo;
+import com.dispenserlatienda.domain.orden.OrdenVisita;
 import com.dispenserlatienda.domain.sede.Sede;
 import com.dispenserlatienda.domain.servicio.EstadoServicio;
 import com.dispenserlatienda.domain.servicio.Servicio;
@@ -134,12 +135,17 @@ public class HistorialSerieController {
         out.put("encontrado", true);
         out.put("equipo", datosEquipo(e));
 
+        out.put("visitas", historial(e, 20));
+        return out;
+    }
+
+    private List<Map<String, Object>> historial(Equipo e, int max) {
         List<Object[]> res = em.createQuery(
             "select s, i from Servicio s join s.items i where i.equipo.id = :eid and s.estado in :estados " +
             "order by s.fechaServicio desc, s.id desc", Object[].class)
             .setParameter("eid", e.getId())
             .setParameter("estados", HECHOS)
-            .setMaxResults(20)
+            .setMaxResults(max)
             .getResultList();
 
         List<Map<String, Object>> visitas = new ArrayList<>();
@@ -168,7 +174,49 @@ public class HistorialSerieController {
             v.put("repuestos", reps);
             visitas.add(v);
         }
-        out.put("visitas", visitas);
+        return visitas;
+    }
+
+    // Equipos de una visita con su historial (5-oct-2026), para que el técnico los
+    // vea en la tarjeta de la visita sin buscar el N/S. Sale de los N/S de la orden,
+    // de los ítems del presupuesto vinculado o, si no hay, de las sedes del cliente.
+    // Solo el técnico asignado (o el admin). Sin montos.
+    @GetMapping("/orden/{ordenId}")
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> deOrden(@PathVariable Long ordenId, Authentication auth) {
+        Usuario u = usuario(auth);
+        OrdenVisita o = em.find(OrdenVisita.class, ordenId);
+        if (o == null) throw new com.dispenserlatienda.exception.ResourceNotFoundException("Visita no encontrada");
+        if (u.getRol() != RolUsuario.ADMIN && (o.getTecnico() == null || !o.getTecnico().getId().equals(u.getId())))
+            throw new org.springframework.security.access.AccessDeniedException("No es tu visita");
+
+        LinkedHashMap<Long, Equipo> equipos = new LinkedHashMap<>();
+        if (o.getEquiposSerie() != null && !o.getEquiposSerie().isBlank()) {
+            for (String serie : o.getEquiposSerie().split("[,;\\s]+")) {
+                if (serie.isBlank()) continue;
+                Equipo e = buscarExacto(serie.trim());
+                if (e != null) equipos.putIfAbsent(e.getId(), e);
+            }
+        }
+        if (equipos.isEmpty() && o.getPresupuestoId() != null) {
+            Servicio p = em.find(Servicio.class, o.getPresupuestoId());
+            if (p != null) for (ServicioItem it : p.getItems())
+                if (it.getEquipo() != null) equipos.putIfAbsent(it.getEquipo().getId(), it.getEquipo());
+        }
+        if (equipos.isEmpty() && o.getClienteId() != null) {
+            em.createQuery("select e from Equipo e where e.sede.cliente.id = :cid and e.sede.activa = true", Equipo.class)
+                .setParameter("cid", o.getClienteId()).setMaxResults(10).getResultList()
+                .forEach(e -> equipos.putIfAbsent(e.getId(), e));
+        }
+
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Equipo e : equipos.values()) {
+            Map<String, Object> m = new LinkedHashMap<>(datosEquipo(e));
+            List<Map<String, Object>> hist = historial(e, 3);
+            m.put("visitas", hist);
+            m.put("garantiaHasta", hist.stream().map(v -> v.get("garantiaHasta")).filter(Objects::nonNull).findFirst().orElse(null));
+            out.add(m);
+        }
         return out;
     }
 }

@@ -27,5 +27,7 @@ public record OrdenVisitaDTO(
     // días/franjas aceptó el cliente (JSON [{dia, franja}]), para que el técnico lo vea.
     Boolean horarioACoordinar,
     String ventanasCliente,
-    String equiposSerie
+    String equiposSerie,
+    // Cuándo el técnico confirmó "Ok, voy" (null = sin confirmar)
+    LocalDateTime confirmadaEn
 ) {}

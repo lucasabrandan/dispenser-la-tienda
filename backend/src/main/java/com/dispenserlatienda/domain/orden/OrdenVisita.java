@@ -76,6 +76,10 @@ public class OrdenVisita {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // El técnico tocó "Ok, voy" (5-oct-2026). Se borra si cambian técnico, día u hora.
+    @Column(name = "confirmada_en")
+    private LocalDateTime confirmadaEn;
+
     @PrePersist
     protected void onCreate() {
         this.creadoEn = LocalDateTime.now();
@@ -144,4 +148,6 @@ public class OrdenVisita {
 
     public LocalDateTime getCreadoEn() { return creadoEn; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public LocalDateTime getConfirmadaEn() { return confirmadaEn; }
+    public void setConfirmadaEn(LocalDateTime confirmadaEn) { this.confirmadaEn = confirmadaEn; }
 }

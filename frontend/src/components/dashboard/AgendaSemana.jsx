@@ -85,6 +85,7 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
                                 <span className="flex items-center gap-1.5 text-caption text-muted">
                                     <AvatarTecnico nombre={o.tecnicoNombre} size={16} />
                                     {(o.tecnicoNombre || 'Sin técnico').split(' ')[0]} · {estadoLabel(o.estado).toLowerCase()}
+                                    {o.estado === 'PENDIENTE' && (o.confirmadaEn ? ' · ✓ confirmó' : ' · sin confirmar')}
                                 </span>
                             </span>
                         </button>

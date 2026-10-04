@@ -53,7 +53,7 @@ public interface OrdenVisitaRepository extends JpaRepository<OrdenVisita, Long> 
     int cancelarActivasDePresupuesto(@Param("presupuestoId") Long presupuestoId);
 
     @Modifying
-    @Query("UPDATE OrdenVisita o SET o.tecnico = :tecnico " +
+    @Query("UPDATE OrdenVisita o SET o.tecnico = :tecnico, o.confirmadaEn = NULL " +
            "WHERE o.presupuestoId = :presupuestoId AND o.estado IN ('PENDIENTE', 'EN_CAMINO', 'EN_SITIO', 'NO_ATENDIDO')")
     int reasignarActivasDePresupuesto(@Param("presupuestoId") Long presupuestoId,
                                       @Param("tecnico") com.dispenserlatienda.domain.usuario.Usuario tecnico);

@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface RendicionRepository extends JpaRepository<Rendicion, Long> {
     Optional<Rendicion> findByTecnicoIdAndFecha(Long tecnicoId, LocalDate fecha);
     List<Rendicion> findByRecibidoFalseOrderByFechaAsc();
+    List<Rendicion> findByTecnicoIdAndFechaBetween(Long tecnicoId, LocalDate desde, LocalDate hasta);
 }

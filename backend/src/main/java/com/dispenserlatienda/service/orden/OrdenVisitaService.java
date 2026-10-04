@@ -119,6 +119,11 @@ public class OrdenVisitaService {
             .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado: " + dto.tecnicoId()));
 
         boolean cambioTecnico = o.getTecnico() != null && !o.getTecnico().getId().equals(tecnico.getId());
+        // Si cambia quién, el día o la hora, el técnico tiene que volver a confirmar
+        if (cambioTecnico || !java.util.Objects.equals(o.getFechaProgramada(), dto.fechaProgramada())
+                || !java.util.Objects.equals(o.getHoraEstimada(), dto.horaEstimada())) {
+            o.setConfirmadaEn(null);
+        }
         o.setTecnico(tecnico);
         o.setTitulo(dto.titulo().trim());
         o.setDescripcion(dto.descripcion());
@@ -425,7 +430,8 @@ public class OrdenVisitaService {
             o.getPresupuestoId(),
             tentativo != null,
             tentativo != null ? tentativo.getVentanasDisponibles() : null,
-            o.getEquiposSerie()
+            o.getEquiposSerie(),
+            o.getConfirmadaEn()
         );
     }
 
@@ -511,6 +517,26 @@ public class OrdenVisitaService {
             texto + (deHoy.isEmpty() ? "" : " — " + deHoy.size() + " visita(s) para reasignar: " + clientes + ". Avisales a los clientes."),
             null);
         return deHoy.size();
+    }
+
+    // Técnico: "Ok, voy" (5-oct-2026). Aviso al admin solo en la app (sin WhatsApp).
+    @Transactional
+    public OrdenVisitaDTO confirmar(Long id) {
+        OrdenVisita o = repo.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
+        if (!ABIERTAS.contains(o.getEstado())) throw new IllegalArgumentException("Esta orden ya no está abierta");
+        if (o.getConfirmadaEn() == null) {
+            o.setConfirmadaEn(java.time.LocalDateTime.now());
+            String cliente = o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo();
+            String cuando = (o.getFechaProgramada() != null ? o.getFechaProgramada().toString() : "")
+                + (o.getHoraEstimada() != null ? " " + o.getHoraEstimada() : "");
+            usuarioRepo.findAll().stream()
+                .filter(u -> u.getRol() == RolUsuario.ADMIN && u.isActivo())
+                .forEach(admin -> notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE,
+                    admin.getId(), o.getTecnico().getId(),
+                    o.getTecnico().getNombre() + " confirmó · " + cliente, "Va el " + cuando.trim(), o.getId(), false));
+        }
+        return toDTO(o);
     }
 
     public void mensajeAlAdmin(Usuario tecnico, String mensaje) {

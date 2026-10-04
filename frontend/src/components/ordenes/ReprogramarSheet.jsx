@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { LuX } from 'react-icons/lu';
 import api from '../../services/api';
 import { formatDateISO, getTodayISO } from '../../utils/dateUtils';
+import ModalShell from '../ui/ModalShell';
 import AgendaHuecos, { franjaDe } from './AgendaHuecos';
 
 // Reprogramar una visita (3-oct-2026): igual que el paso 3 de Nueva visita —
@@ -55,40 +55,30 @@ export default function ReprogramarSheet({ orden, tecnicos = [], onGuardado, onC
 
     const tec = tecnicos.find(x => x.id === hueco?.tecnicoId);
     return (
-        <div className="fixed inset-0 z-[2000] bg-black/60 flex md:items-center md:justify-center">
-            <div className="w-full h-full md:h-[88vh] md:max-w-lg md:rounded-3xl bg-page flex flex-col overflow-hidden">
-                <div className="px-4 pt-4 pb-3 shrink-0 flex items-start gap-3">
-                    <button type="button" onClick={onCerrar} aria-label="Cerrar" className="w-10 h-10 rounded-xl bg-chip text-muted flex items-center justify-center active:scale-95"><LuX size={18} /></button>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-label font-black text-muted uppercase tracking-widest">Reprogramar visita</p>
-                        <h2 className="text-title font-black text-ink leading-tight truncate">{orden.clienteNombre || orden.titulo}</h2>
-                        <p className="text-caption text-muted truncate">{orden.titulo}{orden.direccion ? ` · ${orden.direccion}` : ''}</p>
+        <ModalShell titulo="Reprogramar visita" ancho="md:max-w-2xl"
+            subtitulo={[orden.clienteNombre || orden.titulo, orden.direccion].filter(Boolean).join(' · ')}
+            onCerrar={onCerrar}
+            pie={<button type="button" disabled={!hueco || guardando} onClick={guardar}
+                className="w-full h-12 rounded-xl bg-[#C9341F] text-white font-black text-body active:scale-95 disabled:opacity-40">Guardar</button>}>
+            <div className="space-y-3">
+                <AgendaHuecos tecnicos={tecnicos} ordenes={ordenes} fecha={fecha} onFecha={setFecha}
+                    hueco={hueco} onHueco={h => { setHueco(h); if (h && hora && franjaDe(hora) !== h.franja) setHora(''); }} direccion={orden.direccion} excluirId={orden.id} />
+                {hueco && (
+                    <div className="p-3.5 rounded-2xl bg-chip space-y-2">
+                        <p className="text-body text-ink">
+                            <b>{tec?.nombre?.split(' ')[0] || 'Técnico'}</b> · {new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'numeric' })} · {hora || hueco.franja.toLowerCase()}
+                        </p>
+                        <label className="flex items-center gap-2 text-caption text-secondary">
+                            Hora exacta (opcional)
+                            <input type="time" value={hora} onChange={e => setHora(e.target.value)} className="h-9 px-2 rounded-lg bg-card text-ink font-bold outline-none" />
+                            {hora && <button type="button" onClick={() => setHora('')} className="text-caption font-bold text-muted underline">Sin hora</button>}
+                        </label>
                     </div>
-                </div>
-                <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
-                    <AgendaHuecos tecnicos={tecnicos} ordenes={ordenes} fecha={fecha} onFecha={setFecha}
-                        hueco={hueco} onHueco={h => { setHueco(h); if (h && hora && franjaDe(hora) !== h.franja) setHora(''); }} direccion={orden.direccion} excluirId={orden.id} />
-                    {hueco && (
-                        <div className="p-3.5 rounded-2xl bg-card space-y-2">
-                            <p className="text-body text-ink">
-                                <b>{tec?.nombre?.split(' ')[0] || 'Técnico'}</b> · {new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'numeric' })} · {hora || hueco.franja.toLowerCase()}
-                            </p>
-                            <label className="flex items-center gap-2 text-caption text-secondary">
-                                Hora exacta (opcional)
-                                <input type="time" value={hora} onChange={e => setHora(e.target.value)} className="h-9 px-2 rounded-lg bg-chip text-ink font-bold outline-none" />
-                                {hora && <button type="button" onClick={() => setHora('')} className="text-caption font-bold text-muted underline">Sin hora</button>}
-                            </label>
-                        </div>
-                    )}
-                    {onEditarTodo && (
-                        <button type="button" onClick={onEditarTodo} className="text-caption font-bold text-secondary underline">Editar todo (cliente, dirección, notas…)</button>
-                    )}
-                </div>
-                <div className="shrink-0 px-4 pt-3 pb-5 border-t border-black/[0.06] dark:border-white/[0.06] bg-panel">
-                    <button type="button" disabled={!hueco || guardando} onClick={guardar}
-                        className="w-full h-12 rounded-xl bg-[#C9341F] text-white font-black text-body active:scale-95 disabled:opacity-40">Guardar</button>
-                </div>
+                )}
+                {onEditarTodo && (
+                    <button type="button" onClick={onEditarTodo} className="text-caption font-bold text-secondary underline">Editar el resto (cliente, dirección, notas…)</button>
+                )}
             </div>
-        </div>
+        </ModalShell>
     );
 }

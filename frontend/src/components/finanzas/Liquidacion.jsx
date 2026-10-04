@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { useMontos } from '../../context/MontosContext';
 import { formatMesLargo } from '../../utils/dateUtils';
 import { generarPDFLiquidacion } from '../../utils/pdf/liquidacion';
+import CuentasMes from './CuentasMes';
 
 // Liquidación mensual del técnico/socio (4-oct-2026).
 // La ven el admin (Finanzas → Técnicos) y el técnico (Mi mes) con los mismos números.
@@ -57,14 +58,15 @@ function Trabajo({ t, ocultar, pct }) {
 export default function Liquidacion({ tecnicoId, mesInicial, esAdmin = false, onMes }) {
     const { ocultar } = useMontos();
     const [mes, setMes] = useState(mesInicial || new Date().toISOString().substring(0, 7));
-    const [liq, setLiq] = useState(null);
+    const [data, setData] = useState(null); // { base, cuentas, movimientos, cierre }
+    const liq = data?.base;
     const [cargando, setCargando] = useState(true);
 
     useEffect(() => {
         setCargando(true);
-        api.get('/servicios/liquidacion', { params: { mes, ...(tecnicoId ? { tecnicoId } : {}) } })
-            .then(r => setLiq(r.data))
-            .catch(() => setLiq(null))
+        api.get('/liquidacion', { params: { mes, ...(tecnicoId ? { tecnicoId } : {}) } })
+            .then(r => setData(r.data))
+            .catch(() => setData(null))
             .finally(() => setCargando(false));
         if (onMes) onMes(mes);
     }, [mes, tecnicoId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -109,6 +111,9 @@ export default function Liquidacion({ tecnicoId, mesInicial, esAdmin = false, on
                         </div>
                     </div>
 
+                    <CuentasMes data={data} esAdmin={esAdmin} tecnicoId={liq.tecnicoId} mes={mes} nombre={nombre}
+                        ocultar={ocultar} onCambio={setData} />
+
                     {/* Trabajos cobrados */}
                     {liq.trabajos.length > 0 ? (
                         <div className="rounded-2xl overflow-hidden bg-card border border-black/[0.06] dark:border-white/[0.06]">
@@ -132,7 +137,7 @@ export default function Liquidacion({ tecnicoId, mesInicial, esAdmin = false, on
                         </div>
                     )}
 
-                    <button onClick={() => generarPDFLiquidacion(liq)} disabled={liq.trabajos.length === 0 && liq.pendientes.length === 0}
+                    <button onClick={() => generarPDFLiquidacion(liq, data)} disabled={liq.trabajos.length === 0 && liq.pendientes.length === 0}
                         className="w-full py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-[0.98] disabled:opacity-40">
                         Exportar PDF
                     </button>

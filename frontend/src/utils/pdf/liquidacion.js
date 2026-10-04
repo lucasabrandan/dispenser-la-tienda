@@ -15,7 +15,7 @@ const fmt = v => `$ ${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
 const menos = v => (Number(v) > 0 ? `- ${fmt(v)}` : '-');
 const fechaCorta = f => (f ? f.split('-').reverse().slice(0, 2).join('/') : '');
 
-export function generarPDFLiquidacion(liq) {
+export function generarPDFLiquidacion(liq, completa = null) {
     if (!liq) return;
     const loading = toast.loading('Generando PDF…');
     try {
@@ -81,6 +81,36 @@ export function generarPDFLiquidacion(liq) {
             },
         });
         y = doc.lastAutoTable.finalY + 8;
+
+        // Cuentas del mes: saldo entre DLT y el técnico (5-oct-2026)
+        if (completa?.cuentas) {
+            const c = completa.cuentas;
+            const saldo = Number(c.saldo) || 0;
+            const filasC = [[`Parte ${liq.tecnicoNombre}`, fmt(c.parteTecnico)]];
+            if (Number(c.efectivoCobrado) > 0) filasC.push(['- Efectivo de DLT que cobró', fmt(c.efectivoCobrado)]);
+            if (Number(c.rendido) > 0) filasC.push(['+ Ya rendido (cierres del día recibidos)', fmt(c.rendido)]);
+            if (Number(c.entregado) > 0) filasC.push(['+ Otras entregas a DLT', fmt(c.entregado)]);
+            if (Number(c.pagado) > 0) filasC.push(['- Ya pagado por DLT', fmt(c.pagado)]);
+            (completa.movimientos || []).forEach(mv => filasC.push([
+                `   ${String(mv.fecha).split('-').reverse().slice(0, 2).join('/')} ${mv.tipo === 'PAGO' ? 'Pago' : 'Entrega'}${mv.nota ? ' - ' + mv.nota : ''}`, fmt(mv.monto)]));
+            filasC.push([saldo > 0 ? `Saldo: DLT le debe a ${liq.tecnicoNombre}` : saldo < 0 ? `Saldo: ${liq.tecnicoNombre} le debe a DLT` : 'Saldo: cuentas saldadas', fmt(Math.abs(saldo))]);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(T.md); doc.setTextColor(...C.navy);
+            doc.text('Cuentas del mes', M, y);
+            autoTable(doc, {
+                startY: y + 2, body: filasC, theme: 'plain', margin: { left: M }, tableWidth: 140,
+                styles: { fontSize: T.sm, cellPadding: 1.4 },
+                columnStyles: { 1: { halign: 'right' } },
+                didParseCell: (d) => { if (d.row.index === filasC.length - 1) { d.cell.styles.fontStyle = 'bold'; d.cell.styles.textColor = C.gold; } },
+            });
+            y = doc.lastAutoTable.finalY + 4;
+            const ci = completa.cierre;
+            if (ci?.cerrado) {
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(T.xs); doc.setTextColor(...C.grayText);
+                doc.text(`Mes cerrado el ${String(ci.cerradoEn).slice(0, 10).split('-').reverse().join('/')}`
+                    + (ci.aceptadoEn ? ` · aceptado por ${liq.tecnicoNombre} el ${String(ci.aceptadoEn).slice(0, 10).split('-').reverse().join('/')}` : ' · pendiente de aceptación'), M, y);
+                y += 6;
+            } else { y += 2; }
+        }
 
         // Pendientes de cobro (no suman)
         if (liq.pendientes?.length) {

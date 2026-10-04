@@ -15,6 +15,7 @@ import { enviarOEncolar } from '../../utils/pendientesOffline';
 import CerrarDiaSheet from './CerrarDiaSheet';
 import QueLlevarHoy from './QueLlevarHoy';
 import CargaPorSerieSheet from './CargaPorSerieSheet';
+import EquiposDeVisita from './EquiposDeVisita';
 import { etapaColor, etapaDeEstado, estiloEtiqueta } from '../../utils/estados';
 import { useAuth } from '../../context/AuthContext';
 import AvatarTecnico from '../ui/AvatarTecnico';
@@ -58,7 +59,7 @@ const ESTADO_ANTERIOR = {
     EN_SITIO:  { estado: 'EN_CAMINO', label: 'Deshacer "Llegué"' },
 };
 
-function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblema, onVerServicio, onHorarioConfirmado, seleccionando, seleccionada, onToggleSel }) {
+function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblema, onConfirmar, onVerServicio, onHorarioConfirmado, seleccionando, seleccionada, onToggleSel }) {
     const [expandido, setExpandido] = useState(false);
     const [confirmandoHorario, setConfirmandoHorario] = useState(false);
     const aCoordinar = !!orden.horarioACoordinar;
@@ -85,6 +86,9 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                                     style={etapaDeEstado(orden.estado) ? estiloEtiqueta(etapaDeEstado(orden.estado)) : { background: BORDER_COLOR[orden.estado], color: '#fff' }}>
                                     {ESTADO_LABEL[orden.estado]}
                                 </span>
+                            )}
+                            {orden.estado === 'PENDIENTE' && orden.confirmadaEn && (
+                                <span className="text-label font-black px-2 py-0.5 rounded-md bg-chip text-secondary">✓ Confirmada</span>
                             )}
                             {orden.prioridad && orden.prioridad !== 'NORMAL' && (
                                 <span className={`text-label font-black px-2 py-0.5 rounded-md uppercase ${pr.bg} ${pr.tx}`}>
@@ -146,6 +150,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                     />
                 )}
 
+                {!esFinal && <EquiposDeVisita ordenId={orden.id} />}
+
                 {!esFinal && orden.descripcion && (
                     <>
                         <button onClick={() => setExpandido(v => !v)}
@@ -179,6 +185,13 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
 
             {!esFinal && sig && !seleccionando && (
                 <div className="flex flex-col gap-2 px-4 py-3 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]" onClick={e => e.stopPropagation()}>
+                    {/* "Ok, voy" (5-oct-2026): el admin ve quién confirmó su visita */}
+                    {orden.estado === 'PENDIENTE' && !orden.confirmadaEn && onConfirmar && (!orden.fechaProgramada || orden.fechaProgramada >= getTodayISO()) && (
+                        <button onClick={() => onConfirmar(orden)}
+                            className="w-full py-2.5 rounded-xl font-black text-body text-ink bg-card border-2 border-[color:var(--etapa-listo)] active:scale-95 transition-all">
+                            ✓ Ok, voy
+                        </button>
+                    )}
                     {orden.estado === 'EN_SITIO' ? (
                         <>
                             {/* Un solo botón con un solo texto — antes decía "Registrar trabajo"
@@ -313,6 +326,15 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
             const det = e?.response?.data?.mensaje || e?.message || '';
             toast.error(`No se pudo completar la orden${det ? ': ' + det : ''}. Avisá al admin.`);
         }
+    };
+
+    // "Ok, voy": el técnico confirma la visita que le asignaron
+    const confirmarVisita = async (o) => {
+        try {
+            await api.patch(`/ordenes/${o.id}/confirmar`);
+            toast.success('Listo, el admin ya sabe que vas');
+            if (recargar) recargar();
+        } catch (e) { toast.error(e?.response?.data?.mensaje || 'No se pudo confirmar'); }
     };
 
     const handleConfirmado = () => {
@@ -487,7 +509,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             )}
                             {abierto && <div className="space-y-4">
                                 {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={(o) => (o.equiposSerie ? setCargaSerie(o) : setOrdenRegistrando(o))} onProblema={setProblema} onVerServicio={verServicio}
+                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={(o) => (o.equiposSerie ? setCargaSerie(o) : setOrdenRegistrando(o))} onProblema={setProblema} onConfirmar={confirmarVisita} onVerServicio={verServicio}
                                         seleccionando={modoSeleccion} seleccionada={seleccionados.has(o.id)} onToggleSel={toggleSeleccion} />
                                 ))}
                             </div>}
