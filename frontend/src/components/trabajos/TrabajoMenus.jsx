@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuPencil, LuCopy, LuFileText, LuPause, LuPlay, LuArchive, LuTrash2, LuWrench, LuShoppingCart, LuCalendarPlus, LuRotateCcw, LuEye } from 'react-icons/lu';
+import { LuPencil, LuCopy, LuFileText, LuPause, LuPlay, LuArchive, LuTrash2, LuWrench, LuShoppingCart, LuCalendarPlus, LuRotateCcw, LuEye, LuCalendarX } from 'react-icons/lu';
 import ActionSheet from '../ui/ActionSheet';
 
 // Botón de una fila de menú (mismo estilo en los dos sheets)
@@ -50,6 +50,13 @@ export function TrabajoMenu({ fila, onClose, on }) {
             {s && !esArchivado && <Opcion Icon={LuArchive} label="Archivar" onClick={run(() => on.archivar(s))} />}
             {esArchivado && <Opcion Icon={LuRotateCcw} label="Recuperar" sub="Vuelve como presupuesto" onClick={run(() => on.recuperar(s))} />}
             {fila.orden && !s && <Opcion Icon={LuPencil} label="Editar visita" onClick={run(() => on.editarOrden(fila.orden))} />}
+            {/* Visita sin presupuesto (5-oct-2026): antes no había cómo sacarla de la lista */}
+            {fila.orden && !s && fila.orden.estado !== 'COMPLETADA' && (
+                <Opcion Icon={LuCalendarX} label="Cancelar visita" sub="Sale de la agenda del técnico; queda en el historial" onClick={run(() => on.cancelarOrden(fila.orden))} />
+            )}
+            {fila.orden && !s && fila.orden.estado !== 'COMPLETADA' && (
+                <Opcion Icon={LuTrash2} label="Eliminar visita" sub="Se borra del todo. No se puede deshacer" peligro onClick={run(() => on.eliminarOrden(fila.orden))} />
+            )}
             {s && <Opcion Icon={LuTrash2} label="Eliminar" sub="No se puede deshacer" peligro onClick={run(() => on.eliminar(s))} />}
         </ActionSheet>
     );

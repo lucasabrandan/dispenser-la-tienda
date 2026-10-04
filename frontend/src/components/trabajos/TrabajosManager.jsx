@@ -409,6 +409,18 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
         recuperar: (s) => patchServicio(s.id, 'PRESUPUESTO', 'Recuperado como presupuesto'),
         eliminar: (s) => setConfirmar({ tipo: 'eliminar', servicio: s }),
         editarOrden: (o) => setOrdenEditar(o),
+        cancelarOrden: (o) => setConfirmar({ tipo: 'cancelarVisita', orden: o }),
+        eliminarOrden: (o) => setConfirmar({ tipo: 'eliminarVisita', orden: o }),
+    };
+    // Visitas sin presupuesto: cancelar (queda en el historial) o eliminar del todo
+    const accionVisita = async (tipo, o) => {
+        const t = toast.loading(tipo === 'eliminarVisita' ? 'Eliminando…' : 'Cancelando…');
+        try {
+            if (tipo === 'eliminarVisita') await api.delete(`/ordenes/${o.id}`);
+            else await api.patch(`/ordenes/${o.id}/estado`, { estado: 'CANCELADA' });
+            toast.success(tipo === 'eliminarVisita' ? 'Visita eliminada' : 'Visita cancelada', { id: t });
+            cargar();
+        } catch (e) { toast.error(e?.response?.data?.mensaje || 'No se pudo', { id: t }); }
     };
 
     const elegirNuevo = (q) => {
@@ -658,14 +670,20 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
             {nuevaVisita && <VisitaForm tecnicos={tecnicos} onGuardado={() => { setNuevaVisita(false); cargar(); }} onCancelar={() => setNuevaVisita(false)} />}
             {confirmar && (
                 <ConfirmDialog
-                    titulo={confirmar.tipo === 'eliminar' ? 'Eliminar trabajo' : 'Archivar trabajo'}
-                    mensaje={confirmar.tipo === 'eliminar' ? 'No se puede deshacer: se borra el trabajo con sus ítems y repuestos.' : 'Sale de la lista. Lo podés recuperar desde Archivados.'}
-                    textoConfirmar={confirmar.tipo === 'eliminar' ? 'Sí, eliminar' : 'Sí, archivar'}
+                    titulo={{ eliminar: 'Eliminar trabajo', archivar: 'Archivar trabajo', cancelarVisita: 'Cancelar visita', eliminarVisita: 'Eliminar visita' }[confirmar.tipo]}
+                    mensaje={{
+                        eliminar: 'No se puede deshacer: se borra el trabajo con sus ítems y repuestos.',
+                        archivar: 'Sale de la lista. Lo podés recuperar desde Archivados.',
+                        cancelarVisita: `${confirmar.orden?.clienteNombre || 'La visita'} sale de la agenda del técnico. Queda en el historial como cancelada.`,
+                        eliminarVisita: `Se borra la visita de ${confirmar.orden?.clienteNombre || 'este cliente'} del todo. No se puede deshacer.`,
+                    }[confirmar.tipo]}
+                    textoConfirmar={{ eliminar: 'Sí, eliminar', archivar: 'Sí, archivar', cancelarVisita: 'Sí, cancelar', eliminarVisita: 'Sí, eliminar' }[confirmar.tipo]}
                     onCancelar={() => setConfirmar(null)}
                     onConfirmar={() => {
-                        const { tipo, servicio } = confirmar;
+                        const { tipo, servicio, orden } = confirmar;
                         setConfirmar(null);
-                        if (tipo === 'eliminar') eliminar(servicio);
+                        if (tipo === 'cancelarVisita' || tipo === 'eliminarVisita') accionVisita(tipo, orden);
+                        else if (tipo === 'eliminar') eliminar(servicio);
                         else patchServicio(servicio.id, 'ARCHIVADO', 'Archivado');
                     }} />
             )}
