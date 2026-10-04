@@ -3,6 +3,7 @@ import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { colorTecnico, etapaColor } from '../../utils/estados';
 import { formatDateISO, getTodayISO, lunesDeLaSemana } from '../../utils/dateUtils';
 import AvatarTecnico from '../ui/AvatarTecnico';
+import { useBloqueos, estaOcupado } from '../../utils/bloqueos';
 
 // "Elegí el hueco" (3-oct-2026): la semana arriba y, para el día elegido, una
 // columna por técnico con mañana y tarde y lo que ya tiene cada uno. Se toca
@@ -30,6 +31,8 @@ export default function AgendaHuecos({ tecnicos = [], ordenes = [], fecha, onFec
         l.setDate(l.getDate() + offset * 7);
         return DIAS.map((n, i) => { const d = new Date(l); d.setDate(l.getDate() + i); return { n, num: d.getDate(), iso: formatDateISO(d) }; });
     }, [offset]);
+    // Días que el técnico marcó como ocupados por trabajo propio (5-oct-2026)
+    const bloqueos = useBloqueos(semana[0].iso, semana[semana.length - 1].iso);
     const delDia = (iso) => ordenes.filter(o => o.id !== excluirId && ABIERTAS.includes(o.estado) && String(o.fechaProgramada).slice(0, 10) === iso);
     const visitasDia = delDia(fecha);
     const sede = direccion ? { direccion } : null;
@@ -72,6 +75,7 @@ export default function AgendaHuecos({ tecnicos = [], ordenes = [], fecha, onFec
                                         {['Mañana', 'Tarde'].map(fr => {
                                             const lista = suyas.filter(o => franjaDe(o.horaEstimada) === fr);
                                             const on = hueco?.tecnicoId === t.id && hueco?.franja === fr;
+                                            const ocupado = estaOcupado(bloqueos, t.id, fecha, fr);
                                             return (
                                                 <div key={fr} className="space-y-1.5">
                                                     <p className="text-label font-black uppercase tracking-widest text-muted pt-1">{fr}</p>
@@ -81,10 +85,16 @@ export default function AgendaHuecos({ tecnicos = [], ordenes = [], fecha, onFec
                                                             <p className="text-label text-muted truncate">{o.horaEstimada || ''}</p>
                                                         </div>
                                                     ))}
+                                                    {ocupado ? (
+                                                        <div className="w-full h-11 rounded-xl bg-chip text-label font-black text-muted flex items-center justify-center text-center leading-tight px-1">
+                                                            Ocupado · trabajo propio
+                                                        </div>
+                                                    ) : (
                                                     <button type="button" onClick={() => setHueco({ tecnicoId: t.id, franja: fr })}
                                                         className={`w-full h-11 rounded-xl border-2 border-dashed text-label font-black active:scale-95 ${on ? 'border-brand-red bg-[rgba(232,66,47,0.10)] text-brand-red' : 'border-black/15 dark:border-white/15 text-muted'}`}>
                                                         {on ? '✓ Acá' : '+ Acá'}
                                                     </button>
+                                                    )}
                                                 </div>
                                             );
                                         })}

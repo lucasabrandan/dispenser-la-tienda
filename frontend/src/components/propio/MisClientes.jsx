@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { LuPhone, LuMapPin, LuPlus, LuMessageCircle } from 'react-icons/lu';
+import { LuPhone, LuMapPin, LuPlus, LuMessageCircle, LuFileText } from 'react-icons/lu';
+import PresupuestoPropio from './PresupuestoPropio';
 import api from '../../services/api';
 import BusquedaBar from '../ui/BusquedaBar';
 import { coincideTodo } from '../../utils/busqueda';
@@ -62,6 +63,7 @@ export default function MisClientes() {
     const [cargando, setCargando] = useState(true);
     const [busqueda, setBusqueda] = useState('');
     const [editando, setEditando] = useState(null); // null | {} (nuevo) | cliente
+    const [presupuestando, setPresupuestando] = useState(null);
 
     const cargar = () => {
         setCargando(true);
@@ -102,6 +104,7 @@ export default function MisClientes() {
                                 {c.direccion && <p className="text-caption text-muted truncate">{c.direccion}</p>}
                                 {c.notas && <p className="text-caption text-secondary truncate">{c.notas}</p>}
                             </button>
+                            <button onClick={() => setPresupuestando(c)} aria-label="Presupuesto" title="Presupuesto" className="w-9 h-9 rounded-xl bg-chip text-ink flex items-center justify-center active:scale-90"><LuFileText size={15} /></button>
                             {c.telefono && (
                                 <>
                                     <a href={`tel:${c.telefono}`} aria-label="Llamar" className="w-9 h-9 rounded-xl bg-chip text-ink flex items-center justify-center active:scale-90"><LuPhone size={15} /></a>
@@ -117,6 +120,7 @@ export default function MisClientes() {
                 </div>
             )}
 
+            {presupuestando && <PresupuestoPropio cliente={presupuestando} onCerrar={() => setPresupuestando(null)} onHecho={() => { setPresupuestando(null); cargar(); }} />}
             {editando && <FormCliente inicial={editando} onCerrar={() => setEditando(null)} onGuardado={() => { setEditando(null); cargar(); }} />}
         </div>
     );

@@ -3,6 +3,7 @@ import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { colorTecnico, etapaColor, estadoLabel } from '../../utils/estados';
 import { formatDateISO, getTodayISO, lunesDeLaSemana } from '../../utils/dateUtils';
 import AvatarTecnico from '../ui/AvatarTecnico';
+import { useBloqueos, labelFranja } from '../../utils/bloqueos';
 
 // Agenda del Panel (3-oct-2026): semana Lun–Sáb, un punto en los días con visitas,
 // y abajo las visitas del día elegido. Color del borde = etapa, punto = técnico.
@@ -34,6 +35,9 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
     }, [ordenes]);
 
     const delDia = porDia[dia] || [];
+    // Técnicos ocupados por trabajo propio (5-oct-2026)
+    const bloqueos = useBloqueos(semana[0].iso, semana[semana.length - 1].iso);
+    const ocupadosDia = bloqueos.filter(b => b.fecha === dia);
 
     return (
         <div className="space-y-3">
@@ -58,6 +62,12 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
                     className="w-8 h-12 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronRight size={16} /></button>
             </div>
 
+            {ocupadosDia.map((b, i) => (
+                <p key={i} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-black/15 dark:border-white/15 text-caption font-bold text-muted">
+                    <AvatarTecnico nombre={b.tecnicoNombre} size={16} />
+                    {(b.tecnicoNombre || '').split(' ')[0]} no está disponible ({labelFranja(b.franja)}) · trabajo propio
+                </p>
+            ))}
             {cargando ? (
                 <div className="h-14 rounded-xl bg-chip animate-pulse" />
             ) : delDia.length === 0 ? (

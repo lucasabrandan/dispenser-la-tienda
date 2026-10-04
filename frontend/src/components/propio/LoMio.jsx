@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MiAgenda from '../ordenes/MiAgenda';
 import MisClientes from './MisClientes';
+import MisDiasOcupados from './MisDiasOcupados';
 import { useAuth } from '../../context/AuthContext';
 
 // "Lo mío" (5-oct-2026): lo personal del técnico/socio. Agenda (calendario +
@@ -24,7 +25,12 @@ export default function LoMio() {
                         </button>
                     ))}
                 </div>
-                {sec === 'agenda' ? <MiAgenda tecnicoId={usuario?.id} embebido /> : <MisClientes />}
+                {sec === 'agenda' ? (
+                    <>
+                        <MisDiasOcupados />
+                        <MiAgenda tecnicoId={usuario?.id} embebido />
+                    </>
+                ) : <MisClientes />}
             </div>
         </div>
     );
