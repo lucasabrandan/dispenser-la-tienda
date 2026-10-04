@@ -21,7 +21,7 @@ export default function ClienteCard({
     const [modalCierre, setModalCierre] = useState(false);
     const [menuCliente, setMenuCliente] = useState(false);
     const [menuEquipo, setMenuEquipo] = useState(null); // id del equipo con menú abierto
-    const [confirmEliminar, setConfirmEliminar] = useState(null); // 'cliente' | equipoId
+    const [confirmEliminar, setConfirmEliminar] = useState(null); // 'cliente' | equipo (objeto)
 
     const sedesCli       = sedes.filter(s => (s.clienteId || s.cliente?.id) === cliente.id);
     const sedeIds        = sedesCli.map(s => String(s.id));
@@ -226,7 +226,7 @@ export default function ClienteCard({
                                                                     className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
                                                                     <LuPencil size={15} /> Editar
                                                                 </button>
-                                                                <button onClick={() => { setConfirmEliminar(eq.id); setMenuEquipo(null); }}
+                                                                <button onClick={() => { setConfirmEliminar(eq); setMenuEquipo(null); }}
                                                                     className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-brand-red active:bg-[#FEE2E2] rounded-xl flex items-center gap-2.5">
                                                                     <LuTrash2 size={15} /> Eliminar
                                                                 </button>
@@ -266,9 +266,11 @@ export default function ClienteCard({
                         <div className="bg-card rounded-3xl w-full max-w-sm shadow-2xl p-6">
                             <div className="flex justify-center mb-3"><LuTriangleAlert size={28} className="text-brand-amber" /></div>
                             <h3 className="text-center text-body-lg font-black text-ink mb-2">
-                                {confirmEliminar === 'cliente' ? 'Eliminar cliente' : 'Eliminar equipo'}
+                                {confirmEliminar === 'cliente' ? 'Eliminar cliente' : `Eliminar equipo ${confirmEliminar.numeroSerie || ''}`}
                             </h3>
-                            <p className="text-center text-caption text-muted mb-5">Esta acción no se puede deshacer</p>
+                            <p className="text-center text-caption text-muted mb-5">
+                                {confirmEliminar === 'cliente' ? 'Esta acción no se puede deshacer' : 'Se borra el equipo y su historial de services. No se puede deshacer.'}
+                            </p>
                             <div className="flex gap-2">
                                 <button onClick={() => setConfirmEliminar(null)}
                                     className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95">
@@ -276,7 +278,7 @@ export default function ClienteCard({
                                 </button>
                                 <button onClick={() => {
                                     if (confirmEliminar === 'cliente') onDeleteCliente(cliente.id);
-                                    else onEliminarEquipoDefinitivo(confirmEliminar);
+                                    else onEliminarEquipoDefinitivo(confirmEliminar, { yaConfirmado: true });
                                     setConfirmEliminar(null);
                                 }}
                                     className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-95">

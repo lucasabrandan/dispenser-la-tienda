@@ -496,7 +496,7 @@ export default function PresupuestosManager() {
             {/* Modal de edición */}
             {presupuestoEditar && (
                 <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/50 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
-                    <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-card">
+                    <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[calc(var(--vh,1vh)*95)] overflow-y-auto shadow-2xl bg-card">
                         <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-card">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
                         </div>

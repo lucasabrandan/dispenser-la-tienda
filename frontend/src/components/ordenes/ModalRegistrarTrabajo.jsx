@@ -110,9 +110,8 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     const blob = await (await fetch(fotoEvidencia)).blob();
                     const formData = new FormData();
                     formData.append('file', blob, `evidencia_${Date.now()}.jpg`);
-                    const uploadRes = await api.post('/files/upload', formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
+                    // El endpoint es /api/uploads (antes apuntaba a /files/upload, que no existe)
+                    const uploadRes = await api.post('/uploads', formData);
                     fotoUrl = uploadRes.data?.url || uploadRes.data?.filename || null;
                 } catch { /* foto no critica */ }
             }

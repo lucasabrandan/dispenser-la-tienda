@@ -141,7 +141,7 @@ export default function CargaRapidaSheet({ isOpen, onClose, hook, onEquipoAgrega
         <>
             <div className="fixed inset-0 bg-black/60 z-[300] backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-0 z-[301] flex items-end md:items-center justify-center md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
-                <div className="w-full md:max-w-md bg-card rounded-t-3xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">
+                <div className="w-full md:max-w-md bg-card rounded-t-3xl md:rounded-3xl max-h-[calc(var(--vh,1vh)*95)] overflow-y-auto shadow-2xl">
 
                     {/* Header */}
                     <div className="sticky top-0 z-10 bg-card px-5 pt-4 pb-3 border-b border-black/[0.07] dark:border-white/[0.07]">

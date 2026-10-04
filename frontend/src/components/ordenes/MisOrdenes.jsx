@@ -640,7 +640,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                                 Servicio — {servicioDetalle.clienteNombre}
                             </h3>
                             <p className="text-caption text-muted mb-4">#{servicioDetalle.id} · {fechaAR(servicioDetalle.fecha)}</p>
-                            <div className="max-h-[50vh] overflow-y-auto space-y-2 mb-4">
+                            <div className="max-h-[calc(var(--vh,1vh)*50)] overflow-y-auto space-y-2 mb-4">
                                 {(servicioDetalle.items || []).map((it, idx) => (
                                     <div key={`${it.equipoSerial || 'det'}-${idx}`} className="p-3.5 rounded-xl bg-page border border-black/[0.04] dark:border-white/[0.04]">
                                         <div className="flex justify-between mb-1">

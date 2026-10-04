@@ -187,7 +187,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
             onClick={onClose}
         >
             <div
-                className="w-full md:max-w-lg md:rounded-3xl rounded-t-3xl flex flex-col bg-card max-h-[88vh] md:max-h-[80vh] border-[0.5px] border-white/[0.08] md:shadow-2xl"
+                className="w-full md:max-w-lg md:rounded-3xl rounded-t-3xl flex flex-col bg-card max-h-[calc(var(--vh,1vh)*88)] md:max-h-[calc(var(--vh,1vh)*80)] border-[0.5px] border-white/[0.08] md:shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}

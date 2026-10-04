@@ -86,7 +86,7 @@ export default function EquipoModal({ cliente, sedes, equipos = [], equipoParaEd
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end md:items-center z-[2000] md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
-            <div className="bg-card w-full max-w-xl rounded-t-[2rem] md:rounded-[2rem] shadow-2xl animate-slide-up h-[92vh] flex flex-col">
+            <div className="bg-card w-full max-w-xl rounded-t-[2rem] md:rounded-[2rem] shadow-2xl animate-slide-up h-[calc(var(--vh,1vh)*92)] flex flex-col">
 
                 {/* Handle */}
                 <div className="flex justify-center pt-4 pb-2">

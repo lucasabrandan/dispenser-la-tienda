@@ -172,7 +172,7 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
                     {form.id ? 'Editar Producto' : 'Nuevo Producto'}
                 </h3>
 
-                <form onSubmit={handleSubmit} className="grid gap-3 max-h-[75vh] overflow-y-auto pr-1 pb-2">
+                <form onSubmit={handleSubmit} className="grid gap-3 max-h-[calc(var(--vh,1vh)*75)] overflow-y-auto pr-1 pb-2">
                     <FotosUploader form={form} fotoPreviews={fotoPreviews} onFotoChange={manejarFoto} />
 
                     <div className="grid grid-cols-3 gap-3">

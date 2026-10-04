@@ -156,7 +156,7 @@ export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
     return (
         <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6"
             onClick={onClose}>
-            <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl max-h-[90vh] flex flex-col bg-card shadow-2xl"
+            <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl max-h-[calc(var(--vh,1vh)*90)] flex flex-col bg-card shadow-2xl"
                 onClick={e => e.stopPropagation()}>
 
                 {/* Header */}

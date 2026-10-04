@@ -113,7 +113,7 @@ export default function CierreMensualModal({ cliente, onClose }) {
         <>
             <div className="fixed inset-0 bg-black/70 z-[199] backdrop-blur-sm" onClick={onClose} />
             <div className="fixed inset-0 flex items-end md:items-center justify-center z-[200] p-0 md:p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
-                <div className="bg-card w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl p-5 max-h-[92vh] overflow-y-auto">
+                <div className="bg-card w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl p-5 max-h-[calc(var(--vh,1vh)*92)] overflow-y-auto">
                     <div className="flex items-start justify-between mb-4">
                         <div>
                             <p className="text-label font-black text-muted uppercase tracking-widest">Cierre mensual</p>

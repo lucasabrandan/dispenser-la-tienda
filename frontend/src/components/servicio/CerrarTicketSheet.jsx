@@ -167,7 +167,7 @@ export default function CerrarTicketSheet({
     };
 
     const sheetCls = 'fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6';
-    const panelCls = 'w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-t-[2rem] md:rounded-[2rem] shadow-2xl';
+    const panelCls = 'w-full max-w-lg max-h-[calc(var(--vh,1vh)*90)] overflow-y-auto bg-card rounded-t-[2rem] md:rounded-[2rem] shadow-2xl';
 
     return (
         <div className={sheetCls}

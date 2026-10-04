@@ -93,7 +93,7 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
             onClick={onClose}
         >
             <div
-                className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl flex flex-col bg-card max-h-[90vh] border-[0.5px] border-white/[0.08]"
+                className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl flex flex-col bg-card max-h-[calc(var(--vh,1vh)*90)] border-[0.5px] border-white/[0.08]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}

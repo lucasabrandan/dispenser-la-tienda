@@ -173,7 +173,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta, abrirCre
                 return (
                     <>
                         <div className="fixed inset-0 bg-black/50 z-[40]" onClick={() => setExpandedId(null)} />
-                        <div className="fixed inset-x-0 bottom-0 z-[41] max-h-[85vh] overflow-y-auto rounded-t-3xl bg-card shadow-2xl md:inset-auto md:top-1/2 md:left-[calc(50%+var(--modal-sb,0px)/2)] md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[80vh] md:rounded-3xl">
+                        <div className="fixed inset-x-0 bottom-0 z-[41] max-h-[calc(var(--vh,1vh)*85)] overflow-y-auto rounded-t-3xl bg-card shadow-2xl md:inset-auto md:top-1/2 md:left-[calc(50%+var(--modal-sb,0px)/2)] md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[calc(var(--vh,1vh)*80)] md:rounded-3xl">
                             <div className="sticky top-0 z-10 bg-card px-5 pt-4 pb-3 border-b border-black/[0.07] dark:border-white/[0.07]">
                                 <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip md:hidden" />
                                 <div className="flex items-center justify-between">

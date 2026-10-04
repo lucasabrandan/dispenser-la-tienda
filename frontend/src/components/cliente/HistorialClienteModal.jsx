@@ -48,7 +48,7 @@ export default function HistorialClienteModal({ cliente, onClose }) {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6"
             onClick={onClose}>
             <div
-                className="w-full sm:max-w-2xl bg-card rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh]"
+                className="w-full sm:max-w-2xl bg-card rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[calc(var(--vh,1vh)*90)]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}

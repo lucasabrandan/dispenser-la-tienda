@@ -208,7 +208,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onCerrar} />
             <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[1000] p-0 sm:p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
-                <div className="bg-card rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-lg max-h-[85vh] flex flex-col border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="bg-card rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-lg max-h-[calc(var(--vh,1vh)*85)] flex flex-col border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     {/* Handle movil */}
                     <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-0 bg-chip sm:hidden" />

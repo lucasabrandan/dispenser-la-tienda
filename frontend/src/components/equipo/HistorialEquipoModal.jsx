@@ -49,7 +49,7 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
             onClick={onClose}
         >
             <div
-                className="w-full md:max-w-xl rounded-t-[2rem] md:rounded-[2rem] max-h-[92vh] md:max-h-[85vh] flex flex-col shadow-2xl bg-card"
+                className="w-full md:max-w-xl rounded-t-[2rem] md:rounded-[2rem] max-h-[calc(var(--vh,1vh)*92)] md:max-h-[calc(var(--vh,1vh)*85)] flex flex-col shadow-2xl bg-card"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}

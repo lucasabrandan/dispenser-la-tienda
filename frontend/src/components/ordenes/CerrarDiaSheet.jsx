@@ -80,7 +80,7 @@ export default function CerrarDiaSheet({ ordenesHoy = [], onClose }) {
 
     return (
         <div className="fixed inset-0 z-[3000] flex items-end md:items-center md:justify-center bg-black/50 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6" onClick={onClose}>
-            <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 bg-card max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 bg-card max-h-[calc(var(--vh,1vh)*90)] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-3">
                     <div>
                         <p className="text-label font-black text-muted uppercase tracking-widest">Cerrar mi día</p>

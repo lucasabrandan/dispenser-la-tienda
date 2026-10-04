@@ -40,14 +40,18 @@ export function useEquipoActions(onRefresh) {
     }, [onRefresh]);
 
     // ── ELIMINAR DEFINITIVO (hard delete) ─────────────────────────────────
-    const handleEliminarDefinitivo = useCallback(async (equipo) => {
+    const handleEliminarDefinitivo = useCallback(async (equipo, { yaConfirmado = false } = {}) => {
+        // Bug 5-oct-2026: llegaba el id en vez del equipo → DELETE /equipos/undefined/definitivo
+        if (!equipo || equipo.id == null) { toast.error('No se encontró el equipo'); return; }
         const advertencia = `⚠️ ELIMINACIÓN DEFINITIVA\n\n` +
             `Equipo: ${equipo.marca} ${equipo.modelo}\n` +
             `S/N: ${equipo.numeroSerie}\n` +
             `\nSe borrará TODO el historial de servicios asociado.\nEsta acción NO se puede deshacer.\n\n¿Confirmás?`;
 
-        if (!window.confirm(advertencia)) return;
-        if (!window.confirm(`Segunda confirmación: ¿Borrar "${equipo.marca} ${equipo.modelo}" y TODO su historial definitivamente?`)) return;
+        // Si ya se confirmó en pantalla, no se piden los confirm del navegador
+        // (en la app instalada en el celu no aparecen y frenaban todo)
+        if (!yaConfirmado && !window.confirm(advertencia)) return;
+        if (!yaConfirmado && !window.confirm(`Segunda confirmación: ¿Borrar "${equipo.marca} ${equipo.modelo}" y TODO su historial definitivamente?`)) return;
 
         const loading = toast.loading("Eliminando definitivamente...");
         try {
