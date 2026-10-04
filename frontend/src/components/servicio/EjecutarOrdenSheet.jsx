@@ -1,9 +1,9 @@
 /**
  * EjecutarOrdenSheet
  * Vista simplificada para tecnicos al ejecutar un presupuesto asignado.
- * Flujo: detalle → firmas → cobro → resumen
+ * Flujo: detalle → firmas → ¿te pagó? → resumen
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import { enviarOEncolar } from '../../utils/pendientesOffline';
@@ -15,8 +15,9 @@ import PasoCobro from './ejecutar/PasoCobro';
 import PasoResumenEjecutar from './ejecutar/PasoResumenEjecutar';
 
 const PASOS = ['detalle', 'firmas', 'cobro', 'resumen'];
+const fmt = v => `$${Math.round(Number(v) || 0).toLocaleString('es-AR')}`;
 
-export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar }) {
+export default function EjecutarOrdenSheet({ servicio, onGuardado, onConfirmado, onCerrar }) {
     const { usuario } = useAuth();
 
     const [paso, setPaso] = useState('detalle');
@@ -30,9 +31,11 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
     const [firmaCliente, setFirmaCliente] = useState(null);
     const [incluirFirmas, setIncluirFirmas] = useState(true);
     const [procesando, setProcesando] = useState(false);
-    const [modalidadCobro, setModalidadCobro] = useState(null);
-    const [config, setConfig] = useState(null);
-    const [costoMOExtra, setCostoMOExtra] = useState(0);
+    // "¿Te pagó?" (4-oct-2026): NO / EFECTIVO / TRANSFERENCIA. El precio sale del
+    // presupuesto que armó el admin; el técnico ya no recalcula ni ajusta mano de obra.
+    const [pago, setPago] = useState(null);
+    const [monto, setMonto] = useState(0);
+    const [descuentoEfectivo, setDescuentoEfectivo] = useState(0);
 
     useEffect(() => {
         try {
@@ -44,44 +47,18 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
             .then(r => setRepuestosDisponibles(r.data?.content || r.data || []))
             .catch(() => {});
         api.get('/configuracion')
-            .then(r => setConfig(r.data))
-            .catch(() => setConfig({ manoDeObraBase: 72600, porcentajeImpuestos: 30, descuentoEfectivo: 10, porcentajeIVA: 21 }));
+            .then(r => setDescuentoEfectivo(Number(r.data?.descuentoEfectivo) || 0))
+            .catch(() => {});
     }, []);
 
-    const pricing = useMemo(() => {
-        if (!config) return null;
-        const moBase = Number(config.manoDeObraBase) || 72600;
-        const pctImp = Number(config.porcentajeImpuestos) || 30;
-        const pctIVA = Number(config.porcentajeIVA) || 21;
-        const esVisita = servicio.esVisita || false;
-        // moBase ya incluye IVA
-        const precioCliente = moBase;
-        const sinIVA = Math.round(moBase / (1 + pctIVA / 100));
-        const parteTecnico = Math.round(sinIVA / 2);
-        const visitaPrecio = Math.round(moBase / 2);
-        const repuestosOriginales = (servicio.items || []).reduce((s, it) =>
-            s + (it.repuestosUsados || []).reduce((a, r) => a + (Number(r.precio || 0) * Number(r.cantidad || 1)), 0), 0);
-        const repuestosNuevos = repuestosAgregados.reduce((s, r) => s + (parseFloat(r.precio) || 0) * (r.cantidad || 1), 0);
-        const totalRepuestos = repuestosOriginales + repuestosNuevos;
-        const extraNeto = Number(costoMOExtra || 0);
-        const precioConExtra = moBase + Math.round(extraNeto * (1 + pctIVA / 100));
-        return {
-            moBase, precioCliente, parteTecnico, pctImp, pctIVA,
-            esVisita, visitaPrecio,
-            repuestosOriginales, repuestosNuevos, totalRepuestos, precioConExtra,
-            // Con factura = precio con IVA, efectivo = sin IVA (-21%)
-            totalEfectivo: esVisita
-                ? Math.round(visitaPrecio / (1 + pctIVA / 100))
-                : Math.round((precioConExtra + totalRepuestos) / (1 + pctIVA / 100)),
-            totalFacturado: esVisita ? visitaPrecio : (precioConExtra + totalRepuestos),
-        };
-    }, [config, servicio, repuestosAgregados, costoMOExtra]);
-
-    const totalHeader = useMemo(() => {
-        if (!pricing) return 0;
-        if (modalidadCobro === 'EFECTIVO_SIN_FACTURA') return pricing.totalEfectivo;
-        return pricing.totalFacturado;
-    }, [pricing, modalidadCobro]);
+    // Total = lo presupuestado (ítems, con descuento) + los repuestos que agregó en el lugar
+    const repuestosNuevos = repuestosAgregados.reduce((s, r) => s + (parseFloat(r.precio) || 0) * (r.cantidad || 1), 0);
+    const totalItems = (servicio.items || []).reduce((s, it) => s + Number(it.costo || 0), 0);
+    const desc = Number(servicio.descuentoPorcentaje || 0);
+    const total = Math.round(totalItems * (1 - desc / 100) + repuestosNuevos);
+    // Productos a precio de venta (los pone el negocio): no entran en el reparto
+    const totalProductos = (servicio.items || []).reduce((s, it) =>
+        s + (it.repuestosUsados || []).reduce((a, r) => a + Number(r.subtotal ?? (Number(r.precio || 0) * Number(r.cantidad || 1))), 0), 0) + repuestosNuevos;
 
     const guardarFirma = async () => {
         if (!firmaTecnico) return;
@@ -95,7 +72,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
 
     const confirmar = async () => {
         if (!usuario?.id) { toast.error('No se pudo identificar tu usuario. Cerra sesion y volve a entrar.'); return; }
-        if (!modalidadCobro) { toast.error('Selecciona como paga el cliente'); return; }
+        if (!pago) { toast.error('Decinos si te pagó'); return; }
         setProcesando(true);
         const loading = toast.loading('Confirmando trabajo...');
         try {
@@ -112,28 +89,28 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                     ? [...(it.repuestosUsados || []), ...repuestosAgregados]
                     : (it.repuestosUsados || []),
             }));
-            const nuevoEstado = modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'COBRADO' : 'COMPLETADO';
-            const montoFinal = modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? pricing.totalEfectivo : pricing.totalFacturado;
-
+            // NO → queda COMPLETADO para que el admin defina el cobro.
+            // EFECTIVO → COBRADO sin factura, el monto va a su cierre del día.
+            // TRANSFERENCIA → COMPLETADO + nota, el admin confirma que entró la plata.
+            const efectivo = pago === 'EFECTIVO';
+            const nuevoEstado = efectivo ? 'COBRADO' : 'COMPLETADO';
+            const notaTransf = pago === 'TRANSFERENCIA'
+                ? `Pagó por transferencia ${fmt(monto)} — verificar` : '';
+            const obsFinal = [observaciones, notaTransf].filter(Boolean).join('\n');
             const envio = await enviarOEncolar('put', `/servicios/${servicio.id}`, {
                 sedeId: servicio.sedeId, usuarioId: usuario?.id || servicio.usuarioId,
                 fecha: servicio.fecha, servicioTipo: servicio.servicioTipo || 'TECNICA',
                 estado: nuevoEstado, clienteNombre: servicio.clienteNombre,
                 sedeNombre: servicio.sedeNombre, descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
-                observaciones, items: itemsActualizados,
-                modalidadCobro, montoFinal, esVisita: pricing.esVisita || false,
+                observaciones: obsFinal, items: itemsActualizados,
+                ...(efectivo ? { modalidadCobro: 'EFECTIVO_SIN_FACTURA', montoFinal: Number(monto) || total } : {}),
             }, `Trabajo ${servicio.clienteNombre || ''} #${servicio.id}`);
             if (envio.encolado) toast('Sin señal: el trabajo quedó guardado en el celular y se manda solo', { id: loading, icon: '📶', duration: 6000 });
             else toast.success('Trabajo confirmado', { id: loading });
 
-            const extraNeto = Number(costoMOExtra || 0);
-            const netoBase = pricing.esVisita ? (pricing.moBase / 2) : (pricing.moBase + extraNeto);
-            const divisor = pricing.esVisita ? 1 : 2;
-            const neto = Math.round(netoBase / divisor);
-            setResumenGanancias({
-                modalidadCobro, montoFinal, parteTecnico: neto,
-                totalRepuestos: pricing.totalRepuestos, esVisita: pricing.esVisita,
-            });
+            // La orden se completa apenas se guarda el trabajo (no al tocar "Listo")
+            if (onGuardado) { try { await onGuardado(); } catch {} }
+            setResumenGanancias({ pago, monto: Number(monto) || 0, total, totalProductos });
 
             try {
                 const ticketItems = itemsActualizados.map(it => ({
@@ -146,7 +123,7 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                     sede: { nombreSede: servicio.sedeNombre, direccion: servicio.sedeDireccion },
                     tecnico: usuario?.nombre || localStorage.getItem('tecnico_nombre') || 'Tecnico',
                     ticketItems, fechaServicio: servicio.fecha,
-                    descuentoPorcentaje: servicio.descuentoPorcentaje || 0, leyenda: observaciones,
+                    descuentoPorcentaje: servicio.descuentoPorcentaje || 0, leyenda: obsFinal,
                     esTecnicoForzado: true,
                     firmaTecnico: incluirFirmas ? (firmaTecnico || null) : null,
                     firmaCliente: incluirFirmas ? (firmaCliente || null) : null, incluirFirmas,
@@ -162,8 +139,6 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
         } finally { setProcesando(false); }
     };
 
-    const fmt = v => `$${Math.round(v).toLocaleString('es-AR')}`;
-
     return (
         <div className="fixed inset-0 z-[2000] flex flex-col bg-page">
             {/* Header */}
@@ -174,12 +149,12 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                         ←
                     </button>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-title font-black text-ink leading-none">Ejecutar trabajo</h2>
+                        <h2 className="text-title font-black text-ink leading-none">Cerrar trabajo</h2>
                         <p className="text-caption text-muted truncate mt-0.5">{servicio.clienteNombre} · {servicio.sedeNombre}</p>
                     </div>
                     <div className="text-right shrink-0">
                         <p className="text-label font-black text-muted uppercase tracking-wider">Total</p>
-                        <p className="text-title font-black leading-none text-ink">{fmt(totalHeader)}</p>
+                        <p className="text-title font-black leading-none text-ink">{fmt(total)}</p>
                     </div>
                 </div>
                 <div className="flex gap-1 mt-3">
@@ -210,10 +185,10 @@ export default function EjecutarOrdenSheet({ servicio, onConfirmado, onCerrar })
                         onBack={() => setPaso('detalle')} onNext={() => setPaso('cobro')}
                     />
                 )}
-                {paso === 'cobro' && pricing && (
+                {paso === 'cobro' && (
                     <PasoCobro
-                        pricing={pricing} modalidadCobro={modalidadCobro} setModalidadCobro={setModalidadCobro}
-                        costoMOExtra={costoMOExtra} setCostoMOExtra={setCostoMOExtra}
+                        total={total} descuentoEfectivo={descuentoEfectivo}
+                        pago={pago} setPago={setPago} monto={monto} setMonto={setMonto}
                         procesando={procesando}
                         onBack={() => setPaso('firmas')} onConfirmar={confirmar}
                     />

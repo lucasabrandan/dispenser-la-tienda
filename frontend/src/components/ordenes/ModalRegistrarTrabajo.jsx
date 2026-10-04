@@ -3,22 +3,16 @@ import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { getTodayISO } from '../../utils/dateUtils';
 import FotoUpload from '../servicio/FotoUpload';
+import { PreguntaPago, pagoCompleto } from '../servicio/ejecutar/PasoCobro';
 
 const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-chip text-ink text-body font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
 const labelCls = 'block text-label font-black text-muted uppercase tracking-wider mb-1';
 
-// Mismas 3 opciones y mismo destino que EjecutarAdminSheet — un solo vocabulario
-// de "modalidad de cobro" en toda la app, no uno por pantalla.
-const MODALIDADES = [
-    { id: 'EFECTIVO_SIN_FACTURA', label: 'Efectivo sin factura', desc: 'Cobrado en mano, sin ARCA', color: '#16A34A', destino: 'COBRADO' },
-    { id: 'CON_FACTURA',          label: 'Con factura',          desc: 'Facturar + enviar datos bancarios', color: '#8B5CF6', destino: 'PENDIENTE_FACTURACION' },
-    { id: 'PENDIENTE',            label: 'Definir despues',      desc: 'Queda como realizado, cobro pendiente', color: '#A8A29E', destino: 'COMPLETADO' },
-];
-
 /**
  * ModalRegistrarTrabajo — full-screen sheet
  * Permite al tecnico registrar trabajo realizado en una orden sin presupuesto vinculado.
- * Crea un Servicio (tipo TECNICA) con la modalidad de cobro elegida y marca la orden como COMPLETADA.
+ * Crea un Servicio (tipo TECNICA) y marca la orden como COMPLETADA. El precio lo pone el
+ * admin (monto estimado de la visita); el técnico solo dice si le pagaron (4-oct-2026).
  */
 export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, onCerrar }) {
     const tecnicoNombre = orden?.tecnicoNombre || '';
@@ -28,9 +22,9 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
     const [sedeNombre,     setSedeNombre]     = useState('');
     const [descripcion,    setDescripcion]    = useState('');
     const [observaciones,  setObservaciones]  = useState('');
-    const [costo,          setCosto]          = useState('');
-    const [metodoPago,     setMetodoPago]     = useState('EFECTIVO');
-    const [modalidad,      setModalidad]      = useState('');
+    const [pago,           setPago]           = useState(null);
+    const [monto,          setMonto]          = useState(0);
+    const precioAdmin = Number(orden?.montoEstimado) || 0;
     const [serial,         setSerial]         = useState('');
     const [fotoEvidencia,  setFotoEvidencia]  = useState(null);
     const [seleccionados,  setSeleccionados]  = useState([]);
@@ -78,8 +72,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
     const handleGuardar = async () => {
         if (!sedeId) { toast.error('Selecciona la sede'); return; }
         if (!descripcion.trim()) { toast.error('Describi el trabajo realizado'); return; }
-        if (!costo || Number(costo) <= 0) { toast.error('Ingresa el costo del servicio'); return; }
-        if (!modalidad) { toast.error('Elegi la modalidad de cobro'); return; }
+        if (!pagoCompleto(pago, monto)) { toast.error('Decinos si te pagó'); return; }
 
         setGuardando(true);
 
@@ -89,7 +82,11 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
         // avisar eso puntualmente y cerrar el modal, para que Marcos no reintente y
         // termine duplicando el trabajo.
         try {
-            const modalidadSel = MODALIDADES.find(m => m.id === modalidad);
+            const efectivo = pago === 'EFECTIVO';
+            // Si no hay precio cargado y le pagaron, lo que cobró es el precio
+            const precio = precioAdmin || (pago !== 'NO' ? Number(monto) : 0);
+            const notaTransf = pago === 'TRANSFERENCIA' ? `Pagó por transferencia $${Math.round(monto).toLocaleString('es-AR')} — verificar` : '';
+            const obsFinal = [observaciones.trim(), notaTransf].filter(Boolean).join('\n') || null;
             const repuestosUsados = seleccionados.map(s => ({
                 id:       s.repuesto.id,
                 nombre:   s.repuesto.nombre,
@@ -120,19 +117,18 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     sedeNombre:    sedeNombre || sedeSel?.nombre || '',
                     usuarioId:     tecnicoId,
                     servicioTipo:  'TECNICA',
-                    estado:        modalidadSel.destino,
-                    modalidadCobro: modalidad === 'PENDIENTE' ? null : modalidad,
-                    montoFinal:    Number(costo),
+                    estado:        efectivo ? 'COBRADO' : 'COMPLETADO',
+                    ...(efectivo ? { modalidadCobro: 'EFECTIVO_SIN_FACTURA', montoFinal: Number(monto) } : {}),
                     fecha:         getTodayISO(),
                     ordenId:       orden.id,
-                    observaciones: observaciones.trim() || null,
+                    observaciones: obsFinal,
                     items: [{
                         equipoSerial:     serial.trim() || 'S/N',
                         tecnico:          tecnicoNombre || String(tecnicoId),
                         trabajoTipo:      'REPARACION',
-                        metodoPago,
+                        metodoPago:       pago === 'TRANSFERENCIA' ? 'TRANSFERENCIA' : 'EFECTIVO',
                         trabajoRealizado: descripcion,
-                        costo:            Number(costo),
+                        costo:            precio,
                         repuestosUsados,
                         fotoDespues:      fotoUrl,
                     }],
@@ -177,7 +173,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                         ←
                     </button>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-title font-black text-ink leading-none">Registrar trabajo</h2>
+                        <h2 className="text-title font-black text-ink leading-none">Cerrar trabajo</h2>
                         <p className="text-caption text-muted truncate mt-0.5">{orden.clienteNombre || 'Cliente'} · {orden.titulo}</p>
                     </div>
                 </div>
@@ -216,42 +212,17 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                         className={`${inputCls} resize-none`} />
                 </div>
 
-                {/* Serial + Costo */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div>
-                        <label className={labelCls}>N Serie equipo</label>
-                        <input type="text" value={serial} onChange={e => setSerial(e.target.value)}
-                            placeholder="S/N" className={inputCls} />
-                    </div>
-                    <div>
-                        <label className={labelCls}>Costo *</label>
-                        <input type="text" inputMode="decimal" value={costo} onChange={e => setCosto(e.target.value)}
-                            placeholder="0" className={inputCls} />
-                    </div>
+                {/* Serie del equipo */}
+                <div>
+                    <label className={labelCls}>N Serie equipo</label>
+                    <input type="text" value={serial} onChange={e => setSerial(e.target.value)}
+                        placeholder="S/N" className={inputCls} />
                 </div>
 
-                {/* Forma de pago */}
-                <div>
-                    <label className={labelCls}>Forma de pago</label>
-                    <select value={metodoPago} onChange={e => setMetodoPago(e.target.value)} className={inputCls}>
-                        <option value="EFECTIVO">Efectivo</option>
-                        <option value="TRANSFERENCIA">Transferencia</option>
-                    </select>
-                </div>
-
-                {/* Modalidad de cobro — misma pregunta que le hace el admin a un presupuesto */}
-                <div>
-                    <label className={labelCls}>Modalidad de cobro *</label>
-                    <div className="space-y-2">
-                        {MODALIDADES.map(o => (
-                            <button key={o.id} type="button" onClick={() => setModalidad(o.id)}
-                                className={`w-full p-3 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-panel'}`}
-                                style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}>
-                                <p className="text-[12.5px] font-black text-ink">{o.label}</p>
-                                <p className="text-caption text-muted mt-0.5">{o.desc}</p>
-                            </button>
-                        ))}
-                    </div>
+                {/* ¿Te pagó? — mismo bloque que al cerrar un presupuesto */}
+                <div className="space-y-2">
+                    <label className={labelCls}>¿Te pagó? *{precioAdmin > 0 && <span className="normal-case tracking-normal font-bold"> · Precio: ${Math.round(precioAdmin).toLocaleString('es-AR')}</span>}</label>
+                    <PreguntaPago total={precioAdmin} pago={pago} setPago={setPago} monto={monto} setMonto={setMonto} />
                 </div>
 
                 {/* Repuestos */}
@@ -307,9 +278,9 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95 transition-all">
                     Cancelar
                 </button>
-                <button onClick={handleGuardar} disabled={guardando || !sedeId || !descripcion.trim() || !costo || !modalidad}
+                <button onClick={handleGuardar} disabled={guardando || !sedeId || !descripcion.trim() || !pagoCompleto(pago, monto)}
                     className="flex-[2] py-3 rounded-2xl font-black text-label uppercase text-white active:scale-95 transition-all bg-brand-red disabled:opacity-40">
-                    {guardando ? 'Guardando...' : 'Registrar trabajo'}
+                    {guardando ? 'Guardando...' : 'Cerrar trabajo'}
                 </button>
             </div>
         </div>

@@ -42,7 +42,7 @@ const MENU_OPERACIONES_TECNICO = [
     // Agenda (calendario) vive ahora como pestaña adentro de "Hoy" (2-oct-2026)
     { id: 'mis-ordenes',      Icon: LuPin,           nombre: 'Hoy'              },
     { id: 'servicio-tecnico', Icon: LuWrench,        nombre: 'Mis Trabajos'     },
-    { id: 'mi-sueldo',        Icon: LuBanknote,      nombre: 'Mi Sueldo'        },
+    { id: 'mi-sueldo',        Icon: LuBanknote,      nombre: 'Mi mes'           },
 ];
 
 const MENU_GESTION = [

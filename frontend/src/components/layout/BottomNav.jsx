@@ -21,7 +21,7 @@ const NAV_TECNICO = [
     // Agenda (calendario) vive ahora como pestaña adentro de "Hoy" (2-oct-2026)
     { id: 'mis-ordenes',      nombre: 'Hoy',      Icon: LuPin           },
     { id: 'servicio-tecnico', nombre: 'Trabajos', Icon: LuWrench        },
-    { id: 'mi-sueldo',        nombre: 'Sueldo',   Icon: LuBanknote      },
+    { id: 'mi-sueldo',        nombre: 'Mi mes',   Icon: LuBanknote      },
 ];
 
 // Secciones accesibles desde "Más"

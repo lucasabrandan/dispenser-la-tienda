@@ -475,22 +475,24 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         }
     };
 
-    const handleConfirmado = async () => {
-        if (ordenEjecutandoId) {
-            try {
-                const r = await enviarOEncolar('patch', `/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' }, `Visita #${ordenEjecutandoId} → COMPLETADA`);
-                if (r.encolado) toast('Sin señal: la visita se marca completada cuando vuelva la conexión', { icon: '📶' });
-                else toast.success('¡Trabajo completado! Revisá tu rendimiento.');
-            } catch (e) {
-                const det = e?.response?.data?.mensaje || e?.message || '';
-                toast.error(`No se pudo completar la orden${det ? ': ' + det : ''}. Avisá al admin.`);
-            }
+    // La orden se marca COMPLETADA apenas se guarda el trabajo (antes era al tocar
+    // "Listo" y si el técnico cerraba la pantalla quedaba abierta).
+    const completarOrdenEjecutando = async () => {
+        if (!ordenEjecutandoId) return;
+        try {
+            const r = await enviarOEncolar('patch', `/ordenes/${ordenEjecutandoId}/estado`, { estado: 'COMPLETADA' }, `Visita #${ordenEjecutandoId} → COMPLETADA`);
+            if (r.encolado) toast('Sin señal: la visita se marca completada cuando vuelva la conexión', { icon: '📶' });
+        } catch (e) {
+            const det = e?.response?.data?.mensaje || e?.message || '';
+            toast.error(`No se pudo completar la orden${det ? ': ' + det : ''}. Avisá al admin.`);
         }
+    };
+
+    const handleConfirmado = () => {
         setServicioEjecutando(null);
         setOrdenEjecutandoId(null);
         if (recargar) recargar();
         cargarHistorial();
-        setTab('rendimiento');
     };
 
     const activas = ordenes.filter(o => !['COMPLETADA','CANCELADA','NO_ATENDIDO'].includes(o.estado));
@@ -759,8 +761,9 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         {servicioEjecutando && (
             <EjecutarOrdenSheet
                 servicio={servicioEjecutando}
+                onGuardado={completarOrdenEjecutando}
                 onConfirmado={handleConfirmado}
-                onCerrar={() => { setServicioEjecutando(null); setOrdenEjecutandoId(null); }}
+                onCerrar={handleConfirmado}
             />
         )}
 

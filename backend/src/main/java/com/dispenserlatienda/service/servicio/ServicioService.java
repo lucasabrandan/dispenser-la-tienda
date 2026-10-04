@@ -230,103 +230,51 @@ public class ServicioService {
         };
     }
 
-    // Rendimiento mensual del técnico — solo meses cerrados, sin info de clientes
-    // Fórmula: facturado − 30% impuestos − repuestos = gananciaNet → ÷2 = parte técnico
+    // Rendimiento mensual del técnico. Misma cuenta que la liquidación:
+    // cobrado − productos − impuestos (solo con factura) = neto → 50% técnico.
     @Transactional(readOnly = true)
     public List<TecnicoRendimientoDTO> rendimientoTecnico(Long tecnicoId) {
-        final BigDecimal PCT_IMPUESTOS = BigDecimal.valueOf(30);
         final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
-        YearMonth mesActual = YearMonth.now();
+        final BigDecimal pctImp = BigDecimal.valueOf(pctImpuestosConfig());
+        List<Servicio> realizados = servicioRepository.findAll(
+                buildSpec(null, "COBRADO,REALIZADO", null, null, null, tecnicoId, null));
 
-        List<Servicio> cobrados = servicioRepository.findAll(
-                buildSpec(null, "COBRADO", null, null, null, tecnicoId, null));
-        List<Servicio> realizadosLegacy = servicioRepository.findAll(
-                buildSpec(null, "REALIZADO", null, null, null, tecnicoId, null));
-        List<Servicio> realizados = new ArrayList<>(cobrados);
-        realizados.addAll(realizadosLegacy);
-
-        // [0]=facturado [1]=repuestos
+        // [0]=cobrado [1]=productos [2]=impuestos [3]=neto
         Map<YearMonth, BigDecimal[]> porMes  = new TreeMap<>();
         Map<YearMonth, Integer>      countMes = new TreeMap<>();
-
         for (Servicio s : realizados) {
             if (s.getFechaServicio() == null) continue;
             YearMonth ym = YearMonth.from(s.getFechaServicio());
-            // incluir mes actual (el técnico necesita ver su rendimiento en tiempo real)
-
-            // Total facturado (con descuento)
-            BigDecimal facturado = s.getItems().stream()
-                    .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal descPct = s.getDescuentoPorcentaje();
-            if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, RM));
-                facturado = facturado.multiply(factor).setScale(2, RM);
-            }
-
-            // Costo de repuestos (suma de subtotales del JSON)
-            BigDecimal repuestos = BigDecimal.ZERO;
-            for (ServicioItem item : s.getItems()) {
-                String json = item.getRepuestosUsados();
-                if (json == null || json.isBlank()) continue;
-                try {
-                    List<java.util.Map<String, Object>> lista = objectMapper.readValue(
-                            json, new TypeReference<>() {});
-                    for (java.util.Map<String, Object> r : lista) {
-                        Object sub = r.get("subtotal");
-                        Object precio = r.get("precio");
-                        Object cant   = r.get("cantidad");
-                        BigDecimal val = BigDecimal.ZERO;
-                        if (sub != null) {
-                            val = new BigDecimal(sub.toString());
-                        } else if (precio != null && cant != null) {
-                            val = new BigDecimal(precio.toString())
-                                    .multiply(new BigDecimal(cant.toString()));
-                        }
-                        repuestos = repuestos.add(val);
-                    }
-                } catch (JsonProcessingException e) { log.warn("Error parseando JSON repuestos: {}", e.getMessage()); }
-            }
-
-            porMes.merge(ym, new BigDecimal[]{ facturado, repuestos },
-                    (a, b) -> new BigDecimal[]{ a[0].add(b[0]), a[1].add(b[1]) });
+            Desglose d = desglose(s, pctImp);
+            porMes.merge(ym, new BigDecimal[]{ d.cobrado(), d.productos(), d.impuestos(), d.neto() },
+                    (x, y) -> new BigDecimal[]{ x[0].add(y[0]), x[1].add(y[1]), x[2].add(y[2]), x[3].add(y[3]) });
             countMes.merge(ym, 1, Integer::sum);
         }
 
         return porMes.entrySet().stream()
                 .sorted(Map.Entry.<YearMonth, BigDecimal[]>comparingByKey().reversed())
                 .map(e -> {
-                    BigDecimal fact   = e.getValue()[0].setScale(2, RM);
-                    BigDecimal reps   = e.getValue()[1].setScale(2, RM);
-                    BigDecimal imp    = fact.multiply(PCT_IMPUESTOS)
-                                           .divide(BigDecimal.valueOf(100), 2, RM);
-                    BigDecimal ganNet = fact.subtract(imp).subtract(reps).max(BigDecimal.ZERO);
-                    BigDecimal tecni  = ganNet.divide(BigDecimal.valueOf(2), 2, RM);
+                    BigDecimal[] v = e.getValue();
                     return new TecnicoRendimientoDTO(
                             e.getKey().toString(),
                             countMes.getOrDefault(e.getKey(), 0),
-                            fact, imp, reps, ganNet, tecni);
+                            v[0], v[2], v[1], v[3], v[3].divide(BigDecimal.valueOf(2), 2, RM));
                 })
                 .collect(java.util.stream.Collectors.toList());
     }
 
-    // Rendimiento del mes actual — todos los técnicos — para vista admin
+    // Rendimiento del mes — todos los técnicos — vista admin
     @Transactional(readOnly = true)
     public List<TecnicoResumenMesDTO> rendimientoMesActual(String mesParam, Long tecnicoId) {
-        final BigDecimal PCT_IMPUESTOS = BigDecimal.valueOf(30);
         final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
+        final BigDecimal pctImp = BigDecimal.valueOf(pctImpuestosConfig());
         YearMonth mes = (mesParam != null && !mesParam.isBlank()) ? YearMonth.parse(mesParam) : YearMonth.now();
         String desde = mes.atDay(1).toString();
         String hasta  = mes.atEndOfMonth().toString();
 
-        List<Servicio> cobrados = servicioRepository.findAll(
-                buildSpec(null, "COBRADO", null, desde, hasta, tecnicoId, null));
-        List<Servicio> realizadosLegacy = servicioRepository.findAll(
-                buildSpec(null, "REALIZADO", null, desde, hasta, tecnicoId, null));
-        List<Servicio> realizados = new ArrayList<>(cobrados);
-        realizados.addAll(realizadosLegacy);
+        List<Servicio> realizados = servicioRepository.findAll(
+                buildSpec(null, "COBRADO,REALIZADO", null, desde, hasta, tecnicoId, null));
 
-        // Agrupar por usuario
         Map<Long, List<Servicio>> porTecnico = new LinkedHashMap<>();
         Map<Long, String>         nombres    = new LinkedHashMap<>();
         for (Servicio s : realizados) {
@@ -337,44 +285,14 @@ public class ServicioService {
         }
 
         return porTecnico.entrySet().stream().map(e -> {
-            Long uid = e.getKey();
-            List<Servicio> servicios = e.getValue();
-            BigDecimal facturado = BigDecimal.ZERO;
-            BigDecimal repuestos = BigDecimal.ZERO;
-
-            for (Servicio s : servicios) {
-                BigDecimal f = s.getItems().stream()
-                        .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                BigDecimal descPct = s.getDescuentoPorcentaje();
-                if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, RM));
-                    f = f.multiply(factor).setScale(2, RM);
-                }
-                facturado = facturado.add(f);
-
-                for (ServicioItem item : s.getItems()) {
-                    String json = item.getRepuestosUsados();
-                    if (json == null || json.isBlank()) continue;
-                    try {
-                        List<java.util.Map<String, Object>> lista = objectMapper.readValue(json, new TypeReference<>() {});
-                        for (java.util.Map<String, Object> r : lista) {
-                            Object sub = r.get("subtotal"), precio = r.get("precio"), cant = r.get("cantidad");
-                            BigDecimal val = BigDecimal.ZERO;
-                            if (sub != null) val = new BigDecimal(sub.toString());
-                            else if (precio != null && cant != null)
-                                val = new BigDecimal(precio.toString()).multiply(new BigDecimal(cant.toString()));
-                            repuestos = repuestos.add(val);
-                        }
-                    } catch (Exception ex) { log.warn("Error procesando item: {}", ex.getMessage()); }
-                }
+            BigDecimal cob = BigDecimal.ZERO, prod = BigDecimal.ZERO, imp = BigDecimal.ZERO, neto = BigDecimal.ZERO;
+            for (Servicio s : e.getValue()) {
+                Desglose d = desglose(s, pctImp);
+                cob = cob.add(d.cobrado()); prod = prod.add(d.productos());
+                imp = imp.add(d.impuestos()); neto = neto.add(d.neto());
             }
-
-            BigDecimal imp    = facturado.multiply(PCT_IMPUESTOS).divide(BigDecimal.valueOf(100), 2, RM);
-            BigDecimal ganNet = facturado.subtract(imp).subtract(repuestos).max(BigDecimal.ZERO);
-            BigDecimal parte  = ganNet.divide(BigDecimal.valueOf(2), 2, RM);
-            return new TecnicoResumenMesDTO(uid, nombres.get(uid), mes.toString(),
-                    servicios.size(), facturado, imp, repuestos, ganNet, parte);
+            return new TecnicoResumenMesDTO(e.getKey(), nombres.get(e.getKey()), mes.toString(),
+                    e.getValue().size(), cob, imp, prod, neto, neto.divide(BigDecimal.valueOf(2), 2, RM));
         })
         .sorted(Comparator.comparing(TecnicoResumenMesDTO::totalFacturado).reversed())
         .collect(java.util.stream.Collectors.toList());
@@ -986,7 +904,7 @@ public class ServicioService {
     // Técnico (isAdmin=false): su parte = 50% de sus servicios cobrados
     @Transactional(readOnly = true)
     public SueldoProgressDTO calcularProgresoSueldo(Long usuarioId, String mesParam, boolean isAdmin) {
-        final BigDecimal PCT_IMPUESTOS = BigDecimal.valueOf(30);
+        final BigDecimal PCT_IMPUESTOS = BigDecimal.valueOf(pctImpuestosConfig());
         final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -1116,38 +1034,132 @@ public class ServicioService {
         };
     }
 
-    // Ganancia neta de un servicio: facturado - 30% imp - repuestos
-    private BigDecimal calcularGananciaNetaServicio(Servicio s, BigDecimal pctImp, java.math.RoundingMode rm) {
-        BigDecimal facturado = s.getItems().stream()
-                .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal descPct = s.getDescuentoPorcentaje();
-        if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, rm));
-            facturado = facturado.multiply(factor).setScale(2, rm);
+    // ── Desglose único de un trabajo (4-oct-2026) ─────────────────────────────
+    // Lo usan la liquidación, el sueldo y el rendimiento, para que los números
+    // coincidan en todas las pantallas.
+    //   cobrado   = montoFinal si está cargado; si no, ítems con descuento
+    //   productos = repuestos a precio de venta (los pone el negocio, no se reparten)
+    //   impuestos = % de configuración, SOLO si se cobró con factura
+    //   neto      = cobrado − productos − impuestos (mano de obra a repartir)
+    private record Desglose(BigDecimal cobrado, BigDecimal productos, BigDecimal impuestos, BigDecimal neto) {}
+
+    private int pctImpuestosConfig() {
+        return configRepo.findById(1L)
+                .map(c -> c.getPorcentajeImpuestos() != null ? c.getPorcentajeImpuestos() : 30)
+                .orElse(30);
+    }
+
+    private Desglose desglose(Servicio s, BigDecimal pctImp) {
+        final java.math.RoundingMode rm = java.math.RoundingMode.HALF_UP;
+        BigDecimal cobrado;
+        if (s.getMontoFinal() != null && s.getMontoFinal().compareTo(BigDecimal.ZERO) > 0) {
+            cobrado = s.getMontoFinal().setScale(2, rm);
+        } else {
+            cobrado = s.getItems().stream()
+                    .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal descPct = s.getDescuentoPorcentaje();
+            if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, rm));
+                cobrado = cobrado.multiply(factor);
+            }
+            cobrado = cobrado.setScale(2, rm);
         }
 
-        BigDecimal repuestos = BigDecimal.ZERO;
+        BigDecimal productos = BigDecimal.ZERO;
         for (ServicioItem item : s.getItems()) {
             String json = item.getRepuestosUsados();
             if (json == null || json.isBlank()) continue;
             try {
                 List<java.util.Map<String, Object>> lista = objectMapper.readValue(json, new TypeReference<>() {});
                 for (java.util.Map<String, Object> r : lista) {
-                    Object sub = r.get("subtotal");
-                    Object precio = r.get("precio");
-                    Object cant = r.get("cantidad");
+                    Object sub = r.get("subtotal"), precio = r.get("precio"), cant = r.get("cantidad");
                     BigDecimal val = BigDecimal.ZERO;
                     if (sub != null) val = new BigDecimal(sub.toString());
                     else if (precio != null && cant != null)
                         val = new BigDecimal(precio.toString()).multiply(new BigDecimal(cant.toString()));
-                    repuestos = repuestos.add(val);
+                    productos = productos.add(val);
                 }
-            } catch (JsonProcessingException e) { log.warn("Error parseando JSON repuestos: {}", e.getMessage()); }
+            } catch (Exception e) { log.warn("Error parseando JSON repuestos: {}", e.getMessage()); }
         }
+        productos = productos.setScale(2, rm);
 
-        BigDecimal imp = facturado.multiply(pctImp).divide(BigDecimal.valueOf(100), 2, rm);
-        return facturado.subtract(imp).subtract(repuestos).max(BigDecimal.ZERO);
+        BigDecimal impuestos = s.getModalidadCobro() == ModalidadCobro.CON_FACTURA
+                ? cobrado.multiply(pctImp).divide(BigDecimal.valueOf(100), 2, rm)
+                : BigDecimal.ZERO.setScale(2);
+        BigDecimal neto = cobrado.subtract(productos).subtract(impuestos).max(BigDecimal.ZERO);
+        return new Desglose(cobrado, productos, impuestos, neto);
+    }
+
+    // Ganancia neta (mano de obra a repartir) de un servicio
+    private BigDecimal calcularGananciaNetaServicio(Servicio s, BigDecimal pctImp, java.math.RoundingMode rm) {
+        return desglose(s, pctImp).neto();
+    }
+
+    // ── Liquidación mensual del técnico/socio ─────────────────────────────────
+    private static final java.util.Set<EstadoServicio> ESTADOS_PENDIENTE_COBRO = java.util.EnumSet.of(
+            EstadoServicio.COMPLETADO, EstadoServicio.PENDIENTE_FACTURACION, EstadoServicio.FACTURADO);
+
+    @Transactional(readOnly = true)
+    public LiquidacionDTO liquidacion(Long tecnicoId, String mesParam) {
+        final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
+        final int pctImpInt = pctImpuestosConfig();
+        final BigDecimal pctImp = BigDecimal.valueOf(pctImpInt);
+        final int pctTecnico = 50;
+        Usuario tecnico = usuarioRepository.findById(tecnicoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        YearMonth mes = (mesParam != null && !mesParam.isBlank()) ? YearMonth.parse(mesParam) : YearMonth.now();
+        String desde = mes.atDay(1).toString();
+        String hasta = mes.atEndOfMonth().toString();
+
+        List<Servicio> cobrados = servicioRepository.findAll(
+                buildSpec(null, "COBRADO,REALIZADO", null, desde, hasta, tecnicoId, null));
+        List<Servicio> pendientesSrv = servicioRepository.findAll(
+                buildSpec(null, "COMPLETADO,PENDIENTE_FACTURACION,FACTURADO", null, desde, hasta, tecnicoId, null));
+        Comparator<Servicio> porFecha = Comparator.comparing(Servicio::getFechaServicio,
+                Comparator.nullsLast(Comparator.naturalOrder()));
+        cobrados.sort(porFecha);
+        pendientesSrv.sort(porFecha);
+
+        List<LiquidacionDTO.Linea> lineas = new ArrayList<>();
+        BigDecimal tCob = BigDecimal.ZERO, tProd = BigDecimal.ZERO, tImp = BigDecimal.ZERO, tNeto = BigDecimal.ZERO, tParte = BigDecimal.ZERO;
+        for (Servicio s : cobrados) {
+            Desglose d = desglose(s, pctImp);
+            BigDecimal parte = d.neto().multiply(BigDecimal.valueOf(pctTecnico)).divide(BigDecimal.valueOf(100), 2, RM);
+            lineas.add(new LiquidacionDTO.Linea(s.getId(), s.getFechaServicio(), nombreCliente(s), detalleTrabajo(s),
+                    etiquetaCobro(s), d.cobrado(), d.productos(), d.impuestos(), d.neto(), parte));
+            tCob = tCob.add(d.cobrado()); tProd = tProd.add(d.productos()); tImp = tImp.add(d.impuestos());
+            tNeto = tNeto.add(d.neto()); tParte = tParte.add(parte);
+        }
+        List<LiquidacionDTO.Pendiente> pendientes = pendientesSrv.stream()
+                .filter(s -> ESTADOS_PENDIENTE_COBRO.contains(s.getEstado()))
+                .map(s -> new LiquidacionDTO.Pendiente(s.getId(), s.getFechaServicio(), nombreCliente(s),
+                        detalleTrabajo(s), s.getEstado().name(), desglose(s, pctImp).cobrado()))
+                .collect(java.util.stream.Collectors.toList());
+
+        return new LiquidacionDTO(tecnico.getId(), tecnico.getNombre(), mes.toString(), pctImpInt, pctTecnico,
+                lineas, pendientes, tCob, tProd, tImp, tNeto, tParte, tNeto.subtract(tParte));
+    }
+
+    private static String nombreCliente(Servicio s) {
+        if (s.getClienteNombre() != null && !s.getClienteNombre().isBlank()) return s.getClienteNombre();
+        if (s.getSede() != null && s.getSede().getCliente() != null) return s.getSede().getCliente().getNombre();
+        return "Cliente";
+    }
+
+    private static String detalleTrabajo(Servicio s) {
+        String det = s.getItems().stream()
+                .map(ServicioItem::getTrabajoRealizado)
+                .filter(t -> t != null && !t.isBlank())
+                .findFirst().orElse(null);
+        if (det == null) det = s.getServicioTipo() == ServicioTipo.VENTA ? "Venta" : "Servicio técnico";
+        return det.length() > 80 ? det.substring(0, 77) + "..." : det;
+    }
+
+    private static String etiquetaCobro(Servicio s) {
+        if (s.getModalidadCobro() == ModalidadCobro.CON_FACTURA) return "Con factura";
+        if (s.getModalidadCobro() == ModalidadCobro.EFECTIVO_SIN_FACTURA) return "Efectivo";
+        return "Sin factura";
     }
 
     private static boolean perteneceAOtroCliente(Equipo equipo, Servicio servicio) {

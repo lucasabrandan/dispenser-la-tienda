@@ -87,7 +87,7 @@ export function generarPDFRendimientoTecnicos({ datos, periodo }) {
     // Nota al pie
     doc.setFontSize(T.xs);
     doc.setTextColor(...C.grayText);
-    doc.text('* Ganancia neta = Facturado − 30% impuestos − repuestos. Su parte = 50% de la ganancia neta.', M, y);
+    doc.text('* Ganancia neta = Cobrado − productos − impuestos (solo trabajos con factura). Su parte = 50% de la ganancia neta.', M, y);
 
     dibujarFooter(doc, { pagina: 1, totalPaginas: doc.getNumberOfPages() });
 

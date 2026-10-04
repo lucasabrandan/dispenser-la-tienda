@@ -295,7 +295,7 @@ export default function TabSueldo({ filtroMes, setFiltroMes }) {
             <p className="text-caption text-muted text-center pb-2">
                 {verEmpresa
                     ? 'Tu sueldo = servicios propios (100%) + parte empresa técnicos (50%) + ventas. Resultado = acumulado − sueldo − gastos.'
-                    : 'Tu parte = 50% de ganancia neta (facturado − 30% imp − repuestos) de tus servicios cobrados.'
+                    : 'Tu parte = 50% de la mano de obra neta (cobrado − productos − impuestos si se facturó) de tus trabajos cobrados.'
                 }
             </p>
         </div>

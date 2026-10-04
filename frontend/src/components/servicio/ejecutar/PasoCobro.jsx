@@ -1,12 +1,60 @@
 import React from 'react';
 
-const fmt = v => `$${Math.round(v).toLocaleString('es-AR')}`;
+const fmt = v => `$${Math.round(Number(v) || 0).toLocaleString('es-AR')}`;
 
-export default function PasoCobro({
-    pricing, modalidadCobro, setModalidadCobro,
-    costoMOExtra, setCostoMOExtra,
-    procesando, onBack, onConfirmar,
-}) {
+// "¿Te pagó?" (4-oct-2026). El técnico ya no elige "con factura / sin factura"
+// ni ajusta la mano de obra: eso lo define el admin. Solo dice si el cliente le
+// pagó y cómo. Si fue en efectivo, el monto va a su "Cerrar mi día".
+export const OPCIONES_PAGO = [
+    { id: 'NO',            label: 'No me pagó',      sub: 'El admin lo cobra después' },
+    { id: 'EFECTIVO',      label: 'Sí, en efectivo', sub: 'Va a tu cierre del día' },
+    { id: 'TRANSFERENCIA', label: 'Sí, por transferencia', sub: 'El admin lo confirma' },
+];
+
+// Bloque reutilizable: opciones + "¿Cuánto te pagó?". Lo usan el cierre de un
+// presupuesto (PasoCobro) y el registro de una visita sin presupuesto.
+export function PreguntaPago({ total, descuentoEfectivo = 0, pago, setPago, monto, setMonto }) {
+    const sugeridoEfectivo = Math.round(total * (1 - (Number(descuentoEfectivo) || 0) / 100));
+    const elegir = (id) => {
+        setPago(id);
+        if (total > 0 && id === 'EFECTIVO') setMonto(sugeridoEfectivo);
+        if (total > 0 && id === 'TRANSFERENCIA') setMonto(total);
+    };
+    return (
+        <>
+            <div className="space-y-2">
+                {OPCIONES_PAGO.map(opt => (
+                    <button key={opt.id} type="button" onClick={() => elegir(opt.id)}
+                        className={`w-full p-4 rounded-2xl text-left border-2 transition-all active:scale-[0.98] ${
+                            pago === opt.id ? 'border-brand-red bg-[#D13A28]/5 dark:bg-[#E8422F]/5' : 'border-black/[0.06] dark:border-white/[0.06] bg-card'
+                        }`}>
+                        <p className="text-body font-black text-ink">{opt.label}</p>
+                        <p className="text-caption text-muted mt-0.5">{opt.sub}</p>
+                    </button>
+                ))}
+            </div>
+
+            {(pago === 'EFECTIVO' || pago === 'TRANSFERENCIA') && (
+                <div className="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06] p-4">
+                    <label className="text-label font-black text-muted uppercase tracking-widest">¿Cuánto te pagó?</label>
+                    <div className="mt-2 flex items-center gap-2">
+                        <span className="text-title font-black text-ink">$</span>
+                        <input type="text" inputMode="decimal" value={monto || ''}
+                            onChange={e => setMonto(Number(String(e.target.value).replace(/[^\d]/g, '')) || 0)}
+                            className="flex-1 h-12 px-3 rounded-xl text-title font-black bg-chip text-ink outline-none" />
+                    </div>
+                    {pago === 'EFECTIVO' && Number(descuentoEfectivo) > 0 && total > 0 && (
+                        <p className="text-caption text-muted mt-2">Sugerido con {descuentoEfectivo}% de descuento por efectivo: {fmt(sugeridoEfectivo)}</p>
+                    )}
+                </div>
+            )}
+        </>
+    );
+}
+
+export const pagoCompleto = (pago, monto) => !!pago && (pago === 'NO' || monto > 0);
+
+export default function PasoCobro({ total, descuentoEfectivo = 0, pago, setPago, monto, setMonto, procesando, onBack, onConfirmar }) {
     return (
         <>
             <button onClick={onBack}
@@ -15,79 +63,16 @@ export default function PasoCobro({
             </button>
 
             <div className="text-center py-1">
-                <p className="text-body-lg font-black text-ink">
-                    {pricing.esVisita ? 'Cobro de visita' : 'Cobro del servicio'}
-                </p>
-                <p className="text-caption text-muted mt-0.5">Selecciona como paga el cliente</p>
+                <p className="text-body-lg font-black text-ink">¿Te pagó?</p>
+                {total > 0 && <p className="text-caption text-muted mt-0.5">Total del trabajo: {fmt(total)}</p>}
             </div>
 
-            {/* Desglose */}
-            <div className="rounded-2xl bg-card border border-black/[0.06] p-4 space-y-2">
-                <div className="flex justify-between text-body">
-                    <span className="text-secondary">
-                        {pricing.esVisita ? 'Visita diagnostica' : 'Mano de obra'}
-                    </span>
-                    <span className="font-bold text-ink">
-                        {fmt(pricing.esVisita ? pricing.visitaPrecio : pricing.precioCliente)}
-                    </span>
-                </div>
-                {!pricing.esVisita && pricing.totalRepuestos > 0 && (
-                    <div className="flex justify-between text-body">
-                        <span className="text-secondary">Repuestos</span>
-                        <span className="font-bold text-ink">{fmt(pricing.totalRepuestos)}</span>
-                    </div>
-                )}
-                {!pricing.esVisita && costoMOExtra > 0 && (
-                    <div className="flex justify-between text-body">
-                        <span className="text-secondary">Ajuste MO extra</span>
-                        <span className="font-bold text-ink">+{fmt(Math.round(costoMOExtra * (1 + pricing.pctIVA / 100)))}</span>
-                    </div>
-                )}
-            </div>
+            <PreguntaPago total={total} descuentoEfectivo={descuentoEfectivo}
+                pago={pago} setPago={setPago} monto={monto} setMonto={setMonto} />
 
-            {/* Ajuste MO */}
-            {!pricing.esVisita && (
-                <div className="rounded-2xl bg-card border border-black/[0.06] p-3">
-                    <p className="text-label font-black text-muted uppercase tracking-widest mb-2">Ajustar mano de obra (solo subir)</p>
-                    <div className="flex items-center gap-2">
-                        <span className="text-label text-secondary">Extra:</span>
-                        <input type="text" inputMode="decimal"
-                            value={costoMOExtra || ''}
-                            onChange={e => setCostoMOExtra(Math.max(0, Number(e.target.value) || 0))}
-                            placeholder="0"
-                            className="flex-1 px-3 py-2 rounded-lg text-body bg-[#F5F3F1] dark:bg-[#2A2A28] text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Opciones */}
-            <div className="space-y-2">
-                {[
-                    { id: 'EFECTIVO_SIN_FACTURA', label: 'Efectivo sin factura', sub: `Descuento ${pricing.pctIVA}% · Cobras en mano`, monto: pricing.totalEfectivo, color: 'border-brand-red bg-[#D13A28]/5 dark:bg-[#E8422F]/5', montoColor: 'text-brand-red' },
-                    { id: 'CON_FACTURA', label: 'Con factura (IVA inc.)', sub: 'Admin gestiona cobro', monto: pricing.totalFacturado, color: 'border-brand-amber bg-[#D48800]/5 dark:bg-[#F0A500]/5', montoColor: 'text-brand-amber' },
-                    { id: 'PENDIENTE', label: 'Definir despues', sub: 'El admin decide la modalidad', monto: null, color: 'border-muted bg-muted/5', montoColor: '' },
-                ].map(opt => (
-                    <button key={opt.id} onClick={() => setModalidadCobro(opt.id)}
-                        className={`w-full p-4 rounded-2xl text-left border-2 transition-all active:scale-[0.98] ${
-                            modalidadCobro === opt.id ? opt.color : 'border-black/[0.06] dark:border-white/[0.06] bg-card'
-                        }`}>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-body font-black text-ink">{opt.label}</p>
-                                <p className="text-caption text-muted mt-0.5">{opt.sub}</p>
-                            </div>
-                            {opt.monto !== null && (
-                                <p className={`text-title font-black ${opt.montoColor}`}>{fmt(opt.monto)}</p>
-                            )}
-                        </div>
-                    </button>
-                ))}
-            </div>
-
-            <button onClick={onConfirmar} disabled={procesando || !modalidadCobro}
-                className="w-full py-4 rounded-2xl font-black text-label uppercase text-white bg-brand-red active:scale-[0.98] disabled:opacity-50 transition-all">
-                {procesando ? 'Procesando...' : '✓ Confirmar trabajo'}
+            <button onClick={onConfirmar} disabled={procesando || !pagoCompleto(pago, monto)}
+                className="w-full py-4 rounded-2xl font-black text-label uppercase text-white bg-[color:var(--etapa-listo)] active:scale-[0.98] disabled:opacity-50 transition-all">
+                {procesando ? 'Guardando...' : '✓ Listo, cerrar trabajo'}
             </button>
         </>
     );

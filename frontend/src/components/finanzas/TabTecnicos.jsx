@@ -7,12 +7,14 @@ import Paginacion from '../ui/Paginacion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { colorTecnico } from '../../utils/estados';
 import AvatarTecnico from '../ui/AvatarTecnico';
+import Liquidacion from './Liquidacion';
 
 export default function TabTecnicos({ filtroMes }) {
     const { ocultar } = useMontos();
     const [datos,      setDatos]      = useState([]);
     const [cargando,   setCargando]   = useState(false);
     const [filtroTec,  setFiltroTec]  = useState('');
+    const [liqDe,      setLiqDe]      = useState(null); // técnico cuya liquidación se abre
 
     const cargar = () => {
         setCargando(true);
@@ -93,7 +95,9 @@ export default function TabTecnicos({ filtroMes }) {
                             ))}
                         </div>
                         {datosFiltrados.map((d, i) => (
-                            <div key={d.tecnicoId} className={`grid grid-cols-[minmax(120px,1fr)_60px_90px_90px_90px] px-4 py-3 items-center ${i < datosFiltrados.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
+                            <div key={d.tecnicoId} role="button" tabIndex={0} onClick={() => setLiqDe(d)}
+                                onKeyDown={e => { if (e.key === 'Enter') setLiqDe(d); }}
+                                className={`cursor-pointer active:bg-chip grid grid-cols-[minmax(120px,1fr)_60px_90px_90px_90px] px-4 py-3 items-center ${i < datosFiltrados.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
                                 <p className="text-body font-black text-ink truncate pr-2 flex items-center gap-2"><AvatarTecnico nombre={d.tecnicoNombre} size={22} />{d.tecnicoNombre}</p>
                                 <p className="text-body font-bold text-muted text-center">{d.cantidadTrabajos}</p>
                                 <p className="text-body font-bold text-ink text-right">{fmt(d.totalFacturado)}</p>
@@ -114,8 +118,21 @@ export default function TabTecnicos({ filtroMes }) {
                 </div>
             )}
             <p className="text-caption text-muted text-center">
-                Ganancia neta = Facturado − 30% impuestos − repuestos · Su parte = 50%
+                Neto = cobrado − productos − impuestos (solo con factura) · Su parte = 50% · Tocá un técnico para ver su liquidación
             </p>
+
+            {liqDe && (
+                <div className="fixed inset-0 z-[2000] flex flex-col bg-page">
+                    <div className="shrink-0 px-4 pt-4 pb-3 bg-panel border-b border-black/[0.08] flex items-center gap-3">
+                        <button onClick={() => setLiqDe(null)} aria-label="Volver"
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-chip text-secondary active:scale-90">←</button>
+                        <h2 className="text-title font-black text-ink">Liquidación · {liqDe.tecnicoNombre}</h2>
+                    </div>
+                    <div className="flex-1 overflow-y-auto px-4 py-4 pb-10 max-w-2xl w-full mx-auto">
+                        <Liquidacion tecnicoId={liqDe.tecnicoId} mesInicial={filtroMes} esAdmin />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

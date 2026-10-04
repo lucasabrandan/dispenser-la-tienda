@@ -172,12 +172,28 @@ public class ServicioController {
         return ResponseEntity.ok(servicioService.rendimientoTecnico(tecnicoId));
     }
 
-    // GET: Rendimiento del mes actual — todos los técnicos — vista admin
+    // GET: Rendimiento del mes actual — todos los técnicos — vista admin.
+    // Un técnico solo puede ver el suyo (antes veía el de todos, 4-oct-2026).
     @GetMapping("/rendimiento/mes-actual")
     public ResponseEntity<List<TecnicoResumenMesDTO>> rendimientoMesActual(
             @RequestParam(required = false) String mes,
-            @RequestParam(required = false) Long tecnicoId) {
+            @RequestParam(required = false) Long tecnicoId,
+            Authentication auth) {
+        Usuario solicitante = resolverUsuario(auth);
+        if (solicitante.getRol() != RolUsuario.ADMIN) tecnicoId = solicitante.getId();
         return ResponseEntity.ok(servicioService.rendimientoMesActual(mes, tecnicoId));
+    }
+
+    // GET: Liquidación mensual del técnico/socio (desglose por trabajo).
+    // Admin elige el técnico; un técnico siempre ve la suya.
+    @GetMapping("/liquidacion")
+    public ResponseEntity<com.dispenserlatienda.dto.servicio.LiquidacionDTO> liquidacion(
+            @RequestParam(required = false) String mes,
+            @RequestParam(required = false) Long tecnicoId,
+            Authentication auth) {
+        Usuario solicitante = resolverUsuario(auth);
+        Long id = (solicitante.getRol() == RolUsuario.ADMIN && tecnicoId != null) ? tecnicoId : solicitante.getId();
+        return ResponseEntity.ok(servicioService.liquidacion(id, mes));
     }
 
     // GET: Progreso de sueldo mensual — admin ve todo, técnico ve su parte.
