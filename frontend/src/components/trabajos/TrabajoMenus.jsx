@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuPencil, LuCopy, LuFileText, LuPause, LuPlay, LuArchive, LuTrash2, LuWrench, LuShoppingCart, LuLayers, LuCalendarPlus, LuRotateCcw, LuEye } from 'react-icons/lu';
+import { LuPencil, LuCopy, LuFileText, LuPause, LuPlay, LuArchive, LuTrash2, LuWrench, LuShoppingCart, LuCalendarPlus, LuRotateCcw, LuEye } from 'react-icons/lu';
 import ActionSheet from '../ui/ActionSheet';
 
 // Botón de una fila de menú (mismo estilo en los dos sheets)
@@ -24,7 +24,6 @@ export function NuevoSheet({ open, onClose, onElegir }) {
             <p className="px-4 pt-1 pb-2 text-label font-black uppercase tracking-widest text-muted">Nuevo</p>
             <Opcion Icon={LuWrench} label="Trabajo / presupuesto" sub="Service, reparación o instalación" onClick={() => elegir('nuevo')} />
             <Opcion Icon={LuShoppingCart} label="Venta" sub="Productos sin visita técnica" onClick={() => elegir('venta')} />
-            <Opcion Icon={LuLayers} label="Cotizar por volumen" sub="Muchos equipos, precio por cantidad" onClick={() => elegir('volumen')} />
             <Opcion Icon={LuCalendarPlus} label="Visita" sub="Mandar un técnico sin presupuesto (ej. MODO AGUA)" onClick={() => elegir('visita')} />
         </ActionSheet>
     );

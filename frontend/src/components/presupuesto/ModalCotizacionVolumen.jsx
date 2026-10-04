@@ -217,7 +217,7 @@ export default function ModalCotizacionVolumen({ onCerrar }) {
                     <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
                         <div>
                             <h3 className="text-lg font-black text-ink uppercase leading-none">
-                                Cotizacion por volumen
+                                Precios por cantidad
                             </h3>
                             <p className="text-caption font-bold text-muted mt-1">
                                 {productos.length === 1 ? 'Precios escalonados por cantidad' : `${productos.length} productos`}

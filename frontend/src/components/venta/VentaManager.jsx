@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuDownload } from 'react-icons/lu';
+import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuDownload, LuListOrdered } from 'react-icons/lu';
+import ModalCotizacionVolumen from '../presupuesto/ModalCotizacionVolumen';
 import BusquedaBar from '../ui/BusquedaBar';
 import ChipFiltro from '../ui/ChipFiltro';
 import { periodoLabelDe } from '../../utils/dateUtils';
@@ -30,6 +31,7 @@ const ESTADO_API_MAP = {
 
 export default function VentaManager({ clienteInicial = null, onClienteConsumido, abrirCrearDirecto = false, onCrearConsumido }) {
     const { esAdmin } = useAuth();
+    const [listaPrecios, setListaPrecios] = useState(false);
     const {
         cargando,
         modalCrear, setModalCrear,
@@ -148,6 +150,15 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                             title="Exportar CSV"
                             className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuDownload size={15} /></button>
 
+                        {/* Lista de precios por cantidad (antes "Cotizar por volumen", estaba en
+                            Trabajos): es de venta mayorista, solo genera un PDF */}
+                        {esAdmin && (
+                            <button onClick={() => setListaPrecios(true)} title="Lista de precios por cantidad"
+                                className="h-9 px-2.5 rounded-lg flex items-center gap-1.5 text-label font-bold text-ink bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 shrink-0">
+                                <LuListOrdered size={15} /><span className="hidden sm:inline">Precios x cantidad</span>
+                            </button>
+                        )}
+
                         {esAdmin && (
                             <button onClick={() => setModalCrear(true)}
                                 className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label uppercase items-center active:scale-95 bg-card text-ink border border-black/[0.08] dark:border-white/[0.08] shrink-0">
@@ -219,6 +230,8 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
             )}
 
             {/* Modal crear/editar */}
+            {listaPrecios && <ModalCotizacionVolumen onCerrar={() => setListaPrecios(false)} />}
+
             {modalCrear && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end md:items-center justify-center p-0 md:p-4">
                     <div className="bg-card w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl">

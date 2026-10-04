@@ -15,7 +15,6 @@ import DetalleSheet from '../servicio/DetalleSheet';
 import OrdenForm from '../ordenes/OrdenForm';
 import VisitaForm from '../ordenes/VisitaForm';
 import CierreMensualModal from '../cliente/CierreMensualModal';
-import ModalCotizacionVolumen from '../presupuesto/ModalCotizacionVolumen';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
 import { buildGoogleMapsRouteUrl } from '../../utils/clienteUtils';
@@ -93,7 +92,6 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     // Lo que antes vivía en Servicio Técnico y Presupuestos
     const [nuevoAbierto, setNuevoAbierto] = useState(false);
     const [editor, setEditor]         = useState(null);   // { modo, servicio, clienteId }
-    const [cotizar, setCotizar]       = useState(false);
     const [nuevaVisita, setNuevaVisita] = useState(false);
     const [menuFila, setMenuFila]     = useState(null);
     const [confirmar, setConfirmar]   = useState(null);   // { tipo: 'archivar'|'eliminar', servicio }
@@ -394,8 +392,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     };
 
     const elegirNuevo = (q) => {
-        if (q === 'volumen') setCotizar(true);
-        else if (q === 'visita') setNuevaVisita(true);
+        if (q === 'visita') setNuevaVisita(true);
         else setEditor({ modo: q, servicio: null });
     };
     // Selección para armar la ruta del día
@@ -636,15 +633,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 <TrabajoEditorModal modo={editor.modo} servicio={editor.servicio} clienteInicialId={editor.clienteId}
                     onCerrar={() => setEditor(null)} onGuardado={cargar} />
             )}
-            {cotizar && <ModalCotizacionVolumen onCerrar={() => { setCotizar(false); cargar(); }} />}
-            {nuevaVisita && (
-                <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
-                    <div className="w-full max-w-lg bg-card rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-body-lg font-black text-ink mb-5">Nueva visita</h2>
-                        <VisitaForm tecnicos={tecnicos} onGuardado={() => { setNuevaVisita(false); cargar(); }} onCancelar={() => setNuevaVisita(false)} />
-                    </div>
-                </div>
-            )}
+            {nuevaVisita && <VisitaForm tecnicos={tecnicos} onGuardado={() => { setNuevaVisita(false); cargar(); }} onCancelar={() => setNuevaVisita(false)} />}
             {confirmar && (
                 <ConfirmDialog
                     titulo={confirmar.tipo === 'eliminar' ? 'Eliminar trabajo' : 'Archivar trabajo'}
