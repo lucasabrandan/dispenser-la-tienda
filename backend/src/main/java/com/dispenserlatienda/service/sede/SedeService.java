@@ -44,6 +44,19 @@ public class SedeService {
                 .toList();
     }
 
+    // Sede "Mostrador" (5-oct-2026): para cerrar ventas o visitas cuyo cliente
+    // no tiene dirección cargada. Antes el técnico caía en el listado completo
+    // de sedes (que ahora es solo del admin) y se quedaba sin poder cerrar.
+    @Transactional(readOnly = true)
+    public List<SedeDTO> mostrador() {
+        return sedeRepository.findAll().stream()
+                .filter(s -> s.isActiva() && s.getNombreSede() != null
+                          && s.getNombreSede().toLowerCase().contains("mostrador"))
+                .findFirst()
+                .map(s -> List.of(mapToDTO(s)))
+                .orElse(List.of());
+    }
+
     @Transactional
     public SedeDTO crear(SedeCreateDTO dto) {
         Cliente cliente = clienteRepository.findById(dto.clienteId())

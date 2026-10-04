@@ -393,7 +393,8 @@ public class ServicioService {
         }
 
         ServicioCreateDTO limpio = new ServicioCreateDTO();
-        limpio.setSedeId(actual.getSede().getId());
+        // Venta vieja sin sede: se usa la que mande el frontend (5-oct-2026)
+        limpio.setSedeId(actual.getSede() != null ? actual.getSede().getId() : dto.getSedeId());
         limpio.setUsuarioId(tecnico.getId());
         limpio.setFecha(actual.getFechaServicio() != null ? actual.getFechaServicio().toString() : dto.getFecha());
         limpio.setServicioTipo(actual.getServicioTipo());

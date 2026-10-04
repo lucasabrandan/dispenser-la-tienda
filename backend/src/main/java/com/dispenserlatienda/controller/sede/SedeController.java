@@ -30,6 +30,11 @@ public class SedeController {
         return sedeRepository.findAll();
     }
 
+    @GetMapping("/mostrador")
+    public List<SedeDTO> mostrador() {
+        return sedeService.mostrador();
+    }
+
     @GetMapping("/cliente/{clienteId}")
     public List<SedeDTO> listarPorCliente(@PathVariable Long clienteId) {
         return sedeService.listarPorCliente(clienteId);

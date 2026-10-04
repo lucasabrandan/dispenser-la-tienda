@@ -4,7 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban, LuLayers, LuSettings } from 'react-icons/lu';
+import { LuHouse, LuNotebookPen, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban, LuLayers, LuSettings } from 'react-icons/lu';
 import { NotifBell } from './NotificacionesPanel';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
@@ -42,6 +42,7 @@ const MENU_OPERACIONES_TECNICO = [
     // Agenda (calendario) vive ahora como pestaña adentro de "Hoy" (2-oct-2026)
     { id: 'mis-ordenes',      Icon: LuPin,           nombre: 'Hoy'              },
     { id: 'mi-sueldo',        Icon: LuBanknote,      nombre: 'Mi mes'           },
+    { id: 'lo-mio',           Icon: LuNotebookPen,   nombre: 'Lo mío'           },
 ];
 
 const MENU_GESTION = [

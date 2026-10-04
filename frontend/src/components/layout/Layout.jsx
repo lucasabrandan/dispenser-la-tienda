@@ -29,6 +29,7 @@ const NOMBRES_SECCION = {
     'usuarios':         'Usuarios',
     'mis-ordenes':      'Hoy',
     'mi-sueldo':        'Mi mes',
+    'lo-mio':           'Lo mío',
     'mi-agenda':        'Mi Agenda',
     'mi-espacio':       'Mi Espacio',
 };

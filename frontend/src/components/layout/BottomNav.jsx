@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuPin, LuShoppingCart, LuEllipsis, LuBanknote, LuLayers } from 'react-icons/lu';
+import { LuHouse, LuPin, LuNotebookPen, LuShoppingCart, LuEllipsis, LuBanknote, LuLayers } from 'react-icons/lu';
 
 // Reordenado: las acciones más frecuentes accesibles directamente.
 // 'despacho' (ítem propio, 26-ago) se saco de acá: el modo Despacho/Servicio
@@ -23,6 +23,7 @@ const NAV_TECNICO = [
     // hacer; "Mi mes" = lo que hizo y cobró (liquidación) + su objetivo.
     { id: 'mis-ordenes',      nombre: 'Hoy',      Icon: LuPin           },
     { id: 'mi-sueldo',        nombre: 'Mi mes',   Icon: LuBanknote      },
+    { id: 'lo-mio',           nombre: 'Lo mío',   Icon: LuNotebookPen   },
 ];
 
 // Secciones accesibles desde "Más"

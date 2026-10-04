@@ -24,6 +24,7 @@ import UsuariosManager    from './components/usuarios/UsuariosManager';
 import MisOrdenes         from './components/ordenes/MisOrdenes';
 import MiAgenda           from './components/ordenes/MiAgenda';
 import MiSueldo           from './components/finanzas/MiSueldo';
+import LoMio             from './components/propio/LoMio';
 import MiEspacio          from './components/miespacio/MiEspacio';
 import Configuracion      from './components/configuracion/Configuracion';
 import api from './services/api';
@@ -83,7 +84,7 @@ function AppInterna() {
 
     // El técnico solo tiene "Hoy", su agenda y "Mi mes" (4-oct-2026). Cualquier
     // otra sección (por un link viejo, una notificación) lo lleva a "Hoy".
-    const SECCIONES_TECNICO = ['mis-ordenes', 'mi-agenda', 'mi-sueldo'];
+    const SECCIONES_TECNICO = ['mis-ordenes', 'mi-agenda', 'mi-sueldo', 'lo-mio'];
     const renderSeccion = () => {
         const seccion = esAdmin || SECCIONES_TECNICO.includes(seccionActual) ? seccionActual : 'mis-ordenes';
         switch (seccion) {
@@ -139,6 +140,8 @@ function AppInterna() {
                 return <MiAgenda tecnicoId={usuario?.id} />;
             case 'mi-sueldo':
                 return <MiSueldo />;
+            case 'lo-mio':
+                return <LoMio />;
             case 'mi-espacio':
                 return <MiEspacio />;
             case 'configuracion':

@@ -29,6 +29,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
     const [fotoEvidencia,  setFotoEvidencia]  = useState(null);
     const [seleccionados,  setSeleccionados]  = useState([]);
     const [guardando,      setGuardando]      = useState(false);
+    const [esMostrador,    setEsMostrador]    = useState(false);
 
     useEffect(() => {
         // Bug 3-oct-2026: /repuestos devuelve una página ({content: [...]}), no una
@@ -37,19 +38,25 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
         api.get('/repuestos', { params: { page: 0, size: 1000 } })
             .then(r => { const d = r.data; setRepuestosDisp(Array.isArray(d) ? d : (d?.content || [])); })
             .catch(() => {});
-        // /sedes?clienteId= devolvía TODAS las sedes de todos los clientes
-        const url = orden.clienteId ? `/sedes/cliente/${orden.clienteId}` : '/sedes';
-        api.get(url)
-            .then(r => {
-                const d = r.data;
-                const lista = (Array.isArray(d) ? d : (d?.content || [])).map(s => ({ ...s, nombre: s.nombre || s.nombreSede || s.direccion || `Sede ${s.id}` }));
-                setSedes(lista);
-                if (lista.length === 1) {
-                    setSedeId(String(lista[0].id));
-                    setSedeNombre(lista[0].nombre || lista[0].descripcion || '');
-                }
-            })
+        // Sedes del cliente de la visita. Si no tiene (venta o cliente sin dirección
+        // cargada) se usa la sede "Mostrador" — antes caía en el listado de TODAS las
+        // sedes (ahora solo del admin) y el técnico no podía cerrar (5-oct-2026).
+        const normalizar = d => (Array.isArray(d) ? d : (d?.content || []))
+            .map(s => ({ ...s, nombre: s.nombre || s.nombreSede || s.direccion || `Sede ${s.id}` }));
+        const elegir = (lista) => {
+            setSedes(lista);
+            if (lista.length === 1) {
+                setSedeId(String(lista[0].id));
+                setSedeNombre(lista[0].nombre || lista[0].descripcion || '');
+            }
+        };
+        const mostrador = () => api.get('/sedes/mostrador')
+            .then(r => { const l = normalizar(r.data); setEsMostrador(l.length > 0); elegir(l); })
             .catch(() => {});
+        if (!orden.clienteId) { mostrador(); return; }
+        api.get(`/sedes/cliente/${orden.clienteId}`)
+            .then(r => { const l = normalizar(r.data); if (l.length) elegir(l); else mostrador(); })
+            .catch(mostrador);
     }, [orden.clienteId]);
 
     const agregarRepuesto = (e) => {
@@ -200,8 +207,11 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                 {sedes.length === 0 && (
                     <div>
                         <label className={labelCls}>Sede *</label>
-                        <p className="text-caption text-[#D13A28] font-bold">Sin sedes disponibles en el sistema</p>
+                        <p className="text-caption text-[#D13A28] font-bold">Este cliente no tiene dirección cargada. Avisale al admin.</p>
                     </div>
+                )}
+                {esMostrador && sedes.length > 0 && (
+                    <p className="text-caption text-muted">El cliente no tiene dirección cargada: se registra como mostrador.</p>
                 )}
 
                 {/* Trabajo realizado */}
