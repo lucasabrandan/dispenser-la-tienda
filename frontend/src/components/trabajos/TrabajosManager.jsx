@@ -5,6 +5,7 @@ import api from '../../services/api';
 import BusquedaBar from '../ui/BusquedaBar';
 import { M } from '../servicio/ServicioUI';
 import { colorTecnico, ETAPAS } from '../../utils/estados';
+import { coincideTodo } from '../../utils/busqueda';
 import { getTodayISO } from '../../utils/dateUtils';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
 import IniciarTrabajoSheet from '../presupuesto/IniciarTrabajoSheet';
@@ -266,9 +267,12 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
 
     // ── Filtros ──────────────────────────────────────────────────────────────
     const q = busqueda.trim().toLowerCase();
-    const pasaBusqueda = (f) => !q || q.split(/\s+/).every(t => f.busca.includes(t) || (f.cliente || '').toLowerCase().includes(t));
+    // Multi-palabra y sin acentos ("guemes" encuentra "Güemes"), igual en toda la app
+    const pasaBusqueda = (f) => !q || coincideTodo(`${f.busca || ''} ${f.cliente || ''} ${f.detalle || ''}`, q);
     const pasaTec = (f) => !tec || (tec === '__SIN__' ? !f.tecnico : f.tecnico === tec);
-    const enEtapa = (f) => (GRUPOS.find(g => g.id === grupo)?.etapas || []).includes(f.etapa) && (!etapa || f.etapa === etapa);
+    // Mientras se busca, se busca en TODOS los grupos (antes buscaba solo en el grupo
+    // abierto y parecía que no encontraba nada)
+    const enEtapa = (f) => (q ? true : (GRUPOS.find(g => g.id === grupo)?.etapas || []).includes(f.etapa) && (!etapa || f.etapa === etapa));
 
     // Archivados: lista aparte, fuera del recorrido (se ven solo con "Ver archivados")
     const filasArchivadas = useMemo(() => archivados.map(s => ({
@@ -299,7 +303,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     }, [base]);
 
     const totalVisible = visibles.reduce((a, f) => a + (f.monto || 0), 0);
-    const tituloTotal = { HECHO: 'Para cobrar', FACTURADO: 'Para cobrar', COBRADO: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}`, PRESUPUESTO: 'Presupuestado' }[etapa] || { hacer: 'Por hacer', marcha: 'En marcha', cobrar: 'Para cobrar', cobrado: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}` }[grupo];
+    const tituloTotal = q ? 'Encontrados' : { HECHO: 'Para cobrar', FACTURADO: 'Para cobrar', COBRADO: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}`, PRESUPUESTO: 'Presupuestado' }[etapa] || { hacer: 'Por hacer', marcha: 'En marcha', cobrar: 'Para cobrar', cobrado: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}` }[grupo];
 
     const elegirGrupo = (id) => { setGrupo(id); setEtapa(null); setTec(''); };
 
@@ -466,7 +470,10 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
 
                 {/* Grupos (opción A, 3-oct-2026): 3 preguntas del día en vez de 7 etapas.
                     Debajo, el detalle de las etapas del grupo (tocables para filtrar). */}
-                {!verArchivados && (
+                {!verArchivados && q && (
+                    <p className="px-1 text-caption text-muted">Buscando «{busqueda.trim()}» en todos los trabajos (también cobrados)</p>
+                )}
+                {!verArchivados && !q && (
                     <div className="space-y-2">
                         <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-chip">
                             {GRUPOS.filter(g => g.id !== 'cobrado').map(g => {

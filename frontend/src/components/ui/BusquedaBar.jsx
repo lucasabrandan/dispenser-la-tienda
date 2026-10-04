@@ -1,42 +1,38 @@
-import React, { useState } from 'react';
-import { LuSearch } from 'react-icons/lu';
+import React, { useRef } from 'react';
+import { LuSearch, LuX } from 'react-icons/lu';
 
-// Barra de búsqueda unificada (Lucas, 7-sep-2026: "los buscadores... se ven
-// todos distintos" -- Servicio/Venta/Presupuestos, Clientes y Productos tenían
-// cada uno su propia versión copiada a mano, con pequeñas diferencias de look
-// y de comportamiento entre sí). Se extrae acá una sola vez para que las 5
-// pantallas se vean y actúen exactamente igual, y no puedan volver a divergir.
+// Barra de búsqueda unificada — la usan Trabajos, Venta, Clientes, Productos,
+// Presupuestos y Servicio Técnico, así se ven y actúan igual en todos lados.
 //
-// En mobile el buscador queda escondido atrás de un botón-ícono (no ocupa
-// lugar todo el tiempo); en desktop siempre visible. Mismo criterio en las 5
-// pantallas, tengan o no otros botones al lado (Filtros, + Nuevo, etc.).
-export default function BusquedaBar({ valor, onChange, placeholder = 'Buscar...', accent = 'red', onExpandChange }) {
-    const [expandido, setExpandidoState] = useState(false);
-    const setExpandido = (v) => { setExpandidoState(v); onExpandChange?.(v); };
-    const accentClass = accent === 'amber' ? 'bg-brand-amber' : 'bg-brand-red';
-
+// 3-oct-2026: antes, en el celular, el buscador quedaba escondido detrás de un
+// botón-lupa que al tocarlo se ponía rojo y abría el campo al lado (o abajo,
+// según la pantalla). Se veía distinto en cada lugar y el botón rojo quedaba
+// colgado. Ahora el campo está SIEMPRE visible, en celular y en compu, ocupando
+// el lugar que sobra en la fila; con ✕ para borrar lo escrito.
+// (onExpandChange y accent quedan aceptados para no romper a quien los pasa.)
+export default function BusquedaBar({ valor, onChange, placeholder = 'Buscar...' }) {
+    const ref = useRef(null);
     return (
-        <>
-            <button onClick={() => setExpandido(!expandido)}
-                className={`md:hidden w-9 h-9 rounded-lg flex items-center justify-center shrink-0 active:scale-95 shadow-sm border border-black/[0.05] dark:border-white/[0.05] ${
-                    expandido || valor ? `${accentClass} text-white` : 'bg-card text-muted'
-                }`}>
-                <LuSearch size={15} />
-            </button>
-            <div className={`${expandido ? 'flex' : 'hidden'} md:flex relative flex-1`}>
-                <LuSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
-                <input
-                    value={valor}
-                    onChange={e => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full h-9 pl-9 pr-8 rounded-lg text-body outline-none bg-card text-ink placeholder:text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] focus:border-[#D13A28] dark:focus:border-[#E8422F]"
-                    autoFocus={expandido}
-                />
-                {valor && (
-                    <button onClick={() => onChange('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted text-label font-bold">✕</button>
-                )}
-            </div>
-        </>
+        <div className="relative flex-1 min-w-0">
+            <LuSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+            <input
+                ref={ref}
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                value={valor}
+                onChange={e => onChange(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Escape') { onChange(''); ref.current?.blur(); } }}
+                placeholder={placeholder}
+                aria-label={placeholder}
+                className="w-full h-9 pl-9 pr-9 rounded-xl text-body outline-none bg-card text-ink placeholder:text-muted border border-black/[0.08] dark:border-white/[0.08] focus:border-[#D13A28] dark:focus:border-[#E8422F] [&::-webkit-search-cancel-button]:hidden"
+            />
+            {valor && (
+                <button type="button" onClick={() => { onChange(''); ref.current?.focus(); }} aria-label="Borrar búsqueda"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-muted active:bg-chip">
+                    <LuX size={15} />
+                </button>
+            )}
+        </div>
     );
 }

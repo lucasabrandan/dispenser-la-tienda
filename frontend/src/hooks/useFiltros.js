@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { inicioMes, finMes, formatDateISO } from '../utils/dateUtils';
 import { POR_PAGINA } from '../utils/paginacion';
+import { coincideTodo } from '../utils/busqueda';
 
 const hoy = () => new Date();
 
@@ -111,6 +112,7 @@ export function useFiltros(items = [], { porPagina = POR_PAGINA, campoFecha = 'f
 
         // Filtro búsqueda texto
         if (busqueda.trim() && (campoBusqueda || campoBusquedaFn)) {
+            // Multi-palabra y sin importar acentos (3-oct-2026), igual que el resto de la app
             const q = busqueda.toLowerCase().trim();
             // Bug real (reportado 7-sep): se le muestra a cada item su número de id
             // como "#123" en toda la app (tarjetas de Servicio/Presupuesto/Venta),
@@ -119,10 +121,9 @@ export function useFiltros(items = [], { porPagina = POR_PAGINA, campoFecha = 'f
             // pantalla que use este hook.
             const qId = q.replace(/^#/, '');
             resultado = resultado.filter(it => {
-                const enCampos = campoBusqueda?.some(campo => it[campo]?.toString().toLowerCase().includes(q)) ?? false;
-                const enExtra  = campoBusquedaFn ? campoBusquedaFn(it).toLowerCase().includes(q) : false;
-                const enId     = qId !== '' && it.id != null && String(it.id).includes(qId);
-                return enCampos || enExtra || enId;
+                const texto = [...(campoBusqueda || []).map(c => it[c]), campoBusquedaFn ? campoBusquedaFn(it) : ''].filter(v => v != null).join(' ');
+                const enId  = qId !== '' && it.id != null && String(it.id).includes(qId);
+                return coincideTodo(texto, busqueda) || enId;
             });
         }
 

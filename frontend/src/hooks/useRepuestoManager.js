@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { generarPDFListaPrecios } from '../utils/generadorPDFListaPrecios';
 import { generarPDFCatalogo } from '../utils/generadorPDFCatalogo';
 import { POR_PAGINA } from '../utils/paginacion';
+import { coincideTodo } from '../utils/busqueda';
 
 
 /**
@@ -58,8 +59,7 @@ export function useRepuestoManager() {
         if (busqueda.trim()) {
             const q = busqueda.toLowerCase().trim();
             items = items.filter(p =>
-                p.nombre?.toLowerCase().includes(q) ||
-                p.sku?.toLowerCase().includes(q)
+                coincideTodo(`${p.nombre || ''} ${p.sku || ''} ${p.categoria || ''}`, q)
             );
         }
         // Ordenar

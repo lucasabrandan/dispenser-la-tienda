@@ -1,3 +1,4 @@
+import { coincideTodo } from './busqueda';
 import { toast } from 'react-hot-toast';
 
 export const abrirWhatsApp = (telefono, nombre) => {
@@ -50,21 +51,19 @@ export function resumenCliente(cliente, sedes, equipos, servicios = []) {
 }
 
 export const filtrarClientesPorBusqueda = (clientes, sedes, equipos, busqueda) => {
+    // Multi-palabra y sin acentos (3-oct-2026): "guemes cordoba" encuentra
+    // "Sanatorio Güemes" con sede en Av. Córdoba. Busca en el cliente, sus sedes
+    // y los N/S de sus equipos.
+    if (!String(busqueda || '').trim()) return clientes;
     return clientes.filter(c => {
-        const term = busqueda.toLowerCase();
-        // Cliente: nombre, localidad, teléfono, dirección
-        const matchCliente = c.nombre?.toLowerCase().includes(term)
-            || c.localidad?.toLowerCase().includes(term)
-            || c.telefono?.toLowerCase().includes(term)
-            || c.calle?.toLowerCase().includes(term);
-        // Sedes del cliente
-        const sedesCli = sedes.filter(s => s.clienteId === c.id);
-        const matchSede = sedesCli.some(s => s.nombreSede?.toLowerCase().includes(term)
-            || s.direccion?.toLowerCase().includes(term));
-        // Equipos del cliente
-        const sedesId = sedesCli.map(s => s.id);
-        const matchEquipo = equipos.some(eq => sedesId.includes(eq.sedeId) && eq.numeroSerie?.toLowerCase().includes(term));
-        return matchCliente || matchSede || matchEquipo;
+        const sedesCli = sedes.filter(s => (s.clienteId || s.cliente?.id) === c.id);
+        const sedesId = sedesCli.map(s => String(s.id));
+        const texto = [
+            c.nombre, c.localidad, c.telefono, c.calle, c.numero, c.direccion, c.cuilDni,
+            ...sedesCli.flatMap(s => [s.nombreSede, s.direccion]),
+            ...equipos.filter(eq => sedesId.includes(String(eq.sedeId))).map(eq => eq.numeroSerie),
+        ].filter(Boolean).join(' ');
+        return coincideTodo(texto, busqueda);
     });
 };
 

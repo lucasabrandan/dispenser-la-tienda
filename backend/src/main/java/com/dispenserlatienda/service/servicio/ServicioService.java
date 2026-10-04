@@ -196,13 +196,17 @@ public class ServicioService {
                 // que aparecer en algún campo (AND entre palabras, OR entre campos).
                 for (String termino : busqueda.trim().split("[\\s+]+")) {
                     if (termino.isBlank()) continue;
-                    String like = "%" + termino.toLowerCase() + "%";
+                    // Sin importar acentos (3-oct-2026): "guemes" encuentra "Güemes".
+                    String like = "%" + sinAcentos(termino.toLowerCase()) + "%";
+                    java.util.function.Function<jakarta.persistence.criteria.Expression<String>, jakarta.persistence.criteria.Expression<String>> norm =
+                            e -> cb.function("translate", String.class, cb.lower(cb.coalesce(e, "")),
+                                    cb.literal("áéíóúüñàèìòùâêîôû"), cb.literal("aeiouunaeiouaeiou"));
                     List<Predicate> matchTexto = new ArrayList<>(List.of(
-                            cb.like(cb.lower(root.get("clienteNombre")), like),
-                            cb.like(cb.lower(root.get("sedeNombre")), like),
-                            cb.like(cb.lower(equipo.get("numeroSerie")), like),
-                            cb.like(cb.lower(cb.coalesce(equipo.get("ubicacion"), "")), like),
-                            cb.like(cb.lower(cb.coalesce(equipo.get("modelo"), "")), like)
+                            cb.like(norm.apply(root.<String>get("clienteNombre")), like),
+                            cb.like(norm.apply(root.<String>get("sedeNombre")), like),
+                            cb.like(norm.apply(equipo.<String>get("numeroSerie")), like),
+                            cb.like(norm.apply(equipo.<String>get("ubicacion")), like),
+                            cb.like(norm.apply(equipo.<String>get("modelo")), like)
                     ));
                     // Buscar "123" o "#123" también matchea el id que se muestra como "#123".
                     String soloNumero = termino.replaceFirst("^#", "");
@@ -1150,5 +1154,10 @@ public class ServicioService {
         if (equipo.getSede() == null || equipo.getSede().getCliente() == null) return false;
         if (servicio.getSede() == null || servicio.getSede().getCliente() == null) return false;
         return !equipo.getSede().getCliente().getId().equals(servicio.getSede().getCliente().getId());
+    }
+
+    // Saca acentos y diéresis (para buscar "guemes" y encontrar "Güemes")
+    private static String sinAcentos(String t) {
+        return java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", "");
     }
 }
