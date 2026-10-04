@@ -60,7 +60,12 @@ public class ServicioController {
             Authentication auth) {
         // Un técnico solo ve sus propios servicios, mande lo que mande el frontend.
         Usuario solicitante = resolverUsuario(auth);
-        if (solicitante.getRol() != RolUsuario.ADMIN) usuarioId = solicitante.getId();
+        if (solicitante.getRol() != RolUsuario.ADMIN) {
+            usuarioId = solicitante.getId();
+            // Al técnico no le viajan costos internos (4-oct-2026)
+            return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, usuarioId, clienteId, pageable)
+                    .map(servicioService::sinCostos));
+        }
         return ResponseEntity.ok(servicioService.listarFiltrado(tipo, estado, busqueda, desde, hasta, usuarioId, clienteId, pageable));
     }
 
@@ -80,20 +85,37 @@ public class ServicioController {
     @GetMapping("/{id}")
     public ResponseEntity<ServicioDTO> obtenerPorId(@PathVariable Long id, Authentication auth) {
         verificarAccesoServicio(id, auth);
-        return ResponseEntity.ok(servicioService.buscarPorId(id));
+        ServicioDTO dto = servicioService.buscarPorId(id);
+        return ResponseEntity.ok(esAdmin(auth) ? dto : servicioService.sinCostos(dto));
     }
 
-    // POST: Crear servicio (JSON puro, sin FormData)
+    // POST: Crear servicio (JSON puro, sin FormData).
+    // Técnico (4-oct-2026): solo al cerrar una visita suya, a su nombre, sin
+    // costos ni precios de repuestos inventados, y sin pasos del admin.
     @PostMapping
-    public ResponseEntity<ServicioDTO> crear(@Valid @RequestBody ServicioCreateDTO dto) {
+    public ResponseEntity<ServicioDTO> crear(@Valid @RequestBody ServicioCreateDTO dto, Authentication auth) {
+        Usuario solicitante = resolverUsuario(auth);
+        if (solicitante.getRol() != RolUsuario.ADMIN) {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(servicioService.sinCostos(servicioService.crearComoTecnico(dto, solicitante)));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(servicioService.crearServicioCompleto(dto));
     }
 
-    // PUT: Actualizar servicio (JSON puro, sin FormData)
+    // PUT: Actualizar servicio (JSON puro, sin FormData).
+    // Técnico: solo los suyos o los que le asignaron por orden; precios, costos
+    // y descuento quedan como estaban; solo COMPLETADO o COBRADO en efectivo.
     @PutMapping("/{id}")
     public ResponseEntity<ServicioDTO> actualizar(
             @PathVariable Long id,
-            @Valid @RequestBody ServicioCreateDTO dto) {
+            @Valid @RequestBody ServicioCreateDTO dto,
+            Authentication auth) {
+        Usuario solicitante = resolverUsuario(auth);
+        if (solicitante.getRol() != RolUsuario.ADMIN) {
+            if (!servicioService.tecnicoPuedeTocar(id, solicitante.getId()))
+                throw new AccessDeniedException("No podés modificar este trabajo");
+            return ResponseEntity.ok(servicioService.sinCostos(servicioService.actualizarComoTecnico(id, dto, solicitante)));
+        }
         return ResponseEntity.ok(servicioService.actualizarServicio(id, dto));
     }
 
@@ -106,6 +128,8 @@ public class ServicioController {
         verificarAccesoServicio(id, auth);
         String nuevoEstado = (String) payload.get("estado");
         String modalidadCobro = (String) payload.get("modalidadCobro");
+        // Técnico: solo COMPLETADO o COBRADO en efectivo (facturar, archivar, cancelar = admin)
+        if (!esAdmin(auth)) servicioService.validarEstadoTecnico(nuevoEstado, modalidadCobro);
         java.math.BigDecimal montoFinal = null;
         if (payload.get("montoFinal") != null) {
             montoFinal = new java.math.BigDecimal(payload.get("montoFinal").toString());
@@ -142,7 +166,9 @@ public class ServicioController {
     @PatchMapping("/{id}/nro-doc")
     public ResponseEntity<Void> guardarNroDoc(
             @PathVariable Long id,
-            @RequestBody java.util.Map<String, String> payload) {
+            @RequestBody java.util.Map<String, String> payload,
+            Authentication auth) {
+        verificarAccesoServicio(id, auth);
         servicioService.guardarNroDocumento(id, payload.get("nroDocumento"));
         return ResponseEntity.noContent().build();
     }
@@ -229,11 +255,17 @@ public class ServicioController {
     private void verificarAccesoServicio(Long servicioId, Authentication auth) {
         Usuario solicitante = resolverUsuario(auth);
         if (solicitante.getRol() == RolUsuario.ADMIN) return;
-        Servicio servicio = servicioRepository.findById(servicioId)
+        servicioRepository.findById(servicioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado con ID: " + servicioId));
-        if (servicio.getUsuario() == null || !servicio.getUsuario().getId().equals(solicitante.getId())) {
+        // Suyo, o asignado por una orden (4-oct-2026: antes el presupuesto asignado
+        // por orden quedaba a nombre del admin y el técnico no lo podía abrir)
+        if (!servicioService.tecnicoPuedeTocar(servicioId, solicitante.getId())) {
             throw new AccessDeniedException("No podés acceder a este servicio");
         }
+    }
+
+    private boolean esAdmin(Authentication auth) {
+        return resolverUsuario(auth).getRol() == RolUsuario.ADMIN;
     }
 
     private void verificarAccesoTecnico(Long tecnicoId, Authentication auth) {

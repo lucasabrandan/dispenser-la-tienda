@@ -326,6 +326,166 @@ public class ServicioService {
         return procesarGuardado(servicio, dto);
     }
 
+    // ── Blindaje del técnico (4-oct-2026) ─────────────────────────────────────
+    // Lo que un técnico puede cambiar de un trabajo: el texto, las fotos, cómo le
+    // pagaron y agregar repuestos del catálogo. Los precios, el descuento, los
+    // costos internos, el cliente y la sede quedan como los dejó el admin.
+    private static final java.util.Set<EstadoServicio> ESTADOS_TECNICO =
+            java.util.EnumSet.of(EstadoServicio.COMPLETADO, EstadoServicio.COBRADO);
+
+    public void validarEstadoTecnico(String estado, String modalidadCobro) {
+        EstadoServicio e;
+        try { e = EstadoServicio.valueOf(estado); }
+        catch (Exception ex) { throw new org.springframework.security.access.AccessDeniedException("Estado no permitido"); }
+        if (!ESTADOS_TECNICO.contains(e)) {
+            throw new org.springframework.security.access.AccessDeniedException("Ese paso lo hace el admin");
+        }
+        if (e == EstadoServicio.COBRADO && !"EFECTIVO_SIN_FACTURA".equals(modalidadCobro)) {
+            throw new org.springframework.security.access.AccessDeniedException("Solo podés marcar cobrado en efectivo");
+        }
+    }
+
+    @Transactional
+    public ServicioDTO actualizarComoTecnico(Long id, ServicioCreateDTO dto, Usuario tecnico) {
+        Servicio actual = servicioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe el servicio con ID: " + id));
+        validarEstadoTecnico(dto.getEstado(), dto.getModalidadCobro());
+
+        List<ServicioItemCreateDTO> recibidos = dto.getItems() != null ? dto.getItems() : List.of();
+        List<ServicioItemCreateDTO> items = new ArrayList<>();
+        List<ServicioItem> existentes = actual.getItems();
+        for (int i = 0; i < existentes.size(); i++) {
+            ServicioItem ex = existentes.get(i);
+            ServicioItemCreateDTO rec = i < recibidos.size() ? recibidos.get(i) : null;
+            List<RepuestoUsadoDTO> reps = new ArrayList<>();
+            try {
+                if (ex.getRepuestosUsados() != null && !ex.getRepuestosUsados().isBlank())
+                    reps.addAll(objectMapper.readValue(ex.getRepuestosUsados(), new TypeReference<List<RepuestoUsadoDTO>>(){}));
+            } catch (JsonProcessingException e) { log.warn("Error leyendo repuestos: {}", e.getMessage()); }
+            // Repuestos nuevos: los que vienen después de los que ya tenía, con precio del catálogo
+            if (rec != null && rec.repuestosUsados() != null && rec.repuestosUsados().size() > reps.size()) {
+                for (RepuestoUsadoDTO r : rec.repuestosUsados().subList(reps.size(), rec.repuestosUsados().size())) {
+                    if (r.id() == null) continue;
+                    Repuesto cat = repuestoRepository.findById(r.id()).orElse(null);
+                    if (cat == null) continue;
+                    int cant = r.cantidad() != null && r.cantidad() > 0 ? r.cantidad() : 1;
+                    BigDecimal precio = cat.getPrecio() != null ? cat.getPrecio() : BigDecimal.ZERO;
+                    reps.add(new RepuestoUsadoDTO(cat.getId(), cat.getNombre(), cat.getSku(), null, null, cant,
+                            precio, precio.multiply(BigDecimal.valueOf(cant)), cat.getCosto(), cat.getPorcentajeGanancia()));
+                }
+            }
+            String serial = ex.getEquipo() != null ? ex.getEquipo().getNumeroSerie() : "MOSTRADOR";
+            items.add(new ServicioItemCreateDTO(
+                    serial,
+                    ex.getTecnico() != null ? ex.getTecnico() : tecnico.getNombre(),
+                    ex.getCosto() != null ? ex.getCosto() : BigDecimal.ZERO,
+                    ex.getCostoExtra(),
+                    reps,
+                    ex.getCostoInterno(),
+                    null,
+                    rec != null && rec.metodoPago() != null ? rec.metodoPago()
+                            : (ex.getMetodoPago() != null ? ex.getMetodoPago().name() : "EFECTIVO"),
+                    rec != null && rec.trabajoRealizado() != null ? rec.trabajoRealizado() : ex.getTrabajoRealizado(),
+                    ex.getGarantiaHasta() != null ? ex.getGarantiaHasta().toString() : null,
+                    rec != null && rec.trabajoTipo() != null ? rec.trabajoTipo() : TrabajoTipo.REPARACION,
+                    rec != null && rec.fotoAntes() != null ? rec.fotoAntes() : ex.getFotoAntes(),
+                    rec != null && rec.fotoDespues() != null ? rec.fotoDespues() : ex.getFotoDespues()));
+        }
+
+        ServicioCreateDTO limpio = new ServicioCreateDTO();
+        limpio.setSedeId(actual.getSede().getId());
+        limpio.setUsuarioId(tecnico.getId());
+        limpio.setFecha(actual.getFechaServicio() != null ? actual.getFechaServicio().toString() : dto.getFecha());
+        limpio.setServicioTipo(actual.getServicioTipo());
+        limpio.setClienteNombre(actual.getClienteNombre());
+        limpio.setSedeNombre(dto.getSedeNombre());
+        limpio.setObservaciones(dto.getObservaciones());
+        limpio.setItems(items);
+        limpio.setEstado(dto.getEstado());
+        limpio.setFotoRemito(dto.getFotoRemito() != null ? dto.getFotoRemito() : actual.getFotoRemito());
+        limpio.setDescuentoPorcentaje(actual.getDescuentoPorcentaje());
+        limpio.setPresupuestoOrigenId(actual.getPresupuestoOrigenId());
+        limpio.setOrdenId(actual.getOrdenId());
+        if ("COBRADO".equals(dto.getEstado())) {
+            limpio.setModalidadCobro("EFECTIVO_SIN_FACTURA");
+            limpio.setMontoFinal(dto.getMontoFinal());
+        }
+        limpio.setEsVisita(actual.getEsVisita());
+        limpio.setAbonoVisita(actual.getAbonoVisita());
+        limpio.setPresupuestoVisitaId(actual.getPresupuestoVisitaId());
+        limpio.setDuracionMinutos(actual.getDuracionMinutos());
+        limpio.setAceptaTerminos(actual.getAceptaTerminos());
+        limpio.setFechaTentativa(false);
+
+        actual.getItems().clear();
+        return procesarGuardado(actual, limpio);
+    }
+
+    // Un técnico crea un trabajo solo al cerrar una visita suya sin presupuesto
+    @Transactional
+    public ServicioDTO crearComoTecnico(ServicioCreateDTO dto, Usuario tecnico) {
+        validarEstadoTecnico(dto.getEstado(), dto.getModalidadCobro());
+        // Con orden: tiene que ser una visita suya. Sin orden solo se permite la
+        // carga por N/S (sin precio, se factura en el cierre mensual del cliente).
+        boolean sinPrecio = dto.getItems().stream().allMatch(i -> i.costo() == null || i.costo().signum() == 0)
+                && "COMPLETADO".equals(dto.getEstado());
+        if (dto.getOrdenId() != null) {
+            if (!ordenVisitaRepository.existsByIdAndTecnicoId(dto.getOrdenId(), tecnico.getId()))
+                throw new org.springframework.security.access.AccessDeniedException("Esa visita no es tuya");
+        } else if (!sinPrecio) {
+            throw new org.springframework.security.access.AccessDeniedException("Solo podés cargar trabajos de tus visitas");
+        }
+        dto.setUsuarioId(tecnico.getId());
+        dto.setDescuentoPorcentaje(null);
+        if (!"COBRADO".equals(dto.getEstado())) { dto.setModalidadCobro(null); dto.setMontoFinal(null); }
+        // Sin costos internos ni precios de repuestos inventados: van del catálogo
+        List<ServicioItemCreateDTO> items = new ArrayList<>();
+        for (ServicioItemCreateDTO it : dto.getItems()) {
+            List<RepuestoUsadoDTO> reps = new ArrayList<>();
+            if (it.repuestosUsados() != null) for (RepuestoUsadoDTO r : it.repuestosUsados()) {
+                if (r.id() == null) continue;
+                Repuesto cat = repuestoRepository.findById(r.id()).orElse(null);
+                if (cat == null) continue;
+                int cant = r.cantidad() != null && r.cantidad() > 0 ? r.cantidad() : 1;
+                BigDecimal precio = cat.getPrecio() != null ? cat.getPrecio() : BigDecimal.ZERO;
+                reps.add(new RepuestoUsadoDTO(cat.getId(), cat.getNombre(), cat.getSku(), null, null, cant,
+                        precio, precio.multiply(BigDecimal.valueOf(cant)), cat.getCosto(), cat.getPorcentajeGanancia()));
+            }
+            items.add(new ServicioItemCreateDTO(it.equipoSerial(), tecnico.getNombre(), it.costo(), null, reps, null, null,
+                    it.metodoPago(), it.trabajoRealizado(), null, it.trabajoTipo(), it.fotoAntes(), it.fotoDespues()));
+        }
+        dto.setItems(items);
+        return procesarGuardado(new Servicio(), dto);
+    }
+
+    // Puede el técnico tocar este servicio? Es suyo, o se lo asignaron con una orden.
+    public boolean tecnicoPuedeTocar(Long servicioId, Long tecnicoId) {
+        Servicio s = servicioRepository.findById(servicioId).orElse(null);
+        if (s == null) return false;
+        if (s.getUsuario() != null && s.getUsuario().getId().equals(tecnicoId)) return true;
+        return ordenVisitaRepository.existsByPresupuestoIdAndTecnicoId(servicioId, tecnicoId);
+    }
+
+    // Quita costos internos (costo de repuestos, % ganancia, costo interno) de lo que ve un técnico
+    public ServicioDTO sinCostos(ServicioDTO d) {
+        if (d == null || d.items() == null) return d;
+        List<ServicioItemDTO> items = d.items().stream().map(i -> new ServicioItemDTO(
+                i.equipoId(), i.equipoSerial(), i.equipoModelo(), i.equipoUbicacion(), i.equipoPiso(), i.equipoSector(),
+                i.tecnico(), i.costo(), i.costoExtra(), null, i.descuento(), i.metodoPago(), i.trabajoRealizado(),
+                i.garantiaHasta(),
+                i.repuestosUsados() == null ? null : i.repuestosUsados().stream().map(r -> new RepuestoUsadoDTO(
+                        r.id(), r.nombre(), r.sku(), r.descripcion(), r.fotoUrl(), r.cantidad(), r.precio(), r.subtotal(),
+                        null, null)).toList(),
+                i.fotoAntes(), i.fotoDespues())).toList();
+        return new ServicioDTO(d.id(), d.fecha(), d.servicioTipo(), d.clienteId(), d.clienteNombre(), d.clienteTelefono(),
+                d.clienteEmail(), d.clienteDni(), d.clienteCondicionIva(), d.sedeId(), d.sedeNombre(), d.sedeDireccion(),
+                items, d.estado(), d.fotoRemito(), d.descuentoPorcentaje(), d.observaciones(), d.nroDocumento(),
+                d.usuarioId(), d.usuarioNombre(), d.modificadoPorNombre(), d.fechaModificacion(), d.presupuestoOrigenId(),
+                d.modalidadCobro(), d.montoFinal(), d.fechaCompletado(), d.fechaFacturacion(), d.fechaCobro(),
+                d.datosBancariosEnviados(), d.esVisita(), d.abonoVisita(), d.presupuestoVisitaId(), d.duracionMinutos(),
+                d.aceptaTerminos(), d.fechaTentativa(), d.ventanasDisponibles(), d.horaServicio(), d.enEspera());
+    }
+
     private ServicioDTO procesarGuardado(Servicio servicio, ServicioCreateDTO dto) {
         Sede sede = sedeRepository.findById(dto.getSedeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sede no encontrada"));

@@ -168,6 +168,14 @@ public class NotificacionService {
         repo.findById(id).ifPresent(n -> { n.setLeida(true); repo.save(n); });
     }
 
+    // Solo el destinatario marca como leída su notificación (4-oct-2026)
+    @Transactional
+    public void marcarLeida(Long id, Long usuarioId) {
+        repo.findById(id)
+            .filter(n -> n.getDestino() != null && n.getDestino().getId().equals(usuarioId))
+            .ifPresent(n -> { n.setLeida(true); repo.save(n); });
+    }
+
     @Transactional
     public int marcarTodasLeidas(Long usuarioId) {
         return repo.marcarTodasLeidas(usuarioId);

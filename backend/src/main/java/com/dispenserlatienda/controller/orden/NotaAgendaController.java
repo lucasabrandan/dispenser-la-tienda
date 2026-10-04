@@ -50,7 +50,13 @@ public class NotaAgendaController {
     }
 
     @PostMapping
-    public ResponseEntity<NotaAgendaDTO> crear(@RequestBody NotaAgendaDTO dto) {
+    public ResponseEntity<NotaAgendaDTO> crear(@RequestBody NotaAgendaDTO dto, Authentication auth) {
+        // Un técnico solo agenda notas para sí mismo (4-oct-2026)
+        Usuario solicitante = resolverUsuario(auth);
+        if (solicitante.getRol() != RolUsuario.ADMIN) {
+            dto = new NotaAgendaDTO(dto.id(), solicitante.getId(), solicitante.getNombre(), dto.fecha(),
+                    dto.horaEstimada(), dto.titulo(), dto.descripcion(), dto.direccion(), dto.completada());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(dto));
     }
 

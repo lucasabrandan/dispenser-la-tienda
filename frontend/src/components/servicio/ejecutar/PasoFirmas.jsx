@@ -48,7 +48,7 @@ export default function PasoFirmas({
 
             <button onClick={onNext}
                 className="w-full py-4 rounded-2xl font-black text-body uppercase text-white bg-brand-red active:scale-[0.98] transition-all">
-                Definir cobro →
+                ¿Te pagó? →
             </button>
         </>
     );

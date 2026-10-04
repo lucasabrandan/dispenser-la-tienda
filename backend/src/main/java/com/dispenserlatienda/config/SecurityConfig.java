@@ -77,6 +77,20 @@ public class SecurityConfig {
                 .requestMatchers("/api/ventas/**").hasRole("ADMIN")
 
                 // Solo ADMIN: operaciones destructivas
+                // Limpieza del técnico (4-oct-2026): precios, stock, configuración,
+                // importaciones, alta de clientes, alta de visitas y listados completos
+                // de clientes/sedes son del admin. El técnico ve las sedes de SU
+                // cliente (/api/sedes/cliente/{id}) y crea sedes/equipos en el lugar.
+                .requestMatchers("/api/notificaciones/por-trabajo/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/repuestos", "/api/repuestos/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/repuestos/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/repuestos/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/configuracion", "/api/configuracion/**").hasRole("ADMIN")
+                .requestMatchers("/api/importacion/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/ordenes").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/clientes").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/clientes").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/sedes").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/clientes/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/sedes/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/equipos/**").hasRole("ADMIN")

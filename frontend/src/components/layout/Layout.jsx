@@ -28,6 +28,7 @@ const NOMBRES_SECCION = {
     'finanzas':         'Finanzas',
     'usuarios':         'Usuarios',
     'mis-ordenes':      'Hoy',
+    'mi-sueldo':        'Mi mes',
     'mi-agenda':        'Mi Agenda',
     'mi-espacio':       'Mi Espacio',
 };
@@ -40,7 +41,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     const [trabajoDeepLinkId, setTrabajoDeepLinkId] = useState(null);
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
-    const { logout } = useAuth();
+    const { logout, esAdmin } = useAuth();
     // Cerrar sesión en mobile solo vivía 2 taps adentro del Drawer ("Más" → scroll
     // hasta el final) — Lucas reportó que "sigue sin poderse ver". Se agrega acá,
     // al lado del resto de los accesos rápidos del header, a un tap de distancia.
@@ -99,7 +100,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                 <header className="md:hidden h-14 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-panel border-b border-black/[0.08] dark:border-white/[0.07]">
 
                     {/* Logo + sección actual */}
-                    <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setVistaActual('caja')}>
+                    <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setVistaActual(esAdmin ? 'caja' : 'mis-ordenes')}>
                         <img src={logo} alt="Dispenser La Tienda" className="h-12 w-auto" />
                         <span className="font-black text-[14px] tracking-tight uppercase text-ink leading-none">
                             {NOMBRES_SECCION[vistaActual] || 'Dispenser'}

@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LuPin, LuCircleCheck, LuChartColumn, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote, LuCalendar } from 'react-icons/lu';
+import { LuPin, LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
 import EjecutarOrdenSheet from '../servicio/EjecutarOrdenSheet';
-import { getTodayISO, MESES_ES, fechaAR } from '../../utils/dateUtils';
+import { getTodayISO, fechaAR } from '../../utils/dateUtils';
 import ModalRegistrarTrabajo from './ModalRegistrarTrabajo';
-import SwipeColumns from '../ui/SwipeColumns';
-import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { buildGoogleMapsRouteUrl } from '../../utils/clienteUtils';
 import DireccionMapa from '../ui/DireccionMapa';
 import ConfirmarHorarioSheet from '../servicio/ConfirmarHorarioSheet';
 import { resumenVentanas } from '../../utils/ordenes';
 import SalidaTecnicoSheet from './SalidaTecnicoSheet';
-import MiAgenda from './MiAgenda';
 import { enviarOEncolar } from '../../utils/pendientesOffline';
 import HistorialSerieSheet from './HistorialSerieSheet';
 import CerrarDiaSheet from './CerrarDiaSheet';
@@ -62,7 +59,7 @@ const ESTADO_ANTERIOR = {
     EN_SITIO:  { estado: 'EN_CAMINO', label: 'Deshacer "Llegué"' },
 };
 
-function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtendido, onNoPuedo, onVerServicio, onHorarioConfirmado, seleccionando, seleccionada, onToggleSel }) {
+function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblema, onVerServicio, onHorarioConfirmado, seleccionando, seleccionada, onToggleSel }) {
     const [expandido, setExpandido] = useState(false);
     const [confirmandoHorario, setConfirmandoHorario] = useState(false);
     const aCoordinar = !!orden.horarioACoordinar;
@@ -204,191 +201,24 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                             <sig.Icon size={16} /> {sig.label}
                         </button>
                     )}
-                    {(orden.estado === 'EN_CAMINO' || orden.estado === 'EN_SITIO') && (
-                        <button onClick={() => onNoAtendido(orden)}
-                            className="w-full py-2 rounded-xl font-bold text-label text-muted bg-chip active:scale-95 transition-all">
-                            El cliente no atendió
-                        </button>
-                    )}
-                    {/* Motivo del técnico, no del cliente: la visita vuelve al admin */}
-                    {onNoPuedo && (
-                        <button onClick={() => onNoPuedo(orden)}
-                            className="w-full py-2 rounded-xl font-bold text-label text-muted border border-black/10 dark:border-line active:scale-95 transition-all">
-                            No puedo ir
-                        </button>
-                    )}
-                    {ESTADO_ANTERIOR[orden.estado] && (
-                        <button onClick={() => onAvanzar(orden.id, ESTADO_ANTERIOR[orden.estado].estado)}
-                            className="w-full py-1.5 flex items-center justify-center gap-1 font-bold text-caption text-muted active:opacity-60">
-                            <LuUndo2 size={13} /> {ESTADO_ANTERIOR[orden.estado].label}
-                        </button>
-                    )}
+                    {/* Todo lo que sale mal, en un solo lugar (4-oct-2026): antes eran
+                        3 botones sueltos (no atendió / no puedo ir / volver atrás). */}
+                    <button onClick={() => onProblema(orden)}
+                        className="w-full py-2 rounded-xl font-bold text-label text-muted bg-chip active:scale-95 transition-all">
+                        Hubo un problema
+                    </button>
                 </div>
             )}
         </div>
     );
 }
-
-function MesCard({ d, fmt, labelMes }) {
-    const [abierto, setAbierto] = useState(false);
-    return (
-        <div className="rounded-2xl overflow-hidden bg-card border-[0.5px] border-black/[0.07]"
-            >
-            <button onClick={() => setAbierto(v => !v)}
-                className="w-full flex items-center justify-between px-4 py-3 active:bg-[#EFEDEA] dark:active:bg-[#161615] transition-colors">
-                <div className="flex items-center gap-2">
-                    <p className="text-body-lg font-black text-ink capitalize">
-                        {labelMes(d.periodo)}
-                    </p>
-                    <span className="text-label font-bold text-muted bg-panel px-2 py-0.5 rounded-md">
-                        {d.cantidadServicios} {d.cantidadServicios === 1 ? 'trabajo' : 'trabajos'}
-                    </span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <p className="text-body-lg font-black text-brand-amber">
-                        ${fmt(d.totalTecnico)}
-                    </p>
-                    <span className="text-label text-muted">{abierto ? '▲' : '▼'}</span>
-                </div>
-            </button>
-            {abierto && (
-                <div className="px-4 pb-3 space-y-1.5 border-t border-black/[0.06] dark:border-white/[0.06] pt-3">
-                    <div className="flex justify-between text-body">
-                        <span className="text-secondary">Facturado</span>
-                        <span className="font-bold text-ink">${fmt(d.totalFacturado)}</span>
-                    </div>
-                    <div className="flex justify-between text-body">
-                        <span className="text-muted">− Impuestos (30%)</span>
-                        <span className="text-brand-red">−${fmt(d.totalImpuestos)}</span>
-                    </div>
-                    {parseFloat(d.totalRepuestos || 0) > 0 && (
-                        <div className="flex justify-between text-body">
-                            <span className="text-muted">− Repuestos</span>
-                            <span className="text-brand-red">−${fmt(d.totalRepuestos)}</span>
-                        </div>
-                    )}
-                    <div className="flex justify-between text-body pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
-                        <span className="text-secondary">Ganancia neta</span>
-                        <span className="font-bold text-ink">${fmt(d.gananciaNet)}</span>
-                    </div>
-                    <div className="flex justify-between text-body font-black">
-                        <span className="text-brand-amber">Tu parte (50%)</span>
-                        <span className="text-brand-amber">${fmt(d.totalTecnico)}</span>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
-function RendimientoTab({ tecnicoId }) {
-    const [datos,    setDatos]    = useState([]);
-    const [cargando, setCargando] = useState(false);
-    const [tick,     setTick]     = useState(0);
-
-    const cargar = () => {
-        if (!tecnicoId) return;
-        setCargando(true);
-        api.get(`/servicios/tecnico/${tecnicoId}/rendimiento`)
-            .then(r => setDatos(r.data || []))
-            .catch(() => setDatos([]))
-            .finally(() => setCargando(false));
-    };
-
-    useEffect(() => { cargar(); }, [tecnicoId, tick]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    if (cargando) return <p className="text-center text-muted py-12">Cargando...</p>;
-
-    if (datos.length === 0) return (
-        <div className="text-center py-12 space-y-3">
-            <p className="text-muted">Sin trabajos registrados aún</p>
-            <button onClick={() => setTick(t => t + 1)}
-                className="text-label font-bold text-brand-red px-4 py-2 rounded-xl border border-[#D13A28]/30 dark:border-[#E8422F]/30 active:scale-95 transition-all">
-                Recargar
-            </button>
-        </div>
-    );
-
-    const fmt = (n) => Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
-    const labelMes = (periodo) => {
-        const [y, m] = periodo.split('-');
-        return `${MESES_ES[parseInt(m)]} ${y}`;
-    };
-
-    const totalFact     = datos.reduce((s, d) => s + parseFloat(d.totalFacturado || 0), 0);
-    const totalImp      = datos.reduce((s, d) => s + parseFloat(d.totalImpuestos  || 0), 0);
-    const totalReps     = datos.reduce((s, d) => s + parseFloat(d.totalRepuestos  || 0), 0);
-    const totalNet      = datos.reduce((s, d) => s + parseFloat(d.gananciaNet     || 0), 0);
-    const totalTecni    = datos.reduce((s, d) => s + parseFloat(d.totalTecnico    || 0), 0);
-    const totalTrabajos = datos.reduce((s, d) => s + d.cantidadServicios, 0);
-
-    return (
-        <div className="space-y-4">
-            <div className="flex justify-end">
-                <button onClick={() => setTick(t => t + 1)}
-                    className="text-label font-bold text-muted px-3 py-1.5 rounded-xl bg-panel active:scale-95 transition-all">
-                    ↻ Recargar
-                </button>
-            </div>
-            <div className="rounded-2xl overflow-hidden bg-card border-[0.5px] border-black/[0.07]"
-                >
-                <div className="p-4">
-                    <p className="text-label font-black text-muted uppercase tracking-widest mb-1">
-                        Total acumulado · {totalTrabajos} {totalTrabajos === 1 ? 'trabajo' : 'trabajos'}
-                    </p>
-                    <p className="text-[42px] font-black text-brand-amber leading-none mb-3">
-                        ${fmt(totalTecni)}
-                    </p>
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-body">
-                            <span className="text-muted">Facturado</span>
-                            <span className="font-bold text-ink">${fmt(totalFact)}</span>
-                        </div>
-                        <div className="flex justify-between text-body">
-                            <span className="text-muted">− Impuestos (30%)</span>
-                            <span className="text-brand-red">−${fmt(totalImp)}</span>
-                        </div>
-                        {totalReps > 0 && (
-                            <div className="flex justify-between text-body">
-                                <span className="text-muted">− Repuestos</span>
-                                <span className="text-brand-red">−${fmt(totalReps)}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between text-body pt-1 border-t border-black/[0.06] dark:border-white/[0.06]">
-                            <span className="text-muted">Ganancia neta</span>
-                            <span className="font-bold text-ink">${fmt(totalNet)}</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="px-4 py-2 bg-[#D48800]/10 dark:bg-[#F0A500]/10 border-t border-[#D48800]/20">
-                    <p className="text-caption text-brand-amber font-bold">
-                        Facturado − 30% imp. − repuestos = ganancia ÷ 2
-                    </p>
-                </div>
-            </div>
-
-            <p className="text-label font-black text-muted uppercase tracking-widest px-1">
-                Por mes · tocá para ver detalle
-            </p>
-            {datos.map(d => (
-                <MesCard key={d.periodo} d={d} fmt={fmt} labelMes={labelMes} />
-            ))}
-        </div>
-    );
-}
-
-const TAB_DEFS = [
-    { id: 'activas',     label: 'Activas',     fullLabel: 'Activas',     color: '#D13A28', Icon: LuPin },
-    // Agenda (calendario) fusionada acá — antes era su propia pantalla en el menú (2-oct-2026)
-    { id: 'agenda',      label: 'Agenda',      fullLabel: 'Agenda',      color: '#3B82F6', Icon: LuCalendar },
-    { id: 'historial',   label: 'Completadas', fullLabel: 'Completadas', color: '#16A34A', Icon: LuCircleCheck },
-    { id: 'rendimiento', label: 'Rendimiento', fullLabel: 'Rendimiento', color: '#D48800', Icon: LuChartColumn },
-];
 
 export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado, recargar } = useOrdenes({ tecnicoId });
     const { usuario } = useAuth();
-    const [tab, setTab] = useState('activas');
+    const tab = 'activas'; // sin pestañas (4-oct-2026): agenda/completadas/rendimiento → "Mi mes"
+    const [problema, setProblema] = useState(null); // orden con "Hubo un problema" abierto
+    const [diasAbiertos, setDiasAbiertos] = useState(() => new Set());
 
     // "Elegir para ruta": mismo patron que ya tiene Presupuestos (admin) —
     // el tecnico marca varias visitas pendientes y arma una sola ruta con
@@ -410,7 +240,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     };
 
     const [historial,        setHistorial]        = useState([]);
-    const [cargandoHistorial, setCargandoHistorial] = useState(false);
+    const [, setCargandoHistorial] = useState(false);
 
     const cargarHistorial = useCallback(() => {
         if (!tecnicoId) return;
@@ -530,22 +360,11 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
     };
 
-    // SwipeColumns
-    const columns = TAB_DEFS.map(t => ({
-        ...t,
-        count: t.id === 'activas' ? activas.length : t.id === 'historial' ? historial.length : null,
-    }));
 
-    const tabIds = TAB_DEFS.map(t => t.id);
-    // Envuelve setTab para salir del modo selección al cambiar de pestaña —
-    // "Elegir para ruta" solo tiene sentido en Activas (usado tanto por el
-    // swipe como por el tap directo en SwipeColumns más abajo).
-    const cambiarTab = (t) => { setTab(t); setModoSeleccion(false); setSeleccionados(new Set()); };
-    const swipeHandlers = useSwipeGesture(tabIds, tab, cambiarTab);
 
     return (
         <>
-        <div className="min-h-screen pb-28 bg-page" {...swipeHandlers}>
+        <div className="min-h-screen pb-28 bg-page">
             <div className="max-w-2xl mx-auto px-4 pt-4">
                 {/* Header */}
                 {modoSeleccion ? (
@@ -595,11 +414,6 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         )}
                     </div>
                 )}
-
-                {/* SwipeColumns */}
-                <div className="mb-4">
-                    <SwipeColumns columns={columns} activeId={tab} onChangeColumn={cambiarTab} />
-                </div>
 
                 {/* Resumen del dia */}
                 {tab === 'activas' && ordenesHoy.length > 0 && (
@@ -660,11 +474,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 )}
 
                 {/* Contenido */}
-                {tab === 'agenda' ? (
-                    <MiAgenda tecnicoId={tecnicoId} embebido />
-                ) : tab === 'rendimiento' ? (
-                    <RendimientoTab tecnicoId={tecnicoId} />
-                ) : (tab === 'activas' ? cargando : cargandoHistorial) ? (
+                {cargando ? (
                     <div className="flex flex-col gap-2">
                         {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse bg-card" />)}
                     </div>
@@ -676,19 +486,32 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         </p>
                     </div>
                 ) : (
-                    Object.entries(porFecha).map(([fecha, items]) => (
+                    Object.entries(porFecha).map(([fecha, items]) => {
+                        // Hoy y lo atrasado, abierto. Los días que vienen, plegados (4-oct-2026)
+                        const futuro = fecha > hoy;
+                        const abierto = !futuro || diasAbiertos.has(fecha);
+                        return (
                         <div key={fecha} className="mb-5">
-                            <p className="text-label font-black text-muted uppercase tracking-wider mb-2 capitalize">
-                                {formatFecha(fecha)}
-                            </p>
-                            <div className="space-y-4">
+                            {futuro ? (
+                                <button onClick={() => setDiasAbiertos(prev => { const n = new Set(prev); n.has(fecha) ? n.delete(fecha) : n.add(fecha); return n; })}
+                                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-card border border-black/[0.06] dark:border-white/[0.06] mb-2 active:scale-[0.99]">
+                                    <span className="text-label font-black text-muted uppercase tracking-wider capitalize">{formatFecha(fecha)}</span>
+                                    <span className="text-label font-bold text-secondary">{items.length} visita{items.length !== 1 ? 's' : ''} {abierto ? '▲' : '▼'}</span>
+                                </button>
+                            ) : (
+                                <p className="text-label font-black text-muted uppercase tracking-wider mb-2 capitalize">
+                                    {fecha < hoy ? `Atrasada · ${formatFecha(fecha)}` : formatFecha(fecha)}
+                                </p>
+                            )}
+                            {abierto && <div className="space-y-4">
                                 {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={(o) => (o.equiposSerie ? setCargaSerie(o) : setOrdenRegistrando(o))} onNoAtendido={setNoAtendidoOrden} onNoPuedo={(o) => setSalida({ modo: 'orden', orden: o })} onVerServicio={verServicio}
+                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={(o) => (o.equiposSerie ? setCargaSerie(o) : setOrdenRegistrando(o))} onProblema={setProblema} onVerServicio={verServicio}
                                         seleccionando={modoSeleccion} seleccionada={seleccionados.has(o.id)} onToggleSel={toggleSeleccion} />
                                 ))}
-                            </div>
+                            </div>}
                         </div>
-                    ))
+                        );
+                    })
                 )}
 
                 {/* Cerrar mi día va al final: es lo último que se hace en el día */}
@@ -756,6 +579,39 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 ordenesHoy={[...ordenes, ...historial.filter(h => !ordenes.some(o => o.id === h.id))]
                     .filter(o => o.fechaProgramada === getTodayISO())}
                 onClose={() => setCerrarDia(false)} />
+        )}
+
+        {problema && (
+            <div className="fixed inset-0 z-[3000] flex items-end bg-black/50" onClick={() => setProblema(null)}>
+                <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 pb-8 bg-card space-y-2" onClick={e => e.stopPropagation()}>
+                    <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip" />
+                    <p className="text-body-lg font-black text-ink">¿Qué pasó?</p>
+                    <p className="text-caption text-muted mb-2">{problema.clienteNombre || problema.titulo}</p>
+                    {(problema.estado === 'EN_CAMINO' || problema.estado === 'EN_SITIO') && (
+                        <button onClick={() => { setNoAtendidoOrden(problema); setProblema(null); }}
+                            className="w-full p-4 rounded-2xl text-left bg-chip active:scale-[0.98]">
+                            <p className="text-body font-black text-ink">El cliente no atendió</p>
+                            <p className="text-caption text-muted">Queda registrado y el admin la reprograma</p>
+                        </button>
+                    )}
+                    <button onClick={() => { setSalida({ modo: 'orden', orden: problema }); setProblema(null); }}
+                        className="w-full p-4 rounded-2xl text-left bg-chip active:scale-[0.98]">
+                        <p className="text-body font-black text-ink">No puedo ir</p>
+                        <p className="text-caption text-muted">La visita vuelve al admin para reasignarla</p>
+                    </button>
+                    <button onClick={() => { setSalida({ modo: 'mensaje', orden: problema }); setProblema(null); }}
+                        className="w-full p-4 rounded-2xl text-left bg-chip active:scale-[0.98]">
+                        <p className="text-body font-black text-ink">Avisar algo al admin</p>
+                        <p className="text-caption text-muted">Falta un repuesto, otro problema, una duda</p>
+                    </button>
+                    {ESTADO_ANTERIOR[problema.estado] && (
+                        <button onClick={() => { avanzarEstado(problema.id, ESTADO_ANTERIOR[problema.estado].estado); setProblema(null); }}
+                            className="w-full p-3 rounded-2xl flex items-center justify-center gap-1.5 font-bold text-label text-muted active:opacity-60">
+                            <LuUndo2 size={14} /> Me equivoqué: {ESTADO_ANTERIOR[problema.estado].label.toLowerCase()}
+                        </button>
+                    )}
+                </div>
+            </div>
         )}
 
         {servicioEjecutando && (

@@ -36,8 +36,8 @@ public class NotificacionController {
     }
 
     @PatchMapping("/{id}/leer")
-    public ResponseEntity<Void> marcarLeida(@PathVariable Long id) {
-        service.marcarLeida(id);
+    public ResponseEntity<Void> marcarLeida(@PathVariable Long id, Authentication auth) {
+        service.marcarLeida(id, resolverUserId(auth));
         return ResponseEntity.noContent().build();
     }
 

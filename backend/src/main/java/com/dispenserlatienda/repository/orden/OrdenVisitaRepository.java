@@ -34,6 +34,9 @@ public interface OrdenVisitaRepository extends JpaRepository<OrdenVisita, Long> 
     List<OrdenVisita> findActivasAtrasadas(@Param("desde") LocalDate desde);
 
     boolean existsByPresupuestoId(Long presupuestoId);
+    // ¿Este presupuesto/servicio le fue asignado a este técnico por una orden? (4-oct-2026)
+    boolean existsByPresupuestoIdAndTecnicoId(Long presupuestoId, Long tecnicoId);
+    boolean existsByIdAndTecnicoId(Long id, Long tecnicoId);
     boolean existsByPresupuestoIdAndEstadoNotIn(Long presupuestoId, List<EstadoOrden> estados);
 
     // Cuando el servicio/presupuesto se cierra por otro camino (Presupuestos → "Cerrar

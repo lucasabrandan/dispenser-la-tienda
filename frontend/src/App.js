@@ -81,8 +81,12 @@ function AppInterna() {
         setSeccionActual('servicio-tecnico');
     };
 
+    // El técnico solo tiene "Hoy", su agenda y "Mi mes" (4-oct-2026). Cualquier
+    // otra sección (por un link viejo, una notificación) lo lleva a "Hoy".
+    const SECCIONES_TECNICO = ['mis-ordenes', 'mi-agenda', 'mi-sueldo'];
     const renderSeccion = () => {
-        switch (seccionActual) {
+        const seccion = esAdmin || SECCIONES_TECNICO.includes(seccionActual) ? seccionActual : 'mis-ordenes';
+        switch (seccion) {
             case 'caja':
                 return <DashboardCaja setVistaActual={(seccion, opts) => {
                     if (opts?.crear && seccion === 'trabajos') setTrabajoNuevo(opts.crear === true ? 'nuevo' : opts.crear);

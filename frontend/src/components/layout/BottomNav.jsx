@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuWrench, LuPin, LuShoppingCart, LuEllipsis, LuBanknote, LuLayers } from 'react-icons/lu';
+import { LuHouse, LuPin, LuShoppingCart, LuEllipsis, LuBanknote, LuLayers } from 'react-icons/lu';
 
 // Reordenado: las acciones más frecuentes accesibles directamente.
 // 'despacho' (ítem propio, 26-ago) se saco de acá: el modo Despacho/Servicio
@@ -19,8 +19,9 @@ const NAV_ADMIN = [
 // servicioTipo TECNICA) — quedaba vacio de adorno para este rol.
 const NAV_TECNICO = [
     // Agenda (calendario) vive ahora como pestaña adentro de "Hoy" (2-oct-2026)
+    // Limpieza del técnico (4-oct-2026): dos lugares. "Hoy" = lo que tiene que
+    // hacer; "Mi mes" = lo que hizo y cobró (liquidación) + su objetivo.
     { id: 'mis-ordenes',      nombre: 'Hoy',      Icon: LuPin           },
-    { id: 'servicio-tecnico', nombre: 'Trabajos', Icon: LuWrench        },
     { id: 'mi-sueldo',        nombre: 'Mi mes',   Icon: LuBanknote      },
 ];
 
