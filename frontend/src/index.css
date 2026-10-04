@@ -52,10 +52,22 @@
 
   /* ── Sistema "cada color, una función" (rediseño 29-sep-2026) ──
      4 estados, siempre como punto/texto chico, nunca fondo lleno. */
-  --estado-pendiente: #78716C;
-  --estado-camino:    #2563EB;
-  --estado-curso:     #B45309;
-  --estado-listo:     #15803D;
+  /* ── Recorrido del trabajo (3-oct-2026, "Opción 1: color = etapa") ──
+     4 familias con significado: gris = quieto · azul = se mueve ·
+     dorado = falta la plata · verde = cobrado. Rojo SOLO para alertas.
+     Cada familia: color (bordes/puntos/rellenos), -tx (texto legible
+     sobre fondo claro) y -bg (fondo suave). Validado para daltonismo
+     y contraste (skill dataviz, validate_palette.js). */
+  --etapa-hacer:     #78716C;  --etapa-hacer-tx:  #57534E;  --etapa-hacer-bg:  #EFEDEA;
+  --etapa-marcha:    #2A71D6;  --etapa-marcha-tx: #1D55A8;  --etapa-marcha-bg: #E5EEFB;
+  --etapa-cobrar:    #E1901F;  --etapa-cobrar-tx: #8A5205;  --etapa-cobrar-bg: #FCF1DF;
+  --etapa-listo:     #067132;  --etapa-listo-tx:  #067132;  --etapa-listo-bg:  #E1F2E7;
+  --alerta:          #D13A28;  --alerta-tx:       #B42F20;  --alerta-bg:       #FDE8E4;
+  /* Los 4 estados viejos apuntan a las mismas familias (un solo sistema) */
+  --estado-pendiente: var(--etapa-hacer);
+  --estado-camino:    var(--etapa-marcha);
+  --estado-curso:     var(--etapa-cobrar);
+  --estado-listo:     var(--etapa-listo);
   /* Separador entre filas dentro de una tarjeta (reemplaza cajas anidadas) */
   --color-line: rgba(0, 0, 0, 0.07);
 }
@@ -95,10 +107,15 @@
   --indigo-bg:  rgba(49, 46, 129, 0.3);
   --indigo-tx:  #818CF8;
 
-  --estado-pendiente: #A8A29E;
-  --estado-camino:    #60A5FA;
-  --estado-curso:     #F0A500;
-  --estado-listo:     #4ADE80;
+  --etapa-hacer:     #A8A29E;  --etapa-hacer-tx:  #C9C4BE;  --etapa-hacer-bg:  #2A2A28;
+  --etapa-marcha:    #4C8BE6;  --etapa-marcha-tx: #8DB6F2;  --etapa-marcha-bg: #16253A;
+  --etapa-cobrar:    #D9932A;  --etapa-cobrar-tx: #F0BE6A;  --etapa-cobrar-bg: #33260F;
+  --etapa-listo:     #2F9A57;  --etapa-listo-tx:  #7BD4A0;  --etapa-listo-bg:  #12281B;
+  --alerta:          #E8422F;  --alerta-tx:       #F58C7E;  --alerta-bg:       #3B1611;
+  --estado-pendiente: var(--etapa-hacer);
+  --estado-camino:    var(--etapa-marcha);
+  --estado-curso:     var(--etapa-cobrar);
+  --estado-listo:     var(--etapa-listo);
   --color-line: rgba(255, 255, 255, 0.06);
 }
 

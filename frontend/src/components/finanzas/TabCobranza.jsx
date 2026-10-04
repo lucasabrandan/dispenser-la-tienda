@@ -11,9 +11,9 @@ const total = (s) => Number(s.montoFinal) > 0 ? Number(s.montoFinal)
     : (s.items || []).reduce((a, i) => a + Number(i.costo || 0), 0);
 const dias = (f) => f ? Math.max(0, Math.floor((Date.now() - new Date(String(f).slice(0, 10) + 'T00:00:00').getTime()) / 86400000)) : 0;
 const ETAPA = {
-    COMPLETADO:            { label: 'Hecho · falta cobrar',   color: '#2DD4BF' },
-    PENDIENTE_FACTURACION: { label: 'Hecho · falta facturar', color: '#2DD4BF' },
-    FACTURADO:             { label: 'Facturado',              color: '#818CF8' },
+    COMPLETADO:            { label: 'Hecho · falta cobrar',   color: 'var(--etapa-cobrar)' },
+    PENDIENTE_FACTURACION: { label: 'Hecho · falta facturar', color: 'var(--etapa-cobrar)' },
+    FACTURADO:             { label: 'Facturado',              color: 'var(--etapa-cobrar)' },
 };
 
 export default function TabCobranza() {

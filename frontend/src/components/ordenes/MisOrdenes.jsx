@@ -19,8 +19,9 @@ import HistorialSerieSheet from './HistorialSerieSheet';
 import CerrarDiaSheet from './CerrarDiaSheet';
 import QueLlevarHoy from './QueLlevarHoy';
 import CargaPorSerieSheet from './CargaPorSerieSheet';
-import { etapaColor, colorTecnico } from '../../utils/estados';
+import { etapaColor, etapaDeEstado, estiloEtiqueta } from '../../utils/estados';
 import { useAuth } from '../../context/AuthContext';
+import AvatarTecnico from '../ui/AvatarTecnico';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -40,8 +41,8 @@ const BORDER_COLOR = {
     EN_CAMINO:   etapaColor('EN_CAMINO'),
     EN_SITIO:    etapaColor('EN_SITIO'),
     COMPLETADA:  etapaColor('COMPLETADA'),
-    CANCELADA:   '#A8A29E',
-    NO_ATENDIDO: '#F87171',
+    CANCELADA:   'var(--etapa-hacer)',
+    NO_ATENDIDO: 'var(--alerta)',
 };
 
 // El color del boton ya no varia por etapa (antes: azul/ambar/verde) — es
@@ -49,10 +50,10 @@ const BORDER_COLOR = {
 // se lee en el borde/dot de la card (BORDER_COLOR). Mismo criterio que se
 // aplico a ServicioCard.jsx.
 const SIGUIENTE_ESTADO = {
-    // Un color por paso (2-oct-2026: todo rojo se confundía): azul salir, ámbar llegué, verde cerrar
-    PENDIENTE:  { estado: 'EN_CAMINO', label: 'Salir', bg: '#2563EB', Icon: LuCar },
-    EN_CAMINO:  { estado: 'EN_SITIO',  label: 'Llegué', bg: '#B45309', Icon: LuMapPin },
-    EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', bg: '#15803D', Icon: LuCircleCheck },
+    // Opción 1 de color (3-oct-2026): salir y llegar = azul "en marcha"; cerrar = verde "listo"
+    PENDIENTE:  { estado: 'EN_CAMINO', label: 'Salir', bg: 'var(--etapa-marcha)', Icon: LuCar },
+    EN_CAMINO:  { estado: 'EN_SITIO',  label: 'Llegué', bg: 'var(--etapa-marcha)', Icon: LuMapPin },
+    EN_SITIO:   { estado: 'COMPLETADA', label: 'Completar', bg: 'var(--etapa-listo)', Icon: LuCircleCheck },
 };
 
 // Paso atrás por si el técnico tocó la orden equivocada (solo uno, y nunca desde COMPLETADA)
@@ -84,8 +85,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                             {ESTADO_LABEL[orden.estado] && (
-                                <span className="text-label font-black px-2 py-0.5 rounded-md uppercase text-[#1C1917]"
-                                    style={{ background: BORDER_COLOR[orden.estado] }}>
+                                <span className="text-label font-black px-2 py-0.5 rounded-md uppercase"
+                                    style={etapaDeEstado(orden.estado) ? estiloEtiqueta(etapaDeEstado(orden.estado)) : { background: BORDER_COLOR[orden.estado], color: '#fff' }}>
                                     {ESTADO_LABEL[orden.estado]}
                                 </span>
                             )}
@@ -188,7 +189,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                                 o "Ejecutar trabajo" según un dato invisible (si venía de un
                                 presupuesto). Adentro se decide solo qué formulario abrir. */}
                             <button onClick={() => orden.presupuestoId ? onEjecutar(orden) : onRegistrarTrabajo(orden)}
-                                style={{ background: '#15803D' }}
+                                style={{ background: 'var(--etapa-listo)' }}
                                 className="w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all">
                                 Cerrar trabajo
                             </button>
@@ -577,7 +578,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                                 Hoy
                                 {usuario?.nombre && (
                                     <span className="flex items-center gap-1.5 text-caption font-bold text-secondary">
-                                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: colorTecnico(usuario.nombre) }} />
+                                        <AvatarTecnico nombre={usuario.nombre} size={22} />
                                         {usuario.nombre.split(' ')[0]}
                                     </span>
                                 )}

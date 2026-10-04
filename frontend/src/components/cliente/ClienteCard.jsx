@@ -76,7 +76,7 @@ export default function ClienteCard({
                     <p className="text-body font-black text-ink leading-tight truncate flex items-center gap-1.5">
                         <span className="truncate">{cliente.nombre}</span>
                         {cliente.tieneTarifa && (
-                            <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-[#818CF8]/15 text-[#4F46E5] dark:text-[#A5B4FC] text-label font-black">Tarifa mensual</span>
+                            <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-[color:var(--etapa-cobrar-bg)] text-[color:var(--etapa-cobrar-tx)] text-label font-black">Tarifa mensual</span>
                         )}
                     </p>
                     <p className="text-caption text-muted mt-0.5 flex items-center gap-1.5">
@@ -177,8 +177,8 @@ export default function ClienteCard({
                 {/* Clientes con tarifa: el cierre del mes a mano */}
                 {cliente.tieneTarifa && (
                     <button onClick={() => setModalCierre(true)}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#818CF8]/10 text-left active:scale-[0.99]">
-                        <span className="text-caption font-black text-[#4F46E5] dark:text-[#A5B4FC] flex items-center gap-1.5"><LuFileText size={14} /> Cierre mensual · tarifa por volumen</span>
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-[color:var(--etapa-cobrar-bg)] text-left active:scale-[0.99]">
+                        <span className="text-caption font-black text-[color:var(--etapa-cobrar-tx)] flex items-center gap-1.5"><LuFileText size={14} /> Cierre mensual · tarifa por volumen</span>
                         <span className="text-label text-muted">Abrir →</span>
                     </button>
                 )}

@@ -21,6 +21,7 @@ const MODALIDADES = [
  * Crea un Servicio (tipo TECNICA) con la modalidad de cobro elegida y marca la orden como COMPLETADA.
  */
 export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, onCerrar }) {
+    const tecnicoNombre = orden?.tecnicoNombre || '';
     const [repuestosDisp,  setRepuestosDisp]  = useState([]);
     const [sedes,          setSedes]          = useState([]);
     const [sedeId,         setSedeId]         = useState('');
@@ -36,11 +37,18 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
     const [guardando,      setGuardando]      = useState(false);
 
     useEffect(() => {
-        api.get('/repuestos').then(r => setRepuestosDisp(r.data || [])).catch(() => {});
-        const url = orden.clienteId ? `/sedes?clienteId=${orden.clienteId}` : '/sedes';
+        // Bug 3-oct-2026: /repuestos devuelve una página ({content: [...]}), no una
+        // lista. Se guardaba el objeto y al dibujar la pantalla .filter() rompía todo
+        // ("se cae la pantalla" al tocar Cerrar trabajo). Además traía solo 20.
+        api.get('/repuestos', { params: { page: 0, size: 1000 } })
+            .then(r => { const d = r.data; setRepuestosDisp(Array.isArray(d) ? d : (d?.content || [])); })
+            .catch(() => {});
+        // /sedes?clienteId= devolvía TODAS las sedes de todos los clientes
+        const url = orden.clienteId ? `/sedes/cliente/${orden.clienteId}` : '/sedes';
         api.get(url)
             .then(r => {
-                const lista = r.data?.content || r.data || [];
+                const d = r.data;
+                const lista = (Array.isArray(d) ? d : (d?.content || [])).map(s => ({ ...s, nombre: s.nombre || s.nombreSede || s.direccion || `Sede ${s.id}` }));
                 setSedes(lista);
                 if (lista.length === 1) {
                     setSedeId(String(lista[0].id));
@@ -120,7 +128,7 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
                     observaciones: observaciones.trim() || null,
                     items: [{
                         equipoSerial:     serial.trim() || 'S/N',
-                        tecnico:          String(tecnicoId),
+                        tecnico:          tecnicoNombre || String(tecnicoId),
                         trabajoTipo:      'REPARACION',
                         metodoPago,
                         trabajoRealizado: descripcion,

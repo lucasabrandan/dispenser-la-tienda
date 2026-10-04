@@ -14,7 +14,7 @@ export default function PresupuestoCard({ s, calcularTotal, onPDF, onArchivar, o
     const asignado = seccion === 'EN_CURSO';
     const color    = seccion === 'EN_ESPERA' ? 'var(--estado-pendiente)'
                    : seccion === 'REALIZADOS' ? 'var(--estado-listo)'
-                   : asignado ? 'var(--estado-curso)' : 'var(--estado-pendiente)';
+                   : asignado ? 'var(--etapa-hacer)' : 'var(--etapa-hacer)';
     const quien    = s.tecnicoAsignado || s.usuarioNombre;
     const etiqueta = seccion === 'EN_ESPERA' ? 'En espera'
                    : seccion === 'REALIZADOS' ? `Realizado${quien ? ` por ${quien.split(' ')[0]}` : ''}`

@@ -35,7 +35,7 @@ public class UsuarioAdminController {
     @GetMapping
     public List<UsuarioDTO> listar() {
         return usuarioRepository.findAll().stream()
-                .map(u -> new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo()))
+                .map(u -> new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo(), u.getColor()))
                 .toList();
     }
 
@@ -58,7 +58,7 @@ public class UsuarioAdminController {
         nuevo.setWhatsapp(dto.whatsapp());
         usuarioRepository.save(nuevo);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo(), nuevo.getTelefono(), nuevo.getWhatsapp(), nuevo.getFirma(), nuevo.getSueldoObjetivo()));
+                .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo(), nuevo.getTelefono(), nuevo.getWhatsapp(), nuevo.getFirma(), nuevo.getSueldoObjetivo(), nuevo.getColor()));
     }
 
     @PutMapping("/{id}")
@@ -89,7 +89,21 @@ public class UsuarioAdminController {
         if (seDesactiva) {
             refreshTokenService.revocarTodosDeUsuario(u.getId());
         }
-        return ResponseEntity.ok(new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo()));
+        return ResponseEntity.ok(new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo(), u.getColor()));
+    }
+
+    // Color del técnico (3-oct-2026): se elige en Usuarios. Vacío = automático.
+    @PutMapping("/{id}/color")
+    public ResponseEntity<Void> guardarColor(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        Usuario u = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        String c = body.get("color");
+        if (c != null && !c.isBlank() && !c.matches("^#[0-9A-Fa-f]{6}$")) {
+            throw new IllegalArgumentException("Color inválido");
+        }
+        u.setColor(c == null || c.isBlank() ? null : c.toUpperCase());
+        usuarioRepository.save(u);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/firma")

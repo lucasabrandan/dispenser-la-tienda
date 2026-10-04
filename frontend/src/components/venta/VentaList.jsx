@@ -15,8 +15,8 @@ function M({ valor, prefix = '$', className = '' }) {
 }
 
 const badgeClass = (v) => {
-    if (v.estado === 'PRESUPUESTO') return 'bg-[#FEF3C7] text-[#92400E] dark:bg-[#2E2207] dark:text-[#FBBF24]';
-    if (v.estado === 'REALIZADO')   return 'bg-[#DCFCE7] text-[#16A34A] dark:bg-[#0F2A1A] dark:text-[#4ADE80]';
+    if (v.estado === 'PRESUPUESTO') return 'bg-[color:var(--etapa-cobrar-bg)] text-[color:var(--etapa-cobrar-tx)]';
+    if (v.estado === 'REALIZADO')   return 'bg-[color:var(--etapa-listo-bg)] text-[color:var(--etapa-listo-tx)]';
     return 'bg-[#E8E5E0] text-[#57534E] dark:bg-[#2A2A28] dark:text-[#9E9A94]';
 };
 
@@ -162,9 +162,9 @@ export default function VentaList({
                     <div key={v.id}
                         className={`rounded-xl shadow-sm border border-black/[0.05] dark:border-white/[0.05] overflow-hidden border-l-[3px] ${
                             esPendiente
-                                ? 'border-l-[#D48800] dark:border-l-[#F0A500] bg-[#FFFBF0] dark:bg-[#242118]'
+                                ? 'border-l-[color:var(--etapa-cobrar)] bg-card'
                                 : v.estado === 'REALIZADO'
-                                    ? 'border-l-[#16A34A] bg-card'
+                                    ? 'border-l-[color:var(--etapa-listo)] bg-card'
                                     : 'border-l-[#A8A29E] bg-card'
                         }`}>
 

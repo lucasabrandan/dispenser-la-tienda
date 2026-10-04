@@ -57,13 +57,13 @@ export default function DashboardCaja({ setVistaActual }) {
         const sinRespuesta = servicios.filter(s => s.estado === 'PRESUPUESTO' && !s.enEspera && s.fecha && diasDesde(s.fecha) > 7);
         const masViejo = sinRespuesta.reduce((m, s) => Math.max(m, diasDesde(s.fecha)), 0);
         const out = [];
-        if (atrasadas) out.push({ id: 'atr', color: '#FBBF24', link: 'Ver', onClick: () => setVistaActual('trabajos'),
+        if (atrasadas) out.push({ id: 'atr', color: 'var(--alerta)', link: 'Ver', onClick: () => setVistaActual('trabajos'),
             texto: `${atrasadas} visita${atrasadas !== 1 ? 's' : ''} atrasada${atrasadas !== 1 ? 's' : ''}` });
-        if (sinRespuesta.length) out.push({ id: 'ppto', color: '#A8A29E', link: 'Ver', onClick: () => setVistaActual('trabajos'),
+        if (sinRespuesta.length) out.push({ id: 'ppto', color: 'var(--etapa-hacer)', link: 'Ver', onClick: () => setVistaActual('trabajos'),
             texto: `${sinRespuesta.length} presupuesto${sinRespuesta.length !== 1 ? 's' : ''} sin respuesta (el más viejo, hace ${masViejo} días)` });
-        if (alertasRadar.length) out.push({ id: 'radar', color: '#60A5FA', link: 'Radar', onClick: () => setVistaActual('radar'),
+        if (alertasRadar.length) out.push({ id: 'radar', color: 'var(--etapa-hacer)', link: 'Radar', onClick: () => setVistaActual('radar'),
             texto: `${alertasRadar.length} equipo${alertasRadar.length !== 1 ? 's' : ''} con mantenimiento vencido` });
-        if (stockBajo) out.push({ id: 'stock', color: '#F87171', link: 'Ver', onClick: () => setVistaActual('productos'),
+        if (stockBajo) out.push({ id: 'stock', color: 'var(--etapa-hacer)', link: 'Ver', onClick: () => setVistaActual('productos'),
             texto: `${stockBajo} producto${stockBajo !== 1 ? 's' : ''} con stock bajo` });
         return out;
     }, [ordenes, servicios, alertasRadar, stockBajo, hoy, setVistaActual]);

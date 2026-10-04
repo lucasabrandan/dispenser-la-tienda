@@ -125,7 +125,14 @@ public class OrdenVisitaController {
     @GetMapping("/tecnicos")
     public ResponseEntity<List<Map<String, Object>>> tecnicos() {
         List<Map<String, Object>> result = service.listarTecnicos().stream()
-            .map(u -> Map.<String, Object>of("id", u.getId(), "nombre", u.getNombre()))
+            .map(u -> {
+                // HashMap: Map.of no acepta null y el color puede no estar elegido
+                Map<String, Object> m = new java.util.HashMap<>();
+                m.put("id", u.getId());
+                m.put("nombre", u.getNombre());
+                m.put("color", u.getColor());
+                return m;
+            })
             .toList();
         return ResponseEntity.ok(result);
     }

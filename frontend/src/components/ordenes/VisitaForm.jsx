@@ -4,6 +4,7 @@ import { LuChevronLeft, LuChevronRight, LuX, LuMapPin, LuPlus, LuSearch, LuCheck
 import api from '../../services/api';
 import { colorTecnico, etapaColor } from '../../utils/estados';
 import { formatDateISO, getTodayISO, lunesDeLaSemana } from '../../utils/dateUtils';
+import AvatarTecnico from '../ui/AvatarTecnico';
 
 // Nueva visita (3-oct-2026, opción B "paso a paso" + el "elegí el hueco" de la C).
 //   1 · ¿A quién?  — buscar cliente / N° de serie, recientes, o cliente nuevo
@@ -259,7 +260,7 @@ export default function VisitaForm({ tecnicos = [], onGuardado, onCancelar }) {
                                 <span className="flex-1 min-w-0">
                                     <span className="flex items-center gap-1.5 text-body font-black text-ink truncate">
                                         <span className="truncate">{c.nombre}</span>
-                                        {c.tieneTarifa && <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-[#818CF8]/15 text-[#4F46E5] dark:text-[#A5B4FC] text-label font-black">Tarifa mensual</span>}
+                                        {c.tieneTarifa && <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-[color:var(--etapa-cobrar-bg)] text-[color:var(--etapa-cobrar-tx)] text-label font-black">Tarifa mensual</span>}
                                     </span>
                                     <span className="block text-caption text-muted truncate">{c.direccion || c.telefono || ''}</span>
                                 </span>
@@ -287,7 +288,7 @@ export default function VisitaForm({ tecnicos = [], onGuardado, onCancelar }) {
                     {paso === 2 && (<>
                         <p className="flex items-center gap-2 text-caption font-bold text-secondary">
                             {nombreCliente}
-                            {conTarifa && <span className="px-1.5 py-0.5 rounded-md bg-[#818CF8]/15 text-[#4F46E5] dark:text-[#A5B4FC] text-label font-black">Tarifa mensual</span>}
+                            {conTarifa && <span className="px-1.5 py-0.5 rounded-md bg-[color:var(--etapa-cobrar-bg)] text-[color:var(--etapa-cobrar-tx)] text-label font-black">Tarifa mensual</span>}
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                             {MOTIVOS.map(m => <button key={m} type="button" onClick={() => setMotivo(m)} className={chipCls(motivo === m)}>{m}</button>)}
@@ -390,7 +391,7 @@ export default function VisitaForm({ tecnicos = [], onGuardado, onCancelar }) {
                                 return (
                                     <div key={t.id} className="min-w-0 space-y-1.5">
                                         <p className="flex items-center gap-1.5 text-body font-black text-ink truncate">
-                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorTecnico(t.nombre) }} />{t.nombre.split(' ')[0]}
+                                            <AvatarTecnico nombre={t.nombre} size={22} />{t.nombre.split(' ')[0]}
                                             <span className="text-caption text-muted font-bold">{suyas.length}</span>
                                         </p>
                                         {mismaZona && <p className="text-label font-black text-[#16A34A] dark:text-[#4ADE80]">Ya va por esa zona</p>}
@@ -424,13 +425,13 @@ export default function VisitaForm({ tecnicos = [], onGuardado, onCancelar }) {
                                 <p className="text-body text-ink leading-relaxed">
                                     {motivo}{series.length ? <> · <b>{series.length} equipo{series.length !== 1 ? 's' : ''}</b> ({series.join(', ')})</> : null}<br />
                                     {nombreCliente}{sede ? ` · ${sede.nombreSede}` : ''}<br />
-                                    <b style={{ color: colorTecnico(tecElegido?.nombre) }}>{tecElegido?.nombre?.split(' ')[0]}</b> · {new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric' })} · {hora || hueco.franja.toLowerCase()}
+                                    <span className="inline-flex items-center gap-1 align-middle"><AvatarTecnico nombre={tecElegido?.nombre} size={18} /><b>{tecElegido?.nombre?.split(' ')[0]}</b></span> · {new Date(fecha + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric' })} · {hora || hueco.franja.toLowerCase()}
                                 </p>
                                 <label className="flex items-center gap-2 text-caption text-secondary">
                                     Hora exacta (opcional)
                                     <input type="time" value={hora} onChange={e => setHora(e.target.value)} className="h-9 px-2 rounded-lg bg-chip text-ink font-bold outline-none" />
                                 </label>
-                                {conTarifa && <p className="text-caption font-bold text-[#4F46E5] dark:text-[#A5B4FC]">Sin precio · va al cierre mensual</p>}
+                                {conTarifa && <p className="text-caption font-bold text-[color:var(--etapa-cobrar-tx)]">Sin precio · va al cierre mensual</p>}
                             </div>
                         )}
                     </>)}

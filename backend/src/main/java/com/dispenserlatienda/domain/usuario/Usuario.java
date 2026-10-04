@@ -35,6 +35,10 @@ public class Usuario {
     @Column(length = 30)
     private String whatsapp;
 
+    // Color de identidad del técnico (hex, ej. #7C4DD8). Si es null, la app asigna uno fijo.
+    @Column(length = 9)
+    private String color;
+
     @Column(columnDefinition = "TEXT")
     private String firma;
 
@@ -91,6 +95,8 @@ public class Usuario {
     public void setTelefono(String telefono) { this.telefono = telefono; }
     public String getWhatsapp() { return whatsapp; }
     public void setWhatsapp(String whatsapp) { this.whatsapp = whatsapp; }
+    public String getColor() { return color; }
+    public void setColor(String color) { this.color = color; }
     public String getFirma() { return firma; }
     public void setFirma(String firma) { this.firma = firma; }
     public BigDecimal getSueldoObjetivo() { return sueldoObjetivo; }

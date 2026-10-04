@@ -16,8 +16,8 @@ import { exportarVentasCSV } from '../../utils/exportarCSV';
 import api from '../../services/api';
 
 const TABS = [
-    { id: 'PRESUPUESTO', label: 'En curso',   short: 'En curso', color: '#F0A500', Icon: LuBanknote },
-    { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: '#4ADE80', Icon: LuCircleCheck },
+    { id: 'PRESUPUESTO', label: 'En curso',   short: 'En curso', color: 'var(--etapa-cobrar)', Icon: LuBanknote },
+    { id: 'REALIZADO',   label: 'Cobradas',   short: 'Cobradas', color: 'var(--etapa-listo)', Icon: LuCircleCheck },
     { id: 'ARCHIVADO',   label: 'Archivadas', short: 'Arch',   color: '#A8A29E', Icon: LuArchive },
     // "Todo" — mismo patrón que ya tiene Servicio Técnico: búsqueda libre sin
     // filtro de estado, con rango de fechas. Jubila a "Historial" como pantalla

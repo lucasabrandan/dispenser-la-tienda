@@ -21,6 +21,7 @@ import { buildGoogleMapsRouteUrl } from '../../utils/clienteUtils';
 import TrabajoFila, { ENCABEZADO_GRID } from './TrabajoFila';
 import TrabajoEditorModal from './TrabajoEditorModal';
 import { NuevoSheet, TrabajoMenu } from './TrabajoMenus';
+import AvatarTecnico from '../ui/AvatarTecnico';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Trabajos (2-oct-2026) — una sola pantalla para todo el recorrido de un trabajo:
@@ -33,12 +34,12 @@ import { NuevoSheet, TrabajoMenu } from './TrabajoMenus';
 
 // Opción A: los 7 pasos se agrupan en 3 preguntas (+ cobrados aparte)
 const GRUPOS = [
-    { id: 'hacer',   label: 'Por hacer',  etapas: ['PRESUPUESTO', 'ASIGNADO'], color: '#A8A29E' },
-    { id: 'marcha',  label: 'En marcha',  etapas: ['CAMINO', 'LUGAR'],         color: '#60A5FA' },
-    { id: 'cobrar',  label: 'Por cobrar', etapas: ['HECHO', 'FACTURADO'],      color: '#2DD4BF' },
-    { id: 'cobrado', label: 'Cobrados',   etapas: ['COBRADO'],                 color: '#4ADE80' },
+    { id: 'hacer',   label: 'Por hacer',  etapas: ['PRESUPUESTO', 'ASIGNADO'], color: 'var(--etapa-hacer)' },
+    { id: 'marcha',  label: 'En marcha',  etapas: ['CAMINO', 'LUGAR'],         color: 'var(--etapa-marcha)' },
+    { id: 'cobrar',  label: 'Por cobrar', etapas: ['HECHO', 'FACTURADO'],      color: 'var(--etapa-cobrar)' },
+    { id: 'cobrado', label: 'Cobrados',   etapas: ['COBRADO'],                 color: 'var(--etapa-listo)' },
 ];
-const ETAPA = { ...Object.fromEntries(ETAPAS.map(e => [e.id, e])), ARCHIVADO: { id: 'ARCHIVADO', label: 'Archivado', color: '#78716C' } };
+const ETAPA = { ...Object.fromEntries(ETAPAS.map(e => [e.id, e])), ARCHIVADO: { id: 'ARCHIVADO', label: 'Archivado', familia: 'hacer', nivel: 1, color: 'var(--etapa-hacer)', tx: 'var(--etapa-hacer-tx)', bg: 'var(--etapa-hacer-bg)', sobre: '#fff' } };
 const ETAPA_DE_ORDEN = { PENDIENTE: 'ASIGNADO', EN_CAMINO: 'CAMINO', EN_SITIO: 'LUGAR' };
 const ABIERTAS = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO'];
 
@@ -454,7 +455,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
 
                 {/* Atrasadas */}
                 {atrasadas.length > 0 && !(grupo === 'hacer' && etapa === 'ASIGNADO') && !verArchivados && (
-                    <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#FEF3C7] text-[#92400E] dark:bg-[#2A1A0A] dark:text-[#FBBF24] border border-[#F0A500]/40 text-caption font-bold">
+                    <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[color:var(--alerta-bg)] text-[color:var(--alerta-tx)] border border-[color:var(--alerta)]/30 text-caption font-bold">
                         <LuTriangleAlert size={16} className="shrink-0" />
                         <span className="flex-1">
                             {atrasadas.length} visita{atrasadas.length !== 1 ? 's' : ''} de días anteriores sigue{atrasadas.length !== 1 ? 'n' : ''} abierta{atrasadas.length !== 1 ? 's' : ''}
@@ -543,7 +544,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                             return (
                                 <button key={c.id || 'todos'} onClick={() => setTec(c.id)} aria-pressed={activo}
                                     className={`h-8 md:h-10 px-3 md:px-3.5 rounded-full shrink-0 inline-flex items-center gap-2 text-label font-bold border transition-all active:scale-95 ${activo ? 'border-brand-red text-ink bg-[rgba(232,66,47,0.10)]' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
-                                    {c.color && <span className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />}
+                                    {c.id && c.id !== '__SIN__' && <AvatarTecnico nombre={c.id} size={20} />}
                                     {c.label}<span className="text-muted">{c.count}</span>
                                 </button>
                             );
@@ -580,7 +581,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                             <div key={nombre ?? '__todos'} className="space-y-2">
                                 {grupos && (
                                     <p className="flex items-center gap-2 pt-3 px-1 text-label font-black uppercase tracking-widest text-secondary">
-                                        <span className="w-3 h-3 rounded-full" style={{ background: nombre ? colorTecnico(nombre) : '#78716C' }} />
+                                        <AvatarTecnico nombre={nombre} size={22} />
                                         {nombre || 'Sin técnico'} <span className="text-muted">{items.length}</span>
                                     </p>
                                 )}

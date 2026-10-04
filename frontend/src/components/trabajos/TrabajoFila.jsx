@@ -1,7 +1,8 @@
 import React from 'react';
 import { LuEllipsisVertical, LuSquare, LuSquareCheck } from 'react-icons/lu';
 import { M } from '../servicio/ServicioUI';
-import { colorTecnico } from '../../utils/estados';
+import { estiloEtiqueta, ALERTA } from '../../utils/estados';
+import AvatarTecnico from '../ui/AvatarTecnico';
 
 const primerNombre = (n) => (n || '').trim().split(' ')[0] || '';
 const GRID = 'md:grid-cols-[140px_minmax(0,1fr)_140px_110px_120px_170px_36px]';
@@ -13,7 +14,16 @@ export const ENCABEZADO_GRID = GRID;
 // Celular (3-oct-2026): tarjeta compacta en 3 líneas + botón, para no scrollear tanto.
 export default function TrabajoFila({ f, etapa, boton, textoSeguimiento, onAbrir, onMenu, seleccionando, seleccionado, onToggle }) {
     const tecTxt = f.tecnicoTexto || (f.tecnico ? primerNombre(f.tecnico) : 'Sin técnico');
-    const tecColor = f.tecnico ? colorTecnico(f.tecnico) : '#78716C';
+    // Opción 1 de color: el borde y la etiqueta dicen la etapa; lo atrasado, en rojo.
+    const borde = f.alerta ? ALERTA.color : etapa.color;
+    const etiqueta = (
+        <span className="px-1.5 py-[1px] rounded-md text-[11px] font-black uppercase tracking-wide shrink-0" style={estiloEtiqueta(etapa)}>{etapa.label}</span>
+    );
+    // Botón del próximo paso: color de la familia (el gris de "Por hacer" va en tinta),
+    // rojo si está atrasado.
+    const estiloBoton = f.alerta ? { background: ALERTA.color, color: '#fff' }
+        : etapa.familia === 'hacer' || !etapa.familia ? null
+        : { background: etapa.color, color: etapa.sobre };
     const monto = f.monto == null ? <span className="text-muted font-bold text-caption">Cierre mensual</span>
         : f.monto > 0 ? <M valor={f.monto} className="font-black" /> : <span className="text-muted">—</span>;
     const casilla = seleccionando && (
@@ -25,8 +35,8 @@ export default function TrabajoFila({ f, etapa, boton, textoSeguimiento, onAbrir
         <span className="text-caption text-muted md:text-right">{textoSeguimiento(f)}</span>
     ) : boton && !seleccionando && (
         <button type="button" onClick={() => boton.run(f)}
-            className={`h-9 md:h-10 px-4 rounded-xl text-label font-black active:scale-95 transition-all shrink-0 ${boton.primaria ? 'text-[#1C1917]' : 'bg-chip text-ink border border-black/10 dark:border-white/10'}`}
-            style={boton.primaria ? { background: etapa.color } : undefined}>
+            className={`h-9 md:h-10 px-4 rounded-xl text-label font-black active:scale-95 transition-all shrink-0 ${boton.primaria ? (estiloBoton ? '' : 'bg-ink text-page') : 'bg-chip text-ink border border-black/10 dark:border-white/10'}`}
+            style={boton.primaria ? estiloBoton || undefined : undefined}>
             {boton.label}
         </button>
     );
@@ -35,16 +45,16 @@ export default function TrabajoFila({ f, etapa, boton, textoSeguimiento, onAbrir
     return (
         <>
             {/* ── Celular ── */}
-            <div className={`md:hidden ${marco} px-3 py-2.5`} style={{ borderLeftWidth: 5, borderLeftColor: etapa.color }}>
+            <div className={`md:hidden ${marco} px-3 py-2.5`} style={{ borderLeftWidth: 5, borderLeftColor: borde }}>
                 <div className="flex items-center gap-2">
                     {casilla}
                     <button type="button" onClick={seleccionando ? onToggle : onAbrir} disabled={!f.servicio && !seleccionando}
                         className="flex-1 min-w-0 text-left disabled:cursor-default">
-                        <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide" style={{ color: etapa.color }}>
-                            {etapa.label}
-                            {f.esVenta && <span className="px-1 rounded bg-chip text-muted normal-case tracking-normal">Venta</span>}
-                            <span className={`normal-case tracking-normal font-bold truncate ${f.alerta ? 'text-[#B45309] dark:text-[#FBBF24]' : 'text-muted'}`}>
-                                · {f.fecha || '—'}{f.nota ? ` · ${f.nota}` : ''}
+                        <span className="flex items-center gap-1.5 text-[11px] min-w-0">
+                            {etiqueta}
+                            {f.esVenta && <span className="px-1 rounded bg-chip text-muted">Venta</span>}
+                            <span className={`font-bold truncate ${f.alerta ? 'text-[color:var(--alerta-tx)]' : 'text-muted'}`}>
+                                {f.alerta ? '⚠ ' : ''}{f.fecha || '—'}{f.nota ? ` · ${f.nota}` : ''}
                             </span>
                         </span>
                         <span className="flex items-baseline justify-between gap-2 mt-0.5">
@@ -59,7 +69,7 @@ export default function TrabajoFila({ f, etapa, boton, textoSeguimiento, onAbrir
                 </div>
                 <div className="flex items-center justify-between gap-2 mt-1.5">
                     <span className="flex items-center gap-1.5 text-caption text-muted min-w-0">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: tecColor }} />
+                        <AvatarTecnico nombre={f.tecnicoTexto ? null : f.tecnico} size={18} />
                         <span className="truncate">{tecTxt}{f.detalle ? ` · ${f.detalle}` : ''}</span>
                     </span>
                     {accion}
@@ -68,10 +78,10 @@ export default function TrabajoFila({ f, etapa, boton, textoSeguimiento, onAbrir
 
             {/* ── Escritorio ── */}
             <div className={`hidden md:grid ${marco} px-4 py-3 ${GRID} gap-4 items-center`}
-                style={{ borderLeftWidth: 5, borderLeftColor: etapa.color }}>
-                <span className="flex items-center gap-2 text-label font-black uppercase tracking-wide" style={{ color: etapa.color }}>
+                style={{ borderLeftWidth: 5, borderLeftColor: borde }}>
+                <span className="flex items-center gap-2 text-label font-black uppercase tracking-wide">
                     {casilla}
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: etapa.color }} />{etapa.label}
+                    {etiqueta}
                     {f.esVenta && <span className="ml-1 px-1.5 py-0.5 rounded bg-chip text-muted normal-case tracking-normal">Venta</span>}
                 </span>
                 <button type="button" onClick={seleccionando ? onToggle : onAbrir} disabled={!f.servicio && !seleccionando}
@@ -80,7 +90,7 @@ export default function TrabajoFila({ f, etapa, boton, textoSeguimiento, onAbrir
                     <span className="block text-caption text-muted truncate">{f.detalle || '—'}</span>
                 </button>
                 <span className="flex items-center gap-2 text-caption text-secondary">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: tecColor }} />{tecTxt}
+                    <AvatarTecnico nombre={f.tecnicoTexto ? null : f.tecnico} size={22} />{tecTxt}
                 </span>
                 <span className="flex flex-col gap-0.5 text-caption">
                     <span className="text-ink">{f.fecha || '—'}</span>

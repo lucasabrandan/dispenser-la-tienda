@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword, eliminarUsuario } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import AvatarTecnico from '../ui/AvatarTecnico';
+import { PALETA_TECNICO, setColoresTecnicos } from '../../utils/estados';
 import { LuShieldCheck, LuWrench, LuKey, LuPencil, LuLock, LuCircleCheck, LuTrash2, LuEyeOff, LuEye } from 'react-icons/lu';
 
 const ROL_LABEL = { ADMIN: 'Administrador', TECNICO: 'Técnico' };
@@ -22,6 +25,17 @@ export default function UsuariosManager() {
     // Las condiciones del PDF se mudaron a Más › Configuración (3-oct-2026).
     // Los inactivos quedan ocultos hasta tocar "Ver inactivos".
     const [verInactivos, setVerInactivos] = useState(false);
+    const [colorDe, setColorDe] = useState(null);
+    const guardarColor = async (u, color) => {
+        try {
+            await api.put(`/admin/usuarios/${u.id}/color`, { color });
+            const nuevos = usuarios.map(x => (x.id === u.id ? { ...x, color: color || null } : x));
+            setUsuarios(nuevos);
+            setColoresTecnicos(nuevos.filter(x => x.activo !== false));
+            setColorDe(null);
+            toast.success('Color guardado');
+        } catch { toast.error('No se pudo guardar el color'); }
+    };
 
     // Modal crear/editar
     const [modal, setModal]           = useState(null); // null | 'crear' | usuario
@@ -178,10 +192,14 @@ export default function UsuariosManager() {
                                          : 'border-dashed border-black/[0.15] dark:border-white/[0.15] opacity-60'
                                  }`}>
                                 <div className="p-4 flex items-center justify-between gap-3">
-                                    {/* Avatar */}
-                                    <div className="w-10 h-10 rounded-xl bg-[#D13A28]/10 dark:bg-[#E8422F]/10 flex items-center justify-center text-[18px] shrink-0">
-                                        {u.rol === 'ADMIN' ? <LuShieldCheck size={18} /> : <LuWrench size={18} />}
-                                    </div>
+                                    {/* Avatar con su color: tocándolo se elige otro (3-oct-2026) */}
+                                    <button type="button" onClick={() => setColorDe(c => (c === u.id ? null : u.id))} title="Cambiar color"
+                                        className="relative shrink-0 active:scale-95">
+                                        <AvatarTecnico nombre={u.nombre} size={40} />
+                                        <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-card border border-black/10 dark:border-white/10 flex items-center justify-center text-muted">
+                                            {u.rol === 'ADMIN' ? <LuShieldCheck size={11} /> : <LuWrench size={11} />}
+                                        </span>
+                                    </button>
                                     {/* Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -223,6 +241,21 @@ export default function UsuariosManager() {
                                         )}
                                     </div>
                                 </div>
+                                {colorDe === u.id && (
+                                    <div className="px-4 pb-4 -mt-1">
+                                        <p className="text-label font-bold text-muted uppercase tracking-wider mb-2">Color de {u.nombre.split(' ')[0]}</p>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {PALETA_TECNICO.map(c => (
+                                                <button key={c} type="button" onClick={() => guardarColor(u, c)} aria-label={`Color ${c}`}
+                                                    className={`w-9 h-9 rounded-full active:scale-90 ${(u.color || '').toUpperCase() === c ? 'ring-[3px] ring-offset-2 ring-ink ring-offset-card' : ''}`}
+                                                    style={{ background: c }} />
+                                            ))}
+                                            <button type="button" onClick={() => guardarColor(u, '')}
+                                                className={`h-9 px-3 rounded-full text-label font-bold bg-chip ${!u.color ? 'text-ink ring-2 ring-ink' : 'text-muted'}`}>Automático</button>
+                                        </div>
+                                        <p className="text-caption text-muted mt-2">Se ve como un círculo con sus iniciales en toda la app.</p>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

@@ -26,6 +26,8 @@ import MiAgenda           from './components/ordenes/MiAgenda';
 import MiSueldo           from './components/finanzas/MiSueldo';
 import MiEspacio          from './components/miespacio/MiEspacio';
 import Configuracion      from './components/configuracion/Configuracion';
+import api from './services/api';
+import { setColoresTecnicos } from './utils/estados';
 
 function AppInterna() {
     const { autenticado, esAdmin, usuario } = useAuth();
@@ -37,6 +39,7 @@ function AppInterna() {
     const [modoInicialServicio, setModoInicialServicio] = useState(null);
     // Trabajos: abrir directo el formulario de alta ('nuevo' | 'venta')
     const [trabajoNuevo, setTrabajoNuevo] = useState(null);
+    const [, setColoresVer] = useState(0);
 
     // Bug: como AppInterna nunca se desmonta al cerrar sesión (solo cambia
     // qué devuelve el render), seccionActual quedaba con el valor de la
@@ -50,6 +53,16 @@ function AppInterna() {
         }
         estabaAutenticado.current = autenticado;
     }, [autenticado, esAdmin]);
+
+    // Colores de los técnicos (elegidos en Usuarios o automáticos): se cargan al
+    // entrar y la app se vuelve a dibujar con ellos.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+        if (!autenticado) return;
+        api.get('/ordenes/tecnicos')
+            .then(r => { setColoresTecnicos(Array.isArray(r.data) ? r.data : []); setColoresVer(v => v + 1); })
+            .catch(() => {});
+    }, [autenticado]);
 
     if (!autenticado) return <LoginPage />;
 

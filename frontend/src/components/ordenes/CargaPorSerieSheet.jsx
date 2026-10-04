@@ -45,7 +45,7 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
     const [guardando, setGuardando] = useState(false);
 
     useEffect(() => {
-        api.get('/repuestos').then(r => {
+        api.get('/repuestos', { params: { page: 0, size: 1000 } }).then(r => {
             const d = r.data;
             setRepuestosDB(Array.isArray(d) ? d : (d?.content || []));
         }).catch(() => {});

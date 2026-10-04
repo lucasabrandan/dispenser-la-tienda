@@ -6,6 +6,7 @@ import { generarPDFRendimientoTecnicos } from '../../utils/pdf/rendimientoTecnic
 import Paginacion from '../ui/Paginacion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { colorTecnico } from '../../utils/estados';
+import AvatarTecnico from '../ui/AvatarTecnico';
 
 export default function TabTecnicos({ filtroMes }) {
     const { ocultar } = useMontos();
@@ -93,7 +94,7 @@ export default function TabTecnicos({ filtroMes }) {
                         </div>
                         {datosFiltrados.map((d, i) => (
                             <div key={d.tecnicoId} className={`grid grid-cols-[minmax(120px,1fr)_60px_90px_90px_90px] px-4 py-3 items-center ${i < datosFiltrados.length - 1 ? 'border-b border-black/[0.06] dark:border-white/[0.06]' : ''}`}>
-                                <p className="text-body font-black text-ink truncate pr-2 flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorTecnico(d.tecnicoNombre) }} />{d.tecnicoNombre}</p>
+                                <p className="text-body font-black text-ink truncate pr-2 flex items-center gap-2"><AvatarTecnico nombre={d.tecnicoNombre} size={22} />{d.tecnicoNombre}</p>
                                 <p className="text-body font-bold text-muted text-center">{d.cantidadTrabajos}</p>
                                 <p className="text-body font-bold text-ink text-right">{fmt(d.totalFacturado)}</p>
                                 <p className="text-body font-bold text-brand-red text-right">{fmt(d.totalRepuestos)}</p>

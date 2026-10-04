@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { colorTecnico, etapaColor, estadoLabel } from '../../utils/estados';
 import { formatDateISO, getTodayISO, lunesDeLaSemana } from '../../utils/dateUtils';
+import AvatarTecnico from '../ui/AvatarTecnico';
 
 // Agenda del Panel (3-oct-2026): semana Lun–Sáb, un punto en los días con visitas,
 // y abajo las visitas del día elegido. Color del borde = etapa, punto = técnico.
@@ -71,7 +72,7 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
                             <span className="min-w-0 flex-1">
                                 <span className="block text-body font-bold text-ink truncate">{o.clienteNombre || o.titulo || `Visita #${o.id}`}</span>
                                 <span className="flex items-center gap-1.5 text-caption text-muted">
-                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: o.tecnicoNombre ? colorTecnico(o.tecnicoNombre) : '#78716C' }} />
+                                    <AvatarTecnico nombre={o.tecnicoNombre} size={16} />
                                     {(o.tecnicoNombre || 'Sin técnico').split(' ')[0]} · {estadoLabel(o.estado).toLowerCase()}
                                 </span>
                             </span>

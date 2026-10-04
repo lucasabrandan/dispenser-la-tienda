@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { LuBanknote, LuChevronDown, LuChevronUp, LuCheck } from 'react-icons/lu';
 import api from '../../services/api';
 import { colorTecnico } from '../../utils/estados';
+import AvatarTecnico from '../ui/AvatarTecnico';
 
 // Rendiciones pendientes (2-oct-2026): los "Cerrar mi día" de los técnicos que todavía
 // no marcaste como recibidos. No se muestra nada si no hay pendientes.
@@ -55,7 +56,7 @@ export default function RendicionesBlock({ card = '' }) {
                     <div key={r.id} className="py-2">
                         <div className="flex items-center gap-2">
                             <button onClick={() => setAbierta(a => a === r.id ? null : r.id)} className="flex-1 min-w-0 text-left flex items-center gap-1.5">
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: colorTecnico(r.tecnicoNombre) }} /><span className="text-caption font-black text-ink truncate">{r.tecnicoNombre}</span>
+                                <AvatarTecnico nombre={r.tecnicoNombre} size={18} /><span className="text-caption font-black text-ink truncate">{r.tecnicoNombre}</span>
                                 <span className="text-label text-muted shrink-0">{fmtFecha(r.fecha)}</span>
                                 {abierta === r.id ? <LuChevronUp size={13} className="text-muted" /> : <LuChevronDown size={13} className="text-muted" />}
                             </button>
