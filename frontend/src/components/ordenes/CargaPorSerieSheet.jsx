@@ -28,7 +28,8 @@ async function subirFoto(dataUrl, prefijo) {
 // orden (opcional): visita agendada con equiposSerie — se precargan esos equipos y el
 // cliente; al guardar, quien llama cierra la visita.
 export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }) {
-    const { usuario } = useAuth();
+    const { usuario, esAdmin } = useAuth();
+    const [clientesTarifa, setClientesTarifa] = useState(null); // admin: elegir cliente para un equipo nuevo
     const [serie, setSerie] = useState('');
     const [buscando, setBuscando] = useState(false);
     const [noEncontrado, setNoEncontrado] = useState(null); // serie buscada sin resultado
@@ -50,6 +51,15 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
             setRepuestosDB(Array.isArray(d) ? d : (d?.content || []));
         }).catch(() => {});
     }, []);
+
+    // Admin con un N/S que no existe y todavía sin cliente: puede elegir a qué
+    // cliente con tarifa mensual pertenece y darlo de alta (5-oct-2026).
+    useEffect(() => {
+        if (!esAdmin || cliente || !noEncontrado || clientesTarifa) return;
+        api.get('/clientes', { params: { page: 0, size: 1000 } })
+            .then(r => { const d = r.data; setClientesTarifa((Array.isArray(d) ? d : (d?.content || [])).filter(c => c.tieneTarifa)); })
+            .catch(() => setClientesTarifa([]));
+    }, [esAdmin, cliente, noEncontrado, clientesTarifa]);
 
     useEffect(() => {
         if (!cliente) return;
@@ -237,8 +247,19 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
                                     </div>
                                 )}
                             </>
+                        ) : esAdmin ? (
+                            <>
+                                <p className="text-muted mb-1.5">Si es un equipo nuevo, ¿de qué cliente es?</p>
+                                <select value="" onChange={e => { const c = (clientesTarifa || []).find(x => String(x.id) === e.target.value); if (c) setCliente({ id: c.id, nombre: c.nombre, exigeFotos: true }); }} className={INPUT}>
+                                    <option value="">{clientesTarifa === null ? 'Cargando clientes…' : 'Elegí el cliente…'}</option>
+                                    {(clientesTarifa || []).map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                </select>
+                                {clientesTarifa && clientesTarifa.length === 0 && (
+                                    <p className="text-muted mt-1.5">No hay clientes con tarifa mensual. Cargale la tarifa al cliente primero.</p>
+                                )}
+                            </>
                         ) : (
-                            <p className="text-muted">Revisá la serie. Si es un equipo nuevo, agregá primero uno que ya exista de ese cliente o pedile al admin que lo cargue.</p>
+                            <p className="text-muted">Revisá la serie. Si es un equipo nuevo, pedile al admin que lo cargue.</p>
                         )}
                     </div>
                 )}
