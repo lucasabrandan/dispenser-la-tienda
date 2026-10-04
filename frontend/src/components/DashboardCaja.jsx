@@ -13,7 +13,7 @@ import { LuWrench, LuShoppingCart, LuUserPlus } from 'react-icons/lu';
 import { getTodayISO } from '../utils/dateUtils';
 
 // Panel (inicio) — 3-oct-2026, diseño "Panel completo". De arriba hacia abajo:
-// saludo · Para resolver · Agenda de la semana · Crear · Mis tareas · Rendiciones ·
+// saludo · Agenda de la semana · Para resolver · Crear · Mis tareas · Rendiciones ·
 // Plata (plegada, sin montos a la vista) · backup. La plata ya no está grande arriba.
 
 const ABIERTAS = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO'];
@@ -97,19 +97,19 @@ export default function DashboardCaja({ setVistaActual }) {
                     </button>
                 </div>
 
-                {/* 2. Para resolver */}
-                {esAdmin && (
-                    <Seccion titulo="Para resolver">
-                        {cargando ? <div className="h-12 rounded-xl bg-card animate-pulse" /> : <ParaResolver alertas={alertas} />}
-                    </Seccion>
-                )}
-
-                {/* 3. Agenda */}
+                {/* 2. Agenda — arriba de todo (Lucas, 4-oct-2026) */}
                 {esAdmin && (
                     <Seccion titulo="Agenda" link="Ver en Trabajos" onLink={() => setVistaActual('trabajos')}>
                         <div className="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06] p-3">
                             <AgendaSemana ordenes={ordenes} cargando={cargando} onVerTrabajos={() => setVistaActual('trabajos')} />
                         </div>
+                    </Seccion>
+                )}
+
+                {/* 3. Para resolver */}
+                {esAdmin && (
+                    <Seccion titulo="Para resolver">
+                        {cargando ? <div className="h-12 rounded-xl bg-card animate-pulse" /> : <ParaResolver alertas={alertas} />}
                     </Seccion>
                 )}
 

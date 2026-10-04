@@ -162,9 +162,10 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                 setVistaActual={setVistaActual}
             />
 
-            {/* BOTTOM NAV MOBILE */}
-            <BottomNav vistaActual={vistaActual} setVistaActual={setVistaActual}
-                onMoreClick={() => setDrawerOpen(true)} />
+            {/* BOTTOM NAV MOBILE — tocar "Más" de nuevo cierra el menú, y tocar
+                otra pestaña también lo cierra (4-oct-2026) */}
+            <BottomNav vistaActual={vistaActual} setVistaActual={(v) => { setDrawerOpen(false); setVistaActual(v); }}
+                onMoreClick={() => setDrawerOpen(v => !v)} />
 
             {/* PANEL NOTIFICACIONES */}
             <NotificacionesPanel abierto={notifAbierto}
