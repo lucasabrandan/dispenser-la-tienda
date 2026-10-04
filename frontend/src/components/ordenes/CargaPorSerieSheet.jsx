@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { LuX, LuSearch, LuTrash2, LuPackage, LuCamera } from 'react-icons/lu';
 import api from '../../services/api';
@@ -25,15 +25,20 @@ async function subirFoto(dataUrl, prefijo) {
     return r.data?.url || r.data?.filename || null;
 }
 
-export default function CargaPorSerieSheet({ onClose, onGuardado }) {
+// orden (opcional): visita agendada con equiposSerie — se precargan esos equipos y el
+// cliente; al guardar, quien llama cierra la visita.
+export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }) {
     const { usuario } = useAuth();
     const [serie, setSerie] = useState('');
     const [buscando, setBuscando] = useState(false);
     const [noEncontrado, setNoEncontrado] = useState(null); // serie buscada sin resultado
-    const [cliente, setCliente] = useState(null);           // { id, nombre, exigeFotos }
+    const [cliente, setCliente] = useState(() => (orden?.clienteId ? { id: orden.clienteId, nombre: orden.clienteNombre, exigeFotos: true } : null)); // { id, nombre, exigeFotos }
+    const [nuevaDir, setNuevaDir] = useState(null);         // { nombre, direccion } — alta de dirección
     const [sedesCliente, setSedesCliente] = useState([]);
     const [sedeAlta, setSedeAlta] = useState('');
     const [items, setItems] = useState([]);
+    const itemsRef = useRef([]);
+    itemsRef.current = items;
     const [repuestosDB, setRepuestosDB] = useState([]);
     const [sheetRep, setSheetRep] = useState(null);         // índice del item
     const [observaciones, setObservaciones] = useState('');
@@ -48,10 +53,21 @@ export default function CargaPorSerieSheet({ onClose, onGuardado }) {
 
     useEffect(() => {
         if (!cliente) return;
-        api.get('/sedes', { params: { clienteId: cliente.id } })
+        // Antes pedía /sedes?clienteId= y el backend devolvía TODAS las sedes
+        api.get(`/sedes/cliente/${cliente.id}`)
             .then(r => { const d = r.data; setSedesCliente(Array.isArray(d) ? d : (d?.content || [])); })
             .catch(() => {});
     }, [cliente]);
+
+    // Visita con equipos ya elegidos por el admin: se agregan solos al abrir
+    useEffect(() => {
+        if (!orden?.equiposSerie) return;
+        (async () => {
+            for (const s of orden.equiposSerie.split(',').map(x => x.trim()).filter(Boolean)) {
+                await buscar(s); // eslint-disable-line no-await-in-loop
+            }
+        })();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const agregar = (eq) => setItems(its => [{
         serie: eq.serie, equipo: eq, trabajo: '', repuestos: [], fotoAntes: null, fotoDespues: null,
@@ -60,7 +76,7 @@ export default function CargaPorSerieSheet({ onClose, onGuardado }) {
     const buscar = async (valor = serie) => {
         const s = valor.trim().toUpperCase();
         if (!s) return;
-        if (items.some(i => i.serie.toUpperCase() === s)) { toast('Ese equipo ya está en la lista'); return; }
+        if (itemsRef.current.some(i => i.serie.toUpperCase() === s)) { toast('Ese equipo ya está en la lista'); return; }
         setBuscando(true); setNoEncontrado(null);
         try {
             const r = await api.get('/equipos/historial/para-carga', { params: { serie: s } });
@@ -87,11 +103,22 @@ export default function CargaPorSerieSheet({ onClose, onGuardado }) {
         }
     };
 
-    // Alta rápida: equipo nuevo en una dirección de este mismo cliente
+    // Alta rápida: equipo nuevo en una dirección de este mismo cliente.
+    // Si la dirección tampoco existe, se crea ahí mismo ("Nueva dirección").
     const darDeAlta = async () => {
-        if (!sedeAlta) { toast.error('Elegí la dirección'); return; }
+        let sedeId = sedeAlta;
+        if (sedeAlta === '__nueva__') {
+            if (!nuevaDir?.nombre?.trim() || !nuevaDir?.direccion?.trim()) { toast.error('Completá el lugar y la dirección'); return; }
+            try {
+                const r = await api.post('/sedes', { clienteId: cliente.id, nombreSede: nuevaDir.nombre.trim(), direccion: nuevaDir.direccion.trim() });
+                sedeId = r.data?.id;
+                setSedesCliente(ss => [...ss, r.data]);
+            } catch (e) { toast.error(e?.response?.data?.mensaje || 'No se pudo crear la dirección'); return; }
+        }
+        if (!sedeId) { toast.error('Elegí la dirección'); return; }
         try {
-            await api.post('/equipos', { numeroSerie: noEncontrado, sedeId: Number(sedeAlta) });
+            await api.post('/equipos', { numeroSerie: noEncontrado, sedeId: Number(sedeId) });
+            setNuevaDir(null);
             toast.success(`Equipo ${noEncontrado} dado de alta`);
             const s = noEncontrado;
             setNoEncontrado(null); setSedeAlta('');
@@ -140,6 +167,7 @@ export default function CargaPorSerieSheet({ onClose, onGuardado }) {
                     usuarioId: usuario?.id,
                     servicioTipo: 'TECNICA',
                     estado: 'COMPLETADO',
+                    ordenId: orden?.id || null,
                     fecha: getTodayISO(),
                     observaciones: [observaciones.trim(), 'Cargado por N° de serie — se factura en el cierre mensual'].filter(Boolean).join(' | '),
                     items: grupo.map(it => ({
@@ -170,7 +198,7 @@ export default function CargaPorSerieSheet({ onClose, onGuardado }) {
         <div className="fixed inset-0 z-[3000] flex items-end md:items-center md:justify-center bg-black/50">
             <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 bg-card max-h-[94vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-body-lg font-black text-ink">Cargar equipos por N° de serie</h3>
+                    <h3 className="text-body-lg font-black text-ink">{orden ? 'Cerrar visita' : 'Cargar equipos por N° de serie'}</h3>
                     <button onClick={() => (items.length && !window.confirm('¿Salir sin guardar? Se pierde lo cargado.')) ? null : onClose()}
                         className="w-9 h-9 rounded-xl flex items-center justify-center bg-chip text-muted active:scale-95"><LuX size={16} /></button>
                 </div>
@@ -189,16 +217,25 @@ export default function CargaPorSerieSheet({ onClose, onGuardado }) {
                 {noEncontrado && (
                     <div className="p-3 rounded-xl bg-page border border-black/[0.06] dark:border-white/[0.06] mb-3 text-caption">
                         <p className="font-bold text-ink mb-2">{noEncontrado} no está cargado.</p>
-                        {cliente && sedesCliente.length > 0 ? (
+                        {cliente ? (
                             <>
                                 <p className="text-muted mb-1.5">Darlo de alta en una dirección de {cliente.nombre}:</p>
                                 <div className="flex gap-1.5">
-                                    <select value={sedeAlta} onChange={e => setSedeAlta(e.target.value)} className={INPUT}>
+                                    <select value={sedeAlta} onChange={e => { setSedeAlta(e.target.value); setNuevaDir(e.target.value === '__nueva__' ? { nombre: '', direccion: '' } : null); }} className={INPUT}>
                                         <option value="">Elegí la dirección…</option>
-                                        {sedesCliente.map(s => <option key={s.id} value={s.id}>{s.nombreSede || s.nombre || s.direccion}</option>)}
+                                        <option value="__nueva__">+ Nueva dirección</option>
+                                        {sedesCliente.map(s => <option key={s.id} value={s.id}>{[s.nombreSede || s.nombre, s.direccion].filter(Boolean).join(' · ')}</option>)}
                                     </select>
                                     <button onClick={darDeAlta} className="px-3 rounded-xl font-black text-label uppercase bg-ink text-page active:scale-95">Alta</button>
                                 </div>
+                                {nuevaDir && (
+                                    <div className="mt-2 space-y-1.5">
+                                        <input value={nuevaDir.nombre} onChange={e => setNuevaDir(d => ({ ...d, nombre: e.target.value }))}
+                                            placeholder="Nombre del lugar (ej: Gimnasio Núñez)" className={INPUT} />
+                                        <input value={nuevaDir.direccion} onChange={e => setNuevaDir(d => ({ ...d, direccion: e.target.value }))}
+                                            placeholder="Calle, número y localidad" className={INPUT} />
+                                    </div>
+                                )}
                             </>
                         ) : (
                             <p className="text-muted">Revisá la serie. Si es un equipo nuevo, agregá primero uno que ya exista de ese cliente o pedile al admin que lo cargue.</p>

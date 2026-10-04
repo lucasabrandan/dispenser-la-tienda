@@ -13,6 +13,7 @@ import EjecutarAdminSheet from '../servicio/EjecutarAdminSheet';
 import CobroSheet from '../servicio/CobroSheet';
 import DetalleSheet from '../servicio/DetalleSheet';
 import OrdenForm from '../ordenes/OrdenForm';
+import VisitaForm from '../ordenes/VisitaForm';
 import CierreMensualModal from '../cliente/CierreMensualModal';
 import ModalCotizacionVolumen from '../presupuesto/ModalCotizacionVolumen';
 import ConfirmDialog from '../ui/ConfirmDialog';
@@ -229,7 +230,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     busca: [o.clienteNombre, o.titulo, o.direccion, o.tecnicoNombre].filter(Boolean).join(' ').toLowerCase(),
                     tecnico: o.tecnicoNombre || '',
                     fecha: fechaCorta(o.fechaProgramada) + (o.horaEstimada ? ` ${o.horaEstimada}` : ''),
-                    nota: atr ? `Atrasada ${diasDesde(o.fechaProgramada)} días` : 'Visita sin presupuesto',
+                    nota: atr ? `Atrasada ${diasDesde(o.fechaProgramada)} días` : (o.equiposSerie ? `${o.equiposSerie.split(',').filter(Boolean).length} equipos · cierre mensual` : 'Visita sin presupuesto'),
                     alerta: atr, monto: Number(o.montoEstimado) || 0,
                     accion: atr ? 'atrasada' : et === 'ASIGNADO' ? 'reprogramar' : 'seguimiento',
                     fechaOrden: String(o.fechaProgramada || '') + ' ' + (o.horaEstimada || ''),
@@ -397,17 +398,6 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
         else if (q === 'visita') setNuevaVisita(true);
         else setEditor({ modo: q, servicio: null });
     };
-    const crearVisita = async (form) => {
-        const t = toast.loading('Guardando…');
-        try {
-            const { estadoNuevo, ...datos } = form;
-            await api.post('/ordenes', datos);
-            toast.success('Visita agendada', { id: t });
-            setNuevaVisita(false);
-            cargar();
-        } catch { toast.error('No se pudo guardar', { id: t }); }
-    };
-
     // Selección para armar la ruta del día
     const toggleSel = (key) => setSeleccion(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
     const salirSeleccion = () => { setSeleccionando(false); setSeleccion(new Set()); };
@@ -651,7 +641,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
                     <div className="w-full max-w-lg bg-card rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
                         <h2 className="text-body-lg font-black text-ink mb-5">Nueva visita</h2>
-                        <OrdenForm orden={null} tecnicos={tecnicos} onGuardar={crearVisita} onCancelar={() => setNuevaVisita(false)} />
+                        <VisitaForm tecnicos={tecnicos} onGuardado={() => { setNuevaVisita(false); cargar(); }} onCancelar={() => setNuevaVisita(false)} />
                     </div>
                 </div>
             )}

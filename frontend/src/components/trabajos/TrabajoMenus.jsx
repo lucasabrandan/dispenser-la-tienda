@@ -25,7 +25,7 @@ export function NuevoSheet({ open, onClose, onElegir }) {
             <Opcion Icon={LuWrench} label="Trabajo / presupuesto" sub="Service, reparación o instalación" onClick={() => elegir('nuevo')} />
             <Opcion Icon={LuShoppingCart} label="Venta" sub="Productos sin visita técnica" onClick={() => elegir('venta')} />
             <Opcion Icon={LuLayers} label="Cotizar por volumen" sub="Muchos equipos, precio por cantidad" onClick={() => elegir('volumen')} />
-            <Opcion Icon={LuCalendarPlus} label="Visita sin presupuesto" sub="Agendar a un técnico directo" onClick={() => elegir('visita')} />
+            <Opcion Icon={LuCalendarPlus} label="Visita" sub="Mandar un técnico sin presupuesto (ej. MODO AGUA)" onClick={() => elegir('visita')} />
         </ActionSheet>
     );
 }

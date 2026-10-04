@@ -107,6 +107,15 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onNoAtend
                     <p className="text-body text-secondary font-bold flex items-center gap-1"><LuBuilding2 size={13} />{orden.clienteNombre}</p>
                 )}
 
+                {/* Visita de cliente con tarifa mensual: los equipos a atender */}
+                {!esFinal && orden.equiposSerie && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                        {orden.equiposSerie.split(',').filter(Boolean).map(ns => (
+                            <span key={ns} className="px-2 py-0.5 rounded-md bg-chip text-label font-black text-ink">{ns}</span>
+                        ))}
+                    </div>
+                )}
+
                 {!esFinal && orden.montoEstimado && (
                     <p className="text-body font-black text-brand-amber mt-0.5 flex items-center gap-1">
                         <LuBanknote size={14} /> ${Number(orden.montoEstimado).toLocaleString('es-AR')} · {orden.formaPago === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}
@@ -671,7 +680,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             </p>
                             <div className="space-y-4">
                                 {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={setOrdenRegistrando} onNoAtendido={setNoAtendidoOrden} onNoPuedo={(o) => setSalida({ modo: 'orden', orden: o })} onVerServicio={verServicio}
+                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={(o) => (o.equiposSerie ? setCargaSerie(o) : setOrdenRegistrando(o))} onNoAtendido={setNoAtendidoOrden} onNoPuedo={(o) => setSalida({ modo: 'orden', orden: o })} onVerServicio={verServicio}
                                         seleccionando={modoSeleccion} seleccionada={seleccionados.has(o.id)} onToggleSel={toggleSeleccion} />
                                 ))}
                             </div>
@@ -732,7 +741,13 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         )}
 
         {buscarSerie && <HistorialSerieSheet onClose={() => setBuscarSerie(false)} />}
-        {cargaSerie && <CargaPorSerieSheet onClose={() => setCargaSerie(false)} onGuardado={() => cargarHistorial()} />}
+        {cargaSerie && <CargaPorSerieSheet orden={cargaSerie === true ? null : cargaSerie}
+            onClose={() => setCargaSerie(false)}
+            onGuardado={() => {
+                // Visita con equipos: al guardar la carga, la visita queda cerrada
+                if (cargaSerie !== true) avanzarEstado(cargaSerie.id, 'COMPLETADA');
+                cargarHistorial();
+            }} />}
         {cerrarDia && (
             <CerrarDiaSheet
                 ordenesHoy={[...ordenes, ...historial.filter(h => !ordenes.some(o => o.id === h.id))]

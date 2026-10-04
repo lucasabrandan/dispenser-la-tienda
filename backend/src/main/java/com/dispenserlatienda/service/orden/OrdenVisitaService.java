@@ -82,6 +82,7 @@ public class OrdenVisitaService {
         o.setMontoEstimado(dto.montoEstimado());
         o.setFormaPago(dto.formaPago());
         o.setPresupuestoId(dto.presupuestoId());
+        o.setEquiposSerie(dto.equiposSerie());
 
         OrdenVisitaDTO saved = toDTO(repo.save(o));
 
@@ -131,6 +132,8 @@ public class OrdenVisitaService {
         o.setMontoEstimado(dto.montoEstimado());
         o.setFormaPago(dto.formaPago());
         o.setPresupuestoId(dto.presupuestoId());
+        // El formulario viejo de edición no manda los equipos: si no vienen, se mantienen
+        if (dto.equiposSerie() != null) o.setEquiposSerie(dto.equiposSerie());
 
         // Si estaba NO_ATENDIDO, reprogramar la vuelve a PENDIENTE
         if (o.getEstado() == EstadoOrden.NO_ATENDIDO) {
@@ -304,6 +307,8 @@ public class OrdenVisitaService {
             // Caso 2: orden sin presupuesto → crear servicio mínimo para impactar rendimientos
             // Si ya existe un servicio asociado (creado por ModalRegistrarTrabajo), no duplicar
             if (servicioRepository.existsByOrdenId(o.getId())) return;
+            // Visitas con equipos por N/S (tarifa mensual): los servicios los arma la carga por serie
+            if (o.getEquiposSerie() != null && !o.getEquiposSerie().isBlank()) return;
 
             Sede sedeMostrador = sedeRepository.findAll().stream()
                 .filter(s -> s.getNombreSede() != null
@@ -419,7 +424,8 @@ public class OrdenVisitaService {
             o.getFormaPago(),
             o.getPresupuestoId(),
             tentativo != null,
-            tentativo != null ? tentativo.getVentanasDisponibles() : null
+            tentativo != null ? tentativo.getVentanasDisponibles() : null,
+            o.getEquiposSerie()
         );
     }
 

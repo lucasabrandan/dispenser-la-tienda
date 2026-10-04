@@ -26,5 +26,6 @@ public record OrdenVisitaDTO(
     // Del presupuesto vinculado: si el día/hora todavía está "a coordinar" y qué
     // días/franjas aceptó el cliente (JSON [{dia, franja}]), para que el técnico lo vea.
     Boolean horarioACoordinar,
-    String ventanasCliente
+    String ventanasCliente,
+    String equiposSerie
 ) {}

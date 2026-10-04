@@ -17,5 +17,6 @@ public record OrdenVisitaCreateDTO(
     String horaEstimada,
     java.math.BigDecimal montoEstimado,
     String formaPago,
-    Long presupuestoId
+    Long presupuestoId,
+    String equiposSerie
 ) {}

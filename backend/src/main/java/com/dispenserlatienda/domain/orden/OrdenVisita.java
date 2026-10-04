@@ -58,6 +58,11 @@ public class OrdenVisita {
     @Column(name = "forma_pago", length = 20)
     private String formaPago;
 
+    // Clientes con tarifa mensual (ej. MODO AGUA): N° de serie de los equipos a atender
+    // en esta visita, separados por coma. Al cerrarla, el técnico los carga por N/S.
+    @Column(name = "equipos_serie", columnDefinition = "TEXT")
+    private String equiposSerie;
+
     // Presupuesto vinculado (opcional) — el técnico lo ejecuta al completar la orden
     @Column(name = "presupuesto_id")
     private Long presupuestoId;
@@ -128,6 +133,8 @@ public class OrdenVisita {
 
     public String getFormaPago() { return formaPago; }
     public void setFormaPago(String formaPago) { this.formaPago = formaPago; }
+    public String getEquiposSerie() { return equiposSerie; }
+    public void setEquiposSerie(String equiposSerie) { this.equiposSerie = equiposSerie; }
 
     public Long getPresupuestoId() { return presupuestoId; }
     public void setPresupuestoId(Long presupuestoId) { this.presupuestoId = presupuestoId; }

@@ -67,7 +67,7 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
                         <button key={o.id} type="button" onClick={onVerTrabajos}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-chip text-left active:scale-[0.99]"
                             style={{ borderLeft: `4px solid ${etapaColor(o.estado)}` }}>
-                            <span className="w-11 shrink-0 text-caption font-black text-ink">{o.horaEstimada ? String(o.horaEstimada).slice(0, 5) : '—'}</span>
+                            <span className="w-11 shrink-0 text-caption font-black text-ink">{o.horaEstimada ? (String(o.horaEstimada).includes(':') ? String(o.horaEstimada).slice(0, 5) : String(o.horaEstimada).slice(0, 3) + '.') : '—'}</span>
                             <span className="min-w-0 flex-1">
                                 <span className="block text-body font-bold text-ink truncate">{o.clienteNombre || o.titulo || `Visita #${o.id}`}</span>
                                 <span className="flex items-center gap-1.5 text-caption text-muted">
