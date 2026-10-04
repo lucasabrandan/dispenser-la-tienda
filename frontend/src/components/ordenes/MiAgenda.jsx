@@ -52,7 +52,10 @@ function DiaBtn({ d, seleccionado, count, onClick }) {
 }
 
 // Card de orden asignada (del admin)
-function OrdenAgendaCard({ orden }) {
+function OrdenAgendaCard({ orden, onConfirmar }) {
+    const hoyISO = formatDateISO(new Date());
+    const puedeConfirmar = orden.estado === 'PENDIENTE' && !orden.confirmadaEn && onConfirmar
+        && (!orden.fechaProgramada || orden.fechaProgramada >= hoyISO);
     const borderColor = {
         PENDIENTE: '#A8A29E', EN_CAMINO: '#3B82F6', EN_SITIO: '#D48800',
         COMPLETADA: '#16A34A', NO_ATENDIDO: '#DC2626',
@@ -70,11 +73,21 @@ function OrdenAgendaCard({ orden }) {
                     )}
                 </div>
                 <span className="text-label font-bold px-1.5 py-0.5 rounded shrink-0" style={{ color: borderColor, backgroundColor: borderColor + '15' }}>
-                    {orden.estado?.replace('_', ' ')}
+                    {orden.estado === 'PENDIENTE' ? (orden.confirmadaEn ? '✓ CONFIRMADA' : 'ASIGNADA') : orden.estado?.replace('_', ' ')}
                 </span>
             </div>
             {orden.direccion && (
                 <DireccionMapa direccion={orden.direccion} className="mt-1" />
+            )}
+            {/* "Ok, voy" también desde la agenda (5-oct-2026): antes solo estaba en "Hoy" */}
+            {puedeConfirmar && (
+                <button onClick={() => onConfirmar(orden)}
+                    className="mt-2 w-full py-2 rounded-xl font-black text-body text-ink bg-card border-2 border-[color:var(--etapa-listo)] active:scale-95 transition-all">
+                    ✓ Ok, voy
+                </button>
+            )}
+            {orden.estado === 'PENDIENTE' && orden.fechaProgramada === hoyISO && (
+                <p className="mt-1.5 text-caption text-muted">Para salir y cerrar el trabajo, usá la pestaña "Hoy".</p>
             )}
         </div>
     );
@@ -217,7 +230,11 @@ function CrearNotaSheet({ fecha, tecnicoId, onCreada, onCerrar }) {
 
 export default function MiAgenda({ tecnicoId, embebido = false }) {
     const [semanaOffset, setSemanaOffset] = useState(0);
-    const [diaSel, setDiaSel] = useState(formatDateISO(new Date()));
+    const [diaSel, setDiaSel] = useState(() => {
+        const d = new Date();
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // domingo → lunes (la grilla es lun–sáb)
+        return formatDateISO(d);
+    });
     const [ordenes, setOrdenes] = useState([]);
     const [notas, setNotas] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -249,6 +266,14 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
     }, [tecnicoId, desde, hasta]);
 
     useEffect(() => { cargar(); }, [cargar]);
+
+    const confirmarVisita = async (o) => {
+        try {
+            await api.patch(`/ordenes/${o.id}/confirmar`);
+            toast.success('Listo, el admin ya sabe que vas');
+            cargar();
+        } catch (e) { toast.error(e?.response?.data?.mensaje || 'No se pudo confirmar'); }
+    };
 
     const toggleNota = async (id) => {
         try {
@@ -373,7 +398,7 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
                         {ordenesDia.length > 0 && (
                             <>
                                 <p className="text-label font-black text-brand-red uppercase tracking-wider px-1">Ordenes asignadas</p>
-                                {ordenesDia.map(o => <OrdenAgendaCard key={`o-${o.id}`} orden={o} />)}
+                                {ordenesDia.map(o => <OrdenAgendaCard key={`o-${o.id}`} orden={o} onConfirmar={confirmarVisita} />)}
                             </>
                         )}
 

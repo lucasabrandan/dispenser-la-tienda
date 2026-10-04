@@ -137,9 +137,10 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                             <p key={linea} className="text-body font-bold text-ink">{linea}</p>
                         ))}
                         <button onClick={e => { e.stopPropagation(); setConfirmandoHorario(true); }}
-                            className="mt-2 w-full h-10 rounded-lg font-bold text-body text-ink border border-black/10 dark:border-white/[0.12] active:scale-95">
-                            Confirmar día y hora
+                            className="mt-2 w-full h-11 rounded-xl font-black text-body text-ink bg-card border-2 border-[color:var(--etapa-listo)] active:scale-95">
+                            ✓ Confirmar día y hora
                         </button>
+                        <p className="mt-1.5 text-caption text-muted">Primero elegí cuándo vas; con eso el admin ya sabe que confirmaste.</p>
                     </div>
                 )}
                 {confirmandoHorario && (
@@ -186,7 +187,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
             {!esFinal && sig && !seleccionando && (
                 <div className="flex flex-col gap-2 px-4 py-3 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]" onClick={e => e.stopPropagation()}>
                     {/* "Ok, voy" (5-oct-2026): el admin ve quién confirmó su visita */}
-                    {orden.estado === 'PENDIENTE' && !orden.confirmadaEn && onConfirmar && (!orden.fechaProgramada || orden.fechaProgramada >= getTodayISO()) && (
+                    {/* Con fecha "a coordinar" el paso es Confirmar día y hora (arriba): sin "Ok, voy" ni "Salir" (5-oct-2026) */}
+                    {!aCoordinar && orden.estado === 'PENDIENTE' && !orden.confirmadaEn && onConfirmar && (!orden.fechaProgramada || orden.fechaProgramada >= getTodayISO()) && (
                         <button onClick={() => onConfirmar(orden)}
                             className="w-full py-2.5 rounded-xl font-black text-body text-ink bg-card border-2 border-[color:var(--etapa-listo)] active:scale-95 transition-all">
                             ✓ Ok, voy
@@ -206,7 +208,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                                 Completá los datos del trabajo para cerrar la orden
                             </p>
                         </>
-                    ) : (
+                    ) : aCoordinar ? null : (
                         <button onClick={() => onAvanzar(orden.id, sig.estado)}
                             style={{ background: sig.bg }}
                             className="w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all flex items-center justify-center gap-1.5">
@@ -521,7 +523,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                 {/* Cerrar mi día va al final: es lo último que se hace en el día */}
                 {tab === 'activas' && !cargando && (
                     <button onClick={() => setCerrarDia(true)}
-                        className="mt-2 w-full h-12 rounded-xl text-label font-black uppercase text-white bg-ink dark:text-[#1C1917] active:scale-95">
+                        className="mt-2 mx-auto block h-10 px-6 rounded-xl text-label font-bold text-secondary bg-card border border-black/10 dark:border-white/10 active:scale-95">
                         Cerrar mi día
                     </button>
                 )}

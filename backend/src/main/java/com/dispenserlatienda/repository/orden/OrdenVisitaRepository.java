@@ -60,7 +60,8 @@ public interface OrdenVisitaRepository extends JpaRepository<OrdenVisita, Long> 
 
     // El técnico confirmó día y hora de un presupuesto "a coordinar": la orden lo sigue.
     @Modifying
-    @Query("UPDATE OrdenVisita o SET o.fechaProgramada = :fecha, o.horaEstimada = :hora " +
+    // Confirmar día y hora cuenta como "Ok, voy" (5-oct-2026)
+    @Query("UPDATE OrdenVisita o SET o.fechaProgramada = :fecha, o.horaEstimada = :hora, o.confirmadaEn = CURRENT_TIMESTAMP " +
            "WHERE o.presupuestoId = :presupuestoId AND o.estado IN ('PENDIENTE', 'EN_CAMINO', 'EN_SITIO', 'NO_ATENDIDO')")
     int reprogramarActivasDePresupuesto(@Param("presupuestoId") Long presupuestoId,
                                         @Param("fecha") java.time.LocalDate fecha,
