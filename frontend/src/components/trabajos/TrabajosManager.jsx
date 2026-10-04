@@ -15,6 +15,7 @@ import CobroSheet from '../servicio/CobroSheet';
 import DetalleSheet from '../servicio/DetalleSheet';
 import OrdenForm from '../ordenes/OrdenForm';
 import VisitaForm from '../ordenes/VisitaForm';
+import ReprogramarSheet from '../ordenes/ReprogramarSheet';
 import CierreMensualModal from '../cliente/CierreMensualModal';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import { exportarServiciosCSV } from '../../utils/exportarCSV';
@@ -96,6 +97,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     const [cobrar, setCobrar]         = useState(null);
     const [detalle, setDetalle]       = useState(null);
     const [ordenEditar, setOrdenEditar] = useState(null);
+    const [reprogramar, setReprogramar] = useState(null);
     const [atrasada, setAtrasada]     = useState(null);
     const [cierreCliente, setCierreCliente] = useState(null);
 
@@ -356,7 +358,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     const BOTON = {
         asignar:     { label: 'Asignar',          primaria: true,  run: f => setIniciar(f.servicio) },
         ejecutar:    { label: 'Agendar o cerrar', primaria: true,  run: f => setIniciar(f.servicio) },
-        reprogramar: { label: 'Reprogramar',      primaria: false, run: f => setOrdenEditar(f.orden) },
+        reprogramar: { label: 'Reprogramar',      primaria: false, run: f => setReprogramar(f.orden) },
         atrasada:    { label: 'Resolver',         primaria: true,  run: f => setAtrasada(f) },
         cobrar:      { label: 'Cobrar',           primaria: true,  run: f => setCobrar(f.servicio) },
         facturado:   { label: 'Ya la emití',      primaria: true,  run: f => patchServicio(f.servicio.id, 'FACTURADO', 'Marcado como facturado') },
@@ -665,10 +667,16 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
             {detalle && <DetalleSheet servicio={detalle} onCerrar={() => setDetalle(null)} />}
             {cierreCliente && <CierreMensualModal cliente={cierreCliente} onClose={() => { setCierreCliente(null); cargar(); }} />}
 
+            {reprogramar && (
+                <ReprogramarSheet orden={reprogramar} tecnicos={tecnicos}
+                    onCerrar={() => setReprogramar(null)}
+                    onGuardado={() => { setReprogramar(null); cargar(); }}
+                    onEditarTodo={() => { setOrdenEditar(reprogramar); setReprogramar(null); }} />
+            )}
             {ordenEditar && (
                 <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
                     <div className="w-full max-w-lg bg-card rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-body-lg font-black text-ink mb-5">Reprogramar visita</h2>
+                        <h2 className="text-body-lg font-black text-ink mb-5">Editar visita</h2>
                         <OrdenForm orden={ordenEditar} tecnicos={tecnicos}
                             onGuardar={(form) => guardarOrden(ordenEditar.id, form)}
                             onCancelar={() => setOrdenEditar(null)} />
@@ -687,7 +695,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                             </div>
                             <button onClick={() => setAtrasada(null)} aria-label="Cerrar" className="w-9 h-9 rounded-xl flex items-center justify-center bg-chip text-muted"><LuX size={16} /></button>
                         </div>
-                        <button onClick={() => { setOrdenEditar(atrasada.orden); setAtrasada(null); }}
+                        <button onClick={() => { setReprogramar(atrasada.orden); setAtrasada(null); }}
                             className="w-full h-12 rounded-xl font-black text-label uppercase bg-[#C9341F] text-white active:scale-95">Reprogramar para otro día</button>
                         <button onClick={() => patchOrden(atrasada.orden.id, 'COMPLETADA', 'Visita marcada como hecha')}
                             className="w-full h-12 rounded-xl font-bold text-label bg-chip text-ink active:scale-95">Ya se hizo (marcar completada)</button>

@@ -3,7 +3,6 @@ import { LuClipboardList, LuMapPin, LuBuilding2, LuStickyNote, LuPencil, LuTrash
 import { formatFechaCorta } from '../../utils/dateUtils';
 import DireccionMapa from '../ui/DireccionMapa';
 import { resumenVentanas } from '../../utils/ordenes';
-import { colorTecnico } from '../../utils/estados';
 import AvatarTecnico from '../ui/AvatarTecnico';
 
 // Extraído de DespachoManager.jsx (hub único de Servicio Técnico — ítem 4 paso 3 /

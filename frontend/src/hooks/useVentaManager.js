@@ -168,10 +168,32 @@ export function useVentaManager() {
             }),
         }));
 
+        // Datos reales del cliente en el comprobante (antes solo iba el nombre y la
+        // sede "Mostrador"). Ventas viejas guardadas en Mostrador: se busca el
+        // cliente por nombre para completar dirección, teléfono y CUIT.
+        let cli = {
+            nombre: venta.clienteNombre, telefono: venta.clienteTelefono, email: venta.clienteEmail,
+            cuilDni: venta.clienteDni, condicionIva: venta.clienteCondicionIva, condicionFiscal: venta.clienteCondicionIva,
+        };
+        let direccion = venta.sedeNombre && venta.sedeNombre !== 'Mostrador' ? venta.sedeDireccion : null;
+        if (!direccion && venta.clienteNombre && venta.clienteNombre !== 'Mostrador') {
+            try {
+                const r = await api.get('/clientes', { params: { size: 1000 } });
+                const lista = r.data?.content || r.data || [];
+                const n = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+                const c = lista.find(x => n(x.nombre) === n(venta.clienteNombre));
+                if (c) {
+                    cli = { ...cli, telefono: cli.telefono || c.telefono, email: cli.email || c.email, cuilDni: cli.cuilDni || c.cuilDni,
+                        condicionIva: cli.condicionIva || c.condicionIva, condicionFiscal: cli.condicionFiscal || c.condicionIva };
+                    direccion = c.direccion || [c.calle, c.numero, c.localidad].filter(Boolean).join(' ');
+                }
+            } catch { /* sin datos extra */ }
+        }
+
         generarRemitoPDFPremium({
             tipo:                    venta.estado === 'PRESUPUESTO' ? 'PRESUPUESTO_VENTA' : 'COMPROBANTE',
-            cliente:                 { nombre: venta.clienteNombre },
-            sede:                    { nombreSede: venta.sedeNombre },
+            cliente:                 cli,
+            sede:                    direccion ? { nombreSede: venta.sedeNombre !== 'Mostrador' ? venta.sedeNombre : null, direccion } : { nombreSede: venta.sedeNombre },
             tecnico,
             servicioId:              venta.id,
             nroDocumentoExistente:   venta.nroDocumento || null,

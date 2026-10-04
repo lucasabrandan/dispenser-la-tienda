@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import WeekDatePicker from '../ui/WeekDatePicker';
+import AgendaHuecos from '../ordenes/AgendaHuecos';
 import { LuCircleCheck, LuCalendar, LuClock, LuMessageCircle, LuSend } from 'react-icons/lu';
 import { datosOrdenDesdePresupuesto } from '../../utils/ordenes';
-import { fechaAR } from '../../utils/dateUtils';
+import { fechaAR, getTodayISO } from '../../utils/dateUtils';
 
 const PRIORIDADES = [
     { value: 'NORMAL',  label: 'Normal'  },
@@ -12,23 +12,8 @@ const PRIORIDADES = [
     { value: 'URGENTE', label: 'Urgente' },
 ];
 
-// Horario laboral: cada 30 min de 08:00 a 17:00. Antes era un <input type="time">
-// que dejaba elegir cualquier hora de las 24 — en la práctica nunca se despacha
-// una visita a las 3 de la mañana, así que directamente se acotan las opciones.
-const HORARIOS_LABORALES = Array.from({ length: ((17 - 8) * 2) + 1 }, (_, i) => {
-    const totalMin = 8 * 60 + i * 30;
-    const hh = String(Math.floor(totalMin / 60)).padStart(2, '0');
-    const mm = String(totalMin % 60).padStart(2, '0');
-    return `${hh}:${mm}`;
-});
 
-const INPUT = `w-full px-3 py-2.5 rounded-xl text-body font-medium outline-none
-    bg-chip
-    text-ink
-    border border-black/[0.07] dark:border-white/[0.07]
-    placeholder:text-muted
-    focus:ring-2 focus:ring-[#D13A28]/20 focus:border-[#D13A28] dark:focus:border-[#E8422F]
-    transition-all`;
+
 
 const LABEL = 'block text-label font-black text-muted uppercase tracking-widest mb-1.5';
 
@@ -49,8 +34,15 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
         tecnicoId:       '',
         fechaProgramada: '',
         horaEstimada:    '',
+        franja:          '',
         prioridad:       'NORMAL',
     });
+    const [ordenesAgenda, setOrdenesAgenda] = useState([]);
+    useEffect(() => {
+        const d = new Date(); d.setDate(d.getDate() + 120);
+        api.get('/ordenes', { params: { desde: getTodayISO(), hasta: d.toISOString().slice(0, 10) } })
+            .then(r => setOrdenesAgenda(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+    }, []);
 
     useEffect(() => {
         api.get('/ordenes/tecnicos')
@@ -63,12 +55,12 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
 
     const handleGuardar = async () => {
         if (!form.tecnicoId)       { toast.error('Seleccioná un técnico');  return; }
-        if (!form.fechaProgramada) { toast.error('Ingresá la fecha');        return; }
+        if (!form.fechaProgramada) { toast.error('Elegí el día');            return; }
         setGuardando(true);
         try {
             const res = await api.post('/ordenes', datosOrdenDesdePresupuesto(presupuesto, {
                 tecnicoId: form.tecnicoId, fechaProgramada: form.fechaProgramada,
-                horaEstimada: form.horaEstimada, prioridad: form.prioridad,
+                horaEstimada: form.horaEstimada || form.franja || '', prioridad: form.prioridad,
             }));
             setOrdenCreada(res.data);
             toast.success('Orden de visita creada');
@@ -97,7 +89,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
             `🔧 *Nuevo trabajo asignado*\n` +
             `Cliente: ${presupuesto.clienteNombre || '-'}\n` +
             (presupuesto.sedeDireccion ? `Dirección: ${presupuesto.sedeDireccion}\n` : '') +
-            `Fecha: ${fechaAR(form.fechaProgramada)}${form.horaEstimada ? ` a las ${form.horaEstimada}` : ''}\n` +
+            `Fecha: ${fechaAR(form.fechaProgramada)}${form.horaEstimada ? ` a las ${form.horaEstimada}` : form.franja ? ` (${form.franja.toLowerCase()})` : ''}\n` +
             `Prioridad: ${form.prioridad}\n` +
             `Monto estimado: $${total.toLocaleString('es-AR')}`
         );
@@ -179,34 +171,23 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                 <div className="py-8 text-center text-muted text-sm">Cargando técnicos…</div>
                             ) : (
                                 <>
-                                    {/* Técnico */}
-                                    <div>
-                                        <label className={LABEL}>Técnico asignado</label>
-                                        <select value={form.tecnicoId} onChange={e => set('tecnicoId', e.target.value)}
-                                            className={INPUT}>
-                                            <option value="">Seleccioná un técnico…</option>
-                                            {tecnicos.map(t => (
-                                                <option key={t.id} value={t.id}>{t.nombre}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    {/* Fecha programada — semana actual, con flechas para ir hacia atrás (carga histórica) o adelante */}
-                                    <div>
-                                        <label className={LABEL}>Fecha programada</label>
-                                        <WeekDatePicker value={form.fechaProgramada} onChange={v => set('fechaProgramada', v)} />
-                                    </div>
-
-                                    {/* Hora estimada — acotada al horario laboral, antes eran las 24hs */}
-                                    <div>
-                                        <label className={LABEL}>Hora estimada</label>
-                                        <select value={form.horaEstimada} onChange={e => set('horaEstimada', e.target.value)}
-                                            className={INPUT}>
-                                            <option value="">Seleccioná un horario…</option>
-                                            {HORARIOS_LABORALES.map(h => (
-                                                <option key={h} value={h}>{h}</option>
-                                            ))}
-                                        </select>
+                                    {/* Técnico, día y franja: se toca el hueco en la agenda — igual que
+                                        Nueva visita y Reprogramar (3-oct-2026) */}
+                                    <div className="space-y-2">
+                                        <label className={LABEL}>¿Quién y cuándo?</label>
+                                        <AgendaHuecos tecnicos={tecnicos} ordenes={ordenesAgenda}
+                                            fecha={form.fechaProgramada || getTodayISO()}
+                                            onFecha={v => set('fechaProgramada', v)}
+                                            hueco={form.tecnicoId ? { tecnicoId: Number(form.tecnicoId), franja: form.franja || 'Mañana' } : null}
+                                            onHueco={h => setForm(f => ({ ...f, tecnicoId: h ? String(h.tecnicoId) : '', franja: h?.franja || '', fechaProgramada: f.fechaProgramada || getTodayISO() }))}
+                                            direccion={presupuesto.sedeDireccion} />
+                                        {form.tecnicoId && (
+                                            <label className="flex items-center gap-2 text-caption text-secondary">
+                                                Hora exacta (opcional)
+                                                <input type="time" value={form.horaEstimada} onChange={e => set('horaEstimada', e.target.value)}
+                                                    className="h-9 px-2 rounded-lg bg-chip text-ink font-bold outline-none" />
+                                            </label>
+                                        )}
                                     </div>
 
                                     {/* Prioridad chips */}

@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { LuChevronLeft, LuChevronRight, LuX, LuMapPin, LuPlus, LuSearch, LuCheck } from 'react-icons/lu';
 import api from '../../services/api';
-import { colorTecnico, etapaColor } from '../../utils/estados';
-import { formatDateISO, getTodayISO, lunesDeLaSemana } from '../../utils/dateUtils';
+import { formatDateISO, getTodayISO } from '../../utils/dateUtils';
+import AgendaHuecos from './AgendaHuecos';
 import AvatarTecnico from '../ui/AvatarTecnico';
 
 // Nueva visita (3-oct-2026, opción B "paso a paso" + el "elegí el hueco" de la C).
@@ -14,17 +14,9 @@ import AvatarTecnico from '../ui/AvatarTecnico';
 // por N/S y va al cierre mensual (ver CargaPorSerieSheet). Editar sigue en OrdenForm.
 
 const MOTIVOS = ['Service', 'Revisar falla', 'Instalación', 'Retiro', 'Otro'];
-const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const ABIERTAS = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO', 'COMPLETADA'];
 const INPUT = 'w-full h-12 px-3.5 rounded-xl bg-chip text-ink text-body font-medium outline-none focus:ring-2 focus:ring-[#D13A28]/40 placeholder:text-muted';
 const chipCls = (on) => `h-10 px-3.5 rounded-full inline-flex items-center gap-2 text-label font-bold border-2 transition-all active:scale-95 ${on ? 'border-brand-red bg-[rgba(232,66,47,0.10)] text-ink' : 'border-transparent bg-chip text-secondary'}`;
 const iniciales = (n) => (n || '?').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
-const franjaDe = (h) => {
-    const s = String(h || '');
-    if (/tarde/i.test(s)) return 'Tarde';
-    const hh = parseInt(s.slice(0, 2), 10);
-    return !isNaN(hh) && hh >= 13 ? 'Tarde' : 'Mañana';
-};
 const sumarDias = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return formatDateISO(d); };
 
 function Check({ on }) {
@@ -56,7 +48,6 @@ export default function VisitaForm({ tecnicos = [], onGuardado, onCancelar }) {
     const [nuevaSede, setNuevaSede] = useState(null);
     const [preSerie, setPreSerie] = useState(null);     // N/S que vino del buscador del paso 1
     // Paso 3
-    const [offset, setOffset] = useState(0);
     const [fecha, setFecha] = useState(getTodayISO());
     const [hueco, setHueco] = useState(null);           // { tecnicoId, franja }
     const [hora, setHora] = useState('');
@@ -161,14 +152,6 @@ export default function VisitaForm({ tecnicos = [], onGuardado, onCancelar }) {
         } catch (e) { toast.error(e?.response?.data?.mensaje || 'No se pudo dar de alta'); }
     };
 
-    // ── Paso 3: semana y huecos ──────────────────────────────────────────────
-    const semana = useMemo(() => {
-        const l = lunesDeLaSemana(new Date());
-        l.setDate(l.getDate() + offset * 7);
-        return DIAS.map((n, i) => { const d = new Date(l); d.setDate(l.getDate() + i); return { n, num: d.getDate(), iso: formatDateISO(d) }; });
-    }, [offset]);
-    const delDia = (iso) => ordenes.filter(o => ABIERTAS.includes(o.estado) && String(o.fechaProgramada).slice(0, 10) === iso);
-    const visitasDia = delDia(fecha);
 
     // ── Guardar ──────────────────────────────────────────────────────────────
     const nombreCliente = nuevo ? nuevo.nombre : cliente?.nombre;
@@ -363,61 +346,8 @@ export default function VisitaForm({ tecnicos = [], onGuardado, onCancelar }) {
 
                     {/* ═══ Paso 3: elegí el hueco ═══ */}
                     {paso === 3 && (<>
-                        <div className="flex items-center gap-1.5">
-                            <button type="button" onClick={() => setOffset(o => o - 1)} aria-label="Semana anterior" className="w-8 h-14 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronLeft size={16} /></button>
-                            <div className="flex-1 grid grid-cols-6 gap-1.5">
-                                {semana.map(d => {
-                                    const sel = d.iso === fecha;
-                                    const vs = delDia(d.iso);
-                                    return (
-                                        <button key={d.iso} type="button" disabled={d.iso < hoy} onClick={() => { setFecha(d.iso); setHueco(null); }}
-                                            className={`h-16 rounded-xl flex flex-col items-center justify-center gap-0.5 text-label font-black active:scale-95 disabled:opacity-30 ${sel ? 'bg-[#C9341F] text-white' : 'bg-chip text-muted'} ${d.iso === hoy && !sel ? 'ring-2 ring-[#C9341F]/50' : ''}`}>
-                                            {d.n}<span className={`text-body ${sel ? 'text-white' : 'text-ink'}`}>{d.num}</span>
-                                            <span className="flex gap-0.5 h-1.5">
-                                                {vs.slice(0, 4).map(o => <span key={o.id} className="w-1.5 h-1.5 rounded-full" style={{ background: colorTecnico(o.tecnicoNombre) }} />)}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <button type="button" onClick={() => setOffset(o => o + 1)} aria-label="Semana siguiente" className="w-8 h-14 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronRight size={16} /></button>
-                        </div>
-
-                        <p className="text-caption text-muted">Tocá un hueco libre para darle la visita a ese técnico.</p>
-                        <div className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(tecnicos.length, 3))}, minmax(0, 1fr))` }}>
-                            {tecnicos.map(t => {
-                                const suyas = visitasDia.filter(o => o.tecnicoId === t.id || o.tecnicoNombre === t.nombre);
-                                const mismaZona = sede?.direccion && suyas.some(o => (o.direccion || '').toLowerCase().includes(String(sede.direccion).split(',').pop().trim().toLowerCase()));
-                                return (
-                                    <div key={t.id} className="min-w-0 space-y-1.5">
-                                        <p className="flex items-center gap-1.5 text-body font-black text-ink truncate">
-                                            <AvatarTecnico nombre={t.nombre} size={22} />{t.nombre.split(' ')[0]}
-                                            <span className="text-caption text-muted font-bold">{suyas.length}</span>
-                                        </p>
-                                        {mismaZona && <p className="text-label font-black text-[#16A34A] dark:text-[#4ADE80]">Ya va por esa zona</p>}
-                                        {['Mañana', 'Tarde'].map(fr => {
-                                            const lista = suyas.filter(o => franjaDe(o.horaEstimada) === fr);
-                                            const on = hueco?.tecnicoId === t.id && hueco?.franja === fr;
-                                            return (
-                                                <div key={fr} className="space-y-1.5">
-                                                    <p className="text-label font-black uppercase tracking-widest text-muted pt-1">{fr}</p>
-                                                    {lista.map(o => (
-                                                        <div key={o.id} className="px-2.5 py-2 rounded-xl bg-card" style={{ borderLeft: `4px solid ${etapaColor(o.estado)}` }}>
-                                                            <p className="text-caption font-black text-ink truncate">{o.clienteNombre || o.titulo}</p>
-                                                            <p className="text-label text-muted truncate">{o.horaEstimada || ''}</p>
-                                                        </div>
-                                                    ))}
-                                                    <button type="button" onClick={() => setHueco({ tecnicoId: t.id, franja: fr })}
-                                                        className={`w-full h-11 rounded-xl border-2 border-dashed text-label font-black active:scale-95 ${on ? 'border-brand-red bg-[rgba(232,66,47,0.10)] text-brand-red' : 'border-black/15 dark:border-white/15 text-muted'}`}>
-                                                        {on ? '✓ Acá' : '+ Acá'}
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                        <AgendaHuecos tecnicos={tecnicos} ordenes={ordenes} fecha={fecha} onFecha={setFecha}
+                            hueco={hueco} onHueco={setHueco} direccion={sede?.direccion} />
 
                         {hueco && (
                             <div className="p-3.5 rounded-2xl bg-card space-y-2.5">

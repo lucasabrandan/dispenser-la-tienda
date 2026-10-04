@@ -216,7 +216,9 @@ input, select, textarea {
      CUALQUIER .fixed.bottom-0 de toda la app (el BottomNav global
      incluido), así que un input enfocado en cualquier pantalla podía
      hacer desaparecer navegación o menús que no tenían nada que ver. */
-  body:has(input:focus, textarea:focus, select:focus) .hide-on-keyboard {
+  /* Solo cuando el teclado está abierto de verdad (index.js mide la pantalla
+     visible). Antes bastaba con tener un campo/select enfocado. */
+  body.teclado-abierto .hide-on-keyboard {
     display: none;
   }
 }

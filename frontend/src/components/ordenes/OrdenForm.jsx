@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import { buildSelectStyles } from '../servicio/ServicioUI';
 import { useTheme } from '../../hooks/useTheme';
-import DateInput from '../ui/DateInput';
+import FechaFranja from './FechaFranja';
 
 import { filtroMultiTermino } from '../../utils/busqueda';
 const PRIORIDADES = [
@@ -284,30 +284,19 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar }) {
                 </div>
             </div>
 
-            {/* Fecha + Hora + Prioridad */}
-            <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-1">
-                    <label className={labelCls}>Fecha *</label>
-                    <DateInput value={form.fechaProgramada}
-                        onChange={v => set('fechaProgramada', v)}
-                        required
-                        className={inputCls} />
-                </div>
-                <div>
-                    <label className={labelCls}>Hora est.</label>
-                    <input type="time" value={form.horaEstimada}
-                        onChange={e => set('horaEstimada', e.target.value)}
-                        className={inputCls} />
-                </div>
-                <div>
-                    <label className={labelCls}>Prioridad</label>
-                    <select value={form.prioridad} onChange={e => set('prioridad', e.target.value)}
-                        className={inputCls}>
-                        {PRIORIDADES.map(p => (
-                            <option key={p.value} value={p.value}>{p.label}</option>
-                        ))}
-                    </select>
-                </div>
+            {/* Día y horario — igual que Nueva visita y Reprogramar (3-oct-2026) */}
+            <div>
+                <label className={labelCls}>Día y horario *</label>
+                <FechaFranja fecha={form.fechaProgramada} hora={form.horaEstimada}
+                    onFecha={v => set('fechaProgramada', v)} onHora={v => set('horaEstimada', v)} />
+            </div>
+            <div>
+                <label className={labelCls}>Prioridad</label>
+                <select value={form.prioridad} onChange={e => set('prioridad', e.target.value)} className={inputCls}>
+                    {PRIORIDADES.map(p => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
+                </select>
             </div>
 
             {/* Botones */}

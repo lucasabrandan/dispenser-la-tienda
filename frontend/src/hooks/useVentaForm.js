@@ -233,23 +233,48 @@ export function useVentaForm(onSaved, clienteInicialId = null, ventaParaEditar =
                 : (clienteObj?.nombre || 'Mostrador');
 
             // Si el usuario quiere registrar el cliente, crearlo antes de guardar
+            let clienteReal = !modoRapido ? clienteObj : null;
             if (modoRapido && registrarCliente && datosCliente?.nombre?.trim()) {
                 const nuevoCliente = await crearClienteRapido();
                 if (nuevoCliente) {
                     nombreFinal = nuevoCliente.nombre;
+                    clienteReal = nuevoCliente;
                     toast.success(`Cliente "${nuevoCliente.nombre}" registrado`, { duration: 2000 });
                 }
             }
 
+            // Bug 3-oct-2026: TODAS las ventas se guardaban en la sede "Mostrador",
+            // aunque fueran de un cliente cargado. Por eso el comprobante salía con
+            // "Mostrador" y sin la dirección, teléfono ni CUIT del cliente. Ahora la
+            // venta va a la sede del cliente (si no tiene ninguna, se le crea
+            // "Principal" con su dirección). Mostrador queda solo para venta rápida.
+            let sedeIdFinal = parseInt(mostradorSid || 1);
+            let sedeNombreFinal = 'Mostrador';
+            if (clienteReal?.id) {
+                try {
+                    const r = await api.get(`/sedes/cliente/${clienteReal.id}`);
+                    let sede = (Array.isArray(r.data) ? r.data : [])[0];
+                    if (!sede) {
+                        const n = await api.post('/sedes', {
+                            clienteId: clienteReal.id, nombreSede: 'Principal',
+                            calle: clienteReal.calle, numero: clienteReal.numero, localidad: clienteReal.localidad,
+                            provincia: clienteReal.provincia, direccion: clienteReal.direccion,
+                        });
+                        sede = n.data;
+                    }
+                    if (sede?.id) { sedeIdFinal = sede.id; sedeNombreFinal = sede.nombreSede || 'Principal'; }
+                } catch { /* si falla, queda en Mostrador como antes */ }
+            }
+
             const authUsuario = (() => { try { return JSON.parse(localStorage.getItem('auth_usuario')); } catch { return null; } })();
             const ventaData = {
-                sedeId:            parseInt(mostradorSid || 1),
+                sedeId:            sedeIdFinal,
                 usuarioId:         authUsuario?.id || 1,
                 fecha:             fechaVenta,
                 servicioTipo:      'VENTA',
                 estado:            confirmar ? 'REALIZADO' : 'PRESUPUESTO',
                 clienteNombre:     nombreFinal,
-                sedeNombre:        'Mostrador',
+                sedeNombre:        sedeNombreFinal,
                 descuentoPorcentaje,
                 observaciones:     leyenda || '',
                 totalConDescuento: totalFinal,
