@@ -225,6 +225,9 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 fila = { ...base, etapa: 'COBRADO', tecnico: s.usuarioNombre || '', fecha: fechaCorta(s.fechaCobro || s.fecha),
                     nota: s.modalidadCobro === 'EFECTIVO_SIN_FACTURA' ? 'Efectivo' : s.modalidadCobro === 'CON_FACTURA' ? 'Con factura' : '', accion: 'pdf', fechaOrden: fo(s.fechaCobro, s.fecha) };
             }
+            // Las ventas no van a un técnico (4-oct-2026): en vez de "Asignar",
+            // el paso que corresponde es confirmar la venta (queda cobrada).
+            if (fila && fila.esVenta && fila.accion === 'asignar') fila = { ...fila, accion: 'venta', nota: fila.nota || 'Venta sin confirmar' };
             if (fila) out.push(fila);
         });
 
@@ -357,6 +360,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
 
     const BOTON = {
         asignar:     { label: 'Asignar',          primaria: true,  run: f => setIniciar(f.servicio) },
+        venta:       { label: 'Confirmar venta',  primaria: true,  run: f => patchServicio(f.servicio.id, 'REALIZADO', 'Venta confirmada') },
         ejecutar:    { label: 'Agendar o cerrar', primaria: true,  run: f => setIniciar(f.servicio) },
         reprogramar: { label: 'Reprogramar',      primaria: false, run: f => setReprogramar(f.orden) },
         atrasada:    { label: 'Resolver',         primaria: true,  run: f => setAtrasada(f) },

@@ -13,7 +13,7 @@ export const ENCABEZADO_GRID = GRID;
 // etapa (mismo color que el puntito), así cada paso se distingue a simple vista.
 // Celular (3-oct-2026): tarjeta compacta en 3 líneas + botón, para no scrollear tanto.
 export default function TrabajoFila({ f, etapa, boton, textoSeguimiento, onAbrir, onMenu, seleccionando, seleccionado, onToggle }) {
-    const tecTxt = f.tecnicoTexto || (f.tecnico ? primerNombre(f.tecnico) : 'Sin técnico');
+    const tecTxt = f.tecnicoTexto || (f.tecnico ? primerNombre(f.tecnico) : f.esVenta ? 'Venta · sin técnico' : 'Sin técnico');
     // Opción 1 de color: el borde y la etiqueta dicen la etapa; lo atrasado, en rojo.
     const borde = f.alerta ? ALERTA.color : etapa.color;
     const etiqueta = (
