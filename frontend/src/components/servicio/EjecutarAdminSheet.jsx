@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 import { useMontos } from '../../context/MontosContext';
 
 function M({ valor, className = '' }) {
@@ -23,9 +24,16 @@ export default function EjecutarAdminSheet({ servicio, calcularTotal, onConfirma
     const [observaciones, setObservaciones] = useState(servicio.observaciones || '');
     const [procesando, setProcesando] = useState(false);
 
-    // Monto = siempre el total del presupuesto (ya tiene el pricing calculado)
-    // La modalidad solo define el estado, no cambia el monto
-    const montoAuto = totalBase;
+    const [descuentoEfectivo, setDescuentoEfectivo] = useState(10);
+    useEffect(() => {
+        api.get('/configuracion')
+            .then(r => { const d = Number(r.data?.descuentoEfectivo); if (!Number.isNaN(d)) setDescuentoEfectivo(d); })
+            .catch(() => {});
+    }, []);
+
+    // Efectivo sin factura → descuento por efectivo de la configuración; resto → total
+    const conDescuento = modalidad === 'EFECTIVO_SIN_FACTURA' && descuentoEfectivo > 0;
+    const montoAuto = conDescuento ? Math.round(totalBase * (1 - descuentoEfectivo / 100)) : totalBase;
 
     // Monto final: editado manualmente o auto
     const montoFinal = montoEditado !== null ? Number(montoEditado) : montoAuto;
@@ -147,6 +155,11 @@ export default function EjecutarAdminSheet({ servicio, calcularTotal, onConfirma
                                         </button>
                                     )}
                                 </div>
+                                {conDescuento && montoEditado === null && (
+                                    <p className="text-caption text-[#16A34A] font-bold mt-1">
+                                        Con {descuentoEfectivo}% de descuento por efectivo · total ${Math.round(totalBase).toLocaleString('es-AR')}
+                                    </p>
+                                )}
                                 {montoFinal !== montoAuto && (
                                     <p className="text-caption text-[#D48800] mt-1">
                                         Calculado auto: ${Math.round(montoAuto).toLocaleString('es-AR')}

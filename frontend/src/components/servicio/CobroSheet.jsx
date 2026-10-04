@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 
 export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCerrar }) {
     const [modalidad, setModalidad] = useState(servicio.modalidadCobro || '');
-    const [montoFinal, setMontoFinal] = useState(servicio.montoFinal || calcularTotal(servicio));
+    const [montoEditado, setMontoEditado] = useState(null); // null = automático
     const [procesando, setProcesando] = useState(false);
+    const [descuentoEfectivo, setDescuentoEfectivo] = useState(10);
     const total = calcularTotal(servicio);
+
+    useEffect(() => {
+        api.get('/configuracion')
+            .then(r => { const d = Number(r.data?.descuentoEfectivo); if (!Number.isNaN(d)) setDescuentoEfectivo(d); })
+            .catch(() => {});
+    }, []);
+
+    const conDescuento = modalidad === 'EFECTIVO_SIN_FACTURA' && descuentoEfectivo > 0;
+    const montoAuto = conDescuento ? Math.round(total * (1 - descuentoEfectivo / 100)) : total;
+    const montoFinal = montoEditado !== null ? montoEditado : montoAuto;
+    const elegir = (id) => { setModalidad(id); setMontoEditado(null); };
 
     const opciones = [
         { id: 'EFECTIVO_SIN_FACTURA', label: 'Efectivo sin factura', desc: 'Cobrado en mano, sin ARCA', color: '#16A34A', destino: 'COBRADO' },
@@ -15,7 +28,7 @@ export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCer
         if (!modalidad) return;
         setProcesando(true);
         const opt = opciones.find(o => o.id === modalidad);
-        await onConfirmar(opt?.destino || 'COBRADO', { modalidadCobro: modalidad, montoFinal: Number(montoFinal) || total });
+        await onConfirmar(opt?.destino || 'COBRADO', { modalidadCobro: modalidad, montoFinal: Number(montoFinal) || montoAuto });
         setProcesando(false);
     };
 
@@ -33,16 +46,20 @@ export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCer
                         <label className="text-label font-black text-muted uppercase tracking-widest block mb-1">Monto final a cobrar</label>
                         <div className="flex items-center gap-2">
                             <span className="text-body-lg font-black text-ink">$</span>
-                            <input type="text" inputMode="decimal" value={montoFinal} onChange={e => setMontoFinal(e.target.value)}
+                            <input type="text" inputMode="decimal" value={montoFinal} onChange={e => setMontoEditado(e.target.value)}
                                 className="flex-1 bg-transparent text-body-lg font-black text-ink outline-none" />
                         </div>
-                        {Number(montoFinal) !== total && (
-                            <p className="text-caption text-muted mt-1">Presupuesto original: ${Math.round(total).toLocaleString('es-AR')}</p>
+                        {conDescuento && montoEditado === null ? (
+                            <p className="text-caption text-[#16A34A] font-bold mt-1">Con {descuentoEfectivo}% de descuento por efectivo · total ${Math.round(total).toLocaleString('es-AR')}</p>
+                        ) : Number(montoFinal) !== total && (
+                            <p className="text-caption text-muted mt-1">Presupuesto original: ${Math.round(total).toLocaleString('es-AR')}
+                                {montoEditado !== null && <button onClick={() => setMontoEditado(null)} className="ml-2 underline">Auto</button>}
+                            </p>
                         )}
                     </div>
                     <div className="space-y-2 mb-5">
                         {opciones.map(o => (
-                            <button key={o.id} onClick={() => setModalidad(o.id)}
+                            <button key={o.id} onClick={() => elegir(o.id)}
                                 className={`w-full p-3.5 rounded-xl text-left border-2 transition-all active:scale-[0.98] ${modalidad === o.id ? '' : 'border-black/[0.06] dark:border-white/[0.06] bg-panel'}`}
                                 style={modalidad === o.id ? { borderColor: o.color, backgroundColor: o.color + '0D' } : {}}>
                                 <p className="text-body font-black text-ink">{o.label}</p>
