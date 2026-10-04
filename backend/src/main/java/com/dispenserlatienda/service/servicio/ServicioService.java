@@ -426,14 +426,8 @@ public class ServicioService {
     @Transactional
     public ServicioDTO crearComoTecnico(ServicioCreateDTO dto, Usuario tecnico) {
         validarEstadoTecnico(dto.getEstado(), dto.getModalidadCobro());
-        // Con orden: tiene que ser una visita suya. Sin orden solo se permite la
-        // carga por N/S (sin precio, se factura en el cierre mensual del cliente).
-        boolean sinPrecio = dto.getItems().stream().allMatch(i -> i.costo() == null || i.costo().signum() == 0)
-                && "COMPLETADO".equals(dto.getEstado());
-        if (dto.getOrdenId() != null) {
-            if (!ordenVisitaRepository.existsByIdAndTecnicoId(dto.getOrdenId(), tecnico.getId()))
-                throw new org.springframework.security.access.AccessDeniedException("Esa visita no es tuya");
-        } else if (!sinPrecio) {
+        // Siempre desde una visita suya (5-oct-2026): la carga suelta por N/S pasó al admin.
+        if (dto.getOrdenId() == null || !ordenVisitaRepository.existsByIdAndTecnicoId(dto.getOrdenId(), tecnico.getId())) {
             throw new org.springframework.security.access.AccessDeniedException("Solo podés cargar trabajos de tus visitas");
         }
         dto.setUsuarioId(tecnico.getId());

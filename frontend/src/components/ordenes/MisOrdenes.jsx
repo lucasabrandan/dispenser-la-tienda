@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LuPin, LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote } from 'react-icons/lu';
+import { LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -12,7 +12,6 @@ import ConfirmarHorarioSheet from '../servicio/ConfirmarHorarioSheet';
 import { resumenVentanas } from '../../utils/ordenes';
 import SalidaTecnicoSheet from './SalidaTecnicoSheet';
 import { enviarOEncolar } from '../../utils/pendientesOffline';
-import HistorialSerieSheet from './HistorialSerieSheet';
 import CerrarDiaSheet from './CerrarDiaSheet';
 import QueLlevarHoy from './QueLlevarHoy';
 import CargaPorSerieSheet from './CargaPorSerieSheet';
@@ -258,10 +257,8 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);
     const [ordenRegistrando, setOrdenRegistrando] = useState(null);
     const [noAtendidoOrden, setNoAtendidoOrden] = useState(null);
-    const [buscarSerie, setBuscarSerie] = useState(false);
     const [cerrarDia, setCerrarDia] = useState(false);
     const [cargaSerie, setCargaSerie] = useState(false);
-    const [masAcciones, setMasAcciones] = useState(false);
     const [salida, setSalida] = useState(null); // { modo: 'orden'|'hoy'|'mensaje', orden? }
     const [notaNoAtendido, setNotaNoAtendido] = useState('');
     const [servicioDetalle, setServicioDetalle] = useState(null);
@@ -442,34 +439,19 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
 
                 {tab === 'activas' && <QueLlevarHoy ordenesHoy={ordenesHoy} />}
 
-                {/* Herramientas del día — una sola fila compacta (2-oct-2026: antes eran 5
-                    botones grandes apilados que empujaban las órdenes para abajo). */}
+                {/* Herramientas del día (5-oct-2026): "Cargar N/S" e "Historial N/S" pasaron
+                    al Panel del admin. La carga por N/S se abre sola al cerrar una visita con
+                    equipos; el técnico solo trabaja lo que le asignan. */}
                 {tab === 'activas' && (
-                    <div className="mb-4 grid grid-cols-3 gap-2">
-                        <button onClick={() => setCargaSerie(true)}
-                            className="h-10 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-white/10 active:scale-95 flex items-center justify-center gap-1">
-                            <LuPin size={13} /> Cargar N/S
+                    <div className="mb-4 grid grid-cols-2 gap-2">
+                        <button onClick={() => setSalida({ modo: 'mensaje' })}
+                            className="h-10 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-white/10 active:scale-95">
+                            Avisar al admin
                         </button>
-                        <button onClick={() => setBuscarSerie(true)}
-                            className="h-10 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-white/10 active:scale-95 flex items-center justify-center gap-1">
-                            <LuClipboardList size={13} /> Historial N/S
+                        <button onClick={() => setSalida({ modo: 'hoy' })}
+                            className="h-10 rounded-xl text-label font-bold text-muted bg-card border border-black/10 dark:border-white/10 active:scale-95">
+                            No puedo trabajar hoy
                         </button>
-                        <button onClick={() => setMasAcciones(v => !v)}
-                            className={`h-10 rounded-xl text-label font-bold border active:scale-95 ${masAcciones ? 'bg-chip text-ink border-transparent' : 'bg-card text-muted border-black/10 dark:border-white/10'}`}>
-                            Más {masAcciones ? '▲' : '▼'}
-                        </button>
-                        {masAcciones && (
-                            <div className="col-span-3 grid grid-cols-2 gap-2">
-                                <button onClick={() => { setMasAcciones(false); setSalida({ modo: 'mensaje' }); }}
-                                    className="h-10 rounded-xl text-label font-bold text-ink border border-black/10 dark:border-white/10 active:scale-95">
-                                    Avisar al admin
-                                </button>
-                                <button onClick={() => { setMasAcciones(false); setSalida({ modo: 'hoy' }); }}
-                                    className="h-10 rounded-xl text-label font-bold text-muted border border-black/10 dark:border-white/10 active:scale-95">
-                                    No puedo trabajar hoy
-                                </button>
-                            </div>
-                        )}
                     </div>
                 )}
 
@@ -566,7 +548,6 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
             />
         )}
 
-        {buscarSerie && <HistorialSerieSheet onClose={() => setBuscarSerie(false)} />}
         {cargaSerie && <CargaPorSerieSheet orden={cargaSerie === true ? null : cargaSerie}
             onClose={() => setCargaSerie(false)}
             onGuardado={() => {

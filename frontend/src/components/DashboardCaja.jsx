@@ -9,7 +9,9 @@ import { Seccion, ParaResolver, PlataBlock } from './dashboard/PanelBloques';
 import MiEspacioChecklist from './miespacio/MiEspacioChecklist';
 import { useMiEspacio } from './miespacio/useMiEspacio';
 import { calcTotal } from './dashboard/estadoConstants';
-import { LuWrench, LuShoppingCart, LuUserPlus } from 'react-icons/lu';
+import { LuWrench, LuShoppingCart, LuUserPlus, LuScanBarcode, LuHistory } from 'react-icons/lu';
+import CargaPorSerieSheet from './ordenes/CargaPorSerieSheet';
+import HistorialSerieSheet from './ordenes/HistorialSerieSheet';
 import { getTodayISO } from '../utils/dateUtils';
 
 // Panel (inicio) — 3-oct-2026, diseño "Panel completo". De arriba hacia abajo:
@@ -22,6 +24,9 @@ const diasDesde = (f) => Math.floor((Date.now() - new Date(String(f).slice(0, 10
 export default function DashboardCaja({ setVistaActual }) {
     const { esAdmin, usuario } = useAuth();
     const [modalCierre, setModalCierre] = useState(false);
+    // Herramientas por N/S (clientes con tarifa mensual) — vivían en "Hoy" del técnico (5-oct-2026)
+    const [cargaSerie, setCargaSerie] = useState(false);
+    const [historialSerie, setHistorialSerie] = useState(false);
     const [cargando, setCargando] = useState(true);
     const [servicios, setServicios] = useState([]);
     const [ordenes, setOrdenes] = useState([]);
@@ -127,6 +132,16 @@ export default function DashboardCaja({ setVistaActual }) {
                                 <LuUserPlus size={18} className="text-brand-red" /> Cliente
                             </button>
                         </div>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                            <button type="button" onClick={() => setCargaSerie(true)}
+                                className="h-11 rounded-xl text-label font-bold text-ink bg-card border border-black/[0.06] dark:border-white/[0.06] active:scale-95 flex items-center justify-center gap-1.5">
+                                <LuScanBarcode size={15} /> Cargar por N/S
+                            </button>
+                            <button type="button" onClick={() => setHistorialSerie(true)}
+                                className="h-11 rounded-xl text-label font-bold text-ink bg-card border border-black/[0.06] dark:border-white/[0.06] active:scale-95 flex items-center justify-center gap-1.5">
+                                <LuHistory size={15} /> Historial de un equipo
+                            </button>
+                        </div>
                     </Seccion>
                 )}
 
@@ -160,6 +175,8 @@ export default function DashboardCaja({ setVistaActual }) {
                     onArchivar={() => { setModalCierre(false); cargar(); }}
                 />
             )}
+            {cargaSerie && <CargaPorSerieSheet onClose={() => setCargaSerie(false)} onGuardado={cargar} />}
+            {historialSerie && <HistorialSerieSheet onClose={() => setHistorialSerie(false)} />}
         </div>
     );
 }
