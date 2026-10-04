@@ -50,7 +50,7 @@ export default function EjecutarAdminSheet({ servicio, calcularTotal, onConfirma
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[1999] backdrop-blur-sm" onClick={onCerrar} />
-            <div className="fixed inset-x-0 bottom-0 z-[2000] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg">
+            <div className="fixed inset-x-0 bottom-0 z-[2000] md:inset-auto md:top-1/2 md:left-[calc(50%+var(--modal-sb,0px)/2)] md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg">
                 <div className="bg-card rounded-t-3xl md:rounded-3xl shadow-2xl border-t border-black/[0.07] max-h-[90vh] flex flex-col">
                     {/* Handle + header */}
                     <div className="px-5 pt-4 pb-3 border-b border-black/[0.06] dark:border-white/[0.06] shrink-0">

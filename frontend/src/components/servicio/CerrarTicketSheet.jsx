@@ -166,8 +166,8 @@ export default function CerrarTicketSheet({
         }
     };
 
-    const sheetCls = 'fixed inset-0 z-[200] flex items-end justify-center bg-black/60 backdrop-blur-sm';
-    const panelCls = 'w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-t-[2rem] shadow-2xl';
+    const sheetCls = 'fixed inset-0 z-[200] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6';
+    const panelCls = 'w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-t-[2rem] md:rounded-[2rem] shadow-2xl';
 
     return (
         <div className={sheetCls}
@@ -176,7 +176,7 @@ export default function CerrarTicketSheet({
             <div className={panelCls} onMouseDown={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
 
                 {/* Handle */}
-                <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-chip" />
+                <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-chip md:hidden" />
 
                 {/* ═══ FLUJO A: CREAR NUEVO → Confirmar presupuesto ═══ */}
                 {paso === 'confirmar' && (

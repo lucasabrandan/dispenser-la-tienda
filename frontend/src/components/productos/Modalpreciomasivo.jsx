@@ -27,7 +27,7 @@ export default function ModalPrecioMasivo({
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onCerrar} />
-            <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
+            <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                 <div className="bg-card rounded-[2rem] p-6 w-full max-w-sm border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     <h3 className="text-lg font-black text-ink uppercase mb-1">

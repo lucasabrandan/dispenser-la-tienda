@@ -262,7 +262,7 @@ export default function ClienteCard({
             {confirmEliminar && (
                 <>
                     <div className="fixed inset-0 bg-black/70 z-[199] backdrop-blur-sm" onClick={() => setConfirmEliminar(null)} />
-                    <div className="fixed inset-0 flex items-center justify-center z-[200] p-4">
+                    <div className="fixed inset-0 flex items-center justify-center z-[200] p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                         <div className="bg-card rounded-3xl w-full max-w-sm shadow-2xl p-6">
                             <div className="flex justify-center mb-3"><LuTriangleAlert size={28} className="text-brand-amber" /></div>
                             <h3 className="text-center text-body-lg font-black text-ink mb-2">

@@ -163,11 +163,11 @@ function CrearNotaSheet({ fecha, tecnicoId, onCreada, onCerrar }) {
     })();
 
     return (
-        <div className="fixed inset-0 z-[3000] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+        <div className="fixed inset-0 z-[3000] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6"
             onClick={onCerrar}>
-            <div className="w-full max-w-md bg-card rounded-t-3xl shadow-2xl p-5 space-y-4"
+            <div className="w-full max-w-md bg-card rounded-t-3xl md:rounded-3xl shadow-2xl p-5 space-y-4"
                 onClick={e => e.stopPropagation()}>
-                <div className="w-10 h-1 rounded-full mx-auto bg-chip" />
+                <div className="w-10 h-1 rounded-full mx-auto bg-chip md:hidden" />
                 <div>
                     <p className="text-label font-black text-muted uppercase tracking-widest mb-0.5">Nueva nota</p>
                     <p className="text-body font-bold text-ink capitalize">{fechaLabel}</p>

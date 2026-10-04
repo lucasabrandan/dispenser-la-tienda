@@ -19,7 +19,7 @@ function ChecklistsTecnicos() {
         (async () => {
             try {
                 const res = await getMiEspacioTecnicos();
-                setTecnicos(res.data || []);
+                setTecnicos(Array.isArray(res.data) ? res.data : []);
             } catch {
                 setTecnicos([]);
             } finally {

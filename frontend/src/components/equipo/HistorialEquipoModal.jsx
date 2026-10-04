@@ -45,11 +45,11 @@ export default function HistorialEquipoModal({ equipo, servicios = [], onClose }
 
     return (
         <div
-            className="fixed inset-0 z-[3000] flex items-end bg-black/60"
+            className="fixed inset-0 z-[3000] flex items-end md:items-center bg-black/60 md:justify-center md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6"
             onClick={onClose}
         >
             <div
-                className="w-full rounded-t-[2rem] max-h-[92vh] flex flex-col shadow-2xl bg-card"
+                className="w-full md:max-w-xl rounded-t-[2rem] md:rounded-[2rem] max-h-[92vh] md:max-h-[85vh] flex flex-col shadow-2xl bg-card"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}

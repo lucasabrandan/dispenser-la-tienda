@@ -59,7 +59,7 @@ export default function ModalFirmasPDF({ onConfirm, onCancel }) {
     const firmaGuardada = !!firmaTecnico && !editandoTecnico;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
             <div className="w-full max-w-lg bg-card rounded-2xl shadow-2xl overflow-hidden">
 
                 {/* Header */}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import logo from '../../assets/logo-dispenser.svg';
 import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
@@ -72,6 +72,13 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
     // (daba 122 con 2 visitas en el día). Los presupuestos tienen su propio
     // badge en "Presupuestos"; el técnico ve lo suyo en "Mis órdenes".
     const servicioTecnicoBadge = esAdmin ? ordenesActivas : 0;
+
+    // Ancho del menú lateral como variable CSS (5-oct-2026): las ventanas se
+    // centran sobre el contenido y no sobre toda la pantalla.
+    useEffect(() => {
+        document.documentElement.style.setProperty('--sidebar-w', colapsado ? '64px' : '270px');
+        return () => document.documentElement.style.setProperty('--sidebar-w', '0px');
+    }, [colapsado]);
 
     const MenuItem = ({ item }) => {
         const activa = vistaActual === item.id;

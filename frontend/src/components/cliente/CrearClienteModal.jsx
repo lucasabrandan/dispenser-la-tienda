@@ -94,7 +94,7 @@ export default function CrearClienteModal({
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={onClose} />
-            <div className="fixed inset-0 flex items-end md:items-center justify-center z-[1000] p-4">
+            <div className="fixed inset-0 flex items-end md:items-center justify-center z-[1000] p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                 <div className="w-full max-w-md rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
 
                     {/* Handle mobile */}

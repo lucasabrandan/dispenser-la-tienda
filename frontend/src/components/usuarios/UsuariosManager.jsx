@@ -264,7 +264,7 @@ export default function UsuariosManager() {
 
             {/* MODAL CREAR / EDITAR */}
             {modal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                     <div className="w-full max-w-sm rounded-3xl p-6 bg-card shadow-2xl space-y-4">
                         <h3 className="text-title font-black text-ink">
                             {modal === 'crear' ? 'Nuevo usuario' : `Editar: ${modal.nombre}`}
@@ -382,7 +382,7 @@ export default function UsuariosManager() {
 
             {/* MODAL CONFIRMAR ELIMINACIÓN */}
             {confirmEliminar && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                     <div className="w-full max-w-sm rounded-3xl p-6 bg-card shadow-2xl space-y-4">
                         <h3 className="text-title font-black text-ink">
                             Eliminar usuario
@@ -406,7 +406,7 @@ export default function UsuariosManager() {
 
             {/* MODAL CAMBIAR CONTRASEÑA */}
             {modalPass && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                     <div className="w-full max-w-sm rounded-3xl p-6 bg-card shadow-2xl space-y-4">
                         <h3 className="text-title font-black text-ink">
                             Cambiar clave: {modalPass.nombre}

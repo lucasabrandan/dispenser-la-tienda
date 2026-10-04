@@ -81,7 +81,7 @@ export default function CrearSedeModal({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 z-[999] backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4">
+      <div className="fixed inset-0 flex items-center justify-center z-[1000] p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
         <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
           
           <div className="flex justify-between items-center mb-6 pb-4 border-b border-black/[0.08] dark:border-white/[0.08]">

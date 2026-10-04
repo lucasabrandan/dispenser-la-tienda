@@ -183,7 +183,7 @@ export default function RepuestosBottomSheet({ isOpen, onClose, repuestos = [], 
 
     return (
         <div
-            className="fixed inset-0 z-[3000] flex items-end md:items-center md:justify-center bg-black/60 md:backdrop-blur-sm"
+            className="fixed inset-0 z-[3000] flex items-end md:items-center md:justify-center bg-black/60 md:backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6"
             onClick={onClose}
         >
             <div

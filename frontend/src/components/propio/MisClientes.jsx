@@ -35,7 +35,7 @@ function FormCliente({ inicial, onGuardado, onCerrar }) {
     };
 
     return (
-        <div className="fixed inset-0 z-[3000] flex items-end md:items-center md:justify-center bg-black/50" onClick={onCerrar}>
+        <div className="fixed inset-0 z-[3000] flex items-end md:items-center md:justify-center bg-black/50 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6" onClick={onCerrar}>
             <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 pb-8 bg-card space-y-3" onClick={e => e.stopPropagation()}>
                 <div className="w-10 h-1 rounded-full mx-auto bg-chip md:hidden" />
                 <p className="text-body-lg font-black text-ink">{f.id ? 'Editar cliente' : 'Nuevo cliente propio'}</p>

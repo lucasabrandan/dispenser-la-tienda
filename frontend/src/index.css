@@ -164,10 +164,17 @@ body {
   }
 }
 
+/* Corrimiento de las ventanas para centrarlas sobre el contenido y no sobre
+   toda la pantalla (5-oct-2026). --sidebar-w lo pone Sidebar.jsx. Adentro de
+   <main> hay zoom, así que el ancho del menú se pasa a esa escala. */
+:root { --modal-sb: var(--sidebar-w, 0px); }
+main { --modal-sb: var(--sidebar-w, 0px); }
+
 /* Desktop: escalar toda la UI para mejor legibilidad */
 @media (min-width: 1024px) {
   main {
     zoom: 1.2;
+    --modal-sb: calc(var(--sidebar-w, 0px) / 1.2);
   }
 }
 

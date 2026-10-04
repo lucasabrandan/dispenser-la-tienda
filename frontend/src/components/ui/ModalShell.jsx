@@ -7,7 +7,7 @@ import { LuX } from 'react-icons/lu';
 // centrado (antes la barra de scroll comía margen solo a la derecha).
 export default function ModalShell({ titulo, subtitulo, onCerrar, pie, ancho = 'md:max-w-lg', children }) {
     return (
-        <div className="fixed inset-0 z-[2000] bg-black/60 dark:bg-black/75 flex items-end md:items-center justify-center md:p-6" onClick={onCerrar}>
+        <div className="fixed inset-0 z-[2000] bg-black/60 dark:bg-black/75 flex items-end md:items-center justify-center md:p-6 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6" onClick={onCerrar}>
             <div className={`w-full ${ancho} max-h-[92vh] md:max-h-[88vh] bg-card rounded-t-3xl md:rounded-3xl flex flex-col overflow-hidden shadow-2xl`}
                 onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={titulo}>
                 <div className="shrink-0 flex items-center gap-3 px-5 pt-4 pb-3 border-b border-black/[0.06] dark:border-white/[0.06]">

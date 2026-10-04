@@ -13,6 +13,7 @@ import ServicioForm from '../servicio/ServicioForm';
 import ServicioCard from '../servicio/ServicioCard';
 import { OrdenCard } from '../ordenes/OrdenCard';
 import OrdenForm from '../ordenes/OrdenForm';
+import ModalShell from '../ui/ModalShell';
 import SwipeColumns from '../ui/SwipeColumns';
 import Paginacion from '../ui/Paginacion';
 import FiltrosPanel from '../ui/FiltrosPanel';
@@ -599,7 +600,7 @@ export default function ServicioManager({
             {/* ═══ MODALES ═══ */}
 
             {modalCrear && (
-                <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/55">
+                <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/55 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                     <div className="w-full md:max-w-2xl md:rounded-3xl max-h-[95vh] overflow-y-auto shadow-2xl bg-card">
                         <div className="md:hidden flex justify-center pt-3 pb-1 sticky top-0 z-20 bg-card">
                             <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
@@ -643,21 +644,20 @@ export default function ServicioManager({
             )}
 
             {(modalCrearOrden || ordenEditar) && (
-                <div className="fixed inset-0 bg-black/60 dark:bg-black/80 z-50 flex items-end md:items-center justify-center p-4">
-                    <div className="w-full max-w-lg bg-card rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
-                        <div className="md:hidden flex justify-center -mt-2 mb-4">
-                            <div className="w-10 h-1 rounded-full bg-[#E8E5E0] dark:bg-[#3E3E3E]" />
+                <ModalShell titulo={ordenEditar ? 'Editar orden' : 'Nueva orden'} onCerrar={cerrarModalOrden}
+                    pie={(
+                        <div className="grid grid-cols-2 gap-3">
+                            <button type="button" onClick={cerrarModalOrden} className="h-12 rounded-xl font-bold text-body bg-chip text-secondary active:scale-95">Cancelar</button>
+                            <button type="submit" form="form-orden-sm" className="h-12 rounded-xl font-black text-body bg-brand-red text-white active:scale-95">{ordenEditar ? 'Guardar cambios' : 'Crear orden'}</button>
                         </div>
-                        <h2 className="text-body-lg font-black text-ink mb-5">
-                            {ordenEditar ? 'Editar orden' : 'Nueva orden'}
-                        </h2>
-                        <OrdenForm
-                            orden={ordenEditar}
-                            tecnicos={tecnicosOrden}
-                            onGuardar={ordenEditar ? (f) => actualizarOrden(ordenEditar.id, f) : crearOrden}
-                            onCancelar={cerrarModalOrden} />
-                    </div>
-                </div>
+                    )}>
+                    <OrdenForm
+                        orden={ordenEditar}
+                        tecnicos={tecnicosOrden}
+                        formId="form-orden-sm"
+                        onGuardar={ordenEditar ? (f) => actualizarOrden(ordenEditar.id, f) : crearOrden}
+                        onCancelar={cerrarModalOrden} />
+                </ModalShell>
             )}
 
             {modalDetalle && (

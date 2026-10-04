@@ -5,10 +5,10 @@ import { fechaAR } from '../../utils/dateUtils';
 
 export default function DetalleSheet({ servicio, onCerrar }) {
     return (
-        <div className="fixed inset-0 z-[2000] flex items-end bg-black/50" onClick={onCerrar}>
-            <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 max-h-[80vh] flex flex-col bg-card"
+        <div className="fixed inset-0 z-[2000] flex items-end md:items-center bg-black/50 md:justify-center md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6" onClick={onCerrar}>
+            <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl md:rounded-3xl p-5 max-h-[80vh] flex flex-col bg-card"
                 onClick={e => e.stopPropagation()}>
-                <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip" />
+                <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip md:hidden" />
                 <h3 className="text-title font-black mb-1 text-ink">{servicio.clienteNombre}</h3>
                 <p className="text-caption text-muted mb-4 flex items-center gap-1"><LuMapPin size={11} />{servicio.sedeNombre} · {fechaAR(servicio.fecha)}</p>
                 <div className="overflow-y-auto flex-1 mb-4 space-y-3">

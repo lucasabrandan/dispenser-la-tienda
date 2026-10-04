@@ -54,7 +54,7 @@ export default function RepuestoRapidoModal({ isOpen, onClose, nombreInicial = '
         'focus:ring-2 focus:ring-[#D13A28] dark:focus:ring-[#E8422F]';
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-end md:items-center z-[4000]">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-end md:items-center z-[4000] md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
             <div className="bg-card w-full max-w-md md:max-w-sm rounded-t-3xl md:rounded-2xl p-6 shadow-2xl">
                 <div className="w-12 h-1.5 bg-black/20 dark:bg-white/20 rounded-full mx-auto mb-5" />
 

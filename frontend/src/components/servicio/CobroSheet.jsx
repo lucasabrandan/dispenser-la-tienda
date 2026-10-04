@@ -22,7 +22,7 @@ export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCer
     return (
         <>
             <div className="fixed inset-0 bg-black/60 z-[1999] backdrop-blur-sm" onClick={onCerrar} />
-            <div className="fixed inset-x-0 bottom-0 z-[2000] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md">
+            <div className="fixed inset-x-0 bottom-0 z-[2000] md:inset-auto md:top-1/2 md:left-[calc(50%+var(--modal-sb,0px)/2)] md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md">
                 <div className="bg-card rounded-t-3xl md:rounded-3xl p-5 shadow-2xl border-t border-black/[0.07]">
                     <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip md:hidden" />
                     <div className="mb-4">

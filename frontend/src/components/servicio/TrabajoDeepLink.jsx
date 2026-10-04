@@ -31,7 +31,7 @@ export default function TrabajoDeepLink({ servicioId, onCerrar }) {
 
     if (cargando) {
         return (
-            <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-black/50">
+            <div className="fixed inset-0 z-[2500] flex items-center justify-center bg-black/50 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                 <div className="w-9 h-9 rounded-full border-4 border-white/25 border-t-white animate-spin" />
             </div>
         );

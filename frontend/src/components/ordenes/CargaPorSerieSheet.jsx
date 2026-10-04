@@ -195,7 +195,7 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
     };
 
     return (
-        <div className="fixed inset-0 z-[3000] flex items-end md:items-center md:justify-center bg-black/50">
+        <div className="fixed inset-0 z-[3000] flex items-end md:items-center md:justify-center bg-black/50 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
             <div className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 bg-card max-h-[94vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-1">
                     <h3 className="text-body-lg font-black text-ink">{orden ? 'Cerrar visita' : 'Cargar equipos por N° de serie'}</h3>

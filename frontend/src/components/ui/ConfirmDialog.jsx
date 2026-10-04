@@ -17,7 +17,7 @@ export default function ConfirmDialog({
     return (
         <>
             <div className="fixed inset-0 bg-black/70 z-[1999] backdrop-blur-sm" onClick={onCancelar} />
-            <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4">
+            <div className="fixed inset-0 flex items-center justify-center z-[2000] p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
                 <div className="bg-card rounded-3xl w-full max-w-sm border border-[#D13A28]/30 shadow-2xl p-6"
                     onClick={e => e.stopPropagation()}>
                     <div className="text-center mb-5">

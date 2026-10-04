@@ -89,15 +89,15 @@ export default function StockQuickSheet({ isOpen, onClose, repuestos, onActualiz
 
     return (
         <div
-            className="fixed inset-0 z-[3000] flex items-end bg-black/60"
+            className="fixed inset-0 z-[3000] flex items-end md:items-center bg-black/60 md:justify-center md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6"
             onClick={onClose}
         >
             <div
-                className="w-full rounded-t-3xl flex flex-col bg-card max-h-[90vh] border-[0.5px] border-white/[0.08]"
+                className="w-full md:max-w-lg rounded-t-3xl md:rounded-3xl flex flex-col bg-card max-h-[90vh] border-[0.5px] border-white/[0.08]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Handle */}
-                <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-2 bg-chip" />
+                <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-2 bg-chip md:hidden" />
 
                 {/* Header */}
                 <div className="px-4 pb-3 flex items-center justify-between">

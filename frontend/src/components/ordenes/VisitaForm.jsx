@@ -203,7 +203,7 @@ export default function VisitaForm({ tecnicos = [], onGuardado, onCancelar }) {
     const titulos = { 1: '¿A quién vas?', 2: '¿Qué hay que hacer?', 3: '¿Quién y cuándo?' };
 
     return (
-        <div className="fixed inset-0 z-[2000] bg-black/60 flex md:items-center md:justify-center">
+        <div className="fixed inset-0 z-[2000] bg-black/60 flex md:items-center md:justify-center md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
             <div className="w-full h-full md:h-[88vh] md:max-w-lg md:rounded-3xl bg-page flex flex-col overflow-hidden">
                 {/* Encabezado con progreso */}
                 <div className="px-4 pt-4 pb-3 shrink-0">

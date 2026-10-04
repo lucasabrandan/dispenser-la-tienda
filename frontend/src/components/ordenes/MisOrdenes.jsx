@@ -529,11 +529,11 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         </div>
 
         {noAtendidoOrden && (
-            <div className="fixed inset-0 z-[3000] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+            <div className="fixed inset-0 z-[3000] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6"
                 onClick={() => setNoAtendidoOrden(null)}>
-                <div className="w-full max-w-md bg-card rounded-t-3xl shadow-2xl p-5 space-y-4"
+                <div className="w-full max-w-md bg-card rounded-t-3xl md:rounded-3xl shadow-2xl p-5 space-y-4"
                     onClick={e => e.stopPropagation()}>
-                    <div className="w-10 h-1 rounded-full mx-auto bg-chip" />
+                    <div className="w-10 h-1 rounded-full mx-auto bg-chip md:hidden" />
                     <div>
                         <p className="text-label font-black text-muted uppercase tracking-widest mb-1">No atendido</p>
                         <p className="text-body-lg font-black text-ink">{noAtendidoOrden.titulo}</p>
@@ -585,9 +585,9 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         )}
 
         {problema && (
-            <div className="fixed inset-0 z-[3000] flex items-end bg-black/50" onClick={() => setProblema(null)}>
-                <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 pb-8 bg-card space-y-2" onClick={e => e.stopPropagation()}>
-                    <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip" />
+            <div className="fixed inset-0 z-[3000] flex items-end md:items-center bg-black/50 md:justify-center md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6" onClick={() => setProblema(null)}>
+                <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl md:rounded-3xl p-5 pb-8 bg-card space-y-2" onClick={e => e.stopPropagation()}>
+                    <div className="w-10 h-1 rounded-full mx-auto mb-3 bg-chip md:hidden" />
                     <p className="text-body-lg font-black text-ink">¿Qué pasó?</p>
                     <p className="text-caption text-muted mb-2">{problema.clienteNombre || problema.titulo}</p>
                     {(problema.estado === 'EN_CAMINO' || problema.estado === 'EN_SITIO') && (
@@ -628,10 +628,10 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
 
         {/* Detalle del servicio — link "Ver servicio" desde Completadas (hallazgo 07) */}
         {(cargandoDetalle || servicioDetalle) && (
-            <div className="fixed inset-0 z-[3000] flex items-end bg-black/50" onClick={() => setServicioDetalle(null)}>
-                <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl p-5 bg-card border-t border-black/[0.05] dark:border-white/[0.05]"
+            <div className="fixed inset-0 z-[3000] flex items-end md:items-center bg-black/50 md:justify-center md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6" onClick={() => setServicioDetalle(null)}>
+                <div className="w-full md:max-w-lg md:mx-auto rounded-t-3xl md:rounded-3xl p-5 bg-card border-t border-black/[0.05] dark:border-white/[0.05]"
                     onClick={e => e.stopPropagation()}>
-                    <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip" />
+                    <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-chip md:hidden" />
                     {cargandoDetalle ? (
                         <p className="text-center text-muted py-8">Cargando...</p>
                     ) : (

@@ -165,9 +165,9 @@ export default function RepuestoModal({ isOpen, onClose, onGuardado, repuestoEdi
     const labelBase = "text-[10px] font-black uppercase tracking-wide";
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end z-[3000]">
-            <div className="bg-card w-full max-w-lg rounded-t-3xl p-6 shadow-2xl">
-                <div className="w-12 h-1.5 bg-chip rounded-full mx-auto mb-5" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end md:items-center z-[3000] md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
+            <div className="bg-card w-full max-w-lg rounded-t-3xl md:rounded-3xl p-6 shadow-2xl">
+                <div className="w-12 h-1.5 bg-chip rounded-full mx-auto mb-5 md:hidden" />
                 <h3 className="text-lg font-black text-ink mb-5">
                     {form.id ? 'Editar Producto' : 'Nuevo Producto'}
                 </h3>
