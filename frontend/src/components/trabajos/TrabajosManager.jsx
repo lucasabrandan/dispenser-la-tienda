@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { LuTriangleAlert, LuX, LuMapPin, LuPlus, LuRoute, LuDownload, LuArchive, LuList, LuUsers } from 'react-icons/lu';
+import { LuTriangleAlert, LuX, LuMapPin, LuPlus, LuRoute, LuDownload, LuArchive, LuList, LuUsers, LuSquareCheck, LuTrash2, LuArchiveRestore } from 'react-icons/lu';
 import api from '../../services/api';
 import BusquedaBar from '../ui/BusquedaBar';
 import { M } from '../servicio/ServicioUI';
@@ -430,6 +430,26 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     // Selección para armar la ruta del día
     const toggleSel = (key) => setSeleccion(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
     const salirSeleccion = () => { setSeleccionando(false); setSeleccion(new Set()); };
+    // Archivados: selección masiva para recuperar o eliminar definitivamente
+    const [confirmarMasivo, setConfirmarMasivo] = useState(false);
+    const elegidosArchivados = () => visibles.filter(f => seleccion.has(f.key) && f.servicio).map(f => f.servicio);
+    const todosElegidos = visibles.length > 0 && visibles.every(f => seleccion.has(f.key));
+    const elegirTodos = () => setSeleccion(todosElegidos ? new Set() : new Set(visibles.map(f => f.key)));
+    const masivo = async (tipo) => {
+        const lista = elegidosArchivados();
+        if (!lista.length) return;
+        const t = toast.loading(tipo === 'eliminar' ? 'Eliminando…' : 'Recuperando…');
+        const res = await Promise.allSettled(lista.map(sv => tipo === 'eliminar'
+            ? api.delete(`/servicios/${sv.id}`)
+            : api.patch(`/servicios/${sv.id}/estado`, { estado: 'PRESUPUESTO' })));
+        const fallas = res.filter(r => r.status === 'rejected').length;
+        const ok = lista.length - fallas;
+        const verbo = tipo === 'eliminar' ? 'eliminado' : 'recuperado';
+        if (fallas) toast.error(`${ok} ${verbo}${ok !== 1 ? 's' : ''} · ${fallas} no se pudo${fallas !== 1 ? 'ieron' : ''}`, { id: t });
+        else toast.success(`${ok} ${verbo}${ok !== 1 ? 's' : ''}`, { id: t });
+        salirSeleccion();
+        cargar();
+    };
     const abrirRuta = () => {
         const dirs = visibles.filter(f => seleccion.has(f.key))
             .map(f => f.servicio?.sedeDireccion || f.orden?.direccion).filter(Boolean);
@@ -535,13 +555,15 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     </div>
                     <button type="button" onClick={() => (seleccionando ? salirSeleccion() : setSeleccionando(true))}
                         className={`h-9 md:h-10 px-2.5 md:px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${seleccionando ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
-                        <LuRoute size={14} />{seleccionando ? 'Cancelar' : <><span className="sm:hidden">Ruta</span><span className="hidden sm:inline">Armar ruta</span></>}
+                        {verArchivados
+                            ? <><LuSquareCheck size={14} />{seleccionando ? 'Cancelar' : 'Seleccionar'}</>
+                            : <><LuRoute size={14} />{seleccionando ? 'Cancelar' : <><span className="sm:hidden">Ruta</span><span className="hidden sm:inline">Armar ruta</span></>}</>}
                     </button>
                     <button type="button" onClick={exportar}
                         className="h-9 md:h-10 px-2.5 md:px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border border-black/10 dark:border-white/10 text-secondary">
                         <LuDownload size={14} /><span className="hidden sm:inline">Exportar</span>
                     </button>
-                    <button type="button" onClick={() => { setVerArchivados(v => !v); setEtapa(null); setTec(''); }}
+                    <button type="button" onClick={() => { setVerArchivados(v => !v); setEtapa(null); setTec(''); salirSeleccion(); }}
                         className={`h-9 md:h-10 px-2.5 md:px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${verArchivados ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
                         <LuArchive size={14} /><span className={verArchivados ? '' : 'hidden sm:inline'}>{verArchivados ? 'Volver' : 'Archivados'}</span>
                     </button>
@@ -553,7 +575,20 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     )}
                 </div>
 
-                {seleccionando && (
+                {seleccionando && verArchivados && (
+                    <div className="flex flex-wrap items-center gap-2 px-4 py-3 rounded-xl bg-panel text-caption">
+                        <span className="flex-1 min-w-[8rem] text-secondary">{seleccion.size} elegido{seleccion.size !== 1 ? 's' : ''}</span>
+                        <button type="button" onClick={elegirTodos}
+                            className="h-10 px-3 rounded-xl border border-black/10 dark:border-white/10 text-secondary font-bold">{todosElegidos ? 'Ninguno' : 'Todos'}</button>
+                        <button type="button" disabled={!seleccion.size} onClick={() => masivo('recuperar')}
+                            className="h-10 px-3 rounded-xl inline-flex items-center gap-1.5 border border-black/10 dark:border-white/10 text-ink font-bold disabled:opacity-40">
+                            <LuArchiveRestore size={14} /> Recuperar</button>
+                        <button type="button" disabled={!seleccion.size} onClick={() => setConfirmarMasivo(true)}
+                            className="h-10 px-4 rounded-xl inline-flex items-center gap-1.5 bg-[#C9341F] text-white font-black disabled:opacity-40">
+                            <LuTrash2 size={14} /> Eliminar</button>
+                    </div>
+                )}
+                {seleccionando && !verArchivados && (
                     <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-panel text-caption">
                         <span className="flex-1 text-secondary">Tocá los trabajos que querés visitar · {seleccion.size} elegido{seleccion.size !== 1 ? 's' : ''}</span>
                         <button type="button" disabled={!seleccion.size} onClick={abrirRuta}
@@ -669,6 +704,14 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     orden={editor.orden} onReprogramar={editor.orden ? () => { setReprogramar(editor.orden); setEditor(null); } : null} />
             )}
             {nuevaVisita && <VisitaForm tecnicos={tecnicos} onGuardado={() => { setNuevaVisita(false); cargar(); }} onCancelar={() => setNuevaVisita(false)} />}
+            {confirmarMasivo && (
+                <ConfirmDialog
+                    titulo={`Eliminar ${seleccion.size} trabajo${seleccion.size !== 1 ? 's' : ''}`}
+                    mensaje="Se borran definitivamente con sus ítems y repuestos. No se puede deshacer."
+                    textoConfirmar="Sí, eliminar"
+                    onCancelar={() => setConfirmarMasivo(false)}
+                    onConfirmar={() => { setConfirmarMasivo(false); masivo('eliminar'); }} />
+            )}
             {confirmar && (
                 <ConfirmDialog
                     titulo={{ eliminar: 'Eliminar trabajo', archivar: 'Archivar trabajo', cancelarVisita: 'Cancelar visita', eliminarVisita: 'Eliminar visita' }[confirmar.tipo]}
