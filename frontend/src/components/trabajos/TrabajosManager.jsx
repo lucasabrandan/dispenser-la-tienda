@@ -31,6 +31,13 @@ import { NuevoSheet, TrabajoMenu } from './TrabajoMenus';
 // Cada fila tiene un solo botón: el próximo paso que le toca al admin.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Opción A: los 7 pasos se agrupan en 3 preguntas (+ cobrados aparte)
+const GRUPOS = [
+    { id: 'hacer',   label: 'Por hacer',  etapas: ['PRESUPUESTO', 'ASIGNADO'], color: '#A8A29E' },
+    { id: 'marcha',  label: 'En marcha',  etapas: ['CAMINO', 'LUGAR'],         color: '#60A5FA' },
+    { id: 'cobrar',  label: 'Por cobrar', etapas: ['HECHO', 'FACTURADO'],      color: '#2DD4BF' },
+    { id: 'cobrado', label: 'Cobrados',   etapas: ['COBRADO'],                 color: '#4ADE80' },
+];
 const ETAPA = { ...Object.fromEntries(ETAPAS.map(e => [e.id, e])), ARCHIVADO: { id: 'ARCHIVADO', label: 'Archivado', color: '#78716C' } };
 const ETAPA_DE_ORDEN = { PENDIENTE: 'ASIGNADO', EN_CAMINO: 'CAMINO', EN_SITIO: 'LUGAR' };
 const ABIERTAS = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO'];
@@ -75,7 +82,8 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     const [tecnicos, setTecnicos]   = useState([]);
     const [cargando, setCargando]   = useState(true);
 
-    const [etapa, setEtapa]   = useState(null);   // null = "En curso" (todo menos Cobrado)
+    const [grupo, setGrupo]   = useState('hacer'); // Por hacer · En marcha · Por cobrar · (Cobrados)
+    const [etapa, setEtapa]   = useState(null);    // sub-filtro dentro del grupo
     const [tec, setTec]       = useState('');      // '' todos · '__SIN__' · nombre
     const [busqueda, setBusqueda] = useState('');
 
@@ -259,7 +267,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     const q = busqueda.trim().toLowerCase();
     const pasaBusqueda = (f) => !q || q.split(/\s+/).every(t => f.busca.includes(t) || (f.cliente || '').toLowerCase().includes(t));
     const pasaTec = (f) => !tec || (tec === '__SIN__' ? !f.tecnico : f.tecnico === tec);
-    const enEtapa = (f) => (etapa ? f.etapa === etapa : f.etapa !== 'COBRADO');
+    const enEtapa = (f) => (GRUPOS.find(g => g.id === grupo)?.etapas || []).includes(f.etapa) && (!etapa || f.etapa === etapa);
 
     // Archivados: lista aparte, fuera del recorrido (se ven solo con "Ver archivados")
     const filasArchivadas = useMemo(() => archivados.map(s => ({
@@ -290,9 +298,9 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     }, [base]);
 
     const totalVisible = visibles.reduce((a, f) => a + (f.monto || 0), 0);
-    const tituloTotal = { HECHO: 'Para cobrar', FACTURADO: 'Para cobrar', COBRADO: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}`, PRESUPUESTO: 'Presupuestado' }[etapa] || 'En curso';
+    const tituloTotal = { HECHO: 'Para cobrar', FACTURADO: 'Para cobrar', COBRADO: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}`, PRESUPUESTO: 'Presupuestado' }[etapa] || { hacer: 'Por hacer', marcha: 'En marcha', cobrar: 'Para cobrar', cobrado: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}` }[grupo];
 
-    const elegirEtapa = (id) => { setEtapa(e => (e === id ? null : id)); setTec(''); };
+    const elegirGrupo = (id) => { setGrupo(id); setEtapa(null); setTec(''); };
 
     // ── Acciones ─────────────────────────────────────────────────────────────
     const patchServicio = async (id, estado, msg, extras = {}) => {
@@ -445,49 +453,48 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 </div>
 
                 {/* Atrasadas */}
-                {atrasadas.length > 0 && etapa !== 'ASIGNADO' && !verArchivados && (
+                {atrasadas.length > 0 && !(grupo === 'hacer' && etapa === 'ASIGNADO') && !verArchivados && (
                     <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#FEF3C7] text-[#92400E] dark:bg-[#2A1A0A] dark:text-[#FBBF24] border border-[#F0A500]/40 text-caption font-bold">
                         <LuTriangleAlert size={16} className="shrink-0" />
                         <span className="flex-1">
                             {atrasadas.length} visita{atrasadas.length !== 1 ? 's' : ''} de días anteriores sigue{atrasadas.length !== 1 ? 'n' : ''} abierta{atrasadas.length !== 1 ? 's' : ''}
                         </span>
-                        <button onClick={() => { setEtapa('ASIGNADO'); setTec(''); }} className="font-black underline">Ver</button>
+                        <button onClick={() => { setGrupo('hacer'); setEtapa('ASIGNADO'); setTec(''); }} className="font-black underline">Ver</button>
                     </div>
                 )}
 
-                {/* Etapas — celular: pastillas chicas en una sola línea (antes eran
-                    tarjetas grandes y había que deslizar mucho para verlas) */}
+                {/* Grupos (opción A, 3-oct-2026): 3 preguntas del día en vez de 7 etapas.
+                    Debajo, el detalle de las etapas del grupo (tocables para filtrar). */}
                 {!verArchivados && (
-                    <div className="md:hidden flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-0.5 [scrollbar-width:none]">
-                        {[{ id: null, label: 'En curso', color: '#E8422F', n: filas.filter(f => f.etapa !== 'COBRADO' && pasaBusqueda(f) && pasaTec(f)).length },
-                          ...ETAPAS.map(e => ({ ...e, n: conteo[e.id] }))].map(e => {
-                            const activo = etapa === e.id;
-                            return (
-                                <button key={e.id || 'curso'} onClick={() => (e.id ? elegirEtapa(e.id) : (setEtapa(null), setTec('')))} aria-pressed={activo}
-                                    className={`h-9 px-3 shrink-0 rounded-full inline-flex items-center gap-1.5 text-label font-bold border-2 active:scale-95 ${activo ? 'bg-card text-ink' : 'bg-panel border-transparent text-secondary'}`}
-                                    style={activo ? { borderColor: e.color } : undefined}>
-                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: e.color }} />
-                                    {e.label}<span className="font-black text-ink">{cargando ? '·' : e.n}</span>
-                                </button>
-                            );
-                        })}
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-chip">
+                            {GRUPOS.filter(g => g.id !== 'cobrado').map(g => {
+                                const activo = grupo === g.id;
+                                const n = filas.filter(f => g.etapas.includes(f.etapa) && pasaBusqueda(f) && pasaTec(f)).length;
+                                return (
+                                    <button key={g.id} type="button" onClick={() => elegirGrupo(g.id)} aria-pressed={activo}
+                                        className={`h-12 md:h-14 rounded-xl flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${activo ? 'bg-card shadow-sm' : ''}`}>
+                                        <span className={`text-body font-black ${activo ? 'text-ink' : 'text-secondary'}`}>{g.label} <span className="opacity-70">{cargando ? '·' : n}</span></span>
+                                        <span className="w-5 h-[3px] rounded-full" style={{ background: g.color }} />
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="flex items-center justify-between gap-2 px-1 text-caption text-muted">
+                            <span className="flex items-center gap-3 min-w-0 overflow-x-auto [scrollbar-width:none]">
+                                {(GRUPOS.find(g => g.id === grupo)?.etapas || []).map(id => (
+                                    <button key={id} type="button" onClick={() => setEtapa(e => (e === id ? null : id))}
+                                        className={`shrink-0 inline-flex items-center gap-1.5 ${etapa === id ? 'text-ink font-black underline' : ''}`}>
+                                        <span className="w-2 h-2 rounded-full" style={{ background: ETAPA[id].color }} />{ETAPA[id].label} {conteo[id]}
+                                    </button>
+                                ))}
+                            </span>
+                            <button type="button" onClick={() => elegirGrupo(grupo === 'cobrado' ? 'hacer' : 'cobrado')} className="shrink-0 font-bold underline">
+                                {grupo === 'cobrado' ? 'Volver' : 'Cobrados'}
+                            </button>
+                        </div>
                     </div>
                 )}
-                {!verArchivados && <div className="hidden md:grid md:grid-cols-7 gap-2">
-                    {ETAPAS.map(e => {
-                        const activo = etapa === e.id;
-                        return (
-                            <button key={e.id} onClick={() => elegirEtapa(e.id)} aria-pressed={activo}
-                                className={`text-left px-3.5 py-3 rounded-2xl border-2 transition-all active:scale-95 ${activo ? 'bg-card' : 'bg-panel border-transparent'}`}
-                                style={activo ? { borderColor: e.color } : undefined}>
-                                <span className="flex items-center gap-1.5 text-label font-bold uppercase tracking-wide text-muted">
-                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: e.color }} />{e.label}
-                                </span>
-                                <span className="block mt-1.5 text-2xl font-black text-ink leading-none">{cargando ? '·' : conteo[e.id]}</span>
-                            </button>
-                        );
-                    })}
-                </div>}
 
                 {/* Herramientas: vista, ruta, exportar, archivados */}
                 <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
@@ -511,7 +518,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                         className={`h-9 md:h-10 px-2.5 md:px-3 shrink-0 rounded-xl inline-flex items-center gap-1.5 text-label font-bold border ${verArchivados ? 'border-brand-red text-ink' : 'border-black/10 dark:border-white/10 text-secondary'}`}>
                         <LuArchive size={14} /><span className={verArchivados ? '' : 'hidden sm:inline'}>{verArchivados ? 'Volver' : 'Archivados'}</span>
                     </button>
-                    {etapa === 'COBRADO' && !verArchivados && (
+                    {grupo === 'cobrado' && !verArchivados && (
                         <select value={periodo} onChange={e => setPeriodo(e.target.value)} aria-label="Período de cobrados"
                             className="h-10 px-3 shrink-0 rounded-xl text-label font-bold bg-panel text-ink border border-black/10 dark:border-white/10">
                             {PERIODOS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
@@ -555,7 +562,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 ) : visibles.length === 0 ? (
                     <div className="py-12 px-6 text-center rounded-2xl border border-dashed border-black/10 dark:border-white/10 space-y-4">
                         <p className="text-body text-muted">
-                            {verArchivados ? 'No hay trabajos archivados' : `No hay trabajos ${etapa ? `en "${ETAPA[etapa].label}"` : 'en curso'}`}{tec ? ' con este técnico' : ''}{q ? ' para esa búsqueda' : ''}
+                            {verArchivados ? 'No hay trabajos archivados' : `No hay trabajos ${etapa ? `en "${ETAPA[etapa].label}"` : `en "${GRUPOS.find(g => g.id === grupo)?.label}"`}`}{tec ? ' con este técnico' : ''}{q ? ' para esa búsqueda' : ''}
                         </p>
                         {!verArchivados && (
                             <button type="button" onClick={() => setNuevoAbierto(true)}
