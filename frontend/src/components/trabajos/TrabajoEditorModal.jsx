@@ -6,7 +6,7 @@ import VentaForm from '../venta/VentaForm';
 // Modal único para crear / editar / duplicar un trabajo desde la pantalla Trabajos.
 // modo: 'nuevo' | 'editar' | 'duplicar' | 'venta'. Reusa los mismos formularios
 // de siempre (ServicioForm y VentaForm), no cambia ningún dato.
-export default function TrabajoEditorModal({ modo, servicio = null, clienteInicialId = null, onCerrar, onGuardado }) {
+export default function TrabajoEditorModal({ modo, servicio = null, clienteInicialId = null, onCerrar, onGuardado, orden = null, onReprogramar = null }) {
     const esVenta = modo === 'venta' || servicio?.servicioTipo === 'VENTA';
     const titulo = {
         nuevo:    { Icon: LuWrench,       txt: 'Nuevo trabajo',     sub: 'Cargá el trabajo a realizar' },
@@ -38,7 +38,9 @@ export default function TrabajoEditorModal({ modo, servicio = null, clienteInici
                 ) : (
                     <ServicioForm onSaved={guardado} clienteInicialId={clienteInicialId}
                         servicioParaEditar={modo === 'nuevo' ? null : servicio}
-                        esDuplicado={modo === 'duplicar'} />
+                        esDuplicado={modo === 'duplicar'}
+                        ordenActiva={modo === 'editar' && orden && !['COMPLETADA', 'CANCELADA'].includes(orden.estado) ? orden : null}
+                        onReprogramar={onReprogramar} />
                 )}
             </div>
         </div>

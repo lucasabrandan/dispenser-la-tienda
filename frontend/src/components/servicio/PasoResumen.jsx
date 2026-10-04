@@ -144,7 +144,7 @@ function RentabilidadPanel({ resumen, desglose, onEditarCosto }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF, modoEjecucion = false }) {
+export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF, modoEjecucion = false, ordenActiva = null, onReprogramar = null }) {
     const {
         ticketItems, setTicketItems,
         descuentoPorcentaje, setDescuentoPorcentaje,
@@ -292,6 +292,27 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
             <div className="rounded-2xl p-4 bg-panel border border-black/[0.07] dark:border-white/[0.07] space-y-3">
                 <p className="text-label font-black text-muted uppercase tracking-widest">Planificación</p>
 
+                {/* Trabajo con visita agendada: el día, la hora y el técnico se cambian en
+                    la visita (Reprogramar), así quedan iguales en todos lados y le llega el
+                    aviso al técnico (5-oct-2026). */}
+                {ordenActiva ? (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-card">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-label font-black text-muted uppercase tracking-wider">Visita agendada</p>
+                            <p className="text-body font-black text-ink truncate">
+                                {(ordenActiva.tecnicoNombre || 'Sin técnico').split(' ')[0]}
+                                {ordenActiva.fechaProgramada ? ` · ${new Date(ordenActiva.fechaProgramada + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'numeric' })}` : ''}
+                                {ordenActiva.horaEstimada ? ` · ${ordenActiva.horaEstimada}` : ''}
+                            </p>
+                            <p className="text-caption text-muted">Para cambiar día, hora o técnico usá Reprogramar (le avisa al técnico).</p>
+                        </div>
+                        {onReprogramar && (
+                            <button type="button" onClick={onReprogramar}
+                                className="h-9 px-3 rounded-xl bg-chip text-label font-black text-ink shrink-0 active:scale-95">Reprogramar</button>
+                        )}
+                    </div>
+                ) : (<>
+
                 {/* Fecha tentativa: en vez de una fecha exacta, el admin habilita los días/franjas
                     que el cliente aceptó por teléfono, y el técnico asignado confirma después
                     el día y horario puntual dentro de eso. */}
@@ -384,6 +405,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         </select>
                     </div>
                 )}
+                </>)}
             </div>
 
             {/* ── Más opciones ──────────────────────────────────────────── */}
@@ -475,7 +497,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                     </div>
                     <div className="flex gap-2">
                         <button
-                            disabled={(esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) || (fechaTentativa && ventanasDisponibles.length === 0)}
+                            disabled={hook.estaBloqueado || (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) || (fechaTentativa && ventanasDisponibles.length === 0)}
                             onClick={() => {
                                 if (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) {
                                     toast.error('⚠ Asigná un técnico antes de continuar', { duration: 3500 });
@@ -487,8 +509,8 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                                 }
                                 onCerrarTicket();
                             }}
-                            className={`h-11 px-5 rounded-xl font-black text-label text-white active:scale-95 ${(esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) || (fechaTentativa && ventanasDisponibles.length === 0) ? 'opacity-40 cursor-not-allowed bg-muted' : 'bg-brand-red'}`}>
-                            {modoEjecucion ? 'Cerrar trabajo →' : 'Cerrar ticket →'}
+                            className={`h-11 px-5 rounded-xl font-black text-label text-white active:scale-95 ${hook.estaBloqueado || (esAdmin && tecnicos.length > 0 && !tecnicoSeleccionado) || (fechaTentativa && ventanasDisponibles.length === 0) ? 'opacity-40 cursor-not-allowed bg-muted' : 'bg-brand-red'}`}>
+                            {hook.estaBloqueado ? 'Solo lectura' : modoEjecucion ? 'Cerrar trabajo →' : 'Cerrar ticket →'}
                         </button>
                     </div>
                 </div>

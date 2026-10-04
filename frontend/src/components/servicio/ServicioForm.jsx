@@ -28,6 +28,8 @@ export default function ServicioForm({
     ordenOrigen        = null,
     modoEjecucion      = false,
     esDuplicado        = false,
+    ordenActiva        = null,   // visita agendada de este trabajo (5-oct-2026)
+    onReprogramar      = null,
 }) {
     const hook = useServicioForm(servicioParaEditar, clienteInicialId, presupuestoOrigen, ordenOrigen);
     const {
@@ -240,7 +242,7 @@ export default function ServicioForm({
 
             {estaBloqueado && (
                 <div className="mx-5 mt-4 p-3 rounded-xl text-center font-bold text-[13px] bg-red-50 dark:bg-red-900/30 text-[#D13A28] dark:text-red-300 flex items-center justify-center gap-1.5">
-                    <LuLock size={13} /> Registro cobrado — solo lectura
+                    <LuLock size={13} /> {servicioParaEditar?.estado === 'COBRADO' ? 'Trabajo cobrado' : 'Trabajo ya cerrado'} — solo lectura
                 </div>
             )}
 
@@ -260,6 +262,8 @@ export default function ServicioForm({
                     onCerrarTicket={() => setSheetVisible(true)}
                     dispararPDF={dispararPDF}
                     modoEjecucion={modoEjecucion}
+                    ordenActiva={ordenActiva}
+                    onReprogramar={onReprogramar}
                 />
             )}
 

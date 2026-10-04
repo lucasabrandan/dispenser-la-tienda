@@ -401,7 +401,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     };
     const accionesMenu = {
         detalle: (s) => setDetalle(s),
-        editar: (s) => setEditor({ modo: 'editar', servicio: s }),
+        editar: (s, orden = null) => setEditor({ modo: 'editar', servicio: s, orden }),
         duplicar,
         pdf,
         espera: cambiarEspera,
@@ -665,7 +665,8 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
             <TrabajoMenu fila={menuFila} onClose={() => setMenuFila(null)} on={accionesMenu} />
             {editor && (
                 <TrabajoEditorModal modo={editor.modo} servicio={editor.servicio} clienteInicialId={editor.clienteId}
-                    onCerrar={() => setEditor(null)} onGuardado={cargar} />
+                    onCerrar={() => setEditor(null)} onGuardado={cargar}
+                    orden={editor.orden} onReprogramar={editor.orden ? () => { setReprogramar(editor.orden); setEditor(null); } : null} />
             )}
             {nuevaVisita && <VisitaForm tecnicos={tecnicos} onGuardado={() => { setNuevaVisita(false); cargar(); }} onCancelar={() => setNuevaVisita(false)} />}
             {confirmar && (

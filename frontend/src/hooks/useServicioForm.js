@@ -153,7 +153,9 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
             }))
           );
         } else if (servicioParaEditar) {
-          setEstaBloqueado(servicioParaEditar.estado !== 'PRESUPUESTO');
+          // Bug 5-oct-2026: bloqueaba todo lo que no fuera PRESUPUESTO, incluido un trabajo
+          // asignado (EN_PROGRESO): mostraba "cobrado — solo lectura" y Guardar no hacía nada.
+          setEstaBloqueado(['COMPLETADO', 'PENDIENTE_FACTURACION', 'FACTURADO', 'COBRADO', 'REALIZADO', 'ARCHIVADO', 'CANCELADO'].includes(servicioParaEditar.estado));
           setIdEdicion(servicioParaEditar.id);
           setEsPresupuesto(servicioParaEditar.servicioTipo === 'TECNICA');
           setDescuentoPorcentaje(servicioParaEditar.descuentoPorcentaje || 0);

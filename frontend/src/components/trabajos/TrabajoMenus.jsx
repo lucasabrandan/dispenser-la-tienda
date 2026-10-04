@@ -41,7 +41,7 @@ export function TrabajoMenu({ fila, onClose, on }) {
         <ActionSheet open={abierto} onClose={onClose}>
             <p className="px-4 pt-1 pb-2 text-label font-black uppercase tracking-widest text-muted truncate">{fila.cliente}</p>
             {s && <Opcion Icon={LuEye} label="Ver detalle" onClick={run(() => on.detalle(s))} />}
-            {editable && <Opcion Icon={LuPencil} label="Editar" onClick={run(() => on.editar(s))} />}
+            {editable && <Opcion Icon={LuPencil} label="Editar" onClick={run(() => on.editar(s, fila.orden))} />}
             {s && !esArchivado && <Opcion Icon={LuCopy} label="Duplicar" sub="Mismo cliente y equipos, nuevo presupuesto" onClick={run(() => on.duplicar(s))} />}
             {s && <Opcion Icon={LuFileText} label="PDF" onClick={run(() => on.pdf(s))} />}
             {editable && (s.enEspera
