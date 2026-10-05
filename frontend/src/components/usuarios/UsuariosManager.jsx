@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, Pestanas } from '../ui/Pantalla';
 import { toast } from 'react-hot-toast';
 import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword, eliminarUsuario } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -142,31 +143,17 @@ export default function UsuariosManager() {
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page transition-colors">
 
-            {/* Header sticky */}
-            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink">Usuarios</h2>
-                    <div className="flex gap-1.5 items-center">
-                        {['TODOS', 'ADMIN', 'TECNICO'].map(rol => (
-                            <button key={rol} onClick={() => setFiltroRol(rol)}
-                                className={`h-8 px-3 rounded-lg font-bold text-label uppercase transition-all active:scale-95 ${
-                                    filtroRol === rol
-                                        ? 'bg-brand-red text-white'
-                                        : 'bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05]'
-                                }`}>
-                                {rol === 'TODOS' ? `Todos (${usuarios.length})` : `${ROL_LABEL[rol]} (${usuarios.filter(u => u.rol === rol).length})`}
-                            </button>
-                        ))}
-                        <div className="flex-1" />
-                        <button onClick={abrirCrear}
-                            className="h-8 px-4 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red">
-                            + Nuevo
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <div className={CONTENEDOR}>
+                <PantallaHeader titulo="Usuarios" subtitulo="Quién entra al sistema y con qué permisos"
+                    accion={<BotonPrimario enCelular onClick={abrirCrear}>Nuevo</BotonPrimario>} />
 
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
+                <Pestanas activo={filtroRol} onChange={setFiltroRol}
+                    items={['TODOS', 'ADMIN', 'TECNICO'].map(rol => ({
+                        id: rol,
+                        label: rol === 'TODOS' ? 'Todos' : ROL_LABEL[rol],
+                        count: rol === 'TODOS' ? usuarios.length : usuarios.filter(u => u.rol === rol).length,
+                    }))} />
+
 
                 {inactivos > 0 && (
                     <button type="button" onClick={() => setVerInactivos(v => !v)}

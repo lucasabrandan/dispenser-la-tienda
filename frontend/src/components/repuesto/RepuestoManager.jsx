@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { LuPackage, LuEllipsis, LuListChecks, LuDownload, LuFileText, LuArrowUpDown } from 'react-icons/lu';
+import { LuPackage, LuListChecks, LuDownload, LuFileText, LuArrowUpDown } from 'react-icons/lu';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, BotonHerramienta, Herramientas } from '../ui/Pantalla';
 import BusquedaBar from '../ui/BusquedaBar';
-import ChipFiltro from '../ui/ChipFiltro';
 import { useRepuestoManager } from '../../hooks/useRepuestoManager';
 import RepuestoCard from './RepuestoCard';
 import RepuestoModal from './RepuestoModal';
@@ -25,7 +24,6 @@ const ORDEN_OPTIONS = [
 
 export default function RepuestoManager() {
     const [stockSheetOpen, setStockSheetOpen] = useState(false);
-    const [menuOverflow, setMenuOverflow] = useState(false);
     const [mostrarOrden, setMostrarOrden] = useState(false);
 
     const {
@@ -67,57 +65,31 @@ export default function RepuestoManager() {
     return (
         <div className="min-h-screen bg-page pb-32 font-sans transition-colors" {...swipeHandlers}>
 
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink mb-2.5">Productos</h2>
-                    <div className="flex gap-1.5 items-center">
-                        {/* Búsqueda y Filtros — mismo componente que usan Servicio, Venta,
-                            Presupuestos y Clientes (Lucas, 7-sep-2026: unificar look y comportamiento) */}
-                        <BusquedaBar valor={busqueda} onChange={setBusqueda} placeholder="Buscar..." />
-                        <ChipFiltro label={ORDEN_OPTIONS.find(o => o.value === ordenProductos)?.label || 'Orden'}
-                            icono={LuArrowUpDown} activo={mostrarOrden} onClick={() => setMostrarOrden(v => !v)} />
-                        <button onClick={() => setStockSheetOpen(true)} title="Ajuste stock"
-                            className="h-9 w-9 rounded-lg flex items-center justify-center bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuPackage size={15} /></button>
+            <div className={CONTENEDOR}>
+                <PantallaHeader titulo="Productos" subtitulo="Repuestos y productos: precios y stock"
+                    busqueda={<BusquedaBar valor={busqueda} onChange={setBusqueda} placeholder="Nombre o código…" />}
+                    accion={<BotonPrimario onClick={abrirNuevo}>Nuevo</BotonPrimario>} />
 
-                        {/* Menú overflow */}
-                        <div className="relative">
-                            <button onClick={() => setMenuOverflow(v => !v)}
-                                className="h-9 w-9 rounded-lg flex items-center justify-center bg-card text-muted shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuEllipsis size={15} /></button>
-                            {menuOverflow && createPortal(
-                                <>
-                                    <div className="fixed inset-0 bg-black/40 z-[60] md:bg-transparent" onClick={() => setMenuOverflow(false)} />
-                                    <div className="fixed inset-x-0 bottom-0 z-[61] rounded-t-2xl p-2 pb-6 md:absolute md:inset-auto md:right-0 md:top-full md:mt-1 md:bottom-auto md:rounded-xl md:p-0 md:py-1.5 md:w-52 bg-card shadow-2xl border-t border-black/[0.08] dark:border-white/[0.08] md:border">
-                                        <div className="w-10 h-1 rounded-full mx-auto mb-2 bg-chip md:hidden" />
-                                        <button onClick={() => { setModoSeleccion(true); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
-                                            <LuListChecks size={15} /> Seleccionar
-                                        </button>
-                                        <button onClick={() => { exportarTodos(); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
-                                            <LuDownload size={15} /> Exportar lista
-                                        </button>
-                                        <button onClick={() => { exportarCatalogoTodos(); setMenuOverflow(false); }}
-                                            className="w-full px-5 py-3.5 md:py-2.5 text-left text-body-lg md:text-body font-bold text-ink active:bg-[#E8E5E0] rounded-xl md:rounded-none flex items-center gap-2.5">
-                                            <LuFileText size={15} /> Exportar catálogo
-                                        </button>
-                                    </div>
-                                </>,
-                                document.body
-                            )}
-                        </div>
+                <Herramientas>
+                    <BotonHerramienta icono={LuArrowUpDown} activo={mostrarOrden} onClick={() => setMostrarOrden(v => !v)} textoEnCelular>
+                        {ORDEN_OPTIONS.find(o => o.value === ordenProductos)?.label || 'Orden'}
+                    </BotonHerramienta>
+                    <BotonHerramienta icono={LuPackage} onClick={() => setStockSheetOpen(true)}>Ajuste stock</BotonHerramienta>
+                    <BotonHerramienta icono={LuListChecks} activo={modoSeleccion} onClick={() => (modoSeleccion ? cancelarSeleccion() : setModoSeleccion(true))}>
+                        {modoSeleccion ? 'Cancelar' : 'Seleccionar'}
+                    </BotonHerramienta>
+                    <BotonHerramienta icono={LuDownload} onClick={exportarTodos}>Exportar lista</BotonHerramienta>
+                    <BotonHerramienta icono={LuFileText} onClick={exportarCatalogoTodos}>Catálogo</BotonHerramienta>
+                </Herramientas>
 
-                        <button onClick={abrirNuevo}
-                            className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label text-white uppercase items-center active:scale-95 bg-brand-red">+ Nuevo</button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
-
-                {/* Stats */}
-                <div className="flex items-center px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05]">
-                    <span className="text-caption font-bold text-muted">{productosFiltrados.length} productos</span>
+                {/* Resumen — misma línea de totales que Trabajos */}
+                <div className="flex flex-wrap items-baseline justify-end gap-x-3 gap-y-1 text-caption text-muted">
+                    {productos.length > 0 && (
+                        <span className="flex items-baseline gap-1.5">En mercadería
+                            <span className="text-body-lg font-black text-ink">${Math.round(valorTotalInventario).toLocaleString('es-AR')}</span></span>
+                    )}
+                    <span>· {productosFiltrados.length} producto{productosFiltrados.length !== 1 ? 's' : ''}</span>
+                    {itemsBajoStock > 0 && <span className="font-bold text-brand-red">· {itemsBajoStock} con stock bajo</span>}
                 </div>
 
                 {/* Orden — colapsado por defecto, se abre desde el chip del header */}
@@ -131,23 +103,6 @@ export default function RepuestoManager() {
                                 {o.label}
                             </button>
                         ))}
-                    </div>
-                )}
-
-                {/* Métricas — el hook ya las calculaba ("para el header", según su propio
-                    comentario) pero nunca se conectaron a la pantalla */}
-                {productos.length > 0 && (
-                    <div className="flex items-center justify-between px-3 h-8 rounded-lg bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] text-caption font-bold">
-                        <span className="flex items-center gap-1.5 text-muted">
-                            <span className="w-1.5 h-1.5 rounded-full bg-brand-amber" />
-                            ${Math.round(valorTotalInventario).toLocaleString('es-AR')} en mercadería
-                        </span>
-                        {itemsBajoStock > 0 && (
-                            <span className="flex items-center gap-1.5 text-brand-red">
-                                <span className="w-1.5 h-1.5 rounded-full bg-brand-red" />
-                                {itemsBajoStock} con stock bajo
-                            </span>
-                        )}
                     </div>
                 )}
 

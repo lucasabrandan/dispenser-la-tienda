@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CONTENEDOR, PantallaHeader, BotonHerramienta } from './ui/Pantalla';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { LuRefreshCw, LuMessageCircle, LuWrench } from 'react-icons/lu';
@@ -57,23 +58,14 @@ export default function RadarMantenimiento({ onCrearTrabajo }) {
     return (
         <div className="min-h-screen bg-page pb-28 transition-colors">
 
-            {/* Header sticky */}
-            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink">Radar</h2>
-                    <div className="flex items-center gap-2">
-                        <span className="text-caption font-bold text-muted">Dispensers que necesitan atención</span>
-                        <div className="flex-1" />
-                        <span className="text-body font-black text-brand-red">{alertas.length} equipos · {grupos.length} clientes</span>
-                        <button onClick={cargarAlertas}
-                            className="h-8 w-8 rounded-lg flex items-center justify-center bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 text-sm">
-                            <LuRefreshCw size={14} />
-                        </button>
-                    </div>
+            <div className={CONTENEDOR}>
+                <PantallaHeader titulo="Radar" subtitulo="Dispensers que necesitan atención">
+                    <BotonHerramienta icono={LuRefreshCw} onClick={cargarAlertas} title="Actualizar" />
+                </PantallaHeader>
+                <div className="flex items-baseline justify-end gap-2 text-caption text-muted">
+                    <span className="text-body-lg font-black text-ink">{alertas.length}</span> equipo{alertas.length !== 1 ? 's' : ''} · {grupos.length} cliente{grupos.length !== 1 ? 's' : ''}
                 </div>
-            </div>
 
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
 
             {/* Stats compacto */}
             {alertas.length > 0 && (

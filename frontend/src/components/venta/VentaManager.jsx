@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import VentaList   from './VentaList';
 import VentaForm   from './VentaForm';
 import Paginacion   from '../ui/Paginacion';
-import SwipeColumns from '../ui/SwipeColumns';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, BotonHerramienta, Herramientas, Pestanas } from '../ui/Pantalla';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { exportarVentasCSV } from '../../utils/exportarCSV';
@@ -22,7 +22,7 @@ const TABS = [
     // "Todo" — mismo patrón que ya tiene Servicio Técnico: búsqueda libre sin
     // filtro de estado, con rango de fechas. Jubila a "Historial" como pantalla
     // aparte (ver ServicioList.jsx, ahora sin uso — 26-ago).
-    { id: 'TODOS',        label: 'Todo',       short: 'Todo',    color: '#1C1917', Icon: LuLayers },
+    { id: 'TODOS',        label: 'Todo',       short: 'Todo',    color: null, Icon: LuLayers },
 ];
 
 const ESTADO_API_MAP = {
@@ -132,47 +132,19 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
         <div className="min-h-screen bg-page pb-28 font-sans transition-colors"
             {...swipeHandlers}>
 
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink mb-2.5">
-                        Ventas
-                    </h2>
-                    <div className="flex items-center gap-1.5">
-                        {/* Búsqueda — mismo componente que usan Servicio, Presupuestos, Clientes
-                            y Productos (Lucas, 7-sep-2026: unificar look y comportamiento) */}
-                        <BusquedaBar valor={filtros.busqueda} onChange={filtros.setBusqueda} placeholder="Cliente, producto, sede..." accent="amber" />
-
-                        {/* Antes escondia "Exportar CSV" detras de un menu "..." de un
-                            solo boton (Lucas, 7-sep-2026: no tenia sentido el clic extra
-                            para la unica accion que habia adentro) */}
-                        <button onClick={() => exportarVentasCSV(filtros.itemsFiltrados)}
-                            title="Exportar CSV"
-                            className="h-9 w-9 rounded-lg flex items-center justify-center text-muted bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95"><LuDownload size={15} /></button>
-
-                        {/* Lista de precios por cantidad (antes "Cotizar por volumen", estaba en
-                            Trabajos): es de venta mayorista, solo genera un PDF */}
-                        {esAdmin && (
-                            <button onClick={() => setListaPrecios(true)} title="Lista de precios por cantidad"
-                                className="h-9 px-2.5 rounded-lg flex items-center gap-1.5 text-label font-bold text-ink bg-card shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-95 shrink-0">
-                                <LuListOrdered size={15} /><span className="hidden sm:inline">Precios x cantidad</span>
-                            </button>
-                        )}
-
-                        {esAdmin && (
-                            <button onClick={() => setModalCrear(true)}
-                                className="hidden md:flex h-9 px-4 rounded-lg font-bold text-label uppercase items-center active:scale-95 bg-card text-ink border border-black/[0.08] dark:border-white/[0.08] shrink-0">
-                                + Venta
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 space-y-3">
+            <div className={CONTENEDOR}>
+                <PantallaHeader titulo="Ventas" subtitulo="Ventas de productos, de presupuesto a cobrada"
+                    busqueda={<BusquedaBar valor={filtros.busqueda} onChange={filtros.setBusqueda} placeholder="Cliente, producto, sede…" />}
+                    accion={esAdmin && <BotonPrimario onClick={() => setModalCrear(true)}>Nueva venta</BotonPrimario>} />
 
                 {/* SwipeColumns */}
-                <SwipeColumns columns={columns} activeId={tabActual} onChangeColumn={cambiarTab} />
+                <Pestanas items={TABS.map(t => ({ id: t.id, label: t.label, count: columns.find(c => c.id === t.id)?.count, color: t.color }))}
+                    activo={tabActual} onChange={cambiarTab} />
+
+                <Herramientas>
+                    <BotonHerramienta icono={LuDownload} onClick={() => exportarVentasCSV(filtros.itemsFiltrados)}>Exportar</BotonHerramienta>
+                    {esAdmin && <BotonHerramienta icono={LuListOrdered} onClick={() => setListaPrecios(true)}>Precios x cantidad</BotonHerramienta>}
+                </Herramientas>
 
                 {/* Filtros colapsables — solo en "Todo": las otras 3 pestañas ya filtran
                     por estado, acá es donde tiene sentido acotar por fecha */}
@@ -196,7 +168,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                 ) : filtros.itemsPagina.length === 0 ? (
                     <div className="text-center py-16 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
                         {(() => { const EmptyIcon = TABS.find(t => t.id === tabActual)?.Icon || LuShoppingCart; return <EmptyIcon size={32} className="mb-2 text-muted inline-block" />; })()}
-                        <p className="text-body font-bold text-muted">Sin ventas {(TABS.find(t => t.id === tabActual)?.label || '').toLowerCase()}</p>
+                        <p className="text-body font-bold text-muted">{tabActual === 'TODOS' ? 'No hay ventas en este período' : `No hay ventas en "${TABS.find(t => t.id === tabActual)?.label}"`}</p>
                         {esAdmin && (
                             <button onClick={() => setModalCrear(true)}
                                 className="mt-4 h-11 px-5 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">+ Cargar una venta</button>

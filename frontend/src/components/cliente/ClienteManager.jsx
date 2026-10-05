@@ -7,6 +7,7 @@ import { filtrarClientesPorBusqueda } from '../../utils/clienteUtils';
 import { toTitleCase } from '../../utils/titleCase';
 import { LuTriangleAlert } from 'react-icons/lu';
 import BusquedaBar from '../ui/BusquedaBar';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, Segmentado } from '../ui/Pantalla';
 import ClienteCard        from './ClienteCard';
 import ClienteRow         from './ClienteRow';
 import ClienteForm        from './ClienteForm';
@@ -99,33 +100,17 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta, abrirCre
     return (
         <div className="min-h-screen pb-20 bg-page transition-colors">
 
-            {/* Header sticky */}
-            <div className="sticky top-0 z-30 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3 space-y-2.5">
-                    <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink">
-                        Clientes
-                    </h2>
-                    <div className="flex gap-1.5 items-center">
-                        {/* Búsqueda — mismo componente que usan Servicio, Venta, Presupuestos
-                            y Productos (Lucas, 7-sep-2026: unificar look y comportamiento) */}
-                        <BusquedaBar valor={busqueda} onChange={v => { setBusqueda(v); setPagina(1); }}
-                            placeholder="Cliente, sede, teléfono, S/N..." />
-                        <button onClick={() => setModalOpen('nuevo')}
-                            className="h-9 px-4 rounded-lg font-bold text-label text-white uppercase transition-all active:scale-95 bg-brand-red shrink-0">
-                            + Nuevo
-                        </button>
-                    </div>
-                    <div className="flex items-center gap-2 text-label font-bold text-muted">
-                        <span>{filtrados.length} clientes ·</span>
-                        {[['visita', 'Última visita'], ['az', 'A-Z']].map(([id, l]) => (
-                            <button key={id} type="button" onClick={() => { setOrden(id); setPagina(1); }} aria-pressed={orden === id}
-                                className={`h-7 px-2.5 rounded-lg ${orden === id ? 'bg-chip text-ink' : 'text-muted'}`}>{l}</button>
-                        ))}
-                    </div>
-                </div>
-            </div>
+            <div className={CONTENEDOR}>
+                <PantallaHeader titulo="Clientes" subtitulo="Clientes, sedes y equipos"
+                    busqueda={<BusquedaBar valor={busqueda} onChange={v => { setBusqueda(v); setPagina(1); }} placeholder="Cliente, sede, teléfono, S/N…" />}
+                    accion={<BotonPrimario onClick={() => setModalOpen('nuevo')}>Nuevo</BotonPrimario>} />
 
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3">
+                <div className="flex items-center justify-between gap-2">
+                    <Segmentado opciones={[{ id: 'visita', label: 'Última visita' }, { id: 'az', label: 'A-Z' }]}
+                        valor={orden} onChange={id => { setOrden(id); setPagina(1); }} />
+                    <span className="text-caption text-muted">{filtrados.length} cliente{filtrados.length !== 1 ? 's' : ''}</span>
+                </div>
+
 
             {/* Mobile (< md): stack de tarjetas -- Opción B del rediseño */}
             <div className="md:hidden space-y-2">

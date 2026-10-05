@@ -88,7 +88,7 @@ export default function DashboardCaja({ setVistaActual }) {
 
     return (
         <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page">
-            <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 md:pt-6 space-y-5">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-5">
 
                 {/* 1. Saludo */}
                 <div className="flex justify-between items-start">
