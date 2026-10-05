@@ -174,7 +174,8 @@ export default function DashboardCaja({ setVistaActual }) {
 
             {ficha && (
                 <FichaVisitaSheet orden={ficha} onCerrar={() => setFicha(null)}
-                    onVerTrabajos={() => { setFicha(null); setVistaActual('trabajos'); }} />
+                    onVerTrabajos={() => { setFicha(null); setVistaActual('trabajos'); }}
+                    onEliminada={() => { setFicha(null); cargar(); }} />
             )}
             {modalCierre && (
                 <CierreCajaModal

@@ -39,6 +39,18 @@ public interface OrdenVisitaRepository extends JpaRepository<OrdenVisita, Long> 
     boolean existsByIdAndTecnicoId(Long id, Long tecnicoId);
     boolean existsByPresupuestoIdAndEstadoNotIn(Long presupuestoId, List<EstadoOrden> estados);
 
+    // Al borrar un trabajo, sus visitas se borran con él (5-oct-2026): quedaban
+    // "huérfanas" en la agenda apuntando a un trabajo que ya no existía.
+    @Modifying
+    @Query("DELETE FROM OrdenVisita o WHERE o.presupuestoId = :presupuestoId")
+    int borrarDePresupuesto(@Param("presupuestoId") Long presupuestoId);
+
+    // Limpieza de las que ya quedaron huérfanas antes de este arreglo
+    @Modifying
+    @Query("DELETE FROM OrdenVisita o WHERE o.presupuestoId IS NOT NULL AND NOT EXISTS " +
+           "(SELECT s.id FROM Servicio s WHERE s.id = o.presupuestoId)")
+    int borrarHuerfanas();
+
     // Cuando el servicio/presupuesto se cierra por otro camino (Presupuestos → "Cerrar
     // trabajo", cobro, archivar), la orden del técnico quedaba abierta para siempre:
     // así se acumularon las órdenes "activas" viejas. Esto las cierra junto con él.

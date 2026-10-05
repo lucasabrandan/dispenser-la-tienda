@@ -12,6 +12,7 @@ import com.dispenserlatienda.domain.servicio.Servicio;
 import com.dispenserlatienda.domain.usuario.RolUsuario;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.exception.ResourceNotFoundException;
+import com.dispenserlatienda.repository.orden.OrdenVisitaRepository;
 import com.dispenserlatienda.repository.servicio.ServicioRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.service.servicio.ServicioService;
@@ -37,13 +38,16 @@ public class ServicioController {
     private final ServicioService servicioService;
     private final ServicioRepository servicioRepository;
     private final UsuarioRepository usuarioRepository;
+    private final OrdenVisitaRepository ordenVisitaRepository;
 
     public ServicioController(ServicioService servicioService,
                               ServicioRepository servicioRepository,
-                              UsuarioRepository usuarioRepository) {
+                              UsuarioRepository usuarioRepository,
+                              OrdenVisitaRepository ordenVisitaRepository) {
         this.servicioService = servicioService;
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
+        this.ordenVisitaRepository = ordenVisitaRepository;
     }
 
     // GET: Listar servicios con filtros opcionales (tipo, estado, busqueda, desde, hasta, usuarioId, clienteId)
@@ -176,7 +180,10 @@ public class ServicioController {
     // DELETE: Eliminar servicio
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @org.springframework.transaction.annotation.Transactional
     public void eliminar(@PathVariable Long id) {
+        // Sus visitas se van con él, así no quedan en la agenda sin trabajo (5-oct-2026)
+        ordenVisitaRepository.borrarDePresupuesto(id);
         servicioRepository.deleteById(id);
     }
 
