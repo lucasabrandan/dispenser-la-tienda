@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LuCopy, LuX, LuArrowLeft, LuArrowRight } from 'react-icons/lu';
+import { LuCopy, LuX, LuArrowLeft, LuArrowRight, LuTrash2 } from 'react-icons/lu';
 import { uid } from './useMiEspacio';
 import AgregarInput from './AgregarInput';
 
@@ -34,6 +34,7 @@ export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
     const [renombrandoCol, setRenombrandoCol] = useState(null);     // id de la columna en edición de nombre
     const [arrastrando, setArrastrando] = useState(null);           // { colId, tarjetaId } de la tarjeta que se está arrastrando
     const [colSobrevolada, setColSobrevolada] = useState(null);     // id de la columna bajo el cursor mientras se arrastra
+    const [confirmarBorrar, setConfirmarBorrar] = useState(false);  // confirmación para eliminar el tablero activo
 
     // Arranca en el primer board apenas el espacio termina de cargar (o si el
     // board activo dejo de existir, ej. despues de que otra pestaña lo borre).
@@ -78,6 +79,15 @@ export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
         actualizar({ ...espacio, boards: [...espacio.boards, copia] });
         setBoardActivoId(copia.id);
         setRenombrandoBoard(copia.id); // el nombre generado queda editable al toque, sin prompt()
+    };
+
+    // Eliminar el tablero activo (5-oct-2026). Siempre queda al menos uno.
+    const eliminarBoardActual = () => {
+        const restantes = espacio.boards.filter(b => b.id !== boardActivo.id);
+        if (!restantes.length) return;
+        actualizar({ ...espacio, boards: restantes });
+        setBoardActivoId(restantes[0].id);
+        setConfirmarBorrar(false);
     };
 
     const renombrarColumna = (colId, nombre) => {
@@ -188,6 +198,20 @@ export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
                     className="shrink-0 px-3.5 py-1.5 rounded-full text-caption font-black whitespace-nowrap border border-dashed border-black/20 dark:border-white/20 text-muted flex items-center gap-1.5">
                     <LuCopy size={12} /> Duplicar
                 </button>
+                {espacio.boards.length > 1 && (confirmarBorrar ? (
+                    <span className="shrink-0 flex items-center gap-1.5 pl-1">
+                        <span className="text-caption font-bold text-ink whitespace-nowrap">¿Eliminar "{boardActivo.nombre}" y sus notas?</span>
+                        <button onClick={() => setConfirmarBorrar(false)}
+                            className="px-3 py-1.5 rounded-full text-caption font-black bg-chip text-secondary">No</button>
+                        <button onClick={eliminarBoardActual}
+                            className="px-3 py-1.5 rounded-full text-caption font-black bg-[#C9341F] text-white">Sí, eliminar</button>
+                    </span>
+                ) : (
+                    <button onClick={() => setConfirmarBorrar(true)} title="Eliminar tablero actual"
+                        className="shrink-0 px-3.5 py-1.5 rounded-full text-caption font-black whitespace-nowrap border border-black/10 dark:border-white/10 text-brand-red flex items-center gap-1.5">
+                        <LuTrash2 size={12} /> Eliminar
+                    </button>
+                ))}
             </div>
 
             {/* Tablero kanban */}
@@ -256,7 +280,7 @@ export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
                             ))}
                         </div>
 
-                        <AgregarInput placeholder="+ nota" onAgregar={texto => agregarNota(col.id, texto)} />
+                        <AgregarInput placeholder="Agregar una nota…" onAgregar={texto => agregarNota(col.id, texto)} />
                     </div>
                 ))}
             </div>
