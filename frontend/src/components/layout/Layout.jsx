@@ -101,15 +101,15 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                 <header className="md:hidden h-14 px-3 flex items-center justify-between sticky top-0 z-40 transition-colors flex-shrink-0 bg-panel border-b border-black/[0.08] dark:border-white/[0.07]">
 
                     {/* Logo + sección actual */}
-                    <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setVistaActual(esAdmin ? 'caja' : 'mis-ordenes')}>
-                        <img src={logo} alt="Dispenser La Tienda" className="h-12 w-auto" />
-                        <span className="font-black text-[14px] tracking-tight uppercase text-ink leading-none">
+                    <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => setVistaActual(esAdmin ? 'caja' : 'mis-ordenes')}>
+                        <img src={logo} alt="Dispenser La Tienda" className="h-12 w-auto shrink-0" />
+                        <span className="font-black text-[14px] tracking-tight uppercase text-ink leading-none truncate">
                             {NOMBRES_SECCION[vistaActual] || 'Dispenser'}
                         </span>
                     </div>
 
                     {/* Iconos derecha */}
-                    <div className="flex items-center gap-0.5">
+                    <div className="flex items-center gap-0.5 shrink-0">
                         <button
                             onClick={toggleMontos}
                             className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90 ${

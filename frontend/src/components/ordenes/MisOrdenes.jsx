@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote } from 'react-icons/lu';
+import { LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote, LuMessageSquare, LuCalendarX } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -17,8 +17,7 @@ import QueLlevarHoy from './QueLlevarHoy';
 import CargaPorSerieSheet from './CargaPorSerieSheet';
 import EquiposDeVisita from './EquiposDeVisita';
 import { etapaColor, etapaDeEstado, estiloEtiqueta } from '../../utils/estados';
-import { useAuth } from '../../context/AuthContext';
-import AvatarTecnico from '../ui/AvatarTecnico';
+import { PantallaHeader, BotonHerramienta, Herramientas } from '../ui/Pantalla';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -229,7 +228,6 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
 
 export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado, recargar } = useOrdenes({ tecnicoId });
-    const { usuario } = useAuth();
     const tab = 'activas'; // sin pestañas (4-oct-2026): agenda/completadas/rendimiento → "Mi mes"
     const [problema, setProblema] = useState(null); // orden con "Hubo un problema" abierto
     const [diasAbiertos, setDiasAbiertos] = useState(() => new Set());
@@ -361,6 +359,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     };
 
     // Resumen del dia
+    const fechaLarga = (() => { const t = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); return t.charAt(0).toUpperCase() + t.slice(1); })();
     const ordenesHoy = activas.filter(o => o.fechaProgramada === getTodayISO());
     const completadasHoy = historial.filter(o => o.estado === 'COMPLETADA' && o.fechaProgramada === getTodayISO());
     const proxima = ordenesHoy
@@ -386,7 +385,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     return (
         <>
         <div className="min-h-screen pb-28 bg-page">
-            <div className="max-w-2xl mx-auto px-4 pt-4">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6">
                 {/* Header */}
                 {modoSeleccion ? (
                     <div className="mb-4 flex items-center justify-between gap-2">
@@ -414,50 +413,29 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         </div>
                     </div>
                 ) : (
-                    <div className="mb-4 flex items-center justify-between gap-2">
-                        <div>
-                            <h1 className="text-body-lg font-black text-ink flex items-center gap-2">
-                                Hoy
-                                {usuario?.nombre && (
-                                    <span className="flex items-center gap-1.5 text-caption font-bold text-secondary">
-                                        <AvatarTecnico nombre={usuario.nombre} size={22} />
-                                        {usuario.nombre.split(' ')[0]}
-                                    </span>
-                                )}
-                            </h1>
-                            <p className="text-caption text-muted">{activas.length} pendiente{activas.length !== 1 ? 's' : ''}</p>
-                        </div>
-                        {tab === 'activas' && activas.length > 0 && (
-                            <button onClick={() => setModoSeleccion(true)}
-                                className="h-9 px-3 rounded-xl font-bold text-label text-secondary bg-chip active:scale-95 transition-all shrink-0 flex items-center gap-1">
-                                <LuMapPin size={14} /> Elegir para ruta
-                            </button>
-                        )}
+                    <div className="mb-4">
+                        <PantallaHeader subtituloEnCelular titulo="Hoy"
+                            subtitulo={`${fechaLarga} · ${activas.length} pendiente${activas.length !== 1 ? 's' : ''}`}>
+                            {tab === 'activas' && activas.length > 0 && (
+                                <BotonHerramienta icono={LuMapPin} onClick={() => setModoSeleccion(true)} textoEnCelular>Elegir para ruta</BotonHerramienta>
+                            )}
+                        </PantallaHeader>
                     </div>
                 )}
 
-                {/* Resumen del dia */}
-                {tab === 'activas' && ordenesHoy.length > 0 && (
-                    <div className="mb-4 p-3 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="text-center">
-                                    <p className="text-body-lg font-black text-ink leading-none">{ordenesHoy.length}</p>
-                                    <p className="text-label font-black text-muted uppercase">hoy</p>
-                                </div>
-                                <div className="w-px h-8 bg-black/[0.07] dark:bg-white/[0.07]" />
-                                <div className="text-center">
-                                    <p className="text-body-lg font-black text-[#16A34A] leading-none">{completadasHoy.length}</p>
-                                    <p className="text-label font-black text-muted uppercase">listas</p>
-                                </div>
+                {/* Resumen del día: siempre a la vista, grande (5-oct-2026) */}
+                {tab === 'activas' && (
+                    <div className="mb-4 grid grid-cols-3 gap-2 md:gap-3">
+                        {[
+                            ['Visitas hoy', ordenesHoy.length, 'text-ink'],
+                            ['Listas', completadasHoy.length, 'text-[#16A34A]'],
+                            ['Próxima', proxima?.horaEstimada || '—', 'text-brand-amber'],
+                        ].map(([l, v, c]) => (
+                            <div key={l} className="p-3 md:p-4 rounded-2xl bg-card border border-black/[0.07] dark:border-white/[0.07]">
+                                <p className="text-label font-black text-muted uppercase tracking-widest">{l}</p>
+                                <p className={`mt-1 text-2xl md:text-3xl font-black leading-none ${c}`}>{v}</p>
                             </div>
-                            {proxima && (
-                                <div className="text-right">
-                                    <p className="text-label font-black text-muted uppercase">Proxima</p>
-                                    <p className="text-body-lg font-black text-brand-amber leading-none">{proxima.horaEstimada}</p>
-                                </div>
-                            )}
-                        </div>
+                        ))}
                     </div>
                 )}
 
@@ -467,15 +445,11 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                     al Panel del admin. La carga por N/S se abre sola al cerrar una visita con
                     equipos; el técnico solo trabaja lo que le asignan. */}
                 {tab === 'activas' && (
-                    <div className="mb-4 grid grid-cols-2 gap-2">
-                        <button onClick={() => setSalida({ modo: 'mensaje' })}
-                            className="h-10 rounded-xl text-label font-bold text-ink bg-card border border-black/10 dark:border-white/10 active:scale-95">
-                            Avisar al admin
-                        </button>
-                        <button onClick={() => setSalida({ modo: 'hoy' })}
-                            className="h-10 rounded-xl text-label font-bold text-muted bg-card border border-black/10 dark:border-white/10 active:scale-95">
-                            No puedo trabajar hoy
-                        </button>
+                    <div className="mb-4">
+                        <Herramientas>
+                            <BotonHerramienta icono={LuMessageSquare} onClick={() => setSalida({ modo: 'mensaje' })} textoEnCelular>Avisar al admin</BotonHerramienta>
+                            <BotonHerramienta icono={LuCalendarX} onClick={() => setSalida({ modo: 'hoy' })} textoEnCelular>No puedo trabajar hoy</BotonHerramienta>
+                        </Herramientas>
                     </div>
                 )}
 

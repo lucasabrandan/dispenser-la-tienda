@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CONTENEDOR, PantallaHeader } from '../ui/Pantalla';
 import { useMiEspacio } from './useMiEspacio';
 import MiEspacioChecklist from './MiEspacioChecklist';
 import MiEspacioBoard from './MiEspacioBoard';
@@ -84,17 +85,8 @@ export default function MiEspacio() {
     return (
         <div className="min-h-screen bg-page pb-28 transition-colors">
 
-            {/* Header sticky */}
-            <div className="sticky top-0 z-10 bg-page border-b border-black/[0.04] dark:border-white/[0.04]">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 pb-3">
-                    <div className="flex items-center gap-2">
-                        <h2 className="hidden md:block text-2xl font-black uppercase tracking-tight text-ink">Mi Espacio</h2>
-                        <span className="text-caption font-bold text-muted md:ml-2">Notas propias, solo para vos</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 space-y-4">
+            <div className={CONTENEDOR}>
+                <PantallaHeader titulo="Mi Espacio" subtitulo="Notas propias, solo para vos" />
                 <div className={card}>
                     <p className="text-label font-bold uppercase tracking-wider text-muted mb-3">Notas rápidas</p>
                     <MiEspacioChecklist espacio={espacio} actualizar={actualizar} cargando={cargando} />

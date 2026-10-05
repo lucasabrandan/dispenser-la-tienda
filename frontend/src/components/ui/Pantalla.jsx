@@ -10,12 +10,13 @@ import { LuPlus } from 'react-icons/lu';
 export const CONTENEDOR = 'max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-3 md:space-y-4';
 
 // Encabezado: título (+ bajada) a la izquierda; búsqueda, extras y acción a la derecha
-export function PantallaHeader({ titulo, subtitulo, busqueda, accion, children }) {
+export function PantallaHeader({ titulo, subtitulo, busqueda, accion, children, subtituloEnCelular = false }) {
     return (
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-            <div className="hidden md:block">
-                <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-ink">{titulo}</h2>
-                {subtitulo && <p className="text-caption text-muted">{subtitulo}</p>}
+            {/* En celular el nombre de la pantalla ya está en la barra de arriba: no se repite */}
+            <div className={subtituloEnCelular && subtitulo ? '' : 'hidden md:block'}>
+                <h2 className="hidden md:block text-2xl md:text-3xl font-black uppercase tracking-tight text-ink">{titulo}</h2>
+                {subtitulo && <p className={`text-muted ${subtituloEnCelular ? 'text-body font-bold md:font-normal md:text-caption' : 'text-caption'}`}>{subtitulo}</p>}
             </div>
             {(busqueda || accion || children) && (
                 <div className="flex items-center gap-2 w-full md:w-auto">

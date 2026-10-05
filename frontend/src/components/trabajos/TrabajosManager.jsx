@@ -482,7 +482,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-ink">Trabajos</h2>
+                        <h2 className="hidden md:block text-2xl md:text-3xl font-black uppercase tracking-tight text-ink">Trabajos</h2>
                         <p className="hidden md:block text-caption text-muted">Cada trabajo, de presupuesto a cobrado, en una sola lista</p>
                     </div>
                     <div className="flex items-center gap-2 w-full md:w-auto">
