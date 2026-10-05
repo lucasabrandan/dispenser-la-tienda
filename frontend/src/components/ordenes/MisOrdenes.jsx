@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import DeslizarAcciones from '../ui/DeslizarAcciones';
+import ContactarClienteSheet from './ContactarClienteSheet';
 import { LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote, LuMessageSquare, LuCalendarX } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
@@ -63,6 +64,7 @@ const ESTADO_ANTERIOR = {
 function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblema, onConfirmar, onVerServicio, onHorarioConfirmado, seleccionando, seleccionada, onToggleSel }) {
     const [expandido, setExpandido] = useState(false);
     const [confirmandoHorario, setConfirmandoHorario] = useState(false);
+    const [contactando, setContactando] = useState(false);
     const aCoordinar = !!orden.horarioACoordinar;
 
     const pr  = PRIORIDAD_COLOR[orden.prioridad] || PRIORIDAD_COLOR.NORMAL;
@@ -159,6 +161,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                         <p className="mt-1.5 text-caption text-muted">Primero elegí cuándo vas; con eso el admin ya sabe que confirmaste.</p>
                     </div>
                 )}
+                {contactando && <ContactarClienteSheet orden={orden} onCerrar={() => setContactando(false)} />}
                 {confirmandoHorario && (
                     <ConfirmarHorarioSheet
                         servicio={{ id: orden.presupuestoId, ventanasDisponibles: orden.ventanasCliente, clienteNombre: orden.clienteNombre }}
@@ -233,10 +236,17 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                     )}
                     {/* Todo lo que sale mal, en un solo lugar (4-oct-2026): antes eran
                         3 botones sueltos (no atendió / no puedo ir / volver atrás). */}
-                    <button onClick={() => onProblema(orden)}
-                        className="w-full py-2 rounded-xl font-bold text-label text-muted bg-chip active:scale-95 transition-all">
-                        Hubo un problema
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                        {/* Contactar al cliente pasa por el admin: el técnico no tiene el teléfono (5-oct-2026) */}
+                        <button onClick={() => setContactando(true)}
+                            className="py-2 rounded-xl font-bold text-label text-secondary bg-chip active:scale-95 transition-all inline-flex items-center justify-center gap-1.5">
+                            <LuMessageSquare size={14} /> Contactar al cliente
+                        </button>
+                        <button onClick={() => onProblema(orden)}
+                            className="py-2 rounded-xl font-bold text-label text-muted bg-chip active:scale-95 transition-all">
+                            Hubo un problema
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

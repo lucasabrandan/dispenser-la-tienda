@@ -463,8 +463,8 @@ public class ServicioService {
 
     // Quita costos internos (costo de repuestos, % ganancia, costo interno) de lo que ve un técnico
     public ServicioDTO sinCostos(ServicioDTO d) {
-        if (d == null || d.items() == null) return d;
-        List<ServicioItemDTO> items = d.items().stream().map(i -> new ServicioItemDTO(
+        if (d == null) return d;
+        List<ServicioItemDTO> items = d.items() == null ? null : d.items().stream().map(i -> new ServicioItemDTO(
                 i.equipoId(), i.equipoSerial(), i.equipoModelo(), i.equipoUbicacion(), i.equipoPiso(), i.equipoSector(),
                 i.tecnico(), i.costo(), i.costoExtra(), null, i.descuento(), i.metodoPago(), i.trabajoRealizado(),
                 i.garantiaHasta(),
@@ -472,8 +472,9 @@ public class ServicioService {
                         r.id(), r.nombre(), r.sku(), r.descripcion(), r.fotoUrl(), r.cantidad(), r.precio(), r.subtotal(),
                         null, null)).toList(),
                 i.fotoAntes(), i.fotoDespues())).toList();
-        return new ServicioDTO(d.id(), d.fecha(), d.servicioTipo(), d.clienteId(), d.clienteNombre(), d.clienteTelefono(),
-                d.clienteEmail(), d.clienteDni(), d.clienteCondicionIva(), d.sedeId(), d.sedeNombre(), d.sedeDireccion(),
+        // Sin teléfono ni mail del cliente para el técnico (5-oct-2026)
+        return new ServicioDTO(d.id(), d.fecha(), d.servicioTipo(), d.clienteId(), d.clienteNombre(), null,
+                null, d.clienteDni(), d.clienteCondicionIva(), d.sedeId(), d.sedeNombre(), d.sedeDireccion(),
                 items, d.estado(), d.fotoRemito(), d.descuentoPorcentaje(), d.observaciones(), d.nroDocumento(),
                 d.usuarioId(), d.usuarioNombre(), d.modificadoPorNombre(), d.fechaModificacion(), d.presupuestoOrigenId(),
                 d.modalidadCobro(), d.montoFinal(), d.fechaCompletado(), d.fechaFacturacion(), d.fechaCobro(),

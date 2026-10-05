@@ -89,6 +89,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/importacion/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/ordenes").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/clientes").hasRole("ADMIN")
+                // Datos de un cliente (teléfono, mail): solo admin (5-oct-2026)
+                .requestMatchers(HttpMethod.GET, "/api/clientes/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/clientes").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/sedes").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/clientes/**").hasRole("ADMIN")

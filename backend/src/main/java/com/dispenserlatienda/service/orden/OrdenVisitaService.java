@@ -417,7 +417,7 @@ public class OrdenVisitaService {
             o.getDireccion(),
             o.getClienteId(),
             o.getClienteNombre(),
-            o.getClienteTelefono(),
+            esAdminActual() ? o.getClienteTelefono() : null, // el técnico no recibe el teléfono del cliente (5-oct-2026)
             o.getPrioridad().name(),
             o.getEstado().name(),
             o.getFechaProgramada(),
@@ -543,5 +543,47 @@ public class OrdenVisitaService {
         if (mensaje == null || mensaje.isBlank()) throw new IllegalArgumentException("Escribí el mensaje");
         avisarAdmins(TipoNotificacion.MENSAJE_LIBRE, tecnico,
             "Mensaje de " + tecnico.getNombre(), mensaje.trim(), null);
+    }
+
+    // ── Contacto con el cliente a través del admin (5-oct-2026) ─────────────────
+    // El técnico no tiene el teléfono de los clientes de la empresa: pide y el
+    // admin le escribe al cliente desde su WhatsApp, con el mensaje ya armado.
+    private static boolean esAdminActual() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+    }
+
+    public void pedirContactoCliente(Usuario tecnico, Long ordenId, String motivo, String detalle) {
+        OrdenVisita o = repo.findById(ordenId)
+            .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + ordenId));
+        String m = (motivo == null || motivo.isBlank()) ? "Otro" : motivo.trim();
+        String texto = m + (detalle != null && !detalle.isBlank() ? " · " + detalle.trim() : "");
+        String cliente = o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo();
+        avisarAdmins(TipoNotificacion.MENSAJE_LIBRE, tecnico, "Contactar al cliente · " + cliente, texto, o.getId());
+    }
+
+    public java.util.Map<String, Object> contactoCliente(Long ordenId) {
+        OrdenVisita o = repo.findById(ordenId)
+            .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + ordenId));
+        String tel = o.getClienteTelefono();
+        if ((tel == null || tel.isBlank()) && o.getPresupuestoId() != null) {
+            tel = servicioRepository.findById(o.getPresupuestoId())
+                .map(Servicio::getSede).filter(java.util.Objects::nonNull)
+                .map(Sede::getCliente).filter(java.util.Objects::nonNull)
+                .map(c -> c.getTelefono()).orElse(null);
+        }
+        java.util.Map<String, Object> r = new java.util.HashMap<>();
+        r.put("telefono", tel);
+        r.put("clienteNombre", o.getClienteNombre());
+        r.put("tecnicoNombre", o.getTecnico() != null ? o.getTecnico().getNombre() : null);
+        return r;
+    }
+
+    public void clienteAvisado(Usuario admin, Long ordenId) {
+        OrdenVisita o = repo.findById(ordenId)
+            .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + ordenId));
+        if (o.getTecnico() == null) return;
+        notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, o.getTecnico().getId(), admin.getId(),
+            "✓ El admin avisó al cliente", o.getClienteNombre(), o.getId(), false);
     }
 }

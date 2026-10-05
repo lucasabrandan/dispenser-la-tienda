@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LuBellOff, LuBell } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
+import ContactoClienteAcciones from './ContactoClienteAcciones';
+import { TITULO_CONTACTO } from '../../utils/contactoCliente';
 import { pushSoportado, estaSuscripto, activarNotificaciones, desactivarNotificaciones, resincronizar } from '../../utils/pushNotifications';
 
 const TIPO_CONFIG = {
@@ -231,6 +233,9 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo 
                                             )}
                                             {n.origenNombre && (
                                                 <p className="text-caption text-muted mt-0.5">de {n.origenNombre}</p>
+                                            )}
+                                            {n.referenciaId && String(n.titulo || '').startsWith(TITULO_CONTACTO) && (
+                                                <ContactoClienteAcciones notif={n} />
                                             )}
                                         </div>
                                     </div>

@@ -118,6 +118,30 @@ public class OrdenVisitaController {
         return ResponseEntity.noContent().build();
     }
 
+    // Técnico → admin: "Contactar al cliente" (el técnico no tiene el teléfono)
+    @PostMapping("/{id}/contactar-cliente")
+    public ResponseEntity<Void> contactarCliente(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
+        verificarAccesoOrden(id, auth);
+        service.pedirContactoCliente(resolverUsuario(auth), id, body.get("motivo"), body.get("detalle"));
+        return ResponseEntity.noContent().build();
+    }
+
+    // Admin: teléfono del cliente para escribirle (solo admin)
+    @GetMapping("/{id}/contacto")
+    public ResponseEntity<Map<String, Object>> contacto(@PathVariable Long id, Authentication auth) {
+        if (resolverUsuario(auth).getRol() != RolUsuario.ADMIN) throw new AccessDeniedException("Solo el admin");
+        return ResponseEntity.ok(service.contactoCliente(id));
+    }
+
+    // Admin: ya le escribió al cliente → se le avisa al técnico
+    @PostMapping("/{id}/cliente-avisado")
+    public ResponseEntity<Void> clienteAvisado(@PathVariable Long id, Authentication auth) {
+        Usuario u = resolverUsuario(auth);
+        if (u.getRol() != RolUsuario.ADMIN) throw new AccessDeniedException("Solo el admin");
+        service.clienteAvisado(u, id);
+        return ResponseEntity.noContent().build();
+    }
+
     // Badge: count activas totales (admin) o por técnico
     @GetMapping("/count-activas")
     public ResponseEntity<Map<String, Long>> countActivas(
