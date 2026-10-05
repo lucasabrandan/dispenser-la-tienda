@@ -348,7 +348,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
             cargar();
         } catch { toast.error('No se pudo guardar', { id: t }); }
     };
-    const pdf = async (s) => {
+    const pdf = async (s, { sinPrecios = false } = {}) => {
         const t = toast.loading('Generando PDF…');
         try {
             await generarRemitoPDFPremium({
@@ -359,7 +359,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 tecnico: s.items?.[0]?.tecnico || s.usuarioNombre || 'Técnico',
                 ticketItems: (s.items || []).map(it => ({ ...it, totalCalculado: parseFloat(it.costo) || 0, trabajo: it.trabajoRealizado || '' })),
                 fechaServicio: s.fecha, descuentoPorcentaje: s.descuentoPorcentaje || 0,
-                leyenda: s.observaciones || '', incluirFirmas: false,
+                leyenda: s.observaciones || '', incluirFirmas: false, sinPrecios,
             });
             toast.success('PDF generado', { id: t });
         } catch { toast.error('No se pudo generar el PDF', { id: t }); }

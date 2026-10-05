@@ -1,5 +1,5 @@
 import React from 'react';
-import { LuPencil, LuCopy, LuFileText, LuPause, LuPlay, LuArchive, LuTrash2, LuWrench, LuShoppingCart, LuCalendarPlus, LuRotateCcw, LuEye, LuCalendarX } from 'react-icons/lu';
+import { LuPencil, LuCopy, LuFileText, LuPause, LuPlay, LuArchive, LuTrash2, LuWrench, LuShoppingCart, LuCalendarPlus, LuRotateCcw, LuEye, LuCalendarX, LuClipboardList } from 'react-icons/lu';
 import ActionSheet from '../ui/ActionSheet';
 
 // Botón de una fila de menú (mismo estilo en los dos sheets)
@@ -44,6 +44,7 @@ export function TrabajoMenu({ fila, onClose, on }) {
             {editable && <Opcion Icon={LuPencil} label="Editar" onClick={run(() => on.editar(s, fila.orden))} />}
             {s && !esArchivado && <Opcion Icon={LuCopy} label="Duplicar" sub="Mismo cliente y equipos, nuevo presupuesto" onClick={run(() => on.duplicar(s))} />}
             {s && <Opcion Icon={LuFileText} label="PDF" onClick={run(() => on.pdf(s))} />}
+            {s && <Opcion Icon={LuClipboardList} label="PDF sin precios" onClick={run(() => on.pdf(s, { sinPrecios: true }))} />}
             {editable && (s.enEspera
                 ? <Opcion Icon={LuPlay} label="Retomar" sub="Vuelve a Presupuesto para asignar" onClick={run(() => on.espera(s, false))} />
                 : <Opcion Icon={LuPause} label="Poner en espera" sub="El cliente todavía no confirmó" onClick={run(() => on.espera(s, true))} />)}
