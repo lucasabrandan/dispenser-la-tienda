@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import CierreCajaModal from './finanzas/CierreCajaModal';
@@ -89,8 +90,11 @@ export default function DashboardCaja({ setVistaActual }) {
     const fechaLarga = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
     const rapido = 'h-16 rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.08] flex flex-col items-center justify-center gap-1 text-caption font-black text-ink active:scale-95';
 
+    const pull = usePullToRefresh(() => cargar());
+
     return (
-        <div className={PAGINA}>
+        <div className={PAGINA} {...pull.handlers}>
+            {pull.indicador}
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-5">
 
                 {/* 1. Saludo */}

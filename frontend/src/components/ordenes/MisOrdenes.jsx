@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import DeslizarAcciones from '../ui/DeslizarAcciones';
 import { LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote, LuMessageSquare, LuCalendarX } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
@@ -67,7 +69,22 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
     const sig = SIGUIENTE_ESTADO[orden.estado];
     const esFinal = orden.estado === 'COMPLETADA' || orden.estado === 'CANCELADA';
 
+    // Deslizar la tarjeta (5-oct-2026): → hace el paso que sigue, ← abre el mapa
+    const fechaOk = !orden.fechaProgramada || orden.fechaProgramada >= getTodayISO();
+    const listo = 'var(--etapa-listo)';
+    let derecha = null;
+    if (!esFinal && !seleccionando) {
+        if (aCoordinar) derecha = { label: 'Confirmar día y hora', color: listo, Icon: LuCircleCheck, accion: () => setConfirmandoHorario(true) };
+        else if (orden.estado === 'PENDIENTE' && !orden.confirmadaEn && onConfirmar && fechaOk) derecha = { label: 'Ok, voy', color: listo, Icon: LuCircleCheck, accion: () => onConfirmar(orden) };
+        else if (orden.estado === 'EN_SITIO') derecha = { label: 'Cerrar trabajo', color: listo, Icon: LuCircleCheck, accion: () => (orden.presupuestoId ? onEjecutar(orden) : onRegistrarTrabajo(orden)) };
+        else if (sig) derecha = { label: sig.label, color: sig.bg, Icon: sig.Icon, accion: () => onAvanzar(orden.id, sig.estado) };
+    }
+    const izquierda = !esFinal && !seleccionando && orden.direccion
+        ? { label: 'Mapa', color: '#3B82F6', Icon: LuMapPin, accion: () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(orden.direccion)}`, '_blank') }
+        : null;
+
     return (
+        <DeslizarAcciones derecha={derecha} izquierda={izquierda}>
         <div className={`rounded-2xl overflow-hidden bg-card border border-black/10 dark:border-white/[0.12] transition-all ${seleccionando && seleccionada ? 'ring-2 ring-brand-red' : ''} ${['EN_CAMINO', 'EN_SITIO'].includes(orden.estado) ? 'shadow-lg' : ''}`}
             style={{ borderLeft: `6px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}
             onClick={seleccionando ? () => onToggleSel(orden.id) : undefined}>
@@ -223,6 +240,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                 </div>
             )}
         </div>
+        </DeslizarAcciones>
     );
 }
 
@@ -382,9 +400,12 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
 
 
 
+    const pull = usePullToRefresh(() => recargar?.());
+
     return (
         <>
-        <div className={PAGINA}>
+        <div className={PAGINA} {...pull.handlers}>
+            {pull.indicador}
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6">
                 {/* Header */}
                 {modoSeleccion ? (

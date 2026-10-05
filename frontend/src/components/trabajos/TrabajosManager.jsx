@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePullToRefresh, unirGestos } from '../../hooks/usePullToRefresh';
+import { useMantenerApretado } from '../../hooks/useMantenerApretado';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { PAGINA, BotonFlotante } from '../ui/Pantalla';
 import { toast } from 'react-hot-toast';
@@ -479,8 +481,16 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
         return [...m.entries()].sort((a, b) => (a[0] ? 0 : 1) - (b[0] ? 0 : 1) || a[0].localeCompare(b[0]));
     }, [vista, visibles]);
 
+    const pull = usePullToRefresh(() => cargar());
+    // Mantener apretada una fila: entra en selección con esa fila elegida
+    const apretado = useMantenerApretado((f) => {
+        setSeleccionando(true);
+        setSeleccion(prev => { const n = new Set(prev); n.add(f.key); return n; });
+    });
+
     return (
-        <div className={PAGINA} {...swipeHandlers}>
+        <div className={PAGINA} {...unirGestos(swipeHandlers, pull.handlers)}>
+            {pull.indicador}
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-3 md:space-y-4">
 
                 {/* Header */}
@@ -651,12 +661,15 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                                     </p>
                                 )}
                                 {items.map(f => (
-                                    <TrabajoFila key={f.key} f={f} etapa={ETAPA[f.etapa]} boton={BOTON[f.accion]}
+                                    <div key={f.key} onTouchStart={e => apretado.onTouchStart(e, f)} onTouchMove={apretado.onTouchMove}
+                                        onTouchEnd={apretado.onTouchEnd} onClickCapture={apretado.onClickCapture}>
+                                    <TrabajoFila f={f} etapa={ETAPA[f.etapa]} boton={BOTON[f.accion]}
                                         textoSeguimiento={textoSeguimiento}
                                         onAbrir={() => f.servicio && setDetalle(f.servicio)}
                                         onMenu={() => setMenuFila(f)}
                                         seleccionando={seleccionando} seleccionado={seleccion.has(f.key)}
                                         onToggle={() => toggleSel(f.key)} />
+                                    </div>
                                 ))}
                             </div>
                         ))}

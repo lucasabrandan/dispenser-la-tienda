@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useArrastrarHojas } from '../../hooks/useArrastrarHojas';
 import logo from '../../assets/logo-dispenser.svg';
 import Sidebar from './Sidebar';
 import Drawer from './Drawer';
@@ -35,6 +36,7 @@ const NOMBRES_SECCION = {
 };
 
 export default function Layout({ children, vistaActual, setVistaActual }) {
+    useArrastrarHojas(); // celular: cerrar ventanas arrastrándolas hacia abajo
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [sidebarColapsado, setSidebarColapsado] = useState(false);
     const [notifAbierto, setNotifAbierto] = useState(false);
