@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { LuInbox, LuPin } from 'react-icons/lu';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -235,6 +236,8 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
     const [diaSel, setDiaSel] = useState(diaHoy);
     const enHoy = semanaOffset === 0 && diaSel === diaHoy;
     const volverHoy = () => { setSemanaOffset(0); setDiaSel(diaHoy); };
+    // Deslizar sobre la semana: semana anterior / siguiente
+    const swipeSemana = useSwipeGesture(['-1', '0', '1'], '0', id => setSemanaOffset(o => o + Number(id)));
     const [ordenes, setOrdenes] = useState([]);
     const [notas, setNotas] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -362,7 +365,7 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
                     </div>
                 )}
                 {/* Una semana */}
-                <div className="space-y-1.5 mb-4">
+                <div className="space-y-1.5 mb-4" data-noswipe {...swipeSemana}>
                     {[semana].map((fila, i) => (
                         <div key={i} className="grid grid-cols-6 gap-1.5">
                             {fila.map(d => (

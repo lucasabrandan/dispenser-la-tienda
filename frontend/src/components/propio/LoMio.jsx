@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { CONTENEDOR, PantallaHeader, Pestanas, PAGINA } from '../ui/Pantalla';
 import MiAgenda from '../ordenes/MiAgenda';
 import MisClientes from './MisClientes';
@@ -15,8 +16,9 @@ const SECCIONES = [
 export default function LoMio() {
     const { usuario } = useAuth();
     const [sec, setSec] = useState('agenda');
+    const swipeHandlers = useSwipeGesture(SECCIONES.map(x => x.id), sec, setSec);
     return (
-        <div className={PAGINA}>
+        <div className={PAGINA} {...swipeHandlers}>
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Lo mío" subtitulo="Tu agenda, tus días ocupados y tus clientes" />
                 <Pestanas items={SECCIONES} activo={sec} onChange={setSec} />

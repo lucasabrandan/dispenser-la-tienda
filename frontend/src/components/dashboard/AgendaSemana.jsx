@@ -4,6 +4,7 @@ import { colorTecnico, etapaColor, estadoLabel } from '../../utils/estados';
 import { formatDateISO, getTodayISO, lunesAgenda } from '../../utils/dateUtils';
 import AvatarTecnico from '../ui/AvatarTecnico';
 import { useBloqueos, labelFranja } from '../../utils/bloqueos';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 
 // Agenda del Panel (3-oct-2026): semana Lun–Sáb, un punto en los días con visitas,
 // y abajo las visitas del día elegido. Color del borde = etapa, punto = técnico.
@@ -18,6 +19,8 @@ export default function AgendaSemana({ ordenes = [], cargando, onAbrir }) {
     const [dia, setDia] = useState(diaHoy);
     const enHoy = offset === 0 && dia === diaHoy;
     const volverHoy = () => { setOffset(0); setDia(diaHoy); };
+    // Deslizar sobre la semana: semana anterior / siguiente
+    const swipeSemana = useSwipeGesture(['-1', '0', '1'], '0', id => setOffset(o => o + Number(id)));
 
     const semana = useMemo(() => {
         const l = lunesAgenda();
@@ -55,7 +58,7 @@ export default function AgendaSemana({ ordenes = [], cargando, onAbrir }) {
                         className="h-8 px-3 rounded-lg border border-brand-red text-label font-black text-ink active:scale-95">Hoy</button>
                 )}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5" data-noswipe {...swipeSemana}>
                 <button type="button" onClick={() => setOffset(o => o - 1)} aria-label="Semana anterior"
                     className="w-8 h-14 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronLeft size={16} /></button>
                 <div className="flex-1 grid grid-cols-6 gap-1.5">

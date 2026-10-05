@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { CONTENEDOR, PantallaHeader, BotonPrimario, Pestanas, PAGINA, BotonFlotante } from '../ui/Pantalla';
 import { toast } from 'react-hot-toast';
 import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword, eliminarUsuario } from '../../services/api';
@@ -140,8 +141,10 @@ export default function UsuariosManager() {
     const usuariosFiltrados = (filtroRol === 'TODOS' ? usuarios : usuarios.filter(u => u.rol === filtroRol))
         .filter(u => verInactivos || u.activo);
 
+    const swipeHandlers = useSwipeGesture(['TODOS', 'ADMIN', 'TECNICO'], filtroRol, setFiltroRol);
+
     return (
-        <div className={PAGINA}>
+        <div className={PAGINA} {...swipeHandlers}>
             <BotonFlotante onClick={abrirCrear} label="Nuevo usuario" />
 
             <div className={CONTENEDOR}>

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { PAGINA, BotonFlotante } from '../ui/Pantalla';
 import { toast } from 'react-hot-toast';
 import { LuTriangleAlert, LuX, LuMapPin, LuPlus, LuRoute, LuDownload, LuArchive, LuList, LuUsers, LuSquareCheck, LuTrash2, LuArchiveRestore } from 'react-icons/lu';
@@ -313,6 +314,8 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     const tituloTotal = q ? 'Encontrados' : { HECHO: 'Para cobrar', FACTURADO: 'Para cobrar', COBRADO: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}`, PRESUPUESTO: 'Presupuestado' }[etapa] || { hacer: 'Por hacer', marcha: 'En marcha', cobrar: 'Para cobrar', cobrado: `Cobrado · ${(PERIODOS.find(p => p.id === periodo)?.label || '').toLowerCase()}` }[grupo];
 
     const elegirGrupo = (id) => { setGrupo(id); setEtapa(null); setTec(''); };
+    // Deslizar el dedo a los costados cambia de grupo (como antes en Servicio Técnico)
+    const swipeHandlers = useSwipeGesture(verArchivados || q ? [] : GRUPOS.map(g => g.id), grupo, elegirGrupo);
 
     // ── Acciones ─────────────────────────────────────────────────────────────
     const patchServicio = async (id, estado, msg, extras = {}) => {
@@ -477,7 +480,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     }, [vista, visibles]);
 
     return (
-        <div className={PAGINA}>
+        <div className={PAGINA} {...swipeHandlers}>
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-3 md:space-y-4">
 
                 {/* Header */}

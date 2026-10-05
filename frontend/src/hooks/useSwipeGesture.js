@@ -9,6 +9,15 @@ import { useRef, useCallback } from 'react';
  * @param {function} onChange — callback al cambiar de columna
  * @param {object} opts — { threshold: px mínimos para considerar swipe }
  */
+function arrancaEnZonaPropia(el, raiz) {
+    for (let n = el; n && n !== raiz && n.nodeType === 1; n = n.parentElement) {
+        if (n.closest && n.matches('input, textarea, select, canvas, [data-noswipe], [role="dialog"], .fixed')) return true;
+        const st = window.getComputedStyle(n);
+        if ((st.overflowX === 'auto' || st.overflowX === 'scroll') && n.scrollWidth > n.clientWidth + 2) return true;
+    }
+    return false;
+}
+
 export function useSwipeGesture(columnIds, activeId, onChange, { threshold = 50 } = {}) {
     const startX = useRef(0);
     const startY = useRef(0);
@@ -17,7 +26,10 @@ export function useSwipeGesture(columnIds, activeId, onChange, { threshold = 50 
     const onTouchStart = useCallback((e) => {
         startX.current = e.touches[0].clientX;
         startY.current = e.touches[0].clientY;
-        swiping.current = true;
+        // No cambiar de pestaña si el dedo arrancó en algo que se desliza solo
+        // (fila de chips/herramientas con scroll, campos de texto, firma, mapas)
+        // o adentro de una ventana abierta (5-oct-2026).
+        swiping.current = !arrancaEnZonaPropia(e.target, e.currentTarget);
     }, []);
 
     const onTouchEnd = useCallback((e) => {
