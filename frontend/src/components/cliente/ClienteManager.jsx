@@ -7,7 +7,7 @@ import { filtrarClientesPorBusqueda } from '../../utils/clienteUtils';
 import { toTitleCase } from '../../utils/titleCase';
 import { LuTriangleAlert } from 'react-icons/lu';
 import BusquedaBar from '../ui/BusquedaBar';
-import { CONTENEDOR, PantallaHeader, BotonPrimario, Segmentado } from '../ui/Pantalla';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, Segmentado, PAGINA, BotonFlotante } from '../ui/Pantalla';
 import ClienteCard        from './ClienteCard';
 import ClienteRow         from './ClienteRow';
 import ClienteForm        from './ClienteForm';
@@ -98,7 +98,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta, abrirCre
     };
 
     return (
-        <div className="min-h-screen pb-20 bg-page transition-colors">
+        <div className={PAGINA}>
 
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Clientes" subtitulo="Clientes, sedes y equipos"
@@ -203,8 +203,7 @@ export default function ClienteManager({ onNuevoServicio, onNuevaVenta, abrirCre
             </div>{/* cierre max-w-6xl */}
 
             {/* FAB "+" (celular) — mismo lugar que en Trabajos, Venta y Productos */}
-            <button onClick={() => setModalOpen('nuevo')} aria-label="Nuevo cliente"
-                className="md:hidden fixed right-4 bottom-24 z-30 w-14 h-14 rounded-2xl bg-[#C9341F] text-white shadow-xl flex items-center justify-center text-3xl font-black active:scale-90">+</button>
+            <BotonFlotante onClick={() => setModalOpen('nuevo')} label="Nuevo cliente" />
 
             {/* MODALES */}
             <CrearClienteModal isOpen={modalOpen === 'nuevo'} onClose={() => setModalOpen(null)}

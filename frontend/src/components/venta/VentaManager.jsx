@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import VentaList   from './VentaList';
 import VentaForm   from './VentaForm';
 import Paginacion   from '../ui/Paginacion';
-import { CONTENEDOR, PantallaHeader, BotonPrimario, BotonHerramienta, Herramientas, Pestanas } from '../ui/Pantalla';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, BotonHerramienta, Herramientas, Pestanas, PAGINA, BotonFlotante } from '../ui/Pantalla';
 import FiltrosPanel from '../ui/FiltrosPanel';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { exportarVentasCSV } from '../../utils/exportarCSV';
@@ -129,7 +129,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     const swipeHandlers = useSwipeGesture(columnIds, tabActual, cambiarTab);
 
     return (
-        <div className="min-h-screen bg-page pb-28 font-sans transition-colors"
+        <div className={PAGINA}
             {...swipeHandlers}>
 
             <div className={CONTENEDOR}>
@@ -196,9 +196,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
                 header de esta pantalla: secundario, no ambar solido — el rojo de marca
                 queda como unico acento fuerte de la app (ver "Nuevo Servicio"). */}
             {esAdmin && (
-                <button onClick={() => setModalCrear(true)}
-                    className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center text-3xl font-black text-white bg-[#C9341F] active:scale-90 transition-all z-40"
-                    aria-label="Nueva venta">+</button>
+                <BotonFlotante onClick={() => setModalCrear(true)} label="Nueva venta" />
             )}
 
             {/* Modal crear/editar */}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LuSave } from 'react-icons/lu';
-import { CONTENEDOR, PantallaHeader, BotonPrimario } from '../ui/Pantalla';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, PAGINA } from '../ui/Pantalla';
 import { toast } from 'react-hot-toast';
 
 // Más › Configuración (3-oct-2026). Antes las condiciones del PDF estaban
@@ -36,7 +36,7 @@ export default function Configuracion() {
     };
 
     return (
-        <div className="min-h-screen pb-28 md:pb-10 bg-page font-sans">
+        <div className={PAGINA}>
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Configuración" subtitulo="Lo que sale impreso en presupuestos, remitos y cierres"
                     accion={<BotonPrimario icono={LuSave} onClick={guardar}>Guardar</BotonPrimario>} />

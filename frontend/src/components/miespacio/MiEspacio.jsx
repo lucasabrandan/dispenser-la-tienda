@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CONTENEDOR, PantallaHeader } from '../ui/Pantalla';
+import { CONTENEDOR, PantallaHeader, PAGINA } from '../ui/Pantalla';
 import { useMiEspacio } from './useMiEspacio';
 import MiEspacioChecklist from './MiEspacioChecklist';
 import MiEspacioBoard from './MiEspacioBoard';
@@ -83,7 +83,7 @@ export default function MiEspacio() {
     const { esAdmin } = useAuth();
 
     return (
-        <div className="min-h-screen bg-page pb-28 transition-colors">
+        <div className={PAGINA}>
 
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Mi Espacio" subtitulo="Notas propias, solo para vos" />

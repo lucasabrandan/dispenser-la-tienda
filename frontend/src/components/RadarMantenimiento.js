@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CONTENEDOR, PantallaHeader, BotonHerramienta } from './ui/Pantalla';
+import { CONTENEDOR, PAGINA, PantallaHeader, BotonHerramienta } from './ui/Pantalla';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
 import { LuRefreshCw, LuMessageCircle, LuWrench } from 'react-icons/lu';
@@ -56,7 +56,7 @@ export default function RadarMantenimiento({ onCrearTrabajo }) {
     );
 
     return (
-        <div className="min-h-screen bg-page pb-28 transition-colors">
+        <div className={PAGINA}>
 
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Radar" subtitulo="Dispensers que necesitan atención">

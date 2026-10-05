@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CONTENEDOR, PantallaHeader, BotonPrimario, Pestanas } from '../ui/Pantalla';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, Pestanas, PAGINA, BotonFlotante } from '../ui/Pantalla';
 import { toast } from 'react-hot-toast';
 import { getUsuarios, crearUsuario, editarUsuario, cambiarPassword, eliminarUsuario } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -141,11 +141,12 @@ export default function UsuariosManager() {
         .filter(u => verInactivos || u.activo);
 
     return (
-        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page transition-colors">
+        <div className={PAGINA}>
+            <BotonFlotante onClick={abrirCrear} label="Nuevo usuario" />
 
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Usuarios" subtitulo="Quién entra al sistema y con qué permisos"
-                    accion={<BotonPrimario enCelular onClick={abrirCrear}>Nuevo</BotonPrimario>} />
+                    accion={<BotonPrimario onClick={abrirCrear}>Nuevo</BotonPrimario>} />
 
                 <Pestanas activo={filtroRol} onChange={setFiltroRol}
                     items={['TODOS', 'ADMIN', 'TECNICO'].map(rol => ({

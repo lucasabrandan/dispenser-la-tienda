@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CONTENEDOR, PantallaHeader, Pestanas } from '../ui/Pantalla';
+import { CONTENEDOR, PantallaHeader, Pestanas, PAGINA } from '../ui/Pantalla';
 import MiAgenda from '../ordenes/MiAgenda';
 import MisClientes from './MisClientes';
 import MisDiasOcupados from './MisDiasOcupados';
@@ -16,7 +16,7 @@ export default function LoMio() {
     const { usuario } = useAuth();
     const [sec, setSec] = useState('agenda');
     return (
-        <div className="min-h-screen pb-28 bg-page">
+        <div className={PAGINA}>
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Lo mío" subtitulo="Tu agenda, tus días ocupados y tus clientes" />
                 <Pestanas items={SECCIONES} activo={sec} onChange={setSec} />

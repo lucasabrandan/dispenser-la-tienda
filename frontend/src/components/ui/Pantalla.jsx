@@ -7,19 +7,25 @@ import { LuPlus } from 'react-icons/lu';
 // fila de herramientas con bordes, y el contenido en el mismo ancho.
 
 // Contenedor: mismo ancho y aire en todas las pantallas
-export const CONTENEDOR = 'max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-3 md:space-y-4';
+// (si el encabezado está escondido en celular, lo siguiente arranca pegado arriba igual que en el resto)
+export const CONTENEDOR = 'max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-3 md:space-y-4 max-md:[&>.hidden:first-child+*]:mt-0';
+// Fondo de página: abajo deja lugar para la barra del celular + el botón "+" flotante
+export const PAGINA = 'min-h-screen pb-32 md:pb-10 bg-page font-sans';
+// Scroll horizontal sin barra visible (pestañas y herramientas en celular)
+const SIN_BARRA = '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
 
 // Encabezado: título (+ bajada) a la izquierda; búsqueda, extras y acción a la derecha
 export function PantallaHeader({ titulo, subtitulo, busqueda, accion, children, subtituloEnCelular = false }) {
     return (
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
+        <div className={`${busqueda || children || (subtituloEnCelular && subtitulo) ? 'flex' : 'hidden md:flex'} flex-col md:flex-row md:items-end justify-between gap-3`}>
             {/* En celular el nombre de la pantalla ya está en la barra de arriba: no se repite */}
             <div className={subtituloEnCelular && subtitulo ? '' : 'hidden md:block'}>
                 <h2 className="hidden md:block text-2xl md:text-3xl font-black uppercase tracking-tight text-ink">{titulo}</h2>
                 {subtitulo && <p className={`text-muted ${subtituloEnCelular ? 'text-body font-bold md:font-normal md:text-caption' : 'text-caption'}`}>{subtitulo}</p>}
             </div>
             {(busqueda || accion || children) && (
-                <div className="flex items-center gap-2 w-full md:w-auto">
+                // Solo el botón principal (que en celular se esconde) → la fila no ocupa lugar en celular
+                <div className={`${busqueda || children ? 'flex' : 'hidden md:flex'} items-center gap-2 w-full md:w-auto`}>
                     {busqueda && <div className="flex-1 md:w-80 flex">{busqueda}</div>}
                     {children}
                     {accion}
@@ -53,7 +59,7 @@ export function BotonHerramienta({ onClick, icono: Ic, children, activo = false,
 
 // Fila de herramientas (scroll horizontal en celular)
 export function Herramientas({ children }) {
-    return <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">{children}</div>;
+    return <div className={`flex items-center gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 ${SIN_BARRA}`}>{children}</div>;
 }
 
 // Selector chico segmentado (Lista / Por técnico, Última visita / A-Z)
@@ -74,7 +80,7 @@ export function Segmentado({ opciones, valor, onChange }) {
 // items: [{ id, label, count?, color? }]
 export function Pestanas({ items, activo, onChange }) {
     return (
-        <div className="flex gap-1 p-1 rounded-2xl bg-chip overflow-x-auto">
+        <div className={`flex gap-1 p-1 rounded-2xl bg-chip overflow-x-auto ${SIN_BARRA}`}>
             {items.map(t => {
                 const on = t.id === activo;
                 return (
@@ -89,5 +95,15 @@ export function Pestanas({ items, activo, onChange }) {
                 );
             })}
         </div>
+    );
+}
+
+// Botón "+" flotante del celular: mismo tamaño, lugar e ícono en todas las pantallas
+export function BotonFlotante({ onClick, label = 'Nuevo' }) {
+    return (
+        <button type="button" onClick={onClick} aria-label={label}
+            className="md:hidden fixed right-4 bottom-24 z-40 w-14 h-14 rounded-2xl bg-[#C9341F] text-white shadow-xl flex items-center justify-center active:scale-90">
+            <LuPlus size={26} />
+        </button>
     );
 }

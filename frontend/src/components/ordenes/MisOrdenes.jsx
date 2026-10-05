@@ -17,7 +17,7 @@ import QueLlevarHoy from './QueLlevarHoy';
 import CargaPorSerieSheet from './CargaPorSerieSheet';
 import EquiposDeVisita from './EquiposDeVisita';
 import { etapaColor, etapaDeEstado, estiloEtiqueta } from '../../utils/estados';
-import { PantallaHeader, BotonHerramienta, Herramientas } from '../ui/Pantalla';
+import { PAGINA, PantallaHeader, BotonHerramienta, Herramientas } from '../ui/Pantalla';
 
 const PRIORIDAD_COLOR = {
     BAJA:    { bg: 'bg-chip', tx: 'text-muted' },
@@ -384,7 +384,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
 
     return (
         <>
-        <div className="min-h-screen pb-28 bg-page">
+        <div className={PAGINA}>
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6">
                 {/* Header */}
                 {modoSeleccion ? (

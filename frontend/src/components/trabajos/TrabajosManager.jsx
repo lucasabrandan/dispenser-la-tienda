@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { PAGINA, BotonFlotante } from '../ui/Pantalla';
 import { toast } from 'react-hot-toast';
 import { LuTriangleAlert, LuX, LuMapPin, LuPlus, LuRoute, LuDownload, LuArchive, LuList, LuUsers, LuSquareCheck, LuTrash2, LuArchiveRestore } from 'react-icons/lu';
 import api from '../../services/api';
@@ -476,12 +477,12 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     }, [vista, visibles]);
 
     return (
-        <div className="min-h-screen pb-28 md:pb-10 bg-page font-sans">
+        <div className={PAGINA}>
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-3 md:space-y-4">
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-                    <div>
+                    <div className="hidden md:block">
                         <h2 className="hidden md:block text-2xl md:text-3xl font-black uppercase tracking-tight text-ink">Trabajos</h2>
                         <p className="hidden md:block text-caption text-muted">Cada trabajo, de presupuesto a cobrado, en una sola lista</p>
                     </div>
@@ -662,10 +663,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
 
             {/* FAB "+" (celular) — mismo lugar en Trabajos, Venta, Clientes y Productos */}
             {!seleccionando && (
-                <button type="button" onClick={() => setNuevoAbierto(true)} aria-label="Nuevo trabajo"
-                    className="md:hidden fixed right-4 bottom-24 z-40 w-14 h-14 rounded-2xl bg-[#C9341F] text-white shadow-xl flex items-center justify-center active:scale-90">
-                    <LuPlus size={26} />
-                </button>
+                <BotonFlotante onClick={() => setNuevoAbierto(true)} label="Nuevo trabajo" />
             )}
 
             {/* ── Modales ── */}

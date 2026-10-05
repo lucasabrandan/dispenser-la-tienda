@@ -191,13 +191,13 @@ export default function MiEspacioBoard({ espacio, actualizar, cargando }) {
             </div>
 
             {/* Tablero kanban */}
-            <div className="flex gap-3 md:gap-4 overflow-x-auto pb-1">
+            <div className="flex flex-col md:flex-row gap-3 md:gap-4 md:overflow-x-auto pb-1">
                 {boardActivo.columnas.map((col, colIdx) => (
                     <div key={col.id}
                         onDragOver={e => { e.preventDefault(); if (arrastrando) setColSobrevolada(col.id); }}
                         onDragLeave={() => setColSobrevolada(c => c === col.id ? null : c)}
                         onDrop={e => handleDrop(e, col.id)}
-                        className={`flex-1 min-w-[220px] flex flex-col rounded-xl transition-colors ${
+                        className={`flex-1 md:min-w-[220px] flex flex-col rounded-xl transition-colors ${
                             colSobrevolada === col.id ? 'bg-[#D13A28]/5 ring-2 ring-[#D13A28]/30' : ''
                         }`}>
                         <div className="flex items-center gap-2 mb-2.5 px-0.5">

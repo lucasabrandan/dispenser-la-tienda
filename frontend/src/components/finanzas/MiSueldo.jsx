@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CONTENEDOR, PantallaHeader } from '../ui/Pantalla';
+import { CONTENEDOR, PantallaHeader, PAGINA } from '../ui/Pantalla';
 import TabSueldo from './TabSueldo';
 import Liquidacion from './Liquidacion';
 
@@ -9,7 +9,7 @@ export default function MiSueldo() {
     const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
 
     return (
-        <div className="min-h-screen pb-28 bg-page">
+        <div className={PAGINA}>
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Mi mes" subtitulo="Lo que cobraste, tu parte y tu objetivo" />
                 <Liquidacion onMes={setFiltroMes} />

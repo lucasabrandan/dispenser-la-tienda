@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { LuPackage, LuListChecks, LuDownload, LuFileText, LuArrowUpDown } from 'react-icons/lu';
-import { CONTENEDOR, PantallaHeader, BotonPrimario, BotonHerramienta, Herramientas } from '../ui/Pantalla';
+import { CONTENEDOR, PantallaHeader, BotonPrimario, BotonHerramienta, Herramientas, PAGINA, BotonFlotante } from '../ui/Pantalla';
 import BusquedaBar from '../ui/BusquedaBar';
 import { useRepuestoManager } from '../../hooks/useRepuestoManager';
 import RepuestoCard from './RepuestoCard';
@@ -63,7 +63,7 @@ export default function RepuestoManager() {
     const swipeHandlers = useSwipeGesture(pageIds, String(pagina), handleSwipePage);
 
     return (
-        <div className="min-h-screen bg-page pb-32 font-sans transition-colors" {...swipeHandlers}>
+        <div className={PAGINA} {...swipeHandlers}>
 
             <div className={CONTENEDOR}>
                 <PantallaHeader titulo="Productos" subtitulo="Repuestos y productos: precios y stock"
@@ -171,9 +171,7 @@ export default function RepuestoManager() {
             </div>
 
             {/* FAB Nuevo — mobile */}
-            <button onClick={abrirNuevo}
-                className="md:hidden fixed bottom-24 right-4 w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center text-3xl font-black text-white bg-[#C9341F] active:scale-90 transition-all z-40"
-                aria-label="Nuevo producto">+</button>
+            <BotonFlotante onClick={abrirNuevo} label="Nuevo producto" />
 
             {/* Modales */}
             {modalPrecio && (
