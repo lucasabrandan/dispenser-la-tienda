@@ -9,8 +9,8 @@ export function Seccion({ titulo, link, onLink, children }) {
     return (
         <section className="space-y-2">
             <div className="flex items-center justify-between px-1">
-                <h3 className="text-label font-black uppercase tracking-widest text-muted">{titulo}</h3>
-                {link && <button type="button" onClick={onLink} className="text-caption font-bold text-secondary underline">{link}</button>}
+                <h3 className="text-caption font-bold text-muted">{titulo}</h3>
+                {link && <button type="button" onClick={onLink} className="text-caption font-bold text-muted underline underline-offset-2 hover:text-ink">{link}</button>}
             </div>
             {children}
         </section>

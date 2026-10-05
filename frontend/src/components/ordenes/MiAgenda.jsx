@@ -16,9 +16,8 @@ function generarSemana(offset = 0) {
     const lunes = lunesAgenda();
     lunes.setDate(lunes.getDate() + offset * 7);
     const dias = [];
-    // 2 semanas (5-oct-2026): lun–sáb de esta y de la próxima, para organizarse
-    for (let i = 0; i < 13; i++) {
-        if (i === 6) continue; // domingo
+    // Una semana lun–sáb (5-oct-2026: dos semanas era mucho)
+    for (let i = 0; i < 6; i++) {
         const d = new Date(lunes);
         d.setDate(lunes.getDate() + i);
         dias.push({
@@ -230,11 +229,14 @@ function CrearNotaSheet({ fecha, tecnicoId, onCreada, onCerrar }) {
 
 export default function MiAgenda({ tecnicoId, embebido = false }) {
     const [semanaOffset, setSemanaOffset] = useState(0);
-    const [diaSel, setDiaSel] = useState(() => {
+    const diaHoy = (() => {
         const d = new Date();
         if (d.getDay() === 0) d.setDate(d.getDate() + 1); // domingo → lunes (la grilla es lun–sáb)
         return formatDateISO(d);
-    });
+    })();
+    const [diaSel, setDiaSel] = useState(diaHoy);
+    const enHoy = semanaOffset === 0 && diaSel === diaHoy;
+    const volverHoy = () => { setSemanaOffset(0); setDiaSel(diaHoy); };
     const [ordenes, setOrdenes] = useState([]);
     const [notas, setNotas] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -331,8 +333,8 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
                             className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-card text-secondary shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                             ←
                         </button>
-                        {semanaOffset !== 0 && (
-                            <button onClick={() => setSemanaOffset(0)}
+                        {!enHoy && (
+                            <button onClick={volverHoy}
                                 className="h-9 px-3 rounded-xl font-bold text-label bg-card text-brand-red shadow-sm border border-black/[0.05] dark:border-white/[0.05] active:scale-90">
                                 Hoy
                             </button>
@@ -349,16 +351,22 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
                     <div className="flex items-center justify-between mb-2">
                         <button onClick={() => setSemanaOffset(v => v - 1)} aria-label="Semana anterior"
                             className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-card text-secondary border border-black/[0.05] dark:border-white/[0.05] active:scale-90">←</button>
-                        <button onClick={() => setSemanaOffset(0)} className="text-label font-black text-muted uppercase tracking-wider">
-                            {semanaOffset === 0 ? 'Esta semana y la próxima' : mesLabel}
-                        </button>
+                        <span className="flex items-center gap-2">
+                            <span className="text-label font-black text-muted uppercase tracking-wider">
+                                {semanaOffset === 0 ? 'Esta semana' : semanaOffset === 1 ? 'La que viene' : mesLabel}
+                            </span>
+                            {!enHoy && (
+                                <button onClick={volverHoy}
+                                    className="h-8 px-3 rounded-lg border border-brand-red text-label font-black text-ink active:scale-95">Hoy</button>
+                            )}
+                        </span>
                         <button onClick={() => setSemanaOffset(v => v + 1)} aria-label="Semana siguiente"
                             className="w-9 h-9 rounded-xl flex items-center justify-center font-bold bg-card text-secondary border border-black/[0.05] dark:border-white/[0.05] active:scale-90">→</button>
                     </div>
                 )}
-                {/* Dos semanas, una fila cada una */}
+                {/* Una semana */}
                 <div className="space-y-1.5 mb-4">
-                    {[semana.slice(0, 6), semana.slice(6)].map((fila, i) => (
+                    {[semana].map((fila, i) => (
                         <div key={i} className="grid grid-cols-6 gap-1.5">
                             {fila.map(d => (
                                 <DiaBtn key={d.fecha} d={d}

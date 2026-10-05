@@ -5,6 +5,8 @@ import CierreCajaModal from './finanzas/CierreCajaModal';
 import RendicionesBlock from './dashboard/RendicionesBlock';
 import BackupIndicador from './dashboard/BackupIndicador';
 import AgendaSemana from './dashboard/AgendaSemana';
+import FichaVisitaSheet from './dashboard/FichaVisitaSheet';
+import { PAGINA } from './ui/Pantalla';
 import { Seccion, ParaResolver, PlataBlock } from './dashboard/PanelBloques';
 import MiEspacioChecklist from './miespacio/MiEspacioChecklist';
 import { useMiEspacio } from './miespacio/useMiEspacio';
@@ -22,6 +24,7 @@ const ABIERTAS = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO'];
 const diasDesde = (f) => Math.floor((Date.now() - new Date(String(f).slice(0, 10) + 'T00:00:00').getTime()) / 86400000);
 
 export default function DashboardCaja({ setVistaActual }) {
+    const [ficha, setFicha] = useState(null); // visita abierta desde la agenda
     const { esAdmin, usuario } = useAuth();
     const [modalCierre, setModalCierre] = useState(false);
     // Herramientas por N/S (clientes con tarifa mensual) — vivían en "Hoy" del técnico (5-oct-2026)
@@ -87,7 +90,7 @@ export default function DashboardCaja({ setVistaActual }) {
     const rapido = 'h-16 rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.08] flex flex-col items-center justify-center gap-1 text-caption font-black text-ink active:scale-95';
 
     return (
-        <div className="min-h-screen pb-28 md:pb-8 font-sans bg-page">
+        <div className={PAGINA}>
             <div className="max-w-6xl mx-auto px-4 md:px-6 pt-4 md:pt-6 space-y-5">
 
                 {/* 1. Saludo */}
@@ -106,19 +109,12 @@ export default function DashboardCaja({ setVistaActual }) {
                 {esAdmin && (
                     <Seccion titulo="Agenda" link="Ver en Trabajos" onLink={() => setVistaActual('trabajos')}>
                         <div className="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06] p-3">
-                            <AgendaSemana ordenes={ordenes} cargando={cargando} onVerTrabajos={() => setVistaActual('trabajos')} />
+                            <AgendaSemana ordenes={ordenes} cargando={cargando} onAbrir={setFicha} />
                         </div>
                     </Seccion>
                 )}
 
-                {/* 3. Para resolver */}
-                {esAdmin && (
-                    <Seccion titulo="Para resolver">
-                        {cargando ? <div className="h-12 rounded-xl bg-card animate-pulse" /> : <ParaResolver alertas={alertas} />}
-                    </Seccion>
-                )}
-
-                {/* 4. Crear */}
+                {/* 3. Crear — arriba (Lucas, 5-oct-2026) */}
                 {esAdmin && (
                     <Seccion titulo="Crear">
                         <div className="grid grid-cols-3 gap-2">
@@ -145,12 +141,19 @@ export default function DashboardCaja({ setVistaActual }) {
                     </Seccion>
                 )}
 
-                {/* 5. Mis tareas */}
+                {/* 4. Mis tareas */}
                 <Seccion titulo="Mis tareas" link="Mi espacio" onLink={() => setVistaActual('mi-espacio')}>
                     <div className="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06] p-3.5">
                         <MiEspacioChecklist espacio={miEspacio.espacio} actualizar={miEspacio.actualizar} cargando={miEspacio.cargando} />
                     </div>
                 </Seccion>
+
+                {/* 5. Para resolver — debajo de Mis tareas */}
+                {esAdmin && (
+                    <Seccion titulo="Para resolver">
+                        {cargando ? <div className="h-12 rounded-xl bg-card animate-pulse" /> : <ParaResolver alertas={alertas} />}
+                    </Seccion>
+                )}
 
                 {/* 6. Rendiciones (solo aparece si hay algo para recibir) */}
                 {esAdmin && <RendicionesBlock card="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06]" />}
@@ -169,6 +172,10 @@ export default function DashboardCaja({ setVistaActual }) {
                 {esAdmin && <BackupIndicador />}
             </div>
 
+            {ficha && (
+                <FichaVisitaSheet orden={ficha} onCerrar={() => setFicha(null)}
+                    onVerTrabajos={() => { setFicha(null); setVistaActual('trabajos'); }} />
+            )}
             {modalCierre && (
                 <CierreCajaModal
                     onClose={() => setModalCierre(false)}

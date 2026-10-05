@@ -10,19 +10,23 @@ import { useBloqueos, labelFranja } from '../../utils/bloqueos';
 const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const VISIBLES = ['PENDIENTE', 'EN_CAMINO', 'EN_SITIO', 'COMPLETADA', 'NO_ATENDIDO'];
 
-export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) {
+export default function AgendaSemana({ ordenes = [], cargando, onAbrir }) {
     const hoy = getTodayISO();
+    // Domingo → se marca el lunes (la grilla es lun–sáb)
+    const diaHoy = (() => { const d = new Date(); if (d.getDay() === 0) d.setDate(d.getDate() + 1); return formatDateISO(d); })();
     const [offset, setOffset] = useState(0);
-    const [dia, setDia] = useState(hoy);
+    const [dia, setDia] = useState(diaHoy);
+    const enHoy = offset === 0 && dia === diaHoy;
+    const volverHoy = () => { setOffset(0); setDia(diaHoy); };
 
     const semana = useMemo(() => {
         const l = lunesAgenda();
         l.setDate(l.getDate() + offset * 7);
-        // 2 semanas (5-oct-2026): esta y la próxima, una fila cada una
-        return [0, 7].flatMap(base => DIAS.map((n, i) => {
-            const d = new Date(l); d.setDate(l.getDate() + base + i);
-            return { nombre: n, num: d.getDate(), iso: formatDateISO(d) };
-        }));
+        // Una semana (5-oct-2026, Lucas: dos semanas era mucho para el Panel)
+        return DIAS.map((n, i) => {
+            const d = new Date(l); d.setDate(l.getDate() + i);
+            return { nombre: n, num: d.getDate(), iso: formatDateISO(d), mes: d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '') };
+        });
     }, [offset]);
 
     const porDia = useMemo(() => {
@@ -42,9 +46,18 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
 
     return (
         <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2 px-1">
+                <span className="text-caption font-bold text-muted">
+                    {offset === 0 ? 'Esta semana' : offset === 1 ? 'La semana que viene' : `Semana del ${semana[0].num} ${semana[0].mes}`}
+                </span>
+                {!enHoy && (
+                    <button type="button" onClick={volverHoy}
+                        className="h-8 px-3 rounded-lg border border-brand-red text-label font-black text-ink active:scale-95">Hoy</button>
+                )}
+            </div>
             <div className="flex items-center gap-1.5">
                 <button type="button" onClick={() => setOffset(o => o - 1)} aria-label="Semana anterior"
-                    className="w-8 h-28 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronLeft size={16} /></button>
+                    className="w-8 h-14 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronLeft size={16} /></button>
                 <div className="flex-1 grid grid-cols-6 gap-1.5">
                     {semana.map(d => {
                         const sel = d.iso === dia;
@@ -60,7 +73,7 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
                     })}
                 </div>
                 <button type="button" onClick={() => setOffset(o => o + 1)} aria-label="Semana siguiente"
-                    className="w-8 h-28 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronRight size={16} /></button>
+                    className="w-8 h-14 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronRight size={16} /></button>
             </div>
 
             {ocupadosDia.map((b, i) => (
@@ -76,7 +89,7 @@ export default function AgendaSemana({ ordenes = [], cargando, onVerTrabajos }) 
             ) : (
                 <div className="space-y-2">
                     {delDia.map(o => (
-                        <button key={o.id} type="button" onClick={onVerTrabajos}
+                        <button key={o.id} type="button" onClick={() => onAbrir?.(o)}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-chip text-left active:scale-[0.99]"
                             style={{ borderLeft: `4px solid ${etapaColor(o.estado)}` }}>
                             <span className="w-11 shrink-0 text-caption font-black text-ink">{o.horaEstimada ? (String(o.horaEstimada).includes(':') ? String(o.horaEstimada).slice(0, 5) : String(o.horaEstimada).slice(0, 3) + '.') : '—'}</span>

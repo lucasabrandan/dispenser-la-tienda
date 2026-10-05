@@ -114,7 +114,7 @@ export default function MiEspacioChecklist({ espacio, actualizar, cargando }) {
                 </div>
             )}
 
-            <AgregarInput placeholder="+ tarea" onAgregar={agregar} />
+            <AgregarInput placeholder="Anotá algo para hoy…" onAgregar={agregar} />
         </div>
     );
 }
