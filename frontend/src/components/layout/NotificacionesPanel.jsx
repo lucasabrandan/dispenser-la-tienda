@@ -237,6 +237,10 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo 
                                             {n.referenciaId && String(n.titulo || '').startsWith(TITULO_CONTACTO) && (
                                                 <ContactoClienteAcciones notif={n} />
                                             )}
+                                            {/* El técnico salió: avisarle al cliente que va en camino (5-oct-2026) */}
+                                            {n.referenciaId && n.tipo === 'ORDEN_EN_CAMINO' && (
+                                                <ContactoClienteAcciones notif={n} motivo="Voy en camino" etiqueta="Avisarle al cliente que va en camino" />
+                                            )}
                                         </div>
                                     </div>
                                 );

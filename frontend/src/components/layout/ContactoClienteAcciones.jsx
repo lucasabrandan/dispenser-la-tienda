@@ -6,7 +6,7 @@ import { mensajeParaCliente, linkWhatsApp } from '../../utils/contactoCliente';
 
 // En la notificación "Contactar al cliente" (admin): trae el teléfono, muestra
 // el mensaje armado y abre WhatsApp / llamada. Al tocar, avisa al técnico.
-export default function ContactoClienteAcciones({ notif }) {
+export default function ContactoClienteAcciones({ notif, motivo, etiqueta = 'Escribirle al cliente' }) {
     const [datos, setDatos] = useState(null);
     const [cargando, setCargando] = useState(false);
     const [avisado, setAvisado] = useState(false);
@@ -28,11 +28,11 @@ export default function ContactoClienteAcciones({ notif }) {
         return (
             <button type="button" onClick={abrir} disabled={cargando}
                 className="mt-2 h-9 px-3 rounded-xl inline-flex items-center gap-1.5 bg-[#16A34A] text-white text-label font-black active:scale-95 disabled:opacity-60">
-                <LuMessageCircle size={14} /> {cargando ? 'Buscando…' : 'Escribirle al cliente'}
+                <LuMessageCircle size={14} /> {cargando ? 'Buscando…' : etiqueta}
             </button>
         );
     }
-    const texto = mensajeParaCliente(notif.mensaje, datos);
+    const texto = mensajeParaCliente(motivo || notif.mensaje, datos);
     const wa = linkWhatsApp(datos.telefono, texto);
     return (
         <div className="mt-2 space-y-2" onClick={e => e.stopPropagation()}>
