@@ -34,7 +34,7 @@ export function sonarAviso() {
     try { navigator.vibrate?.([200, 100, 200]); } catch { /* */ }
 }
 
-export default function AvisoUrgente({ notif, restantes = 0, onListo, onVerTodas }) {
+export default function AvisoUrgente({ notif, restantes = 0, onListo, onVerTodas, onVerVisita }) {
     // Mientras está abierto, la pestaña del navegador lo muestra en el título
     useEffect(() => {
         const original = document.title;
@@ -66,7 +66,9 @@ export default function AvisoUrgente({ notif, restantes = 0, onListo, onVerTodas
                     {enCamino && <ContactoClienteAcciones notif={notif} motivo="Voy en camino" etiqueta="Avisarle al cliente que va en camino" />}
                 </div>
                 <div className="flex gap-2 px-5 pb-5">
-                    <button type="button" onClick={onVerTodas} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Ver todas</button>
+                    {notif.referenciaId && onVerVisita && notif.tipo !== 'TRABAJO_ASIGNADO'
+                        ? <button type="button" onClick={onVerVisita} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Ver visita</button>
+                        : <button type="button" onClick={onVerTodas} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Ver todas</button>}
                     <button type="button" onClick={onListo} className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">Listo, lo vi</button>
                 </div>
             </div>

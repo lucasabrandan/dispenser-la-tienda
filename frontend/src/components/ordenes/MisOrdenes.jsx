@@ -88,7 +88,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
 
     return (
         <DeslizarAcciones derecha={derecha} izquierda={izquierda}>
-        <div className={`rounded-2xl overflow-hidden bg-card border border-black/10 dark:border-white/[0.12] transition-all ${seleccionando && seleccionada ? 'ring-2 ring-brand-red' : ''} ${['EN_CAMINO', 'EN_SITIO'].includes(orden.estado) ? 'shadow-lg' : ''}`}
+        <div id={`orden-${orden.id}`} className={`rounded-2xl overflow-hidden bg-card border border-black/10 dark:border-white/[0.12] transition-all ${seleccionando && seleccionada ? 'ring-2 ring-brand-red' : ''} ${['EN_CAMINO', 'EN_SITIO'].includes(orden.estado) ? 'shadow-lg' : ''}`}
             style={{ borderLeft: `6px solid ${BORDER_COLOR[orden.estado] || '#A8A29E'}` }}
             onClick={seleccionando ? () => onToggleSel(orden.id) : undefined}>
             <div className="p-4">
@@ -297,6 +297,29 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
 
     // Cargar historial al montar (resumen del dia) y al cambiar a tab historial
     useEffect(() => { cargarHistorial(); }, [cargarHistorial]);
+
+    // Llegó tocando una notificación: mostrar y resaltar esa visita (5-oct-2026)
+    useEffect(() => {
+        const resaltar = () => {
+            let id = null;
+            try { id = sessionStorage.getItem('resaltarOrden'); } catch { /* */ }
+            if (!id) return;
+            const o = ordenes.find(x => String(x.id) === id);
+            if (!o) return; // todavía no cargó, o ya no está activa
+            try { sessionStorage.removeItem('resaltarOrden'); } catch { /* */ }
+            if (o.fechaProgramada) setDiasAbiertos(prev => new Set(prev).add(o.fechaProgramada));
+            setTimeout(() => {
+                const el = document.getElementById(`orden-${id}`);
+                if (!el) return;
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('ring-4', 'ring-[#C9341F]');
+                setTimeout(() => el.classList.remove('ring-4', 'ring-[#C9341F]'), 2500);
+            }, 150);
+        };
+        resaltar();
+        window.addEventListener('resaltar-orden', resaltar);
+        return () => window.removeEventListener('resaltar-orden', resaltar);
+    }, [ordenes]);
 
     const [servicioEjecutando, setServicioEjecutando] = useState(null);
     const [ordenEjecutandoId, setOrdenEjecutandoId] = useState(null);

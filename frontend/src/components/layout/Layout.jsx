@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AvisoUrgente, { esUrgente, sonarAviso } from './AvisoUrgente';
+import FichaVisitaSheet from '../dashboard/FichaVisitaSheet';
 import { useArrastrarHojas } from '../../hooks/useArrastrarHojas';
 import logo from '../../assets/logo-dispenser.svg';
 import Sidebar from './Sidebar';
@@ -43,6 +44,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     const [notifAbierto, setNotifAbierto] = useState(false);
     const [notifCount, setNotifCount] = useState(0);
     const [trabajoDeepLinkId, setTrabajoDeepLinkId] = useState(null);
+    const [fichaOrden, setFichaOrden] = useState(null); // visita abierta desde una notificación (admin)
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
     const { logout, esAdmin } = useAuth();
@@ -73,6 +75,19 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             sonarAviso();
         } catch { /* silencio */ }
     }, [esAdmin]);
+    // Tocar una notificación de visita (5-oct-2026): el admin ve la ficha de la
+    // visita; el técnico va a "Hoy" con esa tarjeta resaltada.
+    const abrirOrden = async (ordenId) => {
+        setNotifAbierto(false);
+        if (esAdmin) {
+            try { const r = await api.get(`/ordenes/${ordenId}`); setFichaOrden(r.data); }
+            catch { setVistaActual('trabajos'); }
+        } else {
+            try { sessionStorage.setItem('resaltarOrden', String(ordenId)); } catch { /* */ }
+            setVistaActual('mis-ordenes');
+            window.dispatchEvent(new Event('resaltar-orden'));
+        }
+    };
     const listoUrgente = (n) => {
         api.patch(`/notificaciones/${n.id}/leer`).catch(() => {});
         setUrgentes(prev => prev.filter(x => x.id !== n.id));
@@ -207,11 +222,19 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             {urgentes.length > 0 && (
                 <AvisoUrgente notif={urgentes[0]} restantes={urgentes.length - 1}
                     onListo={() => listoUrgente(urgentes[0])}
-                    onVerTodas={() => { setUrgentes([]); setNotifAbierto(true); setNotifCount(0); }} />
+                    onVerTodas={() => { setUrgentes([]); setNotifAbierto(true); setNotifCount(0); }}
+                    onVerVisita={() => { const n = urgentes[0]; listoUrgente(n); abrirOrden(n.referenciaId); }} />
+            )}
+            {fichaOrden && (
+                <FichaVisitaSheet orden={fichaOrden} onCerrar={() => setFichaOrden(null)}
+                    onVerTrabajos={() => { setFichaOrden(null); setVistaActual('trabajos'); }}
+                    onEliminada={() => setFichaOrden(null)} />
             )}
             <NotificacionesPanel abierto={notifAbierto}
                 onCerrar={() => { setNotifAbierto(false); pollNotifs(); }}
                 onAbrirTrabajo={(servicioId) => { setNotifAbierto(false); setTrabajoDeepLinkId(servicioId); }}
+                onAbrirOrden={abrirOrden}
+                onSinReferencia={() => { setNotifAbierto(false); setVistaActual(esAdmin ? 'trabajos' : 'mis-ordenes'); }}
             />
             {trabajoDeepLinkId && (
                 <TrabajoDeepLink servicioId={trabajoDeepLinkId} onCerrar={() => setTrabajoDeepLinkId(null)} />

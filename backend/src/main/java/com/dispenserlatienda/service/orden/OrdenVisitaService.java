@@ -175,6 +175,12 @@ public class OrdenVisitaService {
             .map(this::toDTO).collect(Collectors.toList());
     }
 
+    // Una orden puntual (para abrirla desde una notificación, 5-oct-2026)
+    public OrdenVisitaDTO obtener(Long id) {
+        return repo.findById(id).map(this::toDTO)
+            .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
+    }
+
     // ── Técnico: listar mis órdenes activas ────────────────────────────────────
     public List<OrdenVisitaDTO> listarPorTecnico(Long tecnicoId) {
         List<EstadoOrden> excluidos = List.of(EstadoOrden.COMPLETADA, EstadoOrden.CANCELADA, EstadoOrden.NO_ATENDIDO);

@@ -48,7 +48,7 @@ export function NotifBell({ count, onClick }) {
 }
 
 // Panel desplegable de notificaciones
-export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo }) {
+export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo, onAbrirOrden, onSinReferencia }) {
     const [notifs, setNotifs] = useState([]);
     const [cargando, setCargando] = useState(false);
     // 'cargando' | 'no-soportado' | 'denegado' | 'inactivo' | 'activo'
@@ -213,6 +213,11 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo 
                                             // de detalle para ellos todavia.
                                             if (n.tipo === 'TRABAJO_ASIGNADO' && n.referenciaId && onAbrirTrabajo) {
                                                 onAbrirTrabajo(n.referenciaId);
+                                            } else if (n.referenciaId && onAbrirOrden) {
+                                                // El resto con referencia son visitas (5-oct-2026): se abre esa visita
+                                                onAbrirOrden(n.referenciaId);
+                                            } else if (onSinReferencia) {
+                                                onSinReferencia();
                                             }
                                         }}
                                         className={`px-4 py-3 flex gap-3 items-start transition-colors cursor-pointer active:bg-[#EFEDEA] dark:active:bg-[#1C1C1B] ${

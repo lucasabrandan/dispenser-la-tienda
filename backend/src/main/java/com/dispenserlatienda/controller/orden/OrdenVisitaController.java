@@ -118,6 +118,13 @@ public class OrdenVisitaController {
         return ResponseEntity.noContent().build();
     }
 
+    // Una visita puntual (admin, o el técnico si es suya) — para abrirla desde la campanita
+    @GetMapping("/{id}")
+    public ResponseEntity<OrdenVisitaDTO> obtener(@PathVariable Long id, Authentication auth) {
+        verificarAccesoOrden(id, auth);
+        return ResponseEntity.ok(service.obtener(id));
+    }
+
     // Técnico → admin: "Contactar al cliente" (el técnico no tiene el teléfono)
     @PostMapping("/{id}/contactar-cliente")
     public ResponseEntity<Void> contactarCliente(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
