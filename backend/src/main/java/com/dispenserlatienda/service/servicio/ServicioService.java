@@ -492,6 +492,8 @@ public class ServicioService {
 
         boolean esNuevo = servicio.getId() == null;
         Long usuarioAnteriorId = servicio.getUsuario() != null ? servicio.getUsuario().getId() : null;
+        java.time.LocalDate fechaAnterior = servicio.getFechaServicio();
+        String horaAnterior = servicio.getHoraServicio();
         servicio.setSede(sede);
         servicio.setUsuario(usuario);
         if (esNuevo) {
@@ -644,14 +646,39 @@ public class ServicioService {
         // Acá solo queda la REASIGNACIÓN: la orden abierta pasa al técnico nuevo (antes
         // quedaba en la agenda del anterior) y se avisa una sola vez.
         boolean seReasigno = !esNuevo && usuarioAnteriorId != null && !usuarioAnteriorId.equals(usuario.getId());
+        List<com.dispenserlatienda.domain.orden.EstadoOrden> ACTIVAS = List.of(
+                com.dispenserlatienda.domain.orden.EstadoOrden.PENDIENTE,
+                com.dispenserlatienda.domain.orden.EstadoOrden.EN_CAMINO,
+                com.dispenserlatienda.domain.orden.EstadoOrden.EN_SITIO);
+        String detalle = (saved.getClienteNombre() != null ? saved.getClienteNombre() : "")
+                + (saved.getSedeNombre() != null ? " · " + saved.getSedeNombre() : "");
         if (seReasigno && saved.getServicioTipo() == ServicioTipo.TECNICA) {
             int movidas = ordenVisitaRepository.reasignarActivasDePresupuesto(saved.getId(), usuario);
-            String detalle = (saved.getClienteNombre() != null ? saved.getClienteNombre() : "")
-                    + (saved.getSedeNombre() != null ? " · " + saved.getSedeNombre() : "");
+            // La referencia apunta a la visita (si hay) para que al tocar la notificación se abra (5-oct-2026)
+            Long refOrden = movidas > 0 ? ordenVisitaRepository.findByPresupuestoIdAndEstadoIn(saved.getId(), ACTIVAS)
+                    .stream().map(com.dispenserlatienda.domain.orden.OrdenVisita::getId).findFirst().orElse(null) : null;
             notificacionService.notificar(
                     movidas > 0 ? TipoNotificacion.ORDEN_ASIGNADA : TipoNotificacion.TRABAJO_ASIGNADO,
                     usuario.getId(), null,
-                    "Te asignaron un trabajo", detalle, saved.getId(), false);
+                    "Te asignaron un trabajo", detalle, refOrden != null ? refOrden : saved.getId(), false);
+        } else if (!esNuevo && saved.getServicioTipo() == ServicioTipo.TECNICA && saved.getFechaServicio() != null
+                && (!java.util.Objects.equals(fechaAnterior, saved.getFechaServicio())
+                    || !java.util.Objects.equals(horaAnterior, saved.getHoraServicio()))) {
+            // Mismo técnico, otro día/hora (5-oct-2026): antes la visita del técnico
+            // quedaba con la fecha vieja y no se enteraba. Se mueve y se le avisa.
+            for (var o : ordenVisitaRepository.findByPresupuestoIdAndEstadoIn(saved.getId(), ACTIVAS)) {
+                o.setFechaProgramada(saved.getFechaServicio());
+                o.setHoraEstimada(saved.getHoraServicio());
+                o.setConfirmadaEn(null); // tiene que volver a confirmar "Ok, voy"
+                ordenVisitaRepository.save(o);
+                if (o.getTecnico() != null) {
+                    String cuando = saved.getFechaServicio().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM"))
+                            + (saved.getHoraServicio() != null && !saved.getHoraServicio().isBlank() ? " " + saved.getHoraServicio() : "");
+                    notificacionService.notificar(TipoNotificacion.ORDEN_ASIGNADA, o.getTecnico().getId(), null,
+                            "Cambió tu visita · " + (saved.getClienteNombre() != null ? saved.getClienteNombre() : ""),
+                            "Nuevo día: " + cuando, o.getId(), false);
+                }
+            }
         }
 
         return mapToDTO(saved);
