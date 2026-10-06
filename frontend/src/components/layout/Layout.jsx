@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'react-hot-toast';
+import { TITULO_CONTACTO } from '../../utils/contactoCliente';
 import { useArrastrarHojas } from '../../hooks/useArrastrarHojas';
 import logo from '../../assets/logo-dispenser.svg';
 import Sidebar from './Sidebar';
@@ -50,12 +52,41 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     // al lado del resto de los accesos rápidos del header, a un tap de distancia.
     const [confirmLogoutAbierto, setConfirmLogoutAbierto] = useState(false);
 
+    // Aviso flotante (admin, 5-oct-2026): cuando el técnico sale o pide contactar al
+    // cliente, además de la campanita aparece un cartel con "Avisarle al cliente".
+    const vistos = useRef(null);
+    const ultimoCount = useRef(0);
+    const avisarFlotante = useCallback(async () => {
+        try {
+            const r = await api.get('/notificaciones');
+            const lista = (r.data || []).filter(n => !n.leida);
+            if (vistos.current === null) { vistos.current = new Set(lista.map(n => n.id)); return; }
+            lista.filter(n => !vistos.current.has(n.id)).forEach(n => {
+                vistos.current.add(n.id);
+                const contacto = String(n.titulo || '').startsWith(TITULO_CONTACTO);
+                if (!(n.referenciaId && (contacto || n.tipo === 'ORDEN_EN_CAMINO'))) return;
+                const quien = (n.origenNombre || 'El técnico').split(' ')[0];
+                const texto = contacto ? `${quien} pide que le escribas al cliente · ${n.mensaje || ''}` : `${quien} salió para ${n.mensaje || n.titulo}`;
+                toast(t => (
+                    <span className="flex items-center gap-3">
+                        <span className="text-body">{texto}</span>
+                        <button type="button" onClick={() => { toast.dismiss(t.id); setNotifAbierto(true); setNotifCount(0); }}
+                            className="shrink-0 h-9 px-3 rounded-lg bg-[#16A34A] text-white text-label font-black">Avisarle al cliente</button>
+                    </span>
+                ), { duration: 15000, id: `notif-${n.id}` });
+            });
+        } catch { /* silencio */ }
+    }, []);
+
     const pollNotifs = useCallback(async () => {
         try {
             const res = await api.get('/notificaciones/count');
-            setNotifCount(res.data?.count || 0);
+            const c = res.data?.count || 0;
+            setNotifCount(c);
+            if (esAdmin && (vistos.current === null || c > ultimoCount.current)) avisarFlotante();
+            ultimoCount.current = c;
         } catch { /* silencio */ }
-    }, []);
+    }, [esAdmin, avisarFlotante]);
 
     useEffect(() => {
         pollNotifs();

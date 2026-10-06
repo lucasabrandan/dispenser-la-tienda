@@ -257,7 +257,8 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
             ]);
             // Filtrar ordenes de esta semana
             const todas = resOrdenes.data || [];
-            const enSemana = todas.filter(o => o.fechaProgramada >= desde && o.fechaProgramada <= hasta);
+            // Las canceladas (pausadas o devueltas) no se muestran en la agenda (5-oct-2026)
+            const enSemana = todas.filter(o => o.fechaProgramada >= desde && o.fechaProgramada <= hasta && o.estado !== 'CANCELADA');
             setOrdenes(enSemana);
             setNotas(resNotas.data || []);
         } catch {

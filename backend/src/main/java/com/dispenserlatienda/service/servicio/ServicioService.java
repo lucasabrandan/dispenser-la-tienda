@@ -719,6 +719,15 @@ public class ServicioService {
         }
         s.setEnEspera(enEspera);
         if (enEspera) {
+            // Avisarle al técnico que esa visita ya no va (5-oct-2026: antes le quedaba "Cancelada" sin explicación)
+            ordenVisitaRepository.findByPresupuestoIdAndEstadoIn(s.getId(), List.of(
+                    com.dispenserlatienda.domain.orden.EstadoOrden.PENDIENTE,
+                    com.dispenserlatienda.domain.orden.EstadoOrden.EN_CAMINO,
+                    com.dispenserlatienda.domain.orden.EstadoOrden.EN_SITIO))
+                .forEach(o -> { if (o.getTecnico() != null) notificacionService.notificar(
+                    com.dispenserlatienda.domain.notificacion.TipoNotificacion.MENSAJE_LIBRE, o.getTecnico().getId(), null,
+                    "Visita en pausa · " + (o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo()),
+                    "El admin la puso en espera: no vayas por ahora. Te avisa cuando se reprograme.", o.getId(), true); });
             ordenVisitaRepository.cancelarActivasDePresupuesto(s.getId());
             if (s.getEstado() == EstadoServicio.EN_PROGRESO) s.setEstado(EstadoServicio.PRESUPUESTO);
         }

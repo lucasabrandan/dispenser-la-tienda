@@ -100,7 +100,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
         <>
             <div className="fixed inset-0 bg-black/60 z-[999] backdrop-blur-sm" onClick={!ordenCreada ? onCerrar : undefined} />
             <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[1000] p-0 sm:p-4 md:pl-[calc(var(--modal-sb,0px)+1.5rem)] md:pr-6">
-                <div className="bg-card rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-md border border-black/[0.07] dark:border-white/[0.07] shadow-2xl">
+                <div className="bg-card rounded-t-[2rem] sm:rounded-[2rem] w-full sm:max-w-md border border-black/[0.07] dark:border-white/[0.07] shadow-2xl max-h-[calc(var(--vh,1vh)*92)] overflow-y-auto overscroll-contain">
 
                     {/* Handle */}
                     <div className="w-10 h-1 rounded-full mx-auto mt-3 bg-chip sm:hidden" />
@@ -166,7 +166,7 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                         </div>
                     ) : (
                         /* ── Formulario ──────────────────────────────────── */
-                        <div className="px-6 pb-6 space-y-4">
+                        <div className="px-6 space-y-4">
                             {cargando ? (
                                 <div className="py-8 text-center text-muted text-sm">Cargando técnicos…</div>
                             ) : (
@@ -224,7 +224,8 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                                     )}
 
                                     {/* Botones */}
-                                    <div className="flex gap-2 pt-1">
+                                    {/* Botones fijos abajo: siempre a la vista aunque el contenido sea largo (5-oct-2026) */}
+                                    <div className="sticky bottom-0 -mx-6 px-6 pt-3 pb-4 bg-card border-t border-black/[0.06] dark:border-white/[0.06] flex gap-2">
                                         <button type="button" onClick={onCerrar}
                                             className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95">
                                             Cancelar

@@ -39,6 +39,8 @@ public interface OrdenVisitaRepository extends JpaRepository<OrdenVisita, Long> 
     boolean existsByIdAndTecnicoId(Long id, Long tecnicoId);
     boolean existsByPresupuestoIdAndEstadoNotIn(Long presupuestoId, List<EstadoOrden> estados);
 
+    List<OrdenVisita> findByPresupuestoIdAndEstadoIn(Long presupuestoId, List<EstadoOrden> estados);
+
     // Al borrar un trabajo, sus visitas se borran con él (5-oct-2026): quedaban
     // "huérfanas" en la agenda apuntando a un trabajo que ya no existía.
     @Modifying
