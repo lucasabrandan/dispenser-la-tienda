@@ -16,7 +16,7 @@ import IniciarTrabajoSheet from '../presupuesto/IniciarTrabajoSheet';
 import ModalDespacharPresupuesto from '../presupuesto/ModalDespacharPresupuesto';
 import EjecutarAdminSheet from '../servicio/EjecutarAdminSheet';
 import CobroSheet from '../servicio/CobroSheet';
-import DetalleSheet from '../servicio/DetalleSheet';
+import DetalleTrabajoSheet from './DetalleTrabajoSheet';
 import OrdenForm from '../ordenes/OrdenForm';
 import VisitaForm from '../ordenes/VisitaForm';
 import ReprogramarSheet from '../ordenes/ReprogramarSheet';
@@ -745,7 +745,19 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                         else patchServicio(servicio.id, 'ARCHIVADO', 'Archivado');
                     }} />
             )}
-            {detalle && <DetalleSheet servicio={detalle} onCerrar={() => setDetalle(null)} />}
+            {detalle && (() => {
+                const f = filas.find(x => x.servicio?.id === detalle.id) || filasArchivadas.find(x => x.servicio?.id === detalle.id);
+                const orden = f?.orden || null;
+                const total = f?.monto ?? (Number(detalle.montoFinal) > 0 ? Number(detalle.montoFinal) : totalItems(detalle));
+                const editable = !['COBRADO', 'ARCHIVADO', 'CANCELADO'].includes(detalle.estado);
+                return (
+                    <DetalleTrabajoSheet servicio={detalle} orden={orden} total={total}
+                        onCerrar={() => setDetalle(null)}
+                        onEditar={editable ? () => { setDetalle(null); setEditor({ modo: 'editar', servicio: detalle, orden }); } : null}
+                        onReprogramar={orden ? () => { setDetalle(null); setReprogramar(orden); } : null}
+                        onPDF={() => pdf(detalle)} />
+                );
+            })()}
             {cierreCliente && <CierreMensualModal cliente={cierreCliente} onClose={() => { setCierreCliente(null); cargar(); }} />}
 
             {reprogramar && (
