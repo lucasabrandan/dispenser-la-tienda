@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import DeslizarAcciones from '../ui/DeslizarAcciones';
 import ContactarClienteSheet from './ContactarClienteSheet';
-import { LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote, LuMessageSquare, LuCalendarX } from 'react-icons/lu';
+import { LuCircleCheck, LuPartyPopper, LuClipboardList, LuCar, LuMapPin, LuUndo2, LuBuilding2, LuBanknote, LuStickyNote, LuMessageSquare, LuCalendarX, LuChevronDown, LuChevronUp } from 'react-icons/lu';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
@@ -73,6 +73,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
 
     // Deslizar la tarjeta (5-oct-2026): → hace el paso que sigue, ← abre el mapa
     const fechaOk = !orden.fechaProgramada || orden.fechaProgramada >= getTodayISO();
+    const pideOkVoy = !aCoordinar && orden.estado === 'PENDIENTE' && !orden.confirmadaEn && !!onConfirmar && fechaOk;
     const listo = 'var(--etapa-listo)';
     let derecha = null;
     if (!esFinal && !seleccionando) {
@@ -117,12 +118,14 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                         <p className="font-black text-body-lg text-ink leading-tight">{orden.titulo}</p>
                     </div>
                     <div className="text-right shrink-0">
-                        <p className="text-body font-black text-ink">{aCoordinar ? 'A coordinar' : (orden.horaEstimada || '—')}</p>
+                        {aCoordinar ? <p className="text-body font-black text-ink">A coordinar</p>
+                            : orden.horaEstimada ? <p className="text-body font-black text-ink">{orden.horaEstimada}</p>
+                            : <p className="text-caption font-bold text-muted">Sin horario</p>}
                         <p className="text-caption text-muted">{fechaAR(orden.fechaProgramada)}</p>
                     </div>
                 </div>
 
-                {!esFinal && orden.clienteNombre && (
+                {!esFinal && orden.clienteNombre && !String(orden.titulo || '').includes(orden.clienteNombre) && (
                     <p className="text-body text-secondary font-bold flex items-center gap-1"><LuBuilding2 size={13} />{orden.clienteNombre}</p>
                 )}
 
@@ -177,7 +180,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                         <button onClick={() => setExpandido(v => !v)}
                             className="mt-3 w-full flex items-center justify-between px-3 py-2 rounded-xl text-label font-bold bg-panel text-secondary active:scale-95 transition-all">
                             <span>Instrucciones</span>
-                            <span className="text-label">{expandido ? '▲' : '▼'}</span>
+                            {expandido ? <LuChevronUp size={14} /> : <LuChevronDown size={14} />}
                         </button>
                         {expandido && (
                             <div className="mt-2 p-3 rounded-xl bg-panel">
@@ -207,7 +210,8 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                 <div className="flex flex-col gap-2 px-4 py-3 bg-panel border-t border-black/[0.06] dark:border-white/[0.06]" onClick={e => e.stopPropagation()}>
                     {/* "Ok, voy" (5-oct-2026): el admin ve quién confirmó su visita */}
                     {/* Con fecha "a coordinar" el paso es Confirmar día y hora (arriba): sin "Ok, voy" ni "Salir" (5-oct-2026) */}
-                    {!aCoordinar && orden.estado === 'PENDIENTE' && !orden.confirmadaEn && onConfirmar && (!orden.fechaProgramada || orden.fechaProgramada >= getTodayISO()) && (
+                    {/* Un solo botón grande, el paso que sigue: primero "Ok, voy"; recién después "Salir" (5-oct-2026) */}
+                    {pideOkVoy && (
                         <button onClick={() => onConfirmar(orden)}
                             className="w-full py-2.5 rounded-xl font-black text-body text-ink bg-card border-2 border-[color:var(--etapa-listo)] active:scale-95 transition-all">
                             ✓ Ok, voy
@@ -227,7 +231,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                                 Completá los datos del trabajo para cerrar la orden
                             </p>
                         </>
-                    ) : aCoordinar ? null : (
+                    ) : aCoordinar || pideOkVoy ? null : (
                         <button onClick={() => onAvanzar(orden.id, sig.estado)}
                             style={{ background: sig.bg }}
                             className="w-full py-2.5 rounded-xl font-black text-body text-white active:scale-95 transition-all flex items-center justify-center gap-1.5">
@@ -507,7 +511,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                                 <button onClick={() => setDiasAbiertos(prev => { const n = new Set(prev); n.has(fecha) ? n.delete(fecha) : n.add(fecha); return n; })}
                                     className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-card border border-black/[0.06] dark:border-white/[0.06] mb-2 active:scale-[0.99]">
                                     <span className="text-label font-black text-muted uppercase tracking-wider capitalize">{formatFecha(fecha)}</span>
-                                    <span className="text-label font-bold text-secondary">{items.length} visita{items.length !== 1 ? 's' : ''} {abierto ? '▲' : '▼'}</span>
+                                    <span className="text-label font-bold text-secondary inline-flex items-center gap-1">{items.length} visita{items.length !== 1 ? 's' : ''} {abierto ? <LuChevronUp size={14} /> : <LuChevronDown size={14} />}</span>
                                 </button>
                             ) : (
                                 <p className="text-label font-black text-muted uppercase tracking-wider mb-2 capitalize">
