@@ -53,18 +53,24 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
 
     // Avisos urgentes (5-oct-2026): ventana en el medio con sonido para lo que no
     // puede esperar (ver AvisoUrgente.jsx). Se revisa cada 15 s.
-    const vistos = useRef(null);
+    // Se muestran los urgentes sin leer de los últimos 30 min que todavía no se
+    // mostraron en este navegador (guardado en localStorage: no vuelven a saltar al
+    // recargar). Antes solo saltaban los que llegaban con la app ya abierta.
     const ultimoCount = useRef(0);
     const [urgentes, setUrgentes] = useState([]);
+    const yaMostrados = () => { try { return new Set(JSON.parse(localStorage.getItem('urgentes_mostrados') || '[]')); } catch { return new Set(); } };
+    const guardarMostrados = (set) => { try { localStorage.setItem('urgentes_mostrados', JSON.stringify([...set].slice(-200))); } catch { /* */ } };
     const buscarUrgentes = useCallback(async () => {
         try {
             const r = await api.get('/notificaciones');
-            const lista = (r.data || []).filter(n => !n.leida);
-            if (vistos.current === null) { vistos.current = new Set(lista.map(n => n.id)); return; }
-            const nuevas = lista.filter(n => !vistos.current.has(n.id));
-            nuevas.forEach(n => vistos.current.add(n.id));
-            const urg = nuevas.filter(n => esUrgente(n, esAdmin));
-            if (urg.length) { setUrgentes(prev => [...prev, ...urg.reverse()]); sonarAviso(); }
+            const limite = Date.now() - 30 * 60 * 1000;
+            const vistos = yaMostrados();
+            const urg = (r.data || []).filter(n => !n.leida && !vistos.has(n.id)
+                && new Date(n.creadoEn).getTime() >= limite && esUrgente(n, esAdmin));
+            if (!urg.length) return;
+            urg.forEach(n => vistos.add(n.id)); guardarMostrados(vistos);
+            setUrgentes(prev => [...prev, ...urg.filter(n => !prev.some(p => p.id === n.id)).reverse()]);
+            sonarAviso();
         } catch { /* silencio */ }
     }, [esAdmin]);
     const listoUrgente = (n) => {
@@ -78,7 +84,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             const res = await api.get('/notificaciones/count');
             const c = res.data?.count || 0;
             setNotifCount(c);
-            if (vistos.current === null || c > ultimoCount.current) buscarUrgentes();
+            if (c > 0) buscarUrgentes();
             ultimoCount.current = c;
         } catch { /* silencio */ }
     }, [buscarUrgentes]);
