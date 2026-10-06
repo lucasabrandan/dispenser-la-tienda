@@ -74,8 +74,9 @@ export default function ModalDespacharPresupuesto({ presupuesto, calcularTotal, 
                 console.error('No se pudo pasar el presupuesto a EN_PROGRESO');
             }
             if (onDespachado) onDespachado(res.data);
-        } catch {
-            toast.error('Error al crear la orden');
+        } catch (e) {
+            // Mostrar el motivo real que manda el servidor (6-oct-2026)
+            toast.error(e?.response?.data?.mensaje || e?.response?.data?.message || 'Error al crear la orden');
         } finally {
             setGuardando(false);
         }

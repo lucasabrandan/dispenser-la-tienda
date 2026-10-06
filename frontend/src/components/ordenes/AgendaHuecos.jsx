@@ -29,8 +29,8 @@ export default function AgendaHuecos({ tecnicos = [], ordenes = [], fecha, onFec
     const semana = useMemo(() => {
         const l = lunesAgenda();
         l.setDate(l.getDate() + offset * 7);
-        // 2 semanas (5-oct-2026): esta y la próxima
-        return [0, 7].flatMap(base => DIAS.map((n, i) => { const d = new Date(l); d.setDate(l.getDate() + base + i); return { n, num: d.getDate(), iso: formatDateISO(d) }; }));
+        // Una semana lun–sáb, igual que la agenda del Panel (6-oct-2026)
+        return DIAS.map((n, i) => { const d = new Date(l); d.setDate(l.getDate() + i); return { n, num: d.getDate(), iso: formatDateISO(d), mes: d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '') }; });
     }, [offset]);
     // Días que el técnico marcó como ocupados por trabajo propio (5-oct-2026)
     const bloqueos = useBloqueos(semana[0].iso, semana[semana.length - 1].iso);
@@ -40,9 +40,20 @@ export default function AgendaHuecos({ tecnicos = [], ordenes = [], fecha, onFec
     const setFecha = (iso) => onFecha(iso);
     const setHueco = (h) => onHueco(h);
 
+    const diaHoy = (() => { const d = new Date(); if (d.getDay() === 0) d.setDate(d.getDate() + 1); return formatDateISO(d); })();
+    const enHoy = offset === 0 && fecha === diaHoy;
     return (<>
+                        <div className="flex items-center justify-between gap-2 px-1">
+                            <span className="text-caption font-bold text-muted">
+                                {offset === 0 ? 'Esta semana' : offset === 1 ? 'La semana que viene' : `Semana del ${semana[0].num} ${semana[0].mes}`}
+                            </span>
+                            {!enHoy && (
+                                <button type="button" onClick={() => { setOffset(0); setFecha(diaHoy); }}
+                                    className="h-8 px-3 rounded-lg border border-brand-red text-label font-black text-ink active:scale-95">Hoy</button>
+                            )}
+                        </div>
                         <div className="flex items-center gap-1.5">
-                            <button type="button" onClick={() => setOffset(o => o - 1)} aria-label="Semana anterior" className="w-8 h-32 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronLeft size={16} /></button>
+                            <button type="button" onClick={() => setOffset(o => o - 1)} aria-label="Semana anterior" className="w-8 h-16 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronLeft size={16} /></button>
                             <div className="flex-1 grid grid-cols-6 gap-1.5">
                                 {semana.map(d => {
                                     const sel = d.iso === fecha;
@@ -58,7 +69,7 @@ export default function AgendaHuecos({ tecnicos = [], ordenes = [], fecha, onFec
                                     );
                                 })}
                             </div>
-                            <button type="button" onClick={() => setOffset(o => o + 1)} aria-label="Semana siguiente" className="w-8 h-32 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronRight size={16} /></button>
+                            <button type="button" onClick={() => setOffset(o => o + 1)} aria-label="Semana siguiente" className="w-8 h-16 shrink-0 rounded-lg flex items-center justify-center text-muted active:bg-chip"><LuChevronRight size={16} /></button>
                         </div>
 
                         <p className="text-caption text-muted">Tocá un hueco libre para darle la visita a ese técnico.</p>

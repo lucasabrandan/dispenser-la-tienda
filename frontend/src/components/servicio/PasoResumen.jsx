@@ -6,6 +6,7 @@ import api from '../../services/api';
 import { getTodayISO } from '../../utils/dateUtils';
 import DateInput from '../ui/DateInput';
 import SelectorVentanas from './SelectorVentanas';
+import AgendaHuecos from '../ordenes/AgendaHuecos';
 
 const QUICK_PCTS = [5, 10];
 
@@ -164,13 +165,19 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
     const [masOpciones, setMasOpciones] = useState(false);
     const [modoCustom,  setModoCustom]  = useState(false);
 
+    // Agenda para elegir técnico y día (6-oct-2026): la misma de Despachar/Reprogramar
+    const [ordenesAgenda, setOrdenesAgenda] = useState([]);
+    const [franja, setFranja] = useState('Mañana');
+    const [fechaManual, setFechaManual] = useState(false);
     useEffect(() => {
         if (esAdmin) {
             api.get('/admin/usuarios')
                 .then(r => setTecnicos((r.data || []).filter(u => u.activo)))
                 .catch(() => {});
+            api.get('/ordenes').then(r => setOrdenesAgenda(r.data || [])).catch(() => {});
         }
     }, [esAdmin]);
+    const conAgenda = esAdmin && tecnicos.length > 0 && !fechaManual;
 
     // Auto-descuento 10% a partir de 5 equipos (reversible)
     // No aplica en edición (idEdicion) ni ejecución (modoEjecucion) para no pisar descuento existente
@@ -335,6 +342,30 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         <Label>Días y horarios habilitados</Label>
                         <SelectorVentanas value={ventanasDisponibles} onChange={setVentanasDisponibles} />
                     </div>
+                ) : conAgenda ? (
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <Label>¿Quién y cuándo?</Label>
+                            {!tecnicoSeleccionado ? (
+                                <span className="text-label font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white bg-[#D13A28]">⚠ Elegí un técnico</span>
+                            ) : (
+                                <span className="text-label font-black uppercase tracking-wider px-2 py-0.5 rounded-full text-white bg-[#1F9D55]">✓ {tecnicoSeleccionado.nombre.split(' ')[0]}</span>
+                            )}
+                        </div>
+                        <AgendaHuecos tecnicos={tecnicos} ordenes={ordenesAgenda}
+                            fecha={fechaServicio || getTodayISO()}
+                            onFecha={setFechaServicio}
+                            hueco={tecnicoSeleccionado ? { tecnicoId: tecnicoSeleccionado.id, franja } : null}
+                            onHueco={h => {
+                                if (!h) return; // cambiar de día no saca al técnico
+                                const t = tecnicos.find(u => u.id === h.tecnicoId);
+                                setTecnicoSeleccionado(t ? { id: t.id, nombre: t.nombre } : null);
+                                setFranja(h.franja);
+                                if (!fechaServicio) setFechaServicio(getTodayISO());
+                            }} />
+                        <button type="button" onClick={() => setFechaManual(true)}
+                            className="text-caption font-bold text-muted underline underline-offset-2">Cargar con una fecha pasada (histórico)</button>
+                    </div>
                 ) : (
                     <div>
                         <Label>Fecha del servicio</Label>
@@ -376,7 +407,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                 </div>
 
                 {/* Técnico responsable — OBLIGATORIO para admin */}
-                {esAdmin && tecnicos.length > 0 && (
+                {esAdmin && tecnicos.length > 0 && (!conAgenda || fechaTentativa) && (
                     <div>
                         <div className="flex items-center justify-between mb-1">
                             <Label>Técnico responsable</Label>

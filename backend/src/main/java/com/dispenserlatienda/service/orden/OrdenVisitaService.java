@@ -63,8 +63,10 @@ public class OrdenVisitaService {
 
         // Un presupuesto no puede tener dos órdenes vivas a la vez (antes pasaba: se
         // despachaba desde el asistente y después se volvía a despachar desde Presupuestos).
+        // Solo frena si hay una visita EN CURSO; una ya hecha (COMPLETADA) no impide
+        // agendar otra (6-oct-2026: el trabajo volvía a Presupuesto y no se podía despachar).
         if (dto.presupuestoId() != null && repo.existsByPresupuestoIdAndEstadoNotIn(
-                dto.presupuestoId(), List.of(EstadoOrden.CANCELADA, EstadoOrden.NO_ATENDIDO))) {
+                dto.presupuestoId(), List.of(EstadoOrden.CANCELADA, EstadoOrden.NO_ATENDIDO, EstadoOrden.COMPLETADA))) {
             throw new IllegalArgumentException("Ese presupuesto ya tiene una orden asignada");
         }
 
