@@ -121,17 +121,22 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
         const params = new URLSearchParams(window.location.search);
         if (params.get('notif') === '1') {
             const servicioId = params.get('servicioId');
+            const ordenId = params.get('ordenId');
             if (servicioId) {
                 setTrabajoDeepLinkId(servicioId);
+            } else if (ordenId) {
+                abrirOrden(ordenId); // push de una visita → su ficha / su tarjeta (5-oct-2026)
             } else {
                 setNotifAbierto(true);
             }
             params.delete('notif');
             params.delete('servicioId');
+            params.delete('ordenId');
             params.delete('tipo');
             const resto = params.toString();
             window.history.replaceState({}, '', window.location.pathname + (resto ? `?${resto}` : ''));
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

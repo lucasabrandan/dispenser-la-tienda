@@ -71,27 +71,54 @@ self.addEventListener('push', (event) => {
             if (!ultima) {
                 return self.registration.showNotification(generico.title, generico.options);
             }
-            // El deep-link a "pantalla de ese trabajo" solo existe para
-            // TRABAJO_ASIGNADO (Servicio) — los tipos de Orden (Mis Órdenes /
-            // Despacho: ORDEN_ASIGNADA, ORDEN_EN_CAMINO, etc.) usan otro
-            // espacio de ids, así que referenciaId ahí NO es un id de
-            // Servicio. Mandarlo igual hacía que /servicios/{id} fallara, o
-            // peor, mostrara por casualidad un trabajo de otro cliente si el
-            // número coincidía. Para esos tipos se omite "data": el click
-            // cae al fallback seguro (abre la lista general).
+            // TRABAJO_ASIGNADO apunta a un Servicio; el resto con referencia, a una
+            // visita (OrdenVisita). Desde el 5-oct-2026 la notificación de una visita
+            // trae los datos de la tarjeta (cliente, día/hora, técnico, dirección) y
+            // botones (Android/compu): "Ver visita", "Ok, voy" o "Avisar al cliente".
             const esDeTrabajo = ultima.tipo === 'TRABAJO_ASIGNADO';
-            // El push llega vacío y acá se muestra "la última" notificación. Si llegan
-            // dos pushes seguidos (o el usuario tiene el celu registrado dos veces), los
-            // dos leían la misma y el celu sonaba dos veces con el mismo texto. Ahora:
-            // si esa notificación ya está en pantalla, se reemplaza en silencio.
+            const esDeVisita = !esDeTrabajo && !!ultima.referenciaId;
             const tag = `dlt-${ultima.id ?? 'notificacion'}`;
             const yaMostrada = (await self.registration.getNotifications({ tag })).length > 0;
+
+            let body = ultima.mensaje || generico.options.body;
+            let actions = [];
+            if (esDeVisita) {
+                try {
+                    const r = await fetch(`${API_BASE}/ordenes/${ultima.referenciaId}`, { headers: { Authorization: `Bearer ${token}` } });
+                    if (r.ok) {
+                        const o = await r.json();
+                        const hora = o.horaEstimada ? String(o.horaEstimada).slice(0, 5) : 'sin horario';
+                        const fecha = o.fechaProgramada ? o.fechaProgramada.split('-').reverse().slice(0, 2).join('/') : '';
+                        const lineas = [
+                            ultima.mensaje,
+                            `🕐 ${fecha} · ${hora}${o.tecnicoNombre ? ' · ' + o.tecnicoNombre.split(' ')[0] : ''}`,
+                            o.direccion ? `📍 ${o.direccion}` : null,
+                        ].filter(Boolean);
+                        body = lineas.join('\n');
+                    }
+                } catch { /* sin datos extra: queda el mensaje */ }
+                const t = String(ultima.titulo || '');
+                if (t.startsWith('Contactar al cliente') || ultima.tipo === 'ORDEN_EN_CAMINO') {
+                    actions = [{ action: 'avisar', title: '💬 Avisar al cliente' }, { action: 'ver', title: 'Ver visita' }];
+                } else if (ultima.tipo === 'ORDEN_ASIGNADA') {
+                    actions = [{ action: 'okvoy', title: '✓ Ok, voy' }, { action: 'ver', title: 'Ver' }];
+                } else {
+                    actions = [{ action: 'ver', title: 'Ver visita' }];
+                }
+            }
+            const urgente = esDeVisita && (String(ultima.titulo || '').startsWith('Contactar al cliente')
+                || ['ORDEN_NO_ATENDIDO', 'ORDEN_ASIGNADA'].includes(ultima.tipo));
             return self.registration.showNotification(ultima.titulo || generico.title, {
-                body: ultima.mensaje || generico.options.body,
+                body,
                 tag,
                 renotify: !yaMostrada,
                 silent: yaMostrada,
-                data: esDeTrabajo ? { referenciaId: ultima.referenciaId, tipo: ultima.tipo } : undefined,
+                requireInteraction: urgente, // en compu queda en pantalla hasta que se toca
+                icon: '/logo192.png',
+                badge: '/logo192.png',
+                actions,
+                data: esDeTrabajo ? { referenciaId: ultima.referenciaId, tipo: ultima.tipo }
+                    : esDeVisita ? { ordenId: ultima.referenciaId, tipo: ultima.tipo, titulo: ultima.titulo, mensaje: ultima.mensaje } : undefined,
             });
         } catch {
             return self.registration.showNotification(generico.title, generico.options);
@@ -99,8 +126,58 @@ self.addEventListener('push', (event) => {
     })());
 });
 
+// Mensaje de WhatsApp para el cliente (mismo texto que utils/contactoCliente.js)
+function mensajeCliente(motivo, o) {
+    const quien = (o.tecnicoNombre || 'el técnico').split(' ')[0];
+    const hola = `Hola${o.clienteNombre ? ` ${o.clienteNombre}` : ''}, te escribimos de Dispenser La Tienda.`;
+    const m = String(motivo || '');
+    if (m.startsWith('Me demoro')) return `${hola} ${quien} viene un poco demorado, llega en breve. Disculpá la demora.`;
+    if (m.startsWith('Llegué y no hay nadie')) return `${hola} ${quien} ya está en el lugar y no encuentra a nadie. ¿Nos avisás si lo pueden atender?`;
+    if (m.startsWith('No me atiende')) return `${hola} ${quien} está intentando comunicarse por la visita de hoy. ¿Nos confirmás si lo pueden atender?`;
+    if (m.startsWith('Otro')) return `${hola} Te contactamos por la visita de hoy.`;
+    return `${hola} ${quien} ya está en camino para la visita.`;
+}
+
+async function abrirVentana(url) {
+    const lista = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of lista) {
+        if ('focus' in client) {
+            if ('navigate' in client) return client.navigate(url).then((c) => c && c.focus()).catch(() => client.focus());
+            return client.focus();
+        }
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(url);
+}
+
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+    const d = event.notification.data || {};
+    // Botones de la notificación de una visita (5-oct-2026)
+    if (d.ordenId && event.action === 'okvoy') {
+        event.waitUntil((async () => {
+            const token = await leerTokenCacheado();
+            try { await fetch(`${API_BASE}/ordenes/${d.ordenId}/confirmar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } }); } catch { /* */ }
+        })());
+        return;
+    }
+    if (d.ordenId && event.action === 'avisar') {
+        event.waitUntil((async () => {
+            const token = await leerTokenCacheado();
+            try {
+                const r = await fetch(`${API_BASE}/ordenes/${d.ordenId}/contacto`, { headers: { Authorization: `Bearer ${token}` } });
+                const c = await r.json();
+                let num = String(c.telefono || '').replace(/\D/g, '');
+                if (!num) return abrirVentana(`/?notif=1&ordenId=${d.ordenId}`);
+                if (num.startsWith('0')) num = num.slice(1);
+                if (!num.startsWith('54')) num = '549' + num;
+                const motivo = d.tipo === 'ORDEN_EN_CAMINO' ? 'Voy en camino' : d.mensaje;
+                fetch(`${API_BASE}/ordenes/${d.ordenId}/cliente-avisado`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+                return self.clients.openWindow(`https://wa.me/${num}?text=${encodeURIComponent(mensajeCliente(motivo, c))}`);
+            } catch { return abrirVentana(`/?notif=1&ordenId=${d.ordenId}`); }
+        })());
+        return;
+    }
+    if (d.ordenId) { event.waitUntil(abrirVentana(`/?notif=1&ordenId=${d.ordenId}`)); return; }
     // '?notif=1' le avisa a la app (ver Layout.jsx) que se abrió desde una
     // notificación push. Si se pudo identificar el trabajo (ver 'push' más
     // arriba), se suma servicioId+tipo para ir directo a esa pantalla en vez
