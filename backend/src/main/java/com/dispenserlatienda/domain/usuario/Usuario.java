@@ -51,6 +51,13 @@ public class Usuario {
     @Column(name = "espacio_json", columnDefinition = "TEXT")
     private String espacioJson;
 
+    // Solo para rol EMPRESA: el cliente al que pertenece (Portal Empresa, 7-oct-2026)
+    @Column(name = "cliente_id")
+    private Long clienteId;
+
+    public Long getClienteId() { return clienteId; }
+    public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
+
     protected Usuario() {
     }
 

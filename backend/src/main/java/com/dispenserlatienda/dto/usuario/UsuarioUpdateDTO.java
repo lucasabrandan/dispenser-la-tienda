@@ -7,5 +7,6 @@ public record UsuarioUpdateDTO(
         @NotBlank String rol,
         boolean activo,
         String telefono,
-        String whatsapp
+        String whatsapp,
+        Long clienteId // solo rol EMPRESA (Portal Empresa)
 ) {}

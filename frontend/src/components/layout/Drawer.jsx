@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban } from 'react-icons/lu';
+import { LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban, LuInbox } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
 // (mismo criterio que Sidebar.jsx en desktop). Presupuestos queda aparte de
@@ -10,6 +10,7 @@ import { LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings
 // (26-ago) — la pestaña "Todo" de Venta cubre lo mismo.
 // 3-oct-2026: Servicio Técnico y Presupuestos quedaron adentro de Trabajos.
 const MENU_GESTION_DRAWER = [
+    { id: 'pedidos',    nombre: 'Pedidos',    Icon: LuInbox }, // Portal Empresa (7-oct-2026)
     { id: 'clientes',   nombre: 'Clientes',   Icon: LuUsers },
     { id: 'radar',      nombre: 'Radar',      Icon: LuSiren },
     { id: 'productos',  nombre: 'Productos',  Icon: LuPackage },
@@ -21,7 +22,7 @@ const MENU_GESTION_DRAWER = [
 
 export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual }) {
     const { usuario, logout, esAdmin } = useAuth();
-    const { pendientes } = useBadges();
+    const { pendientes, pedidosNuevos } = useBadges();
     // Mismo criterio que Sidebar.jsx (desktop): Presupuestos y el grupo de
     // Gestion (Clientes/Radar/Productos/Finanzas/Usuarios/Mi Espacio) son
     // solo-admin. Hoy el tecnico no tiene boton "Mas" en su BottomNav, asi
@@ -60,7 +61,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                     <div>
                         <p className="text-body font-black text-ink">{usuario?.nombre}</p>
                         <p className="text-label font-bold text-muted uppercase tracking-wider">
-                            {usuario?.rol === 'ADMIN' ? 'Administrador' : 'Técnico'}
+                            {usuario?.rol === 'ADMIN' ? 'Administrador' : usuario?.rol === 'EMPRESA' ? 'Empresa' : 'Técnico'}
                         </p>
                     </div>
                     <button
@@ -86,6 +87,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                                 const activa = vistaActual === item.id;
                                 const badge =
                                     item.id === 'presupuestos' && pendientes > 0 ? pendientes :
+                                    item.id === 'pedidos' && pedidosNuevos > 0 ? pedidosNuevos :
                                     null;
                                 return (
                                     <button

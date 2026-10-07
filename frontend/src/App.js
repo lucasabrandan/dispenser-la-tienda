@@ -27,6 +27,8 @@ import MiSueldo           from './components/finanzas/MiSueldo';
 import LoMio             from './components/propio/LoMio';
 import MiEspacio          from './components/miespacio/MiEspacio';
 import Configuracion      from './components/configuracion/Configuracion';
+import PortalEmpresa      from './components/empresa/PortalEmpresa';
+import PedidosEmpresaManager from './components/empresa/PedidosEmpresaManager';
 import api from './services/api';
 import { setColoresTecnicos } from './utils/estados';
 
@@ -59,13 +61,15 @@ function AppInterna() {
     // entrar y la app se vuelve a dibujar con ellos.
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
-        if (!autenticado) return;
+        if (!autenticado || usuario?.rol === 'EMPRESA') return;
         api.get('/ordenes/tecnicos')
             .then(r => { setColoresTecnicos(Array.isArray(r.data) ? r.data : []); setColoresVer(v => v + 1); })
             .catch(() => {});
-    }, [autenticado]);
+    }, [autenticado, usuario?.rol]);
 
     if (!autenticado) return <LoginPage />;
+    // Portal Empresa (7-oct-2026): la empresa ve solo su portal, nada de la app interna
+    if (usuario?.rol === 'EMPRESA') return <PortalEmpresa />;
 
     const irASeccionConCliente = (seccion, cliente) => {
         setClientePreload(cliente);
@@ -144,6 +148,8 @@ function AppInterna() {
                 return <LoMio />;
             case 'mi-espacio':
                 return <MiEspacio />;
+            case 'pedidos':
+                return esAdmin ? <PedidosEmpresaManager /> : null;
             case 'configuracion':
                 return esAdmin ? <Configuracion /> : null;
             default:

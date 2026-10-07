@@ -4,7 +4,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuHouse, LuNotebookPen, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban, LuLayers, LuSettings } from 'react-icons/lu';
+import { LuHouse, LuNotebookPen, LuWrench, LuPin, LuShoppingCart, LuBanknote, LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuSun, LuMoon, LuLogOut, LuKanban, LuLayers, LuSettings, LuInbox } from 'react-icons/lu';
 import { NotifBell } from './NotificacionesPanel';
 
 // Reordenado por flujo de trabajo real, y agrupado por dominio (servicio / ventas)
@@ -22,6 +22,8 @@ const MENU_SERVICIO = [
     // 3-oct-2026: Trabajos absorbió Servicio Técnico y Presupuestos (Opción A).
     // Las pantallas viejas siguen en el código pero ya no están en el menú.
     { id: 'trabajos', Icon: LuLayers, nombre: 'Trabajos' },
+    // Portal Empresa (7-oct-2026): pedidos que cargan las empresas
+    { id: 'pedidos', Icon: LuInbox, nombre: 'Pedidos' },
 ];
 // 'historial' (ítem propio, 26-ago) se saco de acá: la pestaña "Todo" de
 // VentaManager.jsx ya cubre esa misma búsqueda libre sin filtro de estado
@@ -62,7 +64,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
     const { isDark, toggleTheme } = useTheme();
     const { montosVisibles, toggleMontos } = useMontos();
     const { usuario, logout, esAdmin } = useAuth();
-    const { ordenesActivas } = useBadges();
+    const { ordenesActivas, pedidosNuevos } = useBadges();
     const menuOperaciones = esAdmin ? null : MENU_OPERACIONES_TECNICO; // null = admin usa los grupos por dominio, se renderiza aparte
     // Admin ve Despacho fusionado adentro de "Servicio Técnico" (modo), así que
     // el badge de acá suma las dos señales; el técnico no tiene ese modo, sigue
@@ -85,6 +87,7 @@ export default function Sidebar({ vistaActual, setVistaActual, colapsado, setCol
         const badge =
             item.id === 'trabajos' && servicioTecnicoBadge > 0 ? servicioTecnicoBadge :
             item.id === 'mis-ordenes' && ordenesActivas > 0 ? ordenesActivas :
+            item.id === 'pedidos' && pedidosNuevos > 0 ? pedidosNuevos :
             null;
         const baseBtn = activa
             ? 'bg-brand-red text-white font-black shadow-lg'

@@ -20,6 +20,7 @@ export function BadgesProvider({ children }) {
     const { usuario, esAdmin } = useAuth();
     const [pendientes, setPendientes] = useState(0);
     const [ordenesActivas, setOrdenesActivas] = useState(0);
+    const [pedidosNuevos, setPedidosNuevos] = useState(0);
 
     useEffect(() => {
         const cargar = async () => {
@@ -32,6 +33,10 @@ export function BadgesProvider({ children }) {
                 setPendientes(svc.data.pendientesCount || 0);
                 setOrdenesActivas(ord.data.count || 0);
             } catch (err) { console.warn('Badges: error cargando conteos', err); }
+            // Portal Empresa (7-oct-2026): pedidos de empresas sin agendar
+            if (esAdmin) {
+                try { const r = await api.get('/pedidos-empresa/count-nuevos'); setPedidosNuevos(r.data?.count || 0); } catch { /* */ }
+            }
         };
         cargar();
         const interval = setInterval(cargar, 60_000);
@@ -39,7 +44,7 @@ export function BadgesProvider({ children }) {
     }, [usuario, esAdmin]);
 
     return (
-        <BadgesContext.Provider value={{ pendientes, ordenesActivas }}>
+        <BadgesContext.Provider value={{ pendientes, ordenesActivas, pedidosNuevos }}>
             {children}
         </BadgesContext.Provider>
     );

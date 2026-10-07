@@ -56,6 +56,10 @@ public class UsuarioAdminController {
         );
         nuevo.setTelefono(dto.telefono());
         nuevo.setWhatsapp(dto.whatsapp());
+        if (nuevo.getRol() == RolUsuario.EMPRESA) {
+            if (dto.clienteId() == null) throw new com.dispenserlatienda.exception.BusinessException("Elegí a qué cliente pertenece");
+            nuevo.setClienteId(dto.clienteId());
+        }
         usuarioRepository.save(nuevo);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new UsuarioDTO(nuevo.getId(), nuevo.getNombre(), nuevo.getUsername(), nuevo.getRol().name(), nuevo.isActivo(), nuevo.getTelefono(), nuevo.getWhatsapp(), nuevo.getFirma(), nuevo.getSueldoObjetivo(), nuevo.getColor()));
@@ -82,6 +86,12 @@ public class UsuarioAdminController {
         u.setActivo(dto.activo());
         u.setTelefono(dto.telefono());
         u.setWhatsapp(dto.whatsapp());
+        if (nuevoRol == RolUsuario.EMPRESA) {
+            if (dto.clienteId() != null) u.setClienteId(dto.clienteId());
+            if (u.getClienteId() == null) throw new com.dispenserlatienda.exception.BusinessException("Elegí a qué cliente pertenece");
+        } else {
+            u.setClienteId(null);
+        }
         usuarioRepository.save(u);
         // Al desactivar, cortar el acceso de verdad: sin el refresh token no
         // puede renovar el access token vencido — en minutos u horas queda

@@ -7,15 +7,16 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import AvatarTecnico from '../ui/AvatarTecnico';
 import { PALETA_TECNICO, setColoresTecnicos } from '../../utils/estados';
-import { LuShieldCheck, LuWrench, LuKey, LuPencil, LuLock, LuCircleCheck, LuTrash2, LuEyeOff, LuEye } from 'react-icons/lu';
+import { LuShieldCheck, LuWrench, LuKey, LuPencil, LuLock, LuCircleCheck, LuTrash2, LuEyeOff, LuEye, LuBuilding2 } from 'react-icons/lu';
 
-const ROL_LABEL = { ADMIN: 'Administrador', TECNICO: 'Técnico' };
+const ROL_LABEL = { ADMIN: 'Administrador', TECNICO: 'Técnico', EMPRESA: 'Empresa' };
 const ROL_COLOR = {
     ADMIN:   'bg-[#D13A28]/10 text-[#D13A28] dark:bg-[#E8422F]/10 dark:text-[#E8422F]',
     TECNICO: 'bg-[#D48800]/10 text-[#D48800] dark:bg-[#F0A500]/10 dark:text-[#F0A500]',
+    EMPRESA: 'bg-[#2563EB]/10 text-[#2563EB] dark:bg-[#60A5FA]/10 dark:text-[#60A5FA]',
 };
 
-const FORM_VACIO = { nombre: '', username: '', password: '', passwordConfirm: '', rol: 'TECNICO', telefono: '', whatsapp: '' };
+const FORM_VACIO = { nombre: '', username: '', password: '', passwordConfirm: '', rol: 'TECNICO', telefono: '', whatsapp: '', clienteId: '' };
 
 export default function UsuariosManager() {
     const { usuario: usuarioActual } = useAuth();
@@ -28,6 +29,9 @@ export default function UsuariosManager() {
     // Los inactivos quedan ocultos hasta tocar "Ver inactivos".
     const [verInactivos, setVerInactivos] = useState(false);
     const [colorDe, setColorDe] = useState(null);
+    // Portal Empresa (7-oct-2026): usuarios de empresa → a qué cliente pertenecen
+    const [empresaDe, setEmpresaDe] = useState({});
+    const [clientes, setClientes] = useState([]);
     const guardarColor = async (u, color) => {
         try {
             await api.put(`/admin/usuarios/${u.id}/color`, { color });
@@ -58,6 +62,9 @@ export default function UsuariosManager() {
         try {
             const r = await getUsuarios();
             setUsuarios(r.data);
+            api.get('/pedidos-empresa/usuarios').then(x => {
+                const m = {}; (x.data || []).forEach(e => { m[e.id] = e; }); setEmpresaDe(m);
+            }).catch(() => {});
         } catch { toast.error('Error al cargar usuarios'); }
         finally { setCargando(false); }
     };
@@ -65,8 +72,14 @@ export default function UsuariosManager() {
     useEffect(() => { cargar(); }, []);
 
     const abrirCrear = () => { setForm(FORM_VACIO); setModal('crear'); setVerClave(false); setVerClaveConfirm(false); };
+    const cargarClientes = () => {
+        if (clientes.length) return;
+        api.get('/clientes', { params: { size: 1000 } }).then(r => setClientes((Array.isArray(r.data) ? r.data : r.data?.content || [])
+            .slice().sort((a, b) => String(a.nombre).localeCompare(String(b.nombre))))).catch(() => {});
+    };
     const abrirEditar = (u) => {
-        setForm({ nombre: u.nombre, username: u.username, password: '', rol: u.rol, telefono: u.telefono || '', whatsapp: u.whatsapp || '' });
+        if (u.rol === 'EMPRESA') cargarClientes();
+        setForm({ nombre: u.nombre, username: u.username, password: '', rol: u.rol, telefono: u.telefono || '', whatsapp: u.whatsapp || '', clienteId: empresaDe[u.id]?.clienteId || '' });
         setModal(u);
     };
 
@@ -83,13 +96,17 @@ export default function UsuariosManager() {
         if (modal === 'crear' && form.password !== form.passwordConfirm) {
             toast.error('Las contraseñas no coinciden'); return;
         }
+        if (form.rol === 'EMPRESA' && !form.clienteId) {
+            toast.error('Elegí a qué cliente pertenece'); return;
+        }
+        const clienteId = form.rol === 'EMPRESA' ? Number(form.clienteId) : null;
         setGuardando(true);
         try {
             if (modal === 'crear') {
-                await crearUsuario({ nombre: form.nombre, username: form.username, password: form.password, rol: form.rol, telefono: form.telefono || null, whatsapp: form.whatsapp || null });
+                await crearUsuario({ nombre: form.nombre, username: form.username, password: form.password, rol: form.rol, telefono: form.telefono || null, whatsapp: form.whatsapp || null, clienteId });
                 toast.success('Usuario creado');
             } else {
-                await editarUsuario(modal.id, { nombre: form.nombre, rol: form.rol, activo: modal.activo, telefono: form.telefono || null, whatsapp: form.whatsapp || null });
+                await editarUsuario(modal.id, { nombre: form.nombre, rol: form.rol, activo: modal.activo, telefono: form.telefono || null, whatsapp: form.whatsapp || null, clienteId });
                 toast.success('Usuario actualizado');
             }
             setModal(null);
@@ -105,7 +122,7 @@ export default function UsuariosManager() {
 
     const toggleActivo = async (u) => {
         try {
-            await editarUsuario(u.id, { nombre: u.nombre, rol: u.rol, activo: !u.activo, telefono: u.telefono || null, whatsapp: u.whatsapp || null });
+            await editarUsuario(u.id, { nombre: u.nombre, rol: u.rol, activo: !u.activo, telefono: u.telefono || null, whatsapp: u.whatsapp || null, clienteId: empresaDe[u.id]?.clienteId || null });
             toast.success(u.activo ? 'Usuario desactivado' : 'Usuario activado');
             cargar();
         } catch (e) {
@@ -141,7 +158,7 @@ export default function UsuariosManager() {
     const usuariosFiltrados = (filtroRol === 'TODOS' ? usuarios : usuarios.filter(u => u.rol === filtroRol))
         .filter(u => verInactivos || u.activo);
 
-    const swipeHandlers = useSwipeGesture(['TODOS', 'ADMIN', 'TECNICO'], filtroRol, setFiltroRol);
+    const swipeHandlers = useSwipeGesture(['TODOS', 'ADMIN', 'TECNICO', 'EMPRESA'], filtroRol, setFiltroRol);
 
     return (
         <div className={PAGINA} {...swipeHandlers}>
@@ -152,7 +169,7 @@ export default function UsuariosManager() {
                     accion={<BotonPrimario onClick={abrirCrear}>Nuevo</BotonPrimario>} />
 
                 <Pestanas activo={filtroRol} onChange={setFiltroRol}
-                    items={['TODOS', 'ADMIN', 'TECNICO'].map(rol => ({
+                    items={['TODOS', 'ADMIN', 'TECNICO', 'EMPRESA'].map(rol => ({
                         id: rol,
                         label: rol === 'TODOS' ? 'Todos' : ROL_LABEL[rol],
                         count: rol === 'TODOS' ? usuarios.length : usuarios.filter(u => u.rol === rol).length,
@@ -188,7 +205,7 @@ export default function UsuariosManager() {
                                         className="relative shrink-0 active:scale-95">
                                         <AvatarTecnico nombre={u.nombre} size={40} />
                                         <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-card border border-black/10 dark:border-white/10 flex items-center justify-center text-muted">
-                                            {u.rol === 'ADMIN' ? <LuShieldCheck size={11} /> : <LuWrench size={11} />}
+                                            {u.rol === 'ADMIN' ? <LuShieldCheck size={11} /> : u.rol === 'EMPRESA' ? <LuBuilding2 size={11} /> : <LuWrench size={11} />}
                                         </span>
                                     </button>
                                     {/* Info */}
@@ -205,6 +222,7 @@ export default function UsuariosManager() {
                                             )}
                                         </div>
                                         <p className="text-caption text-muted mt-0.5">@{u.username}{u.telefono ? `  ·  ${u.telefono}` : ''}</p>
+                                        {u.rol === 'EMPRESA' && <p className="text-caption font-bold text-secondary mt-0.5">Portal de {empresaDe[u.id]?.clienteNombre || '—'}</p>}
                                     </div>
                                     {/* Acciones */}
                                     <div className="flex gap-2 shrink-0">
@@ -348,12 +366,34 @@ export default function UsuariosManager() {
                                 <select
                                     className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                     value={form.rol}
-                                    onChange={e => setForm(f => ({ ...f, rol: e.target.value }))}
+                                    onChange={e => {
+                                        const rol = e.target.value;
+                                        setForm(f => ({ ...f, rol }));
+                                        if (rol === 'EMPRESA') cargarClientes();
+                                    }}
                                 >
                                     <option value="TECNICO">Técnico</option>
                                     <option value="ADMIN">Administrador</option>
+                                    <option value="EMPRESA">Empresa (portal de pedidos)</option>
                                 </select>
                             </div>
+                            {form.rol === 'EMPRESA' && (
+                                <div>
+                                    <label className="text-label font-bold text-muted uppercase tracking-wider">Cliente</label>
+                                    <select
+                                        className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                                        value={form.clienteId}
+                                        onChange={e => setForm(f => ({ ...f, clienteId: e.target.value }))}
+                                    >
+                                        <option value="">Elegí el cliente…</option>
+                                        {form.clienteId && !clientes.some(c => String(c.id) === String(form.clienteId)) && (
+                                            <option value={form.clienteId}>{empresaDe[modal?.id]?.clienteNombre || `Cliente #${form.clienteId}`}</option>
+                                        )}
+                                        {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                    </select>
+                                    <p className="text-caption text-muted mt-1">Solo va a ver sus pedidos y los lugares de ese cliente. Nada de precios ni del resto del sistema.</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex gap-3 pt-2">

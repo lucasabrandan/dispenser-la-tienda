@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { cuandoDeNotif } from '../../utils/notifTarjeta';
+import { pedidoIdDeNotif } from '../../utils/pedidosEmpresa';
 import { LuBellOff, LuBell } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
@@ -49,7 +50,7 @@ export function NotifBell({ count, onClick }) {
 }
 
 // Panel desplegable de notificaciones
-export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo, onAbrirOrden, onSinReferencia }) {
+export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo, onAbrirOrden, onSinReferencia, onAbrirPedido }) {
     const [notifs, setNotifs] = useState([]);
     const [cargando, setCargando] = useState(false);
     // 'cargando' | 'no-soportado' | 'denegado' | 'inactivo' | 'activo'
@@ -212,7 +213,10 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo,
                                             // Solo TRABAJO_ASIGNADO esta ligado a un Servicio puntual — los
                                             // demas tipos (ordenes) usan otro espacio de ids, no hay pantalla
                                             // de detalle para ellos todavia.
-                                            if (n.tipo === 'TRABAJO_ASIGNADO' && n.referenciaId && onAbrirTrabajo) {
+                                            if (onAbrirPedido && pedidoIdDeNotif(n)) {
+                                                // Portal Empresa (7-oct-2026): avisos de un pedido
+                                                onAbrirPedido(pedidoIdDeNotif(n));
+                                            } else if (n.tipo === 'TRABAJO_ASIGNADO' && n.referenciaId && onAbrirTrabajo) {
                                                 onAbrirTrabajo(n.referenciaId);
                                             } else if (n.referenciaId && onAbrirOrden) {
                                                 // El resto con referencia son visitas (5-oct-2026): se abre esa visita

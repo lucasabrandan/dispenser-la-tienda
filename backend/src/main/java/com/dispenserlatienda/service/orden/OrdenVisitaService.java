@@ -40,13 +40,16 @@ public class OrdenVisitaService {
     private final NotificacionService   notificacionService;
     private final ServicioRepository    servicioRepository;
     private final SedeRepository        sedeRepository;
+    private final com.dispenserlatienda.repository.empresa.PedidoEmpresaRepository pedidoEmpresaRepo;
 
     public OrdenVisitaService(OrdenVisitaRepository repo,
                               UsuarioRepository usuarioRepo,
                               WhatsAppService whatsApp,
                               NotificacionService notificacionService,
                               ServicioRepository servicioRepository,
-                              SedeRepository sedeRepository) {
+                              SedeRepository sedeRepository,
+                              com.dispenserlatienda.repository.empresa.PedidoEmpresaRepository pedidoEmpresaRepo) {
+        this.pedidoEmpresaRepo = pedidoEmpresaRepo;
         this.repo              = repo;
         this.usuarioRepo       = usuarioRepo;
         this.whatsApp          = whatsApp;
@@ -172,6 +175,8 @@ public class OrdenVisitaService {
                 + (horaAntes != null && !horaAntes.isBlank() ? " " + (horaAntes.length() > 5 && horaAntes.charAt(2) == ':' ? horaAntes.substring(0, 5) : horaAntes) : "");
             notificacionService.notificar(TipoNotificacion.ORDEN_ASIGNADA, tecnico.getId(), null,
                 "Cambió tu visita · " + cliente, "Antes era el " + antes, guardada.id(), false);
+            avisarEmpresa(o, "reprogramado", com.dispenserlatienda.service.empresa.PedidoEmpresaService.cuando(dto.fechaProgramada(), dto.horaEstimada())
+                + (o.getDireccion() != null ? "\n📍 " + o.getDireccion() : ""));
         }
         // El trabajo (presupuesto) queda con el mismo día que su visita
         if (cambioDia && dto.presupuestoId() != null && dto.fechaProgramada() != null) {
@@ -296,6 +301,7 @@ public class OrdenVisitaService {
             default           -> null;
         };
         if (tipo == null) return;
+        avisarEmpresaDeEstado(o, estado);
 
         Long tecnicoId = o.getTecnico().getId();
         String tecnicoNombre = o.getTecnico().getNombre();
@@ -509,6 +515,30 @@ public class OrdenVisitaService {
         o.setEstado(EstadoOrden.NO_ATENDIDO);
         repo.save(o);
         return "quedó para reprogramar";
+    }
+
+    // ── Portal Empresa (7-oct-2026): si la visita viene de un pedido de una empresa,
+    // la empresa se entera de cada paso (sin datos internos).
+    private void avisarEmpresaDeEstado(OrdenVisita o, EstadoOrden estado) {
+        String quien = o.getTecnico() != null ? o.getTecnico().getNombre().split(" ")[0] : "El técnico";
+        switch (estado) {
+            case EN_CAMINO -> avisarEmpresa(o, "· el técnico va en camino", quien + " salió para " + (o.getDireccion() != null ? o.getDireccion() : "el lugar"));
+            case EN_SITIO -> avisarEmpresa(o, "· el técnico llegó", quien + " ya está en el lugar");
+            case COMPLETADA -> avisarEmpresa(o, "terminado ✓", "El trabajo quedó hecho");
+            case NO_ATENDIDO -> avisarEmpresa(o, "· no se pudo hacer", "Lo reprogramamos y te avisamos el día nuevo");
+            default -> { }
+        }
+    }
+
+    private void avisarEmpresa(OrdenVisita o, String que, String mensaje) {
+        try {
+            pedidoEmpresaRepo.findFirstByOrdenId(o.getId()).ifPresent(p -> usuarioRepo.findAll().stream()
+                .filter(u -> u.getRol() == RolUsuario.EMPRESA && u.isActivo() && p.getClienteId().equals(u.getClienteId()))
+                .forEach(u -> notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, u.getId(), null,
+                    "Pedido #" + p.getId() + " " + que, mensaje, null, false)));
+        } catch (Exception e) {
+            // no frena la operación principal
+        }
     }
 
     private void avisarAdmins(TipoNotificacion tipo, Usuario tecnico, String titulo, String detalle, Long refId) {

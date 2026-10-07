@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { LuBellRing, LuX, LuClock, LuMapPin, LuUser } from 'react-icons/lu';
 import { cuandoDeNotif, tieneTarjeta } from '../../utils/notifTarjeta';
+import { pedidoIdDeNotif } from '../../utils/pedidosEmpresa';
 import ContactoClienteAcciones from './ContactoClienteAcciones';
 import { TITULO_CONTACTO } from '../../utils/contactoCliente';
 
@@ -11,6 +12,7 @@ export function esUrgente(n, esAdmin) {
     const t = String(n.titulo || '');
     if (esAdmin) {
         return t.startsWith(TITULO_CONTACTO) || t.startsWith('Mensaje de ')
+            || t.startsWith('Pedido nuevo #') || t.startsWith('🔴 Pedido urgente #') || t.startsWith('Comentario en pedido #')
             || n.tipo === 'ORDEN_NO_ATENDIDO' || (n.tipo === 'ORDEN_EN_CAMINO' && n.referenciaId);
     }
     return t.startsWith('Visita en pausa') || t.startsWith('Visita reasignada') || t.startsWith('✓ El admin avisó')
@@ -35,7 +37,7 @@ export function sonarAviso() {
     try { navigator.vibrate?.([200, 100, 200]); } catch { /* */ }
 }
 
-export default function AvisoUrgente({ notif, restantes = 0, onListo, onVerTodas, onVerVisita }) {
+export default function AvisoUrgente({ notif, restantes = 0, onListo, onVerTodas, onVerVisita, onVerPedido }) {
     // Mientras está abierto, la pestaña del navegador lo muestra en el título
     useEffect(() => {
         const original = document.title;
@@ -74,7 +76,9 @@ export default function AvisoUrgente({ notif, restantes = 0, onListo, onVerTodas
                     {enCamino && <ContactoClienteAcciones notif={notif} motivo="Voy en camino" etiqueta="Avisarle al cliente que va en camino" />}
                 </div>
                 <div className="flex gap-2 px-5 pb-5">
-                    {notif.referenciaId && onVerVisita && notif.tipo !== 'TRABAJO_ASIGNADO'
+                    {pedidoIdDeNotif(notif) && onVerPedido
+                        ? <button type="button" onClick={onVerPedido} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Ver pedido</button>
+                        : notif.referenciaId && onVerVisita && notif.tipo !== 'TRABAJO_ASIGNADO'
                         ? <button type="button" onClick={onVerVisita} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Ver visita</button>
                         : <button type="button" onClick={onVerTodas} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Ver todas</button>}
                     <button type="button" onClick={onListo} className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">Listo, lo vi</button>

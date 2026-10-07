@@ -99,13 +99,16 @@ function esUrgentePush(n) {
     return t.startsWith('Contactar al cliente') || t.startsWith('Mensaje de ') || t.startsWith('Visita en pausa') || t.startsWith('Visita reasignada')
         || t.startsWith('✓ El admin avisó') || n.tipo === 'ORDEN_NO_ATENDIDO' || n.tipo === 'ORDEN_ASIGNADA'
         || (n.tipo === 'ORDEN_EN_CAMINO' && n.referenciaId)
-        || (n.tipo === 'TRABAJO_ASIGNADO' && t !== 'Horario confirmado');
+        || (n.tipo === 'TRABAJO_ASIGNADO' && t !== 'Horario confirmado')
+        || t.startsWith('Pedido nuevo #') || t.startsWith('🔴 Pedido urgente #') || t.startsWith('Comentario en pedido #');
 }
 
 async function mostrarNotif(n) {
     const t = String(n.titulo || '');
     const esDeTrabajo = n.tipo === 'TRABAJO_ASIGNADO';
     const ordenId = n.ordenId || (!esDeTrabajo ? n.referenciaId : null);
+    const mp = t.match(/[Pp]edido[^#]*#(\d+)/);
+    const pedidoId = mp ? Number(mp[1]) : null;
     const tag = `dlt-${n.id}`;
     const yaMostrada = (await self.registration.getNotifications({ tag })).length > 0;
 
@@ -129,6 +132,8 @@ async function mostrarNotif(n) {
         }
     } else if (esDeTrabajo && n.referenciaId) {
         actions = [{ action: 'ver', title: 'Ver trabajo' }];
+    } else if (pedidoId) {
+        actions = [{ action: 'ver', title: 'Ver pedido' }];
     }
 
     return self.registration.showNotification(n.titulo || 'Dispenser La Tienda', {
@@ -140,7 +145,8 @@ async function mostrarNotif(n) {
         icon: '/notif-icon-v3.png',
         badge: '/notif-badge-v2.png',
         actions,
-        data: ordenId ? { ordenId, tipo: n.tipo, titulo: n.titulo, mensaje: n.mensaje }
+        data: pedidoId ? { pedidoId }
+            : ordenId ? { ordenId, tipo: n.tipo, titulo: n.titulo, mensaje: n.mensaje }
             : esDeTrabajo ? { referenciaId: n.referenciaId, tipo: n.tipo } : undefined,
     });
 }
@@ -220,6 +226,8 @@ self.addEventListener('notificationclick', (event) => {
         return;
     }
     if (d.ordenId) { event.waitUntil(abrirVentana(`/?notif=1&ordenId=${d.ordenId}`)); return; }
+    // Portal Empresa (7-oct-2026): avisos de un pedido → ese pedido
+    if (d.pedidoId) { event.waitUntil(abrirVentana(`/?notif=1&pedido=${d.pedidoId}`)); return; }
     // '?notif=1' le avisa a la app (ver Layout.jsx) que se abrió desde una
     // notificación push. Si se pudo identificar el trabajo (ver 'push' más
     // arriba), se suma servicioId+tipo para ir directo a esa pantalla en vez

@@ -27,11 +27,11 @@ const NAV_TECNICO = [
 ];
 
 // Secciones accesibles desde "Más"
-const SECCIONES_MAS = ['servicio-tecnico', 'presupuestos', 'clientes', 'radar', 'productos', 'finanzas', 'usuarios', 'mi-espacio', 'configuracion'];
+const SECCIONES_MAS = ['servicio-tecnico', 'presupuestos', 'clientes', 'radar', 'productos', 'finanzas', 'usuarios', 'mi-espacio', 'configuracion', 'pedidos'];
 
 export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) {
     const { esAdmin } = useAuth();
-    const { ordenesActivas } = useBadges();
+    const { ordenesActivas, pedidosNuevos } = useBadges();
     const NAV_ITEMS = esAdmin ? NAV_ADMIN : NAV_TECNICO;
     // Mismo criterio que Sidebar.jsx: admin ve Despacho fusionado adentro de
     // "Técnico" (modo), el badge suma las dos señales.
@@ -67,6 +67,7 @@ export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) 
                     const badge =
                         item.id === 'trabajos' && servicioTecnicoBadge > 0 ? servicioTecnicoBadge :
                         item.id === 'mis-ordenes' && ordenesActivas > 0 ? ordenesActivas :
+                        item.id === '_more' && pedidosNuevos > 0 ? pedidosNuevos :
                         null;
                     return (
                         <button

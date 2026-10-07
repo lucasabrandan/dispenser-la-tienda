@@ -1,5 +1,6 @@
 package com.dispenserlatienda.config;
 
+import com.dispenserlatienda.security.EmpresaAislamientoFilter;
 import com.dispenserlatienda.security.JwtFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -22,9 +23,11 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
+    private final EmpresaAislamientoFilter empresaFilter;
 
     public SecurityConfig(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
+        this.empresaFilter = new EmpresaAislamientoFilter();
     }
 
     @Bean
@@ -43,6 +46,12 @@ public class SecurityConfig {
 
                 // Solo ADMIN: gestión de usuarios
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // Portal Empresa (7-oct-2026): el portal es solo de la empresa y la
+                // bandeja de pedidos solo del admin. El resto de la API se le corta
+                // a la empresa en EmpresaAislamientoFilter.
+                .requestMatchers("/api/empresa/**").hasRole("EMPRESA")
+                .requestMatchers("/api/pedidos-empresa/**").hasRole("ADMIN")
 
                 // Mi Espacio (notas kanban personales) -- antes solo ADMIN, ahora
                 // cualquier usuario autenticado (Lucas, 7-sep-2026: sumarlo tambien a
@@ -114,7 +123,8 @@ public class SecurityConfig {
                 .authenticationEntryPoint((req, res, ex) ->
                     res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No autenticado"))
             )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(empresaFilter, JwtFilter.class);
 
         return http.build();
     }

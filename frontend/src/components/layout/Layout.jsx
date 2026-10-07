@@ -13,6 +13,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { pedidoIdDeNotif } from '../../utils/pedidosEmpresa';
 import { pushSoportado, estaSuscripto, activarNotificaciones, resincronizar } from '../../utils/pushNotifications';
 import { LuSun, LuMoon, LuLogOut } from 'react-icons/lu';
 import ConfirmDialog from '../ui/ConfirmDialog';
@@ -89,6 +90,13 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             window.dispatchEvent(new Event('resaltar-orden'));
         }
     };
+    // Portal Empresa (7-oct-2026): avisos de un pedido → bandeja de Pedidos con ese pedido abierto
+    const abrirPedido = (id) => {
+        setNotifAbierto(false);
+        try { sessionStorage.setItem('abrirPedido', String(id)); } catch { /* */ }
+        setVistaActual('pedidos');
+        window.dispatchEvent(new CustomEvent('abrir-pedido', { detail: String(id) }));
+    };
     const listoUrgente = (n) => {
         api.patch(`/notificaciones/${n.id}/leer`).catch(() => {});
         setUrgentes(prev => prev.filter(x => x.id !== n.id));
@@ -131,7 +139,10 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
         if (params.get('notif') === '1') {
             const servicioId = params.get('servicioId');
             const ordenId = params.get('ordenId');
-            if (servicioId) {
+            const pedidoId = params.get('pedido');
+            if (pedidoId && esAdmin) {
+                abrirPedido(pedidoId);
+            } else if (servicioId) {
                 setTrabajoDeepLinkId(servicioId);
             } else if (ordenId) {
                 abrirOrden(ordenId); // push de una visita → su ficha / su tarjeta (5-oct-2026)
@@ -141,6 +152,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             params.delete('notif');
             params.delete('servicioId');
             params.delete('ordenId');
+            params.delete('pedido');
             params.delete('tipo');
             const resto = params.toString();
             window.history.replaceState({}, '', window.location.pathname + (resto ? `?${resto}` : ''));
@@ -237,7 +249,8 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                 <AvisoUrgente notif={urgentes[0]} restantes={urgentes.length - 1}
                     onListo={() => listoUrgente(urgentes[0])}
                     onVerTodas={() => { setUrgentes([]); setNotifAbierto(true); setNotifCount(0); }}
-                    onVerVisita={() => { const n = urgentes[0]; listoUrgente(n); abrirOrden(n.referenciaId); }} />
+                    onVerVisita={() => { const n = urgentes[0]; listoUrgente(n); abrirOrden(n.referenciaId); }}
+                    onVerPedido={() => { const n = urgentes[0]; listoUrgente(n); abrirPedido(pedidoIdDeNotif(n)); }} />
             )}
             {fichaOrden && (
                 <FichaVisitaSheet orden={fichaOrden} onCerrar={() => setFichaOrden(null)}
@@ -248,6 +261,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
                 onCerrar={() => { setNotifAbierto(false); pollNotifs(); }}
                 onAbrirTrabajo={(servicioId) => { setNotifAbierto(false); setTrabajoDeepLinkId(servicioId); }}
                 onAbrirOrden={abrirOrden}
+                onAbrirPedido={esAdmin ? abrirPedido : undefined}
                 onSinReferencia={() => { setNotifAbierto(false); setVistaActual(esAdmin ? 'trabajos' : 'mis-ordenes'); }}
             />
             {trabajoDeepLinkId && (
