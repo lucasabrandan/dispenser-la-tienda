@@ -30,7 +30,11 @@ public class OrdenVisitaController {
     private final OrdenVisitaRepository repo;
     private final UsuarioRepository usuarioRepository;
 
-    public OrdenVisitaController(OrdenVisitaService service, OrdenVisitaRepository repo, UsuarioRepository usuarioRepository) {
+    private final com.dispenserlatienda.service.empresa.PedidoEmpresaService pedidoEmpresaService;
+
+    public OrdenVisitaController(OrdenVisitaService service, OrdenVisitaRepository repo, UsuarioRepository usuarioRepository,
+                                 com.dispenserlatienda.service.empresa.PedidoEmpresaService pedidoEmpresaService) {
+        this.pedidoEmpresaService = pedidoEmpresaService;
         this.service = service;
         this.repo = repo;
         this.usuarioRepository = usuarioRepository;
@@ -201,5 +205,12 @@ public class OrdenVisitaController {
         if (orden.getTecnico() == null || !orden.getTecnico().getId().equals(solicitante.getId())) {
             throw new AccessDeniedException("No podés modificar la orden de otro técnico");
         }
+    }
+
+    // Conversación del pedido de empresa de esta visita (7-oct-2026): el técnico la
+    // lee para enterarse de lo que pidió la empresa; no puede escribir.
+    @GetMapping("/{id}/conversacion")
+    public java.util.Map<String, Object> conversacion(@PathVariable Long id, org.springframework.security.core.Authentication auth) {
+        return pedidoEmpresaService.conversacionDeOrden(resolverUsuario(auth), id);
     }
 }

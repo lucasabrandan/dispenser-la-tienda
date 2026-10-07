@@ -161,10 +161,32 @@ public class PedidoEmpresaService {
         String resumen = corto(t, 900);
         if (deEmpresa) {
             avisarAdmins(quien, "Comentario en pedido #" + p.getId() + " · " + nombreCliente(p), resumen, false);
+            // El técnico de la visita también se entera (solo lee; no le escribe a la empresa)
+            if (p.getOrdenId() != null) ordenRepo.findById(p.getOrdenId()).ifPresent(o -> {
+                if (o.getTecnico() != null && List.of(EstadoOrden.PENDIENTE, EstadoOrden.EN_CAMINO, EstadoOrden.EN_SITIO).contains(o.getEstado()))
+                    notificaciones.notificar(TipoNotificacion.MENSAJE_LIBRE, o.getTecnico().getId(), null,
+                        "Mensaje de " + nombreCliente(p) + " · " + (p.getLugar() != null ? p.getLugar() : p.getMotivo()),
+                        resumen, o.getId(), false);
+            });
         } else {
             avisarEmpresa(p.getClienteId(), "Respuesta en tu pedido #" + p.getId(), resumen);
         }
         return new PedidoComentarioDTO(c.getId(), c.getAutorNombre(), c.isDeEmpresa(), c.getTexto(), c.getCreadoEn());
+    }
+
+    // Técnico (7-oct-2026): la conversación del pedido de SU visita, solo para leer
+    public Map<String, Object> conversacionDeOrden(Usuario quien, Long ordenId) {
+        OrdenVisita o = ordenRepo.findById(ordenId).orElseThrow(() -> new ResourceNotFoundException("Visita no encontrada"));
+        if (quien.getRol() != RolUsuario.ADMIN && (o.getTecnico() == null || !o.getTecnico().getId().equals(quien.getId())))
+            throw new AccessDeniedException("No es tu visita");
+        Map<String, Object> out = new LinkedHashMap<>();
+        Optional<PedidoEmpresa> p = repo.findFirstByOrdenId(ordenId);
+        if (p.isEmpty()) { out.put("pedidoId", null); out.put("comentarios", List.of()); return out; }
+        out.put("pedidoId", p.get().getId());
+        out.put("empresa", nombreCliente(p.get()));
+        out.put("comentarios", comentarioRepo.findByPedidoIdOrderByCreadoEnAsc(p.get().getId()).stream()
+            .map(c -> new PedidoComentarioDTO(c.getId(), c.getAutorNombre(), c.isDeEmpresa(), c.getTexto(), c.getCreadoEn())).toList());
+        return out;
     }
 
     // ── Admin ────────────────────────────────────────────────────────────────

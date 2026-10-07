@@ -96,6 +96,13 @@ public class EmpresaController {
         return out;
     }
 
+    // Resumen del mes (equipos atendidos, sin precios)
+    @GetMapping("/resumen")
+    public Map<String, Object> resumen(@RequestParam(required = false) String mes, Authentication auth) {
+        java.time.YearMonth m = mes != null && !mes.isBlank() ? java.time.YearMonth.parse(mes) : java.time.YearMonth.now();
+        return historial.resumenMes(service.clienteDeEmpresa(yo(auth)), m);
+    }
+
     @GetMapping("/sedes")
     public List<Map<String, Object>> sedes(Authentication auth) { return service.sedesDeEmpresa(yo(auth)); }
 

@@ -97,6 +97,41 @@ public class HistorialEquipoService {
         return out;
     }
 
+    // Resumen del mes para la empresa (7-oct-2026): cada equipo atendido, sin precios
+    @Transactional(readOnly = true)
+    public Map<String, Object> resumenMes(Long clienteId, java.time.YearMonth mes) {
+        LocalDate desde = mes.atDay(1), hasta = mes.atEndOfMonth();
+        List<Object[]> res = em.createQuery(
+                "select s, i from Servicio s join s.items i where s.sede.cliente.id = :cid " +
+                "and s.fechaServicio between :d and :h and s.estado in :estados order by s.fechaServicio, s.id", Object[].class)
+            .setParameter("cid", clienteId).setParameter("d", desde).setParameter("h", hasta)
+            .setParameter("estados", HECHOS).getResultList();
+        List<Map<String, Object>> items = new ArrayList<>();
+        Set<Long> visitas = new HashSet<>();
+        Set<String> series = new HashSet<>();
+        Set<Long> lugares = new HashSet<>();
+        for (Object[] r : res) {
+            Servicio s = (Servicio) r[0];
+            ServicioItem it = (ServicioItem) r[1];
+            Map<String, Object> m = itemAMapa(s, it);
+            m.remove("fotoAntes"); m.remove("fotoDespues");
+            m.put("lugar", s.getSede() != null ? s.getSede().getNombreSede() : s.getSedeNombre());
+            m.put("direccion", s.getSede() != null ? s.getSede().getDireccion() : null);
+            items.add(m);
+            visitas.add(s.getId());
+            if (m.get("serie") != null) series.add((String) m.get("serie"));
+            if (s.getSede() != null) lugares.add(s.getSede().getId());
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("mes", mes.toString());
+        out.put("equiposAtendidos", items.size());
+        out.put("equiposDistintos", series.size());
+        out.put("visitas", visitas.size());
+        out.put("lugares", lugares.size());
+        out.put("items", items);
+        return out;
+    }
+
     private List<Map<String, Object>> historial(Equipo e, int max) {
         List<Object[]> res = em.createQuery(
                 "select s, i from Servicio s join s.items i where i.equipo.id = :eid and s.estado in :estados " +

@@ -14,6 +14,7 @@ import { estadoDe, cuandoPedido, haceCuanto, esAbierto } from '../../utils/pedid
 import PedidoDetalle from './PedidoDetalle';
 import NuevoPedidoSheet from './NuevoPedidoSheet';
 import EquiposEmpresa from './EquiposEmpresa';
+import ResumenMes from './ResumenMes';
 
 // Portal Empresa (7-oct-2026): lo único que ve un usuario EMPRESA. Carga
 // pedidos, sigue el estado de cada uno y conversa con Dispenser La Tienda en el
@@ -118,10 +119,13 @@ export default function PortalEmpresa() {
                     <Segmentado valor={vista} onChange={setVista} opciones={[
                         { id: 'pedidos', label: 'Pedidos' },
                         { id: 'equipos', label: 'Mis equipos' },
+                        { id: 'resumen', label: 'Resumen' },
                     ]} />
                 </div>
 
-                {vista === 'equipos' ? (
+                {vista === 'resumen' ? (
+                    <ResumenMes empresa={empresa} />
+                ) : vista === 'equipos' ? (
                     <EquiposEmpresa onPedirServicio={(eq) => setNuevo({ sedeId: eq.sedeId, serie: eq.serie })} />
                 ) : (<>
                 <div className="flex items-center justify-between gap-3">
