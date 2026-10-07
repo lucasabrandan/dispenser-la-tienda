@@ -153,6 +153,7 @@ public class OrdenVisitaService {
 
         // Si estaba NO_ATENDIDO, reprogramar la vuelve a PENDIENTE
         if (o.getEstado() == EstadoOrden.NO_ATENDIDO) {
+            exigirSinOtraVisitaAbierta(o);
             o.setEstado(EstadoOrden.PENDIENTE);
             o.setFechaCompletada(null);
         }
@@ -194,7 +195,61 @@ public class OrdenVisitaService {
     // ── Admin: eliminar ────────────────────────────────────────────────────────
     @Transactional
     public void eliminar(Long id) {
-        repo.deleteById(id);
+        OrdenVisita o = repo.findById(id).orElse(null);
+        if (o == null) return;
+        boolean abierta = ABIERTAS_TEC.contains(o.getEstado());
+        // Testeo integral A2 (7-oct-2026): antes quedaban colgados el pedido de la empresa
+        // (apuntando a una visita que no existe, sin poder agendarlo ni cancelarlo)
+        // y el presupuesto (EN_PROGRESO sin visita).
+        pedidoEmpresaRepo.findFirstByOrdenId(id).ifPresent(p -> {
+            if (abierta) avisarEmpresa(o, "· sin día por ahora", "Lo volvemos a agendar y te avisamos el día nuevo");
+            p.setOrdenId(null);
+            p.setActualizadoEn(LocalDateTime.now());
+            pedidoEmpresaRepo.save(p);
+        });
+        if (o.getPresupuestoId() != null
+                && !repo.existsByPresupuestoIdAndIdNotAndEstadoIn(o.getPresupuestoId(), id, ABIERTAS_TEC)) {
+            servicioRepository.findById(o.getPresupuestoId()).ifPresent(s -> {
+                if (s.getEstado() == EstadoServicio.EN_PROGRESO) {
+                    s.setEstado(EstadoServicio.PRESUPUESTO); // vuelve a "Por despachar"
+                    servicioRepository.save(s);
+                }
+            });
+        }
+        if (abierta && o.getTecnico() != null) {
+            notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, o.getTecnico().getId(), null,
+                "Visita cancelada · " + nombreParaAviso(o), "El admin la sacó de tu agenda: ya no tenés que ir.", null, false);
+        }
+        repo.delete(o);
+    }
+
+    // Testeo integral A1 (7-oct-2026): la empresa cancela/el admin rechaza un pedido ya
+    // agendado → la visita se cancela y el técnico se entera (antes iba igual).
+    @Transactional
+    public void cancelarPorPedido(Long ordenId) {
+        repo.findById(ordenId).ifPresent(o -> {
+            if (!ABIERTAS_TEC.contains(o.getEstado())) return;
+            o.setEstado(EstadoOrden.CANCELADA);
+            repo.save(o);
+            if (o.getTecnico() != null) {
+                notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, o.getTecnico().getId(), null,
+                    "Visita cancelada · " + nombreParaAviso(o), "La empresa canceló el pedido: ya no tenés que ir.", null, false);
+            }
+        });
+    }
+
+    private static String nombreParaAviso(OrdenVisita o) {
+        return o.getClienteNombre() != null && !o.getClienteNombre().isBlank() ? o.getClienteNombre() : o.getTitulo();
+    }
+
+    // Testeo integral A10 (7-oct-2026): un mismo trabajo no puede quedar con dos visitas
+    // abiertas (pasaba al reprogramar una "no atendida" después de haberlo despachado de nuevo).
+    private void exigirSinOtraVisitaAbierta(OrdenVisita o) {
+        if (o.getPresupuestoId() != null
+                && repo.existsByPresupuestoIdAndIdNotAndEstadoIn(o.getPresupuestoId(), o.getId(), ABIERTAS_TEC)) {
+            throw new com.dispenserlatienda.exception.BusinessException("VISITA_DUPLICADA",
+                "Ese trabajo ya tiene otra visita agendada: reprogramá esa");
+        }
     }
 
     // ── Admin: listar todas (con filtro de rango de fechas) ───────────────────
@@ -264,6 +319,9 @@ public class OrdenVisitaService {
             throw new IllegalArgumentException("La orden ya está completada; corregila desde el admin");
         }
 
+        if (!ABIERTAS_TEC.contains(estadoAnterior) && ABIERTAS_TEC.contains(nuevoEstado)) {
+            exigirSinOtraVisitaAbierta(o);
+        }
         o.setEstado(nuevoEstado);
         if (dto.notasTecnico() != null && !dto.notasTecnico().isBlank()) {
             o.setNotasTecnico(dto.notasTecnico());

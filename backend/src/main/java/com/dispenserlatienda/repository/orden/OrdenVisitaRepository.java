@@ -37,6 +37,8 @@ public interface OrdenVisitaRepository extends JpaRepository<OrdenVisita, Long> 
     // ¿Este presupuesto/servicio le fue asignado a este técnico por una orden? (4-oct-2026)
     boolean existsByPresupuestoIdAndTecnicoId(Long presupuestoId, Long tecnicoId);
     boolean existsByIdAndTecnicoId(Long id, Long tecnicoId);
+    boolean existsByPresupuestoIdAndEstadoIn(Long presupuestoId, java.util.Collection<com.dispenserlatienda.domain.orden.EstadoOrden> estados);
+    boolean existsByPresupuestoIdAndIdNotAndEstadoIn(Long presupuestoId, Long id, java.util.Collection<com.dispenserlatienda.domain.orden.EstadoOrden> estados);
     boolean existsByPresupuestoIdAndTecnicoIdAndEstadoIn(Long presupuestoId, Long tecnicoId, java.util.Collection<com.dispenserlatienda.domain.orden.EstadoOrden> estados);
     boolean existsByPresupuestoIdAndEstadoNotIn(Long presupuestoId, List<EstadoOrden> estados);
 

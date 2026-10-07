@@ -62,13 +62,13 @@ public class GeocodificadorService {
         Map<String, GeoUbicacion> out = new HashMap<>();
         if (porClave.isEmpty()) return out;
         for (GeoUbicacion g : repo.findByClaveIn(porClave.keySet())) out.put(g.getClave(), g);
+        List<String> nuevas = new ArrayList<>();
         for (var e : porClave.entrySet()) {
             if (out.containsKey(e.getKey())) continue;
-            GeoUbicacion g = new GeoUbicacion();
-            g.setClave(e.getKey());
-            g.setDireccion(e.getValue().length() > 500 ? e.getValue().substring(0, 500) : e.getValue());
-            try { out.put(e.getKey(), repo.save(g)); } catch (Exception ex) { /* otra pestaña la creó recién */ }
+            repo.insertarSiFalta(e.getKey(), e.getValue().length() > 500 ? e.getValue().substring(0, 500) : e.getValue());
+            nuevas.add(e.getKey());
         }
+        if (!nuevas.isEmpty()) for (GeoUbicacion g : repo.findByClaveIn(nuevas)) out.put(g.getClave(), g);
         return out;
     }
 

@@ -242,6 +242,12 @@ public class PedidoEmpresaService {
     @Transactional
     public PedidoEmpresaDTO rechazar(Long id, String motivo) {
         PedidoEmpresa p = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
+        if (p.getOrdenId() != null) {
+            Optional<OrdenVisita> o = ordenRepo.findById(p.getOrdenId());
+            if (o.isPresent() && o.get().getEstado() == EstadoOrden.COMPLETADA)
+                throw new BusinessException("Ese pedido ya se hizo: no se puede cancelar");
+            ordenService.cancelarPorPedido(p.getOrdenId());
+        }
         p.setEstado("CANCELADO");
         p.setActualizadoEn(LocalDateTime.now());
         String m = limpio(motivo);

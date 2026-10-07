@@ -528,6 +528,7 @@ public class ServicioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
 
         boolean esNuevo = servicio.getId() == null;
+        EstadoServicio estadoPrevio = servicio.getEstado();
         Long usuarioAnteriorId = servicio.getUsuario() != null ? servicio.getUsuario().getId() : null;
         java.time.LocalDate fechaAnterior = servicio.getFechaServicio();
         String horaAnterior = servicio.getHoraServicio();
@@ -553,6 +554,18 @@ public class ServicioService {
             }
         } else {
             servicio.setEstado(EstadoServicio.PRESUPUESTO);
+        }
+        // Testeo integral C4 (7-oct-2026): el formulario de edición siempre manda PRESUPUESTO.
+        // Corregir el precio de un trabajo ya despachado lo devolvía a "Presupuesto" con la
+        // visita viva (reaparecía en "Por hacer" y no se podía volver a despachar).
+        if (!esNuevo && servicio.getEstado() == EstadoServicio.PRESUPUESTO && estadoPrevio != null
+                && estadoPrevio != EstadoServicio.PRESUPUESTO
+                && (estadoPrevio == EstadoServicio.EN_PROGRESO || estadoPrevio == EstadoServicio.APROBADO
+                    || ordenVisitaRepository.existsByPresupuestoIdAndEstadoIn(servicio.getId(), List.of(
+                        com.dispenserlatienda.domain.orden.EstadoOrden.PENDIENTE,
+                        com.dispenserlatienda.domain.orden.EstadoOrden.EN_CAMINO,
+                        com.dispenserlatienda.domain.orden.EstadoOrden.EN_SITIO)))) {
+            servicio.setEstado(estadoPrevio);
         }
 
         servicio.setFotoRemito(dto.getFotoRemito());
@@ -705,7 +718,11 @@ public class ServicioService {
             // quedaba con la fecha vieja y no se enteraba. Se mueve y se le avisa.
             for (var o : ordenVisitaRepository.findByPresupuestoIdAndEstadoIn(saved.getId(), ACTIVAS)) {
                 o.setFechaProgramada(saved.getFechaServicio());
-                o.setHoraEstimada(saved.getHoraServicio());
+                // Testeo integral A6: el trabajo casi nunca tiene hora (la visita usa franjas
+                // como "Mañana"); solo se pisa la hora de la visita si el trabajo trae una.
+                if (saved.getHoraServicio() != null && !saved.getHoraServicio().isBlank()) {
+                    o.setHoraEstimada(saved.getHoraServicio());
+                }
                 o.setConfirmadaEn(null); // tiene que volver a confirmar "Ok, voy"
                 ordenVisitaRepository.save(o);
                 if (o.getTecnico() != null) {

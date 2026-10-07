@@ -40,7 +40,17 @@ export function useArrastrarHojas() {
             const h = hoja; hoja = null;
             h.style.transition = 'transform 180ms ease-out';
             const fondo = dy >= UMBRAL ? fondoDe(h) : null;
-            if (fondo) { h.style.transform = 'translateY(100%)'; setTimeout(() => fondo.click(), 120); }
+            if (fondo) {
+                h.style.transform = 'translateY(100%)';
+                setTimeout(() => {
+                    fondo.click();
+                    // Testeo integral C5 (7-oct-2026): hay hojas cuyo fondo NO cierra a propósito
+                    // (Cerrar por N/S, Cierre mensual, Repuesto) para no perder lo cargado. Antes
+                    // la hoja quedaba fuera de pantalla con el fondo negro tapando todo y la app
+                    // parecía trabada. Si después del "toque" la hoja sigue ahí, vuelve a su lugar.
+                    setTimeout(() => { if (h.isConnected) h.style.transform = ''; }, 220);
+                }, 120);
+            }
             else h.style.transform = '';
         };
         document.addEventListener('touchstart', start, { passive: true });
