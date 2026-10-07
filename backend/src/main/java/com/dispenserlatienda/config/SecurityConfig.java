@@ -52,6 +52,7 @@ public class SecurityConfig {
                 // a la empresa en EmpresaAislamientoFilter.
                 .requestMatchers("/api/empresa/**").hasRole("EMPRESA")
                 .requestMatchers("/api/pedidos-empresa/**").hasRole("ADMIN")
+                .requestMatchers("/api/mapa/**").hasRole("ADMIN")
 
                 // Mi Espacio (notas kanban personales) -- antes solo ADMIN, ahora
                 // cualquier usuario autenticado (Lucas, 7-sep-2026: sumarlo tambien a

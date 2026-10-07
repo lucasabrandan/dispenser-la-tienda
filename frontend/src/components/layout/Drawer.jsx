@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBadges } from '../../context/BadgesContext';
-import { LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban, LuInbox } from 'react-icons/lu';
+import { LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings, LuKanban, LuInbox, LuMap } from 'react-icons/lu';
 
 // Items que NO están en el BottomNav, agrupados por dominio para no mezclar todo
 // (mismo criterio que Sidebar.jsx en desktop). Presupuestos queda aparte de
@@ -11,6 +11,7 @@ import { LuUsers, LuSiren, LuPackage, LuTrendingUp, LuLock, LuLogOut, LuSettings
 // 3-oct-2026: Servicio Técnico y Presupuestos quedaron adentro de Trabajos.
 const MENU_GESTION_DRAWER = [
     { id: 'pedidos',    nombre: 'Pedidos',    Icon: LuInbox }, // Portal Empresa (7-oct-2026)
+    { id: 'mapa',       nombre: 'Mapa',       Icon: LuMap },
     { id: 'clientes',   nombre: 'Clientes',   Icon: LuUsers },
     { id: 'radar',      nombre: 'Radar',      Icon: LuSiren },
     { id: 'productos',  nombre: 'Productos',  Icon: LuPackage },

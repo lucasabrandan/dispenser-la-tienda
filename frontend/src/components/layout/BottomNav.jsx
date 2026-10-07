@@ -27,7 +27,7 @@ const NAV_TECNICO = [
 ];
 
 // Secciones accesibles desde "Más"
-const SECCIONES_MAS = ['servicio-tecnico', 'presupuestos', 'clientes', 'radar', 'productos', 'finanzas', 'usuarios', 'mi-espacio', 'configuracion', 'pedidos'];
+const SECCIONES_MAS = ['servicio-tecnico', 'presupuestos', 'clientes', 'radar', 'productos', 'finanzas', 'usuarios', 'mi-espacio', 'configuracion', 'pedidos', 'mapa'];
 
 export default function BottomNav({ vistaActual, setVistaActual, onMoreClick }) {
     const { esAdmin } = useAuth();

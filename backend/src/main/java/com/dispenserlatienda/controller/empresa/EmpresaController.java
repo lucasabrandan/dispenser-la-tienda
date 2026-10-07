@@ -22,8 +22,11 @@ public class EmpresaController {
     private final PedidoEmpresaService service;
     private final UsuarioRepository usuarioRepo;
     private final HistorialEquipoService historial;
+    private final com.dispenserlatienda.service.mapa.GeocodificadorService geo;
 
-    public EmpresaController(PedidoEmpresaService service, UsuarioRepository usuarioRepo, HistorialEquipoService historial) {
+    public EmpresaController(PedidoEmpresaService service, UsuarioRepository usuarioRepo, HistorialEquipoService historial,
+                             com.dispenserlatienda.service.mapa.GeocodificadorService geo) {
+        this.geo = geo;
         this.service = service;
         this.usuarioRepo = usuarioRepo;
         this.historial = historial;
@@ -75,6 +78,22 @@ public class EmpresaController {
     @GetMapping("/equipo")
     public Map<String, Object> equipo(@RequestParam String serie, Authentication auth) {
         return historial.fichaDeCliente(service.clienteDeEmpresa(yo(auth)), serie);
+    }
+
+    // Mapa de sus lugares (con sus equipos)
+    @GetMapping("/mapa")
+    public List<Map<String, Object>> mapa(Authentication auth) {
+        List<Map<String, Object>> sedes = service.sedesDeEmpresa(yo(auth));
+        var ub = geo.ubicar(sedes.stream().map(m -> (String) m.get("direccion")).filter(java.util.Objects::nonNull).toList());
+        java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
+        for (Map<String, Object> s : sedes) {
+            var g = geo.de(ub, (String) s.get("direccion"));
+            Map<String, Object> m = new java.util.LinkedHashMap<>(s);
+            m.put("lat", g != null ? g.getLat() : null);
+            m.put("lng", g != null ? g.getLng() : null);
+            out.add(m);
+        }
+        return out;
     }
 
     @GetMapping("/sedes")

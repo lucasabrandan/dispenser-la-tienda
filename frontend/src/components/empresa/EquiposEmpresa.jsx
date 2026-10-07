@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { LuSearch, LuMapPin, LuChevronRight, LuHash } from 'react-icons/lu';
 import api from '../../services/api';
 import FichaEquipoSheet from './FichaEquipoSheet';
+import MapaLeaflet, { linkGps } from '../mapa/MapaLeaflet';
+import { Segmentado } from '../ui/Pantalla';
+import { LuNavigation, LuX } from 'react-icons/lu';
 
 // Portal Empresa — etapa 2 (7-oct-2026): los equipos de la empresa. Cada uno
 // tiene su ficha con TODAS las visitas (no se borra nunca).
@@ -16,6 +19,16 @@ export default function EquiposEmpresa({ onPedirServicio }) {
     const [cargando, setCargando] = useState(true);
     const [q, setQ] = useState('');
     const [abierto, setAbierto] = useState(null);
+    const [modo, setModo] = useState('lista');
+    const [lugares, setLugares] = useState(null);
+    const [sel, setSel] = useState(null);
+
+    // Mapa de sus lugares (7-oct-2026)
+    useEffect(() => {
+        if (modo !== 'mapa' || lugares) return;
+        api.get('/empresa/mapa').then(r => setLugares((r.data || []).map(l => ({ ...l, id: `s${l.id}`, sedeId: l.id, color: '#C9341F', etiqueta: l.series?.length > 1 ? String(l.series.length) : null })))).catch(() => setLugares([]));
+    }, [modo, lugares]);
+    const lugar = (lugares || []).find(l => l.id === sel);
 
     useEffect(() => {
         api.get('/empresa/equipos').then(r => setEquipos(Array.isArray(r.data) ? r.data : [])).catch(() => {}).finally(() => setCargando(false));
@@ -29,6 +42,41 @@ export default function EquiposEmpresa({ onPedirServicio }) {
 
     return (
         <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+                <Segmentado valor={modo} onChange={setModo} opciones={[{ id: 'lista', label: 'Lista' }, { id: 'mapa', label: 'Mapa' }]} />
+            </div>
+            {modo === 'mapa' ? (
+                <div className="relative rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/[0.06]">
+                    <MapaLeaflet puntos={lugares || []} seleccionado={sel} ajustarKey={lugares ? lugares.length : 0}
+                        onClickPunto={(p) => setSel(p.id)} onClickMapa={() => setSel(null)}
+                        className="w-full h-[calc(var(--vh,1vh)*100-330px)] min-h-[360px]" />
+                    {lugares && lugares.some(l => l.lat == null) && (
+                        <span className="absolute top-3 left-3 z-[500] h-8 px-3 rounded-full bg-card shadow text-caption font-bold text-secondary inline-flex items-center">
+                            Ubicando {lugares.filter(l => l.lat == null).length} lugar{lugares.filter(l => l.lat == null).length !== 1 ? 'es' : ''}…
+                        </span>
+                    )}
+                    {lugar && (
+                        <div className="absolute left-3 right-3 bottom-3 z-[600] p-4 rounded-2xl bg-card shadow-xl space-y-3">
+                            <div className="flex items-start gap-2">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-body-lg font-black text-ink leading-tight">{lugar.nombre || lugar.direccion}</p>
+                                    <p className="text-caption text-secondary">{lugar.direccion}</p>
+                                </div>
+                                <button type="button" onClick={() => setSel(null)} aria-label="Cerrar" className="w-8 h-8 shrink-0 rounded-lg bg-chip text-muted flex items-center justify-center"><LuX size={15} /></button>
+                            </div>
+                            {lugar.series?.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {lugar.series.map(s => (
+                                        <button key={s} type="button" onClick={() => setAbierto(s)} className="h-8 px-3 rounded-full bg-chip text-caption font-black text-secondary active:scale-95"># {s}</button>
+                                    ))}
+                                </div>
+                            )}
+                            <a href={linkGps(lugar.direccion, lugar.lat, lugar.lng)} target="_blank" rel="noreferrer"
+                                className="h-10 rounded-xl bg-[#C9341F] text-white text-label font-black inline-flex items-center justify-center gap-1.5 w-full"><LuNavigation size={15} /> Cómo llegar</a>
+                        </div>
+                    )}
+                </div>
+            ) : (<>
             <div className="relative">
                 <LuSearch size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
                 <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por N/S, lugar o dirección"
@@ -62,6 +110,7 @@ export default function EquiposEmpresa({ onPedirServicio }) {
                     </div>
                 </>
             )}
+            </>)}
             {abierto && <FichaEquipoSheet serie={abierto} onCerrar={() => setAbierto(null)}
                 onPedirServicio={(eq) => { setAbierto(null); onPedirServicio && onPedirServicio(eq); }} />}
         </div>

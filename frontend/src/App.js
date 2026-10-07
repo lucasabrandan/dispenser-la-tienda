@@ -29,6 +29,7 @@ import MiEspacio          from './components/miespacio/MiEspacio';
 import Configuracion      from './components/configuracion/Configuracion';
 import PortalEmpresa      from './components/empresa/PortalEmpresa';
 import PedidosEmpresaManager from './components/empresa/PedidosEmpresaManager';
+import MapaManager from './components/mapa/MapaManager';
 import api from './services/api';
 import { setColoresTecnicos } from './utils/estados';
 
@@ -148,6 +149,10 @@ function AppInterna() {
                 return <LoMio />;
             case 'mi-espacio':
                 return <MiEspacio />;
+            case 'mapa':
+                return esAdmin ? <MapaManager
+                    onCrearTrabajo={(c) => { setTrabajoNuevo('nuevo'); irASeccionConCliente('trabajos', c); }}
+                    onAbrirPedido={(id) => { try { sessionStorage.setItem('abrirPedido', String(id)); } catch { /* */ } setSeccionActual('pedidos'); }} /> : null;
             case 'pedidos':
                 return esAdmin ? <PedidosEmpresaManager /> : null;
             case 'configuracion':
