@@ -6,6 +6,7 @@ import com.dispenserlatienda.dto.empresa.PedidoEmpresaCreateDTO;
 import com.dispenserlatienda.dto.empresa.PedidoEmpresaDTO;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.service.empresa.PedidoEmpresaService;
+import com.dispenserlatienda.service.equipo.HistorialEquipoService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,10 +21,12 @@ public class EmpresaController {
 
     private final PedidoEmpresaService service;
     private final UsuarioRepository usuarioRepo;
+    private final HistorialEquipoService historial;
 
-    public EmpresaController(PedidoEmpresaService service, UsuarioRepository usuarioRepo) {
+    public EmpresaController(PedidoEmpresaService service, UsuarioRepository usuarioRepo, HistorialEquipoService historial) {
         this.service = service;
         this.usuarioRepo = usuarioRepo;
+        this.historial = historial;
     }
 
     @GetMapping("/datos")
@@ -54,6 +57,24 @@ public class EmpresaController {
     @PostMapping("/pedidos/{id}/comentarios")
     public PedidoComentarioDTO comentar(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
         return service.comentar(yo(auth), id, body.get("texto"));
+    }
+
+    // Etapa 2: informe del trabajo (cuando la visita quedó hecha)
+    @GetMapping("/pedidos/{id}/informe")
+    public List<Map<String, Object>> informe(@PathVariable Long id, Authentication auth) {
+        PedidoEmpresaDTO p = service.obtenerDeEmpresa(yo(auth), id);
+        return "HECHO".equals(p.estado()) ? historial.informeDeOrden(p.ordenId()) : List.of();
+    }
+
+    // Etapa 2: equipos de la empresa y la ficha permanente de cada uno
+    @GetMapping("/equipos")
+    public List<Map<String, Object>> equipos(Authentication auth) {
+        return historial.equiposDeCliente(service.clienteDeEmpresa(yo(auth)));
+    }
+
+    @GetMapping("/equipo")
+    public Map<String, Object> equipo(@RequestParam String serie, Authentication auth) {
+        return historial.fichaDeCliente(service.clienteDeEmpresa(yo(auth)), serie);
     }
 
     @GetMapping("/sedes")

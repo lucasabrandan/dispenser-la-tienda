@@ -5,6 +5,7 @@ import com.dispenserlatienda.dto.empresa.PedidoComentarioDTO;
 import com.dispenserlatienda.dto.empresa.PedidoEmpresaDTO;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.service.empresa.PedidoEmpresaService;
+import com.dispenserlatienda.service.equipo.HistorialEquipoService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,10 +20,12 @@ public class PedidoEmpresaAdminController {
 
     private final PedidoEmpresaService service;
     private final UsuarioRepository usuarioRepo;
+    private final HistorialEquipoService historial;
 
-    public PedidoEmpresaAdminController(PedidoEmpresaService service, UsuarioRepository usuarioRepo) {
+    public PedidoEmpresaAdminController(PedidoEmpresaService service, UsuarioRepository usuarioRepo, HistorialEquipoService historial) {
         this.service = service;
         this.usuarioRepo = usuarioRepo;
+        this.historial = historial;
     }
 
     @GetMapping
@@ -40,6 +43,12 @@ public class PedidoEmpresaAdminController {
     @PostMapping("/{id}/comentarios")
     public PedidoComentarioDTO comentar(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
         return service.comentar(yo(auth), id, body.get("texto"));
+    }
+
+    @GetMapping("/{id}/informe")
+    public List<Map<String, Object>> informe(@PathVariable Long id) {
+        PedidoEmpresaDTO p = service.obtener(id);
+        return historial.informeDeOrden(p.ordenId());
     }
 
     @PostMapping("/{id}/agendar")

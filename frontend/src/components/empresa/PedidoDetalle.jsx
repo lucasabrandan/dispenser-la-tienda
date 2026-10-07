@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { LuMapPin, LuClock, LuSend, LuNavigation, LuTriangleAlert, LuHash, LuMessageCircle } from 'react-icons/lu';
 import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
+import InformeTrabajo from './InformeTrabajo';
 import { estadoDe, cuandoPedido, linkMaps, haceCuanto, PASOS_PEDIDO, esAbierto } from '../../utils/pedidosEmpresa';
 
 // Ficha de un pedido (Portal Empresa, 7-oct-2026). La usan los dos lados:
@@ -12,6 +13,7 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
     const base = modo === 'empresa' ? '/empresa/pedidos' : '/pedidos-empresa';
     const [p, setP] = useState(inicial);
     const [comentarios, setComentarios] = useState([]);
+    const [informe, setInforme] = useState([]);
     const [texto, setTexto] = useState('');
     const [enviando, setEnviando] = useState(false);
     const finRef = useRef(null);
@@ -26,6 +28,12 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
     }, [base, inicial.id]);
 
     useEffect(() => { cargar(); const id = setInterval(cargar, 15000); return () => clearInterval(id); }, [cargar]);
+    // Etapa 2: cuando la visita quedó hecha, el informe (qué se hizo, repuestos, fotos)
+    const hecho = p.estado === 'HECHO';
+    useEffect(() => {
+        if (!hecho) return;
+        api.get(`${base}/${inicial.id}/informe`).then(r => setInforme(Array.isArray(r.data) ? r.data : [])).catch(() => {});
+    }, [hecho, base, inicial.id]);
     useEffect(() => { finRef.current?.scrollIntoView({ block: 'end' }); }, [comentarios.length]);
 
     const enviar = async () => {
@@ -120,6 +128,8 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
                     {p.equipoSerie && <p className="flex items-center gap-2 px-1 text-label font-bold text-secondary"><LuHash size={15} className="text-muted" />Equipo N/S {p.equipoSerie}</p>}
                     {p.detalle && <p className="px-1 text-body text-ink whitespace-pre-line">{p.detalle}</p>}
                 </div>
+
+                {hecho && <InformeTrabajo pedido={p} items={informe} />}
 
                 {/* Conversación */}
                 <div className="space-y-2">

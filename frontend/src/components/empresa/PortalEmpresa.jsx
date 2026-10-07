@@ -6,13 +6,14 @@ import logo from '../../assets/logo-dispenser.svg';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 import { useArrastrarHojas } from '../../hooks/useArrastrarHojas';
-import { Pestanas, CONTENEDOR, PAGINA } from '../ui/Pantalla';
+import { Pestanas, Segmentado, CONTENEDOR, PAGINA } from '../ui/Pantalla';
 import NotificacionesPanel, { NotifBell } from '../layout/NotificacionesPanel';
 import { sonarAviso } from '../layout/AvisoUrgente';
 import { pushSoportado, activarNotificaciones } from '../../utils/pushNotifications';
 import { estadoDe, cuandoPedido, haceCuanto, esAbierto } from '../../utils/pedidosEmpresa';
 import PedidoDetalle from './PedidoDetalle';
 import NuevoPedidoSheet from './NuevoPedidoSheet';
+import EquiposEmpresa from './EquiposEmpresa';
 
 // Portal Empresa (7-oct-2026): lo único que ve un usuario EMPRESA. Carga
 // pedidos, sigue el estado de cada uno y conversa con Dispenser La Tienda en el
@@ -26,7 +27,8 @@ export default function PortalEmpresa() {
     const [cargando, setCargando] = useState(true);
     const [tab, setTab] = useState('curso');
     const [abierto, setAbierto] = useState(null);
-    const [nuevo, setNuevo] = useState(false);
+    const [nuevo, setNuevo] = useState(false); // false | true | { sedeId, serie }
+    const [vista, setVista] = useState('pedidos');
     const [notifCount, setNotifCount] = useState(0);
     const [notifAbierto, setNotifAbierto] = useState(false);
     const [permiso, setPermiso] = useState(() => (typeof Notification !== 'undefined' ? Notification.permission : 'denied'));
@@ -112,6 +114,16 @@ export default function PortalEmpresa() {
                     </button>
                 )}
 
+                <div className="[&>div]:w-full [&_button]:flex-1 [&_button]:justify-center">
+                    <Segmentado valor={vista} onChange={setVista} opciones={[
+                        { id: 'pedidos', label: 'Pedidos' },
+                        { id: 'equipos', label: 'Mis equipos' },
+                    ]} />
+                </div>
+
+                {vista === 'equipos' ? (
+                    <EquiposEmpresa onPedirServicio={(eq) => setNuevo({ sedeId: eq.sedeId, serie: eq.serie })} />
+                ) : (<>
                 <div className="flex items-center justify-between gap-3">
                     <h1 className="text-2xl font-black uppercase tracking-tight text-ink">Pedidos</h1>
                     <button type="button" onClick={() => setNuevo(true)}
@@ -136,9 +148,10 @@ export default function PortalEmpresa() {
                         {lista.map(p => <TarjetaPedido key={p.id} p={p} onClick={() => setAbierto(p)} />)}
                     </div>
                 )}
+                </>)}
             </div>
 
-            {nuevo && <NuevoPedidoSheet onCerrar={() => setNuevo(false)} onCreado={(p) => { setNuevo(false); setTab('curso'); cargar(); setAbierto(p); }} />}
+            {nuevo && <NuevoPedidoSheet inicial={nuevo === true ? null : nuevo} onCerrar={() => setNuevo(false)} onCreado={(p) => { setNuevo(false); setVista('pedidos'); setTab('curso'); cargar(); setAbierto(p); }} />}
             {abierto && <PedidoDetalle key={abierto.id} pedido={abierto} modo="empresa" onCerrar={() => { setAbierto(null); cargar(); }} onCambio={cargar} />}
             <NotificacionesPanel abierto={notifAbierto}
                 onCerrar={() => { setNotifAbierto(false); pollNotifs(); }}

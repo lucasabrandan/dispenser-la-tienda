@@ -29,7 +29,9 @@ public class EmpresaAislamientoFilter extends OncePerRequestFilter {
         if (esEmpresa) {
             String path = req.getRequestURI();
             boolean ok = !path.startsWith("/api/")
-                || (PERMITIDAS.stream().anyMatch(path::startsWith) && !path.startsWith("/api/notificaciones/por-trabajo"));
+                || (PERMITIDAS.stream().anyMatch(path::startsWith) && !path.startsWith("/api/notificaciones/por-trabajo"))
+                // fotos de los informes (solo ver, no subir)
+                || ("GET".equals(req.getMethod()) && path.startsWith("/api/uploads/"));
             if (!ok) {
                 // Se escribe directo (no sendError): el despacho a /error terminaba en
                 // 401 y el frontend lo toma como sesión vencida.

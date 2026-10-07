@@ -9,14 +9,14 @@ const INPUT = 'w-full h-11 px-3.5 rounded-xl bg-chip text-body text-ink outline-
 
 // Nuevo pedido (Portal Empresa, 7-oct-2026): reemplaza la tarjeta de Trello.
 // Lugar (de sus sedes, o una dirección nueva), equipo, motivo, detalle y urgencia.
-export default function NuevoPedidoSheet({ onCerrar, onCreado }) {
+export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null }) {
     const [sedes, setSedes] = useState([]);
     const [q, setQ] = useState('');
-    const [sedeId, setSedeId] = useState(null);
+    const [sedeId, setSedeId] = useState(inicial?.sedeId || null);
     const [otra, setOtra] = useState(false);
     const [lugar, setLugar] = useState('');
     const [direccion, setDireccion] = useState('');
-    const [serie, setSerie] = useState('');
+    const [serie, setSerie] = useState(inicial?.serie || '');
     const [motivo, setMotivo] = useState('');
     const [detalle, setDetalle] = useState('');
     const [urgente, setUrgente] = useState(false);

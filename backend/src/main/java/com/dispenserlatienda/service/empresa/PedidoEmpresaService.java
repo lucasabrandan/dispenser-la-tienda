@@ -251,6 +251,8 @@ public class PedidoEmpresaService {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    public Long clienteDeEmpresa(Usuario empresa) { return clienteDe(empresa); }
+
     private Long clienteDe(Usuario empresa) {
         if (empresa.getRol() != RolUsuario.EMPRESA || empresa.getClienteId() == null)
             throw new AccessDeniedException("Usuario sin empresa asignada");

@@ -524,7 +524,17 @@ public class OrdenVisitaService {
         switch (estado) {
             case EN_CAMINO -> avisarEmpresa(o, "· el técnico va en camino", quien + " salió para " + (o.getDireccion() != null ? o.getDireccion() : "el lugar"));
             case EN_SITIO -> avisarEmpresa(o, "· el técnico llegó", quien + " ya está en el lugar");
-            case COMPLETADA -> avisarEmpresa(o, "terminado ✓", "El trabajo quedó hecho");
+            case COMPLETADA -> {
+                String hecho = null;
+                try {
+                    hecho = servicioRepository.findByOrdenId(o.getId()).stream()
+                        .flatMap(sv -> sv.getItems().stream())
+                        .map(com.dispenserlatienda.domain.servicio.ServicioItem::getTrabajoRealizado)
+                        .filter(t -> t != null && !t.isBlank()).findFirst().orElse(null);
+                } catch (Exception ignored) { }
+                avisarEmpresa(o, "terminado ✓", (hecho != null ? hecho + "\n" : "El trabajo quedó hecho. ")
+                    + "Mirá el informe con las fotos en el pedido.");
+            }
             case NO_ATENDIDO -> avisarEmpresa(o, "· no se pudo hacer", "Lo reprogramamos y te avisamos el día nuevo");
             default -> { }
         }
