@@ -174,7 +174,9 @@ public class OrdenVisitaService {
         if (cambioDia && dto.presupuestoId() != null && dto.fechaProgramada() != null) {
             servicioRepository.findById(dto.presupuestoId()).ifPresent(sv -> {
                 sv.setFechaServicio(dto.fechaProgramada());
-                sv.setHoraServicio(dto.horaEstimada());
+                // hora_servicio es de 5 caracteres ("10:30"): la franja ("Mañana"/"Tarde") no entra
+                String h = dto.horaEstimada() != null ? dto.horaEstimada().trim() : "";
+                sv.setHoraServicio(h.matches("\\d{1,2}:\\d{2}.*") ? h.replaceAll("^(\\d{1,2}:\\d{2}).*$", "$1") : null);
                 servicioRepository.save(sv);
             });
         }
