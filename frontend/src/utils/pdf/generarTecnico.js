@@ -14,6 +14,7 @@ import {
 } from './bloques.js';
 import { cargarFoto, checkSalto, sanitizarTexto } from './helpers.js';
 import { dibujarPaginaEvidencia } from './fotos.js';
+import { altoRegistroFotografico } from './bloques/fotosQR.js';
 import { construirFilasItem, getLabelTipo, TABLE_HEAD_STYLES, TABLE_BODY_STYLES, makeDidDrawPage } from './pdfShared.js';
 
 export async function generarSingleTecnico(doc, {
@@ -219,7 +220,18 @@ export async function generarSingleTecnico(doc, {
             dibujarHeaderCompacto(doc, { tipoLabel: getLabelTipo(tipo, false), fecha, nroDoc });
             y = HEADER_H.compact + 8;
         }
-        y = dibujarRegistroFotografico(doc, { y, fotoA, fotoD });
+        // Si con las fotos en tamaño normal lo que sigue (garantía, firmas, etc.) se va a una
+        // segunda hoja casi vacía, se usan fotos compactas para que todo entre en una (9-oct-2026).
+        const leyLimpiaF = (leyenda || '').trim().toLowerCase();
+        const hayLeyenda = leyLimpiaF && !(leyLimpiaF.includes('90 d') && leyLimpiaF.includes('mano de obra'));
+        const resto = 14 + (incluirFirmas ? 44 : 0)
+            + ((item.checklist || []).length > 0 ? 40 : 0)
+            + (proximoMantenimiento ? 19 : 0)
+            + (hayLeyenda ? 26 : 0);
+        const limite = pageH - 18;
+        const compacto = y + altoRegistroFotografico(fotoA, fotoD) + resto > limite
+            && y + altoRegistroFotografico(fotoA, fotoD, true) + resto <= limite;
+        y = dibujarRegistroFotografico(doc, { y, fotoA, fotoD, compacto });
     }
 
     // Checklist
@@ -283,7 +295,9 @@ export async function generarSingleTecnico(doc, {
             y = dibujarFirmas(doc, { y, firmaCliente, firmaTecnico, aclaracionCliente, esPresupuesto: false });
         }
     } else {
-        y = checkSalto(doc, y, 14 + firmasH);
+        // Si entra con el margen del pie (18mm) no se corta de hoja; checkSalto usa 25mm
+        // y mandaba sola la línea de garantía a una segunda hoja (9-oct-2026).
+        if (!cabeGarYFirmas) y = checkSalto(doc, y, 14 + firmasH);
         // Garantía inline
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.15);

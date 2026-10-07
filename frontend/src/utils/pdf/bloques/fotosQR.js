@@ -62,6 +62,15 @@ function dibujarQRPlaceholder(doc, x, y) {
     return y + 44;
 }
 
+// Alto total que ocupa el registro fotográfico (título + fotos + rótulos), para decidir
+// antes de dibujar si conviene la versión compacta y que el PDF entre en una hoja.
+export function altoRegistroFotografico(fotoA, fotoD, compacto = false) {
+    const esHz = (f) => f && f.w && f.h && f.w > f.h;
+    const alto = (f) => !f ? 0 : compacto ? 56 : (esHz(f) ? 66 : 74);
+    if (!fotoA && !fotoD) return 0;
+    return 5 + Math.max(alto(fotoA), alto(fotoD)) + 10;
+}
+
 export function dibujarRegistroFotografico(doc, { y, fotoA = null, fotoD = null, esPresupuesto = false, compacto = false }) {
     if (!fotoA && !fotoD) return y;
 
