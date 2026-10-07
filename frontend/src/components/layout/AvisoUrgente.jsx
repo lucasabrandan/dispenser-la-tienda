@@ -13,7 +13,7 @@ export function esUrgente(n, esAdmin) {
         return t.startsWith(TITULO_CONTACTO) || t.startsWith('Mensaje de ')
             || n.tipo === 'ORDEN_NO_ATENDIDO' || (n.tipo === 'ORDEN_EN_CAMINO' && n.referenciaId);
     }
-    return t.startsWith('Visita en pausa') || t.startsWith('✓ El admin avisó')
+    return t.startsWith('Visita en pausa') || t.startsWith('Visita reasignada') || t.startsWith('✓ El admin avisó')
         || n.tipo === 'ORDEN_ASIGNADA' || n.tipo === 'TRABAJO_ASIGNADO';
 }
 

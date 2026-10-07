@@ -121,6 +121,10 @@ public class OrdenVisitaService {
             .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado: " + dto.tecnicoId()));
 
         boolean cambioTecnico = o.getTecnico() != null && !o.getTecnico().getId().equals(tecnico.getId());
+        Usuario tecnicoAnterior = o.getTecnico();
+        boolean cambioDia = !java.util.Objects.equals(o.getFechaProgramada(), dto.fechaProgramada())
+            || !java.util.Objects.equals(o.getHoraEstimada(), dto.horaEstimada())
+            || o.getEstado() == EstadoOrden.NO_ATENDIDO;
         // Si cambia quién, el día o la hora, el técnico tiene que volver a confirmar
         if (cambioTecnico || !java.util.Objects.equals(o.getFechaProgramada(), dto.fechaProgramada())
                 || !java.util.Objects.equals(o.getHoraEstimada(), dto.horaEstimada())) {
@@ -149,11 +153,30 @@ public class OrdenVisitaService {
         }
 
         OrdenVisitaDTO guardada = toDTO(repo.save(o));
+        String cliente = guardada.clienteNombre() != null && !guardada.clienteNombre().isBlank() ? guardada.clienteNombre() : guardada.titulo();
         if (cambioTecnico) {
             notificarTecnico(tecnico, guardada);
             notificacionService.notificar(TipoNotificacion.ORDEN_ASIGNADA, tecnico.getId(), null,
                 guardada.titulo(), guardada.clienteNombre() != null ? guardada.clienteNombre() : "",
                 guardada.id(), false);
+            // Al que la tenía antes se le avisa que ya no va (7-oct-2026)
+            notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, tecnicoAnterior.getId(), null,
+                "Visita reasignada · " + cliente, "La va a hacer otro técnico: ya no la tenés que hacer.",
+                guardada.id(), false);
+        } else if (cambioDia) {
+            // Reprogramada desde el admin (7-oct-2026): antes no le llegaba nada al técnico
+            String cuando = (dto.fechaProgramada() != null ? dto.fechaProgramada().format(DateTimeFormatter.ofPattern("dd/MM")) : "sin fecha")
+                + (dto.horaEstimada() != null && !dto.horaEstimada().isBlank() ? " " + dto.horaEstimada() : "");
+            notificacionService.notificar(TipoNotificacion.ORDEN_ASIGNADA, tecnico.getId(), null,
+                "Cambió tu visita · " + cliente, "Nuevo día: " + cuando, guardada.id(), false);
+        }
+        // El trabajo (presupuesto) queda con el mismo día que su visita
+        if (cambioDia && dto.presupuestoId() != null && dto.fechaProgramada() != null) {
+            servicioRepository.findById(dto.presupuestoId()).ifPresent(sv -> {
+                sv.setFechaServicio(dto.fechaProgramada());
+                sv.setHoraServicio(dto.horaEstimada());
+                servicioRepository.save(sv);
+            });
         }
         return guardada;
     }

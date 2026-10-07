@@ -96,7 +96,7 @@ function cuando(n) {
 // Mismo criterio que esUrgente() de AvisoUrgente.jsx (para los dos roles)
 function esUrgentePush(n) {
     const t = String(n.titulo || '');
-    return t.startsWith('Contactar al cliente') || t.startsWith('Mensaje de ') || t.startsWith('Visita en pausa')
+    return t.startsWith('Contactar al cliente') || t.startsWith('Mensaje de ') || t.startsWith('Visita en pausa') || t.startsWith('Visita reasignada')
         || t.startsWith('✓ El admin avisó') || n.tipo === 'ORDEN_NO_ATENDIDO' || n.tipo === 'ORDEN_ASIGNADA'
         || (n.tipo === 'ORDEN_EN_CAMINO' && n.referenciaId)
         || (n.tipo === 'TRABAJO_ASIGNADO' && t !== 'Horario confirmado');
