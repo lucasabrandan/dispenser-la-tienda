@@ -517,12 +517,15 @@ public class OrdenVisitaService {
         String texto = "No puede trabajar hoy (" + (motivo != null && !motivo.isBlank() ? motivo : "sin motivo") + ")"
             + (detalle != null && !detalle.isBlank() ? ": " + detalle.trim() : "");
         deHoy.forEach(o -> devolverOrden(o, texto));
-        String clientes = deHoy.stream()
-            .map(o -> o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo())
-            .collect(Collectors.joining(", "));
+        // Una línea por visita (hora · cliente · dirección) para reasignar sin abrir la app (7-oct-2026)
+        String visitas = deHoy.stream()
+            .map(o -> "• " + (o.getHoraEstimada() != null && !o.getHoraEstimada().isBlank() ? (o.getHoraEstimada().length() > 5 ? o.getHoraEstimada().substring(0, 5) : o.getHoraEstimada()) : "Sin horario")
+                + " " + (o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo())
+                + (o.getDireccion() != null && !o.getDireccion().isBlank() ? " · " + o.getDireccion() : ""))
+            .collect(Collectors.joining("\n"));
         avisarAdmins(TipoNotificacion.ORDEN_NO_ATENDIDO, tecnico,
             tecnico.getNombre() + " no puede trabajar hoy",
-            texto + (deHoy.isEmpty() ? "" : " — " + deHoy.size() + " visita(s) para reasignar: " + clientes + ". Avisales a los clientes."),
+            texto + (deHoy.isEmpty() ? "" : "\n" + deHoy.size() + " visita(s) para reasignar:\n" + visitas + "\nAvisales a los clientes."),
             null);
         return deHoy.size();
     }

@@ -235,7 +235,7 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo,
                                                 {n.titulo}
                                             </p>
                                             {n.mensaje && (
-                                                <p className="text-caption text-muted mt-0.5 line-clamp-2">{n.mensaje}</p>
+                                                <p className="text-caption text-muted mt-0.5 line-clamp-4 whitespace-pre-line">{n.mensaje}</p>
                                             )}
                                             {(cuandoDeNotif(n) || n.direccion) && (
                                                 <p className="text-caption font-bold text-secondary mt-0.5 truncate">
