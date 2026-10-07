@@ -122,6 +122,8 @@ public class OrdenVisitaService {
 
         boolean cambioTecnico = o.getTecnico() != null && !o.getTecnico().getId().equals(tecnico.getId());
         Usuario tecnicoAnterior = o.getTecnico();
+        java.time.LocalDate fechaAntes = o.getFechaProgramada();
+        String horaAntes = o.getHoraEstimada();
         boolean cambioDia = !java.util.Objects.equals(o.getFechaProgramada(), dto.fechaProgramada())
             || !java.util.Objects.equals(o.getHoraEstimada(), dto.horaEstimada())
             || o.getEstado() == EstadoOrden.NO_ATENDIDO;
@@ -165,10 +167,11 @@ public class OrdenVisitaService {
                 guardada.id(), false);
         } else if (cambioDia) {
             // Reprogramada desde el admin (7-oct-2026): antes no le llegaba nada al técnico
-            String cuando = (dto.fechaProgramada() != null ? dto.fechaProgramada().format(DateTimeFormatter.ofPattern("dd/MM")) : "sin fecha")
-                + (dto.horaEstimada() != null && !dto.horaEstimada().isBlank() ? " " + dto.horaEstimada() : "");
+            // El día nuevo ya va en la tarjeta del push: el mensaje dice cuándo era antes
+            String antes = (fechaAntes != null ? fechaAntes.format(DateTimeFormatter.ofPattern("dd/MM")) : "sin fecha")
+                + (horaAntes != null && !horaAntes.isBlank() ? " " + (horaAntes.length() > 5 && horaAntes.charAt(2) == ':' ? horaAntes.substring(0, 5) : horaAntes) : "");
             notificacionService.notificar(TipoNotificacion.ORDEN_ASIGNADA, tecnico.getId(), null,
-                "Cambió tu visita · " + cliente, "Nuevo día: " + cuando, guardada.id(), false);
+                "Cambió tu visita · " + cliente, "Antes era el " + antes, guardada.id(), false);
         }
         // El trabajo (presupuesto) queda con el mismo día que su visita
         if (cambioDia && dto.presupuestoId() != null && dto.fechaProgramada() != null) {

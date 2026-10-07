@@ -137,7 +137,7 @@ async function mostrarNotif(n) {
         renotify: !yaMostrada,
         silent: yaMostrada,
         requireInteraction: esUrgentePush(n), // en compu queda en pantalla hasta que se toca
-        icon: '/notif-icon-192.png',
+        icon: '/notif-icon-v2.png',
         badge: '/notif-badge-96.png',
         actions,
         data: ordenId ? { ordenId, tipo: n.tipo, titulo: n.titulo, mensaje: n.mensaje }

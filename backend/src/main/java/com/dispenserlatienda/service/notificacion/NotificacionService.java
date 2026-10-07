@@ -65,40 +65,43 @@ public class NotificacionService {
         if (destino == null) return;
         Usuario origen = origenId != null ? usuarioRepo.findById(origenId).orElse(null) : null;
 
-        try {
-            txAparte.executeWithoutResult(status -> {
-                Notificacion n = new Notificacion();
-                n.setTipo(tipo);
-                n.setTitulo(titulo);
-                n.setMensaje(mensaje);
-                n.setDestino(usuarioRepo.getReferenceById(destino.getId()));
-                n.setOrigen(origen != null ? usuarioRepo.getReferenceById(origen.getId()) : null);
-                n.setReferenciaId(referenciaId);
-                repo.save(n);
-            });
-        } catch (Exception e) {
-            log.warn("No se pudo guardar la notificación {} para usuario {}: {}", tipo, destinoId, e.getMessage());
-        }
-
-        // Push al celu/navegador — siempre que haya dispositivos suscriptos,
-        // a diferencia de WhatsApp esto no es opcional por tipo de evento.
-        // 7-oct-2026: el push sale DESPUÉS de que se guarde la operación principal.
-        // Antes salía en el medio y el celular, al pedir los datos de la visita,
-        // a veces la encontraba sin guardar (o con el día viejo) → push sin tarjeta.
+        // 7-oct-2026: todo (guardar, push y WhatsApp) sale DESPUÉS de que se guarde la
+        // operación principal. Antes: (1) el push salía en el medio y el celular, al
+        // pedir los datos de la visita, la encontraba sin guardar o con el día viejo;
+        // (2) si la operación fallaba (error 500), la notificación quedaba igual
+        // guardada y después aparecían avisos de cambios que nunca pasaron.
+        Runnable enviar = () -> {
+            try {
+                txAparte.executeWithoutResult(status -> {
+                    Notificacion n = new Notificacion();
+                    n.setTipo(tipo);
+                    n.setTitulo(titulo);
+                    n.setMensaje(mensaje);
+                    n.setDestino(usuarioRepo.getReferenceById(destino.getId()));
+                    n.setOrigen(origen != null ? usuarioRepo.getReferenceById(origen.getId()) : null);
+                    n.setReferenciaId(referenciaId);
+                    repo.save(n);
+                });
+            } catch (Exception e) {
+                log.warn("No se pudo guardar la notificación {} para usuario {}: {}", tipo, destinoId, e.getMessage());
+            }
+            webPush.enviarATodosLosDispositivos(destino);
+            if (enviarWhatsApp) {
+                String wpp = destino.getWhatsapp() != null ? destino.getWhatsapp() : destino.getTelefono();
+                if (wpp != null && !wpp.isBlank()) {
+                    String wppMsg = construirMensajeWhatsApp(tipo, titulo, mensaje, origen);
+                    whatsApp.enviar(wpp, wppMsg);
+                }
+            }
+        };
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override public void afterCommit() { webPush.enviarATodosLosDispositivos(destino); }
+                @Override public void afterCommit() {
+                    try { enviar.run(); } catch (Exception e) { log.warn("Notificación {}: {}", tipo, e.getMessage()); }
+                }
             });
         } else {
-            webPush.enviarATodosLosDispositivos(destino);
-        }
-
-        if (enviarWhatsApp) {
-            String wpp = destino.getWhatsapp() != null ? destino.getWhatsapp() : destino.getTelefono();
-            if (wpp != null && !wpp.isBlank()) {
-                String wppMsg = construirMensajeWhatsApp(tipo, titulo, mensaje, origen);
-                whatsApp.enviar(wpp, wppMsg);
-            }
+            enviar.run();
         }
     }
 

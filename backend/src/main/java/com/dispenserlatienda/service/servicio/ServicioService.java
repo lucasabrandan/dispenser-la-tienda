@@ -676,7 +676,7 @@ public class ServicioService {
                             + (saved.getHoraServicio() != null && !saved.getHoraServicio().isBlank() ? " " + saved.getHoraServicio() : "");
                     notificacionService.notificar(TipoNotificacion.ORDEN_ASIGNADA, o.getTecnico().getId(), null,
                             "Cambió tu visita · " + (saved.getClienteNombre() != null ? saved.getClienteNombre() : ""),
-                            "Nuevo día: " + cuando, o.getId(), false);
+                            "Antes era el " + (fechaAnterior != null ? fechaAnterior.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")) : "sin fecha") + (horaAnterior != null && !horaAnterior.isBlank() ? " " + horaAnterior : ""), o.getId(), false);
                 }
             }
         }
