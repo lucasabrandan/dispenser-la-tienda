@@ -616,6 +616,24 @@ public class ServicioService {
 
             // Un N/S es único en todo el sistema: si ya pertenece a otro cliente no se
             // engancha a este servicio (antes se mezclaba el historial entre clientes).
+            // N/S generado mientras el cliente todavía no existía (alta de cliente nuevo desde
+            // "Nuevo trabajo", 7-oct-2026): el equipo quedaba en el Mostrador y al guardar daba
+            // "ya está registrado en otro cliente" → no se podía cargar y se duplicaba el cliente.
+            // Un equipo del Mostrador no es de nadie: pasa al lugar de este trabajo.
+            String serieItem = Equipo.normalizarSerie(itemDto.equipoSerial());
+            boolean serieReal = serieItem != null && !serieItem.isBlank()
+                    && !List.of("MOSTRADOR", "SIN-SN", "S/N", "SN").contains(serieItem);
+            if (equipo != null && esSedeComodin(equipo.getSede()) && servicio.getSede() != null
+                    && !esSedeComodin(servicio.getSede())) {
+                equipo.setSede(servicio.getSede());
+                equipo = equipoRepository.save(equipo);
+            }
+            // N/S nuevo que nunca se registró como equipo: se crea en el lugar del trabajo
+            // (antes el ítem quedaba sin equipo, se mostraba "Mostrador" y al editarlo pasaba a Venta).
+            if (equipo == null && serieReal && servicio.getSede() != null && !esSedeComodin(servicio.getSede())) {
+                equipo = equipoRepository.save(new Equipo(servicio.getSede(), null, null, serieItem, null, null, null, null));
+            }
+
             if (equipo != null && perteneceAOtroCliente(equipo, servicio)) {
                 throw new BusinessException("EQUIPO_DE_OTRO_CLIENTE",
                         "El N/S " + itemDto.equipoSerial() + " ya está registrado en otro cliente. Usá otro número.");
@@ -1406,6 +1424,13 @@ public class ServicioService {
         if (s.getModalidadCobro() == ModalidadCobro.CON_FACTURA) return "Con factura";
         if (s.getModalidadCobro() == ModalidadCobro.EFECTIVO_SIN_FACTURA) return "Efectivo";
         return "Sin factura";
+    }
+
+    // Sedes "comodín" (Mostrador / Particular): no son un cliente real
+    private static boolean esSedeComodin(com.dispenserlatienda.domain.sede.Sede s) {
+        if (s == null || s.getNombreSede() == null) return false;
+        String n = s.getNombreSede().toLowerCase();
+        return n.contains("mostrador") || n.contains("particular");
     }
 
     private static boolean perteneceAOtroCliente(Equipo equipo, Servicio servicio) {

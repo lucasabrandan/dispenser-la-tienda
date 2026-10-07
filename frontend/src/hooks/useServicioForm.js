@@ -475,8 +475,11 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       return;
     }
 
-    // Guardar equipo nuevo en la BD silenciosamente si fue creado al vuelo
-    if (item.esNuevoEquipo && tieneSerial) {
+    // Guardar equipo nuevo en la BD silenciosamente si fue creado al vuelo.
+    // Con cliente NUEVO (todavía sin crear) no se guarda acá: terminaba en el Mostrador y
+    // al guardar el trabajo daba "N/S ya registrado en otro cliente". Lo crea el backend
+    // al guardar el trabajo, ya en el lugar del cliente nuevo (7-oct-2026).
+    if (item.esNuevoEquipo && tieneSerial && clienteId) {
       const yaExiste = db.equipos?.some(e => e.numeroSerie === tieneSerial);
       if (!yaExiste) {
         // Resolver sedeId: elegida > única sede > auto-crear Principal con dirección del cliente > Mostrador
@@ -663,6 +666,9 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           sedeIdFinal = nuevaSede.id;
           nombreSedeF = nuevaSede.nombreSede;
           overrides.clienteNombre = nuevoCliente.nombre;
+          // Si el guardado del trabajo falla más abajo, el reintento usa ESTE cliente
+          // (antes cada intento creaba otro cliente igual: "Miriam Hospital Argerich" x3).
+          setClienteId(String(nuevoCliente.id));
         } catch (err) {
           console.error('Error auto-creando cliente/sede:', err);
           toast.error('No se pudo crear el cliente — revisá los datos');
