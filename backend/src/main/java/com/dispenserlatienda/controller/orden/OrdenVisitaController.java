@@ -88,7 +88,7 @@ public class OrdenVisitaController {
                                                    @RequestBody OrdenAvanceDTO dto,
                                                    Authentication auth) {
         verificarAccesoOrden(id, auth);
-        return ResponseEntity.ok(service.avanzarEstado(id, dto));
+        return ResponseEntity.ok(service.avanzarEstado(id, dto, resolverUsuario(auth).getRol() == RolUsuario.ADMIN));
     }
 
     // Técnico: "Ok, voy" — confirma la visita asignada (5-oct-2026)
@@ -156,7 +156,10 @@ public class OrdenVisitaController {
     // Badge: count activas totales (admin) o por técnico
     @GetMapping("/count-activas")
     public ResponseEntity<Map<String, Long>> countActivas(
-            @RequestParam(required = false) Long tecnicoId) {
+            @RequestParam(required = false) Long tecnicoId, Authentication auth) {
+        // El técnico solo ve su propio contador (7-oct-2026)
+        Usuario yo = resolverUsuario(auth);
+        if (yo.getRol() != RolUsuario.ADMIN) tecnicoId = yo.getId();
         long count = tecnicoId != null
             ? service.countActivasTecnico(tecnicoId)
             : service.countActivas();

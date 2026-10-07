@@ -232,6 +232,11 @@ public class OrdenVisitaService {
     // ── Técnico/Admin: avanzar estado ─────────────────────────────────────────
     @Transactional
     public OrdenVisitaDTO avanzarEstado(Long id, OrdenAvanceDTO dto) {
+        return avanzarEstado(id, dto, true);
+    }
+
+    @Transactional
+    public OrdenVisitaDTO avanzarEstado(Long id, OrdenAvanceDTO dto, boolean esAdmin) {
         OrdenVisita o = repo.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
 
@@ -243,6 +248,16 @@ public class OrdenVisitaService {
         }
 
         EstadoOrden estadoAnterior = o.getEstado();
+        // Mismo estado (doble toque / reintento sin señal): no se repite nada ni se avisa de nuevo
+        if (estadoAnterior == nuevoEstado) return toDTO(o);
+        // Técnico (7-oct-2026, testeo integral C3): solo pasos válidos de SU recorrido.
+        // Antes podía reabrir una visita cancelada (pausa) o cancelarla sin avisar.
+        if (!esAdmin && !transicionTecnicoPermitida(estadoAnterior, nuevoEstado)) {
+            throw new com.dispenserlatienda.exception.BusinessException("ESTADO_INVALIDO",
+                estadoAnterior == EstadoOrden.CANCELADA ? "Esta visita fue cancelada por el admin"
+                : estadoAnterior == EstadoOrden.NO_ATENDIDO ? "Esta visita quedó para reprogramar"
+                : "Ese cambio de estado no se puede hacer desde acá");
+        }
         boolean esRetroceso = esRetrocesoPermitido(estadoAnterior, nuevoEstado);
         if (estadoAnterior == EstadoOrden.COMPLETADA && nuevoEstado != EstadoOrden.COMPLETADA) {
             // Al completar ya se generó/actualizó el servicio: volver atrás acá lo dejaría colgado.
@@ -270,6 +285,18 @@ public class OrdenVisitaService {
             notificarCambioEstado(o, nuevoEstado);
         }
         return resultado;
+    }
+
+    private static final List<EstadoOrden> ABIERTAS_TEC = List.of(EstadoOrden.PENDIENTE, EstadoOrden.EN_CAMINO, EstadoOrden.EN_SITIO);
+    private static boolean transicionTecnicoPermitida(EstadoOrden desde, EstadoOrden hacia) {
+        if (!ABIERTAS_TEC.contains(desde)) return false; // cancelada, no atendida o completada: no se toca
+        if (esRetrocesoPermitido(desde, hacia)) return true;
+        return switch (hacia) {
+            case EN_CAMINO -> desde == EstadoOrden.PENDIENTE;
+            case EN_SITIO -> desde == EstadoOrden.PENDIENTE || desde == EstadoOrden.EN_CAMINO;
+            case COMPLETADA, NO_ATENDIDO -> true;
+            default -> false; // PENDIENTE (salvo deshacer) y CANCELADA son del admin
+        };
     }
 
     // "Deshacer" del técnico: solo un paso atrás (Salí → Pendiente, Llegué → En camino)

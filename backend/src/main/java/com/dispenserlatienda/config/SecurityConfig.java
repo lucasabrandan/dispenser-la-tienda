@@ -106,6 +106,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/clientes/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/sedes/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/equipos/**").hasRole("ADMIN")
+                // Testeo integral 7-oct-2026 (C2): listar todos los equipos, editarlos
+                // (moverlos de cliente) y restaurarlos es del admin
+                .requestMatchers(HttpMethod.GET, "/api/equipos").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/equipos/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/equipos/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/repuestos/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/servicios/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/clientes/**").hasRole("ADMIN")

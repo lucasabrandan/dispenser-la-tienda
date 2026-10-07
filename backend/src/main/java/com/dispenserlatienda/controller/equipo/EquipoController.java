@@ -22,8 +22,15 @@ public class EquipoController {
 
     private final EquipoService equipoService;
 
-    public EquipoController(EquipoService equipoService) {
+    private final com.dispenserlatienda.service.seguridad.TecnicoAccesoService acceso;
+    private final com.dispenserlatienda.repository.usuario.UsuarioRepository usuarioRepo;
+
+    public EquipoController(EquipoService equipoService,
+                            com.dispenserlatienda.service.seguridad.TecnicoAccesoService acceso,
+                            com.dispenserlatienda.repository.usuario.UsuarioRepository usuarioRepo) {
         this.equipoService = equipoService;
+        this.acceso = acceso;
+        this.usuarioRepo = usuarioRepo;
     }
 
     @GetMapping
@@ -40,7 +47,9 @@ public class EquipoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Equipo crear(@Valid @RequestBody EquipoCreateDTO dto) {
+    public Equipo crear(@Valid @RequestBody EquipoCreateDTO dto, org.springframework.security.core.Authentication auth) {
+        // Técnico: solo en lugares de clientes de sus visitas abiertas (7-oct-2026)
+        acceso.exigirSede(usuarioRepo.findByUsername(auth.getName()).orElseThrow(), dto.sedeId());
         return equipoService.crear(dto);
     }
 

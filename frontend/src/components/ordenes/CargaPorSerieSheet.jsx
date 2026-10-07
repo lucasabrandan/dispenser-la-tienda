@@ -104,6 +104,8 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
         try {
             const r = await api.get('/equipos/historial/para-carga', { params: { serie: s } });
             if (!r.data?.encontrado) { setNoEncontrado(s); return; }
+            // N/S de un cliente que no es el de esta visita (7-oct-2026)
+            if (r.data.ajeno) { toast.error('Ese N/S es de otro cliente, no del de esta visita.', { duration: 6000 }); return; }
             if (!r.data.tarifaVolumen) {
                 toast.error(`${r.data.cliente || 'Ese cliente'} no trabaja con tarifa mensual: cargá el trabajo desde su orden.`, { duration: 6000 });
                 return;

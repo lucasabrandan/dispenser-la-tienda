@@ -133,7 +133,7 @@ public class ServicioController {
         String nuevoEstado = (String) payload.get("estado");
         String modalidadCobro = (String) payload.get("modalidadCobro");
         // Técnico: solo COMPLETADO o COBRADO en efectivo (facturar, archivar, cancelar = admin)
-        if (!esAdmin(auth)) servicioService.validarEstadoTecnico(nuevoEstado, modalidadCobro);
+        if (!esAdmin(auth)) servicioService.validarCambioTecnico(id, nuevoEstado, modalidadCobro);
         java.math.BigDecimal montoFinal = null;
         if (payload.get("montoFinal") != null) {
             montoFinal = new java.math.BigDecimal(payload.get("montoFinal").toString());

@@ -108,7 +108,11 @@ export function useOrdenes({ tecnicoId = null, enabled = true } = {}) {
             }
             toast.success('Estado actualizado', { id: loading });
             cargar();
-        } catch { toast.error('Error al actualizar estado', { id: loading }); }
+        } catch (e) {
+            // Mostrar el motivo real (ej. "Esta visita fue cancelada por el admin") y refrescar
+            toast.error(e?.response?.data?.mensaje || 'Error al actualizar estado', { id: loading });
+            cargar();
+        }
     };
 
     const abrirEditar = (orden) => setOrdenEditar(orden);

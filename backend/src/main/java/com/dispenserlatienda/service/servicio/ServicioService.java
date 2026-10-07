@@ -349,7 +349,7 @@ public class ServicioService {
     public ServicioDTO actualizarComoTecnico(Long id, ServicioCreateDTO dto, Usuario tecnico) {
         Servicio actual = servicioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No existe el servicio con ID: " + id));
-        validarEstadoTecnico(dto.getEstado(), dto.getModalidadCobro());
+        validarCambioTecnico(id, dto.getEstado(), dto.getModalidadCobro());
 
         List<ServicioItemCreateDTO> recibidos = dto.getItems() != null ? dto.getItems() : List.of();
         List<ServicioItemCreateDTO> items = new ArrayList<>();
@@ -430,6 +430,26 @@ public class ServicioService {
         if (dto.getOrdenId() == null || !ordenVisitaRepository.existsByIdAndTecnicoId(dto.getOrdenId(), tecnico.getId())) {
             throw new org.springframework.security.access.AccessDeniedException("Solo podés cargar trabajos de tus visitas");
         }
+        // Testeo integral 7-oct-2026 (C1): la visita tiene que estar abierta y el lugar
+        // tiene que ser del cliente de esa visita (antes podía cargar trabajos, con el
+        // monto que quisiera, en la sede de cualquier cliente).
+        com.dispenserlatienda.domain.orden.OrdenVisita orden = ordenVisitaRepository.findById(dto.getOrdenId()).orElseThrow();
+        if (!com.dispenserlatienda.service.seguridad.TecnicoAccesoService.ABIERTAS.contains(orden.getEstado())) {
+            throw new BusinessException("VISITA_CERRADA", "Esta visita ya no está abierta");
+        }
+        Long clienteOrden = orden.getClienteId();
+        if (clienteOrden == null && orden.getPresupuestoId() != null) {
+            clienteOrden = servicioRepository.findById(orden.getPresupuestoId())
+                .map(Servicio::getSede).filter(java.util.Objects::nonNull)
+                .map(sd -> sd.getCliente() != null ? sd.getCliente().getId() : null).orElse(null);
+        }
+        Sede sedeDto = dto.getSedeId() != null ? sedeRepository.findById(dto.getSedeId()).orElse(null) : null;
+        boolean sedeOk = sedeDto != null && (com.dispenserlatienda.service.seguridad.TecnicoAccesoService.esMostrador(sedeDto)
+            || (sedeDto.getCliente() != null && clienteOrden != null && clienteOrden.equals(sedeDto.getCliente().getId())));
+        if (!sedeOk) {
+            throw new org.springframework.security.access.AccessDeniedException("Ese lugar no es del cliente de la visita");
+        }
+        if (orden.getClienteNombre() != null && !orden.getClienteNombre().isBlank()) dto.setClienteNombre(orden.getClienteNombre());
         dto.setUsuarioId(tecnico.getId());
         dto.setDescuentoPorcentaje(null);
         if (!"COBRADO".equals(dto.getEstado())) { dto.setModalidadCobro(null); dto.setMontoFinal(null); }
@@ -458,7 +478,24 @@ public class ServicioService {
         Servicio s = servicioRepository.findById(servicioId).orElse(null);
         if (s == null) return false;
         if (s.getUsuario() != null && s.getUsuario().getId().equals(tecnicoId)) return true;
-        return ordenVisitaRepository.existsByPresupuestoIdAndTecnicoId(servicioId, tecnicoId);
+        // Solo con una visita ABIERTA (7-oct-2026): antes una visita cancelada o que
+        // pasó a otro técnico le seguía dando acceso al trabajo para siempre.
+        return ordenVisitaRepository.existsByPresupuestoIdAndTecnicoIdAndEstadoIn(servicioId, tecnicoId,
+                com.dispenserlatienda.service.seguridad.TecnicoAccesoService.ABIERTAS);
+    }
+
+    // De qué estado puede partir un cambio hecho por el técnico (7-oct-2026, C1):
+    // un trabajo ya facturado, cobrado, cancelado o archivado no lo toca.
+    private static final java.util.Set<EstadoServicio> ORIGEN_TECNICO = java.util.EnumSet.of(
+            EstadoServicio.PRESUPUESTO, EstadoServicio.APROBADO, EstadoServicio.EN_PROGRESO, EstadoServicio.COMPLETADO);
+
+    public void validarCambioTecnico(Long servicioId, String estado, String modalidadCobro) {
+        validarEstadoTecnico(estado, modalidadCobro);
+        Servicio s = servicioRepository.findById(servicioId)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe el servicio con ID: " + servicioId));
+        if (!ORIGEN_TECNICO.contains(s.getEstado())) {
+            throw new org.springframework.security.access.AccessDeniedException("Este trabajo ya está cerrado: lo maneja el admin");
+        }
     }
 
     // Quita costos internos (costo de repuestos, % ganancia, costo interno) de lo que ve un técnico
@@ -474,7 +511,7 @@ public class ServicioService {
                 i.fotoAntes(), i.fotoDespues())).toList();
         // Sin teléfono ni mail del cliente para el técnico (5-oct-2026)
         return new ServicioDTO(d.id(), d.fecha(), d.servicioTipo(), d.clienteId(), d.clienteNombre(), null,
-                null, d.clienteDni(), d.clienteCondicionIva(), d.sedeId(), d.sedeNombre(), d.sedeDireccion(),
+                null, null, d.clienteCondicionIva(), d.sedeId(), d.sedeNombre(), d.sedeDireccion(),
                 items, d.estado(), d.fotoRemito(), d.descuentoPorcentaje(), d.observaciones(), d.nroDocumento(),
                 d.usuarioId(), d.usuarioNombre(), d.modificadoPorNombre(), d.fechaModificacion(), d.presupuestoOrigenId(),
                 d.modalidadCobro(), d.montoFinal(), d.fechaCompletado(), d.fechaFacturacion(), d.fechaCobro(),

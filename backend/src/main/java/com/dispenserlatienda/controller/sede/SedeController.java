@@ -5,6 +5,9 @@ import com.dispenserlatienda.dto.sede.SedeCreateDTO;
 import com.dispenserlatienda.dto.sede.SedeDTO;
 import com.dispenserlatienda.repository.sede.SedeRepository;
 import com.dispenserlatienda.service.sede.SedeService;
+import com.dispenserlatienda.service.seguridad.TecnicoAccesoService;
+import com.dispenserlatienda.repository.usuario.UsuarioRepository;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +22,15 @@ public class SedeController {
 
     private final SedeService sedeService;
     private final SedeRepository sedeRepository;
+    private final TecnicoAccesoService acceso;
+    private final UsuarioRepository usuarioRepo;
 
-    public SedeController(SedeService sedeService, SedeRepository sedeRepository) {
+    public SedeController(SedeService sedeService, SedeRepository sedeRepository,
+                          TecnicoAccesoService acceso, UsuarioRepository usuarioRepo) {
         this.sedeService = sedeService;
         this.sedeRepository = sedeRepository;
+        this.acceso = acceso;
+        this.usuarioRepo = usuarioRepo;
     }
 
     @GetMapping
@@ -36,13 +44,16 @@ public class SedeController {
     }
 
     @GetMapping("/cliente/{clienteId}")
-    public List<SedeDTO> listarPorCliente(@PathVariable Long clienteId) {
+    public List<SedeDTO> listarPorCliente(@PathVariable Long clienteId, Authentication auth) {
+        // Técnico: solo clientes de sus visitas abiertas (7-oct-2026)
+        acceso.exigirCliente(usuarioRepo.findByUsername(auth.getName()).orElseThrow(), clienteId);
         return sedeService.listarPorCliente(clienteId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public SedeDTO crear(@Valid @RequestBody SedeCreateDTO dto) {
+    public SedeDTO crear(@Valid @RequestBody SedeCreateDTO dto, Authentication auth) {
+        acceso.exigirCliente(usuarioRepo.findByUsername(auth.getName()).orElseThrow(), dto.clienteId());
         return sedeService.crear(dto);
     }
 

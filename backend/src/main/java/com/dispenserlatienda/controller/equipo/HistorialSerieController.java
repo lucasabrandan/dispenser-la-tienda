@@ -42,8 +42,12 @@ public class HistorialSerieController {
     private final ObjectMapper objectMapper;
     private final UsuarioRepository usuarioRepository;
 
+    private final com.dispenserlatienda.service.seguridad.TecnicoAccesoService acceso;
+
     public HistorialSerieController(EquipoRepository equipoRepository, ObjectMapper objectMapper,
-                                    UsuarioRepository usuarioRepository) {
+                                    UsuarioRepository usuarioRepository,
+                                    com.dispenserlatienda.service.seguridad.TecnicoAccesoService acceso) {
+        this.acceso = acceso;
         this.equipoRepository = equipoRepository;
         this.objectMapper = objectMapper;
         this.usuarioRepository = usuarioRepository;
@@ -88,13 +92,19 @@ public class HistorialSerieController {
 
     @GetMapping("/para-carga")
     @Transactional(readOnly = true)
-    public Map<String, Object> paraCarga(@RequestParam String serie) {
+    public Map<String, Object> paraCarga(@RequestParam String serie, Authentication auth) {
         String s = serie == null ? "" : serie.replaceAll("\\s+", "").toUpperCase();
         if (s.isEmpty()) throw new IllegalArgumentException("Falta el N° de serie");
         Map<String, Object> out = new LinkedHashMap<>();
         Equipo e = buscarExacto(s);
         if (e == null) { out.put("encontrado", false); return out; }
         var cli = e.getSede() != null ? e.getSede().getCliente() : null;
+        // Técnico: no revela de quién es un N/S de un cliente ajeno (7-oct-2026)
+        Usuario u = usuario(auth);
+        if (u.getRol() != RolUsuario.ADMIN && (cli == null || !acceso.tieneCliente(u.getId(), cli.getId()))) {
+            out.put("encontrado", true); out.put("ajeno", true); out.put("tarifaVolumen", false);
+            return out;
+        }
         boolean tarifa = cli != null && cli.getTarifaVolumen() != null && !cli.getTarifaVolumen().isBlank();
         out.put("encontrado", true);
         out.put("tarifaVolumen", tarifa);
