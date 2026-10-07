@@ -100,6 +100,13 @@ public class OrdenVisitaService {
                     s.setEstado(EstadoServicio.EN_PROGRESO);
                 }
                 s.setEnEspera(false); // despacharlo = retomarlo
+                // Testeo integral M6: el trabajo queda con el día de su visita (liquidación,
+                // garantía y "última visita" usaban la fecha del presupuesto)
+                if (dto.fechaProgramada() != null) {
+                    s.setFechaServicio(dto.fechaProgramada());
+                    String h = dto.horaEstimada() != null ? dto.horaEstimada().trim() : "";
+                    if (h.matches("\\d{1,2}:\\d{2}.*")) s.setHoraServicio(h.replaceAll("^(\\d{1,2}:\\d{2}).*$", "$1"));
+                }
                 servicioRepository.save(s);
             });
         }
@@ -122,6 +129,15 @@ public class OrdenVisitaService {
 
         Usuario tecnico = usuarioRepo.findById(dto.tecnicoId())
             .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado: " + dto.tecnicoId()));
+
+        // Testeo integral M2: una visita ya hecha no se reprograma (movía la fecha del trabajo
+        // cobrado y le avisaba al técnico y a la empresa de un cambio que no existe)
+        if (o.getEstado() == EstadoOrden.COMPLETADA
+                && (!java.util.Objects.equals(o.getFechaProgramada(), dto.fechaProgramada())
+                    || !java.util.Objects.equals(o.getHoraEstimada(), dto.horaEstimada()))) {
+            throw new com.dispenserlatienda.exception.BusinessException("VISITA_HECHA",
+                "Esa visita ya está hecha: no se puede reprogramar. Si hay que volver, creá una visita nueva.");
+        }
 
         boolean cambioTecnico = o.getTecnico() != null && !o.getTecnico().getId().equals(tecnico.getId());
         Usuario tecnicoAnterior = o.getTecnico();
@@ -168,7 +184,12 @@ public class OrdenVisitaService {
             // Al que la tenía antes se le avisa que ya no va (7-oct-2026)
             notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, tecnicoAnterior.getId(), null,
                 "Visita reasignada · " + cliente, "La va a hacer otro técnico: ya no la tenés que hacer.",
-                guardada.id(), false);
+                null, false); // sin referencia: la visita ya no es suya (antes al tocarla daba error)
+            // Testeo integral M4: si además cambió el día, la empresa también se entera
+            if (cambioDia) {
+                avisarEmpresa(o, "reprogramado", com.dispenserlatienda.service.empresa.PedidoEmpresaService.cuando(dto.fechaProgramada(), dto.horaEstimada())
+                    + (o.getDireccion() != null ? "\n📍 " + o.getDireccion() : ""));
+            }
         } else if (cambioDia) {
             // Reprogramada desde el admin (7-oct-2026): antes no le llegaba nada al técnico
             // El día nuevo ya va en la tarjeta del push: el mensaje dice cuándo era antes
@@ -183,6 +204,9 @@ public class OrdenVisitaService {
         if (cambioDia && dto.presupuestoId() != null && dto.fechaProgramada() != null) {
             servicioRepository.findById(dto.presupuestoId()).ifPresent(sv -> {
                 sv.setFechaServicio(dto.fechaProgramada());
+                // Testeo integral M3: el día ya quedó definido → deja de ser "fecha a coordinar"
+                sv.setFechaTentativa(false);
+                sv.setVentanasDisponibles(null);
                 // hora_servicio es de 5 caracteres ("10:30"): la franja ("Mañana"/"Tarde") no entra
                 String h = dto.horaEstimada() != null ? dto.horaEstimada().trim() : "";
                 sv.setHoraServicio(h.matches("\\d{1,2}:\\d{2}.*") ? h.replaceAll("^(\\d{1,2}:\\d{2}).*$", "$1") : null);
@@ -442,7 +466,10 @@ public class OrdenVisitaService {
             // Visitas con equipos por N/S (tarifa mensual): los servicios los arma la carga por serie
             if (o.getEquiposSerie() != null && !o.getEquiposSerie().isBlank()) return;
 
-            Sede sedeMostrador = sedeRepository.findAll().stream()
+            // Testeo integral M7: si la visita es de un cliente (p. ej. un pedido de empresa), el
+            // trabajo queda en SU lugar (antes iba al Mostrador y no aparecía en su resumen).
+            Sede sedeMostrador = sedeDelCliente(o);
+            if (sedeMostrador == null) sedeMostrador = sedeRepository.findAll().stream()
                 .filter(s -> s.getNombreSede() != null
                           && s.getNombreSede().toLowerCase().contains("mostrador"))
                 .findFirst()
@@ -476,6 +503,28 @@ public class OrdenVisitaService {
 
             servicioRepository.save(servicio);
         }
+    }
+
+    private Sede sedeDelCliente(OrdenVisita o) {
+        try {
+            Long sedePedido = pedidoEmpresaRepo.findFirstByOrdenId(o.getId())
+                .map(com.dispenserlatienda.domain.empresa.PedidoEmpresa::getSedeId).orElse(null);
+            if (sedePedido != null) {
+                Sede s = sedeRepository.findById(sedePedido).orElse(null);
+                if (s != null) return s;
+            }
+            if (o.getClienteId() != null) {
+                List<Sede> sedes = sedeRepository.findByClienteIdAndActivaTrue(o.getClienteId());
+                if (sedes.size() == 1) return sedes.get(0);
+                // varias: la que coincide con la dirección de la visita, si hay
+                String dir = o.getDireccion() != null ? o.getDireccion().toLowerCase() : "";
+                for (Sede s : sedes) {
+                    if (s.getDireccion() != null && !s.getDireccion().isBlank() && dir.contains(s.getDireccion().toLowerCase())) return s;
+                }
+                if (!sedes.isEmpty()) return sedes.get(0);
+            }
+        } catch (Exception e) { /* cae al Mostrador */ }
+        return null;
     }
 
     // ── Resumen para badge sidebar ─────────────────────────────────────────────

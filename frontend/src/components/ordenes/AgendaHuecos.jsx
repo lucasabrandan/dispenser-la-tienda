@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { colorTecnico, etapaColor } from '../../utils/estados';
 import { formatDateISO, getTodayISO, lunesDeLaSemana, lunesAgenda } from '../../utils/dateUtils';
@@ -41,6 +41,15 @@ export default function AgendaHuecos({ tecnicos = [], ordenes = [], fecha, onFec
     const setHueco = (h) => onHueco(h);
 
     const diaHoy = (() => { const d = new Date(); if (d.getDay() === 0) d.setDate(d.getDate() + 1); return formatDateISO(d); })();
+    // Testeo integral M17: abierto un domingo, el día elegido quedaba en domingo (que no
+    // está en la grilla lun–sáb) y se podía agendar igual. Se pasa al lunes.
+    useEffect(() => {
+        if (fecha && new Date(fecha + 'T12:00:00').getDay() === 0) {
+            const d = new Date(fecha + 'T12:00:00'); d.setDate(d.getDate() + 1);
+            onFecha(formatDateISO(d));
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fecha]);
     const enHoy = offset === 0 && fecha === diaHoy;
     return (<>
                         <div className="flex items-center justify-between gap-2 px-1">

@@ -721,6 +721,21 @@ public class ServicioService {
         String detalle = (saved.getClienteNombre() != null ? saved.getClienteNombre() : "")
                 + (saved.getSedeNombre() != null ? " · " + saved.getSedeNombre() : "");
         if (seReasigno && saved.getServicioTipo() == ServicioTipo.TECNICA) {
+            // Testeo integral M4: al reasignar desde el trabajo, la visita también toma el día
+            // nuevo y el técnico anterior se entera de que ya no va.
+            boolean cambioFecha = saved.getFechaServicio() != null && !java.util.Objects.equals(fechaAnterior, saved.getFechaServicio());
+            for (var ov : ordenVisitaRepository.findByPresupuestoIdAndEstadoIn(saved.getId(), ACTIVAS)) {
+                if (cambioFecha) {
+                    ov.setFechaProgramada(saved.getFechaServicio());
+                    if (saved.getHoraServicio() != null && !saved.getHoraServicio().isBlank()) ov.setHoraEstimada(saved.getHoraServicio());
+                    ordenVisitaRepository.save(ov);
+                }
+                if (ov.getTecnico() != null && !ov.getTecnico().getId().equals(usuario.getId())) {
+                    notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, ov.getTecnico().getId(), null,
+                        "Visita reasignada · " + (saved.getClienteNombre() != null ? saved.getClienteNombre() : ""),
+                        "La va a hacer otro técnico: ya no la tenés que hacer.", null, false);
+                }
+            }
             int movidas = ordenVisitaRepository.reasignarActivasDePresupuesto(saved.getId(), usuario);
             // La referencia apunta a la visita (si hay) para que al tocar la notificación se abra (5-oct-2026)
             Long refOrden = movidas > 0 ? ordenVisitaRepository.findByPresupuestoIdAndEstadoIn(saved.getId(), ACTIVAS)
