@@ -40,6 +40,18 @@ export function TrabajoMenu({ fila, onClose, on }) {
     return (
         <ActionSheet open={abierto} onClose={onClose}>
             <p className="px-4 pt-1 pb-2 text-label font-black uppercase tracking-widest text-muted truncate">{fila.cliente}</p>
+            {/* Renglón de cierre mensual (7-oct-2026): los trabajos del mes, cada uno se abre */}
+            {fila.servicios?.length > 0 && (
+                <>
+                    {fila.servicios.map(sv => {
+                        const series = (sv.items || []).map(i => i.equipoSerial).filter(x => x && x !== 'MOSTRADOR');
+                        const f = String(sv.fecha || '').slice(0, 10).split('-').reverse().slice(0, 2).join('/');
+                        return <Opcion key={sv.id} Icon={LuEye} label={`${f} · ${series.length ? series.slice(0, 3).join(', ') + (series.length > 3 ? ` +${series.length - 3}` : '') : 'Trabajo #' + sv.id}`}
+                            sub={[sv.sedeNombre, sv.usuarioNombre].filter(Boolean).join(' · ')} onClick={run(() => on.detalle(sv))} />;
+                    })}
+                    {on.cierre && <Opcion Icon={LuFileText} label="Cierre mensual" sub="Calcular el mes y armar el PDF" onClick={run(() => on.cierre(fila))} />}
+                </>
+            )}
             {s && <Opcion Icon={LuEye} label="Ver detalle" onClick={run(() => on.detalle(s))} />}
             {editable && <Opcion Icon={LuPencil} label="Editar" onClick={run(() => on.editar(s, fila.orden))} />}
             {s && !esArchivado && <Opcion Icon={LuCopy} label="Duplicar" sub="Mismo cliente y equipos, nuevo presupuesto" onClick={run(() => on.duplicar(s))} />}

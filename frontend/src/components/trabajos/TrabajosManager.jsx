@@ -207,8 +207,9 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     const g = grupos[s.clienteId] || (grupos[s.clienteId] = {
                         key: `cm${s.clienteId}`, etapa: 'HECHO', cliente: s.clienteNombre, clienteId: s.clienteId,
                         equipos: 0, tecnicos: new Set(), busca: '', monto: null, accion: 'cierre',
-                        fecha: 'Este mes', nota: 'Se factura en el cierre mensual',
+                        fecha: 'Este mes', nota: 'Se factura en el cierre mensual', servicios: [],
                     });
+                    g.servicios.push(s); // 7-oct-2026: para poder abrir cada trabajo del mes
                     g.equipos += equipos.length || 1;
                     if (s.usuarioNombre) g.tecnicos.add(s.usuarioNombre);
                     g.busca += ' ' + base.busca;
@@ -407,6 +408,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     };
     const accionesMenu = {
         detalle: (s) => setDetalle(s),
+        cierre: (f) => setCierreCliente({ id: f.clienteId, nombre: f.cliente }),
         editar: (s, orden = null) => setEditor({ modo: 'editar', servicio: s, orden }),
         duplicar,
         pdf,
@@ -665,7 +667,12 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                                         onTouchEnd={apretado.onTouchEnd} onClickCapture={apretado.onClickCapture}>
                                     <TrabajoFila f={f} etapa={ETAPA[f.etapa]} boton={BOTON[f.accion]}
                                         textoSeguimiento={textoSeguimiento}
-                                        onAbrir={() => f.servicio && setDetalle(f.servicio)}
+                                        onAbrir={() => {
+                                            if (f.servicio) setDetalle(f.servicio);
+                                            // Renglón de cierre mensual: si hay uno solo se abre, si no, la lista
+                                            else if (f.servicios?.length === 1) setDetalle(f.servicios[0]);
+                                            else if (f.servicios?.length) setMenuFila(f);
+                                        }}
                                         onMenu={() => setMenuFila(f)}
                                         seleccionando={seleccionando} seleccionado={seleccion.has(f.key)}
                                         onToggle={() => toggleSel(f.key)} />
