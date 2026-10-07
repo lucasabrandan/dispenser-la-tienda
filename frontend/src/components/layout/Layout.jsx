@@ -13,6 +13,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMontos } from '../../context/MontosContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { pushSoportado, estaSuscripto, activarNotificaciones, resincronizar } from '../../utils/pushNotifications';
 import { LuSun, LuMoon, LuLogOut } from 'react-icons/lu';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
@@ -103,6 +104,14 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             ultimoCount.current = c;
         } catch { /* silencio */ }
     }, [buscarUrgentes]);
+
+    // 7-oct-2026: al abrir la app, si este celular ya dio permiso de notificaciones,
+    // se asegura de que el servidor tenga su suscripción (si el navegador la perdió,
+    // se vuelve a suscribir solo). Antes solo pasaba al abrir la campanita.
+    useEffect(() => {
+        if (!pushSoportado() || Notification.permission !== 'granted') return;
+        estaSuscripto().then((ya) => (ya ? resincronizar() : activarNotificaciones())).catch(() => {});
+    }, []);
 
     useEffect(() => {
         pollNotifs();

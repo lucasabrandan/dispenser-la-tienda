@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { cuandoDeNotif } from '../../utils/notifTarjeta';
 import { LuBellOff, LuBell } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
@@ -235,6 +236,11 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo,
                                             </p>
                                             {n.mensaje && (
                                                 <p className="text-caption text-muted mt-0.5 line-clamp-2">{n.mensaje}</p>
+                                            )}
+                                            {(cuandoDeNotif(n) || n.direccion) && (
+                                                <p className="text-caption font-bold text-secondary mt-0.5 truncate">
+                                                    {[cuandoDeNotif(n), n.direccion].filter(Boolean).join(' · ')}
+                                                </p>
                                             )}
                                             {n.origenNombre && (
                                                 <p className="text-caption text-muted mt-0.5">de {n.origenNombre}</p>

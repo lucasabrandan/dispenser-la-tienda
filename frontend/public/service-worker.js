@@ -14,27 +14,63 @@ const API_BASE = 'https://api.gestiondlt.com/api';
 const DB_NAME = 'dlt-auth';
 const STORE = 'kv';
 
-function leerTokenCacheado() {
+function abrirKV() {
     return new Promise((resolve) => {
         try {
             const req = indexedDB.open(DB_NAME, 1);
             req.onupgradeneeded = () => { req.result.createObjectStore(STORE); };
-            req.onsuccess = () => {
-                const db = req.result;
-                try {
-                    const tx = db.transaction(STORE, 'readonly');
-                    const getReq = tx.objectStore(STORE).get('token');
-                    getReq.onsuccess = () => resolve(getReq.result || null);
-                    getReq.onerror = () => resolve(null);
-                } catch {
-                    resolve(null);
-                }
-            };
+            req.onsuccess = () => resolve(req.result);
             req.onerror = () => resolve(null);
-        } catch {
-            resolve(null);
-        }
+        } catch { resolve(null); }
     });
+}
+
+async function leerKV(clave) {
+    const db = await abrirKV();
+    if (!db) return null;
+    return new Promise((resolve) => {
+        try {
+            const r = db.transaction(STORE, 'readonly').objectStore(STORE).get(clave);
+            r.onsuccess = () => resolve(r.result ?? null);
+            r.onerror = () => resolve(null);
+        } catch { resolve(null); }
+    });
+}
+
+async function guardarKV(clave, valor) {
+    const db = await abrirKV();
+    if (!db) return;
+    await new Promise((resolve) => {
+        try {
+            const tx = db.transaction(STORE, 'readwrite');
+            tx.objectStore(STORE).put(valor, clave);
+            tx.oncomplete = resolve; tx.onerror = resolve;
+        } catch { resolve(); }
+    });
+}
+
+function leerTokenCacheado() { return leerKV('token'); }
+
+// Pedido a la API con el JWT cacheado. Si venció (la app no se abrió en más de
+// 24 hs), lo renueva con el refresh token y reintenta (7-oct-2026: antes el
+// push quedaba genérico, "Tenés una notificación nueva", sin la tarjeta).
+async function apiFetch(path, opts = {}) {
+    const pedir = (tk) => fetch(`${API_BASE}${path}`, { ...opts, headers: { ...(opts.headers || {}), Authorization: `Bearer ${tk}` } });
+    let token = await leerKV('token');
+    let res = token ? await pedir(token) : null;
+    if (!res || res.status === 401 || res.status === 403) {
+        const refresh = await leerKV('refresh');
+        if (!refresh) return res;
+        const r = await fetch(`${API_BASE}/auth/refresh`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: refresh }),
+        });
+        if (!r.ok) return res;
+        const data = await r.json();
+        if (!data?.accessToken) return res;
+        await guardarKV('token', data.accessToken);
+        res = await pedir(data.accessToken);
+    }
+    return res;
 }
 
 self.addEventListener('install', () => {
@@ -45,83 +81,91 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(self.clients.claim());
 });
 
+const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+function cuando(n) {
+    const partes = [];
+    if (n.fecha) {
+        const [a, m, d] = String(n.fecha).split('-').map(Number);
+        partes.push(`${DIAS[new Date(a, m - 1, d).getDay()]} ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`);
+    }
+    if (n.fecha || n.hora) partes.push(n.hora ? String(n.hora).slice(0, 5) : 'sin horario');
+    if (n.tecnicoNombre) partes.push(String(n.tecnicoNombre).split(' ')[0]);
+    return partes.join(' · ');
+}
+
+// Mismo criterio que esUrgente() de AvisoUrgente.jsx (para los dos roles)
+function esUrgentePush(n) {
+    const t = String(n.titulo || '');
+    return t.startsWith('Contactar al cliente') || t.startsWith('Mensaje de ') || t.startsWith('Visita en pausa')
+        || t.startsWith('✓ El admin avisó') || n.tipo === 'ORDEN_NO_ATENDIDO' || n.tipo === 'ORDEN_ASIGNADA'
+        || (n.tipo === 'ORDEN_EN_CAMINO' && n.referenciaId)
+        || (n.tipo === 'TRABAJO_ASIGNADO' && t !== 'Horario confirmado');
+}
+
+async function mostrarNotif(n) {
+    const t = String(n.titulo || '');
+    const esDeTrabajo = n.tipo === 'TRABAJO_ASIGNADO';
+    const ordenId = n.ordenId || (!esDeTrabajo ? n.referenciaId : null);
+    const tag = `dlt-${n.id}`;
+    const yaMostrada = (await self.registration.getNotifications({ tag })).length > 0;
+
+    // Cuerpo = mensaje + la "tarjeta" (cliente, día/hora/técnico, dirección)
+    const lineas = [
+        n.mensaje,
+        n.clienteNombre && !t.includes(n.clienteNombre) && !String(n.mensaje || '').includes(n.clienteNombre) ? `👤 ${n.clienteNombre}` : null,
+        cuando(n) ? `🕐 ${cuando(n)}` : null,
+        n.direccion ? `📍 ${n.direccion}` : null,
+        !ordenId && !esDeTrabajo && n.origenNombre ? `de ${n.origenNombre}` : null,
+    ].filter(Boolean);
+
+    let actions = [];
+    if (ordenId) {
+        if (t.startsWith('Contactar al cliente') || n.tipo === 'ORDEN_EN_CAMINO') {
+            actions = [{ action: 'avisar', title: '💬 Avisar al cliente' }, { action: 'ver', title: 'Ver visita' }];
+        } else if (n.tipo === 'ORDEN_ASIGNADA') {
+            actions = [{ action: 'okvoy', title: '✓ Ok, voy' }, { action: 'ver', title: 'Ver' }];
+        } else {
+            actions = [{ action: 'ver', title: 'Ver visita' }];
+        }
+    } else if (esDeTrabajo && n.referenciaId) {
+        actions = [{ action: 'ver', title: 'Ver trabajo' }];
+    }
+
+    return self.registration.showNotification(n.titulo || 'Dispenser La Tienda', {
+        body: lineas.join('\n') || 'Tocá para verla en la app.',
+        tag,
+        renotify: !yaMostrada,
+        silent: yaMostrada,
+        requireInteraction: esUrgentePush(n), // en compu queda en pantalla hasta que se toca
+        icon: '/logo192.png',
+        badge: '/logo192.png',
+        actions,
+        data: ordenId ? { ordenId, tipo: n.tipo, titulo: n.titulo, mensaje: n.mensaje }
+            : esDeTrabajo ? { referenciaId: n.referenciaId, tipo: n.tipo } : undefined,
+    });
+}
+
 self.addEventListener('push', (event) => {
     event.waitUntil((async () => {
-        const generico = {
-            title: 'Dispenser La Tienda',
-            options: {
-                body: 'Tenés una notificación nueva — abrí la app para verla.',
-                tag: 'dlt-notificacion',
-                renotify: true,
-            },
-        };
-
-        const token = await leerTokenCacheado();
-        if (!token) {
-            return self.registration.showNotification(generico.title, generico.options);
-        }
-
+        const generico = () => self.registration.showNotification('Dispenser La Tienda', {
+            body: 'Tenés una notificación nueva — abrí la app para verla.',
+            tag: 'dlt-notificacion',
+            renotify: true,
+        });
         try {
-            const res = await fetch(`${API_BASE}/notificaciones`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!res.ok) throw new Error('no-ok');
+            const res = await apiFetch('/notificaciones');
+            if (!res || !res.ok) return generico();
             const notifs = await res.json();
-            const ultima = Array.isArray(notifs) && notifs.length > 0 ? notifs[0] : null;
-            if (!ultima) {
-                return self.registration.showNotification(generico.title, generico.options);
-            }
-            // TRABAJO_ASIGNADO apunta a un Servicio; el resto con referencia, a una
-            // visita (OrdenVisita). Desde el 5-oct-2026 la notificación de una visita
-            // trae los datos de la tarjeta (cliente, día/hora, técnico, dirección) y
-            // botones (Android/compu): "Ver visita", "Ok, voy" o "Avisar al cliente".
-            const esDeTrabajo = ultima.tipo === 'TRABAJO_ASIGNADO';
-            const esDeVisita = !esDeTrabajo && !!ultima.referenciaId;
-            const tag = `dlt-${ultima.id ?? 'notificacion'}`;
-            const yaMostrada = (await self.registration.getNotifications({ tag })).length > 0;
-
-            let body = ultima.mensaje || generico.options.body;
-            let actions = [];
-            if (esDeVisita) {
-                try {
-                    const r = await fetch(`${API_BASE}/ordenes/${ultima.referenciaId}`, { headers: { Authorization: `Bearer ${token}` } });
-                    if (r.ok) {
-                        const o = await r.json();
-                        const hora = o.horaEstimada ? String(o.horaEstimada).slice(0, 5) : 'sin horario';
-                        const fecha = o.fechaProgramada ? o.fechaProgramada.split('-').reverse().slice(0, 2).join('/') : '';
-                        const lineas = [
-                            ultima.mensaje,
-                            `🕐 ${fecha} · ${hora}${o.tecnicoNombre ? ' · ' + o.tecnicoNombre.split(' ')[0] : ''}`,
-                            o.direccion ? `📍 ${o.direccion}` : null,
-                        ].filter(Boolean);
-                        body = lineas.join('\n');
-                    }
-                } catch { /* sin datos extra: queda el mensaje */ }
-                const t = String(ultima.titulo || '');
-                if (t.startsWith('Contactar al cliente') || ultima.tipo === 'ORDEN_EN_CAMINO') {
-                    actions = [{ action: 'avisar', title: '💬 Avisar al cliente' }, { action: 'ver', title: 'Ver visita' }];
-                } else if (ultima.tipo === 'ORDEN_ASIGNADA') {
-                    actions = [{ action: 'okvoy', title: '✓ Ok, voy' }, { action: 'ver', title: 'Ver' }];
-                } else {
-                    actions = [{ action: 'ver', title: 'Ver visita' }];
-                }
-            }
-            const urgente = esDeVisita && (String(ultima.titulo || '').startsWith('Contactar al cliente')
-                || ['ORDEN_NO_ATENDIDO', 'ORDEN_ASIGNADA'].includes(ultima.tipo));
-            return self.registration.showNotification(ultima.titulo || generico.title, {
-                body,
-                tag,
-                renotify: !yaMostrada,
-                silent: yaMostrada,
-                requireInteraction: urgente, // en compu queda en pantalla hasta que se toca
-                icon: '/logo192.png',
-                badge: '/logo192.png',
-                actions,
-                data: esDeTrabajo ? { referenciaId: ultima.referenciaId, tipo: ultima.tipo }
-                    : esDeVisita ? { ordenId: ultima.referenciaId, tipo: ultima.tipo, titulo: ultima.titulo, mensaje: ultima.mensaje } : undefined,
-            });
+            if (!Array.isArray(notifs) || notifs.length === 0) return generico();
+            // Todas las nuevas sin leer (si llegan dos juntas no se pierde ninguna),
+            // no solo la última. Se recuerda hasta cuál ya se mostró.
+            const ultimoId = Number(await leerKV('pushUltimoId')) || 0;
+            let nuevas = ultimoId ? notifs.filter((n) => !n.leida && n.id > ultimoId).slice(0, 4) : [];
+            if (nuevas.length === 0) nuevas = [notifs[0]];
+            await guardarKV('pushUltimoId', Math.max(ultimoId, ...notifs.map((n) => n.id || 0)));
+            for (const n of nuevas.reverse()) await mostrarNotif(n);
         } catch {
-            return self.registration.showNotification(generico.title, generico.options);
+            return generico();
         }
     })());
 });
@@ -155,23 +199,21 @@ self.addEventListener('notificationclick', (event) => {
     // Botones de la notificación de una visita (5-oct-2026)
     if (d.ordenId && event.action === 'okvoy') {
         event.waitUntil((async () => {
-            const token = await leerTokenCacheado();
-            try { await fetch(`${API_BASE}/ordenes/${d.ordenId}/confirmar`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } }); } catch { /* */ }
+            try { await apiFetch(`/ordenes/${d.ordenId}/confirmar`, { method: 'PATCH' }); } catch { /* */ }
         })());
         return;
     }
     if (d.ordenId && event.action === 'avisar') {
         event.waitUntil((async () => {
-            const token = await leerTokenCacheado();
             try {
-                const r = await fetch(`${API_BASE}/ordenes/${d.ordenId}/contacto`, { headers: { Authorization: `Bearer ${token}` } });
+                const r = await apiFetch(`/ordenes/${d.ordenId}/contacto`);
                 const c = await r.json();
                 let num = String(c.telefono || '').replace(/\D/g, '');
                 if (!num) return abrirVentana(`/?notif=1&ordenId=${d.ordenId}`);
                 if (num.startsWith('0')) num = num.slice(1);
                 if (!num.startsWith('54')) num = '549' + num;
                 const motivo = d.tipo === 'ORDEN_EN_CAMINO' ? 'Voy en camino' : d.mensaje;
-                fetch(`${API_BASE}/ordenes/${d.ordenId}/cliente-avisado`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+                apiFetch(`/ordenes/${d.ordenId}/cliente-avisado`, { method: 'POST' }).catch(() => {});
                 return self.clients.openWindow(`https://wa.me/${num}?text=${encodeURIComponent(mensajeCliente(motivo, c))}`);
             } catch { return abrirVentana(`/?notif=1&ordenId=${d.ordenId}`); }
         })());

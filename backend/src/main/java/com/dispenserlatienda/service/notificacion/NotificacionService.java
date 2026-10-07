@@ -5,6 +5,12 @@ import com.dispenserlatienda.domain.notificacion.TipoNotificacion;
 import com.dispenserlatienda.domain.usuario.Usuario;
 import com.dispenserlatienda.dto.notificacion.NotificacionDTO;
 import com.dispenserlatienda.repository.notificacion.NotificacionRepository;
+import com.dispenserlatienda.repository.orden.OrdenVisitaRepository;
+import com.dispenserlatienda.repository.servicio.ServicioRepository;
+import com.dispenserlatienda.domain.orden.OrdenVisita;
+import com.dispenserlatienda.domain.servicio.Servicio;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.service.common.WhatsAppService;
 import com.dispenserlatienda.service.push.WebPushService;
@@ -34,11 +40,16 @@ public class NotificacionService {
     // presupuesto, crear una orden). Antes el error de la notificación hacía
     // rollback de todo.
     private final TransactionTemplate txAparte;
+    private final OrdenVisitaRepository ordenRepo;
+    private final ServicioRepository servicioRepo;
 
     public NotificacionService(NotificacionRepository repo, UsuarioRepository usuarioRepo,
                                 WhatsAppService whatsApp, WebPushService webPush,
-                                PlatformTransactionManager txManager) {
+                                PlatformTransactionManager txManager,
+                                OrdenVisitaRepository ordenRepo, ServicioRepository servicioRepo) {
         this.repo = repo;
+        this.ordenRepo = ordenRepo;
+        this.servicioRepo = servicioRepo;
         this.usuarioRepo = usuarioRepo;
         this.whatsApp = whatsApp;
         this.webPush = webPush;
@@ -71,7 +82,16 @@ public class NotificacionService {
 
         // Push al celu/navegador — siempre que haya dispositivos suscriptos,
         // a diferencia de WhatsApp esto no es opcional por tipo de evento.
-        webPush.enviarATodosLosDispositivos(destino);
+        // 7-oct-2026: el push sale DESPUÉS de que se guarde la operación principal.
+        // Antes salía en el medio y el celular, al pedir los datos de la visita,
+        // a veces la encontraba sin guardar (o con el día viejo) → push sin tarjeta.
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { webPush.enviarATodosLosDispositivos(destino); }
+            });
+        } else {
+            webPush.enviarATodosLosDispositivos(destino);
+        }
 
         if (enviarWhatsApp) {
             String wpp = destino.getWhatsapp() != null ? destino.getWhatsapp() : destino.getTelefono();
@@ -136,9 +156,26 @@ public class NotificacionService {
 
     // ── Queries ──────────────────────────────────────────────────────────────
 
+    @Transactional(readOnly = true)
     public List<NotificacionDTO> listar(Long usuarioId) {
-        return repo.findTop50ByDestinoIdOrderByCreadoEnDesc(usuarioId)
-            .stream().map(this::toDTO).collect(Collectors.toList());
+        List<Notificacion> lista = repo.findTop50ByDestinoIdOrderByCreadoEnDesc(usuarioId);
+        // Datos de la tarjeta: una sola consulta para las visitas y otra para los trabajos
+        java.util.Set<Long> idsOrden = new java.util.HashSet<>();
+        java.util.Set<Long> idsServicio = new java.util.HashSet<>();
+        for (Notificacion n : lista) {
+            if (n.getReferenciaId() == null) continue;
+            if (n.getTipo() == TipoNotificacion.TRABAJO_ASIGNADO) idsServicio.add(n.getReferenciaId());
+            else idsOrden.add(n.getReferenciaId());
+        }
+        java.util.Map<Long, OrdenVisita> ordenes = new java.util.HashMap<>();
+        java.util.Map<Long, Servicio> servicios = new java.util.HashMap<>();
+        try {
+            if (!idsOrden.isEmpty()) ordenRepo.findAllById(idsOrden).forEach(o -> ordenes.put(o.getId(), o));
+            if (!idsServicio.isEmpty()) servicioRepo.findAllById(idsServicio).forEach(sv -> servicios.put(sv.getId(), sv));
+        } catch (Exception e) {
+            log.warn("Notificaciones: no se pudieron cargar las tarjetas: {}", e.getMessage());
+        }
+        return lista.stream().map(n -> toDTO(n, ordenes, servicios)).collect(Collectors.toList());
     }
 
     public long contarNoLeidas(Long usuarioId) {
@@ -160,7 +197,7 @@ public class NotificacionService {
             String key = n.getCreadoEn() + "|" + n.getTitulo() + "|" + n.getMensaje();
             unicos.putIfAbsent(key, n);
         }
-        return unicos.values().stream().map(this::toDTO).collect(Collectors.toList());
+        return unicos.values().stream().map(n -> toDTO(n, java.util.Map.of(), java.util.Map.of())).collect(Collectors.toList());
     }
 
     @Transactional
@@ -181,7 +218,35 @@ public class NotificacionService {
         return repo.marcarTodasLeidas(usuarioId);
     }
 
-    private NotificacionDTO toDTO(Notificacion n) {
+    private NotificacionDTO toDTO(Notificacion n, java.util.Map<Long, OrdenVisita> ordenes, java.util.Map<Long, Servicio> servicios) {
+        Long ordenId = null; String cliente = null, hora = null, tecnico = null, direccion = null;
+        java.time.LocalDate fecha = null;
+        Long ref = n.getReferenciaId();
+        if (ref != null && n.getTipo() == TipoNotificacion.TRABAJO_ASIGNADO) {
+            Servicio sv = servicios.get(ref);
+            if (sv != null) {
+                cliente = sv.getClienteNombre();
+                fecha = sv.getFechaServicio();
+                hora = sv.getHoraServicio();
+                tecnico = sv.getUsuario() != null ? sv.getUsuario().getNombre() : null;
+                if (sv.getSede() != null) {
+                    String d = String.join(" ", java.util.stream.Stream.of(sv.getSede().getCalle(), sv.getSede().getNumero())
+                        .filter(x -> x != null && !x.isBlank()).toList());
+                    String loc = sv.getSede().getLocalidad();
+                    direccion = d.isBlank() ? loc : (loc != null && !loc.isBlank() ? d + ", " + loc : d);
+                }
+            }
+        } else if (ref != null) {
+            OrdenVisita o = ordenes.get(ref);
+            if (o != null) {
+                ordenId = o.getId();
+                cliente = o.getClienteNombre();
+                fecha = o.getFechaProgramada();
+                hora = o.getHoraEstimada();
+                tecnico = o.getTecnico() != null ? o.getTecnico().getNombre() : null;
+                direccion = o.getDireccion();
+            }
+        }
         return new NotificacionDTO(
             n.getId(),
             n.getTipo().name(),
@@ -190,7 +255,8 @@ public class NotificacionService {
             n.getOrigen() != null ? n.getOrigen().getNombre() : null,
             n.getReferenciaId(),
             n.isLeida(),
-            n.getCreadoEn()
+            n.getCreadoEn(),
+            ordenId, cliente, fecha, hora, tecnico, direccion
         );
     }
 }

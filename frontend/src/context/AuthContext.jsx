@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { guardarTokenParaSW } from '../utils/pushTokenCache';
+import { guardarTokenParaSW, guardarRefreshParaSW } from '../utils/pushTokenCache';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -46,6 +46,7 @@ export function AuthProvider({ children }) {
     // cuando llega un push con la app cerrada (ver pushTokenCache.js).
     useEffect(() => {
         guardarTokenParaSW(token);
+        guardarRefreshParaSW(token ? localStorage.getItem('auth_refresh_token') : null);
     }, [token]);
 
     // Renovación proactiva del access token vía el refresh token guardado

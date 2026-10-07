@@ -20,14 +20,21 @@ function abrirDB() {
     });
 }
 
-export async function guardarTokenParaSW(token) {
+export function guardarTokenParaSW(token) { return guardarEnSW('token', token); }
+
+// 7-oct-2026: también el refresh token, para que el service worker pueda
+// renovar el acceso solo si la app no se abrió en más de 24 hs (antes el push
+// llegaba genérico, sin la tarjeta del trabajo).
+export function guardarRefreshParaSW(refresh) { return guardarEnSW('refresh', refresh); }
+
+async function guardarEnSW(clave, valor) {
     if (!('indexedDB' in window)) return;
     try {
         const db = await abrirDB();
         await new Promise((resolve, reject) => {
             const tx = db.transaction(STORE, 'readwrite');
-            if (token) tx.objectStore(STORE).put(token, 'token');
-            else tx.objectStore(STORE).delete('token');
+            if (valor) tx.objectStore(STORE).put(valor, clave);
+            else tx.objectStore(STORE).delete(clave);
             tx.oncomplete = resolve;
             tx.onerror = () => reject(tx.error);
         });

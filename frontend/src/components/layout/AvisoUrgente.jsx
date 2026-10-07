@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { LuBellRing, LuX } from 'react-icons/lu';
+import { LuBellRing, LuX, LuClock, LuMapPin, LuUser } from 'react-icons/lu';
+import { cuandoDeNotif, tieneTarjeta } from '../../utils/notifTarjeta';
 import ContactoClienteAcciones from './ContactoClienteAcciones';
 import { TITULO_CONTACTO } from '../../utils/contactoCliente';
 
@@ -62,6 +63,13 @@ export default function AvisoUrgente({ notif, restantes = 0, onListo, onVerTodas
                 </div>
                 <div className="px-5 py-4 space-y-3">
                     {notif.mensaje && <p className="text-body text-ink whitespace-pre-line">{notif.mensaje}</p>}
+                    {tieneTarjeta(notif) && (
+                        <div className="rounded-2xl bg-panel px-4 py-3 space-y-1.5">
+                            {notif.clienteNombre && <p className="flex items-center gap-2 text-body font-black text-ink"><LuUser size={15} className="shrink-0 text-muted" />{notif.clienteNombre}</p>}
+                            {cuandoDeNotif(notif) && <p className="flex items-center gap-2 text-label font-bold text-secondary"><LuClock size={15} className="shrink-0 text-muted" />{cuandoDeNotif(notif)}</p>}
+                            {notif.direccion && <p className="flex items-center gap-2 text-label font-bold text-secondary"><LuMapPin size={15} className="shrink-0 text-muted" />{notif.direccion}</p>}
+                        </div>
+                    )}
                     {contacto && <ContactoClienteAcciones notif={notif} />}
                     {enCamino && <ContactoClienteAcciones notif={notif} motivo="Voy en camino" etiqueta="Avisarle al cliente que va en camino" />}
                 </div>
