@@ -171,15 +171,31 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    // Ruta inexistente → 404 (antes caía en el genérico y respondía 500) — testeo A4
+    @ExceptionHandler({org.springframework.web.servlet.resource.NoResourceFoundException.class,
+                       org.springframework.web.servlet.NoHandlerFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNoEncontrado(Exception ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "No existe esa dirección", "NOT_FOUND");
+        error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMetodo(Exception ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(HttpStatus.METHOD_NOT_ALLOWED.value(), "Operación no permitida", "METHOD_NOT_ALLOWED");
+        return new ResponseEntity<>(error, HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex,
             WebRequest request) {
         logger.error("Excepción no controlada: ", ex);
 
+        // El detalle técnico (puede traer SQL) queda solo en el log, no en la respuesta
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Error interno del servidor: " + ex.getMessage(),
+                "Error interno del servidor. Probá de nuevo y si sigue, avisá.",
                 "INTERNAL_SERVER_ERROR"
         );
         error.getDetalles().put("path", request.getDescription(false).replace("uri=", ""));

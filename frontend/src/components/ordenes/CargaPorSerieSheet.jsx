@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { LuX, LuSearch, LuTrash2, LuPackage, LuCamera } from 'react-icons/lu';
-import api from '../../services/api';
+import api, { nuevaClaveIdem } from '../../services/api';
 import { limpiarSerie, generarSerie } from '../../utils/serie';
 import { useAuth } from '../../context/AuthContext';
 import { getTodayISO } from '../../utils/dateUtils';
@@ -45,6 +45,11 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
     const [sheetRep, setSheetRep] = useState(null);         // índice del item
     const [observaciones, setObservaciones] = useState('');
     const [guardando, setGuardando] = useState(false);
+    // Testeo integral A5 (7-oct-2026): se guarda de a una sede; si se corta a mitad y se
+    // reintenta, las sedes ya guardadas no se vuelven a mandar (antes se duplicaba la primera),
+    // y cada sede usa siempre la misma clave anti-duplicado (por si el primer intento sí llegó).
+    const sedesGuardadas = useRef(new Set());
+    const clavesIdem = useRef({});
 
     useEffect(() => {
         api.get('/repuestos', { params: { page: 0, size: 1000 } }).then(r => {
@@ -185,6 +190,8 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
             });
             let guardados = 0;
             for (const [sedeId, grupo] of Object.entries(porSede)) {
+                if (sedesGuardadas.current.has(sedeId)) { guardados += grupo.length; continue; }
+                if (!clavesIdem.current[sedeId]) clavesIdem.current[sedeId] = nuevaClaveIdem();
                 await api.post('/servicios', {
                     clienteNombre: cliente.nombre,
                     sedeId: Number(sedeId),
@@ -206,7 +213,8 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
                         fotoAntes: it.fotoAntes,
                         fotoDespues: it.fotoDespues,
                     })),
-                });
+                }, { _idemKey: clavesIdem.current[sedeId] });
+                sedesGuardadas.current.add(sedeId);
                 guardados += grupo.length;
             }
             toast.success(`${guardados} equipo${guardados !== 1 ? 's' : ''} registrado${guardados !== 1 ? 's' : ''}`, { id: loading });

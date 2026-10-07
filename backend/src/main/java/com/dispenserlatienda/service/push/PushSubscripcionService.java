@@ -32,4 +32,11 @@ public class PushSubscripcionService {
     public void desuscribir(String endpoint) {
         repo.deleteByEndpoint(endpoint);
     }
+
+    @Transactional
+    public void desuscribir(String endpoint, Usuario usuario) {
+        repo.findByEndpoint(endpoint)
+            .filter(s -> s.getUsuario() != null && s.getUsuario().getId().equals(usuario.getId()))
+            .ifPresent(repo::delete);
+    }
 }

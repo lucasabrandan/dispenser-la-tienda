@@ -77,3 +77,20 @@ export async function desactivarNotificaciones() {
     await sub.unsubscribe();
     await api.delete('/push/suscribir', { data: { endpoint } });
 }
+
+// Testeo integral A12 (7-oct-2026): al cerrar sesión este celular deja de recibir los
+// avisos de ese usuario (antes, si entraba otro en el mismo celular, le llegaban los
+// del anterior). Se llama con el token todavía vigente; si falla no frena el logout.
+export async function desuscribirAlSalir(token) {
+    try {
+        if (!pushSoportado() || !navigator.serviceWorker.controller) return;
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) return;
+        const endpoint = sub.endpoint;
+        await sub.unsubscribe().catch(() => {});
+        if (token) {
+            await api.delete('/push/suscribir', { data: { endpoint }, headers: { Authorization: `Bearer ${token}` }, _sinReintento: true }).catch(() => {});
+        }
+    } catch { /* */ }
+}

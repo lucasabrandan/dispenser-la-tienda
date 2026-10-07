@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { guardarTokenParaSW, guardarRefreshParaSW } from '../utils/pushTokenCache';
 import api from '../services/api';
+import { desuscribirAlSalir } from '../utils/pushNotifications';
 
 const AuthContext = createContext(null);
 
@@ -33,6 +34,7 @@ export function AuthProvider({ children }) {
     }, []);
 
     const logout = useCallback(() => {
+        desuscribirAlSalir(localStorage.getItem('auth_token'));
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_usuario');
         localStorage.removeItem('auth_refresh_token');

@@ -1,4 +1,4 @@
-import api from '../services/api';
+import api, { nuevaClaveIdem } from '../services/api';
 
 // Cola de cambios sin señal (2-oct-2026). El técnico en la calle confirma un
 // trabajo o cambia el estado de una visita y no hay conexión: en vez de perderlo
@@ -24,9 +24,10 @@ export const getFallidos = () => leer(KEY_FALLIDOS);
 export const descartarFallidos = () => escribir(KEY_FALLIDOS, []);
 export function suscribirPendientes(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
-function encolar(method, url, data, descripcion) {
+function encolar(method, url, data, descripcion, idem) {
     const cola = leer(KEY);
-    cola.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, method, url, data, descripcion, creado: new Date().toISOString() });
+    // idem: la misma clave del primer intento — si ese sí había llegado, el backend no lo repite
+    cola.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, method, url, data, descripcion, idem, creado: new Date().toISOString() });
     escribir(KEY, cola);
 }
 
@@ -36,16 +37,17 @@ function encolar(method, url, data, descripcion) {
  * Si el servidor SÍ respondió con error (validación, 500...), lo tira igual que api.
  */
 export async function enviarOEncolar(method, url, data, descripcion) {
+    const idem = nuevaClaveIdem();
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        encolar(method, url, data, descripcion);
+        encolar(method, url, data, descripcion, idem);
         return { encolado: true };
     }
     try {
-        const res = await api.request({ method, url, data, _sinReintento: true });
+        const res = await api.request({ method, url, data, _sinReintento: true, _idemKey: idem });
         return { encolado: false, data: res.data };
     } catch (e) {
         if (!e?.response) {
-            encolar(method, url, data, descripcion);
+            encolar(method, url, data, descripcion, idem);
             return { encolado: true };
         }
         throw e;
@@ -62,7 +64,7 @@ export async function enviarPendientes() {
         while (cola.length) {
             const p = cola[0];
             try {
-                await api.request({ method: p.method, url: p.url, data: p.data, _sinReintento: true });
+                await api.request({ method: p.method, url: p.url, data: p.data, _sinReintento: true, _idemKey: p.idem || undefined });
             } catch (e) {
                 // sigue sin señal, o la sesión no se pudo renovar todavía: se reintenta más tarde
                 if (!e?.response || e.response.status === 401) break;

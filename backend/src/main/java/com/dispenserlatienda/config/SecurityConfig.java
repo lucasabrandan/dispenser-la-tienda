@@ -24,10 +24,21 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final EmpresaAislamientoFilter empresaFilter;
+    private final com.dispenserlatienda.security.IdempotenciaFilter idempotenciaFilter;
 
     public SecurityConfig(JwtFilter jwtFilter) {
         this.jwtFilter = jwtFilter;
         this.empresaFilter = new EmpresaAislamientoFilter();
+        this.idempotenciaFilter = new com.dispenserlatienda.security.IdempotenciaFilter();
+    }
+
+    // Respuesta JSON directa (sin sendError): sendError reenvía a /error y ahí, sin
+    // usuario, Spring Security convertía cualquier 403 en 401 → la app creía que la
+    // sesión había vencido y podía desloguear (testeo integral A4, 7-oct-2026).
+    private static void responder(HttpServletResponse res, int status, String mensaje, String tipo) throws java.io.IOException {
+        res.setStatus(status);
+        res.setContentType("application/json;charset=UTF-8");
+        res.getWriter().write("{\"status\":" + status + ",\"mensaje\":\"" + mensaje + "\",\"tipo\":\"" + tipo + "\"}");
     }
 
     @Bean
@@ -38,6 +49,8 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas
+                .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
@@ -127,10 +140,14 @@ public class SecurityConfig {
             .exceptionHandling(e -> e
                 // Sin token válido → 401 (no 403), para que el frontend haga logout automático
                 .authenticationEntryPoint((req, res, ex) ->
-                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No autenticado"))
+                    responder(res, HttpServletResponse.SC_UNAUTHORIZED, "No autenticado", "NO_AUTENTICADO"))
+                // Con sesión válida pero sin permiso → 403 real (no "sesión vencida")
+                .accessDeniedHandler((req, res, ex) ->
+                    responder(res, HttpServletResponse.SC_FORBIDDEN, "No tenés permiso para esto", "ACCESS_DENIED"))
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterAfter(empresaFilter, JwtFilter.class);
+            .addFilterAfter(empresaFilter, JwtFilter.class)
+            .addFilterAfter(idempotenciaFilter, EmpresaAislamientoFilter.class);
 
         return http.build();
     }

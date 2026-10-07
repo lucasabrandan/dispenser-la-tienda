@@ -134,8 +134,7 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     // abajo (detalle para el técnico, línea de tiempo para el admin). Si no
     // se sabe a cuál (push viejo/degradado, sin token cacheado todavía), se
     // cae al panel general como antes.
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
+    const abrirDesdeParams = (params, limpiarUrl) => {
         if (params.get('notif') === '1') {
             const servicioId = params.get('servicioId');
             const ordenId = params.get('ordenId');
@@ -154,9 +153,22 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             params.delete('ordenId');
             params.delete('pedido');
             params.delete('tipo');
-            const resto = params.toString();
-            window.history.replaceState({}, '', window.location.pathname + (resto ? `?${resto}` : ''));
+            if (limpiarUrl) {
+                const resto = params.toString();
+                window.history.replaceState({}, '', window.location.pathname + (resto ? `?${resto}` : ''));
+            }
         }
+    };
+
+    useEffect(() => {
+        abrirDesdeParams(new URLSearchParams(window.location.search), true);
+        // Push tocado con la app ya abierta: el service worker avisa en vez de recargar
+        const alMensaje = (ev) => {
+            if (ev.data?.tipo !== 'abrir-desde-push' || !ev.data.url) return;
+            try { abrirDesdeParams(new URL(ev.data.url, window.location.origin).searchParams, false); } catch { /* */ }
+        };
+        if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', alMensaje);
+        return () => { if ('serviceWorker' in navigator) navigator.serviceWorker.removeEventListener('message', alMensaje); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

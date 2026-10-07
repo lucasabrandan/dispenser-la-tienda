@@ -16,8 +16,20 @@ api.interceptors.request.use(config => {
     if (config.data instanceof FormData) {
         delete config.headers['Content-Type'];
     }
+    // Testeo integral A5 (7-oct-2026): cada cambio lleva una clave única que se repite
+    // en los reintentos. Si el primer intento sí llegó al servidor (señal mala), el
+    // backend devuelve la misma respuesta en vez de guardar dos veces (IdempotenciaFilter).
+    const metodo = (config.method || 'get').toLowerCase();
+    if (metodo !== 'get' && metodo !== 'head' && !config.headers['X-Idem-Key']) {
+        config.headers['X-Idem-Key'] = config._idemKey || nuevaClaveIdem();
+    }
     return config;
 });
+
+export function nuevaClaveIdem() {
+    try { if (window.crypto?.randomUUID) return window.crypto.randomUUID(); } catch { /* */ }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
 
 // Spring Boot tarda ~20-40s en arrancar, entonces 8 reintentos × 5s = 40s de ventana
 const MAX_REINTENTOS = 8;
@@ -69,6 +81,10 @@ api.interceptors.response.use(
                     // perdía todo lo que tenía abierto. Se rechaza este pedido y el
                     // próximo vuelve a intentar el refresh cuando haya conexión.
                     if (!errRefresh?.response) return Promise.reject(error);
+                    // Testeo integral A8 (7-oct-2026): durante actualizar-backend.bat el
+                    // servidor responde 502/503 un rato; eso tampoco es "sesión vencida".
+                    // Solo se cierra la sesión si el servidor rechazó el refresh (400/401/403).
+                    if (![400, 401, 403].includes(errRefresh.response.status)) return Promise.reject(error);
                     // El refresh token también venció o fue revocado (ej.
                     // usuario desactivado) — ahí sí, logout real.
                 }

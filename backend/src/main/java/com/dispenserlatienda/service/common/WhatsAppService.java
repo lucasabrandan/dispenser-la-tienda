@@ -59,6 +59,20 @@ public class WhatsAppService {
 
         String numero = normalizarNumero(numeroDestino);
 
+        // Testeo integral A11 (7-oct-2026): si se llama dentro de una operación que todavía
+        // no se guardó, el mensaje sale recién cuando se confirma. Antes salía igual
+        // aunque la operación fallara (aviso de una visita que no existía).
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCommit() { mandar(numero, mensaje); }
+                });
+            return;
+        }
+        mandar(numero, mensaje);
+    }
+
+    private void mandar(String numero, String mensaje) {
         CompletableFuture.runAsync(() -> {
             try {
                 String body = "token="    + enc(token)

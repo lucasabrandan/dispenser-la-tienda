@@ -190,9 +190,12 @@ function mensajeCliente(motivo, o) {
 
 async function abrirVentana(url) {
     const lista = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    // Testeo integral A7 (7-oct-2026): con la app abierta ya no se navega (eso recargaba
+    // la página y el técnico perdía lo que estaba cargando, fotos incluidas). Se le avisa
+    // a la app qué abrir y la app lo abre sin recargar (Layout.jsx, 'abrir-desde-push').
     for (const client of lista) {
         if ('focus' in client) {
-            if ('navigate' in client) return client.navigate(url).then((c) => c && c.focus()).catch(() => client.focus());
+            try { client.postMessage({ tipo: 'abrir-desde-push', url }); } catch { /* */ }
             return client.focus();
         }
     }
