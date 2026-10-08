@@ -24,6 +24,13 @@ export default function CierreMensualModal({ cliente, onClose }) {
     const [calculando, setCalculando] = useState(false);
     const [factura, setFactura] = useState('');
     const [marcando, setMarcando] = useState(false);
+    // Lo que respondió la empresa en su portal sobre el resumen de ese mes (8-oct-2026)
+    const [aprob, setAprob] = useState(null);
+    useEffect(() => {
+        setAprob(null);
+        if (!mes) return;
+        api.get('/pedidos-empresa/aprobacion', { params: { clienteId: cliente.id, mes } }).then(r => setAprob(r.data?.estado ? r.data : null)).catch(() => {});
+    }, [mes, cliente.id]);
 
     useEffect(() => {
         api.get(`/clientes/${cliente.id}/tarifa-volumen`)
@@ -167,6 +174,13 @@ export default function CierreMensualModal({ cliente, onClose }) {
                         </button>
                     </div>
 
+                    {aprob && (
+                        <div className={`p-3 rounded-xl text-caption ${aprob.estado === 'APROBADO' ? 'bg-[rgba(22,163,74,0.1)] text-[#16A34A]' : 'bg-[rgba(201,52,31,0.1)] text-brand-red'}`}>
+                            <p className="font-black">{aprob.estado === 'APROBADO' ? '✓ La empresa aprobó el resumen de este mes' : `⚠️ La empresa observó el resumen${aprob.observados?.length ? ` (${aprob.observados.length} renglón${aprob.observados.length !== 1 ? 'es' : ''})` : ''}`}</p>
+                            {aprob.comentario && <p className="text-ink mt-0.5">{aprob.comentario}</p>}
+                            <p className="text-muted mt-0.5">{aprob.usuario}{aprob.fecha ? ` · ${new Date(aprob.fecha).toLocaleDateString('es-AR')}` : ''}</p>
+                        </div>
+                    )}
                     {cierre && (
                         <div className="rounded-2xl bg-panel p-4 space-y-1.5">
                             <p className="text-caption font-black text-ink">

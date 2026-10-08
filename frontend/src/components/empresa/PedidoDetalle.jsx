@@ -4,6 +4,8 @@ import { LuMapPin, LuClock, LuSend, LuNavigation, LuTriangleAlert, LuHash, LuMes
 import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import InformeTrabajo from './InformeTrabajo';
+import PedirConformidad, { ResultadoConformidad } from './Conformidad';
+import { VerFotos } from './FotosPedido';
 import { estadoDe, cuandoPedido, linkMaps, haceCuanto, PASOS_PEDIDO, esAbierto } from '../../utils/pedidosEmpresa';
 
 // Ficha de un pedido (Portal Empresa, 7-oct-2026). La usan los dos lados:
@@ -73,7 +75,8 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
     const cuando = cuandoPedido(p);
     const sinVisitaActiva = !p.ordenId || ['NO_ATENDIDO', 'PAUSADO'].includes(p.estado);
     const puedeCancelar = modo === 'admin' ? esAbierto(p) && sinVisitaActiva : p.estado === 'NUEVO' && !p.ordenId;
-    const puedeAgendar = modo === 'admin' && esAbierto(p) && sinVisitaActiva;
+    // Reclamo de la empresa (8-oct-2026): se puede volver a agendar una revisión
+    const puedeAgendar = modo === 'admin' && ((esAbierto(p) && sinVisitaActiva) || (p.estado === 'HECHO' && p.conformidad === 'PROBLEMA'));
 
     return (
         <ModalShell titulo={`${p.motivo || 'Pedido'}${p.urgente ? ' · urgente' : ''}`}
@@ -92,7 +95,7 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
                     {(puedeAgendar || puedeCancelar) && (
                         <div className="flex gap-2">
                             {puedeCancelar && <button type="button" onClick={cancelar} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Cancelar pedido</button>}
-                            {puedeAgendar && <button type="button" onClick={() => onAgendar && onAgendar(p)} className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">{p.ordenId ? 'Volver a agendar' : 'Agendar visita'}</button>}
+                            {puedeAgendar && <button type="button" onClick={() => onAgendar && onAgendar(p)} className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">{p.conformidad === 'PROBLEMA' ? 'Agendar revisión' : p.ordenId ? 'Volver a agendar' : 'Agendar visita'}</button>}
                         </div>
                     )}
                 </div>
@@ -130,9 +133,15 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
                     </a>
                     {p.equipoSerie && <p className="flex items-center gap-2 px-1 text-label font-bold text-secondary"><LuHash size={15} className="text-muted" />Equipo N/S {p.equipoSerie}</p>}
                     {p.detalle && <p className="px-1 text-body text-ink whitespace-pre-line">{p.detalle}</p>}
+                    <VerFotos fotos={p.fotos} className="px-1" />
                 </div>
 
                 {hecho && <InformeTrabajo pedido={p} items={informe} />}
+                {hecho && (p.conformidad
+                    ? <ResultadoConformidad p={p} />
+                    : modo === 'empresa'
+                        ? <PedirConformidad p={p} onListo={(nuevo) => { setP(nuevo); cargar(); onCambio && onCambio(); }} />
+                        : <p className="px-1 text-caption text-muted">La empresa todavía no confirmó si quedó conforme.</p>)}
 
                 {/* Conversación */}
                 <div className="space-y-2">

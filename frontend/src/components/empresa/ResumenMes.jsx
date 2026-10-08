@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { LuChevronLeft, LuChevronRight, LuFileDown, LuSheet, LuMapPin } from 'react-icons/lu';
+import { LuChevronLeft, LuChevronRight, LuFileDown, LuSheet, LuMapPin, LuCircleCheck, LuTriangleAlert } from 'react-icons/lu';
 import api from '../../services/api';
 
 // Resumen del mes (Portal Empresa, 7-oct-2026): cada equipo atendido en el mes,
@@ -17,6 +17,26 @@ export default function ResumenMes({ empresa }) {
     const [mes, setMes] = useState(mesActual());
     const [data, setData] = useState(null);
     const [cargando, setCargando] = useState(true);
+    // Aprobación del mes (8-oct-2026): "Aprobado" o "Tengo observaciones" (marcando renglones)
+    const [marcando, setMarcando] = useState(false);
+    const [observados, setObservados] = useState(new Set());
+    const [comentario, setComentario] = useState('');
+    const [enviando, setEnviando] = useState(false);
+    useEffect(() => { setMarcando(false); setObservados(new Set()); setComentario(''); }, [mes]);
+    const aprob = data?.aprobacion || null;
+    const obsGuardados = new Set(aprob?.observados || []);
+    const toggleObs = (id) => setObservados(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    const enviarAprobacion = async (aprobado) => {
+        if (!aprobado && !observados.size && !comentario.trim()) { toast.error('Marcá qué no reconocés o contanos qué pasa'); return; }
+        setEnviando(true);
+        try {
+            const r = await api.post('/empresa/resumen/aprobacion', { mes, aprobado, comentario: comentario.trim() || null, observados: aprobado ? [] : [...observados] });
+            setData(d => ({ ...d, aprobacion: r.data }));
+            setMarcando(false);
+            toast.success(aprobado ? 'Resumen aprobado' : 'Enviamos tus observaciones');
+        } catch (e) { toast.error(e?.response?.data?.mensaje || 'No se pudo enviar'); }
+        finally { setEnviando(false); }
+    };
 
     const cargar = useCallback(async () => {
         setCargando(true);
@@ -101,14 +121,49 @@ export default function ResumenMes({ empresa }) {
                             </div>
                         ))}
                     </div>
+                    {data?.items?.length > 0 && (aprob && !marcando ? (
+                        <div className={`p-4 rounded-2xl space-y-1 ${aprob.estado === 'APROBADO' ? 'bg-[rgba(22,163,74,0.1)]' : 'bg-[rgba(201,52,31,0.1)]'}`}>
+                            <p className={`flex items-center gap-2 text-body font-black ${aprob.estado === 'APROBADO' ? 'text-[#16A34A]' : 'text-brand-red'}`}>
+                                {aprob.estado === 'APROBADO' ? <LuCircleCheck size={18} /> : <LuTriangleAlert size={18} />}
+                                {aprob.estado === 'APROBADO' ? `Aprobaste el resumen de ${nombreMes(mes)}` : `Observaste el resumen${obsGuardados.size ? ` (${obsGuardados.size} renglón${obsGuardados.size !== 1 ? 'es' : ''})` : ''}`}
+                            </p>
+                            {aprob.comentario && <p className="text-body text-ink whitespace-pre-line">{aprob.comentario}</p>}
+                            <p className="text-caption text-muted">{aprob.usuario}{aprob.fecha ? ` · ${new Date(aprob.fecha).toLocaleDateString('es-AR')}` : ''}
+                                {data.puedeAprobar && <button type="button" onClick={() => { setMarcando(true); setObservados(new Set(aprob.observados || [])); setComentario(aprob.comentario || ''); }} className="ml-2 font-black text-secondary underline">Cambiar</button>}
+                            </p>
+                        </div>
+                    ) : data.puedeAprobar && (
+                        <div className="p-4 rounded-2xl border-2 border-[#C9341F]/30 space-y-3">
+                            <p className="text-body-lg font-black text-ink">{marcando ? 'Marcá lo que no reconocés' : `¿Está bien el resumen de ${nombreMes(mes)}?`}</p>
+                            <p className="text-caption text-muted">{marcando ? 'Tocá cada renglón que no corresponda y contanos qué pasa.' : 'Con tu aprobación facturamos el mes. Si algo no coincide, avisanos acá.'}</p>
+                            {marcando && (
+                                <textarea rows={2} value={comentario} onChange={e => setComentario(e.target.value)} placeholder="Comentario (opcional si marcaste renglones)"
+                                    className="w-full px-3.5 py-2.5 rounded-xl bg-chip text-body text-ink outline-none resize-none placeholder:text-muted" />
+                            )}
+                            <div className="flex gap-2">
+                                {!marcando ? (<>
+                                    <button type="button" onClick={() => setMarcando(true)} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Tengo observaciones</button>
+                                    <button type="button" onClick={() => enviarAprobacion(true)} disabled={enviando} className="flex-[2] h-11 rounded-xl bg-[#16A34A] text-white text-label font-black active:scale-95 disabled:opacity-50">✓ Aprobar el mes</button>
+                                </>) : (<>
+                                    <button type="button" onClick={() => setMarcando(false)} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Cancelar</button>
+                                    <button type="button" onClick={() => enviarAprobacion(false)} disabled={enviando} className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95 disabled:opacity-50">Enviar observaciones{observados.size ? ` (${observados.size})` : ''}</button>
+                                </>)}
+                            </div>
+                        </div>
+                    ))}
                     {!data?.items?.length ? (
                         <p className="py-12 text-center text-body text-muted">No hubo trabajos en {nombreMes(mes)}.</p>
                     ) : porLugar.map(([lugar, items]) => (
                         <div key={lugar} className="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06] overflow-hidden">
                             <p className="px-4 pt-3 pb-2 flex items-center gap-1.5 text-label font-black text-ink"><LuMapPin size={14} className="text-brand-red" />{lugar}<span className="text-muted font-bold">· {items.length}</span></p>
                             <div className="divide-y divide-black/[0.05] dark:divide-white/[0.05]">
-                                {items.map((it, i) => (
-                                    <div key={i} className="px-4 py-2.5">
+                                {items.map((it, i) => {
+                                    const obs = marcando ? observados.has(it.id) : obsGuardados.has(it.id);
+                                    return (
+                                    <div key={it.id || i} onClick={marcando ? () => toggleObs(it.id) : undefined}
+                                        className={`px-4 py-2.5 ${marcando ? 'cursor-pointer' : ''} ${obs ? 'bg-[rgba(201,52,31,0.08)]' : ''}`}>
+                                        {marcando && <p className={`text-[11px] font-black uppercase tracking-wider ${obs ? 'text-brand-red' : 'text-muted'}`}>{obs ? '✕ No lo reconozco' : 'Tocá si no lo reconocés'}</p>}
+                                        {!marcando && obs && <p className="text-[11px] font-black uppercase tracking-wider text-brand-red">Observado</p>}
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-body font-black text-ink">{it.serie ? `N/S ${it.serie}` : 'Equipo'}</span>
                                             <span className="ml-auto text-caption text-muted shrink-0">{fmt(it.fecha)}{it.tecnico ? ` · ${it.tecnico}` : ''}</span>
@@ -116,7 +171,8 @@ export default function ResumenMes({ empresa }) {
                                         <p className="text-label text-secondary">{it.trabajo || 'Sin detalle'}</p>
                                         {it.repuestos?.length > 0 && <p className="text-caption text-muted">Repuestos: {reps(it.repuestos)}</p>}
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}

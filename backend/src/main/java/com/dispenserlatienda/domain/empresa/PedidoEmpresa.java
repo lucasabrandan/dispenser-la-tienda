@@ -91,6 +91,33 @@ public class PedidoEmpresa {
     public void setEstado(String v) { this.estado = v; }
     public Long getOrdenId() { return ordenId; }
     public void setOrdenId(Long v) { this.ordenId = v; }
+    // Fotos del problema que adjunta la empresa (8-oct-2026): nombres de archivo separados por coma
+    @Column(columnDefinition = "TEXT")
+    private String fotos;
+    public String getFotos() { return fotos; }
+    public void setFotos(String v) { this.fotos = v; }
+
+    // Conformidad del trabajo (8-oct-2026): CONFORME | PROBLEMA (null = todavía no respondió)
+    @Column(length = 20)
+    private String conformidad;
+    private Integer calificacion;
+    @Column(name = "conformidad_comentario", columnDefinition = "TEXT")
+    private String conformidadComentario;
+    @Column(name = "conformidad_en")
+    private LocalDateTime conformidadEn;
+    @Column(name = "conformidad_por", length = 120)
+    private String conformidadPor;
+    public String getConformidad() { return conformidad; }
+    public void setConformidad(String v) { this.conformidad = v; }
+    public Integer getCalificacion() { return calificacion; }
+    public void setCalificacion(Integer v) { this.calificacion = v; }
+    public String getConformidadComentario() { return conformidadComentario; }
+    public void setConformidadComentario(String v) { this.conformidadComentario = v; }
+    public LocalDateTime getConformidadEn() { return conformidadEn; }
+    public void setConformidadEn(LocalDateTime v) { this.conformidadEn = v; }
+    public String getConformidadPor() { return conformidadPor; }
+    public void setConformidadPor(String v) { this.conformidadPor = v; }
+
     public LocalDateTime getCreadoEn() { return creadoEn; }
     public LocalDateTime getActualizadoEn() { return actualizadoEn; }
     public void setActualizadoEn(LocalDateTime v) { this.actualizadoEn = v; }

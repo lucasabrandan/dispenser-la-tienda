@@ -60,7 +60,11 @@ public class HistorialEquipoService {
 
     // Todos los equipos de un cliente con la fecha de su última visita
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> equiposDeCliente(Long clienteId) {
+    public List<Map<String, Object>> equiposDeCliente(Long clienteId) { return equiposDeCliente(clienteId, null); }
+
+    // sedeId != null: encargado de un lugar (8-oct-2026), solo los equipos de ese lugar
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> equiposDeCliente(Long clienteId, Long sedeId) {
         List<Equipo> equipos = em.createQuery(
                 "select e from Equipo e where e.sede.cliente.id = :cid and e.sede.activa = true order by e.sede.nombreSede, e.numeroSerie", Equipo.class)
             .setParameter("cid", clienteId).getResultList();
@@ -73,6 +77,7 @@ public class HistorialEquipoService {
         List<Map<String, Object>> out = new ArrayList<>();
         for (Equipo e : equipos) {
             if (e.getNumeroSerie() == null || e.getNumeroSerie().isBlank()) continue;
+            if (sedeId != null && (e.getSede() == null || !sedeId.equals(e.getSede().getId()))) continue;
             Map<String, Object> m = datosEquipo(e);
             m.put("ultimaVisita", ultima.get(e.getId()));
             out.add(m);
@@ -82,7 +87,10 @@ public class HistorialEquipoService {
 
     // Ficha de un equipo del cliente: datos + todas las visitas (con fotos)
     @Transactional(readOnly = true)
-    public Map<String, Object> fichaDeCliente(Long clienteId, String serie) {
+    public Map<String, Object> fichaDeCliente(Long clienteId, String serie) { return fichaDeCliente(clienteId, null, serie); }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> fichaDeCliente(Long clienteId, Long sedeId, String serie) {
         String s = Equipo.normalizarSerie(serie);
         if (s == null || s.isBlank()) throw new ResourceNotFoundException("Equipo no encontrado");
         List<Equipo> lista = em.createQuery(
@@ -90,6 +98,7 @@ public class HistorialEquipoService {
             .setParameter("cid", clienteId).setParameter("s", s.toUpperCase()).setMaxResults(1).getResultList();
         if (lista.isEmpty()) throw new ResourceNotFoundException("Equipo no encontrado");
         Equipo e = lista.get(0);
+        if (sedeId != null && (e.getSede() == null || !sedeId.equals(e.getSede().getId()))) throw new ResourceNotFoundException("Equipo no encontrado");
         Map<String, Object> out = datosEquipo(e);
         List<Map<String, Object>> visitas = historial(e, 200);
         out.put("visitas", visitas);
@@ -99,7 +108,10 @@ public class HistorialEquipoService {
 
     // Resumen del mes para la empresa (7-oct-2026): cada equipo atendido, sin precios
     @Transactional(readOnly = true)
-    public Map<String, Object> resumenMes(Long clienteId, java.time.YearMonth mes) {
+    public Map<String, Object> resumenMes(Long clienteId, java.time.YearMonth mes) { return resumenMes(clienteId, null, mes); }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> resumenMes(Long clienteId, Long sedeId, java.time.YearMonth mes) {
         LocalDate desde = mes.atDay(1), hasta = mes.atEndOfMonth();
         List<Object[]> res = em.createQuery(
                 "select s, i from Servicio s join s.items i where s.sede.cliente.id = :cid " +
@@ -113,6 +125,7 @@ public class HistorialEquipoService {
         for (Object[] r : res) {
             Servicio s = (Servicio) r[0];
             ServicioItem it = (ServicioItem) r[1];
+            if (sedeId != null && (s.getSede() == null || !sedeId.equals(s.getSede().getId()))) continue;
             Map<String, Object> m = itemAMapa(s, it);
             m.remove("fotoAntes"); m.remove("fotoDespues");
             m.put("lugar", s.getSede() != null ? s.getSede().getNombreSede() : s.getSedeNombre());
@@ -129,6 +142,48 @@ public class HistorialEquipoService {
         out.put("visitas", visitas.size());
         out.put("lugares", lugares.size());
         out.put("items", items);
+        return out;
+    }
+
+    // ── Próximos mantenimientos (Portal Empresa, 8-oct-2026) ──────────────────
+    // Misma regla que el Radar: sanitización cada 6 meses y cambio de filtro cada 12,
+    // contados desde el último trabajo hecho (o el último donde se cambió el filtro).
+    public static final int MESES_SANITIZACION = 6, MESES_FILTRO = 12;
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> mantenimientos(Long clienteId, Long sedeId) {
+        List<Map<String, Object>> equipos = equiposDeCliente(clienteId, sedeId);
+        Map<String, LocalDate> ultFiltro = new HashMap<>();
+        List<Object[]> filas = em.createQuery(
+                "select upper(i.equipo.numeroSerie), max(s.fechaServicio) from Servicio s join s.items i " +
+                "where i.equipo.sede.cliente.id = :cid and s.estado in :estados and lower(i.trabajoRealizado) like '%filtro%' " +
+                "group by upper(i.equipo.numeroSerie)", Object[].class)
+            .setParameter("cid", clienteId).setParameter("estados", HECHOS).getResultList();
+        for (Object[] f : filas) ultFiltro.put((String) f[0], (LocalDate) f[1]);
+        LocalDate hoy = LocalDate.now();
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<String, Object> e : equipos) {
+            LocalDate ultima = (LocalDate) e.get("ultimaVisita");
+            String serie = (String) e.get("serie");
+            Map<String, Object> m = new LinkedHashMap<>(e);
+            if (ultima == null) {
+                m.put("tipo", "SIN_DATOS"); m.put("vence", null); m.put("dias", null); m.put("estado", "SIN_DATOS");
+                out.add(m); continue;
+            }
+            LocalDate filtroBase = ultFiltro.getOrDefault(serie != null ? serie.toUpperCase() : "", ultima);
+            LocalDate venceSan = ultima.plusMonths(MESES_SANITIZACION);
+            LocalDate venceFil = filtroBase.plusMonths(MESES_FILTRO);
+            boolean filtroPrimero = !venceFil.isAfter(venceSan);
+            LocalDate vence = filtroPrimero ? venceFil : venceSan;
+            long dias = java.time.temporal.ChronoUnit.DAYS.between(hoy, vence);
+            m.put("tipo", filtroPrimero ? "FILTRO" : "SANITIZACION");
+            m.put("ultimoFiltro", ultFiltro.get(serie != null ? serie.toUpperCase() : ""));
+            m.put("vence", vence);
+            m.put("dias", dias);
+            m.put("estado", dias < 0 ? "VENCIDO" : dias <= 30 ? "PRONTO" : "AL_DIA");
+            out.add(m);
+        }
+        out.sort(Comparator.comparing((Map<String, Object> m) -> m.get("vence") == null ? LocalDate.MAX : (LocalDate) m.get("vence")));
         return out;
     }
 
@@ -171,6 +226,7 @@ public class HistorialEquipoService {
         }
         String tecnico = it.getTecnico() != null ? it.getTecnico() : (s.getUsuario() != null ? s.getUsuario().getNombre() : null);
         Map<String, Object> v = new LinkedHashMap<>();
+        v.put("id", it.getId());
         v.put("fecha", s.getFechaServicio());
         v.put("serie", it.getEquipo() != null ? it.getEquipo().getNumeroSerie() : null);
         v.put("trabajo", it.getTrabajoRealizado());

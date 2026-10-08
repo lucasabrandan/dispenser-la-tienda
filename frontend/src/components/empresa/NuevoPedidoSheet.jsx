@@ -4,12 +4,14 @@ import { LuMapPin, LuCheck, LuSearch, LuPlus, LuTriangleAlert } from 'react-icon
 import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import { MOTIVOS_PEDIDO } from '../../utils/pedidosEmpresa';
+import { CargarFotos } from './FotosPedido';
 
 const INPUT = 'w-full h-11 px-3.5 rounded-xl bg-chip text-body text-ink outline-none placeholder:text-muted';
 
 // Nuevo pedido (Portal Empresa, 7-oct-2026): reemplaza la tarjeta de Trello.
 // Lugar (de sus sedes, o una dirección nueva), equipo, motivo, detalle y urgencia.
-export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null }) {
+// soloMiLugar: encargado de un lugar (8-oct-2026) — no puede pedir para otra dirección
+export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null, soloMiLugar = false }) {
     const [sedes, setSedes] = useState([]);
     const [q, setQ] = useState('');
     const [sedeId, setSedeId] = useState(inicial?.sedeId || null);
@@ -17,7 +19,8 @@ export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null })
     const [lugar, setLugar] = useState('');
     const [direccion, setDireccion] = useState('');
     const [serie, setSerie] = useState(inicial?.serie || '');
-    const [motivo, setMotivo] = useState('');
+    const [motivo, setMotivo] = useState(inicial?.motivo || '');
+    const [fotos, setFotos] = useState([]);
     const [detalle, setDetalle] = useState('');
     const [urgente, setUrgente] = useState(false);
     const [guardando, setGuardando] = useState(false);
@@ -26,7 +29,8 @@ export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null })
         api.get('/empresa/sedes').then(r => {
             const l = Array.isArray(r.data) ? r.data : [];
             setSedes(l);
-            if (l.length === 0) setOtra(true);
+            if (l.length === 1 && soloMiLugar) setSedeId(l[0].id);
+            if (l.length === 0 && !soloMiLugar) setOtra(true);
         }).catch(() => setOtra(true));
     }, []);
 
@@ -51,6 +55,7 @@ export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null })
                 motivo,
                 detalle: detalle.trim() || null,
                 urgente,
+                fotos,
             });
             toast.success('Pedido enviado');
             onCreado && onCreado(r.data);
@@ -91,7 +96,7 @@ export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null })
                                     );
                                 })}
                             </div>
-                            <button type="button" onClick={() => { setOtra(true); setSedeId(null); }} className="inline-flex items-center gap-1 py-1 text-caption font-bold text-secondary"><LuPlus size={14} /> Otra dirección</button>
+                            {!soloMiLugar && <button type="button" onClick={() => { setOtra(true); setSedeId(null); }} className="inline-flex items-center gap-1 py-1 text-caption font-bold text-secondary"><LuPlus size={14} /> Otra dirección</button>}
                         </>
                     ) : (
                         <div className="space-y-2">
@@ -132,6 +137,12 @@ export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null })
                     </div>
                     <textarea rows={3} value={detalle} onChange={e => setDetalle(e.target.value)} placeholder="Contanos más (piso, sector, horario de acceso, a quién preguntar…)"
                         className="w-full px-3.5 py-3 rounded-xl bg-chip text-body text-ink outline-none resize-none placeholder:text-muted" />
+                </section>
+
+                {/* Fotos del problema (8-oct-2026): el técnico llega sabiendo qué es */}
+                <section className="space-y-2">
+                    <p className="text-label font-black uppercase tracking-widest text-muted">Fotos <span className="normal-case tracking-normal font-bold">(opcional, hasta 4)</span></p>
+                    <CargarFotos fotos={fotos} onChange={setFotos} />
                 </section>
 
                 <button type="button" onClick={() => setUrgente(u => !u)} aria-pressed={urgente}

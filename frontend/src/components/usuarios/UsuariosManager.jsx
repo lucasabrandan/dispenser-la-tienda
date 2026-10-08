@@ -16,7 +16,7 @@ const ROL_COLOR = {
     EMPRESA: 'bg-[#2563EB]/10 text-[#2563EB] dark:bg-[#60A5FA]/10 dark:text-[#60A5FA]',
 };
 
-const FORM_VACIO = { nombre: '', username: '', password: '', passwordConfirm: '', rol: 'TECNICO', telefono: '', whatsapp: '', clienteId: '' };
+const FORM_VACIO = { nombre: '', username: '', password: '', passwordConfirm: '', rol: 'TECNICO', telefono: '', whatsapp: '', clienteId: '', sedeId: '' };
 
 export default function UsuariosManager() {
     const { usuario: usuarioActual } = useAuth();
@@ -79,7 +79,7 @@ export default function UsuariosManager() {
     };
     const abrirEditar = (u) => {
         if (u.rol === 'EMPRESA') cargarClientes();
-        setForm({ nombre: u.nombre, username: u.username, password: '', rol: u.rol, telefono: u.telefono || '', whatsapp: u.whatsapp || '', clienteId: empresaDe[u.id]?.clienteId || '' });
+        setForm({ nombre: u.nombre, username: u.username, password: '', rol: u.rol, telefono: u.telefono || '', whatsapp: u.whatsapp || '', clienteId: empresaDe[u.id]?.clienteId || '', sedeId: empresaDe[u.id]?.sedeId || '' });
         setModal(u);
     };
 
@@ -100,13 +100,14 @@ export default function UsuariosManager() {
             toast.error('Elegí a qué cliente pertenece'); return;
         }
         const clienteId = form.rol === 'EMPRESA' ? Number(form.clienteId) : null;
+        const sedeId = form.rol === 'EMPRESA' && form.sedeId ? Number(form.sedeId) : null;
         setGuardando(true);
         try {
             if (modal === 'crear') {
-                await crearUsuario({ nombre: form.nombre, username: form.username, password: form.password, rol: form.rol, telefono: form.telefono || null, whatsapp: form.whatsapp || null, clienteId });
+                await crearUsuario({ nombre: form.nombre, username: form.username, password: form.password, rol: form.rol, telefono: form.telefono || null, whatsapp: form.whatsapp || null, clienteId, sedeId });
                 toast.success('Usuario creado');
             } else {
-                await editarUsuario(modal.id, { nombre: form.nombre, rol: form.rol, activo: modal.activo, telefono: form.telefono || null, whatsapp: form.whatsapp || null, clienteId });
+                await editarUsuario(modal.id, { nombre: form.nombre, rol: form.rol, activo: modal.activo, telefono: form.telefono || null, whatsapp: form.whatsapp || null, clienteId, sedeId });
                 toast.success('Usuario actualizado');
             }
             setModal(null);
@@ -122,7 +123,7 @@ export default function UsuariosManager() {
 
     const toggleActivo = async (u) => {
         try {
-            await editarUsuario(u.id, { nombre: u.nombre, rol: u.rol, activo: !u.activo, telefono: u.telefono || null, whatsapp: u.whatsapp || null, clienteId: empresaDe[u.id]?.clienteId || null });
+            await editarUsuario(u.id, { nombre: u.nombre, rol: u.rol, activo: !u.activo, telefono: u.telefono || null, whatsapp: u.whatsapp || null, clienteId: empresaDe[u.id]?.clienteId || null, sedeId: empresaDe[u.id]?.sedeId || null });
             toast.success(u.activo ? 'Usuario desactivado' : 'Usuario activado');
             cargar();
         } catch (e) {
@@ -222,7 +223,7 @@ export default function UsuariosManager() {
                                             )}
                                         </div>
                                         <p className="text-caption text-muted mt-0.5">@{u.username}{u.telefono ? `  ·  ${u.telefono}` : ''}</p>
-                                        {u.rol === 'EMPRESA' && <p className="text-caption font-bold text-secondary mt-0.5">Portal de {empresaDe[u.id]?.clienteNombre || '—'}</p>}
+                                        {u.rol === 'EMPRESA' && <p className="text-caption font-bold text-secondary mt-0.5">Portal de {empresaDe[u.id]?.clienteNombre || '—'}{empresaDe[u.id]?.sedeNombre ? ` · solo ${empresaDe[u.id].sedeNombre}` : ''}</p>}
                                     </div>
                                     {/* Acciones */}
                                     <div className="flex gap-2 shrink-0">
@@ -383,7 +384,7 @@ export default function UsuariosManager() {
                                     <select
                                         className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
                                         value={form.clienteId}
-                                        onChange={e => setForm(f => ({ ...f, clienteId: e.target.value }))}
+                                        onChange={e => setForm(f => ({ ...f, clienteId: e.target.value, sedeId: '' }))}
                                     >
                                         <option value="">Elegí el cliente…</option>
                                         {form.clienteId && !clientes.some(c => String(c.id) === String(form.clienteId)) && (
@@ -392,6 +393,7 @@ export default function UsuariosManager() {
                                         {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                                     </select>
                                     <p className="text-caption text-muted mt-1">Solo va a ver sus pedidos y los lugares de ese cliente. Nada de precios ni del resto del sistema.</p>
+                                    {form.clienteId && <SelectorLugar clienteId={form.clienteId} value={form.sedeId} onChange={v => setForm(f => ({ ...f, sedeId: v }))} />}
                                 </div>
                             )}
                         </div>
@@ -471,6 +473,26 @@ export default function UsuariosManager() {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+// Encargado de un lugar (8-oct-2026): si se elige una sede, ese usuario solo ve y pide
+// para ese lugar. "Toda la empresa" = ve todo (y es quien aprueba el resumen del mes).
+function SelectorLugar({ clienteId, value, onChange }) {
+    const [sedes, setSedes] = useState([]);
+    useEffect(() => {
+        api.get(`/sedes/cliente/${clienteId}`).then(r => setSedes(Array.isArray(r.data) ? r.data : (r.data?.content || []))).catch(() => setSedes([]));
+    }, [clienteId]);
+    return (
+        <div className="mt-3">
+            <label className="text-label font-bold text-muted uppercase tracking-wider">Qué lugares ve</label>
+            <select className="mt-1 w-full h-10 px-3 rounded-xl text-body font-bold bg-chip text-ink border border-black/[0.08] dark:border-white/[0.08] outline-none"
+                value={value || ''} onChange={e => onChange(e.target.value)}>
+                <option value="">Toda la empresa (responsable)</option>
+                {sedes.filter(s => s.activa !== false).map(s => <option key={s.id} value={s.id}>Solo {s.nombreSede || s.direccion}</option>)}
+            </select>
+            <p className="text-caption text-muted mt-1">El encargado de un lugar solo ve los pedidos, equipos y avisos de ese lugar.</p>
         </div>
     );
 }

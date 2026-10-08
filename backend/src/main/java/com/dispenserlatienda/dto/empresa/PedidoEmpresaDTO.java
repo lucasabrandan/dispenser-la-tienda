@@ -23,5 +23,11 @@ public record PedidoEmpresaDTO(
     String tecnicoNombre,
     long comentarios,
     LocalDateTime creadoEn,
-    LocalDateTime actualizadoEn
+    LocalDateTime actualizadoEn,
+    java.util.List<String> fotos,
+    String conformidad,
+    Integer calificacion,
+    String conformidadComentario,
+    LocalDateTime conformidadEn,
+    String conformidadPor
 ) {}

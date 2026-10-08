@@ -9,5 +9,6 @@ public record UsuarioCreateDTO(
         @NotBlank String rol,
         String telefono,
         String whatsapp,
-        Long clienteId // solo rol EMPRESA (Portal Empresa)
+        Long clienteId, // solo rol EMPRESA (Portal Empresa)
+        Long sedeId     // EMPRESA: encargado de un solo lugar (null = toda la empresa)
 ) {}

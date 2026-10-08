@@ -717,7 +717,7 @@ public class OrdenVisitaService {
                         .filter(t -> t != null && !t.isBlank()).findFirst().orElse(null);
                 } catch (Exception ignored) { }
                 avisarEmpresa(o, "terminado ✓", (hecho != null ? hecho + "\n" : "El trabajo quedó hecho. ")
-                    + "Mirá el informe con las fotos en el pedido.");
+                    + "Mirá el informe con las fotos y confirmanos si quedó todo bien.");
             }
             case NO_ATENDIDO -> avisarEmpresa(o, "· no se pudo hacer", "Lo reprogramamos y te avisamos el día nuevo");
             default -> { }
@@ -728,6 +728,7 @@ public class OrdenVisitaService {
         try {
             pedidoEmpresaRepo.findFirstByOrdenId(o.getId()).ifPresent(p -> usuarioRepo.findAll().stream()
                 .filter(u -> u.getRol() == RolUsuario.EMPRESA && u.isActivo() && p.getClienteId().equals(u.getClienteId()))
+                .filter(u -> u.getSedeId() == null || u.getSedeId().equals(p.getSedeId())) // encargado de un lugar
                 .forEach(u -> notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, u.getId(), null,
                     "Pedido #" + p.getId() + " " + que, mensaje, null, false)));
         } catch (Exception e) {

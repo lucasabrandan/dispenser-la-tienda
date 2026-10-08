@@ -23,9 +23,15 @@ public class EmpresaController {
     private final UsuarioRepository usuarioRepo;
     private final HistorialEquipoService historial;
     private final com.dispenserlatienda.service.mapa.GeocodificadorService geo;
+    private final com.dispenserlatienda.service.empresa.PortalEmpresaService portal;
+    private final com.dispenserlatienda.service.servicio.FileStorageService archivos;
 
     public EmpresaController(PedidoEmpresaService service, UsuarioRepository usuarioRepo, HistorialEquipoService historial,
-                             com.dispenserlatienda.service.mapa.GeocodificadorService geo) {
+                             com.dispenserlatienda.service.mapa.GeocodificadorService geo,
+                             com.dispenserlatienda.service.empresa.PortalEmpresaService portal,
+                             com.dispenserlatienda.service.servicio.FileStorageService archivos) {
+        this.portal = portal;
+        this.archivos = archivos;
         this.geo = geo;
         this.service = service;
         this.usuarioRepo = usuarioRepo;
@@ -36,7 +42,12 @@ public class EmpresaController {
     public Map<String, Object> datos(Authentication auth) {
         Usuario u = yo(auth);
         List<Map<String, Object>> datos = service.usuariosEmpresa().stream().filter(m -> u.getId().equals(m.get("id"))).toList();
-        return Map.of("nombre", u.getNombre(), "empresa", datos.isEmpty() || datos.get(0).get("clienteNombre") == null ? "" : datos.get(0).get("clienteNombre"));
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("nombre", u.getNombre());
+        out.put("empresa", datos.isEmpty() || datos.get(0).get("clienteNombre") == null ? "" : datos.get(0).get("clienteNombre"));
+        out.put("sedeId", u.getSedeId()); // encargado de un lugar (null = toda la empresa)
+        out.put("sedeNombre", datos.isEmpty() ? null : datos.get(0).get("sedeNombre"));
+        return out;
     }
 
     @GetMapping("/pedidos")
@@ -72,12 +83,14 @@ public class EmpresaController {
     // Etapa 2: equipos de la empresa y la ficha permanente de cada uno
     @GetMapping("/equipos")
     public List<Map<String, Object>> equipos(Authentication auth) {
-        return historial.equiposDeCliente(service.clienteDeEmpresa(yo(auth)));
+        Usuario u = yo(auth);
+        return historial.equiposDeCliente(service.clienteDeEmpresa(u), u.getSedeId());
     }
 
     @GetMapping("/equipo")
     public Map<String, Object> equipo(@RequestParam String serie, Authentication auth) {
-        return historial.fichaDeCliente(service.clienteDeEmpresa(yo(auth)), serie);
+        Usuario u = yo(auth);
+        return historial.fichaDeCliente(service.clienteDeEmpresa(u), u.getSedeId(), serie);
     }
 
     // Mapa de sus lugares (con sus equipos)
@@ -101,7 +114,54 @@ public class EmpresaController {
     @GetMapping("/resumen")
     public Map<String, Object> resumen(@RequestParam(required = false) String mes, Authentication auth) {
         java.time.YearMonth m = mes != null && !mes.isBlank() ? java.time.YearMonth.parse(mes) : java.time.YearMonth.now();
-        return historial.resumenMes(service.clienteDeEmpresa(yo(auth)), m);
+        Usuario u = yo(auth);
+        Long cid = service.clienteDeEmpresa(u);
+        Map<String, Object> out = new java.util.LinkedHashMap<>(historial.resumenMes(cid, u.getSedeId(), m));
+        out.put("aprobacion", portal.aprobacion(cid, m.toString()));
+        out.put("puedeAprobar", u.getSedeId() == null);
+        return out;
+    }
+
+    // Etapa 4 (8-oct-2026) ─────────────────────────────────────────────────────
+
+    // Fotos del problema al cargar un pedido (solo imágenes; se validan por contenido)
+    @PostMapping(value = "/fotos", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Map<String, String> subirFoto(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        if (file.getSize() > 8 * 1024 * 1024) throw new com.dispenserlatienda.exception.BusinessException("La foto es muy pesada");
+        String nombre = archivos.guardarArchivo(file);
+        if (nombre.endsWith(".pdf")) {
+            archivos.eliminarArchivo(nombre);
+            throw new com.dispenserlatienda.exception.BusinessException("Solo fotos");
+        }
+        return Map.of("filename", nombre);
+    }
+
+    // Conformidad del trabajo terminado
+    @PatchMapping("/pedidos/{id}/conformidad")
+    public PedidoEmpresaDTO conformidad(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
+        boolean conforme = Boolean.TRUE.equals(body.get("conforme"));
+        Integer cal = body.get("calificacion") instanceof Number n ? n.intValue() : null;
+        return service.conformidad(yo(auth), id, conforme, cal, (String) body.get("comentario"));
+    }
+
+    // Próximos mantenimientos de sus equipos
+    @GetMapping("/mantenimientos")
+    public List<Map<String, Object>> mantenimientos(Authentication auth) {
+        Usuario u = yo(auth);
+        return historial.mantenimientos(service.clienteDeEmpresa(u), u.getSedeId());
+    }
+
+    // Aprobar / observar el resumen del mes
+    @PostMapping("/resumen/aprobacion")
+    public Map<String, Object> aprobar(@RequestBody Map<String, Object> body, Authentication auth) {
+        List<Long> obs = body.get("observados") instanceof List<?> l
+            ? l.stream().filter(x -> x instanceof Number).map(x -> ((Number) x).longValue()).toList() : List.of();
+        return portal.aprobar(yo(auth), (String) body.get("mes"), Boolean.TRUE.equals(body.get("aprobado")), (String) body.get("comentario"), obs);
+    }
+
+    @GetMapping("/indicadores")
+    public Map<String, Object> indicadores(@RequestParam(defaultValue = "6") int meses, Authentication auth) {
+        return portal.indicadores(yo(auth), meses);
     }
 
     @GetMapping("/sedes")

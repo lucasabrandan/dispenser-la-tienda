@@ -55,6 +55,13 @@ public class Usuario {
     @Column(name = "cliente_id")
     private Long clienteId;
 
+    // Solo rol EMPRESA (8-oct-2026): si tiene sede, es el encargado de ESE lugar y solo
+    // ve/pide para él. Sin sede = ve toda la empresa.
+    @Column(name = "sede_id")
+    private Long sedeId;
+    public Long getSedeId() { return sedeId; }
+    public void setSedeId(Long sedeId) { this.sedeId = sedeId; }
+
     public Long getClienteId() { return clienteId; }
     public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
 

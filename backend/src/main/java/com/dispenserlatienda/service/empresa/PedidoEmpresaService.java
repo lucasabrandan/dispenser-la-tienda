@@ -64,12 +64,15 @@ public class PedidoEmpresaService {
     // ── Empresa ──────────────────────────────────────────────────────────────
 
     public List<PedidoEmpresaDTO> listarDeEmpresa(Usuario empresa) {
-        return aDTOs(repo.findByClienteIdOrderByCreadoEnDesc(clienteDe(empresa)));
+        Long sede = empresa.getSedeId();
+        return aDTOs(repo.findByClienteIdOrderByCreadoEnDesc(clienteDe(empresa)).stream()
+            .filter(p -> sede == null || sede.equals(p.getSedeId())).toList());
     }
 
     public List<Map<String, Object>> sedesDeEmpresa(Usuario empresa) {
         List<Map<String, Object>> out = new ArrayList<>();
         for (Sede s : sedeRepo.findByClienteIdAndActivaTrue(clienteDe(empresa))) {
+            if (empresa.getSedeId() != null && !empresa.getSedeId().equals(s.getId())) continue; // encargado de un lugar
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", s.getId());
             m.put("nombre", s.getNombreSede());
@@ -98,7 +101,11 @@ public class PedidoEmpresaService {
             if (lugar == null) lugar = s.getNombreSede();
             if (direccion == null) direccion = s.getDireccion();
         }
+        // Encargado de un lugar (8-oct-2026): solo pide para el suyo
+        if (empresa.getSedeId() != null && !empresa.getSedeId().equals(p.getSedeId()))
+            throw new BusinessException("Elegí tu lugar");
         if (direccion == null) throw new BusinessException("Falta la dirección");
+        p.setFotos(fotosValidas(dto.fotos()));
         String motivo = limpio(dto.motivo());
         if (motivo == null) throw new BusinessException("Elegí el motivo");
         p.setLugar(corto(lugar, 300));
@@ -111,7 +118,8 @@ public class PedidoEmpresaService {
 
         String texto = motivo + (p.getEquipoSerie() != null ? " · N/S " + p.getEquipoSerie() : "")
             + "\n📍 " + (lugar != null && !lugar.equalsIgnoreCase(direccion) ? lugar + " · " : "") + direccion
-            + (p.getDetalle() != null ? "\n" + p.getDetalle() : "");
+            + (p.getDetalle() != null ? "\n" + p.getDetalle() : "")
+            + (p.getFotos() != null ? "\n📷 " + p.getFotos().split(",").length + " foto(s)" : "");
         avisarAdmins(empresa, (p.isUrgente() ? "🔴 Pedido urgente #" : "Pedido nuevo #") + p.getId() + " · " + nombreCliente(p), texto, true);
         return aDTO(p);
     }
@@ -169,7 +177,7 @@ public class PedidoEmpresaService {
                         resumen, o.getId(), false);
             });
         } else {
-            avisarEmpresa(p.getClienteId(), "Respuesta en tu pedido #" + p.getId(), resumen);
+            avisarEmpresa(p.getClienteId(), p.getSedeId(), "Respuesta en tu pedido #" + p.getId(), resumen);
         }
         return new PedidoComentarioDTO(c.getId(), c.getAutorNombre(), c.isDeEmpresa(), c.getTexto(), c.getCreadoEn());
     }
@@ -184,6 +192,8 @@ public class PedidoEmpresaService {
         if (p.isEmpty()) { out.put("pedidoId", null); out.put("comentarios", List.of()); return out; }
         out.put("pedidoId", p.get().getId());
         out.put("empresa", nombreCliente(p.get()));
+        out.put("fotos", listaFotos(p.get().getFotos()));
+        out.put("detalle", p.get().getDetalle());
         out.put("comentarios", comentarioRepo.findByPedidoIdOrderByCreadoEnAsc(p.get().getId()).stream()
             .map(c -> new PedidoComentarioDTO(c.getId(), c.getAutorNombre(), c.isDeEmpresa(), c.getTexto(), c.getCreadoEn())).toList());
         return out;
@@ -233,8 +243,11 @@ public class PedidoEmpresaService {
             p.getEquipoSerie()));
         p.setOrdenId(o.id());
         p.setEstado("NUEVO");
+        // Volver a ir (por un reclamo): la conformidad anterior queda en la conversación
+        p.setConformidad(null); p.setCalificacion(null); p.setConformidadComentario(null);
+        p.setConformidadEn(null); p.setConformidadPor(null);
         p.setActualizadoEn(LocalDateTime.now());
-        avisarEmpresa(p.getClienteId(), "Pedido #" + p.getId() + " agendado",
+        avisarEmpresa(p.getClienteId(), p.getSedeId(), "Pedido #" + p.getId() + " agendado",
             p.getMotivo() + " · " + cuando(fecha, hora) + "\n📍 " + p.getDireccion());
         return aDTO(p);
     }
@@ -259,7 +272,7 @@ public class PedidoEmpresaService {
             c.setTexto("Pedido cancelado: " + m);
             comentarioRepo.save(c);
         }
-        avisarEmpresa(p.getClienteId(), "Pedido #" + p.getId() + " cancelado", m != null ? m : p.getMotivo());
+        avisarEmpresa(p.getClienteId(), p.getSedeId(), "Pedido #" + p.getId() + " cancelado", m != null ? m : p.getMotivo());
         return aDTO(p);
     }
 
@@ -272,6 +285,8 @@ public class PedidoEmpresaService {
             m.put("id", u.getId());
             m.put("clienteId", u.getClienteId());
             m.put("clienteNombre", u.getClienteId() == null ? null : clienteRepo.findById(u.getClienteId()).map(c -> c.getNombre()).orElse(null));
+            m.put("sedeId", u.getSedeId());
+            m.put("sedeNombre", u.getSedeId() == null ? null : sedeRepo.findById(u.getSedeId()).map(Sede::getNombreSede).orElse(null));
             out.add(m);
         }
         return out;
@@ -290,7 +305,54 @@ public class PedidoEmpresaService {
     private PedidoEmpresa deEmpresa(Usuario empresa, Long id) {
         PedidoEmpresa p = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
         if (!p.getClienteId().equals(clienteDe(empresa))) throw new AccessDeniedException("Ese pedido no es tuyo");
+        if (empresa.getSedeId() != null && !empresa.getSedeId().equals(p.getSedeId())) throw new AccessDeniedException("Ese pedido es de otro lugar");
         return p;
+    }
+
+    // Fotos del pedido: solo nombres de archivo subidos por /api/empresa/fotos (sin rutas)
+    private static String fotosValidas(List<String> fotos) {
+        if (fotos == null) return null;
+        List<String> ok = fotos.stream().filter(Objects::nonNull).map(String::trim)
+            .filter(f -> f.matches("[A-Za-z0-9._-]{5,200}")).limit(4).toList();
+        return ok.isEmpty() ? null : String.join(",", ok);
+    }
+
+    private static List<String> listaFotos(String fotos) {
+        return fotos == null || fotos.isBlank() ? List.of() : Arrays.asList(fotos.split(","));
+    }
+
+    // ── Conformidad del trabajo (8-oct-2026) ─────────────────────────────────
+    // Cuando la visita queda hecha, la empresa confirma "Conforme" (con estrellas) o
+    // avisa "Hay un problema": eso abre un reclamo en el pedido y le avisa al admin.
+    @Transactional
+    public PedidoEmpresaDTO conformidad(Usuario empresa, Long id, boolean conforme, Integer calificacion, String comentario) {
+        PedidoEmpresa p = deEmpresa(empresa, id);
+        PedidoEmpresaDTO actual = aDTO(p);
+        if (!"HECHO".equals(actual.estado())) throw new BusinessException("Todavía no está terminado");
+        String com = limpio(comentario);
+        if (!conforme && com == null) throw new BusinessException("Contanos qué pasó");
+        Integer cal = calificacion == null ? null : Math.max(1, Math.min(5, calificacion));
+        p.setConformidad(conforme ? "CONFORME" : "PROBLEMA");
+        p.setCalificacion(cal);
+        p.setConformidadComentario(com);
+        p.setConformidadEn(LocalDateTime.now());
+        p.setConformidadPor(empresa.getNombre());
+        p.setActualizadoEn(LocalDateTime.now());
+        String estrellas = cal != null ? " " + "★".repeat(cal) + "☆".repeat(5 - cal) : "";
+        PedidoComentario c = new PedidoComentario();
+        c.setPedidoId(p.getId());
+        c.setAutorId(empresa.getId());
+        c.setAutorNombre(empresa.getNombre());
+        c.setDeEmpresa(true);
+        c.setTexto(conforme ? "✓ Conforme con el trabajo" + estrellas + (com != null ? "\n" + com : "")
+                            : "⚠️ Hay un problema con el trabajo" + estrellas + "\n" + com);
+        comentarioRepo.save(c);
+        if (conforme) {
+            avisarAdmins(empresa, "✓ Conforme · pedido #" + p.getId() + " · " + nombreCliente(p) + estrellas, com != null ? com : p.getMotivo(), false);
+        } else {
+            avisarAdmins(empresa, "🔴 Reclamo · pedido #" + p.getId() + " · " + nombreCliente(p), com, true);
+        }
+        return aDTO(p);
     }
 
     private PedidoEmpresa verificarAcceso(Usuario quien, Long id) {
@@ -307,9 +369,13 @@ public class PedidoEmpresaService {
     }
 
     // Lo usa también OrdenVisitaService (cambios de estado de la visita)
-    public void avisarEmpresa(Long clienteId, String titulo, String mensaje) {
+    public void avisarEmpresa(Long clienteId, String titulo, String mensaje) { avisarEmpresa(clienteId, null, titulo, mensaje); }
+
+    // sedeId: el encargado de un lugar solo recibe lo de su lugar (los generales, todo)
+    public void avisarEmpresa(Long clienteId, Long sedeId, String titulo, String mensaje) {
         usuarioRepo.findAll().stream()
             .filter(u -> u.getRol() == RolUsuario.EMPRESA && u.isActivo() && clienteId.equals(u.getClienteId()))
+            .filter(u -> u.getSedeId() == null || u.getSedeId().equals(sedeId))
             .forEach(u -> notificaciones.notificar(TipoNotificacion.MENSAJE_LIBRE, u.getId(), null,
                 titulo, corto(mensaje, 1000), null, false));
     }
@@ -364,6 +430,8 @@ public class PedidoEmpresaService {
         return new PedidoEmpresaDTO(p.getId(), p.getClienteId(), p.getClienteNombre(), p.getCreadoPorNombre(),
             p.getSedeId(), p.getLugar(), p.getDireccion(), p.getEquipoSerie(), p.getMotivo(), p.getDetalle(),
             p.isUrgente(), estado, p.getOrdenId(), fecha, hora, tecnico,
-            comentarioRepo.countByPedidoId(p.getId()), p.getCreadoEn(), p.getActualizadoEn());
+            comentarioRepo.countByPedidoId(p.getId()), p.getCreadoEn(), p.getActualizadoEn(),
+            listaFotos(p.getFotos()), p.getConformidad(), p.getCalificacion(), p.getConformidadComentario(),
+            p.getConformidadEn(), p.getConformidadPor());
     }
 }

@@ -7,5 +7,6 @@ public record PedidoEmpresaCreateDTO(
     String equipoSerie,
     String motivo,
     String detalle,
-    Boolean urgente
+    Boolean urgente,
+    java.util.List<String> fotos
 ) {}

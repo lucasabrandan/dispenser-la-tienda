@@ -63,6 +63,16 @@ public class PedidoEmpresaAdminController {
         return service.rechazar(id, body != null ? body.get("motivo") : null);
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dispenserlatienda.service.empresa.PortalEmpresaService portal;
+
+    // Aprobación del resumen del mes de un cliente (lo muestra el cierre mensual, 8-oct-2026)
+    @GetMapping("/aprobacion")
+    public Map<String, Object> aprobacion(@RequestParam Long clienteId, @RequestParam String mes) {
+        Map<String, Object> a = portal.aprobacion(clienteId, mes);
+        return a == null ? Map.of() : a;
+    }
+
     @GetMapping("/usuarios")
     public List<Map<String, Object>> usuarios() { return service.usuariosEmpresa(); }
 

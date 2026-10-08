@@ -59,6 +59,7 @@ public class UsuarioAdminController {
         if (nuevo.getRol() == RolUsuario.EMPRESA) {
             if (dto.clienteId() == null) throw new com.dispenserlatienda.exception.BusinessException("Elegí a qué cliente pertenece");
             nuevo.setClienteId(dto.clienteId());
+            nuevo.setSedeId(sedeValida(dto.clienteId(), dto.sedeId()));
         }
         usuarioRepository.save(nuevo);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -89,8 +90,10 @@ public class UsuarioAdminController {
         if (nuevoRol == RolUsuario.EMPRESA) {
             if (dto.clienteId() != null) u.setClienteId(dto.clienteId());
             if (u.getClienteId() == null) throw new com.dispenserlatienda.exception.BusinessException("Elegí a qué cliente pertenece");
+            u.setSedeId(sedeValida(u.getClienteId(), dto.sedeId()));
         } else {
             u.setClienteId(null);
+            u.setSedeId(null);
         }
         usuarioRepository.save(u);
         // Al desactivar, cortar el acceso de verdad: sin el refresh token no
@@ -100,6 +103,18 @@ public class UsuarioAdminController {
             refreshTokenService.revocarTodosDeUsuario(u.getId());
         }
         return ResponseEntity.ok(new UsuarioDTO(u.getId(), u.getNombre(), u.getUsername(), u.getRol().name(), u.isActivo(), u.getTelefono(), u.getWhatsapp(), u.getFirma(), u.getSueldoObjetivo(), u.getColor()));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dispenserlatienda.repository.sede.SedeRepository sedeRepository;
+
+    // Encargado de un lugar: la sede tiene que ser de ese cliente
+    private Long sedeValida(Long clienteId, Long sedeId) {
+        if (sedeId == null) return null;
+        var s = sedeRepository.findById(sedeId).orElseThrow(() -> new com.dispenserlatienda.exception.BusinessException("Ese lugar no existe"));
+        if (s.getCliente() == null || !s.getCliente().getId().equals(clienteId))
+            throw new com.dispenserlatienda.exception.BusinessException("Ese lugar no es de ese cliente");
+        return sedeId;
     }
 
     // Color del técnico (3-oct-2026): se elige en Usuarios. Vacío = automático.
