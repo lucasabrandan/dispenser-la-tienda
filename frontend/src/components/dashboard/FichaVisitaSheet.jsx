@@ -3,6 +3,7 @@ import { LuMapPin, LuClock, LuArrowRight, LuTrash2 } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
+import ChatVisita from '../ordenes/ChatVisita';
 import AvatarTecnico from '../ui/AvatarTecnico';
 import { M } from '../servicio/ServicioUI';
 import { estadoLabel, etapaColor } from '../../utils/estados';
@@ -100,6 +101,8 @@ export default function FichaVisitaSheet({ orden, onCerrar, onVerTrabajos, onEli
                         </div>
                     )}
                 </div>
+
+                {orden.tecnicoNombre && <ChatVisita orden={orden} soyAdmin />}
 
                 {orden.presupuestoId && (
                     cargando ? <div className="h-24 rounded-2xl bg-panel animate-pulse" /> : servicio ? (

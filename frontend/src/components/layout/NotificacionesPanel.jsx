@@ -220,7 +220,7 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo,
                                                 onAbrirTrabajo(n.referenciaId);
                                             } else if (n.referenciaId && onAbrirOrden) {
                                                 // El resto con referencia son visitas (5-oct-2026): se abre esa visita
-                                                onAbrirOrden(n.referenciaId);
+                                                onAbrirOrden(n.referenciaId, String(n.titulo || '').startsWith('💬'));
                                             } else if (onSinReferencia) {
                                                 onSinReferencia();
                                             }

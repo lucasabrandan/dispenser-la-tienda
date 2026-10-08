@@ -19,6 +19,7 @@ import CerrarDiaSheet from './CerrarDiaSheet';
 import QueLlevarHoy from './QueLlevarHoy';
 import CargaPorSerieSheet from './CargaPorSerieSheet';
 import ConversacionEmpresa from './ConversacionEmpresa';
+import ChatVisita from './ChatVisita';
 import EquiposDeVisita from './EquiposDeVisita';
 import { etapaColor, etapaDeEstado, estiloEtiqueta } from '../../utils/estados';
 import { PAGINA, PantallaHeader, BotonHerramienta, Herramientas } from '../ui/Pantalla';
@@ -175,6 +176,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                 )}
 
                 {!esFinal && <EquiposDeVisita ordenId={orden.id} />}
+                <ChatVisita orden={orden} soyAdmin={false} className="mt-3" />
                 {!esFinal && /^Pedido #\d+/.test(orden.descripcion || '') && <ConversacionEmpresa ordenId={orden.id} />}
 
                 {!esFinal && orden.descripcion && (

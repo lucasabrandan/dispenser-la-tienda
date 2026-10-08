@@ -31,10 +31,13 @@ public class OrdenVisitaController {
     private final UsuarioRepository usuarioRepository;
 
     private final com.dispenserlatienda.service.empresa.PedidoEmpresaService pedidoEmpresaService;
+    private final com.dispenserlatienda.service.orden.VisitaChatService chat;
 
     public OrdenVisitaController(OrdenVisitaService service, OrdenVisitaRepository repo, UsuarioRepository usuarioRepository,
-                                 com.dispenserlatienda.service.empresa.PedidoEmpresaService pedidoEmpresaService) {
+                                 com.dispenserlatienda.service.empresa.PedidoEmpresaService pedidoEmpresaService,
+                                 com.dispenserlatienda.service.orden.VisitaChatService chat) {
         this.pedidoEmpresaService = pedidoEmpresaService;
+        this.chat = chat;
         this.service = service;
         this.repo = repo;
         this.usuarioRepository = usuarioRepository;
@@ -215,5 +218,16 @@ public class OrdenVisitaController {
     @GetMapping("/{id}/conversacion")
     public java.util.Map<String, Object> conversacion(@PathVariable Long id, org.springframework.security.core.Authentication auth) {
         return pedidoEmpresaService.conversacionDeOrden(resolverUsuario(auth), id);
+    }
+
+    // Conversación admin ↔ técnico de la visita (8-oct-2026)
+    @GetMapping("/{id}/mensajes")
+    public List<Map<String, Object>> mensajes(@PathVariable Long id, Authentication auth) {
+        return chat.listar(resolverUsuario(auth), id);
+    }
+
+    @PostMapping("/{id}/mensajes")
+    public Map<String, Object> enviarMensaje(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
+        return chat.enviar(resolverUsuario(auth), id, body != null ? body.get("texto") : null);
     }
 }

@@ -228,7 +228,8 @@ self.addEventListener('notificationclick', (event) => {
         })());
         return;
     }
-    if (d.ordenId) { event.waitUntil(abrirVentana(`/?notif=1&ordenId=${d.ordenId}`)); return; }
+    // Mensaje de la conversación de la visita (8-oct-2026): abre directo el chat
+    if (d.ordenId) { event.waitUntil(abrirVentana(`/?notif=1&ordenId=${d.ordenId}${String(d.titulo || '').startsWith('💬') ? '&chat=1' : ''}`)); return; }
     // Portal Empresa (7-oct-2026): avisos de un pedido → ese pedido
     if (d.pedidoId) { event.waitUntil(abrirVentana(`/?notif=1&pedido=${d.pedidoId}`)); return; }
     // '?notif=1' le avisa a la app (ver Layout.jsx) que se abrió desde una

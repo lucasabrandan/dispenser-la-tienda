@@ -79,8 +79,13 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
     }, [esAdmin]);
     // Tocar una notificación de visita (5-oct-2026): el admin ve la ficha de la
     // visita; el técnico va a "Hoy" con esa tarjeta resaltada.
-    const abrirOrden = async (ordenId) => {
+    const abrirOrden = async (ordenId, conChat = false) => {
         setNotifAbierto(false);
+        // Mensaje de la conversación de la visita: además se abre el chat (8-oct-2026)
+        if (conChat) {
+            try { sessionStorage.setItem('abrirChatOrden', String(ordenId)); } catch { /* */ }
+            setTimeout(() => window.dispatchEvent(new CustomEvent('abrir-chat-orden', { detail: String(ordenId) })), 400);
+        }
         if (esAdmin) {
             try { const r = await api.get(`/ordenes/${ordenId}`); setFichaOrden(r.data); }
             catch { setVistaActual('trabajos'); }
@@ -146,13 +151,14 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             } else if (servicioId) {
                 setTrabajoDeepLinkId(servicioId);
             } else if (ordenId) {
-                abrirOrden(ordenId); // push de una visita → su ficha / su tarjeta (5-oct-2026)
+                abrirOrden(ordenId, params.get('chat') === '1'); // push de una visita → su ficha / su tarjeta (5-oct-2026)
             } else {
                 setNotifAbierto(true);
             }
             params.delete('notif');
             params.delete('servicioId');
             params.delete('ordenId');
+            params.delete('chat');
             params.delete('pedido');
             params.delete('tipo');
             if (limpiarUrl) {

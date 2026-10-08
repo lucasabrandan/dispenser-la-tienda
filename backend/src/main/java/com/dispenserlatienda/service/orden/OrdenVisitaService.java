@@ -42,6 +42,7 @@ public class OrdenVisitaService {
     private final SedeRepository        sedeRepository;
     private final com.dispenserlatienda.repository.empresa.PedidoEmpresaRepository pedidoEmpresaRepo;
     private final com.dispenserlatienda.service.servicio.ServicioService servicioService;
+    private final VisitaChatService chat;
 
     public OrdenVisitaService(OrdenVisitaRepository repo,
                               UsuarioRepository usuarioRepo,
@@ -50,7 +51,9 @@ public class OrdenVisitaService {
                               ServicioRepository servicioRepository,
                               SedeRepository sedeRepository,
                               com.dispenserlatienda.repository.empresa.PedidoEmpresaRepository pedidoEmpresaRepo,
-                              @org.springframework.context.annotation.Lazy com.dispenserlatienda.service.servicio.ServicioService servicioService) {
+                              @org.springframework.context.annotation.Lazy com.dispenserlatienda.service.servicio.ServicioService servicioService,
+                              VisitaChatService chat) {
+        this.chat = chat;
         this.pedidoEmpresaRepo = pedidoEmpresaRepo;
         this.servicioService = servicioService;
         this.repo              = repo;
@@ -94,6 +97,7 @@ public class OrdenVisitaService {
         o.setEquiposSerie(dto.equiposSerie());
 
         OrdenVisitaDTO saved = toDTO(repo.save(o));
+        historial(saved.id(), true, "Visita asignada a " + tecnico.getNombre() + " · " + cuandoTxt(o.getFechaProgramada(), o.getHoraEstimada()));
 
         // El presupuesto pasa a "trabajo a realizar" (EN_PROGRESO) apenas tiene orden,
         // venga de donde venga (asistente, Presupuestos u Órdenes). Antes solo lo hacía
@@ -180,6 +184,8 @@ public class OrdenVisitaService {
         }
 
         OrdenVisitaDTO guardada = toDTO(repo.save(o));
+        if (cambioTecnico) historial(o.getId(), true, "Reasignada: pasó de " + tecnicoAnterior.getNombre() + " a " + tecnico.getNombre());
+        if (cambioDia) historial(o.getId(), true, "Reprogramada: antes " + cuandoTxt(fechaAntes, horaAntes) + ", ahora " + cuandoTxt(o.getFechaProgramada(), o.getHoraEstimada()));
         String cliente = guardada.clienteNombre() != null && !guardada.clienteNombre().isBlank() ? guardada.clienteNombre() : guardada.titulo();
         if (cambioTecnico) {
             notificarTecnico(tecnico, guardada);
@@ -260,6 +266,7 @@ public class OrdenVisitaService {
             if (!ABIERTAS_TEC.contains(o.getEstado())) return;
             o.setEstado(EstadoOrden.CANCELADA);
             repo.save(o);
+            historial(o.getId(), true, "Cancelada: la empresa canceló el pedido");
             if (o.getTecnico() != null) {
                 notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, o.getTecnico().getId(), null,
                     "Visita cancelada · " + nombreParaAviso(o), "La empresa canceló el pedido: ya no tenés que ir.", null, false);
@@ -273,6 +280,22 @@ public class OrdenVisitaService {
         if (!u.isActivo() || (u.getRol() != RolUsuario.TECNICO && u.getRol() != RolUsuario.ADMIN))
             throw new com.dispenserlatienda.exception.BusinessException("TECNICO_INVALIDO",
                 "Ese usuario no puede recibir visitas (no es técnico o está desactivado)");
+    }
+
+    // Historial de la visita (conversación admin ↔ técnico, 8-oct-2026)
+    private void historial(Long ordenId, boolean deAdmin, String texto) {
+        Usuario autor = null;
+        try {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) autor = usuarioRepo.findByUsername(auth.getName()).orElse(null);
+        } catch (Exception ignored) { }
+        chat.registrar(ordenId, autor, autor != null ? autor.getRol() == RolUsuario.ADMIN : deAdmin, texto);
+    }
+
+    private static String cuandoTxt(LocalDate f, String h) {
+        String d = f != null ? f.format(DateTimeFormatter.ofPattern("dd/MM")) : "sin fecha";
+        if (h == null || h.isBlank()) return d;
+        return d + " " + (h.length() > 5 && h.charAt(2) == ':' ? h.substring(0, 5) : h);
     }
 
     private static String nombreParaAviso(OrdenVisita o) {
@@ -373,6 +396,16 @@ public class OrdenVisitaService {
         }
 
         OrdenVisitaDTO resultado = toDTO(repo.save(o));
+        historial(o.getId(), esAdmin, (esRetroceso ? "Deshizo el paso: volvió a " : "")
+            + (switch (nuevoEstado) {
+                case PENDIENTE -> esRetroceso ? "pendiente" : "Visita reactivada";
+                case EN_CAMINO -> esRetroceso ? "en camino" : "Salió para el lugar (en camino)";
+                case EN_SITIO -> "Llegó al lugar";
+                case COMPLETADA -> "Terminó la visita";
+                case NO_ATENDIDO -> "No se pudo hacer";
+                case CANCELADA -> "Visita cancelada";
+                default -> nuevoEstado.name();
+            }) + (dto.notasTecnico() != null && !dto.notasTecnico().isBlank() && !esRetroceso ? " · " + dto.notasTecnico().trim() : ""));
         // Notificar admins cuando un tecnico cambia estado
         if (esRetroceso) {
             notificarRetroceso(o, estadoAnterior, nuevoEstado);
@@ -649,6 +682,7 @@ public class OrdenVisitaService {
     // Devuelve la orden: con presupuesto → se cancela y el presupuesto vuelve a
     // "Pendientes" para reasignarlo; sin presupuesto → queda "para reprogramar".
     private String devolverOrden(OrdenVisita o, String nota) {
+        historial(o.getId(), false, nota);
         o.setNotasTecnico(nota);
         o.setFechaCompletada(null);
         if (o.getPresupuestoId() != null) {
@@ -756,6 +790,7 @@ public class OrdenVisitaService {
         if (!ABIERTAS.contains(o.getEstado())) throw new IllegalArgumentException("Esta orden ya no está abierta");
         if (o.getConfirmadaEn() == null) {
             o.setConfirmadaEn(java.time.LocalDateTime.now());
+            historial(o.getId(), false, "Confirmó: \"Ok, voy\"");
             String cliente = o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo();
             String cuando = (o.getFechaProgramada() != null ? o.getFechaProgramada().toString() : "")
                 + (o.getHoraEstimada() != null ? " " + o.getHoraEstimada() : "");
@@ -789,6 +824,7 @@ public class OrdenVisitaService {
         String texto = m + (detalle != null && !detalle.isBlank() ? " · " + detalle.trim() : "");
         String cliente = o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo();
         avisarAdmins(TipoNotificacion.MENSAJE_LIBRE, tecnico, "Contactar al cliente · " + cliente, texto, o.getId());
+        historial(o.getId(), false, "Pidió contactar al cliente: " + texto);
     }
 
     public java.util.Map<String, Object> contactoCliente(Long ordenId) {
@@ -812,6 +848,7 @@ public class OrdenVisitaService {
         OrdenVisita o = repo.findById(ordenId)
             .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + ordenId));
         if (o.getTecnico() == null) return;
+        historial(o.getId(), true, "Avisó al cliente");
         notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE, o.getTecnico().getId(), admin.getId(),
             "✓ El admin avisó al cliente", o.getClienteNombre(), o.getId(), false);
     }
