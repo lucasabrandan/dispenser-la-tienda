@@ -31,6 +31,12 @@ public class AuthController {
         this.refreshTokenService = refreshTokenService;
     }
 
+    private static final class Intentos {
+        final long desde; int fallos = 0; long bloqueadoHasta = 0;
+        Intentos(long desde) { this.desde = desde; }
+    }
+    private final java.util.concurrent.ConcurrentHashMap<String, Intentos> intentos = new java.util.concurrent.ConcurrentHashMap<>();
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
         // El usuario reportó que un espacio de más (típico de autocompletar
@@ -39,9 +45,30 @@ public class AuthController {
         // recorta el usuario (no la contraseña: ahí sí puede ser intencional,
         // no se toca).
         String username = request.username() == null ? null : request.username().trim();
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(username, request.password())
-        );
+        String clave = username == null ? "" : username.toLowerCase();
+        // Bajo del testeo: sin límite se podía probar claves sin fin. 8 errores seguidos
+        // bloquean ese usuario 10 minutos (en memoria; un login correcto lo resetea).
+        Intentos it = intentos.get(clave);
+        if (it != null && it.bloqueadoHasta > System.currentTimeMillis()) {
+            throw new com.dispenserlatienda.exception.BusinessException("DEMASIADOS_INTENTOS",
+                "Demasiados intentos fallidos. Esperá unos minutos y probá de nuevo.");
+        }
+        try {
+            authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, request.password())
+            );
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            Intentos n = intentos.compute(clave, (k, v) -> {
+                long ahora = System.currentTimeMillis();
+                if (v == null || ahora - v.desde > 15 * 60_000) v = new Intentos(ahora);
+                v.fallos++;
+                if (v.fallos >= 8) v.bloqueadoHasta = ahora + 10 * 60_000;
+                return v;
+            });
+            if (intentos.size() > 5000) intentos.clear();
+            throw e;
+        }
+        intentos.remove(clave);
 
         Usuario usuario = usuarioRepository.findByUsername(username).orElseThrow();
         String token = jwtUtil.generarToken(usuario.getUsername(), usuario.getRol().name(), usuario.getNombre());

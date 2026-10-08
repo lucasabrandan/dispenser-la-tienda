@@ -98,12 +98,13 @@ export default function CerrarTicketSheet({
     const handleCobrar = async () => {
         setProcesando(true);
         try {
-            await onCobrar({
+            const r = await onCobrar({
                 firmaTecnico: incluirFirmas ? firmaTecnico : null,
                 firmaCliente: incluirFirmas ? firmaCliente : null,
                 incluirFirmas,
             });
-            onCerrar();
+            // M14: si el guardado falló, no se cierra (antes se perdía lo cargado)
+            if (r !== false) onCerrar();
         } finally {
             setProcesando(false);
         }

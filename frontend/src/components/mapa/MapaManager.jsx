@@ -34,10 +34,16 @@ export default function MapaManager({ onCrearTrabajo, onAbrirPedido }) {
     const [ficha, setFicha] = useState(null);
     const [ajustar, setAjustar] = useState(0);
     const primera = useRef(true);
+    const pedidoActual = useRef(0);
+
+    // M11: al cambiar de día se suelta el filtro de técnico (quedaba filtrando uno que ese día no está)
+    useEffect(() => { setTecnico(null); setSel(null); }, [fecha]);
 
     const cargar = useCallback(async () => {
+        const n = ++pedidoActual.current;
         try {
             const r = await api.get('/mapa', { params: { fecha } });
+            if (n !== pedidoActual.current) return; // M11: llegó la respuesta de otro día (se cambió rápido)
             setData(r.data);
             if (primera.current) {
                 primera.current = false;
@@ -51,9 +57,11 @@ export default function MapaManager({ onCrearTrabajo, onAbrirPedido }) {
     // Mientras haya direcciones buscándose, se refresca solo (sin mover el encuadre)
     useEffect(() => {
         if (!data?.pendientes) return;
+        // M10: cada 20 s (antes 8 s: muchas consultas mientras se ubicaban direcciones)
         const id = setTimeout(async () => {
-            try { const r = await api.get('/mapa', { params: { fecha } }); setData(r.data); } catch { /* */ }
-        }, 8000);
+            const n = pedidoActual.current;
+            try { const r = await api.get('/mapa', { params: { fecha } }); if (n === pedidoActual.current) setData(r.data); } catch { /* */ }
+        }, 20000);
         return () => clearTimeout(id);
     }, [data, fecha]);
 
@@ -147,7 +155,8 @@ export default function MapaManager({ onCrearTrabajo, onAbrirPedido }) {
                 )}
 
                 {/* Mapa */}
-                <div className="relative rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/[0.06]">
+                {/* isolate: los paneles del mapa no tapan el menú ni la campanita (M11) */}
+                <div className="relative isolate rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/[0.06]">
                     <MapaLeaflet puntos={items} seleccionado={sel} ajustarKey={ajustar}
                         onClickPunto={(p) => { if (!corrigiendo) setSel(p.id); }}
                         onClickMapa={(ll) => { if (corrigiendo) fijarUbicacion(ll); else setSel(null); }}

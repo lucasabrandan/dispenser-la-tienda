@@ -9,6 +9,7 @@ import TabCobranza from './TabCobranza';
 import { LuLock } from 'react-icons/lu';
 import { CONTENEDOR, PantallaHeader, BotonPrimario, Herramientas, Pestanas, PAGINA } from '../ui/Pantalla';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
+import { getTodayISO } from '../../utils/dateUtils';
 
 const TABS = [
     { id: 'balance',    label: 'Balance'    },
@@ -21,7 +22,7 @@ const TABS = [
 
 export default function DashboardFinanzas() {
     const [tab,       setTab]       = useState('balance');
-    const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
+    const [filtroMes, setFiltroMes] = useState(getTodayISO().slice(0, 7));
     const [modalCierre, setModalCierre] = useState(false);
     const tabIds = TABS.map(t => t.id);
     const swipeHandlers = useSwipeGesture(tabIds, tab, setTab);

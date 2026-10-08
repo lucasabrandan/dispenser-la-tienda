@@ -91,6 +91,7 @@ public class EmpresaController {
             Map<String, Object> m = new java.util.LinkedHashMap<>(s);
             m.put("lat", g != null ? g.getLat() : null);
             m.put("lng", g != null ? g.getLng() : null);
+            m.put("geo", g != null ? g.getEstado() : "SIN_DIRECCION"); // M16: PENDIENTE = se está buscando
             out.add(m);
         }
         return out;

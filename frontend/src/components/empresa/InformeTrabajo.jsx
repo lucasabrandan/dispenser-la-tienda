@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { LuFileDown, LuShieldCheck, LuWrench, LuX } from 'react-icons/lu';
 import { construirUrlFoto } from '../../utils/construirUrlFoto';
+import { estadoGarantia } from '../../utils/dateUtils';
 
 // Portal Empresa — etapa 2 (7-oct-2026): lo que se hizo en cada equipo, con
 // repuestos, garantía y fotos antes/después. Sin precios. Lo usan el pedido
@@ -32,9 +33,11 @@ export function VisitaEquipo({ v, mostrarSerie = true }) {
                     ))}
                 </div>
             )}
-            {v.garantiaHasta && (
+            {v.garantiaHasta && (estadoGarantia(v.garantiaHasta)?.vigente ? (
                 <p className="inline-flex items-center gap-1.5 text-caption font-black text-[#16A34A]"><LuShieldCheck size={14} /> En garantía hasta el {fmt(v.garantiaHasta)}</p>
-            )}
+            ) : (
+                <p className="inline-flex items-center gap-1.5 text-caption font-bold text-muted"><LuShieldCheck size={14} /> Garantía vencida el {fmt(v.garantiaHasta)}</p>
+            ))}
             {fotos.length > 0 && (
                 <div className="grid grid-cols-2 gap-2">
                     {fotos.map(([lab, f]) => (

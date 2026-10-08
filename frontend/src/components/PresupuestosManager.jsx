@@ -128,7 +128,8 @@ export default function PresupuestosManager() {
             await api.patch(`/servicios/${id}/estado`, { estado, ...extras });
             toast.success(msg, { id: t });
             cargar();
-        } catch { toast.error('Error', { id: t }); }
+            return true;
+        } catch { toast.error('Error', { id: t }); return false; }
     };
 
     const confirmarServicio = async (id, estadoDestino, { modalidadCobro, montoFinal, observaciones } = {}) => {
@@ -137,7 +138,7 @@ export default function PresupuestosManager() {
         if (modalidadCobro) extras.modalidadCobro = modalidadCobro;
         if (montoFinal != null) extras.montoFinal = montoFinal;
         if (observaciones != null) extras.observaciones = observaciones;
-        await patchEstado(id, estadoDestino, labels[estadoDestino] || 'Actualizado', extras);
+        return patchEstado(id, estadoDestino, labels[estadoDestino] || 'Actualizado', extras);
     };
 
     // La confirmación la muestra el ConfirmDialog compartido (ver más abajo).
@@ -481,8 +482,7 @@ export default function PresupuestosManager() {
                     servicio={presupuestoEjecutar}
                     calcularTotal={calcularTotal}
                     onConfirmar={async (estadoDestino, extras) => {
-                        await confirmarServicio(presupuestoEjecutar.id, estadoDestino, extras);
-                        setPresupuestoEjecutar(null);
+                        if (await confirmarServicio(presupuestoEjecutar.id, estadoDestino, extras) !== false) setPresupuestoEjecutar(null);
                     }}
                     onEditarCompleto={() => {
                         const s = presupuestoEjecutar;

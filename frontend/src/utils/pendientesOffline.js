@@ -19,15 +19,23 @@ function escribir(k, v) {
     listeners.forEach(fn => { try { fn(); } catch {} });
 }
 
-export const getPendientes = () => leer(KEY);
+export const getPendientes = () => leer(KEY).filter(esMio);
 export const getFallidos = () => leer(KEY_FALLIDOS);
 export const descartarFallidos = () => escribir(KEY_FALLIDOS, []);
 export function suscribirPendientes(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
+// M18: cada pedido guardado sin señal queda marcado con el usuario que lo hizo. Si en el
+// mismo celular entra otro usuario, NO se manda con la sesión del nuevo: espera a que
+// vuelva a entrar el que lo cargó.
+function usuarioActualId() {
+    try { return JSON.parse(localStorage.getItem('auth_usuario') || 'null')?.id ?? null; } catch { return null; }
+}
+const esMio = (p) => p.usuarioId == null || p.usuarioId === usuarioActualId();
+
 function encolar(method, url, data, descripcion, idem) {
     const cola = leer(KEY);
     // idem: la misma clave del primer intento — si ese sí había llegado, el backend no lo repite
-    cola.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, method, url, data, descripcion, idem, creado: new Date().toISOString() });
+    cola.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, method, url, data, descripcion, idem, usuarioId: usuarioActualId(), creado: new Date().toISOString() });
     escribir(KEY, cola);
 }
 
@@ -60,7 +68,7 @@ export async function enviarPendientes() {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
     enviando = true;
     try {
-        let cola = leer(KEY);
+        let cola = leer(KEY).filter(esMio);
         while (cola.length) {
             const p = cola[0];
             try {
@@ -71,8 +79,9 @@ export async function enviarPendientes() {
                 // El servidor lo rechazó: no tiene sentido reintentarlo para siempre
                 escribir(KEY_FALLIDOS, [...leer(KEY_FALLIDOS), { ...p, error: e.response?.data?.mensaje || `HTTP ${e.response.status}` }]);
             }
-            cola = leer(KEY).filter(x => x.id !== p.id);
-            escribir(KEY, cola);
+            const resto = leer(KEY).filter(x => x.id !== p.id);
+            escribir(KEY, resto);
+            cola = resto.filter(esMio);
         }
     } finally {
         enviando = false;

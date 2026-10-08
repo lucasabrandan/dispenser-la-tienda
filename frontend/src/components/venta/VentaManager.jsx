@@ -3,7 +3,7 @@ import { LuBanknote, LuCircleCheck, LuArchive, LuLayers, LuShoppingCart, LuDownl
 import ModalCotizacionVolumen from '../presupuesto/ModalCotizacionVolumen';
 import BusquedaBar from '../ui/BusquedaBar';
 import ChipFiltro from '../ui/ChipFiltro';
-import { periodoLabelDe } from '../../utils/dateUtils';
+import { periodoLabelDe, getTodayISO } from '../../utils/dateUtils';
 import { useVentaManager } from '../../hooks/useVentaManager';
 import { useAuth } from '../../context/AuthContext';
 import VentaList   from './VentaList';
@@ -100,7 +100,7 @@ export default function VentaManager({ clienteInicial = null, onClienteConsumido
     const duplicarVenta = (v) => {
         setVentaDuplicar({
             ...v, id: undefined, estado: 'PRESUPUESTO', nroDocumento: undefined,
-            fecha: new Date().toISOString().slice(0, 10),
+            fecha: getTodayISO(),
         });
         setModalCrear(true);
     };

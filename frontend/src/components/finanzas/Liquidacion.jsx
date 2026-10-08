@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useMontos } from '../../context/MontosContext';
-import { formatMesLargo } from '../../utils/dateUtils';
+import { formatMesLargo, getTodayISO } from '../../utils/dateUtils';
 import { generarPDFLiquidacion } from '../../utils/pdf/liquidacion';
 import CuentasMes from './CuentasMes';
 
@@ -57,7 +57,7 @@ function Trabajo({ t, ocultar, pct }) {
 
 export default function Liquidacion({ tecnicoId, mesInicial, esAdmin = false, onMes }) {
     const { ocultar } = useMontos();
-    const [mes, setMes] = useState(mesInicial || new Date().toISOString().substring(0, 7));
+    const [mes, setMes] = useState(mesInicial || getTodayISO().slice(0, 7));
     const [data, setData] = useState(null); // { base, cuentas, movimientos, cierre }
     const liq = data?.base;
     const [cargando, setCargando] = useState(true);

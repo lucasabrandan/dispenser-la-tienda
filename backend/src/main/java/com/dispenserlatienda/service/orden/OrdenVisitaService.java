@@ -41,6 +41,7 @@ public class OrdenVisitaService {
     private final ServicioRepository    servicioRepository;
     private final SedeRepository        sedeRepository;
     private final com.dispenserlatienda.repository.empresa.PedidoEmpresaRepository pedidoEmpresaRepo;
+    private final com.dispenserlatienda.service.servicio.ServicioService servicioService;
 
     public OrdenVisitaService(OrdenVisitaRepository repo,
                               UsuarioRepository usuarioRepo,
@@ -48,8 +49,10 @@ public class OrdenVisitaService {
                               NotificacionService notificacionService,
                               ServicioRepository servicioRepository,
                               SedeRepository sedeRepository,
-                              com.dispenserlatienda.repository.empresa.PedidoEmpresaRepository pedidoEmpresaRepo) {
+                              com.dispenserlatienda.repository.empresa.PedidoEmpresaRepository pedidoEmpresaRepo,
+                              @org.springframework.context.annotation.Lazy com.dispenserlatienda.service.servicio.ServicioService servicioService) {
         this.pedidoEmpresaRepo = pedidoEmpresaRepo;
+        this.servicioService = servicioService;
         this.repo              = repo;
         this.usuarioRepo       = usuarioRepo;
         this.whatsApp          = whatsApp;
@@ -63,6 +66,7 @@ public class OrdenVisitaService {
     public OrdenVisitaDTO crear(OrdenVisitaCreateDTO dto) {
         Usuario tecnico = usuarioRepo.findById(dto.tecnicoId())
             .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado: " + dto.tecnicoId()));
+        exigirTecnicoValido(tecnico);
 
         // Un presupuesto no puede tener dos órdenes vivas a la vez (antes pasaba: se
         // despachaba desde el asistente y después se volvía a despachar desde Presupuestos).
@@ -129,6 +133,7 @@ public class OrdenVisitaService {
 
         Usuario tecnico = usuarioRepo.findById(dto.tecnicoId())
             .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado: " + dto.tecnicoId()));
+        exigirTecnicoValido(tecnico);
 
         // Testeo integral M2: una visita ya hecha no se reprograma (movía la fecha del trabajo
         // cobrado y le avisaba al técnico y a la empresa de un cambio que no existe)
@@ -260,6 +265,14 @@ public class OrdenVisitaService {
                     "Visita cancelada · " + nombreParaAviso(o), "La empresa canceló el pedido: ya no tenés que ir.", null, false);
             }
         });
+    }
+
+    // Bajo del testeo: una visita solo se le da a un técnico (o admin) activo; antes se
+    // aceptaba un usuario empresa o uno desactivado.
+    private static void exigirTecnicoValido(Usuario u) {
+        if (!u.isActivo() || (u.getRol() != RolUsuario.TECNICO && u.getRol() != RolUsuario.ADMIN))
+            throw new com.dispenserlatienda.exception.BusinessException("TECNICO_INVALIDO",
+                "Ese usuario no puede recibir visitas (no es técnico o está desactivado)");
     }
 
     private static String nombreParaAviso(OrdenVisita o) {
@@ -457,6 +470,9 @@ public class OrdenVisitaService {
                 if (o.getTecnico() != null) {
                     s.setUsuario(o.getTecnico());
                 }
+                // Bajo del testeo: completar desde la visita ahora también descuenta el stock
+                // de repuestos y carga la garantía (antes solo pasaba cerrando desde el trabajo)
+                servicioService.alTerminarDesdeVisita(s);
                 servicioRepository.save(s);
             });
         } else if (o.getTecnico() != null) {

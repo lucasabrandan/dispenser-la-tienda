@@ -60,11 +60,11 @@ export default function UsuariosManager() {
     const cargar = async () => {
         setCargando(true);
         try {
-            const r = await getUsuarios();
+            // Bajo del testeo: se esperan los dos juntos; antes, si abrías un usuario empresa
+            // antes de que llegaran sus datos, el cliente aparecía vacío y se podía guardar así
+            const [r, x] = await Promise.all([getUsuarios(), api.get('/pedidos-empresa/usuarios').catch(() => ({ data: [] }))]);
+            const m = {}; (x.data || []).forEach(e => { m[e.id] = e; }); setEmpresaDe(m);
             setUsuarios(r.data);
-            api.get('/pedidos-empresa/usuarios').then(x => {
-                const m = {}; (x.data || []).forEach(e => { m[e.id] = e; }); setEmpresaDe(m);
-            }).catch(() => {});
         } catch { toast.error('Error al cargar usuarios'); }
         finally { setCargando(false); }
     };

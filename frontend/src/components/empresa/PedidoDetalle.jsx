@@ -36,9 +36,12 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
     }, [hecho, base, inicial.id]);
     useEffect(() => { finRef.current?.scrollIntoView({ block: 'end' }); }, [comentarios.length]);
 
+    // M12: candado inmediato (el estado "enviando" tarda un render y dos Enter rápidos pasaban)
+    const enviandoRef = useRef(false);
     const enviar = async () => {
         const t = texto.trim();
-        if (!t) return;
+        if (!t || enviandoRef.current) return;
+        enviandoRef.current = true;
         setEnviando(true);
         try {
             const r = await api.post(`${base}/${p.id}/comentarios`, { texto: t });
@@ -47,7 +50,7 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
             onCambio && onCambio();
         } catch (e) {
             toast.error(e?.response?.data?.mensaje || e?.response?.data?.message || 'No se pudo enviar');
-        } finally { setEnviando(false); }
+        } finally { enviandoRef.current = false; setEnviando(false); }
     };
 
     const cancelar = async () => {

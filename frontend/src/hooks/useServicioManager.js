@@ -150,7 +150,8 @@ export function useServicioManager() {
             await api.patch(`/servicios/${id}/estado`, payload);
             toast.success(labels[estadoDestino] || 'Actualizado', { id: loading });
             cargarServicios(); cargarStats();
-        } catch { toast.error('Error al actualizar', { id: loading }); }
+            return true;
+        } catch { toast.error('Error al actualizar', { id: loading }); return false; }
     };
 
     const eliminarServicio = async (id) => {

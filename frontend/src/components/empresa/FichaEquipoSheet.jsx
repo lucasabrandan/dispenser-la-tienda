@@ -4,6 +4,7 @@ import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import { VisitaEquipo } from './InformeTrabajo';
 import { linkMaps } from '../../utils/pedidosEmpresa';
+import { estadoGarantia } from '../../utils/dateUtils';
 
 // Ficha permanente de un equipo (Portal Empresa, etapa 2): todas las visitas
 // con lo que se hizo, repuestos y fotos. Desde acá se pide servicio directo.
@@ -35,7 +36,7 @@ export default function FichaEquipoSheet({ serie, onCerrar, onPedirServicio }) {
                             <span className="block text-label text-secondary">{eq.direccion}</span>
                         </span>
                     </a>
-                    {eq.garantiaHasta && new Date(eq.garantiaHasta) >= new Date(new Date().toDateString()) && (
+                    {eq.garantiaHasta && estadoGarantia(eq.garantiaHasta)?.vigente && (
                         <p className="flex items-center gap-2 p-3 rounded-2xl bg-[rgba(22,163,74,0.1)] text-body font-black text-[#16A34A]"><LuShieldCheck size={18} /> En garantía hasta el {fmt(eq.garantiaHasta)}</p>
                     )}
                     <div className="space-y-2">

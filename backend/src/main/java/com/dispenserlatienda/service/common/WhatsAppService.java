@@ -72,7 +72,28 @@ public class WhatsAppService {
         mandar(numero, mensaje);
     }
 
+    // Bajo del testeo: tope de mensajes por número (evita que alguien dispare WhatsApp sin fin
+    // escribiendo mensajes o comentarios): como máximo 10 por número cada 10 minutos.
+    private static final int TOPE = 10;
+    private static final long VENTANA_MS = 10 * 60_000;
+    private final java.util.Map<String, java.util.Deque<Long>> enviados = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private boolean dentroDelTope(String numero) {
+        long ahora = System.currentTimeMillis();
+        java.util.Deque<Long> q = enviados.computeIfAbsent(numero, k -> new java.util.ArrayDeque<>());
+        synchronized (q) {
+            while (!q.isEmpty() && ahora - q.peekFirst() > VENTANA_MS) q.pollFirst();
+            if (q.size() >= TOPE) return false;
+            q.addLast(ahora);
+            return true;
+        }
+    }
+
     private void mandar(String numero, String mensaje) {
+        if (!dentroDelTope(numero)) {
+            log.warn("WhatsApp a {} omitido: superó {} mensajes en 10 minutos", numero, TOPE);
+            return;
+        }
         CompletableFuture.runAsync(() -> {
             try {
                 String body = "token="    + enc(token)

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { LuClipboardList, LuFileText, LuCircleCheck, LuArchive, LuDownload, LuUpload, LuWrench, LuCopy, LuPencil, LuLayers, LuHourglass, LuCar, LuMapPin, LuUser } from 'react-icons/lu';
 import BusquedaBar from '../ui/BusquedaBar';
 import ChipFiltro from '../ui/ChipFiltro';
-import { periodoLabelDe } from '../../utils/dateUtils';
+import { periodoLabelDe, getTodayISO } from '../../utils/dateUtils';
 import { useServicioManager } from '../../hooks/useServicioManager';
 import { useOrdenes } from '../../hooks/useOrdenes';
 import { useAuth } from '../../context/AuthContext';
@@ -319,7 +319,7 @@ export default function ServicioManager({
     const duplicarServicio = (s) => {
         const copia = {
             ...s, id: undefined, estado: 'PRESUPUESTO', nroDocumento: undefined,
-            fecha: new Date().toISOString().slice(0, 10),
+            fecha: getTodayISO(),
             presupuestoOrigenId: undefined, ordenId: undefined,
         };
         setServicioDuplicar(copia);
@@ -328,8 +328,9 @@ export default function ServicioManager({
 
     // Refrescar conteos al confirmar/eliminar
     const confirmarConRefresh = async (...args) => {
-        await confirmarServicio(...args);
+        const ok = await confirmarServicio(...args);
         fetchTabCounts();
+        return ok;
     };
 
     useEffect(() => { if (esAdmin) getUsuarios().then(r => setTecnicos(r.data)).catch(() => {}); }, [esAdmin]);
@@ -681,8 +682,8 @@ export default function ServicioManager({
                     servicio={servicioEjecutarAdmin}
                     calcularTotal={calcularTotal}
                     onConfirmar={async (estadoDestino, extras) => {
-                        await confirmarConRefresh(servicioEjecutarAdmin.id, estadoDestino, extras);
-                        setServicioEjecutarAdmin(null);
+                        // M14: si falla el guardado, la hoja queda abierta para reintentar
+                        if (await confirmarConRefresh(servicioEjecutarAdmin.id, estadoDestino, extras) !== false) setServicioEjecutarAdmin(null);
                     }}
                     onEditarCompleto={abrirEditarCompleto}
                     onCerrar={() => setServicioEjecutarAdmin(null)}
@@ -701,8 +702,7 @@ export default function ServicioManager({
                     servicio={servicioCobro}
                     calcularTotal={calcularTotal}
                     onConfirmar={async (estadoDestino, extras) => {
-                        await confirmarConRefresh(servicioCobro.id, estadoDestino, extras);
-                        setServicioCobro(null);
+                        if (await confirmarConRefresh(servicioCobro.id, estadoDestino, extras) !== false) setServicioCobro(null);
                     }}
                     onCerrar={() => setServicioCobro(null)}
                 />

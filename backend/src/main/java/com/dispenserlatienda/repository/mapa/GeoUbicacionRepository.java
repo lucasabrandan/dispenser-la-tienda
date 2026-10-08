@@ -12,6 +12,7 @@ public interface GeoUbicacionRepository extends JpaRepository<GeoUbicacion, Long
     List<GeoUbicacion> findByClaveIn(Collection<String> claves);
     Optional<GeoUbicacion> findFirstByEstadoOrderByIdAsc(String estado);
     long countByEstado(String estado);
+    Optional<GeoUbicacion> findFirstByEstadoAndManualFalseAndActualizadoEnBeforeOrderByIdAsc(String estado, java.time.LocalDateTime antes);
 
     // Alta sin chocar si otra pestaña/pedido la crea al mismo tiempo (testeo integral A3):
     // un error de clave única dentro de la transacción la dejaba rota → error 500.

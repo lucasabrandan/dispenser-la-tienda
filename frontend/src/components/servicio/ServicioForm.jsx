@@ -180,7 +180,9 @@ export default function ServicioForm({
             snapshotRef.current.servicioId = result.id;
             await dispararPDFConFirmas({ firmaTecnico, firmaCliente, incluirFirmas });
             if (onSaved) onSaved();
+            return true;
         }
+        return false;
     };
 
     // Guardar presupuesto: guarda como PRESUPUESTO, devuelve datos para despacho

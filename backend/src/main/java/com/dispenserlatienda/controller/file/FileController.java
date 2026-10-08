@@ -40,6 +40,8 @@ public class FileController {
         try {
             String nombreArchivo = fileStorageService.guardarArchivo(file);
             return ResponseEntity.ok(Map.of("filename", nombreArchivo));
+        } catch (com.dispenserlatienda.exception.BusinessException e) {
+            throw e; // tipo no permitido → 400 con mensaje claro
         } catch (Exception e) {
             log.error("Error subiendo archivo: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
@@ -48,6 +50,8 @@ public class FileController {
 
     @GetMapping("/{filename:.+}")
     public ResponseEntity<byte[]> servirArchivo(@PathVariable String filename) {
+        if (filename.contains("..") || filename.contains("/") || filename.contains("\\"))
+            return ResponseEntity.badRequest().build();
         try {
             Path filePath = Paths.get(storageLocation, filename);
             File file = filePath.toFile();
@@ -63,8 +67,12 @@ public class FileController {
             }
 
             byte[] r2Bytes = r2.descargar(filename);
-            String contentType = filename.toLowerCase().endsWith(".png") ? "image/png"
-                    : filename.toLowerCase().endsWith(".webp") ? "image/webp"
+            String fl = filename.toLowerCase();
+            String contentType = fl.endsWith(".png") ? "image/png"
+                    : fl.endsWith(".webp") ? "image/webp"
+                    : fl.endsWith(".pdf") ? "application/pdf"
+                    : fl.endsWith(".gif") ? "image/gif"
+                    : fl.endsWith(".heic") ? "image/heic"
                     : "image/jpeg";
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))

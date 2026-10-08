@@ -17,7 +17,8 @@ export function AuthProvider({ children }) {
     const [token, setToken] = useState(() => localStorage.getItem('auth_token'));
     const [usuario, setUsuario] = useState(() => {
         const u = localStorage.getItem('auth_usuario');
-        return u ? JSON.parse(u) : null;
+        // Bajo del testeo: un dato roto en el navegador dejaba la app en blanco
+        try { return u ? JSON.parse(u) : null; } catch { localStorage.removeItem('auth_usuario'); return null; }
     });
     const refreshTokenRef = useRef(localStorage.getItem('auth_refresh_token'));
 

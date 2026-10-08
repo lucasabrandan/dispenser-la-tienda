@@ -24,10 +24,22 @@ export default function EquiposEmpresa({ onPedirServicio }) {
     const [sel, setSel] = useState(null);
 
     // Mapa de sus lugares (7-oct-2026)
+    const cargarLugares = () => api.get('/empresa/mapa')
+        .then(r => setLugares((r.data || []).map(l => ({ ...l, id: `s${l.id}`, sedeId: l.id, color: '#C9341F', etiqueta: l.series?.length > 1 ? String(l.series.length) : null }))))
+        .catch(() => setLugares(x => x || []));
     useEffect(() => {
         if (modo !== 'mapa' || lugares) return;
-        api.get('/empresa/mapa').then(r => setLugares((r.data || []).map(l => ({ ...l, id: `s${l.id}`, sedeId: l.id, color: '#C9341F', etiqueta: l.series?.length > 1 ? String(l.series.length) : null })))).catch(() => setLugares([]));
+        cargarLugares();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [modo, lugares]);
+    // M16: mientras haya lugares buscándose, se actualiza solo (antes quedaba "Ubicando…" hasta recargar)
+    const buscando = (lugares || []).filter(l => l.lat == null && l.geo === 'PENDIENTE').length;
+    useEffect(() => {
+        if (modo !== 'mapa' || !buscando) return;
+        const id = setTimeout(cargarLugares, 15000);
+        return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [modo, lugares, buscando]);
     const lugar = (lugares || []).find(l => l.id === sel);
 
     useEffect(() => {
@@ -46,13 +58,13 @@ export default function EquiposEmpresa({ onPedirServicio }) {
                 <Segmentado valor={modo} onChange={setModo} opciones={[{ id: 'lista', label: 'Lista' }, { id: 'mapa', label: 'Mapa' }]} />
             </div>
             {modo === 'mapa' ? (
-                <div className="relative rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/[0.06]">
+                <div className="relative isolate rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/[0.06]">
                     <MapaLeaflet puntos={lugares || []} seleccionado={sel} ajustarKey={lugares ? lugares.length : 0}
                         onClickPunto={(p) => setSel(p.id)} onClickMapa={() => setSel(null)}
                         className="w-full h-[calc(var(--vh,1vh)*100-330px)] min-h-[360px]" />
-                    {lugares && lugares.some(l => l.lat == null) && (
+                    {buscando > 0 && (
                         <span className="absolute top-3 left-3 z-[500] h-8 px-3 rounded-full bg-card shadow text-caption font-bold text-secondary inline-flex items-center">
-                            Ubicando {lugares.filter(l => l.lat == null).length} lugar{lugares.filter(l => l.lat == null).length !== 1 ? 'es' : ''}…
+                            Ubicando {buscando} lugar{buscando !== 1 ? 'es' : ''}…
                         </span>
                     )}
                     {lugar && (

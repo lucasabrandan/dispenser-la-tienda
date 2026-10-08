@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { LuInbox, LuPin } from 'react-icons/lu';
 import api from '../../services/api';
@@ -235,7 +235,16 @@ export default function MiAgenda({ tecnicoId, embebido = false }) {
     })();
     const [diaSel, setDiaSel] = useState(diaHoy);
     const enHoy = semanaOffset === 0 && diaSel === diaHoy;
-    const volverHoy = () => { setSemanaOffset(0); setDiaSel(diaHoy); };
+    // M13: al pasar de semana, el día elegido se mueve al mismo día de la semana nueva
+    // (antes quedaba marcado el de la semana anterior y la lista no coincidía con la grilla)
+    const offsetPrevio = useRef(0);
+    useEffect(() => {
+        const delta = semanaOffset - offsetPrevio.current;
+        offsetPrevio.current = semanaOffset;
+        if (!delta) return;
+        setDiaSel(d => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + delta * 7); return formatDateISO(x); });
+    }, [semanaOffset]);
+    const volverHoy = () => { offsetPrevio.current = 0; setSemanaOffset(0); setDiaSel(diaHoy); };
     // Deslizar sobre la semana: semana anterior / siguiente
     const swipeSemana = useSwipeGesture(['-1', '0', '1'], '0', id => setSemanaOffset(o => o + Number(id)));
     const [ordenes, setOrdenes] = useState([]);

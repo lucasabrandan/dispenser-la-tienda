@@ -168,7 +168,7 @@ public class NotificacionService {
         for (Notificacion n : lista) {
             if (n.getReferenciaId() == null) continue;
             if (n.getTipo() == TipoNotificacion.TRABAJO_ASIGNADO) idsServicio.add(n.getReferenciaId());
-            else idsOrden.add(n.getReferenciaId());
+            else if (refEsOrden(n)) idsOrden.add(n.getReferenciaId());
         }
         java.util.Map<Long, OrdenVisita> ordenes = new java.util.HashMap<>();
         java.util.Map<Long, Servicio> servicios = new java.util.HashMap<>();
@@ -197,7 +197,8 @@ public class NotificacionService {
                 servicioId, com.dispenserlatienda.domain.notificacion.TipoNotificacion.TRABAJO_ASIGNADO);
         java.util.LinkedHashMap<String, Notificacion> unicos = new java.util.LinkedHashMap<>();
         for (Notificacion n : eventos) {
-            String key = n.getCreadoEn() + "|" + n.getTitulo() + "|" + n.getMensaje();
+            // M9: entre admins el mismo aviso se guarda con milisegundos de diferencia → al minuto
+            String key = (n.getCreadoEn() != null ? n.getCreadoEn().withSecond(0).withNano(0) : null) + "|" + n.getTitulo() + "|" + n.getMensaje();
             unicos.putIfAbsent(key, n);
         }
         return unicos.values().stream().map(n -> toDTO(n, java.util.Map.of(), java.util.Map.of())).collect(Collectors.toList());
@@ -221,6 +222,14 @@ public class NotificacionService {
         return repo.marcarTodasLeidas(usuarioId);
     }
 
+    // Testeo integral M8: antes del 5-oct-2026 algunas notificaciones guardaban el id del
+    // TRABAJO en la referencia (no el de la visita): leerlas como visita mostraba la tarjeta
+    // de otra. Esas viejas se muestran sin tarjeta.
+    private static final java.time.LocalDateTime DESDE_REF_ORDEN = java.time.LocalDateTime.of(2026, 10, 5, 0, 0);
+    private static boolean refEsOrden(Notificacion n) {
+        return n.getCreadoEn() == null || !n.getCreadoEn().isBefore(DESDE_REF_ORDEN);
+    }
+
     private NotificacionDTO toDTO(Notificacion n, java.util.Map<Long, OrdenVisita> ordenes, java.util.Map<Long, Servicio> servicios) {
         Long ordenId = null; String cliente = null, hora = null, tecnico = null, direccion = null;
         java.time.LocalDate fecha = null;
@@ -239,7 +248,7 @@ public class NotificacionService {
                     direccion = d.isBlank() ? loc : (loc != null && !loc.isBlank() ? d + ", " + loc : d);
                 }
             }
-        } else if (ref != null) {
+        } else if (ref != null && refEsOrden(n)) {
             OrdenVisita o = ordenes.get(ref);
             if (o != null) {
                 ordenId = o.getId();

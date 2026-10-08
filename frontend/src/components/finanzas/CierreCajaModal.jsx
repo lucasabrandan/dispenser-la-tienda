@@ -38,7 +38,7 @@ function resolverRango(periodo, mesInicial) {
         if (mesInicial) {
             const [y, m] = mesInicial.split('-').map(Number);
             const ref = new Date(y, m - 1, 1);
-            const mesActualReal = new Date().toISOString().substring(0, 7);
+            const mesActualReal = getTodayISO().slice(0, 7);
             return {
                 desde: formatDateISO(inicioMes(ref)),
                 hasta: mesInicial === mesActualReal ? hoy : formatDateISO(finMes(ref)),

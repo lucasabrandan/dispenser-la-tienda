@@ -132,15 +132,18 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
             const inicioMes = desdePeriodo(periodo);
             const enUnAno = new Date(); enUnAno.setFullYear(enUnAno.getFullYear() + 1);
             const [abiertos, cobrados, ords] = await Promise.all([
-                api.get('/servicios', { params: { estado: 'PRESUPUESTO,APROBADO,EN_PROGRESO,COMPLETADO,PENDIENTE_FACTURACION,FACTURADO', page: 0, size: 500, sort: 'fechaServicio,desc' } }),
-                api.get('/servicios', { params: { estado: 'COBRADO,REALIZADO', desde: inicioMes, page: 0, size: 300, sort: 'fechaServicio,desc' } }),
+                api.get('/servicios', { params: { estado: 'PRESUPUESTO,APROBADO,EN_PROGRESO,COMPLETADO,PENDIENTE_FACTURACION,FACTURADO', page: 0, size: 2000, sort: 'fechaServicio,desc' } }),
+                api.get('/servicios', { params: { estado: 'COBRADO,REALIZADO', desde: inicioMes, page: 0, size: 2000, sort: 'fechaServicio,desc' } }),
                 api.get('/ordenes', { params: { desde: '2020-01-01', hasta: enUnAno.toISOString().slice(0, 10) } }),
             ]);
             const lista = (r) => r.data?.content || (Array.isArray(r.data) ? r.data : []);
+            // Bajo del testeo: antes la lista se cortaba en 500/300 sin avisar
+            const cortada = [abiertos, cobrados].some(r => r.data?.totalElements > lista(r).length);
+            if (cortada) toast('Hay más trabajos de los que se muestran: usá el buscador o achicá el período', { icon: 'ℹ️', id: 'trabajos-cortados' });
             setServicios([...lista(abiertos), ...lista(cobrados)]);
             setOrdenes(Array.isArray(ords.data) ? ords.data : []);
             if (verArchivados) {
-                const ar = await api.get('/servicios', { params: { estado: 'ARCHIVADO', page: 0, size: 300, sort: 'fechaServicio,desc' } });
+                const ar = await api.get('/servicios', { params: { estado: 'ARCHIVADO', page: 0, size: 1000, sort: 'fechaServicio,desc' } });
                 setArchivados(lista(ar));
             }
         } catch {

@@ -740,6 +740,9 @@ public class ServicioService {
             // La referencia apunta a la visita (si hay) para que al tocar la notificación se abra (5-oct-2026)
             Long refOrden = movidas > 0 ? ordenVisitaRepository.findByPresupuestoIdAndEstadoIn(saved.getId(), ACTIVAS)
                     .stream().map(com.dispenserlatienda.domain.orden.OrdenVisita::getId).findFirst().orElse(null) : null;
+            // M5: un trabajo ya terminado (p. ej. el técnico que cierra el suyo y queda como
+            // responsable) no es una asignación nueva: no se avisa.
+            if (!esEstadoTrabajoTerminado(saved.getEstado()) || movidas > 0)
             notificacionService.notificar(
                     movidas > 0 ? TipoNotificacion.ORDEN_ASIGNADA : TipoNotificacion.TRABAJO_ASIGNADO,
                     usuario.getId(), null,
@@ -797,6 +800,17 @@ public class ServicioService {
     // disponible, ya relevado por separado), y frenar el guardado del
     // servicio por stock insuficiente sin poder probarlo en vivo primero es
     // mas riesgo del que vale la pena correr en esta pasada.
+    // Visita completada (OrdenVisitaService.sincronizarConServicios): mismo cierre que
+    // cambiarEstado — garantía de 3 meses en los equipos y descuento de stock, una sola vez.
+    public void alTerminarDesdeVisita(Servicio s) {
+        if (!esEstadoTrabajoTerminado(s.getEstado())) return;
+        LocalDate fechaGarantia = (s.getFechaServicio() != null ? s.getFechaServicio() : LocalDate.now()).plusMonths(3);
+        for (ServicioItem item : s.getItems()) {
+            if (item.getEquipo() != null && item.getGarantiaHasta() == null) item.setGarantiaHasta(fechaGarantia);
+        }
+        descontarStockSiCorresponde(s);
+    }
+
     private void descontarStockSiCorresponde(Servicio servicio) {
         if (Boolean.TRUE.equals(servicio.getStockDescontado())) return;
         if (!esEstadoTrabajoTerminado(servicio.getEstado())) return;
@@ -1055,11 +1069,11 @@ public class ServicioService {
         }
 
         s.setFechaServicio(fecha);
-        s.setHoraServicio(horaStr);
+        s.setHoraServicio(String.format("%02d:%02d", hora.getHour(), hora.getMinute())); // bajo: "10:30:00" no entra en la columna de 5
         s.setFechaTentativa(false);
         Servicio saved = servicioRepository.save(s);
         // Antes la orden del técnico se quedaba con la fecha vieja y sin hora
-        ordenVisitaRepository.reprogramarActivasDePresupuesto(saved.getId(), fecha, horaStr);
+        ordenVisitaRepository.reprogramarActivasDePresupuesto(saved.getId(), fecha, String.format("%02d:%02d", hora.getHour(), hora.getMinute()));
 
         // Avisar al admin que asigno el trabajo — reusa el mismo tipo de
         // notificacion que ya se dispara al asignar (ver procesarGuardado):

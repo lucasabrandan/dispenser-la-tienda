@@ -47,13 +47,15 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
             {/* Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 dark:bg-black/70 z-30 md:hidden"
+                    className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[45] md:hidden"
                     onClick={onClose}
                 />
             )}
 
             {/* Panel lateral */}
-            <div className={`fixed top-0 right-0 h-full w-72 bg-panel shadow-2xl z-40 transform transition-transform duration-300 md:hidden ${
+            {/* M15: z-50 (encima de la barra de abajo) y en columna: la lista scrollea y
+                "Cerrar sesión" queda siempre visible abajo, sin taparse en celulares bajos */}
+            <div className={`fixed top-0 right-0 h-full w-72 bg-panel shadow-2xl z-50 flex flex-col transform transition-transform duration-300 md:hidden ${
                 isOpen ? 'translate-x-0' : 'translate-x-full'
             }`}>
 
@@ -76,7 +78,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 </div>
 
                 {/* Items */}
-                <div className="p-3 space-y-4 overflow-y-auto">
+                <div className="p-3 space-y-4 overflow-y-auto flex-1 min-h-0">
                     {gruposDrawer.map((grupo, gi) => (
                         <div key={gi} className="space-y-0.5">
                             {grupo.label && (
@@ -117,7 +119,7 @@ export default function Drawer({ isOpen, onClose, vistaActual, setVistaActual })
                 </div>
 
                 {/* Cerrar sesión */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-black/[0.07] dark:border-white/[0.07]">
+                <div className="shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-black/[0.07] dark:border-white/[0.07]">
                     <button
                         onClick={() => { logout(); onClose(); }}
                         className="w-full px-4 py-3 rounded-xl text-left text-body font-bold text-brand-red hover:bg-[#D13A28]/10 dark:hover:bg-[#E8422F]/10 transition-all flex items-center gap-2"

@@ -36,6 +36,8 @@ public class GeocodificadorService {
     private final ObjectMapper json;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
 
+    private volatile long pausaHasta = 0;
+
     @Value("${mapa.geocodificar:true}")
     private boolean habilitado;
 
@@ -91,8 +93,11 @@ public class GeocodificadorService {
     // De a una dirección por vez, con pausa: respeta el límite de 1 pedido por segundo
     @Scheduled(fixedDelay = 1500, initialDelay = 20000)
     public void procesarPendiente() {
-        if (!habilitado) return;
+        if (!habilitado || System.currentTimeMillis() < pausaHasta) return;
         GeoUbicacion g = repo.findFirstByEstadoOrderByIdAsc("PENDIENTE").orElse(null);
+        // M10: las "no encontradas" se vuelven a probar cada 15 días (antes quedaban así para siempre)
+        if (g == null) g = repo.findFirstByEstadoAndManualFalseAndActualizadoEnBeforeOrderByIdAsc(
+            "NO_ENCONTRADA", LocalDateTime.now().minusDays(15)).orElse(null);
         if (g == null) return;
         double[] punto = null;
         boolean sinRed = false;
@@ -108,7 +113,11 @@ public class GeocodificadorService {
                 try { Thread.sleep(1100); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
             }
         }
-        if (sinRed) return; // se reintenta en la próxima vuelta
+        if (sinRed) { pausaHasta = System.currentTimeMillis() + 10 * 60_000; return; } // frenado: espera 10 min
+        // M10: si mientras se buscaba alguien la ubicó a mano, no se pisa
+        GeoUbicacion actual = repo.findById(g.getId()).orElse(null);
+        if (actual == null || actual.isManual()) return;
+        g = actual;
         if (punto != null) { g.setLat(punto[0]); g.setLng(punto[1]); g.setEstado("OK"); }
         else g.setEstado("NO_ENCONTRADA");
         g.setActualizadoEn(LocalDateTime.now());
@@ -121,7 +130,8 @@ public class GeocodificadorService {
             .header("Accept-Language", "es")
             .timeout(Duration.ofSeconds(12)).GET().build();
         HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
-        if (res.statusCode() == 429 || res.statusCode() >= 500) throw new IllegalStateException("HTTP " + res.statusCode());
+        // 403/429/5xx = el servicio nos frenó o está caído: NO es "no encontrada" (testeo M10)
+        if (res.statusCode() == 403 || res.statusCode() == 429 || res.statusCode() >= 500) throw new IllegalStateException("HTTP " + res.statusCode());
         if (res.statusCode() != 200) return null;
         JsonNode arr = json.readTree(res.body());
         if (!arr.isArray() || arr.isEmpty()) return null;

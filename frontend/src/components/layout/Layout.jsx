@@ -108,7 +108,9 @@ export default function Layout({ children, vistaActual, setVistaActual }) {
             const res = await api.get('/notificaciones/count');
             const c = res.data?.count || 0;
             setNotifCount(c);
-            if (c > 0) buscarUrgentes();
+            // Bajo del testeo: antes bajaba la lista completa cada 15 s mientras hubiera algo
+            // sin leer; ahora solo cuando cambia la cantidad
+            if (c > 0 && c !== ultimoCount.current) buscarUrgentes();
             ultimoCount.current = c;
         } catch { /* silencio */ }
     }, [buscarUrgentes]);

@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { CONTENEDOR, PantallaHeader, PAGINA } from '../ui/Pantalla';
 import TabSueldo from './TabSueldo';
 import Liquidacion from './Liquidacion';
+import { getTodayISO } from '../../utils/dateUtils';
 
 // "Mi mes" del técnico (4-oct-2026): su liquidación (trabajo por trabajo, con
 // PDF) y debajo su objetivo de sueldo, que se pone él.
 export default function MiSueldo() {
-    const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
+    const [filtroMes, setFiltroMes] = useState(getTodayISO().slice(0, 7));
 
     return (
         <div className={PAGINA}>
