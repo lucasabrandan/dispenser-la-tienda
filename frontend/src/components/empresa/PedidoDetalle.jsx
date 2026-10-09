@@ -5,6 +5,7 @@ import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import InformeTrabajo from './InformeTrabajo';
 import TrabajoHecho from './TrabajoHecho';
+import CancelarPedido from './CancelarPedido';
 import { VerFotos } from './FotosPedido';
 import { estadoDe, cuandoPedido, linkMaps, haceCuanto, PASOS_PEDIDO, esAbierto } from '../../utils/pedidosEmpresa';
 
@@ -18,6 +19,7 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
     const [informe, setInforme] = useState([]);
     const [texto, setTexto] = useState('');
     const [enviando, setEnviando] = useState(false);
+    const [cancelando, setCancelando] = useState(false);
     const finRef = useRef(null);
     useEffect(() => { setP(inicial); }, [inicial]); // al agendar llega el pedido actualizado
 
@@ -55,15 +57,14 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
         } finally { enviandoRef.current = false; setEnviando(false); }
     };
 
-    const cancelar = async () => {
-        const motivo = modo === 'admin' ? window.prompt('¿Por qué se cancela? (le llega a la empresa)', '') : null;
-        if (modo === 'admin' && motivo === null) return;
-        if (modo === 'empresa' && !window.confirm('¿Cancelar este pedido?')) return;
+    const cancelar = async (motivo) => {
         try {
             const r = modo === 'empresa'
                 ? await api.patch(`${base}/${p.id}/cancelar`)
                 : await api.patch(`${base}/${p.id}/rechazar`, { motivo });
             setP(r.data);
+            setCancelando(false);
+            cargar(); // trae el mensaje "Pedido cancelado: …" a la conversación
             toast.success('Pedido cancelado');
             onCambio && onCambio();
         } catch (e) {
@@ -92,9 +93,11 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
                         <button type="button" onClick={enviar} disabled={!texto.trim() || enviando} aria-label="Enviar"
                             className="w-11 h-11 shrink-0 rounded-xl bg-[#C9341F] text-white flex items-center justify-center active:scale-95 disabled:opacity-40"><LuSend size={18} /></button>
                     </div>
-                    {(puedeAgendar || puedeCancelar) && (
+                    {cancelando && puedeCancelar ? (
+                        <CancelarPedido modo={modo} onConfirmar={cancelar} onVolver={() => setCancelando(false)} />
+                    ) : (puedeAgendar || puedeCancelar) && (
                         <div className="flex gap-2">
-                            {puedeCancelar && <button type="button" onClick={cancelar} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Cancelar pedido</button>}
+                            {puedeCancelar && <button type="button" onClick={() => setCancelando(true)} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Cancelar pedido</button>}
                             {puedeAgendar && <button type="button" onClick={() => onAgendar && onAgendar(p)} className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">{(p.conformidad === 'PROBLEMA' || p.conformidad === 'OBSERVADO') ? 'Agendar revisión' : p.ordenId ? 'Volver a agendar' : 'Agendar visita'}</button>}
                         </div>
                     )}
