@@ -57,11 +57,12 @@ export default function ResumenInforme({ inf, trabajos, conGanancia }) {
                     <Fila label="Te pagaron a vos" valor={$(b.cobroNegocio)} />
                     {b.sinDato > 0 && <Fila label="Cobrado sin saber quién (va como tuyo)" valor={$(b.sinDato)} />}
                     {b.sinCobrar > 0 && <Fila label="Sin cobrar todavía (no entra)" valor={$(b.sinCobrar)} />}
+                    {b.archivadosDudosos > 0 && <Fila label="Archivados: ¿se cobraron? (no entran)" valor={$(b.archivadosDudosos)} />}
                     <Fila label={`Le corresponde a ${nom} de lo cobrado`} valor={$(b.parteTecnico)} />
                     {b.rendido > 0 && <Fila label={`Ya te rindió ${nom}`} valor={$(b.rendido)} />}
                     <Fila label={textoDiferencia(b, nom)} valor={$(Math.abs(b.diferencia))} fuerte dorado />
                 </div>
-                {b.hayDudosos && <p className="pb-1.5 text-caption text-muted">Marcá en cada trabajo quién cobró para que la cuenta sea exacta.</p>}
+                {b.hayDudosos && <p className="pb-1.5 text-caption text-muted">Marcá en cada trabajo quién cobró (o si se cobró, en los archivados) para que la cuenta sea exacta.</p>}
             </div>
         </div>
     );

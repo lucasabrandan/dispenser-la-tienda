@@ -45,6 +45,11 @@ public class Servicio {
     @Column(name = "cobrado_por", length = 10)
     private String cobradoPor;
 
+    // En qué estado estaba cuando se archivó (9-oct-2026): un cobrado archivado sigue
+    // contando para la liquidación; un presupuesto archivado no.
+    @Column(name = "archivado_desde", length = 25)
+    private String archivadoDesde;
+
     @Column(name = "monto_final")
     private BigDecimal montoFinal;
 
@@ -237,6 +242,8 @@ public class Servicio {
     public Long getOrdenId() { return ordenId; }
     public void setOrdenId(Long ordenId) { this.ordenId = ordenId; }
 
+    public String getArchivadoDesde() { return archivadoDesde; }
+    public void setArchivadoDesde(String archivadoDesde) { this.archivadoDesde = archivadoDesde; }
     public String getCobradoPor() { return cobradoPor; }
     public void setCobradoPor(String cobradoPor) { this.cobradoPor = cobradoPor; }
     public ModalidadCobro getModalidadCobro() { return modalidadCobro; }

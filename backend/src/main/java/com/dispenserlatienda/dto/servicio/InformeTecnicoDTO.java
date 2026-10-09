@@ -20,7 +20,8 @@ public record InformeTecnicoDTO(
     public record Trabajo(
         Long servicioId, LocalDate fecha, String estado, String cliente, String direccion,
         String cobro, boolean hecho, boolean porVisita,
-        boolean cobrado,               // ya se cobró (cobrado / archivado)
+        boolean cobrado,               // ya se cobró (cobrado, o archivado estando cobrado)
+        boolean archivadoSinDato,      // archivado viejo: no se sabe si se cobró (se marca en el informe)
         String cobradoPor,             // TECNICO | NEGOCIO | null (no se sabe)
         boolean cobradoPorDeducido,    // sale de la modalidad, nadie lo marcó
         List<Equipo> equipos,

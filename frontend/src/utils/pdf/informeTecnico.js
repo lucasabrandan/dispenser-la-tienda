@@ -20,6 +20,8 @@ const ESTADO = {
     PENDIENTE_FACTURACION: 'A facturar', FACTURADO: 'Facturado', COBRADO: 'Cobrado', REALIZADO: 'Cobrado', ARCHIVADO: 'Cobrado',
 };
 export const estadoTexto = e => ESTADO[e] || e;
+// Un archivado solo es "Cobrado" si cuenta como cobrado
+export const estadoDe = t => (t.estado === 'ARCHIVADO' && !t.cobrado ? 'Archivado' : estadoTexto(t.estado));
 
 // Texto del trabajo: "N/S 123 · Cambio de filtro" por equipo + repuestos
 export const textoTrabajo = t => (t.equipos || []).map(e =>
@@ -29,7 +31,7 @@ export const textoRepuestos = t => (t.equipos || []).flatMap(e => e.repuestos ||
 
 // Quién tiene la plata de cada trabajo
 export function textoCobro(t, tecnico = 'Técnico') {
-    if (!t.cobrado) return 'Sin cobrar';
+    if (!t.cobrado) return t.archivadoSinDato ? 'Archivado (¿se cobró?)' : 'Sin cobrar';
     if (t.cobradoPor === 'TECNICO') return `Cobró ${tecnico}`;
     if (t.cobradoPor === 'NEGOCIO') return 'Te pagaron a vos';
     return 'Cobrado (¿quién?)';
@@ -42,13 +44,14 @@ export function balanceInforme(trabajos, rendido = 0) {
     const cobroTecnico = s(t => t.cobrado && t.cobradoPor === 'TECNICO');
     const cobroNegocio = s(t => t.cobrado && t.cobradoPor === 'NEGOCIO');
     const sinDato = s(t => t.cobrado && !t.cobradoPor);
-    const sinCobrar = s(t => !t.cobrado);
+    const sinCobrar = s(t => !t.cobrado && !t.archivadoSinDato);
+    const archivadosDudosos = s(t => !t.cobrado && t.archivadoSinDato);
     const parteTecnico = s(t => t.cobrado, 'parteTecnico');
     const parteSinCobrar = s(t => !t.cobrado, 'parteTecnico');
     const enMano = cobroTecnico - Number(rendido || 0);
     const diferencia = parteTecnico - enMano; // > 0: le pagás vos · < 0: te da él
-    return { cobroTecnico, cobroNegocio, sinDato, sinCobrar, parteTecnico, parteSinCobrar, rendido: Number(rendido || 0), enMano, diferencia,
-        hayDudosos: trabajos.some(t => t.cobrado && !t.cobradoPor) };
+    return { cobroTecnico, cobroNegocio, sinDato, sinCobrar, archivadosDudosos, parteTecnico, parteSinCobrar, rendido: Number(rendido || 0), enMano, diferencia,
+        hayDudosos: trabajos.some(t => (t.cobrado && !t.cobradoPor) || (!t.cobrado && t.archivadoSinDato)) };
 }
 
 export const textoDiferencia = (b, tecnico) => Math.round(b.diferencia) === 0 ? 'Están a mano'
@@ -119,6 +122,7 @@ export async function generarPDFInformeTecnico(inf, trabajos, { precios = true, 
             ];
             if (b.sinDato > 0) cuentas.push(['Cobrado sin saber quién (se toma como tuyo)', fmt(b.sinDato)]);
             if (b.sinCobrar > 0) cuentas.push(['Todavía sin cobrar (no entra en la cuenta)', fmt(b.sinCobrar)]);
+            if (b.archivadosDudosos > 0) cuentas.push(['Archivados sin saber si se cobraron (no entran)', fmt(b.archivadosDudosos)]);
             cuentas.push([`Le corresponde a ${nom} (${inf.porcentajeTecnico}% de la MO de lo cobrado)`, fmt(b.parteTecnico)]);
             if (b.rendido > 0) cuentas.push([`- Ya te rindió ${nom} (cierres del día)`, fmt(b.rendido)]);
             cuentas.push([`Diferencia: ${textoDiferencia(b, nom)}`, fmt(Math.abs(b.diferencia))]);
@@ -140,7 +144,7 @@ export async function generarPDFInformeTecnico(inf, trabajos, { precios = true, 
         const body = trabajos.map(t => {
             const rep = textoRepuestos(t);
             const fila = [fechaCorta(t.fecha), `${t.cliente}${t.direccion ? '\n' + t.direccion : ''}`,
-                textoTrabajo(t) + (rep ? `\nRepuestos: ${rep}` : ''), estadoTexto(t.estado)];
+                textoTrabajo(t) + (rep ? `\nRepuestos: ${rep}` : ''), estadoDe(t)];
             if (precios) fila.push(textoCobro(t, (inf.tecnicoNombre || '').split(' ')[0]), fmt(t.total));
             if (conGanancia) fila.push(fmt(t.parteTecnico), fmt(t.gananciaNegocio) + (t.costoIncompleto ? ' *' : ''), `${Number(t.margenPorcentaje || 0).toFixed(0)}%`);
             return fila;
@@ -201,7 +205,7 @@ export async function generarExcelInformeTecnico(inf, trabajos, { precios = true
             Fecha: fecha(t.fecha), Cliente: t.cliente, Dirección: t.direccion || '',
             'N/S': (t.equipos || []).map(e => e.serie).filter(Boolean).join(', '),
             Trabajo: (t.equipos || []).map(e => e.trabajo).filter(Boolean).join(' / '),
-            Repuestos: textoRepuestos(t), Estado: estadoTexto(t.estado), Modalidad: t.cobro,
+            Repuestos: textoRepuestos(t), Estado: estadoDe(t), Modalidad: t.cobro,
         };
         if (precios) { f['Quién cobró'] = textoCobro(t, (inf.tecnicoNombre || '').split(' ')[0]); f.Total = Number(t.total); }
         if (conGanancia) Object.assign(f, {
@@ -225,6 +229,7 @@ export async function generarExcelInformeTecnico(inf, trabajos, { precios = true
             { Concepto: 'Te pagaron a vos', Monto: b.cobroNegocio },
             { Concepto: 'Cobrado sin saber quién (se toma como tuyo)', Monto: b.sinDato },
             { Concepto: 'Sin cobrar (no entra)', Monto: b.sinCobrar },
+            { Concepto: 'Archivados sin saber si se cobraron (no entran)', Monto: b.archivadosDudosos },
             { Concepto: `Le corresponde a ${nom}`, Monto: b.parteTecnico },
             { Concepto: `Ya te rindió ${nom}`, Monto: b.rendido },
             { Concepto: `Diferencia: ${textoDiferencia(b, nom)}`, Monto: Math.abs(b.diferencia) },

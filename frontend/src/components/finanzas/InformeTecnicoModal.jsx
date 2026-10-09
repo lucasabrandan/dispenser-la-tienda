@@ -5,7 +5,7 @@ import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import ResumenInforme from './ResumenInforme';
 import { useMontos } from '../../context/MontosContext';
-import { generarPDFInformeTecnico, generarExcelInformeTecnico, estadoTexto, textoTrabajo } from '../../utils/pdf/informeTecnico';
+import { generarPDFInformeTecnico, generarExcelInformeTecnico, estadoDe, textoTrabajo } from '../../utils/pdf/informeTecnico';
 
 // Informe por técnico (9-oct-2026): elegís técnico y período, marcás los trabajos
 // y sale un PDF/Excel con lo hecho, las fotos y, si querés, montos, ganancia y
@@ -60,7 +60,9 @@ export default function InformeTecnicoModal({ tecnicoInicial = null, onCerrar })
     const marcarCobro = async (t, valor) => {
         try {
             await api.patch(`/servicios/${t.servicioId}/cobrado-por`, { cobradoPor: valor || null });
-            setInf(i => ({ ...i, trabajos: i.trabajos.map(x => x.servicioId === t.servicioId ? { ...x, cobradoPor: valor || null, cobradoPorDeducido: false } : x) }));
+            // En un archivado viejo, marcar quién cobró es decir que se cobró (y vaciarlo, que no)
+            setInf(i => ({ ...i, trabajos: i.trabajos.map(x => x.servicioId === t.servicioId
+                ? { ...x, cobradoPor: valor || null, cobradoPorDeducido: false, cobrado: x.archivadoSinDato ? !!valor : x.cobrado } : x) }));
         } catch { toast.error('No se pudo guardar'); }
     };
 
@@ -123,13 +125,13 @@ export default function InformeTecnicoModal({ tecnicoInicial = null, onCerrar })
                                             <p className="text-caption text-secondary truncate">{t.direccion || '—'}</p>
                                             <p className="text-caption text-muted line-clamp-2 whitespace-pre-line">{textoTrabajo(t)}</p>
                                             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                                <span className="h-6 px-2 rounded-full bg-chip text-[11px] font-black text-secondary inline-flex items-center">{estadoTexto(t.estado)}</span>
+                                                <span className="h-6 px-2 rounded-full bg-chip text-[11px] font-black text-secondary inline-flex items-center">{estadoDe(t)}</span>
                                                 {fotos && <span className="h-6 px-2 rounded-full bg-chip text-[11px] font-black text-secondary inline-flex items-center gap-1"><LuCamera size={11} /> Fotos</span>}
                                                 {t.porVisita && <span className="h-6 px-2 rounded-full bg-chip text-[11px] font-black text-secondary inline-flex items-center">Por visita</span>}
-                                                {t.cobrado && (
+                                                {(t.cobrado || t.archivadoSinDato) && (
                                                     <select value={t.cobradoPor || ''} onChange={e => marcarCobro(t, e.target.value)} aria-label="Quién cobró"
                                                         className={`h-6 pl-2 pr-1 rounded-full text-[11px] font-black outline-none ${t.cobradoPor ? 'bg-[rgba(22,163,74,0.12)] text-[#16A34A]' : 'bg-[rgba(212,136,0,0.14)] text-[#A16207] dark:text-[#F0A500]'}`}>
-                                                        <option value="">¿Quién cobró?</option>
+                                                        <option value="">{t.archivadoSinDato ? (t.cobradoPor ? 'No se cobró' : '¿Se cobró?') : '¿Quién cobró?'}</option>
                                                         <option value="TECNICO">Cobró {nom}</option>
                                                         <option value="NEGOCIO">Me pagaron a mí</option>
                                                     </select>

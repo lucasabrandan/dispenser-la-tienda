@@ -130,10 +130,13 @@ export default function Liquidacion({ tecnicoId, mesInicial, esAdmin = false, on
                             <p className="text-label font-black text-muted uppercase tracking-widest mb-1">Pendientes de cobro · todavía no suman</p>
                             {liq.pendientes.map(p => (
                                 <div key={p.servicioId} className="flex justify-between gap-3 py-1 text-body">
-                                    <span className="text-secondary truncate">{fechaCorta(p.fecha)} · {p.cliente}</span>
+                                    <span className="text-secondary truncate">{fechaCorta(p.fecha)} · {p.cliente}{p.estado === 'ARCHIVADO_SIN_DATO' ? ' · archivado, ¿se cobró?' : ''}</span>
                                     <span className="text-ink shrink-0">{m(p.monto)}</span>
                                 </div>
                             ))}
+                            {liq.pendientes.some(p => p.estado === 'ARCHIVADO_SIN_DATO') && (
+                                <p className="pt-1.5 text-caption text-muted">Los archivados sin dato de cobro se marcan en «Informe de trabajos» (¿Quién cobró?) y pasan a sumar.</p>
+                            )}
                         </div>
                     )}
 

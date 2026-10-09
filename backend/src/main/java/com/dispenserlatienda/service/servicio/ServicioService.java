@@ -240,7 +240,8 @@ public class ServicioService {
         final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
         final BigDecimal pctImp = BigDecimal.valueOf(pctImpuestosConfig());
         List<Servicio> realizados = servicioRepository.findAll(
-                buildSpec(null, "COBRADO,REALIZADO", null, null, null, tecnicoId, null));
+                buildSpec(null, "COBRADO,REALIZADO,ARCHIVADO", null, null, null, tecnicoId, null));
+        realizados.removeIf(x -> !cuentaComoCobrado(x));
 
         // [0]=cobrado [1]=productos [2]=impuestos [3]=neto
         Map<YearMonth, BigDecimal[]> porMes  = new TreeMap<>();
@@ -276,7 +277,8 @@ public class ServicioService {
         String hasta  = mes.atEndOfMonth().toString();
 
         List<Servicio> realizados = servicioRepository.findAll(
-                buildSpec(null, "COBRADO,REALIZADO", null, desde, hasta, tecnicoId, null));
+                buildSpec(null, "COBRADO,REALIZADO,ARCHIVADO", null, desde, hasta, tecnicoId, null));
+        realizados.removeIf(x -> !cuentaComoCobrado(x));
 
         Map<Long, List<Servicio>> porTecnico = new LinkedHashMap<>();
         Map<Long, String>         nombres    = new LinkedHashMap<>();
@@ -573,6 +575,7 @@ public class ServicioService {
                         com.dispenserlatienda.domain.orden.EstadoOrden.EN_SITIO)))) {
             servicio.setEstado(estadoPrevio);
         }
+        registrarArchivo(servicio, estadoPrevio);
 
         servicio.setFotoRemito(dto.getFotoRemito());
         servicio.setDescuentoPorcentaje(dto.getDescuentoPorcentaje());
@@ -883,7 +886,9 @@ public class ServicioService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Estado inválido: " + nuevoEstado);
         }
+        EstadoServicio estadoAntes = s.getEstado();
         s.setEstado(estado);
+        registrarArchivo(s, estadoAntes);
 
         // Modalidad de cobro
         if (modalidadCobro != null && !modalidadCobro.isEmpty()) {
@@ -1415,7 +1420,8 @@ public class ServicioService {
         String hasta = mes.atEndOfMonth().toString();
 
         List<Servicio> cobrados = servicioRepository.findAll(
-                buildSpec(null, "COBRADO,REALIZADO", null, desde, hasta, tecnicoId, null));
+                buildSpec(null, "COBRADO,REALIZADO,ARCHIVADO", null, desde, hasta, tecnicoId, null));
+        cobrados.removeIf(x -> !cuentaComoCobrado(x)); // archivados: solo los que se cobraron (9-oct-2026)
         List<Servicio> pendientesSrv = servicioRepository.findAll(
                 buildSpec(null, "COMPLETADO,PENDIENTE_FACTURACION,FACTURADO", null, desde, hasta, tecnicoId, null));
         Comparator<Servicio> porFecha = Comparator.comparing(Servicio::getFechaServicio,
@@ -1433,23 +1439,51 @@ public class ServicioService {
             tCob = tCob.add(d.cobrado()); tProd = tProd.add(d.productos()); tImp = tImp.add(d.impuestos());
             tNeto = tNeto.add(d.neto()); tParte = tParte.add(parte);
         }
-        List<LiquidacionDTO.Pendiente> pendientes = pendientesSrv.stream()
+        List<LiquidacionDTO.Pendiente> pendientes = new ArrayList<>(pendientesSrv.stream()
                 .filter(s -> ESTADOS_PENDIENTE_COBRO.contains(s.getEstado()))
                 .map(s -> new LiquidacionDTO.Pendiente(s.getId(), s.getFechaServicio(), nombreCliente(s),
                         detalleTrabajo(s), s.getEstado().name(), desglose(s, pctImp).cobrado()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(java.util.stream.Collectors.toList()));
+        // Archivados viejos sin dato de cobro: no suman hasta que se marque quién cobró
+        servicioRepository.findAll(buildSpec(null, "ARCHIVADO", null, desde, hasta, tecnicoId, null)).stream()
+                .filter(ServicioService::archivadoSinDato)
+                .sorted(porFecha)
+                .forEach(s -> pendientes.add(new LiquidacionDTO.Pendiente(s.getId(), s.getFechaServicio(), nombreCliente(s),
+                        detalleTrabajo(s), "ARCHIVADO_SIN_DATO", desglose(s, pctImp).cobrado())));
 
         return new LiquidacionDTO(tecnico.getId(), tecnico.getNombre(), mes.toString(), pctImpInt, pctTecnico,
                 lineas, pendientes, tCob, tProd, tImp, tNeto, tParte, tNeto.subtract(tParte));
     }
 
     // ── Quién cobró (9-oct-2026) ──────────────────────────────────────────────
-    private static final java.util.Set<EstadoServicio> ESTADOS_COBRADOS = java.util.EnumSet.of(
-            EstadoServicio.COBRADO, EstadoServicio.REALIZADO, EstadoServicio.ARCHIVADO);
+    // Al archivar se guarda de dónde venía; al sacarlo de archivados se borra
+    private static void registrarArchivo(Servicio s, EstadoServicio antes) {
+        if (s.getEstado() == EstadoServicio.ARCHIVADO) {
+            if (antes != null && antes != EstadoServicio.ARCHIVADO) s.setArchivadoDesde(antes.name());
+        } else {
+            s.setArchivadoDesde(null);
+        }
+    }
+
+    // ¿El trabajo ya se cobró? Cobrado/realizado sí. Archivado: si se archivó estando
+    // cobrado, o (archivados viejos, sin ese dato) si tiene alguna señal de cobro.
+    public static boolean cuentaComoCobrado(Servicio s) {
+        if (s == null || s.getEstado() == null) return false;
+        if (s.getEstado() == EstadoServicio.COBRADO || s.getEstado() == EstadoServicio.REALIZADO) return true;
+        if (s.getEstado() != EstadoServicio.ARCHIVADO) return false;
+        if (s.getArchivadoDesde() != null)
+            return "COBRADO".equals(s.getArchivadoDesde()) || "REALIZADO".equals(s.getArchivadoDesde()) || s.getCobradoPor() != null;
+        return s.getFechaCobro() != null || s.getModalidadCobro() != null || s.getCobradoPor() != null;
+    }
+
+    // Archivado viejo sin ninguna señal de cobro: no se sabe si se cobró
+    public static boolean archivadoSinDato(Servicio s) {
+        return s != null && s.getEstado() == EstadoServicio.ARCHIVADO && s.getArchivadoDesde() == null && !cuentaComoCobrado(s);
+    }
 
     // TECNICO / NEGOCIO, o null si todavía no se cobró o no se sabe
     public static String quienCobro(Servicio s) {
-        if (s == null || !ESTADOS_COBRADOS.contains(s.getEstado())) return null;
+        if (!cuentaComoCobrado(s)) return null;
         if (s.getCobradoPor() != null) return s.getCobradoPor();
         if (s.getModalidadCobro() == ModalidadCobro.EFECTIVO_SIN_FACTURA) return "TECNICO";
         if (s.getModalidadCobro() == ModalidadCobro.CON_FACTURA) return "NEGOCIO";
@@ -1496,6 +1530,9 @@ public class ServicioService {
         List<com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Trabajo> trabajos = new ArrayList<>();
         for (Servicio s : porId.values()) {
             if (s.getEstado() == EstadoServicio.CANCELADO) continue;
+            // Archivado sin hacerse (era presupuesto o estaba en curso): es como cancelado
+            if (s.getEstado() == EstadoServicio.ARCHIVADO && s.getArchivadoDesde() != null
+                    && java.util.Set.of("PRESUPUESTO", "APROBADO", "EN_PROGRESO").contains(s.getArchivadoDesde())) continue;
             Desglose d = desglose(s, pctImp);
             BigDecimal costo = BigDecimal.ZERO;
             boolean incompleto = false;
@@ -1545,7 +1582,7 @@ public class ServicioService {
             trabajos.add(new com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Trabajo(
                     s.getId(), s.getFechaServicio(), s.getEstado().name(), nombreCliente(s), dir, etiquetaCobro(s),
                     ESTADOS_HECHOS_INFORME.contains(s.getEstado()), porVisita.contains(s.getId()),
-                    ESTADOS_COBRADOS.contains(s.getEstado()), quienCobro(s), s.getCobradoPor() == null && quienCobro(s) != null, equipos,
+                    cuentaComoCobrado(s), archivadoSinDato(s), quienCobro(s), s.getCobradoPor() == null && quienCobro(s) != null, equipos,
                     d.cobrado(), d.productos(), costo, incompleto, d.impuestos(), d.neto(),
                     parteTec, parteNeg, margenProd, ganancia, margenPct));
         }
