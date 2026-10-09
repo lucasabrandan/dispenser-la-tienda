@@ -1136,9 +1136,12 @@ public class ServicioService {
                     ? BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP))
                     : BigDecimal.ONE;
             for (ServicioItem item : servicio.getItems()) {
+                // Bug real (9-oct-2026): sumaba costo + costoExtra, pero `costo` ya es el
+                // total del ítem (mano de obra + repuestos) y `costoExtra` es solo la mano
+                // de obra: la mano de obra se contaba dos veces en la facturación del mes
+                // (agosto 2026 daba $1.505.329,89 en vez de $935.419,89).
                 BigDecimal costoBase = item.getCosto() != null ? item.getCosto() : BigDecimal.ZERO;
                 BigDecimal venta = costoBase
-                        .add(item.getCostoExtra() != null ? item.getCostoExtra() : BigDecimal.ZERO)
                         .multiply(factorDescuento)
                         .setScale(2, java.math.RoundingMode.HALF_UP);
 
