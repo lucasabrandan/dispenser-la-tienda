@@ -24,7 +24,8 @@ function labelEstado(estado) {
 // Total de un servicio sumando items (con descuento)
 function calcTotal(s) {
     const sub = (s.items || []).reduce((acc, it) => {
-        return acc + Number(it.costo || 0) + Number(it.costoExtra || 0);
+        // costo ya es el total del ítem (incluye la mano de obra): no sumar costoExtra (9-oct-2026)
+        return acc + Number(it.costo || 0);
     }, 0);
     const pct = Number(s.descuentoPorcentaje || 0);
     return pct > 0 ? sub * (1 - pct / 100) : sub;
