@@ -28,6 +28,10 @@ export function montosDescuento({ totalBruto = 0, descuentoPorcentaje = 0, descu
 export const pesos = v => Number(v || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 });
 
 // Detecta tipo de documento
+// Trabajo ya hecho (lleva "Trabajo realizado"); lo demás todavía es un presupuesto
+const ESTADOS_HECHOS = ['COMPLETADO', 'PENDIENTE_FACTURACION', 'FACTURADO', 'COBRADO', 'REALIZADO', 'ARCHIVADO'];
+export const trabajoHecho = (s) => ESTADOS_HECHOS.includes(String(s?.estado || '').toUpperCase());
+
 export function detectarTipo({ tipo, esPresupuesto, ticketItems, esTecnicoForzado }) {
     if (tipo) return tipo;
     if (esPresupuesto) return 'PRESUPUESTO';

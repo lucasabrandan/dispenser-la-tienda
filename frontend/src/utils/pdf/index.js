@@ -54,7 +54,11 @@ export const generarPDF = async ({
     // Reusar numero existente
     const nroDocGuardado = nroDocumentoExistente
         || (servicioId ? localStorage.getItem(`pdf_nro_${servicioId}`) : null);
-    const nroDoc = nroDocGuardado || generarNroDocumento(prefijo, fecha, tecnico || 'TEC');
+    // El número se mantiene, pero con el prefijo del tipo actual (un presupuesto
+    // impreso antes como "OS-…" sale "PP-…", y al revés cuando ya está hecho)
+    const nroDoc = nroDocGuardado
+        ? String(nroDocGuardado).replace(/^[A-Z]{2}-/, `${prefijo}-`)
+        : generarNroDocumento(prefijo, fecha, tecnico || 'TEC');
 
     if (servicioId && !nroDocGuardado) {
         try {

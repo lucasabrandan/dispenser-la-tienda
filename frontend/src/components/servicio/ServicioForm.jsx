@@ -286,6 +286,7 @@ export default function ServicioForm({
                     onGuardar={handleGuardar}
                     onGenerarPDF={dispararPDF}
                     onCerrar={() => setSheetVisible(false)}
+                    ordenActiva={ordenActiva}
                 />
             )}
 

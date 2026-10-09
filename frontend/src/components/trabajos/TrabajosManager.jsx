@@ -27,6 +27,7 @@ import { exportarServiciosCSV } from '../../utils/exportarCSV';
 import { buildGoogleMapsRouteUrl } from '../../utils/clienteUtils';
 import TrabajoFila, { ENCABEZADO_GRID } from './TrabajoFila';
 import TrabajoEditorModal from './TrabajoEditorModal';
+import { trabajoHecho } from '../../utils/pdf/pdfShared';
 import { NuevoSheet, TrabajoMenu } from './TrabajoMenus';
 import AvatarTecnico from '../ui/AvatarTecnico';
 import { totalServicio } from '../../utils/descuento';
@@ -357,9 +358,13 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
     };
     const pdf = async (s, { sinPrecios = false } = {}) => {
         const t = toast.loading('Generando PDF…');
+        // Mientras el trabajo no está hecho (presupuesto, agendado, en curso) el PDF es un
+        // PRESUPUESTO; recién hecho pasa a "Trabajo realizado" (9-oct-2026: salía al revés)
+        const ppto = !trabajoHecho(s);
         try {
             await generarRemitoPDFPremium({
-                esPresupuesto: false, servicioId: s.id,
+                tipo: ppto && s.servicioTipo === 'VENTA' ? 'PRESUPUESTO_VENTA' : undefined,
+                esPresupuesto: ppto, servicioId: s.id,
                 nroDocumentoExistente: s.nroDocumento || localStorage.getItem(`pdf_nro_${s.id}`) || null,
                 cliente: { nombre: s.clienteNombre, telefono: s.clienteTelefono, email: s.clienteEmail, cuilDni: s.clienteDni, condicionIva: s.clienteCondicionIva },
                 sede: { nombreSede: s.sedeNombre, direccion: s.sedeDireccion },

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { trabajoHecho } from '../utils/pdf/pdfShared';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-hot-toast';
@@ -187,10 +188,10 @@ export function useServicioManager() {
     };
 
     // Presupuestos y archivados → PDF directo sin firmas; trabajo confirmado → modal de firmas
-    const esPresupuesto = (s) => (s.estado || '').toUpperCase() === 'PRESUPUESTO';
+    const esPresupuesto = (s) => !trabajoHecho(s) && (s.estado || '').toUpperCase() !== 'CANCELADO';
     const sinFirmaDirecto = (s) => {
         const est = (s.estado || '').toUpperCase();
-        return est === 'PRESUPUESTO' || est === 'ARCHIVADO';
+        return esPresupuesto(s) || est === 'ARCHIVADO';
     };
 
     const generarPDF = (servicio, { sinPrecios = false } = {}) => {

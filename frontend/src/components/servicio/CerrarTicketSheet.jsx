@@ -34,6 +34,7 @@ export default function CerrarTicketSheet({
     onGuardar,    // async () → { ok, id, clienteId, clienteNombre, tecnicoId, fechaVisita } | null
     onGenerarPDF, // async () → void (genera PDF del presupuesto)
     onCerrar,
+    ordenActiva = null, // visita ya agendada de este trabajo (al editar)
 }) {
     const { esAdmin } = useAuth();
 
@@ -119,8 +120,36 @@ export default function CerrarTicketSheet({
             const result = await onGuardar();
             if (result?.ok) {
                 setSavedResult(result);
+                // Trabajo con visita ya agendada (9-oct-2026): no se crea otra (daba 400
+                // "ya tiene una orden asignada"); se actualiza la misma con el trabajo y el
+                // monto nuevos. Técnico, día y hora quedan como están (eso es Reprogramar).
+                if (ordenActiva?.id) {
+                    setCreandoOrden(true);
+                    try {
+                        const { data: presu } = await api.get(`/servicios/${result.id}`);
+                        const nuevo = datosOrdenDesdePresupuesto(presu, {
+                            tecnicoId: ordenActiva.tecnicoId, fechaProgramada: ordenActiva.fechaProgramada,
+                            horaEstimada: ordenActiva.horaEstimada, prioridad: ordenActiva.prioridad || 'NORMAL',
+                        });
+                        await api.put(`/ordenes/${ordenActiva.id}`, {
+                            ...nuevo,
+                            titulo: ordenActiva.titulo || nuevo.titulo, // las de pedidos de empresa tienen su título
+                            direccion: nuevo.direccion || ordenActiva.direccion,
+                            fechaProgramada: ordenActiva.fechaProgramada,
+                            horaEstimada: ordenActiva.horaEstimada,
+                            formaPago: ordenActiva.formaPago || nuevo.formaPago,
+                        });
+                        setOrdenCreada('actualizada');
+                        toast.success('Trabajo guardado y visita actualizada');
+                    } catch {
+                        toast.error('Trabajo guardado, pero no se pudo actualizar la visita');
+                        setOrdenCreada('actualizada');
+                    } finally {
+                        setCreandoOrden(false);
+                    }
+                }
                 // Auto-despacho si técnico + fecha ya están
-                if (result.tecnicoId && result.fechaVisita) {
+                else if (result.tecnicoId && result.fechaVisita) {
                     setCreandoOrden(true);
                     try {
                         // Se relee el presupuesto recién guardado para mandarle al técnico
@@ -289,7 +318,7 @@ export default function CerrarTicketSheet({
                         ) : (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-panel">
-                                    <span className="text-caption font-bold text-[#1E8A4A]">✓ Orden de visita creada y asignada</span>
+                                    <span className="text-caption font-bold text-[#1E8A4A]">{ordenCreada === 'actualizada' ? '✓ La visita agendada quedó con los cambios' : '✓ Orden de visita creada y asignada'}</span>
                                 </div>
                                 <button onClick={onCerrar}
                                     className="w-full py-3 rounded-2xl text-label font-black uppercase text-white bg-brand-red active:scale-95">
