@@ -6,6 +6,9 @@ export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCer
     const [montoEditado, setMontoEditado] = useState(null); // null = automático
     const [procesando, setProcesando] = useState(false);
     const [descuentoEfectivo, setDescuentoEfectivo] = useState(10);
+    // Quién recibió la plata (9-oct-2026): define las cuentas con el técnico
+    const nombreTec = (servicio.items?.[0]?.tecnico || servicio.usuarioNombre || 'Técnico').split(' ')[0];
+    const [cobradoPor, setCobradoPor] = useState(servicio.cobradoPor || 'TECNICO');
     const total = calcularTotal(servicio);
 
     useEffect(() => {
@@ -28,7 +31,8 @@ export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCer
         if (!modalidad) return;
         setProcesando(true);
         const opt = opciones.find(o => o.id === modalidad);
-        await onConfirmar(opt?.destino || 'COBRADO', { modalidadCobro: modalidad, montoFinal: Number(montoFinal) || montoAuto });
+        await onConfirmar(opt?.destino || 'COBRADO', { modalidadCobro: modalidad, montoFinal: Number(montoFinal) || montoAuto,
+            ...(modalidad === 'EFECTIVO_SIN_FACTURA' ? { cobradoPor } : { cobradoPor: 'NEGOCIO' }) });
         setProcesando(false);
     };
 
@@ -67,6 +71,17 @@ export default function CobroSheet({ servicio, calcularTotal, onConfirmar, onCer
                             </button>
                         ))}
                     </div>
+                    {modalidad === 'EFECTIVO_SIN_FACTURA' && (
+                        <div className="mb-5">
+                            <p className="text-label font-black text-muted uppercase tracking-widest mb-1.5">¿Quién tiene la plata?</p>
+                            <div role="radiogroup" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-chip">
+                                {[{ v: 'TECNICO', t: `La cobró ${nombreTec}` }, { v: 'NEGOCIO', t: 'Me la dieron a mí' }].map(o => (
+                                    <button key={o.v} type="button" role="radio" aria-checked={cobradoPor === o.v} onClick={() => setCobradoPor(o.v)}
+                                        className={`h-10 rounded-lg text-label font-black active:scale-95 ${cobradoPor === o.v ? 'bg-brand-red text-white' : 'text-secondary'}`}>{o.t}</button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     <div className="flex gap-2">
                         <button onClick={onCerrar}
                             className="flex-1 py-3 rounded-2xl font-black text-label uppercase bg-chip text-secondary active:scale-95">

@@ -40,6 +40,11 @@ public class Servicio {
     @Column(name = "modalidad_cobro", length = 25)
     private ModalidadCobro modalidadCobro;
 
+    // Quién recibió la plata (9-oct-2026): TECNICO (la tiene él) o NEGOCIO (te la pagaron a vos).
+    // Si queda vacío se deduce de la modalidad (efectivo → técnico, con factura → negocio).
+    @Column(name = "cobrado_por", length = 10)
+    private String cobradoPor;
+
     @Column(name = "monto_final")
     private BigDecimal montoFinal;
 
@@ -232,6 +237,8 @@ public class Servicio {
     public Long getOrdenId() { return ordenId; }
     public void setOrdenId(Long ordenId) { this.ordenId = ordenId; }
 
+    public String getCobradoPor() { return cobradoPor; }
+    public void setCobradoPor(String cobradoPor) { this.cobradoPor = cobradoPor; }
     public ModalidadCobro getModalidadCobro() { return modalidadCobro; }
     public void setModalidadCobro(ModalidadCobro modalidadCobro) { this.modalidadCobro = modalidadCobro; }
 

@@ -139,7 +139,22 @@ public class ServicioController {
             montoFinal = new java.math.BigDecimal(payload.get("montoFinal").toString());
         }
         String observaciones = (String) payload.get("observaciones");
-        return ResponseEntity.ok(servicioService.cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal, observaciones));
+        ServicioDTO r = servicioService.cambiarEstado(id, nuevoEstado, modalidadCobro, montoFinal, observaciones);
+        // Quién cobró (9-oct-2026): si lo cobra el técnico desde su celu, la plata la tiene él
+        if (payload.containsKey("cobradoPor") && esAdmin(auth)) servicioService.marcarCobradoPor(id, (String) payload.get("cobradoPor"));
+        else if (!esAdmin(auth) && "COBRADO".equals(nuevoEstado)) servicioService.marcarCobradoPor(id, "TECNICO");
+        return ResponseEntity.ok(r);
+    }
+
+    // PATCH: quién recibió la plata de un trabajo (TECNICO / NEGOCIO / null) — solo admin
+    @PatchMapping("/{id}/cobrado-por")
+    public ResponseEntity<java.util.Map<String, Object>> cobradoPor(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Object> payload,
+            Authentication auth) {
+        if (!esAdmin(auth)) throw new AccessDeniedException("Solo el admin marca quién cobró");
+        servicioService.marcarCobradoPor(id, (String) payload.get("cobradoPor"));
+        return ResponseEntity.ok(java.util.Map.of("ok", true));
     }
 
     // PATCH: poner/sacar "en espera" (body: {enEspera: true|false}) — solo admin
@@ -240,6 +255,20 @@ public class ServicioController {
         Usuario solicitante = resolverUsuario(auth);
         Long id = (solicitante.getRol() == RolUsuario.ADMIN && tecnicoId != null) ? tecnicoId : solicitante.getId();
         return ResponseEntity.ok(servicioService.liquidacion(id, mes));
+    }
+
+    // GET: Informe por técnico (9-oct-2026) — trabajos de un período con fotos,
+    // montos y ganancia. Solo admin: lleva costos internos de productos.
+    @GetMapping("/informe-tecnico")
+    public ResponseEntity<com.dispenserlatienda.dto.servicio.InformeTecnicoDTO> informeTecnico(
+            @RequestParam Long tecnicoId,
+            @RequestParam String desde,
+            @RequestParam String hasta,
+            Authentication auth) {
+        if (resolverUsuario(auth).getRol() != RolUsuario.ADMIN)
+            throw new AccessDeniedException("Solo el administrador ve el informe por técnico");
+        return ResponseEntity.ok(servicioService.informeTecnico(tecnicoId,
+                java.time.LocalDate.parse(desde), java.time.LocalDate.parse(hasta)));
     }
 
     // GET: Progreso de sueldo mensual — admin ve todo, técnico ve su parte.

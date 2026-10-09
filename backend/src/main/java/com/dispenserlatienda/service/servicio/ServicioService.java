@@ -65,12 +65,14 @@ public class ServicioService {
     private final NotificacionService notificacionService;
     private final RepuestoRepository repuestoRepository;
     private final OrdenVisitaRepository ordenVisitaRepository;
+    private final com.dispenserlatienda.repository.rendicion.RendicionRepository rendicionRepository;
     public ServicioService(ServicioRepository servicioRepository, SedeRepository sedeRepository,
                            UsuarioRepository usuarioRepository, EquipoRepository equipoRepository,
                            GastoRepository gastoRepository, ConfiguracionGlobalRepository configRepo,
                            VentaRepository ventaRepository, ObjectMapper objectMapper,
                            NotificacionService notificacionService, RepuestoRepository repuestoRepository,
-                           OrdenVisitaRepository ordenVisitaRepository) {
+                           OrdenVisitaRepository ordenVisitaRepository,
+                           com.dispenserlatienda.repository.rendicion.RendicionRepository rendicionRepository) {
         this.servicioRepository = servicioRepository;
         this.sedeRepository = sedeRepository;
         this.usuarioRepository = usuarioRepository;
@@ -82,6 +84,7 @@ public class ServicioService {
         this.notificacionService = notificacionService;
         this.repuestoRepository = repuestoRepository;
         this.ordenVisitaRepository = ordenVisitaRepository;
+        this.rendicionRepository = rendicionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -1426,7 +1429,7 @@ public class ServicioService {
             Desglose d = desglose(s, pctImp);
             BigDecimal parte = d.neto().multiply(BigDecimal.valueOf(pctTecnico)).divide(BigDecimal.valueOf(100), 2, RM);
             lineas.add(new LiquidacionDTO.Linea(s.getId(), s.getFechaServicio(), nombreCliente(s), detalleTrabajo(s),
-                    etiquetaCobro(s), d.cobrado(), d.productos(), d.impuestos(), d.neto(), parte));
+                    etiquetaCobro(s), d.cobrado(), d.productos(), d.impuestos(), d.neto(), parte, quienCobro(s)));
             tCob = tCob.add(d.cobrado()); tProd = tProd.add(d.productos()); tImp = tImp.add(d.impuestos());
             tNeto = tNeto.add(d.neto()); tParte = tParte.add(parte);
         }
@@ -1438,6 +1441,131 @@ public class ServicioService {
 
         return new LiquidacionDTO(tecnico.getId(), tecnico.getNombre(), mes.toString(), pctImpInt, pctTecnico,
                 lineas, pendientes, tCob, tProd, tImp, tNeto, tParte, tNeto.subtract(tParte));
+    }
+
+    // ── Quién cobró (9-oct-2026) ──────────────────────────────────────────────
+    private static final java.util.Set<EstadoServicio> ESTADOS_COBRADOS = java.util.EnumSet.of(
+            EstadoServicio.COBRADO, EstadoServicio.REALIZADO, EstadoServicio.ARCHIVADO);
+
+    // TECNICO / NEGOCIO, o null si todavía no se cobró o no se sabe
+    public static String quienCobro(Servicio s) {
+        if (s == null || !ESTADOS_COBRADOS.contains(s.getEstado())) return null;
+        if (s.getCobradoPor() != null) return s.getCobradoPor();
+        if (s.getModalidadCobro() == ModalidadCobro.EFECTIVO_SIN_FACTURA) return "TECNICO";
+        if (s.getModalidadCobro() == ModalidadCobro.CON_FACTURA) return "NEGOCIO";
+        return null;
+    }
+
+    @Transactional
+    public void marcarCobradoPor(Long id, String quien) {
+        Servicio s = servicioRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("No existe"));
+        if (quien != null && !quien.isBlank() && !java.util.Set.of("TECNICO", "NEGOCIO").contains(quien))
+            throw new IllegalArgumentException("Quién cobró: TECNICO o NEGOCIO");
+        s.setCobradoPor(quien == null || quien.isBlank() ? null : quien);
+        servicioRepository.save(s);
+    }
+
+    // ── Informe por técnico (9-oct-2026) ──────────────────────────────────────
+    // Trabajos del técnico en el período: los que tiene a su nombre y los que hizo
+    // por una visita asignada (a veces el trabajo quedó cargado a nombre de otro).
+    @Transactional(readOnly = true)
+    public com.dispenserlatienda.dto.servicio.InformeTecnicoDTO informeTecnico(Long tecnicoId, LocalDate desde, LocalDate hasta) {
+        final java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
+        final int pctImpInt = pctImpuestosConfig();
+        final BigDecimal pctImp = BigDecimal.valueOf(pctImpInt);
+        final int pctTecnico = 50;
+        Usuario tecnico = usuarioRepository.findById(tecnicoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        if (hasta.isBefore(desde)) throw new IllegalArgumentException("El período está al revés");
+        if (java.time.temporal.ChronoUnit.DAYS.between(desde, hasta) > 400)
+            throw new IllegalArgumentException("Elegí un período de hasta un año");
+
+        Map<Long, Servicio> porId = new java.util.LinkedHashMap<>();
+        servicioRepository.findAll(buildSpec(null, null, null, desde.toString(), hasta.toString(), tecnicoId, null))
+                .forEach(s -> porId.put(s.getId(), s));
+        java.util.Set<Long> porVisita = new java.util.HashSet<>();
+        for (var o : ordenVisitaRepository.findByTecnicoIdOrderByFechaProgramadaAscHoraEstimadaAsc(tecnicoId)) {
+            if (o.getPresupuestoId() == null || o.getEstado() == com.dispenserlatienda.domain.orden.EstadoOrden.CANCELADA) continue;
+            if (porId.containsKey(o.getPresupuestoId())) continue;
+            servicioRepository.findById(o.getPresupuestoId()).ifPresent(s -> {
+                LocalDate f = s.getFechaServicio();
+                if (f != null && !f.isBefore(desde) && !f.isAfter(hasta)) { porId.put(s.getId(), s); porVisita.add(s.getId()); }
+            });
+        }
+
+        List<com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Trabajo> trabajos = new ArrayList<>();
+        for (Servicio s : porId.values()) {
+            if (s.getEstado() == EstadoServicio.CANCELADO) continue;
+            Desglose d = desglose(s, pctImp);
+            BigDecimal costo = BigDecimal.ZERO;
+            boolean incompleto = false;
+            List<com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Equipo> equipos = new ArrayList<>();
+            for (ServicioItem it : s.getItems()) {
+                List<com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Repuesto> reps = new ArrayList<>();
+                String json = it.getRepuestosUsados();
+                if (json != null && !json.isBlank()) {
+                    try {
+                        List<Map<String, Object>> lista = objectMapper.readValue(json, new TypeReference<>() {});
+                        for (Map<String, Object> r : lista) {
+                            BigDecimal cant = num(r.get("cantidad"), BigDecimal.ONE);
+                            BigDecimal precio = num(r.get("precio"), BigDecimal.ZERO);
+                            BigDecimal c = num(r.get("costo"), null);
+                            if (c == null || c.signum() == 0) {
+                                // Sin costo cargado: se deduce del % de ganancia del producto, si lo tiene
+                                BigDecimal pct = num(r.get("porcentajeGanancia"), BigDecimal.ZERO);
+                                c = pct.signum() > 0
+                                        ? precio.multiply(BigDecimal.valueOf(100)).divide(BigDecimal.valueOf(100).add(pct), 2, RM)
+                                        : null;
+                            }
+                            if (c == null) incompleto = true; else costo = costo.add(c.multiply(cant));
+                            reps.add(new com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Repuesto(
+                                    r.get("nombre") != null ? r.get("nombre").toString() : "Producto", cant, precio, c));
+                        }
+                    } catch (Exception e) { log.warn("Error parseando JSON repuestos: {}", e.getMessage()); }
+                }
+                Equipo eq = it.getEquipo();
+                equipos.add(new com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Equipo(
+                        eq != null ? eq.getNumeroSerie() : null,
+                        eq != null ? java.util.stream.Stream.of(eq.getMarca(), eq.getModelo()).filter(x -> x != null && !x.isBlank()).collect(java.util.stream.Collectors.joining(" ")) : null,
+                        eq != null ? eq.getUbicacion() : null,
+                        it.getTrabajoRealizado(), reps, it.getFotoAntes(), it.getFotoDespues()));
+            }
+            costo = costo.setScale(2, RM);
+            BigDecimal parteTec = d.neto().multiply(BigDecimal.valueOf(pctTecnico)).divide(BigDecimal.valueOf(100), 2, RM);
+            BigDecimal parteNeg = d.neto().subtract(parteTec);
+            BigDecimal margenProd = d.productos().subtract(costo);
+            BigDecimal ganancia = parteNeg.add(margenProd);
+            BigDecimal margenPct = d.cobrado().signum() > 0
+                    ? ganancia.multiply(BigDecimal.valueOf(100)).divide(d.cobrado(), 1, RM) : BigDecimal.ZERO;
+            String dir = s.getSede() != null ? s.getSede().getDireccion() : null;
+            String loc = s.getSede() != null ? s.getSede().getLocalidad() : null;
+            // La localidad solo si la dirección no la trae ya ("CABA, CABA")
+            if (loc != null && !loc.isBlank() && (dir == null || !sinAcentos(dir.toLowerCase()).contains(sinAcentos(loc.toLowerCase()))))
+                dir = dir == null || dir.isBlank() ? loc : dir + ", " + loc;
+            trabajos.add(new com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Trabajo(
+                    s.getId(), s.getFechaServicio(), s.getEstado().name(), nombreCliente(s), dir, etiquetaCobro(s),
+                    ESTADOS_HECHOS_INFORME.contains(s.getEstado()), porVisita.contains(s.getId()),
+                    ESTADOS_COBRADOS.contains(s.getEstado()), quienCobro(s), s.getCobradoPor() == null && quienCobro(s) != null, equipos,
+                    d.cobrado(), d.productos(), costo, incompleto, d.impuestos(), d.neto(),
+                    parteTec, parteNeg, margenProd, ganancia, margenPct));
+        }
+        trabajos.sort(Comparator.comparing(com.dispenserlatienda.dto.servicio.InformeTecnicoDTO.Trabajo::fecha,
+                Comparator.nullsLast(Comparator.naturalOrder())));
+        BigDecimal rendido = rendicionRepository.findByTecnicoIdAndFechaBetween(tecnicoId, desde, hasta).stream()
+                .filter(com.dispenserlatienda.domain.rendicion.Rendicion::isRecibido)
+                .map(com.dispenserlatienda.domain.rendicion.Rendicion::getMonto)
+                .filter(java.util.Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new com.dispenserlatienda.dto.servicio.InformeTecnicoDTO(tecnico.getId(), tecnico.getNombre(),
+                desde, hasta, pctImpInt, pctTecnico, rendido, trabajos);
+    }
+
+    private static final java.util.Set<EstadoServicio> ESTADOS_HECHOS_INFORME = java.util.EnumSet.of(
+            EstadoServicio.COMPLETADO, EstadoServicio.PENDIENTE_FACTURACION, EstadoServicio.FACTURADO,
+            EstadoServicio.COBRADO, EstadoServicio.REALIZADO, EstadoServicio.ARCHIVADO);
+
+    private static BigDecimal num(Object v, BigDecimal def) {
+        if (v == null) return def;
+        try { return new BigDecimal(v.toString()); } catch (Exception e) { return def; }
     }
 
     private static String nombreCliente(Servicio s) {

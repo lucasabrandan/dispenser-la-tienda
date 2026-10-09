@@ -8,6 +8,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import { colorTecnico } from '../../utils/estados';
 import AvatarTecnico from '../ui/AvatarTecnico';
 import Liquidacion from './Liquidacion';
+import InformeTecnicoModal from './InformeTecnicoModal';
+import { LuFileText } from 'react-icons/lu';
 
 export default function TabTecnicos({ filtroMes }) {
     const { ocultar } = useMontos();
@@ -15,6 +17,7 @@ export default function TabTecnicos({ filtroMes }) {
     const [cargando,   setCargando]   = useState(false);
     const [filtroTec,  setFiltroTec]  = useState('');
     const [liqDe,      setLiqDe]      = useState(null); // técnico cuya liquidación se abre
+    const [informe,    setInforme]    = useState(false); // informe por técnico (9-oct-2026)
 
     const cargar = () => {
         setCargando(true);
@@ -49,7 +52,12 @@ export default function TabTecnicos({ filtroMes }) {
                         <option key={t.id} value={t.id}>{t.nombre}</option>
                     ))}
                 </select>
+                <button type="button" onClick={() => setInforme(true)}
+                    className="h-8 px-3 rounded-lg text-label font-black bg-brand-red text-white inline-flex items-center gap-1.5 active:scale-95">
+                    <LuFileText size={13} /> Informe de trabajos
+                </button>
             </div>
+            {informe && <InformeTecnicoModal tecnicoInicial={filtroTec || null} onCerrar={() => setInforme(false)} />}
 
             <div className="grid grid-cols-3 gap-3">
                 {[

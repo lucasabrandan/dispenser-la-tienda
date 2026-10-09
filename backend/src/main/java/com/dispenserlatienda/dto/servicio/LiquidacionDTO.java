@@ -27,7 +27,8 @@ public record LiquidacionDTO(
     public record Linea(
         Long servicioId, LocalDate fecha, String cliente, String detalle, String cobro,
         BigDecimal cobrado, BigDecimal productos, BigDecimal impuestos,
-        BigDecimal neto, BigDecimal parteTecnico
+        BigDecimal neto, BigDecimal parteTecnico,
+        String cobradoPor // TECNICO | NEGOCIO | null (9-oct-2026)
     ) {}
 
     public record Pendiente(

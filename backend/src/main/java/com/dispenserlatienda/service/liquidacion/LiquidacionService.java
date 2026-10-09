@@ -70,7 +70,8 @@ public class LiquidacionService {
         YearMonth ym = YearMonth.parse(mes);
 
         BigDecimal efectivo = base.trabajos().stream()
-                .filter(t -> "Efectivo".equals(t.cobro()))
+                // Lo que cobró él (9-oct-2026). Cierres viejos sin el dato: efectivo = él
+                .filter(t -> t.cobradoPor() != null ? "TECNICO".equals(t.cobradoPor()) : "Efectivo".equals(t.cobro()))
                 .map(LiquidacionDTO.Linea::cobrado).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal rendido = rendicionRepo.findByTecnicoIdAndFechaBetween(tecnicoId, ym.atDay(1), ym.atEndOfMonth())
                 .stream().filter(Rendicion::isRecibido)
