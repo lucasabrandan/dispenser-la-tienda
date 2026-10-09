@@ -41,5 +41,8 @@ public record ServicioDTO(
         Boolean fechaTentativa,
         String ventanasDisponibles,
         String horaServicio,
-        Boolean enEspera
+        Boolean enEspera,
+        // Descuento por alcance + desglose calculado en el backend (9-oct-2026)
+        String descuentoAlcance,
+        TotalesDTO totales
 ) {}

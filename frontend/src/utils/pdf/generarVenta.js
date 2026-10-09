@@ -10,7 +10,7 @@ import {
     dibujarQRWhatsApp,
 } from './bloques.js';
 import { cargarFoto, checkSalto, sanitizarTexto } from './helpers.js';
-import { construirFilasItem, getLabelTipo, TABLE_HEAD_STYLES, TABLE_BODY_STYLES, makeDidDrawPage, dibujarObservaciones } from './pdfShared.js';
+import { construirFilasItem, getLabelTipo, TABLE_HEAD_STYLES, TABLE_BODY_STYLES, makeDidDrawPage, dibujarObservaciones, montosDescuento, pesos } from './pdfShared.js';
 
 export async function generarPresupuestoVenta(doc, {
     ticketItems, cliente, sede, y, fecha, descuentoPorcentaje, nroDoc, leyenda = '', sinPrecios = false,
@@ -317,7 +317,7 @@ export async function generarPresupuestoVenta(doc, {
 }
 
 export async function generarComprobante(doc, {
-    ticketItems, cliente, sede, y, fecha, nroDoc, descuentoPorcentaje, leyenda, sinPrecios = false,
+    ticketItems, cliente, sede, y, fecha, nroDoc, descuentoPorcentaje, descuentoAlcance = 'TOTAL', totales = null, leyenda, sinPrecios = false,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
 
@@ -425,12 +425,13 @@ export async function generarComprobante(doc, {
     }
 
     if (!sinPrecios) {
-        const subtotalTotal = ticketItems.reduce(
-            (a, it) => a + (parseFloat(it.totalCalculado) || parseFloat(it.costo) || 0), 0,
-        );
-        const pct       = parseFloat(descuentoPorcentaje || 0);
-        const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
-        const total     = subtotalTotal - descuento;
+        // Comprobante de un servicio sin equipo: montos del backend (servicio.totales) si vienen
+        const md = montosDescuento({
+            totalBruto: ticketItems.reduce((a, it) => a + (parseFloat(it.totalCalculado) || parseFloat(it.costo) || 0), 0),
+            descuentoPorcentaje, descuentoAlcance, totales,
+        });
+        const { pct, descuento, total } = md;
+        const subtotalTotal = md.subtotal;
 
         // Desglose subtotal → descuento → total
         if (pct > 0) {
@@ -438,12 +439,12 @@ export async function generarComprobante(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 4, y + 4.5);
-            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
+            doc.text(`$ ${pesos(subtotalTotal)}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
-            doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
-            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
+            doc.text(md.label, M + 4, y + 4.5);
+            doc.text(`- $ ${pesos(descuento)}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -462,7 +463,7 @@ export async function generarComprobante(doc, {
         doc.text('TOTAL', M + 4, y + 5.5);
         doc.setFontSize(T.xl);
         doc.setTextColor(...C.navy);
-        doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 4, y + 10, { align: 'right' });
+        doc.text(`$ ${pesos(total)}`, pageW - M - 4, y + 10, { align: 'right' });
         y += 18;
     }
 

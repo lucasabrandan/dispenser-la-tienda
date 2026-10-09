@@ -29,6 +29,7 @@ import TrabajoFila, { ENCABEZADO_GRID } from './TrabajoFila';
 import TrabajoEditorModal from './TrabajoEditorModal';
 import { NuevoSheet, TrabajoMenu } from './TrabajoMenus';
 import AvatarTecnico from '../ui/AvatarTecnico';
+import { totalServicio } from '../../utils/descuento';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Trabajos (2-oct-2026) — una sola pantalla para todo el recorrido de un trabajo:
@@ -65,6 +66,8 @@ const fechaCorta = (f) => {
 };
 const primerNombre = (n) => (n || '').trim().split(' ')[0] || '';
 const totalItems = (s) => (s.items || []).reduce((a, i) => a + Number(i.costo || 0), 0);
+// Total con descuento: el del backend (s.totales). Antes la lista mostraba el total sin descuento.
+const totalTrabajo = (s) => totalServicio(s);
 const esCierreMensual = (s) =>
     (s.items || []).length > 0 && totalItems(s) === 0 && /cierre mensual/i.test(s.observaciones || '');
 
@@ -179,7 +182,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                     equipos.slice(0, 2).map(i => i.equipoSerial).join(', ') || null].filter(Boolean).join(' · '),
                 busca: [s.clienteNombre, s.sedeNombre, s.sedeDireccion, s.nroDocumento, s.usuarioNombre,
                     ...equipos.map(i => i.equipoSerial)].filter(Boolean).join(' ').toLowerCase(),
-                monto: Number(s.montoFinal) > 0 ? Number(s.montoFinal) : totalItems(s),
+                monto: Number(s.montoFinal) > 0 ? Number(s.montoFinal) : totalTrabajo(s),
                 esVenta: s.servicioTipo === 'VENTA',
             };
             let fila;
@@ -295,7 +298,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
         detalle: [s.sedeNombre, s.sedeDireccion].filter(Boolean).join(' · '),
         busca: [s.clienteNombre, s.sedeNombre, s.sedeDireccion, s.usuarioNombre].filter(Boolean).join(' ').toLowerCase(),
         tecnico: s.usuarioNombre || '', fecha: fechaCorta(s.fecha),
-        monto: Number(s.montoFinal) > 0 ? Number(s.montoFinal) : totalItems(s), esVenta: s.servicioTipo === 'VENTA',
+        monto: Number(s.montoFinal) > 0 ? Number(s.montoFinal) : totalTrabajo(s), esVenta: s.servicioTipo === 'VENTA',
         accion: null,
     })), [archivados]);
 
@@ -363,6 +366,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
                 tecnico: s.items?.[0]?.tecnico || s.usuarioNombre || 'Técnico',
                 ticketItems: (s.items || []).map(it => ({ ...it, totalCalculado: parseFloat(it.costo) || 0, trabajo: it.trabajoRealizado || '' })),
                 fechaServicio: s.fecha, descuentoPorcentaje: s.descuentoPorcentaje || 0,
+                descuentoAlcance: s.descuentoAlcance || 'TOTAL', totales: s.totales || null,
                 leyenda: s.observaciones || '', incluirFirmas: false, sinPrecios,
             });
             toast.success('PDF generado', { id: t });
@@ -386,7 +390,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
         return f.etapa === 'CAMINO' ? `${n} va en camino` : `${n} está trabajando`;
     };
 
-    const calcularTotal = (s) => totalItems(s);
+    const calcularTotal = (s) => totalTrabajo(s);
 
     // ⋯ de cada fila
     const duplicar = (s) => setEditor({ modo: 'duplicar', servicio: {
@@ -758,7 +762,7 @@ export default function TrabajosManager({ nuevoInicial = null, clienteInicial = 
             {detalle && (() => {
                 const f = filas.find(x => x.servicio?.id === detalle.id) || filasArchivadas.find(x => x.servicio?.id === detalle.id);
                 const orden = f?.orden || null;
-                const total = f?.monto ?? (Number(detalle.montoFinal) > 0 ? Number(detalle.montoFinal) : totalItems(detalle));
+                const total = f?.monto ?? (Number(detalle.montoFinal) > 0 ? Number(detalle.montoFinal) : totalTrabajo(detalle));
                 const editable = !['COBRADO', 'ARCHIVADO', 'CANCELADO'].includes(detalle.estado);
                 return (
                     <DetalleTrabajoSheet servicio={detalle} orden={orden} total={total}

@@ -1,6 +1,31 @@
 // Helpers compartidos entre los generadores de PDF
 import { C, T, M as MARGIN, CONTENT_W } from './theme.js';
 import { dibujarHeaderCompacto } from './layout.js';
+import { leyendaDescuento } from '../descuento.js';
+
+// Montos del descuento para el PDF (9-oct-2026). Con `totales` (calculados por el
+// backend) se usan tal cual: el PDF no recalcula. Sin `totales` (algo que no pasó
+// por el backend) se mantiene el cálculo histórico sobre el total.
+export function montosDescuento({ totalBruto = 0, descuentoPorcentaje = 0, descuentoAlcance = 'TOTAL', totales = null }) {
+    if (totales) {
+        const pct = parseFloat(totales.descuentoPorcentaje) || 0;
+        const alcance = totales.descuentoAlcance || 'TOTAL';
+        return {
+            pct, alcance,
+            subtotal:  Number(totales.subtotal),
+            descuento: Number(totales.descuentoMonto),
+            total:     Number(totales.total),
+            label:     leyendaDescuento(pct, alcance),
+        };
+    }
+    const pct = parseFloat(descuentoPorcentaje) || 0;
+    const descuento = pct > 0 ? Math.round(totalBruto * pct) / 100 : 0;
+    return { pct, alcance: 'TOTAL', subtotal: totalBruto, descuento, total: totalBruto - descuento,
+        label: leyendaDescuento(pct, 'TOTAL') };
+}
+
+// $ con hasta 2 decimales, formato argentino
+export const pesos = v => Number(v || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 });
 
 // Detecta tipo de documento
 export function detectarTipo({ tipo, esPresupuesto, ticketItems, esTecnicoForzado }) {
@@ -62,23 +87,25 @@ export function construirFilasItem(item) {
 }
 
 // Desglose subtotal → descuento → total (compartido entre todos los generadores)
-export function dibujarDesgloseTotal(doc, { y, pageW, totalEquipo, descuentoPorcentaje, sinItems = false, labelTotal = 'TOTAL DEL SERVICIO' }) {
-    const pct = parseFloat(descuentoPorcentaje || 0);
-    const descuentoMonto = (!sinItems && pct > 0) ? Math.round(totalEquipo * pct / 100) : 0;
-    const totalFinal = totalEquipo - descuentoMonto;
-    const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${totalFinal.toLocaleString('es-AR')}`;
+export function dibujarDesgloseTotal(doc, { y, pageW, totalEquipo, descuentoPorcentaje, descuentoAlcance = 'TOTAL', totales = null, sinItems = false, labelTotal = 'TOTAL DEL SERVICIO' }) {
+    const md = montosDescuento({ totalBruto: totalEquipo, descuentoPorcentaje, descuentoAlcance, totales });
+    const pct = md.pct;
+    const descuentoMonto = sinItems ? 0 : md.descuento;
+    const totalFinal = sinItems ? totalEquipo : md.total;
+    totalEquipo = md.subtotal;
+    const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${pesos(totalFinal)}`;
 
     if (pct > 0 && !sinItems) {
         doc.setFontSize(T.xs);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...C.grayText);
         doc.text('Subtotal', MARGIN + 3, y + 4.5);
-        doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - MARGIN - 2, y + 4.5, { align: 'right' });
+        doc.text(`$ ${pesos(totalEquipo)}`, pageW - MARGIN - 2, y + 4.5, { align: 'right' });
         y += 6;
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...C.red);
-        doc.text(`Descuento ${pct}%`, MARGIN + 3, y + 4.5);
-        doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - MARGIN - 2, y + 4.5, { align: 'right' });
+        doc.text(md.label, MARGIN + 3, y + 4.5);
+        doc.text(`- $ ${pesos(descuentoMonto)}`, pageW - MARGIN - 2, y + 4.5, { align: 'right' });
         y += 6;
         doc.setDrawColor(...C.grayBorder);
         doc.setLineWidth(0.15);

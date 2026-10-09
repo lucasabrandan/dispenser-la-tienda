@@ -15,12 +15,12 @@ import {
 import { cargarFoto, checkSalto, sanitizarTexto } from './helpers.js';
 import { dibujarPaginaEvidencia } from './fotos.js';
 import { altoRegistroFotografico } from './bloques/fotosQR.js';
-import { construirFilasItem, getLabelTipo, TABLE_HEAD_STYLES, TABLE_BODY_STYLES, makeDidDrawPage } from './pdfShared.js';
+import { construirFilasItem, getLabelTipo, TABLE_HEAD_STYLES, TABLE_BODY_STYLES, makeDidDrawPage, montosDescuento, pesos } from './pdfShared.js';
 
 export async function generarSingleTecnico(doc, {
     item, cliente, sede, tipo, y, fecha, nroDoc, tecnico,
     firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, proximoMantenimiento,
-    incluirFirmas = true, descuentoPorcentaje = 0, leyenda = '', sinPrecios = false,
+    incluirFirmas = true, descuentoPorcentaje = 0, descuentoAlcance = 'TOTAL', totales = null, leyenda = '', sinPrecios = false,
 }) {
     const pageW = doc.internal.pageSize.getWidth();
 
@@ -174,22 +174,24 @@ export async function generarSingleTecnico(doc, {
 
     if (!sinPrecios) {
         // Desglose subtotal → descuento → total
-        const pct = parseFloat(descuentoPorcentaje || 0);
-        const descuentoMonto = (!sinItems && pct > 0) ? Math.round(totalEquipo * pct / 100) : 0;
-        const totalFinal = totalEquipo - descuentoMonto;
-        const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${totalFinal.toLocaleString('es-AR')}`;
+        // Montos del backend (servicio.totales); el PDF solo los muestra
+        const md = montosDescuento({ totalBruto: totalEquipo, descuentoPorcentaje, descuentoAlcance, totales });
+        const pct = md.pct;
+        const descuentoMonto = sinItems ? 0 : md.descuento;
+        const totalFinal = sinItems ? totalEquipo : md.total;
+        const totalLabel = sinItems ? 'A coordinar con el cliente' : `$ ${pesos(totalFinal)}`;
 
         if (pct > 0 && !sinItems) {
             doc.setFontSize(T.xs);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 3, tableEndY + 4.5);
-            doc.text(`$ ${totalEquipo.toLocaleString('es-AR')}`, pageW - M - 4, tableEndY + 4.5, { align: 'right' });
+            doc.text(`$ ${pesos(md.subtotal)}`, pageW - M - 4, tableEndY + 4.5, { align: 'right' });
             tableEndY += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
-            doc.text(`Descuento ${pct}%`, M + 3, tableEndY + 4.5);
-            doc.text(`- $ ${descuentoMonto.toLocaleString('es-AR')}`, pageW - M - 4, tableEndY + 4.5, { align: 'right' });
+            doc.text(md.label, M + 3, tableEndY + 4.5);
+            doc.text(`- $ ${pesos(descuentoMonto)}`, pageW - M - 4, tableEndY + 4.5, { align: 'right' });
             tableEndY += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -322,7 +324,7 @@ export async function generarSingleTecnico(doc, {
 export async function generarMultiTecnico(doc, {
     ticketItems, cliente, sede, tipo, fecha, nroDoc, tecnico, y: yInicial,
     firmaCliente, firmaTecnico, aclaracionCliente = '', garantiaTexto, leyenda,
-    incluirFirmas = true, descuentoPorcentaje = 0, sinPrecios = false,
+    incluirFirmas = true, descuentoPorcentaje = 0, descuentoAlcance = 'TOTAL', totales = null, sinPrecios = false,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
 
@@ -476,21 +478,23 @@ export async function generarMultiTecnico(doc, {
 
     if (!sinPrecios) {
         // Desglose subtotal → descuento → total
-        const pctM = parseFloat(descuentoPorcentaje || 0);
-        const descuentoM = pctM > 0 ? Math.round(subtotalTotal * pctM / 100) : 0;
-        const totalFinalM = subtotalTotal - descuentoM;
+        // Montos del backend (servicio.totales); el PDF solo los muestra
+        const mdM = montosDescuento({ totalBruto: subtotalTotal, descuentoPorcentaje, descuentoAlcance, totales });
+        const pctM = mdM.pct;
+        const descuentoM = mdM.descuento;
+        const totalFinalM = mdM.total;
 
         if (pctM > 0) {
             doc.setFontSize(T.xs);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 4, y + 4.5);
-            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
+            doc.text(`$ ${pesos(mdM.subtotal)}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
-            doc.text(`Descuento ${pctM}%`, M + 4, y + 4.5);
-            doc.text(`- $ ${descuentoM.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
+            doc.text(mdM.label, M + 4, y + 4.5);
+            doc.text(`- $ ${pesos(descuentoM)}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -508,7 +512,7 @@ export async function generarMultiTecnico(doc, {
         doc.text('TOTAL FACTURADO', M + 4, y + 5.5);
         doc.setFontSize(T.xl);
         doc.setTextColor(...C.navy);
-        doc.text(`$ ${totalFinalM.toLocaleString('es-AR')}`, pageW - M - 4, y + 10, { align: 'right' });
+        doc.text(`$ ${pesos(totalFinalM)}`, pageW - M - 4, y + 10, { align: 'right' });
         y += 18;
     }
 

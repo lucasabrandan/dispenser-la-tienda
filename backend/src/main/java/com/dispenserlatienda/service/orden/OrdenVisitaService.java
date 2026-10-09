@@ -539,6 +539,7 @@ public class OrdenVisitaService {
             servicio.setOrdenId(o.getId());
             servicio.setObservaciones(o.getDescripcion());
             servicio.setDescuentoPorcentaje(BigDecimal.ZERO);
+            servicio.setDescuentoAlcance(com.dispenserlatienda.domain.servicio.DescuentoAlcance.TOTAL);
             servicio.setCreadoEn(LocalDateTime.now());
 
             ServicioItem item = new ServicioItem();

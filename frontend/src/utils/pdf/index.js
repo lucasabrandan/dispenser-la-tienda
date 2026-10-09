@@ -24,6 +24,8 @@ export const generarPDF = async ({
     ticketItems        = [],
     fechaServicio,
     descuentoPorcentaje = 0,
+    descuentoAlcance   = 'TOTAL',
+    totales            = null,   // desglose del backend (servicio.totales); si viene, el PDF no recalcula
     leyenda            = '',
     servicioId         = null,
     nroDocumentoExistente = null,
@@ -76,7 +78,7 @@ export const generarPDF = async ({
         firmaCliente:  incluirFirmasFinal ? firmaCliente  : null,
         firmaTecnico:  incluirFirmasFinal ? firmaTecnico  : null,
         incluirFirmas: incluirFirmasFinal, aclaracionCliente,
-        descuentoPorcentaje, garantiaTexto,
+        descuentoPorcentaje, descuentoAlcance, totales, garantiaTexto,
         proximoMantenimiento, leyenda, sinPrecios, fechaVisita,
     };
 

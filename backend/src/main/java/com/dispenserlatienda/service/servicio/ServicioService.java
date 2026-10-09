@@ -405,6 +405,7 @@ public class ServicioService {
         limpio.setEstado(dto.getEstado());
         limpio.setFotoRemito(dto.getFotoRemito() != null ? dto.getFotoRemito() : actual.getFotoRemito());
         limpio.setDescuentoPorcentaje(actual.getDescuentoPorcentaje());
+        limpio.setDescuentoAlcance(actual.getDescuentoAlcance().name());
         limpio.setPresupuestoOrigenId(actual.getPresupuestoOrigenId());
         limpio.setOrdenId(actual.getOrdenId());
         if ("COBRADO".equals(dto.getEstado())) {
@@ -452,6 +453,7 @@ public class ServicioService {
         if (orden.getClienteNombre() != null && !orden.getClienteNombre().isBlank()) dto.setClienteNombre(orden.getClienteNombre());
         dto.setUsuarioId(tecnico.getId());
         dto.setDescuentoPorcentaje(null);
+        dto.setDescuentoAlcance(null);
         if (!"COBRADO".equals(dto.getEstado())) { dto.setModalidadCobro(null); dto.setMontoFinal(null); }
         // Sin costos internos ni precios de repuestos inventados: van del catálogo
         List<ServicioItemCreateDTO> items = new ArrayList<>();
@@ -516,7 +518,8 @@ public class ServicioService {
                 d.usuarioId(), d.usuarioNombre(), d.modificadoPorNombre(), d.fechaModificacion(), d.presupuestoOrigenId(),
                 d.modalidadCobro(), d.montoFinal(), d.fechaCompletado(), d.fechaFacturacion(), d.fechaCobro(),
                 d.datosBancariosEnviados(), d.esVisita(), d.abonoVisita(), d.presupuestoVisitaId(), d.duracionMinutos(),
-                d.aceptaTerminos(), d.fechaTentativa(), d.ventanasDisponibles(), d.horaServicio(), d.enEspera());
+                d.aceptaTerminos(), d.fechaTentativa(), d.ventanasDisponibles(), d.horaServicio(), d.enEspera(),
+                d.descuentoAlcance(), d.totales());
     }
 
     private ServicioDTO procesarGuardado(Servicio servicio, ServicioCreateDTO dto) {
@@ -570,6 +573,11 @@ public class ServicioService {
 
         servicio.setFotoRemito(dto.getFotoRemito());
         servicio.setDescuentoPorcentaje(dto.getDescuentoPorcentaje());
+        // Alcance del descuento: si un cliente viejo del front no lo manda al editar,
+        // se conserva el que tenía (no se pisa con TOTAL). Al crear, null = TOTAL.
+        if (dto.getDescuentoAlcance() != null || servicio.getId() == null) {
+            servicio.setDescuentoAlcance(DescuentoAlcance.de(dto.getDescuentoAlcance()));
+        }
         servicio.setObservaciones(dto.getObservaciones());
         servicio.setDuracionMinutos(dto.getDuracionMinutos());
         servicio.setAceptaTerminos(dto.getAceptaTerminos());
@@ -1000,7 +1008,9 @@ public class ServicioService {
                 s.getFechaTentativa(),
                 s.getVentanasDisponibles(),
                 s.getHoraServicio(),
-                s.isEnEspera()
+                s.isEnEspera(),
+                s.getDescuentoAlcance().name(),
+                CalculoTotales.de(s).totales()
         );
     }
 
@@ -1131,18 +1141,18 @@ public class ServicioService {
             // completa (siempre cero) -- el descuento real vive a nivel servicio
             // (descuentoPorcentaje), aplicado aca igual que en
             // calcularGananciaNetaServicio.
-            BigDecimal descPct = servicio.getDescuentoPorcentaje();
-            BigDecimal factorDescuento = (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0)
-                    ? BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP))
-                    : BigDecimal.ONE;
+            // Descuento por alcance (9-oct-2026): a cada ítem le toca su parte del
+            // descuento según el alcance (todo / mano de obra / repuestos).
+            List<BigDecimal> descPorItem = CalculoTotales.de(servicio).descuentoPorItem();
+            int idx = 0;
             for (ServicioItem item : servicio.getItems()) {
                 // Bug real (9-oct-2026): sumaba costo + costoExtra, pero `costo` ya es el
                 // total del ítem (mano de obra + repuestos) y `costoExtra` es solo la mano
                 // de obra: la mano de obra se contaba dos veces en la facturación del mes
                 // (agosto 2026 daba $1.505.329,89 en vez de $935.419,89).
                 BigDecimal costoBase = item.getCosto() != null ? item.getCosto() : BigDecimal.ZERO;
-                BigDecimal venta = costoBase
-                        .multiply(factorDescuento)
+                BigDecimal venta = costoBase.max(BigDecimal.ZERO)
+                        .subtract(descPorItem.get(idx++))
                         .setScale(2, java.math.RoundingMode.HALF_UP);
 
                 facturacion = facturacion.add(venta);
@@ -1351,15 +1361,8 @@ public class ServicioService {
         if (s.getMontoFinal() != null && s.getMontoFinal().compareTo(BigDecimal.ZERO) > 0) {
             cobrado = s.getMontoFinal().setScale(2, rm);
         } else {
-            cobrado = s.getItems().stream()
-                    .map(i -> i.getCosto() != null ? i.getCosto() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal descPct = s.getDescuentoPorcentaje();
-            if (descPct != null && descPct.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal factor = BigDecimal.ONE.subtract(descPct.divide(BigDecimal.valueOf(100), 4, rm));
-                cobrado = cobrado.multiply(factor);
-            }
-            cobrado = cobrado.setScale(2, rm);
+            // Total con descuento por alcance, el mismo que ve el cliente (CalculoTotales)
+            cobrado = CalculoTotales.de(s).totales().total().setScale(2, rm);
         }
 
         BigDecimal productos = BigDecimal.ZERO;

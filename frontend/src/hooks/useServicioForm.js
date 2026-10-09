@@ -6,6 +6,14 @@ import { toTitleCase } from '../utils/titleCase';
 
 const DRAFT_KEY = 'servicio_borrador';
 
+// Montos de un ítem tal como los guarda el backend: costo = total del ítem
+// (mano de obra + repuestos), costoExtra = mano de obra. Se usa igual para
+// guardar y para pedir la vista previa del total, así nunca difieren.
+export const montosItem = it => ({
+  costo:      parseFloat(it.totalCalculado) || parseFloat(it.costoExtra) || 0,
+  costoExtra: parseFloat(it.costoExtra) || 0,
+});
+
 export function useServicioForm(servicioParaEditar = null, clienteInicialId = null, presupuestoOrigen = null, ordenOrigen = null) {
   const [db, setDb] = useState({ clientes: [], sedes: [], equipos: [], repuestos: [] });
   const [configGlobal, setConfigGlobal] = useState(null);
@@ -29,6 +37,10 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
   const [estaBloqueado, setEstaBloqueado] = useState(false);
   const [historialEquipo, setHistorialEquipo] = useState(null);
   const [descuentoPorcentaje, setDescuentoPorcentaje] = useState(0);
+  // Sobre qué se aplica el %: TOTAL | MANO_DE_OBRA | REPUESTOS (9-oct-2026)
+  const [descuentoAlcance, setDescuentoAlcance] = useState('TOTAL');
+  // Total calculado por el backend (única fuente): { manoDeObra, repuestos, subtotal, descuentoMonto, total, ... }
+  const [totales, setTotales] = useState(null);
 
   const [modalClienteAbierto, setModalClienteAbierto] = useState(false);
   const [nombreClientePrellenado, setNombreClientePrellenado] = useState('');
@@ -107,6 +119,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
               const { data: p } = await api.get(`/servicios/${ordenOrigen.presupuestoId}`);
               setClienteId(p.clienteId?.toString() || null);
               setDescuentoPorcentaje(p.descuentoPorcentaje || 0);
+              setDescuentoAlcance(p.descuentoAlcance || 'TOTAL');
               if (p.observaciones) setLeyenda(p.observaciones);
               setItemActual(prev => ({ ...prev, sedeId: p.sedeId, sedeNombre: p.sedeNombre }));
               setTicketItems(
@@ -133,6 +146,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           setEsPresupuesto(false); // El servicio resultante será REALIZADO
           setClienteId(presupuestoOrigen.clienteId?.toString() || null);
           setDescuentoPorcentaje(presupuestoOrigen.descuentoPorcentaje || 0);
+          setDescuentoAlcance(presupuestoOrigen.descuentoAlcance || 'TOTAL');
           if (presupuestoOrigen.observaciones) setLeyenda(presupuestoOrigen.observaciones);
           setItemActual(prev => ({ ...prev, sedeId: presupuestoOrigen.sedeId, sedeNombre: presupuestoOrigen.sedeNombre }));
           setTicketItems(
@@ -159,6 +173,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           setIdEdicion(servicioParaEditar.id);
           setEsPresupuesto(servicioParaEditar.servicioTipo === 'TECNICA');
           setDescuentoPorcentaje(servicioParaEditar.descuentoPorcentaje || 0);
+          setDescuentoAlcance(servicioParaEditar.descuentoAlcance || 'TOTAL');
           setTicketItems(
             servicioParaEditar.items.map(it => ({
               sedeId:            servicioParaEditar.sedeId,
@@ -227,12 +242,12 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
         ticketItems, itemActual, clienteId,
-        fechaServicio, descuentoPorcentaje, leyenda,
+        fechaServicio, descuentoPorcentaje, descuentoAlcance, leyenda,
         duracionMinutos, tecnicoSeleccionado,
         ts: Date.now(),
       }));
     } catch { /* localStorage lleno — ignorar */ }
-  }, [ticketItems, itemActual, clienteId, fechaServicio, descuentoPorcentaje, leyenda, borradorDisponible]);
+  }, [ticketItems, itemActual, clienteId, fechaServicio, descuentoPorcentaje, descuentoAlcance, leyenda, borradorDisponible]);
 
   const recuperarBorrador = () => {
     try {
@@ -242,6 +257,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       if (d.clienteId)               setClienteId(d.clienteId);
       if (d.fechaServicio)           setFechaServicio(d.fechaServicio);
       if (d.descuentoPorcentaje !== undefined) setDescuentoPorcentaje(d.descuentoPorcentaje);
+      if (d.descuentoAlcance)        setDescuentoAlcance(d.descuentoAlcance);
       if (d.leyenda)                 setLeyenda(d.leyenda);
       if (d.duracionMinutos)         setDuracionMinutos(d.duracionMinutos);
       if (d.tecnicoSeleccionado)     setTecnicoSeleccionado(d.tecnicoSeleccionado);
@@ -313,26 +329,48 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     return { subtotal, costoTotal: 0, ganancia: 0, margen: 0 };
   };
 
-  const calcularResumenGanancia = () => {
-    let totalVenta = 0;
-    let totalCosto = 0;
-
-    ticketItems.forEach(item => {
-      item.repuestosUsados.forEach(r => {
-        const g = calcularGananciaRepuesto(r, r.cantidad);
-        totalVenta += g.subtotal;
-        totalCosto += g.costoTotal;
-      });
-      totalVenta += parseFloat(item.costoExtra) || 0;
+  // Vista previa del total: se pide al backend cada vez que cambian ítems, % o alcance.
+  // Pequeña espera para no pedir en cada tecla; solo vale la última respuesta.
+  const pedidoTotales = useRef(0);
+  const pedirTotales = async () => {
+    const n = ++pedidoTotales.current;
+    const { data } = await api.post('/servicios/calcular-totales', {
+      descuentoPorcentaje: Number(descuentoPorcentaje) || 0,
+      descuentoAlcance,
+      items: ticketItems.map(montosItem),
     });
+    if (n === pedidoTotales.current) setTotales(data);
+    return data;
+  };
+  useEffect(() => {
+    setTotales(null);
+    const t = setTimeout(() => { pedirTotales().catch(() => {}); }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketItems, descuentoPorcentaje, descuentoAlcance]);
+  // Para el PDF: usa el último total, o lo pide en el momento si todavía no llegó
+  const obtenerTotales = async () => totales || pedirTotales();
 
-    const descuento         = (totalVenta * descuentoPorcentaje) / 100;
-    const totalConDescuento = totalVenta - descuento;
-    const gananciaBruta     = totalConDescuento - totalCosto;
-    const margenFinal       = totalConDescuento > 0
+  // El total con descuento lo calcula el backend (POST /servicios/calcular-totales,
+  // mismo cálculo que usa al guardar). Acá solo se suma el costo de los repuestos,
+  // que es privado y sirve para la rentabilidad. Mientras llega la respuesta,
+  // `calculando` es true y los montos quedan en null (la UI muestra "…").
+  const calcularResumenGanancia = () => {
+    let totalCosto = 0;
+    ticketItems.forEach(item => {
+      item.repuestosUsados.forEach(r => { totalCosto += calcularGananciaRepuesto(r, r.cantidad).costoTotal; });
+    });
+    const t = totales;
+    const totalConDescuento = t ? Number(t.total) : null;
+    const gananciaBruta     = t ? totalConDescuento - totalCosto : null;
+    const margenFinal       = t && totalConDescuento > 0
       ? ((gananciaBruta / totalConDescuento) * 100).toFixed(1) : 0;
-
-    return { totalVenta, totalCosto, descuento, totalConDescuento, gananciaBruta, margenFinal };
+    return {
+      totales: t, calculando: !t,
+      totalVenta: t ? Number(t.subtotal) : null,
+      descuento:  t ? Number(t.descuentoMonto) : null,
+      totalConDescuento, totalCosto, gananciaBruta, margenFinal,
+    };
   };
 
   // ¿Existe este N/S en el inventario pero en una sede de otro cliente?
@@ -701,7 +739,6 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       }
 
       const tieneEquipo = ticketItems.some(it => it.equipoSerial && it.equipoSerial !== 'MOSTRADOR' && it.equipoSerial !== 'SIN-SN');
-      const { totalConDescuento } = calcularResumenGanancia();
       const nombreCliente = overrides.clienteNombre || clienteObj?.nombre || 'Particular';
 
       // Técnico: usa el seleccionado por admin, o el usuario logueado
@@ -760,7 +797,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
         clienteNombre:      nombreCliente,
         sedeNombre:         nombreSedeF,
         descuentoPorcentaje,
-        totalConDescuento,
+        descuentoAlcance,
         observaciones: leyenda,
         duracionMinutos: duracionMinutos || null,
         aceptaTerminos: aceptaTerminos || false,
@@ -770,8 +807,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
           return {
             equipoSerial:     it.equipoSerial || 'MOSTRADOR',
             tecnico:          tecnicoFinal.nombre,
-            costo:            parseFloat(it.totalCalculado) || parseFloat(it.costoExtra) || 0,
-            costoExtra:       parseFloat(it.costoExtra) || 0,
+            ...montosItem(it),
             metodoPago:       'EFECTIVO',
             trabajoRealizado: it.trabajo || it.resumenTexto || '',
             trabajoTipo:      it.esVisita ? 'VISITA' : (tieneEquipo ? (esFiltro ? 'CAMBIO_FILTRO' : 'REPARACION') : 'VENTA'),
@@ -823,6 +859,7 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
       setClienteId(null);
       setIdEdicion(null);
       setDescuentoPorcentaje(0);
+      setDescuentoAlcance('TOTAL');
       setLeyenda(LEYENDA_DEFAULT);
       setFechaServicio(getTodayISO());
       setFechaVisita('');
@@ -873,6 +910,8 @@ export function useServicioForm(servicioParaEditar = null, clienteInicialId = nu
     tecnicoSeleccionado, setTecnicoSeleccionado,
     fechaVisita, setFechaVisita,
     descuentoPorcentaje, setDescuentoPorcentaje,
+    descuentoAlcance, setDescuentoAlcance,
+    totales, obtenerTotales,
     modalClienteAbierto, setModalClienteAbierto,
     nombreClientePrellenado, setNombreClientePrellenado,
     modalSedeAbierto, setModalSedeAbierto,

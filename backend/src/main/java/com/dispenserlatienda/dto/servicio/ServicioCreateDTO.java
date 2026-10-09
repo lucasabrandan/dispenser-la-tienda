@@ -20,6 +20,9 @@ public class ServicioCreateDTO {
     private String estado;
     private String fotoRemito;
     private java.math.BigDecimal descuentoPorcentaje;
+    // TOTAL | MANO_DE_OBRA | REPUESTOS (null = TOTAL). El total NO se recibe del front:
+    // si llega "totalConDescuento" en el JSON se ignora y el backend lo calcula.
+    private String descuentoAlcance;
     private Long presupuestoOrigenId;
     private Long ordenId;
     private String modalidadCobro;
@@ -57,6 +60,8 @@ public class ServicioCreateDTO {
     public void setFotoRemito(String fotoRemito) { this.fotoRemito = fotoRemito; }
     public java.math.BigDecimal getDescuentoPorcentaje() { return descuentoPorcentaje; }
     public void setDescuentoPorcentaje(java.math.BigDecimal descuentoPorcentaje) { this.descuentoPorcentaje = descuentoPorcentaje; }
+    public String getDescuentoAlcance() { return descuentoAlcance; }
+    public void setDescuentoAlcance(String descuentoAlcance) { this.descuentoAlcance = descuentoAlcance; }
     public Long getPresupuestoOrigenId() { return presupuestoOrigenId; }
     public void setPresupuestoOrigenId(Long presupuestoOrigenId) { this.presupuestoOrigenId = presupuestoOrigenId; }
     public Long getOrdenId() { return ordenId; }

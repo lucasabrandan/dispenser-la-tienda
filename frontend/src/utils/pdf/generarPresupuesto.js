@@ -12,11 +12,11 @@ import {
 } from './bloques.js';
 import { cargarFoto, checkSalto, sanitizarTexto, fitEnCaja } from './helpers.js';
 import { dibujarPaginaEvidencia } from './fotos.js';
-import { construirFilasItem, getLabelTipo, TABLE_HEAD_STYLES, TABLE_BODY_STYLES, makeDidDrawPage } from './pdfShared.js';
+import { construirFilasItem, getLabelTipo, TABLE_HEAD_STYLES, TABLE_BODY_STYLES, makeDidDrawPage, montosDescuento, pesos } from './pdfShared.js';
 
 export async function generarSinglePresupuesto(doc, {
     item, cliente, sede, y, fecha, nroDoc, tecnico,
-    firmaCliente, firmaTecnico, descuentoPorcentaje, incluirFirmas = true, sinPrecios = false, fechaVisita = null,
+    firmaCliente, firmaTecnico, descuentoPorcentaje, descuentoAlcance = 'TOTAL', totales = null, incluirFirmas = true, sinPrecios = false, fechaVisita = null,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
@@ -46,10 +46,10 @@ export async function generarSinglePresupuesto(doc, {
 
     // Tabla de precios
     const filas = construirFilasItem(item);
-    const totalBruto = parseFloat(item.totalCalculado || item.costo || 0);
-    const pct        = parseFloat(descuentoPorcentaje || 0);
-    const descuento  = pct > 0 ? totalBruto * pct / 100 : 0;
-    const total      = totalBruto - descuento;
+    // Montos del backend (servicio.totales); el PDF solo los muestra
+    const md         = montosDescuento({ totalBruto: parseFloat(item.totalCalculado || item.costo || 0), descuentoPorcentaje, descuentoAlcance, totales });
+    const { pct, descuento, total } = md;
+    const totalBruto = md.subtotal;
 
     const filasConPlaceholder = filas.length > 0 ? filas : [{
         concepto: 'Servicio tecnico — Diagnostico y presupuesto', cant: 1,
@@ -170,7 +170,7 @@ export async function generarSinglePresupuesto(doc, {
     let presupTableEndY = doc.lastAutoTable.finalY + 8;
 
     if (!sinPrecios) {
-        const totalPresupLabel = sinItems ? 'A coordinar con el cliente' : total.toLocaleString('es-AR');
+        const totalPresupLabel = sinItems ? 'A coordinar con el cliente' : pesos(total);
 
         // Desglose subtotal → descuento → total
         if (pct > 0 && !sinItems) {
@@ -178,12 +178,12 @@ export async function generarSinglePresupuesto(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 3, presupTableEndY + 4.5);
-            doc.text(`$ ${totalBruto.toLocaleString('es-AR')}`, pageW - M - 4, presupTableEndY + 4.5, { align: 'right' });
+            doc.text(`$ ${pesos(totalBruto)}`, pageW - M - 4, presupTableEndY + 4.5, { align: 'right' });
             presupTableEndY += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
-            doc.text(`Descuento ${pct}%`, M + 3, presupTableEndY + 4.5);
-            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 4, presupTableEndY + 4.5, { align: 'right' });
+            doc.text(md.label, M + 3, presupTableEndY + 4.5);
+            doc.text(`- $ ${pesos(descuento)}`, pageW - M - 4, presupTableEndY + 4.5, { align: 'right' });
             presupTableEndY += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -244,24 +244,25 @@ export async function generarSinglePresupuesto(doc, {
 
 export async function generarMultiPresupuesto(doc, {
     ticketItems, cliente, sede, fecha, nroDoc, tecnico, y: yInicial,
-    firmaCliente, firmaTecnico, incluirFirmas = true, descuentoPorcentaje, leyenda, sinPrecios = false, fechaVisita = null,
+    firmaCliente, firmaTecnico, incluirFirmas = true, descuentoPorcentaje, descuentoAlcance = 'TOTAL', totales = null, leyenda, sinPrecios = false, fechaVisita = null,
 }) {
     const pageW   = doc.internal.pageSize.getWidth();
     const empresa = getEmpresa();
 
     let y = yInicial ?? (HEADER_H.compact + 8);
 
-    const subtotalTotal = ticketItems.reduce(
-        (a, it) => a + (parseFloat(it.totalCalculado) || parseFloat(it.costo) || 0), 0,
-    );
-    const pct       = parseFloat(descuentoPorcentaje || 0);
-    const descuento = pct > 0 ? subtotalTotal * pct / 100 : 0;
-    const total     = subtotalTotal - descuento;
+    // Montos del backend (servicio.totales); el PDF solo los muestra
+    const md = montosDescuento({
+        totalBruto: ticketItems.reduce((a, it) => a + (parseFloat(it.totalCalculado) || parseFloat(it.costo) || 0), 0),
+        descuentoPorcentaje, descuentoAlcance, totales,
+    });
+    const { pct, descuento, total } = md;
+    const subtotalTotal = md.subtotal;
 
     // Bloque cliente — con resumen inline en columna derecha (ahorra 22mm del bloque resumen)
     const resumenTextoP = sinPrecios
         ? `${ticketItems.length} equipos`
-        : `${ticketItems.length} equipos\nTotal estimado: $ ${total.toLocaleString('es-AR')}`;
+        : `${ticketItems.length} equipos\nTotal estimado: $ ${pesos(total)}`;
     y = dibujarBloqueClienteEquipo(doc, { cliente, sede, item: null, y, pageW, diagnostico: resumenTextoP, tituloDiag: 'RESUMEN' });
 
     // Detectar si todos los equipos tienen el mismo trabajo → mostrar una sola vez arriba de la tabla
@@ -403,12 +404,12 @@ export async function generarMultiPresupuesto(doc, {
             doc.setFont(undefined, 'normal');
             doc.setTextColor(...C.grayText);
             doc.text('Subtotal', M + 4, y + 4.5);
-            doc.text(`$ ${subtotalTotal.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
+            doc.text(`$ ${pesos(subtotalTotal)}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...C.red);
-            doc.text(`Descuento ${pct}%`, M + 4, y + 4.5);
-            doc.text(`- $ ${descuento.toLocaleString('es-AR')}`, pageW - M - 4, y + 4.5, { align: 'right' });
+            doc.text(md.label, M + 4, y + 4.5);
+            doc.text(`- $ ${pesos(descuento)}`, pageW - M - 4, y + 4.5, { align: 'right' });
             y += 6;
             doc.setDrawColor(...C.grayBorder);
             doc.setLineWidth(0.15);
@@ -433,7 +434,7 @@ export async function generarMultiPresupuesto(doc, {
         doc.text('TOTAL ESTIMADO DEL SERVICIO', M + 4, y + 5);
         doc.setFontSize(T.xl);
         doc.setTextColor(...C.navy);
-        doc.text(`$ ${total.toLocaleString('es-AR')}`, pageW - M - 4, y + 9.5, { align: 'right' });
+        doc.text(`$ ${pesos(total)}`, pageW - M - 4, y + 9.5, { align: 'right' });
         doc.setFontSize(T.label);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...C.grayText);

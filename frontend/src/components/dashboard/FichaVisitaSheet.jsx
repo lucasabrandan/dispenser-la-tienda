@@ -8,6 +8,7 @@ import AvatarTecnico from '../ui/AvatarTecnico';
 import { M } from '../servicio/ServicioUI';
 import { estadoLabel, etapaColor } from '../../utils/estados';
 import { fechaAR } from '../../utils/dateUtils';
+import { totalServicio } from '../../utils/descuento';
 
 // Ficha de una visita de la agenda del Panel (5-oct-2026). Antes, al tocarla,
 // llevaba a Trabajos sin abrir nada (y si ya estaba hecha o cobrada, ni
@@ -54,7 +55,7 @@ export default function FichaVisitaSheet({ orden, onCerrar, onVerTrabajos, onEli
 
     const hora = orden.horaEstimada ? String(orden.horaEstimada).slice(0, 5) : 'Sin horario';
     const total = servicio
-        ? (Number(servicio.montoFinal) > 0 ? Number(servicio.montoFinal) : (servicio.items || []).reduce((a, it) => a + Number(it.costo || 0), 0))
+        ? (Number(servicio.montoFinal) > 0 ? Number(servicio.montoFinal) : totalServicio(servicio))
         : 0;
     const fila = 'flex items-center justify-between gap-3 py-2.5 border-b border-black/[0.06] dark:border-white/[0.06] last:border-0';
 

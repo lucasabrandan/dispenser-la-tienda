@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { generarRemitoPDFPremium } from '../utils/generadorPdfRemito';
 import { resolverFechas } from '../utils/dateUtils';
 import { POR_PAGINA } from '../utils/paginacion';
+import { totalServicio } from '../utils/descuento';
 
 /**
  * useServicioManager
@@ -250,6 +251,8 @@ export function useServicioManager() {
                 ticketItems:         itemsConFotos,
                 fechaServicio:       servicio.fecha,
                 descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
+                descuentoAlcance:    servicio.descuentoAlcance || 'TOTAL',
+                totales:             servicio.totales || null,
                 leyenda:             servicio.observaciones || '',
                 esTecnicoForzado:    servicio.servicioTipo === 'TECNICA',
                 firmaTecnico:        firmaTecnico  || null,
@@ -265,11 +268,8 @@ export function useServicioManager() {
         }
     };
 
-    const calcularTotal = (s) => {
-        const bruto = s.items?.reduce((acc, i) => acc + Number(i.costo || 0), 0) || 0;
-        const desc = Number(s.descuentoPorcentaje) || 0;
-        return desc > 0 ? Math.round(bruto * (1 - desc / 100)) : bruto;
-    };
+    // Total con descuento: el que calcula el backend (s.totales)
+    const calcularTotal = (s) => totalServicio(s);
 
     const abrirEditar   = (servicio) => { setServicioEditar(servicio); setModalCrear(true); };
     const cerrarModal   = ()          => { setModalCrear(false); setServicioEditar(null); };

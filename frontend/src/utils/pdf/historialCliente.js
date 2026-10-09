@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { toast } from 'react-hot-toast';
 import { C, LOGO_URL, M, T, CONTENT_W, PAGE_H, FOOTER_SAFE, getEmpresa } from './theme.js';
+import { totalServicio } from '../descuento.js';
 
 const fmt = v => `$${Math.round(Number(v || 0)).toLocaleString('es-AR')}`;
 
@@ -14,12 +15,8 @@ function formatFechaLarga(f) {
     return new Date(f).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
-function calcTotal(s) {
-    // costo ya es el total del ítem (incluye la mano de obra): no sumar costoExtra (9-oct-2026)
-    const sub = (s.items || []).reduce((acc, it) => acc + Number(it.costo || 0), 0);
-    const pct = Number(s.descuentoPorcentaje || 0);
-    return pct > 0 ? Math.round(sub * (1 - pct / 100)) : Math.round(sub);
-}
+// Total con descuento: el que calcula el backend (s.totales), redondeado como siempre en este PDF
+const calcTotal = s => Math.round(totalServicio(s));
 
 // Trunca texto para que no exceda un ancho máximo
 function truncar(doc, texto, maxW) {

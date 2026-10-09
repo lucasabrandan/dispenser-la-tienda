@@ -39,8 +39,8 @@ function calcGanancia(servicio) {
             totalCosto += costoUnit * qty;
         });
     });
-    const desc = Number(servicio.descuentoPorcentaje) || 0;
-    const ventaConDesc = desc > 0 ? totalVenta * (1 - desc / 100) : totalVenta;
+    // Total con descuento: el del backend (servicio.totales)
+    const ventaConDesc = servicio.totales ? Number(servicio.totales.total) : totalVenta;
     const ganancia = ventaConDesc - totalCosto;
     const margen = ventaConDesc > 0 ? ((ganancia / ventaConDesc) * 100).toFixed(1) : 0;
     return { totalVenta: ventaConDesc, totalCosto, totalMO, ganancia, margen };

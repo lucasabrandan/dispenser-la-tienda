@@ -9,6 +9,7 @@ import api from '../../services/api';
 import { enviarOEncolar } from '../../utils/pendientesOffline';
 import { useAuth } from '../../context/AuthContext';
 import { generarRemitoPDFPremium } from '../../utils/generadorPdfRemito';
+import { totalServicio } from '../../utils/descuento';
 import PasoDetalle from './ejecutar/PasoDetalle';
 import PasoFirmas from './ejecutar/PasoFirmas';
 import PasoCobro from './ejecutar/PasoCobro';
@@ -53,9 +54,8 @@ export default function EjecutarOrdenSheet({ servicio, onGuardado, onConfirmado,
 
     // Total = lo presupuestado (ítems, con descuento) + los repuestos que agregó en el lugar
     const repuestosNuevos = repuestosAgregados.reduce((s, r) => s + (parseFloat(r.precio) || 0) * (r.cantidad || 1), 0);
-    const totalItems = (servicio.items || []).reduce((s, it) => s + Number(it.costo || 0), 0);
-    const desc = Number(servicio.descuentoPorcentaje || 0);
-    const total = Math.round(totalItems * (1 - desc / 100) + repuestosNuevos);
+    // Lo presupuestado con su descuento lo calcula el backend (servicio.totales)
+    const total = Math.round(totalServicio(servicio) + repuestosNuevos);
     // Productos a precio de venta (los pone el negocio): no entran en el reparto
     const totalProductos = (servicio.items || []).reduce((s, it) =>
         s + (it.repuestosUsados || []).reduce((a, r) => a + Number(r.subtotal ?? (Number(r.precio || 0) * Number(r.cantidad || 1))), 0), 0) + repuestosNuevos;
@@ -102,6 +102,7 @@ export default function EjecutarOrdenSheet({ servicio, onGuardado, onConfirmado,
                 fecha: servicio.fecha, servicioTipo: servicio.servicioTipo || 'TECNICA',
                 estado: nuevoEstado, clienteNombre: servicio.clienteNombre,
                 sedeNombre: servicio.sedeNombre, descuentoPorcentaje: servicio.descuentoPorcentaje || 0,
+                descuentoAlcance: servicio.descuentoAlcance || 'TOTAL',
                 observaciones: obsFinal, items: itemsActualizados,
                 ...(efectivo ? { modalidadCobro: 'EFECTIVO_SIN_FACTURA', montoFinal: Number(monto) || total } : {}),
             }, `Trabajo ${servicio.clienteNombre || ''} #${servicio.id}`);
@@ -124,6 +125,13 @@ export default function EjecutarOrdenSheet({ servicio, onGuardado, onConfirmado,
                     tecnico: usuario?.nombre || localStorage.getItem('tecnico_nombre') || 'Tecnico',
                     ticketItems, fechaServicio: servicio.fecha,
                     descuentoPorcentaje: servicio.descuentoPorcentaje || 0, leyenda: obsFinal,
+                    descuentoAlcance: servicio.descuentoAlcance || 'TOTAL',
+                    // Totales del backend + los repuestos que sumó en el lugar (van sin descuento)
+                    totales: servicio.totales ? {
+                        ...servicio.totales,
+                        subtotal: Number(servicio.totales.subtotal) + repuestosNuevos,
+                        total:    Number(servicio.totales.total) + repuestosNuevos,
+                    } : null,
                     esTecnicoForzado: true,
                     firmaTecnico: incluirFirmas ? (firmaTecnico || null) : null,
                     firmaCliente: incluirFirmas ? (firmaCliente || null) : null, incluirFirmas,

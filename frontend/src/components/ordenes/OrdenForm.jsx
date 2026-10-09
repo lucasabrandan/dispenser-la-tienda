@@ -7,6 +7,7 @@ import { useTheme } from '../../hooks/useTheme';
 import FechaFranja from './FechaFranja';
 
 import { filtroMultiTermino } from '../../utils/busqueda';
+import { totalServicio } from '../../utils/descuento';
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
     { value: 'NORMAL',  label: 'Normal'  },
@@ -92,7 +93,7 @@ export default function OrdenForm({ orden, tecnicos, onGuardar, onCancelar, form
         if (!orden?.presupuestoId || presupuestos.length === 0) return;
         const p = presupuestos.find(x => String(x.id) === String(orden.presupuestoId));
         if (!p) return;
-        const total = (p.items || []).reduce((a, i) => a + Number(i.costo || 0), 0);
+        const total = totalServicio(p); // con descuento, calculado por el backend
         setForm(f => ({
             ...f,
             direccion:       f.direccion || p.sedeDireccion || '',

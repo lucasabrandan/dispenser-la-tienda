@@ -7,6 +7,8 @@ import { getTodayISO } from '../../utils/dateUtils';
 import DateInput from '../ui/DateInput';
 import SelectorVentanas from './SelectorVentanas';
 import AgendaHuecos from '../ordenes/AgendaHuecos';
+import SelectorAlcanceDescuento from './SelectorAlcanceDescuento';
+import { leyendaDescuento, leyendaDescuentoCorta } from '../../utils/descuento';
 
 const QUICK_PCTS = [5, 10];
 
@@ -149,6 +151,7 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
     const {
         ticketItems, setTicketItems,
         descuentoPorcentaje, setDescuentoPorcentaje,
+        descuentoAlcance, setDescuentoAlcance,
         leyenda, setLeyenda,
         calcularGananciaRepuesto, calcularResumenGanancia,
         idEdicion, eliminarItem,
@@ -182,10 +185,15 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
     // Auto-descuento 10% a partir de 5 equipos (reversible)
     // No aplica en edición (idEdicion) ni ejecución (modoEjecucion) para no pisar descuento existente
     const [descuentoAutoAplicado, setDescuentoAutoAplicado] = useState(!!idEdicion || modoEjecucion);
+    // Si el usuario eligió el alcance a mano, el automático no lo pisa (9-oct-2026)
+    const [alcanceManual, setAlcanceManual] = useState(!!idEdicion || modoEjecucion);
+    const elegirAlcance = v => { setAlcanceManual(true); setDescuentoAlcance(v); };
     useEffect(() => {
         if (idEdicion || modoEjecucion) return; // No auto-aplicar en edición
         if (ticketItems.length >= 5 && descuentoPorcentaje === 0 && !descuentoAutoAplicado) {
             setDescuentoPorcentaje(10);
+            // Es descuento por volumen: va sobre el total, salvo que el usuario haya elegido otro alcance
+            if (!alcanceManual) setDescuentoAlcance('TOTAL');
             setDescuentoAutoAplicado(true);
             toast.success(`10% de descuento aplicado (${ticketItems.length} equipos)`);
         } else if (ticketItems.length < 5 && descuentoAutoAplicado && descuentoPorcentaje === 10) {
@@ -228,9 +236,10 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
             return copia;
         });
     };
-    const totalBruto     = ticketItems.reduce((a, b) => a + b.totalCalculado, 0);
-    const descuentoMonto = Math.round((totalBruto * descuentoPorcentaje) / 100);
-    const totalFinal     = totalBruto - descuentoMonto;
+    // Montos del backend (único cálculo); null mientras llegan
+    const descuentoMonto = resumen.descuento;
+    const totalFinal     = resumen.totalConDescuento;
+    const fmtPesos = v => v == null ? '…' : `$${Number(v).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`;
 
     const inputCls = `
         w-full block px-3.5 py-2.5 rounded-xl text-body font-medium outline-none
@@ -474,10 +483,17 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                             )}
                             {descuentoPorcentaje > 0 && (
                                 <span className="text-body font-black text-brand-red ml-1">
-                                    -${descuentoMonto.toLocaleString('es-AR')}
+                                    -{fmtPesos(descuentoMonto)}
                                 </span>
                             )}
                         </div>
+                        {descuentoPorcentaje > 0 && (<>
+                            <SelectorAlcanceDescuento valor={descuentoAlcance} onChange={elegirAlcance} />
+                            <p className="text-caption text-muted mt-1.5">
+                                {leyendaDescuento(descuentoPorcentaje, descuentoAlcance)}
+                                {resumen.totales && descuentoAlcance !== 'TOTAL' && ` · sobre ${fmtPesos(resumen.totales.baseDescuento)}`}
+                            </p>
+                        </>)}
                     </div>
 
                     {/* Rentabilidad — solo admin */}
@@ -521,10 +537,12 @@ export default function PasoResumen({ hook, onBack, onCerrarTicket, dispararPDF,
                         <p className="text-label font-bold uppercase tracking-widest text-[#5C5954]">
                             Total
                             {descuentoPorcentaje > 0 && (
-                                <span className="text-[#F5796C] ml-1">(-{descuentoPorcentaje}%)</span>
+                                <span className="text-[#F5796C] ml-1">({leyendaDescuentoCorta(descuentoPorcentaje, descuentoAlcance)})</span>
                             )}
                         </p>
-                        <M valor={totalFinal} className="text-3xl font-black text-white tracking-tighter block" />
+                        {totalFinal == null
+                            ? <span className="text-3xl font-black text-white/60 tracking-tighter block">…</span>
+                            : <M valor={totalFinal} className="text-3xl font-black text-white tracking-tighter block" />}
                     </div>
                     <div className="flex gap-2">
                         <button

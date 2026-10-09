@@ -38,7 +38,9 @@ public class IdempotenciaFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest req) {
         String m = req.getMethod();
         return req.getHeader("X-Idem-Key") == null
-            || !("POST".equals(m) || "PUT".equals(m) || "PATCH".equals(m) || "DELETE".equals(m));
+            || !("POST".equals(m) || "PUT".equals(m) || "PATCH".equals(m) || "DELETE".equals(m))
+            // Cálculo puro sin efectos (vista previa del total): no hace falta guardarlo
+            || req.getRequestURI().endsWith("/api/servicios/calcular-totales");
     }
 
     @Override

@@ -79,6 +79,12 @@ public class Servicio {
     @Column(name = "descuento_porcentaje")
     private java.math.BigDecimal descuentoPorcentaje;
 
+    // Sobre qué se aplica el % (9-oct-2026). Columna nueva: los registros viejos
+    // quedan en null y se leen como TOTAL (DescuentoAlcanceRunner los completa).
+    @Enumerated(EnumType.STRING)
+    @Column(name = "descuento_alcance", length = 20)
+    private DescuentoAlcance descuentoAlcance;
+
     // Número de documento generado al crear el PDF (PP-1304-LB-01 / RS-...)
     @Column(name = "nro_documento", length = 30)
     private String nroDocumento;
@@ -197,6 +203,8 @@ public class Servicio {
 
     public java.math.BigDecimal getDescuentoPorcentaje() { return descuentoPorcentaje; }
     public void setDescuentoPorcentaje(java.math.BigDecimal descuentoPorcentaje) { this.descuentoPorcentaje = descuentoPorcentaje; }
+    public DescuentoAlcance getDescuentoAlcance() { return DescuentoAlcance.o(descuentoAlcance); }
+    public void setDescuentoAlcance(DescuentoAlcance descuentoAlcance) { this.descuentoAlcance = DescuentoAlcance.o(descuentoAlcance); }
 
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }

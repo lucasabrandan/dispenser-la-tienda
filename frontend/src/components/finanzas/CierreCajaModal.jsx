@@ -6,6 +6,7 @@ import { generarPDFCierreCaja } from '../../utils/pdf/cierreCaja';
 import DateInput from '../ui/DateInput';
 import { getTodayISO, formatDateISO, inicioMes, finMes, fechaAR } from '../../utils/dateUtils';
 import { LuCircleCheck, LuWrench, LuShoppingCart, LuFileText } from 'react-icons/lu';
+import { totalServicio } from '../../utils/descuento';
 
 function M({ valor, className = '' }) {
     const { montosVisibles } = useMontos();
@@ -110,11 +111,8 @@ export default function CierreCajaModal({ onClose, onArchivar, mesInicial }) {
 
     // Bug real (mismo hallazgo #8): no aplicaba el descuento real de la venta/
     // servicio (descuentoPorcentaje) -- mismo fix que Balance en el backend.
-    const calcTotal = (s) => {
-        const bruto = s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
-        const descPct = Number(s.descuentoPorcentaje || 0);
-        return descPct > 0 ? bruto * (1 - descPct / 100) : bruto;
-    };
+    // Total con descuento por alcance: el que calcula el backend (s.totales, 9-oct-2026)
+    const calcTotal = (s) => totalServicio(s);
     const calcMO        = (s) => s.items?.reduce((a, i) => a + Number(i.costoExtra || 0), 0) || 0;
     const calcRepuestos = (s) => s.items?.reduce((a, i) =>
         a + (i.repuestosUsados || []).reduce((b, r) => b + Number(r.subtotal ?? (r.precio * r.cantidad) ?? 0), 0), 0

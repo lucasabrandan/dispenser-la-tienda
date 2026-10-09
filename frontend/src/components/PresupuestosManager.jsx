@@ -25,6 +25,7 @@ import ConfirmDialog from './ui/ConfirmDialog';
 import { buildGoogleMapsRouteUrl } from '../utils/clienteUtils';
 import { POR_PAGINA } from '../utils/paginacion';
 import { colorTecnico } from '../utils/estados';
+import { totalServicio } from '../utils/descuento';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function parseFechaSort(f) {
@@ -144,7 +145,8 @@ export default function PresupuestosManager() {
     // La confirmación la muestra el ConfirmDialog compartido (ver más abajo).
     const archivar = (id) => { patchEstado(id, 'ARCHIVADO', 'Archivado'); };
 
-    const calcularTotal = (s) => s.items?.reduce((a, i) => a + Number(i.costo || 0), 0) || 0;
+    // Total con descuento: el que calcula el backend (s.totales). Antes sumaba sin descuento.
+    const calcularTotal = (s) => totalServicio(s);
 
     const generarPDF = useCallback(async (s, { sinPrecios = false } = {}) => {
         const loading = toast.loading('Generando PDF…');
@@ -167,6 +169,9 @@ export default function PresupuestosManager() {
                 esVisita:        it.esVisita || it.trabajoTipo === 'VISITA' || false,
             })) || [],
             fechaServicio: s.fecha,
+            descuentoPorcentaje: s.descuentoPorcentaje || 0,
+            descuentoAlcance: s.descuentoAlcance || 'TOTAL',
+            totales: s.totales || null,
             leyenda: s.observaciones || '',
             incluirFirmas: false,
             sinPrecios,

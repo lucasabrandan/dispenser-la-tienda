@@ -5,6 +5,7 @@ import AvatarTecnico from '../ui/AvatarTecnico';
 import { M } from '../servicio/ServicioUI';
 import { estadoLabel, etapaColor } from '../../utils/estados';
 import { fechaAR } from '../../utils/dateUtils';
+import { leyendaDescuento } from '../../utils/descuento';
 
 // Detalle de un trabajo (5-oct-2026). Antes mostraba solo N/S y monto; ahora el
 // estado, quién va y cuándo, qué se hace en cada equipo, cómo se cobra, y las
@@ -61,7 +62,7 @@ export default function DetalleTrabajoSheet({ servicio: s, orden, total, onCerra
                             <M valor={total} className="text-body-lg font-black text-ink" />
                             {(s.modalidadCobro || Number(s.descuentoPorcentaje) > 0) && (
                                 <span className="block text-caption text-muted">
-                                    {[MODALIDAD[s.modalidadCobro], Number(s.descuentoPorcentaje) > 0 ? `${s.descuentoPorcentaje}% de descuento` : null].filter(Boolean).join(' · ')}
+                                    {[MODALIDAD[s.modalidadCobro], Number(s.descuentoPorcentaje) > 0 ? leyendaDescuento(s.descuentoPorcentaje, s.descuentoAlcance) : null].filter(Boolean).join(' · ')}
                                 </span>
                             )}
                         </span>

@@ -187,6 +187,19 @@ public class ServicioController {
         servicioRepository.deleteById(id);
     }
 
+    // POST: vista previa del total con descuento por alcance (9-oct-2026).
+    // El formulario lo llama mientras se edita para que el total que se ve sea
+    // exactamente el que va a guardar el backend (única fuente del cálculo).
+    public record CalcularTotalesRequest(java.math.BigDecimal descuentoPorcentaje, String descuentoAlcance,
+                                         java.util.List<com.dispenserlatienda.service.servicio.CalculoTotales.Item> items) {}
+
+    @PostMapping("/calcular-totales")
+    public ResponseEntity<com.dispenserlatienda.dto.servicio.TotalesDTO> calcularTotales(@RequestBody CalcularTotalesRequest r) {
+        var items = r.items() != null ? r.items() : java.util.List.<com.dispenserlatienda.service.servicio.CalculoTotales.Item>of();
+        return ResponseEntity.ok(com.dispenserlatienda.service.servicio.CalculoTotales.calcular(items,
+                r.descuentoPorcentaje(), com.dispenserlatienda.domain.servicio.DescuentoAlcance.de(r.descuentoAlcance())).totales());
+    }
+
     // GET: Estadísticas mensuales para análisis financiero
     @GetMapping("/stats/mensual")
     public ResponseEntity<EstadisticasMensualDTO> estadisticasMensual(

@@ -36,7 +36,7 @@ export default function ServicioForm({
         db, setDb, clienteId,
         ticketItems, idEdicion,
         itemActual, fechaServicio,
-        descuentoPorcentaje, leyenda,
+        descuentoPorcentaje, descuentoAlcance, obtenerTotales, leyenda,
         modalClienteAbierto, setModalClienteAbierto,
         nombreClientePrellenado, setNombreClientePrellenado,
         modalSedeAbierto, setModalSedeAbierto,
@@ -87,9 +87,9 @@ export default function ServicioForm({
         }
         const snap = snapshotRef.current || {};
         const sedeObj = db.sedes?.find(s => s.id === (itemActual.sedeId || snap.sedeId));
-        const totalFinal = ticketItems.length > 0 ? calcularResumenGanancia().totalConDescuento : snap.totalConDescuento;
         const loading = toast.loading('Generando PDF…');
         try {
+            const totales = ticketItems.length > 0 ? await obtenerTotales() : snap.totales;
             await generarRemitoPDFPremium({
                 esPresupuesto:           !estaBloqueado,
                 servicioId:              idEdicion || snap.servicioId || null,
@@ -99,7 +99,9 @@ export default function ServicioForm({
                 tecnico:                 tecnicoNombre,
                 ticketItems:             items,
                 descuentoPorcentaje:     ticketItems.length > 0 ? descuentoPorcentaje : (snap.descuentoPorcentaje || 0),
-                totalFinal,
+                descuentoAlcance:        ticketItems.length > 0 ? descuentoAlcance : (snap.descuentoAlcance || 'TOTAL'),
+                totales,
+                totalFinal:              totales ? Number(totales.total) : undefined,
                 fechaServicio:           fechaServicio || snap.fechaServicio,
                 leyenda:                 leyenda || snap.leyenda || '',
                 fechaVisita:             fechaVisita || snap.fechaVisita || null,
@@ -122,8 +124,8 @@ export default function ServicioForm({
         }
         const snap = snapshotRef.current || {};
         const sedeObj = db.sedes?.find(s => s.id === (itemActual.sedeId || snap.sedeId));
-        const totalFinal = ticketItems.length > 0 ? calcularResumenGanancia().totalConDescuento : snap.totalConDescuento;
         try {
+            const totales = ticketItems.length > 0 ? await obtenerTotales() : snap.totales;
             await generarRemitoPDFPremium({
                 esPresupuesto:           false,
                 servicioId:              idEdicion || snap.servicioId || null,
@@ -133,7 +135,9 @@ export default function ServicioForm({
                 tecnico:                 tecnicoNombre,
                 ticketItems:             items,
                 descuentoPorcentaje:     ticketItems.length > 0 ? descuentoPorcentaje : (snap.descuentoPorcentaje || 0),
-                totalFinal,
+                descuentoAlcance:        ticketItems.length > 0 ? descuentoAlcance : (snap.descuentoAlcance || 'TOTAL'),
+                totales,
+                totalFinal:              totales ? Number(totales.total) : undefined,
                 fechaServicio:           fechaServicio || snap.fechaServicio,
                 leyenda:                 leyenda || snap.leyenda || '',
                 fechaVisita:             fechaVisita || snap.fechaVisita || null,
@@ -168,7 +172,8 @@ export default function ServicioForm({
             sede: sedeObj || { nombreSede: 'Mostrador' },
             cliente: clienteObj || { nombre: nombreLibre || 'Particular' },
             descuentoPorcentaje,
-            totalConDescuento: calcularResumenGanancia().totalConDescuento,
+            descuentoAlcance,
+            totales: await obtenerTotales().catch(() => null),
             fechaServicio,
             leyenda,
             duracionMinutos,
@@ -195,7 +200,8 @@ export default function ServicioForm({
             sede: sedeObj || { nombreSede: 'Mostrador' },
             cliente: clienteObj || { nombre: nombreLibre || 'Particular' },
             descuentoPorcentaje,
-            totalConDescuento: calcularResumenGanancia().totalConDescuento,
+            descuentoAlcance,
+            totales: await obtenerTotales().catch(() => null),
             fechaServicio,
             leyenda,
             duracionMinutos,
@@ -273,11 +279,9 @@ export default function ServicioForm({
             {sheetVisible && (
                 <CerrarTicketSheet
                     modoEjecucion={modoEjecucion}
-                    totalFinal={(() => {
-                        const { totalConDescuento } = calcularResumenGanancia();
-                        return totalConDescuento;
-                    })()}
+                    totalFinal={calcularResumenGanancia().totalConDescuento}
                     descuentoPorcentaje={descuentoPorcentaje}
+                    descuentoAlcance={descuentoAlcance}
                     onCobrar={handleCobrar}
                     onGuardar={handleGuardar}
                     onGenerarPDF={dispararPDF}

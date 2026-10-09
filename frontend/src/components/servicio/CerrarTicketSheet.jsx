@@ -7,6 +7,7 @@ import { getTodayISO } from '../../utils/dateUtils';
 import DateInput from '../ui/DateInput';
 import { LuClipboardList, LuCircleCheck, LuFileText, LuRocket } from 'react-icons/lu';
 import { datosOrdenDesdePresupuesto } from '../../utils/ordenes';
+import { leyendaDescuento } from '../../utils/descuento';
 
 const PRIORIDADES = [
     { value: 'BAJA',    label: 'Baja'    },
@@ -28,6 +29,7 @@ export default function CerrarTicketSheet({
     modoEjecucion = false,
     totalFinal,
     descuentoPorcentaje,
+    descuentoAlcance = 'TOTAL',
     onCobrar,     // async ({ firmaTecnico, firmaCliente, incluirFirmas }) → void
     onGuardar,    // async () → { ok, id, clienteId, clienteNombre, tecnicoId, fechaVisita } | null
     onGenerarPDF, // async () → void (genera PDF del presupuesto)
@@ -185,11 +187,11 @@ export default function CerrarTicketSheet({
                         <div>
                             <p className="text-label font-black text-muted uppercase tracking-widest mb-0.5">Total presupuesto</p>
                             <p className="text-[32px] font-black leading-none text-ink">
-                                ${(totalFinal || 0).toLocaleString('es-AR')}
+                                {totalFinal == null ? '…' : `$${Number(totalFinal).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`}
                             </p>
                             {descuentoPorcentaje > 0 && (
                                 <p className="text-caption font-bold text-brand-red mt-0.5">
-                                    Con {descuentoPorcentaje}% descuento aplicado
+                                    Con {leyendaDescuento(descuentoPorcentaje, descuentoAlcance).toLowerCase()} aplicado
                                 </p>
                             )}
                         </div>

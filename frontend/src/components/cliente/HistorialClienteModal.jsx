@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { generarPDFHistorialCliente } from '../../utils/pdf/historialCliente';
 import { LuWrench, LuHardHat } from 'react-icons/lu';
+import { totalServicio } from '../../utils/descuento';
 
 function formatFecha(f) {
     if (!f) return '-';
@@ -22,14 +23,8 @@ function labelEstado(estado) {
 }
 
 // Total de un servicio sumando items (con descuento)
-function calcTotal(s) {
-    const sub = (s.items || []).reduce((acc, it) => {
-        // costo ya es el total del ítem (incluye la mano de obra): no sumar costoExtra (9-oct-2026)
-        return acc + Number(it.costo || 0);
-    }, 0);
-    const pct = Number(s.descuentoPorcentaje || 0);
-    return pct > 0 ? sub * (1 - pct / 100) : sub;
-}
+// Total con descuento: el que calcula el backend (s.totales)
+const calcTotal = s => totalServicio(s);
 
 export default function HistorialClienteModal({ cliente, onClose }) {
     const { esAdmin } = useAuth();
