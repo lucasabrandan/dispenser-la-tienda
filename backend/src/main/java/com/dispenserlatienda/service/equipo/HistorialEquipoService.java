@@ -112,7 +112,14 @@ public class HistorialEquipoService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> resumenMes(Long clienteId, Long sedeId, java.time.YearMonth mes) {
-        LocalDate desde = mes.atDay(1), hasta = mes.atEndOfMonth();
+        Map<String, Object> out = resumenRango(clienteId, sedeId, mes.atDay(1), mes.atEndOfMonth());
+        out.put("mes", mes.toString());
+        return out;
+    }
+
+    // Mismo resumen para cualquier período (semana, rango) — 9-oct-2026
+    @Transactional(readOnly = true)
+    public Map<String, Object> resumenRango(Long clienteId, Long sedeId, LocalDate desde, LocalDate hasta) {
         List<Object[]> res = em.createQuery(
                 "select s, i from Servicio s join s.items i where s.sede.cliente.id = :cid " +
                 "and s.fechaServicio between :d and :h and s.estado in :estados order by s.fechaServicio, s.id", Object[].class)
@@ -136,7 +143,8 @@ public class HistorialEquipoService {
             if (s.getSede() != null) lugares.add(s.getSede().getId());
         }
         Map<String, Object> out = new LinkedHashMap<>();
-        out.put("mes", mes.toString());
+        out.put("desde", desde);
+        out.put("hasta", hasta);
         out.put("equiposAtendidos", items.size());
         out.put("equiposDistintos", series.size());
         out.put("visitas", visitas.size());
@@ -184,6 +192,28 @@ public class HistorialEquipoService {
             out.add(m);
         }
         out.sort(Comparator.comparing((Map<String, Object> m) -> m.get("vence") == null ? LocalDate.MAX : (LocalDate) m.get("vence")));
+        return out;
+    }
+
+    // "Descargar todo" del portal (9-oct-2026): cada visita hecha a los equipos del
+    // cliente (o de su lugar), sin precios, para armar la planilla completa.
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> visitasDeCliente(Long clienteId, Long sedeId) {
+        List<Object[]> res = em.createQuery(
+                "select s, i from Servicio s join s.items i join i.equipo e where e.sede.cliente.id = :cid " +
+                "and s.estado in :estados order by e.numeroSerie, s.fechaServicio desc, s.id desc", Object[].class)
+            .setParameter("cid", clienteId).setParameter("estados", HECHOS).getResultList();
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Object[] r : res) {
+            Servicio s = (Servicio) r[0];
+            ServicioItem it = (ServicioItem) r[1];
+            Sede sede = it.getEquipo().getSede();
+            if (sedeId != null && (sede == null || !sedeId.equals(sede.getId()))) continue;
+            Map<String, Object> m = itemAMapa(s, it);
+            m.put("lugar", sede != null ? sede.getNombreSede() : null);
+            m.put("direccion", sede != null ? sede.getDireccion() : null);
+            out.add(m);
+        }
         return out;
     }
 

@@ -25,6 +25,8 @@ public class EmpresaController {
     private final com.dispenserlatienda.service.mapa.GeocodificadorService geo;
     private final com.dispenserlatienda.service.empresa.PortalEmpresaService portal;
     private final com.dispenserlatienda.service.servicio.FileStorageService archivos;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dispenserlatienda.service.empresa.PortalConfigService config;
 
     public EmpresaController(PedidoEmpresaService service, UsuarioRepository usuarioRepo, HistorialEquipoService historial,
                              com.dispenserlatienda.service.mapa.GeocodificadorService geo,
@@ -47,6 +49,8 @@ public class EmpresaController {
         out.put("empresa", datos.isEmpty() || datos.get(0).get("clienteNombre") == null ? "" : datos.get(0).get("clienteNombre"));
         out.put("sedeId", u.getSedeId()); // encargado de un lugar (null = toda la empresa)
         out.put("sedeNombre", datos.isEmpty() ? null : datos.get(0).get("sedeNombre"));
+        // Funciones del portal que el admin habilitó para este cliente (9-oct-2026)
+        out.put("funciones", com.dispenserlatienda.service.empresa.PortalConfigService.aMapa(config.de(u.getClienteId())));
         return out;
     }
 
@@ -96,7 +100,9 @@ public class EmpresaController {
     // Mapa de sus lugares (con sus equipos)
     @GetMapping("/mapa")
     public List<Map<String, Object>> mapa(Authentication auth) {
-        List<Map<String, Object>> sedes = service.sedesDeEmpresa(yo(auth));
+        Usuario yo = yo(auth);
+        if (!config.de(yo.getClienteId()).mapa()) return List.of();
+        List<Map<String, Object>> sedes = service.sedesDeEmpresa(yo);
         var ub = geo.ubicar(sedes.stream().map(m -> (String) m.get("direccion")).filter(java.util.Objects::nonNull).toList());
         java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
         for (Map<String, Object> s : sedes) {
@@ -112,14 +118,43 @@ public class EmpresaController {
 
     // Resumen del mes (equipos atendidos, sin precios)
     @GetMapping("/resumen")
-    public Map<String, Object> resumen(@RequestParam(required = false) String mes, Authentication auth) {
-        java.time.YearMonth m = mes != null && !mes.isBlank() ? java.time.YearMonth.parse(mes) : java.time.YearMonth.now();
+    // Con desde/hasta (9-oct-2026): semana o rango libre, sin aprobación (eso es por mes)
+    public Map<String, Object> resumen(@RequestParam(required = false) String mes,
+                                       @RequestParam(required = false) String desde,
+                                       @RequestParam(required = false) String hasta, Authentication auth) {
         Usuario u = yo(auth);
         Long cid = service.clienteDeEmpresa(u);
+        if (desde != null && hasta != null) {
+            java.time.LocalDate d = java.time.LocalDate.parse(desde), h = java.time.LocalDate.parse(hasta);
+            if (h.isBefore(d)) throw new com.dispenserlatienda.exception.BusinessException("La fecha final es anterior a la inicial");
+            if (java.time.temporal.ChronoUnit.DAYS.between(d, h) > 400) throw new com.dispenserlatienda.exception.BusinessException("Elegí un período de hasta un año");
+            return historial.resumenRango(cid, u.getSedeId(), d, h);
+        }
+        java.time.YearMonth m = mes != null && !mes.isBlank() ? java.time.YearMonth.parse(mes) : java.time.YearMonth.now();
         Map<String, Object> out = new java.util.LinkedHashMap<>(historial.resumenMes(cid, u.getSedeId(), m));
         out.put("aprobacion", portal.aprobacion(cid, m.toString()));
         out.put("puedeAprobar", u.getSedeId() == null);
+        out.put("limiteAprobacion", portal.limiteAprobacion(cid, m)); // null = no se aprueba solo
         return out;
+    }
+
+    // "Descargar todo" (9-oct-2026): equipos + todas sus visitas, sin precios
+    @GetMapping("/exportar")
+    public Map<String, Object> exportar(Authentication auth) {
+        Usuario u = yo(auth);
+        Long cid = service.clienteDeEmpresa(u);
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("equipos", historial.mantenimientos(cid, u.getSedeId()));
+        out.put("visitas", historial.visitasDeCliente(cid, u.getSedeId()));
+        return out;
+    }
+
+    // Comentario sobre un trabajo hecho, sin puntaje (9-oct-2026)
+    @PostMapping("/pedidos/{id}/observacion")
+    public PedidoEmpresaDTO observar(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
+        Usuario u = yo(auth);
+        if (!config.de(u.getClienteId()).comentarios()) throw new org.springframework.security.access.AccessDeniedException("No habilitado");
+        return service.observar(u, id, body.get("texto"));
     }
 
     // Etapa 4 (8-oct-2026) ─────────────────────────────────────────────────────
@@ -139,6 +174,9 @@ public class EmpresaController {
     // Conformidad del trabajo terminado
     @PatchMapping("/pedidos/{id}/conformidad")
     public PedidoEmpresaDTO conformidad(@PathVariable Long id, @RequestBody Map<String, Object> body, Authentication auth) {
+        // La calificación con estrellas solo si el admin la habilitó para este cliente (9-oct-2026)
+        if (!config.de(yo(auth).getClienteId()).calificacion())
+            throw new org.springframework.security.access.AccessDeniedException("La calificación no está habilitada");
         boolean conforme = Boolean.TRUE.equals(body.get("conforme"));
         Integer cal = body.get("calificacion") instanceof Number n ? n.intValue() : null;
         return service.conformidad(yo(auth), id, conforme, cal, (String) body.get("comentario"));

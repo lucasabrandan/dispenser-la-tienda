@@ -50,10 +50,13 @@ public class PortalEmpresaService {
     private final NotificacionService notificaciones;
     private final HistorialEquipoService historial;
     private final PedidoEmpresaService pedidos;
+    private final PortalConfigService config;
 
     public PortalEmpresaService(ResumenAprobacionRepository aprobRepo, PedidoEmpresaRepository pedidoRepo,
                                 OrdenVisitaRepository ordenRepo, UsuarioRepository usuarioRepo, ClienteRepository clienteRepo,
-                                NotificacionService notificaciones, HistorialEquipoService historial, PedidoEmpresaService pedidos) {
+                                NotificacionService notificaciones, HistorialEquipoService historial, PedidoEmpresaService pedidos,
+                                PortalConfigService config) {
+        this.config = config;
         this.aprobRepo = aprobRepo;
         this.pedidoRepo = pedidoRepo;
         this.ordenRepo = ordenRepo;
@@ -87,6 +90,7 @@ public class PortalEmpresaService {
         a.setComentario(com);
         a.setObservados(aprobado || obs.isEmpty() ? null : obs.stream().map(String::valueOf).collect(Collectors.joining(",")));
         a.setUsuarioNombre(empresa.getNombre());
+        a.setAutomatico(false);
         a.setActualizadoEn(LocalDateTime.now());
         aprobRepo.save(a);
         String cliente = clienteRepo.findById(clienteId).map(c -> c.getNombre()).orElse("Empresa");
@@ -107,7 +111,87 @@ public class PortalEmpresaService {
             : Arrays.stream(a.getObservados().split(",")).map(Long::valueOf).toList());
         m.put("usuario", a.getUsuarioNombre());
         m.put("fecha", a.getActualizadoEn());
+        m.put("automatico", a.isAutomatico());
         return m;
+    }
+
+    // ── Aprobación automática del mes (9-oct-2026) ───────────────────────────
+    // Si pasados N días del cierre la empresa no observó nada, el mes queda aprobado
+    // solo (así se puede facturar sin que nadie tenga que acordarse de aprobar).
+    // Nunca se aplica a meses anteriores a cuando se prendió la función.
+
+    // Último día para observar el mes (null = ese mes no se aprueba solo)
+    public LocalDate limiteAprobacion(Long clienteId, YearMonth mes) {
+        PortalConfigService.Config c = config.de(clienteId);
+        if (c.diasAprobacionAuto() <= 0) return null;
+        try { if (mes.isBefore(YearMonth.parse(c.aprobacionAutoDesde()))) return null; } catch (Exception e) { return null; }
+        return mes.plusMonths(1).atDay(1).plusDays(c.diasAprobacionAuto() - 1L);
+    }
+
+    @Scheduled(cron = "${portal.aprobacion-auto.cron:0 10 9 * * *}", zone = "America/Argentina/Buenos_Aires")
+    public void aprobarAutomaticamente() {
+        Set<Long> clientes = usuarioRepo.findAll().stream()
+            .filter(u -> u.getRol() == RolUsuario.EMPRESA && u.isActivo() && u.getClienteId() != null)
+            .map(Usuario::getClienteId).collect(Collectors.toSet());
+        for (Long cid : clientes) {
+            // El mes pasado y el anterior (por si el servidor estuvo apagado ese día)
+            for (int atras = 1; atras <= 2; atras++) {
+                try { aprobarSiCorresponde(cid, YearMonth.now().minusMonths(atras)); }
+                catch (Exception e) { /* un cliente con datos raros no frena al resto */ }
+            }
+        }
+    }
+
+    @Transactional
+    public boolean aprobarSiCorresponde(Long clienteId, YearMonth mes) {
+        LocalDate limite = limiteAprobacion(clienteId, mes);
+        if (limite == null || !LocalDate.now().isAfter(limite)) return false;
+        if (aprobRepo.findByClienteIdAndMes(clienteId, mes.toString()).isPresent()) return false;
+        Object visitas = historial.resumenMes(clienteId, null, mes).get("visitas");
+        if (!(visitas instanceof Number n) || n.intValue() == 0) return false;
+        ResumenAprobacion a = new ResumenAprobacion();
+        a.setClienteId(clienteId);
+        a.setMes(mes.toString());
+        a.setEstado("APROBADO");
+        a.setUsuarioNombre("Aprobación automática");
+        a.setAutomatico(true);
+        a.setActualizadoEn(LocalDateTime.now());
+        aprobRepo.save(a);
+        String cliente = clienteRepo.findById(clienteId).map(c -> c.getNombre()).orElse("Empresa");
+        String mesTxt = mes.getMonth().getDisplayName(java.time.format.TextStyle.FULL, new Locale("es", "AR")) + " " + mes.getYear();
+        usuarioRepo.findAll().stream().filter(u -> u.getRol() == RolUsuario.ADMIN && u.isActivo())
+            .forEach(u -> notificaciones.notificar(TipoNotificacion.MENSAJE_LIBRE, u.getId(), null,
+                "✓ Resumen de " + mesTxt + " de " + cliente + " aprobado automáticamente",
+                "No hubo observaciones en el plazo. Ya podés facturar.", null, false));
+        usuarioRepo.findAll().stream()
+            .filter(u -> u.getRol() == RolUsuario.EMPRESA && u.isActivo() && clienteId.equals(u.getClienteId()) && u.getSedeId() == null)
+            .forEach(u -> notificaciones.notificar(TipoNotificacion.MENSAJE_LIBRE, u.getId(), null,
+                "Resumen de " + mesTxt + " aprobado",
+                "Se aprobó automáticamente porque no hubo observaciones. Lo podés ver y descargar en «Resumen».", null, false));
+        return true;
+    }
+
+    // ── Reporte semanal (9-oct-2026) ─────────────────────────────────────────
+    // Los lunes a la mañana: a cada usuario empresa le llega cuántos equipos se
+    // atendieron la semana pasada; el Excel lo baja desde Resumen → Semana.
+    @Scheduled(cron = "${portal.reporte-semanal.cron:0 50 8 * * MON}", zone = "America/Argentina/Buenos_Aires")
+    public void reporteSemanal() {
+        LocalDate hasta = LocalDate.now().minusDays(1);          // domingo
+        LocalDate desde = hasta.minusDays(6);                    // lunes
+        java.time.format.DateTimeFormatter f = java.time.format.DateTimeFormatter.ofPattern("dd/MM");
+        usuarioRepo.findAll().stream()
+            .filter(u -> u.getRol() == RolUsuario.EMPRESA && u.isActivo() && u.getClienteId() != null)
+            .forEach(u -> {
+                try {
+                    if (!config.de(u.getClienteId()).reporteSemanal()) return;
+                    Object n = historial.resumenRango(u.getClienteId(), u.getSedeId(), desde, hasta).get("equiposAtendidos");
+                    int cant = n instanceof Number x ? x.intValue() : 0;
+                    if (cant == 0) return;
+                    notificaciones.notificar(TipoNotificacion.MENSAJE_LIBRE, u.getId(), null,
+                        "📋 Reporte semanal · " + cant + " equipo" + (cant != 1 ? "s" : "") + " atendido" + (cant != 1 ? "s" : ""),
+                        "Del " + desde.format(f) + " al " + hasta.format(f) + ". Bajalo en Excel desde «Resumen» → Semana.", null, false);
+                } catch (Exception e) { /* seguir con el resto */ }
+            });
     }
 
     // ── Indicadores ──────────────────────────────────────────────────────────
@@ -115,6 +199,8 @@ public class PortalEmpresaService {
     @Transactional(readOnly = true)
     public Map<String, Object> indicadores(Usuario empresa, int meses) {
         Long clienteId = pedidos.clienteDeEmpresa(empresa);
+        PortalConfigService.Config cfg = config.de(clienteId);
+        if (!cfg.numeros()) throw new AccessDeniedException("Esta sección no está habilitada");
         Long sedeId = empresa.getSedeId();
         int n = Math.max(3, Math.min(12, meses));
         YearMonth hasta = YearMonth.now(), desde = hasta.minusMonths(n - 1);
@@ -172,9 +258,10 @@ public class PortalEmpresaService {
         out.put("resueltos", horas.size());
         out.put("horasPromedio", horas.isEmpty() ? null : Math.round(horas.stream().mapToDouble(d -> d).average().orElse(0) * 10) / 10.0);
         out.put("horasPromedioUrgentes", horasUrg.isEmpty() ? null : Math.round(horasUrg.stream().mapToDouble(d -> d).average().orElse(0) * 10) / 10.0);
-        out.put("conformes", conformes);
-        out.put("reclamos", reclamos);
-        out.put("calificacionPromedio", conCal == 0 ? null : Math.round(sumaCal * 10.0 / conCal) / 10.0);
+        // Sin calificación habilitada no se muestra nada de conformidad (9-oct-2026)
+        out.put("conformes", cfg.calificacion() ? conformes : null);
+        out.put("reclamos", cfg.calificacion() ? reclamos : null);
+        out.put("calificacionPromedio", !cfg.calificacion() || conCal == 0 ? null : Math.round(sumaCal * 10.0 / conCal) / 10.0);
         out.put("porMes", serie);
         out.put("equiposConMasVisitas", top);
         return out;

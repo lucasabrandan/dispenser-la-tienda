@@ -118,6 +118,21 @@ public class PedidoEmpresa {
     public String getConformidadPor() { return conformidadPor; }
     public void setConformidadPor(String v) { this.conformidadPor = v; }
 
+    // Observación de la empresa sobre un trabajo hecho (9-oct-2026). Sin puntaje:
+    // queda PENDIENTE para el admin, que la cierra como RESUELTA o NO_CORRESPONDE.
+    @Column(name = "observacion_estado", length = 20)
+    private String observacionEstado;
+    @Column(name = "observacion_respuesta", columnDefinition = "TEXT")
+    private String observacionRespuesta;
+    @Column(name = "observacion_cerrada_en")
+    private LocalDateTime observacionCerradaEn;
+    public String getObservacionEstado() { return observacionEstado; }
+    public void setObservacionEstado(String v) { this.observacionEstado = v; }
+    public String getObservacionRespuesta() { return observacionRespuesta; }
+    public void setObservacionRespuesta(String v) { this.observacionRespuesta = v; }
+    public LocalDateTime getObservacionCerradaEn() { return observacionCerradaEn; }
+    public void setObservacionCerradaEn(LocalDateTime v) { this.observacionCerradaEn = v; }
+
     public LocalDateTime getCreadoEn() { return creadoEn; }
     public LocalDateTime getActualizadoEn() { return actualizadoEn; }
     public void setActualizadoEn(LocalDateTime v) { this.actualizadoEn = v; }

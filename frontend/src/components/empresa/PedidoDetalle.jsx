@@ -4,14 +4,14 @@ import { LuMapPin, LuClock, LuSend, LuNavigation, LuTriangleAlert, LuHash, LuMes
 import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import InformeTrabajo from './InformeTrabajo';
-import PedirConformidad, { ResultadoConformidad } from './Conformidad';
+import TrabajoHecho from './TrabajoHecho';
 import { VerFotos } from './FotosPedido';
 import { estadoDe, cuandoPedido, linkMaps, haceCuanto, PASOS_PEDIDO, esAbierto } from '../../utils/pedidosEmpresa';
 
 // Ficha de un pedido (Portal Empresa, 7-oct-2026). La usan los dos lados:
 // la empresa (modo="empresa") y el admin (modo="admin", con Agendar / Cancelar).
 // La conversación del pedido reemplaza los comentarios de Trello.
-export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCerrar, onCambio, onAgendar }) {
+export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funciones = null, onCerrar, onCambio, onAgendar }) {
     const base = modo === 'empresa' ? '/empresa/pedidos' : '/pedidos-empresa';
     const [p, setP] = useState(inicial);
     const [comentarios, setComentarios] = useState([]);
@@ -76,7 +76,7 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
     const sinVisitaActiva = !p.ordenId || ['NO_ATENDIDO', 'PAUSADO'].includes(p.estado);
     const puedeCancelar = modo === 'admin' ? esAbierto(p) && sinVisitaActiva : p.estado === 'NUEVO' && !p.ordenId;
     // Reclamo de la empresa (8-oct-2026): se puede volver a agendar una revisión
-    const puedeAgendar = modo === 'admin' && ((esAbierto(p) && sinVisitaActiva) || (p.estado === 'HECHO' && p.conformidad === 'PROBLEMA'));
+    const puedeAgendar = modo === 'admin' && ((esAbierto(p) && sinVisitaActiva) || (p.estado === 'HECHO' && (p.conformidad === 'PROBLEMA' || (p.conformidad === 'OBSERVADO' && p.observacionEstado === 'PENDIENTE'))));
 
     return (
         <ModalShell titulo={`${p.motivo || 'Pedido'}${p.urgente ? ' · urgente' : ''}`}
@@ -95,7 +95,7 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
                     {(puedeAgendar || puedeCancelar) && (
                         <div className="flex gap-2">
                             {puedeCancelar && <button type="button" onClick={cancelar} className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95">Cancelar pedido</button>}
-                            {puedeAgendar && <button type="button" onClick={() => onAgendar && onAgendar(p)} className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">{p.conformidad === 'PROBLEMA' ? 'Agendar revisión' : p.ordenId ? 'Volver a agendar' : 'Agendar visita'}</button>}
+                            {puedeAgendar && <button type="button" onClick={() => onAgendar && onAgendar(p)} className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black active:scale-95">{(p.conformidad === 'PROBLEMA' || p.conformidad === 'OBSERVADO') ? 'Agendar revisión' : p.ordenId ? 'Volver a agendar' : 'Agendar visita'}</button>}
                         </div>
                     )}
                 </div>
@@ -137,11 +137,8 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', onCer
                 </div>
 
                 {hecho && <InformeTrabajo pedido={p} items={informe} />}
-                {hecho && (p.conformidad
-                    ? <ResultadoConformidad p={p} />
-                    : modo === 'empresa'
-                        ? <PedirConformidad p={p} onListo={(nuevo) => { setP(nuevo); cargar(); onCambio && onCambio(); }} />
-                        : <p className="px-1 text-caption text-muted">La empresa todavía no confirmó si quedó conforme.</p>)}
+                {hecho && <TrabajoHecho p={p} modo={modo} funciones={funciones}
+                    onListo={(nuevo) => { setP(nuevo); cargar(); onCambio && onCambio(); }} />}
 
                 {/* Conversación */}
                 <div className="space-y-2">

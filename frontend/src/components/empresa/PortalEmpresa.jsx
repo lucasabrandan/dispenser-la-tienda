@@ -27,6 +27,9 @@ export default function PortalEmpresa() {
     const { isDark, toggleTheme } = useTheme();
     const [empresa, setEmpresa] = useState('');
     const [miLugar, setMiLugar] = useState(null); // encargado de un lugar (8-oct-2026)
+    // Funciones que el admin habilitó para este cliente (9-oct-2026)
+    const [funciones, setFunciones] = useState({ calificacion: false, numeros: false, mapa: true, comentarios: true });
+    const [periodoResumen, setPeriodoResumen] = useState(null); // 'semana' al abrir el reporte semanal
     const [pedidos, setPedidos] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [tab, setTab] = useState('curso');
@@ -60,6 +63,7 @@ export default function PortalEmpresa() {
         api.get('/empresa/datos').then(r => {
             setEmpresa(r.data?.empresa || '');
             setMiLugar(r.data?.sedeId ? { id: r.data.sedeId, nombre: r.data.sedeNombre } : null);
+            if (r.data?.funciones) setFunciones(r.data.funciones);
         }).catch(() => {});
         cargar(); pollNotifs();
         const a = setInterval(cargar, 30000), b = setInterval(pollNotifs, 15000);
@@ -127,18 +131,18 @@ export default function PortalEmpresa() {
                         { id: 'equipos', label: 'Equipos' },
                         { id: 'services', label: 'Services' },
                         { id: 'resumen', label: 'Resumen' },
-                        { id: 'numeros', label: 'Números' },
+                        ...(funciones.numeros ? [{ id: 'numeros', label: 'Números' }] : []),
                     ]} />
                 </div>
 
-                {vista === 'numeros' ? (
+                {vista === 'numeros' && funciones.numeros ? (
                     <IndicadoresEmpresa />
                 ) : vista === 'services' ? (
                     <MantenimientosEmpresa onPedir={(m) => setNuevo({ sedeId: m.sedeId, serie: m.serie, motivo: 'Mantenimiento / limpieza' })} />
                 ) : vista === 'resumen' ? (
-                    <ResumenMes empresa={empresa} />
+                    <ResumenMes empresa={empresa} periodoInicial={periodoResumen} />
                 ) : vista === 'equipos' ? (
-                    <EquiposEmpresa onPedirServicio={(eq) => setNuevo({ sedeId: eq.sedeId, serie: eq.serie })} />
+                    <EquiposEmpresa conMapa={funciones.mapa} empresa={empresa} onPedirServicio={(eq) => setNuevo({ sedeId: eq.sedeId, serie: eq.serie })} />
                 ) : (<>
                 <div className="flex items-center justify-between gap-3">
                     <h1 className="text-2xl font-black uppercase tracking-tight text-ink">Pedidos</h1>
@@ -161,23 +165,29 @@ export default function PortalEmpresa() {
                     </div>
                 ) : (
                     <div className="space-y-2.5">
-                        {lista.map(p => <TarjetaPedido key={p.id} p={p} onClick={() => setAbierto(p)} />)}
+                        {lista.map(p => <TarjetaPedido key={p.id} p={p} funciones={funciones} onClick={() => setAbierto(p)} />)}
                     </div>
                 )}
                 </>)}
             </div>
 
             {nuevo && <NuevoPedidoSheet inicial={nuevo === true ? null : nuevo} soloMiLugar={!!miLugar} onCerrar={() => setNuevo(false)} onCreado={(p) => { setNuevo(false); setVista('pedidos'); setTab('curso'); cargar(); setAbierto(p); }} />}
-            {abierto && <PedidoDetalle key={abierto.id} pedido={abierto} modo="empresa" onCerrar={() => { setAbierto(null); cargar(); }} onCambio={cargar} />}
+            {abierto && <PedidoDetalle key={abierto.id} pedido={abierto} modo="empresa" funciones={funciones} onCerrar={() => { setAbierto(null); cargar(); }} onCambio={cargar} />}
             <NotificacionesPanel abierto={notifAbierto}
                 onCerrar={() => { setNotifAbierto(false); pollNotifs(); }}
                 onAbrirPedido={(id) => { setNotifAbierto(false); abrirPedidoId(id); }}
-                onSinReferencia={() => setNotifAbierto(false)} />
+                onSinReferencia={(n) => {
+                    setNotifAbierto(false);
+                    // Reporte semanal: abre Resumen en la semana pasada
+                    if (String(n?.titulo || '').startsWith('📋')) { setPeriodoResumen('semana'); setVista('resumen'); }
+                    else if (String(n?.titulo || '').startsWith('Resumen de')) { setPeriodoResumen('mes'); setVista('resumen'); }
+                }} />
         </div>
     );
 }
 
-export function TarjetaPedido({ p, onClick, mostrarCliente = false }) {
+export function TarjetaPedido({ p, onClick, mostrarCliente = false, funciones = null }) {
+    const obsPendiente = (p.conformidad === 'OBSERVADO' || p.conformidad === 'PROBLEMA') && !['RESUELTA', 'NO_CORRESPONDE'].includes(p.observacionEstado);
     const est = estadoDe(p);
     const cuando = cuandoPedido(p);
     return (
@@ -202,8 +212,13 @@ export function TarjetaPedido({ p, onClick, mostrarCliente = false }) {
                 <span className="ml-auto inline-flex items-center gap-3">
                     {p.fotos?.length > 0 && <span className="inline-flex items-center gap-1"><LuCamera size={13} />{p.fotos.length}</span>}
                     {p.conformidad === 'PROBLEMA' && <span className="inline-flex items-center gap-1 font-black text-brand-red"><LuTriangleAlert size={13} />Reclamo</span>}
+                    {p.conformidad === 'OBSERVADO' && (obsPendiente
+                        ? <span className={`inline-flex items-center gap-1 font-black ${mostrarCliente ? 'text-brand-red' : 'text-[#A16207] dark:text-[#F0A500]'}`}><LuMessageCircle size={13} />{mostrarCliente ? 'Observación pendiente' : 'Comentario enviado'}</span>
+                        : <span className="inline-flex items-center gap-1 font-black text-secondary"><LuMessageCircle size={13} />Respondido</span>)}
                     {p.conformidad === 'CONFORME' && <span className="inline-flex items-center gap-1 font-black text-[#16A34A]">✓{p.calificacion ? <><LuStar size={12} className="fill-current" />{p.calificacion}</> : ' Conforme'}</span>}
-                    {p.estado === 'HECHO' && !p.conformidad && !mostrarCliente && <span className="font-black text-brand-red">Confirmá ›</span>}
+                    {p.estado === 'HECHO' && !p.conformidad && !mostrarCliente && (funciones?.calificacion
+                        ? <span className="font-black text-brand-red">Confirmá ›</span>
+                        : <span className="font-black text-[#16A34A]">✓ Entregado</span>)}
                     {p.comentarios > 0 && <span className="inline-flex items-center gap-1"><LuMessageCircle size={13} />{p.comentarios}</span>}
                 </span>
             </div>

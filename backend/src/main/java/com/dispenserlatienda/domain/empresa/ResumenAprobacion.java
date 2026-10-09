@@ -33,6 +33,12 @@ public class ResumenAprobacion {
     @Column(name = "usuario_nombre", length = 120)
     private String usuarioNombre;
 
+    // true = se aprobó solo porque no hubo observaciones en el plazo (9-oct-2026)
+    @Column(name = "automatico")
+    private Boolean automatico;
+    public boolean isAutomatico() { return Boolean.TRUE.equals(automatico); }
+    public void setAutomatico(boolean v) { this.automatico = v; }
+
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn = LocalDateTime.now();
 

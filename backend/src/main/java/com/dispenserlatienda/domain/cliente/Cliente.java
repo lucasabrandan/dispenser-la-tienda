@@ -110,6 +110,12 @@ public class Cliente extends BaseEntity {
     public void setProvincia(String provincia) { this.provincia = provincia; }
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
+    // Funciones del portal empresa de este cliente (9-oct-2026), JSON — ver PortalConfigService
+    @Column(name = "portal_config", columnDefinition = "TEXT")
+    private String portalConfig;
+    public String getPortalConfig() { return portalConfig; }
+    public void setPortalConfig(String portalConfig) { this.portalConfig = portalConfig; }
+
     public String getTarifaVolumen() { return tarifaVolumen; }
     public void setTarifaVolumen(String tarifaVolumen) { this.tarifaVolumen = tarifaVolumen; }
 }

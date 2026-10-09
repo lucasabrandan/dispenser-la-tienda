@@ -4,7 +4,8 @@ import HistorialEquipoModal from '../equipo/HistorialEquipoModal';
 import { abrirMaps, abrirWhatsApp, resumenCliente, formatFecha } from '../../utils/clienteUtils';
 import HistorialClienteModal from './HistorialClienteModal';
 import CierreMensualModal from './CierreMensualModal';
-import { LuMapPin, LuMessageCircle, LuWrench, LuShoppingCart, LuPencil, LuClipboardList, LuTrash2, LuHouse, LuTriangleAlert, LuBuilding2, LuUser, LuFileText } from 'react-icons/lu';
+import FuncionesPortalModal from './FuncionesPortalModal';
+import { LuMapPin, LuMessageCircle, LuWrench, LuShoppingCart, LuPencil, LuClipboardList, LuTrash2, LuHouse, LuTriangleAlert, LuBuilding2, LuUser, LuFileText, LuSlidersHorizontal } from 'react-icons/lu';
 import DireccionMapa from '../ui/DireccionMapa';
 
 export default function ClienteCard({
@@ -19,6 +20,7 @@ export default function ClienteCard({
     const [equipoHistorial, setEquipoHistorial] = useState(null);
     const [modalHistorial, setModalHistorial] = useState(false);
     const [modalCierre, setModalCierre] = useState(false);
+    const [modalPortal, setModalPortal] = useState(false);
     const [menuCliente, setMenuCliente] = useState(false);
     const [menuEquipo, setMenuEquipo] = useState(null); // id del equipo con menú abierto
     const [confirmEliminar, setConfirmEliminar] = useState(null); // 'cliente' | equipo (objeto)
@@ -149,6 +151,12 @@ export default function ClienteCard({
                                         className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
                                         <LuFileText size={15} /> {cliente.tieneTarifa ? 'Cierre mensual' : 'Configurar tarifa mensual'}
                                     </button>
+                                    {(esEmpresa || cliente.tieneTarifa) && (
+                                        <button onClick={() => { setModalPortal(true); setMenuCliente(false); }}
+                                            className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
+                                            <LuSlidersHorizontal size={15} /> Funciones del portal
+                                        </button>
+                                    )}
                                     <button onClick={() => { abrirMaps(cliente); setMenuCliente(false); }}
                                         className="w-full px-5 py-3.5 text-left text-body-lg font-bold text-ink active:bg-[#E8E5E0] rounded-xl flex items-center gap-2.5">
                                         <LuMapPin size={15} /> Ver en mapa
@@ -300,6 +308,7 @@ export default function ClienteCard({
             {modalCierre && (
                 <CierreMensualModal cliente={cliente} onClose={() => setModalCierre(false)} />
             )}
+            {modalPortal && <FuncionesPortalModal cliente={cliente} onClose={() => setModalPortal(false)} />}
         </div>
     );
 }

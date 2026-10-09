@@ -222,7 +222,7 @@ export default function NotificacionesPanel({ abierto, onCerrar, onAbrirTrabajo,
                                                 // El resto con referencia son visitas (5-oct-2026): se abre esa visita
                                                 onAbrirOrden(n.referenciaId, String(n.titulo || '').startsWith('💬'));
                                             } else if (onSinReferencia) {
-                                                onSinReferencia();
+                                                onSinReferencia(n);
                                             }
                                         }}
                                         className={`px-4 py-3 flex gap-3 items-start transition-colors cursor-pointer active:bg-[#EFEDEA] dark:active:bg-[#1C1C1B] ${

@@ -29,5 +29,9 @@ public record PedidoEmpresaDTO(
     Integer calificacion,
     String conformidadComentario,
     LocalDateTime conformidadEn,
-    String conformidadPor
+    String conformidadPor,
+    // Observación sin puntaje (9-oct-2026): PENDIENTE | RESUELTA | NO_CORRESPONDE
+    String observacionEstado,
+    String observacionRespuesta,
+    LocalDateTime observacionCerradaEn
 ) {}

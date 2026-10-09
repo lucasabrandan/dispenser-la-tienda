@@ -246,6 +246,7 @@ public class PedidoEmpresaService {
         // Volver a ir (por un reclamo): la conformidad anterior queda en la conversación
         p.setConformidad(null); p.setCalificacion(null); p.setConformidadComentario(null);
         p.setConformidadEn(null); p.setConformidadPor(null);
+        p.setObservacionEstado(null); p.setObservacionRespuesta(null); p.setObservacionCerradaEn(null);
         p.setActualizadoEn(LocalDateTime.now());
         avisarEmpresa(p.getClienteId(), p.getSedeId(), "Pedido #" + p.getId() + " agendado",
             p.getMotivo() + " · " + cuando(fecha, hora) + "\n📍 " + p.getDireccion());
@@ -355,6 +356,62 @@ public class PedidoEmpresaService {
         return aDTO(p);
     }
 
+    // ── Observación sin puntaje (9-oct-2026) ─────────────────────────────────
+    // Para clientes sin calificación: el trabajo hecho queda "Entregado" solo; si la
+    // empresa quiere, deja un comentario. No suma ni resta ningún promedio: le llega
+    // al admin como observación pendiente y él la cierra con una respuesta.
+    @Transactional
+    public PedidoEmpresaDTO observar(Usuario empresa, Long id, String texto) {
+        PedidoEmpresa p = deEmpresa(empresa, id);
+        if (!"HECHO".equals(aDTO(p).estado())) throw new BusinessException("Todavía no está terminado");
+        String t = limpio(texto);
+        if (t == null) throw new BusinessException("Escribí el comentario");
+        t = corto(t, 2000);
+        p.setConformidad("OBSERVADO");
+        p.setCalificacion(null);
+        p.setConformidadComentario(t);
+        p.setConformidadEn(LocalDateTime.now());
+        p.setConformidadPor(empresa.getNombre());
+        p.setObservacionEstado("PENDIENTE");
+        p.setObservacionRespuesta(null);
+        p.setObservacionCerradaEn(null);
+        p.setActualizadoEn(LocalDateTime.now());
+        PedidoComentario c = new PedidoComentario();
+        c.setPedidoId(p.getId());
+        c.setAutorId(empresa.getId());
+        c.setAutorNombre(empresa.getNombre());
+        c.setDeEmpresa(true);
+        c.setTexto("💬 Comentario sobre el trabajo\n" + t);
+        comentarioRepo.save(c);
+        avisarAdmins(empresa, "💬 Observación · pedido #" + p.getId() + " · " + nombreCliente(p), t, false);
+        return aDTO(p);
+    }
+
+    // El admin cierra la observación: RESUELTA (se ocupó) o NO_CORRESPONDE (no era por el trabajo)
+    @Transactional
+    public PedidoEmpresaDTO cerrarObservacion(Usuario admin, Long id, String estado, String nota) {
+        PedidoEmpresa p = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
+        if (p.getConformidad() == null || "CONFORME".equals(p.getConformidad()))
+            throw new BusinessException("Ese pedido no tiene observaciones");
+        String e = "NO_CORRESPONDE".equals(estado) ? "NO_CORRESPONDE" : "RESUELTA";
+        String n = limpio(nota);
+        if ("NO_CORRESPONDE".equals(e) && n == null) throw new BusinessException("Contale a la empresa por qué no corresponde");
+        p.setObservacionEstado(e);
+        p.setObservacionRespuesta(n);
+        p.setObservacionCerradaEn(LocalDateTime.now());
+        p.setActualizadoEn(LocalDateTime.now());
+        String titulo = "RESUELTA".equals(e) ? "✓ Observación resuelta" : "Respuesta a tu observación";
+        PedidoComentario c = new PedidoComentario();
+        c.setPedidoId(p.getId());
+        c.setAutorId(admin.getId());
+        c.setAutorNombre("Dispenser La Tienda");
+        c.setDeEmpresa(false);
+        c.setTexto(titulo + (n != null ? "\n" + n : ""));
+        comentarioRepo.save(c);
+        avisarEmpresa(p.getClienteId(), p.getSedeId(), titulo + " · pedido #" + p.getId(), n != null ? n : p.getMotivo());
+        return aDTO(p);
+    }
+
     private PedidoEmpresa verificarAcceso(Usuario quien, Long id) {
         if (quien.getRol() == RolUsuario.ADMIN) return repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
         if (quien.getRol() == RolUsuario.EMPRESA) return deEmpresa(quien, id);
@@ -432,6 +489,7 @@ public class PedidoEmpresaService {
             p.isUrgente(), estado, p.getOrdenId(), fecha, hora, tecnico,
             comentarioRepo.countByPedidoId(p.getId()), p.getCreadoEn(), p.getActualizadoEn(),
             listaFotos(p.getFotos()), p.getConformidad(), p.getCalificacion(), p.getConformidadComentario(),
-            p.getConformidadEn(), p.getConformidadPor());
+            p.getConformidadEn(), p.getConformidadPor(),
+            p.getObservacionEstado(), p.getObservacionRespuesta(), p.getObservacionCerradaEn());
     }
 }

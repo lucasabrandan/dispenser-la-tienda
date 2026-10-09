@@ -12,9 +12,23 @@ const moverMes = (m, n) => { const [a, mm] = m.split('-').map(Number); const d =
 const nombreMes = (m) => { const [a, mm] = m.split('-').map(Number); return `${MESES[mm - 1]} ${a}`; };
 const fmt = (iso) => { if (!iso) return ''; const [a, m, d] = String(iso).slice(0, 10).split('-'); return `${d}/${m}/${a}`; };
 const reps = (r) => (r || []).map(x => `${x.cantidad || 1} × ${x.nombre}`).join(', ');
+// Semana y rango (9-oct-2026): además del mes, la empresa puede ver/bajar cualquier período
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const lunesDe = (d) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const semanaDesde = (lunes) => { const h = new Date(lunes); h.setDate(h.getDate() + 6); return { desde: iso(lunes), hasta: iso(h) }; };
+const moverSemana = (s, n) => { const d = new Date(s.desde + 'T12:00:00'); d.setDate(d.getDate() + 7 * n); return semanaDesde(d); };
+const proximo = (v) => !v || !v.vence ? '' : v.tipo === 'FILTRO' ? 'Cambio de filtro' : 'Sanitización';
+const PERIODOS = [{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mes' }, { id: 'rango', label: 'Desde / hasta' }];
 
-export default function ResumenMes({ empresa }) {
+export default function ResumenMes({ empresa, periodoInicial = null }) {
     const [mes, setMes] = useState(mesActual());
+    const [modo, setModo] = useState(periodoInicial === 'semana' ? 'semana' : 'mes');
+    // Al abrirse desde el aviso del lunes: la semana pasada
+    const [semana, setSemana] = useState(() => {
+        const l = lunesDe(new Date()); if (periodoInicial === 'semana') l.setDate(l.getDate() - 7); return semanaDesde(l);
+    });
+    const [rango, setRango] = useState(() => ({ desde: `${mesActual()}-01`, hasta: iso(new Date()) }));
+    const [vencimientos, setVencimientos] = useState({}); // serie → próximo service (para el Excel)
     const [data, setData] = useState(null);
     const [cargando, setCargando] = useState(true);
     // Aprobación del mes (8-oct-2026): "Aprobado" o "Tengo observaciones" (marcando renglones)
@@ -38,12 +52,21 @@ export default function ResumenMes({ empresa }) {
         finally { setEnviando(false); }
     };
 
+    const periodo = modo === 'mes' ? { mes } : modo === 'semana' ? semana : rango;
+    const etiqueta = modo === 'mes' ? nombreMes(mes) : `${fmt(periodo.desde)} al ${fmt(periodo.hasta)}`;
+    const sufijoArchivo = modo === 'mes' ? mes : `${periodo.desde}_a_${periodo.hasta}`;
     const cargar = useCallback(async () => {
+        if (modo === 'rango' && (!rango.desde || !rango.hasta || rango.hasta < rango.desde)) return;
         setCargando(true);
-        try { const r = await api.get('/empresa/resumen', { params: { mes } }); setData(r.data); }
-        catch { toast.error('No se pudo cargar el resumen'); } finally { setCargando(false); }
-    }, [mes]);
+        try { const r = await api.get('/empresa/resumen', { params: modo === 'mes' ? { mes } : (modo === 'semana' ? semana : rango) }); setData(r.data); }
+        catch (e) { toast.error(e?.response?.data?.mensaje || 'No se pudo cargar el resumen'); } finally { setCargando(false); }
+    }, [modo, mes, semana, rango]);
     useEffect(() => { cargar(); }, [cargar]);
+    useEffect(() => {
+        api.get('/empresa/mantenimientos').then(r => {
+            const m = {}; (r.data || []).forEach(x => { if (x.serie) m[x.serie] = x; }); setVencimientos(m);
+        }).catch(() => {});
+    }, []);
 
     const porLugar = useMemo(() => {
         const m = new Map();
@@ -55,16 +78,18 @@ export default function ResumenMes({ empresa }) {
         Fecha: fmt(it.fecha), 'N/S': it.serie || '', Lugar: it.lugar || '', Dirección: it.direccion || '',
         'Trabajo realizado': it.trabajo || '', Repuestos: reps(it.repuestos), Técnico: it.tecnico || '',
         'Garantía hasta': fmt(it.garantiaHasta),
+        'Próximo service': proximo(vencimientos[it.serie]),
+        'Vence': fmt(vencimientos[it.serie]?.vence),
     }));
 
     const excel = async () => {
         if (!data?.items?.length) return;
         const XLSX = await import('xlsx');
         const ws = XLSX.utils.json_to_sheet(filas());
-        ws['!cols'] = [{ wch: 11 }, { wch: 14 }, { wch: 22 }, { wch: 30 }, { wch: 50 }, { wch: 30 }, { wch: 12 }, { wch: 14 }];
+        ws['!cols'] = [{ wch: 11 }, { wch: 14 }, { wch: 22 }, { wch: 30 }, { wch: 50 }, { wch: 30 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 11 }];
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, nombreMes(mes).slice(0, 31));
-        XLSX.writeFile(wb, `Resumen-${empresa || 'empresa'}-${mes}.xlsx`.replace(/\s+/g, '-'));
+        XLSX.utils.book_append_sheet(wb, ws, etiqueta.replace(/\//g, '-').slice(0, 31));
+        XLSX.writeFile(wb, `Resumen-${empresa || 'empresa'}-${sufijoArchivo}.xlsx`.replace(/\s+/g, '-'));
     };
 
     const pdf = async () => {
@@ -75,7 +100,7 @@ export default function ResumenMes({ empresa }) {
                 import('jspdf'), import('jspdf-autotable'), import('../../utils/pdf/layout'), import('../../utils/pdf/theme'),
             ]);
             const doc = new jsPDF({ orientation: 'landscape' });
-            dibujarHeaderCompacto(doc, { tipoLabel: `Resumen de servicio técnico · ${nombreMes(mes)}`, fecha: new Date().toLocaleDateString('es-AR'), nroDoc: empresa || null });
+            dibujarHeaderCompacto(doc, { tipoLabel: `Resumen de servicio técnico · ${etiqueta}`, fecha: new Date().toLocaleDateString('es-AR'), nroDoc: empresa || null });
             let y = HEADER_H.compact + 8;
             doc.setFontSize(9); doc.setTextColor(...C.dark);
             doc.text(`Equipos atendidos: ${data.equiposAtendidos}   ·   Equipos distintos: ${data.equiposDistintos}   ·   Visitas: ${data.visitas}   ·   Lugares: ${data.lugares}`, M, y);
@@ -92,19 +117,36 @@ export default function ResumenMes({ empresa }) {
             });
             const total = doc.getNumberOfPages();
             for (let p = 1; p <= total; p++) { doc.setPage(p); dibujarFooter(doc, { pagina: p, totalPaginas: total, textoCentral: 'Resumen generado desde el portal de Dispenser La Tienda' }); }
-            doc.save(`Resumen-${empresa || 'empresa'}-${mes}.pdf`.replace(/\s+/g, '-'));
+            doc.save(`Resumen-${empresa || 'empresa'}-${sufijoArchivo}.pdf`.replace(/\s+/g, '-'));
             toast.success('PDF descargado', { id: t });
         } catch { toast.error('No se pudo armar el PDF', { id: t }); }
     };
 
     return (
         <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-chip" role="radiogroup" aria-label="Período">
+                {PERIODOS.map(o => (
+                    <button key={o.id} type="button" role="radio" aria-checked={modo === o.id} onClick={() => setModo(o.id)}
+                        className={`h-9 rounded-lg text-label font-black ${modo === o.id ? 'bg-card text-ink shadow-sm' : 'text-secondary'}`}>{o.label}</button>
+                ))}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+                {modo === 'rango' ? (
+                    <div className="flex items-center gap-1.5">
+                        <input type="date" value={rango.desde} max={rango.hasta} onChange={e => setRango(r => ({ ...r, desde: e.target.value }))} aria-label="Desde"
+                            className="h-10 px-2 rounded-xl bg-chip text-label font-bold text-ink outline-none" />
+                        <span className="text-muted">→</span>
+                        <input type="date" value={rango.hasta} min={rango.desde} max={iso(new Date())} onChange={e => setRango(r => ({ ...r, hasta: e.target.value }))} aria-label="Hasta"
+                            className="h-10 px-2 rounded-xl bg-chip text-label font-bold text-ink outline-none" />
+                    </div>
+                ) : (
                 <div className="flex items-center rounded-xl bg-chip">
-                    <button type="button" onClick={() => setMes(m => moverMes(m, -1))} aria-label="Mes anterior" className="w-10 h-10 flex items-center justify-center text-secondary"><LuChevronLeft size={18} /></button>
-                    <span className="px-1 min-w-[6.5rem] text-center text-body font-black text-ink capitalize">{nombreMes(mes)}</span>
-                    <button type="button" onClick={() => setMes(m => moverMes(m, 1))} disabled={mes >= mesActual()} aria-label="Mes siguiente" className="w-10 h-10 flex items-center justify-center text-secondary disabled:opacity-30"><LuChevronRight size={18} /></button>
+                    <button type="button" onClick={() => modo === 'mes' ? setMes(m => moverMes(m, -1)) : setSemana(s => moverSemana(s, -1))} aria-label="Anterior" className="w-10 h-10 flex items-center justify-center text-secondary"><LuChevronLeft size={18} /></button>
+                    <span className={`px-1 min-w-[6.5rem] text-center text-body font-black text-ink ${modo === 'mes' ? 'capitalize' : ''}`}>{modo === 'mes' ? nombreMes(mes) : `${fmt(semana.desde).slice(0, 5)} al ${fmt(semana.hasta).slice(0, 5)}`}</span>
+                    <button type="button" onClick={() => modo === 'mes' ? setMes(m => moverMes(m, 1)) : setSemana(s => moverSemana(s, 1))}
+                        disabled={modo === 'mes' ? mes >= mesActual() : semana.hasta >= iso(new Date())} aria-label="Siguiente" className="w-10 h-10 flex items-center justify-center text-secondary disabled:opacity-30"><LuChevronRight size={18} /></button>
                 </div>
+                )}
                 <div className="ml-auto flex gap-1.5">
                     <button type="button" onClick={pdf} disabled={!data?.items?.length} className="h-10 px-3 rounded-xl bg-chip text-secondary text-label font-black inline-flex items-center gap-1.5 disabled:opacity-40"><LuFileDown size={15} /> PDF</button>
                     <button type="button" onClick={excel} disabled={!data?.items?.length} className="h-10 px-3 rounded-xl bg-chip text-secondary text-label font-black inline-flex items-center gap-1.5 disabled:opacity-40"><LuSheet size={15} /> Excel</button>
@@ -121,14 +163,15 @@ export default function ResumenMes({ empresa }) {
                             </div>
                         ))}
                     </div>
-                    {data?.items?.length > 0 && (aprob && !marcando ? (
+                    {modo === 'mes' && data?.items?.length > 0 && (aprob && !marcando ? (
                         <div className={`p-4 rounded-2xl space-y-1 ${aprob.estado === 'APROBADO' ? 'bg-[rgba(22,163,74,0.1)]' : 'bg-[rgba(201,52,31,0.1)]'}`}>
                             <p className={`flex items-center gap-2 text-body font-black ${aprob.estado === 'APROBADO' ? 'text-[#16A34A]' : 'text-brand-red'}`}>
                                 {aprob.estado === 'APROBADO' ? <LuCircleCheck size={18} /> : <LuTriangleAlert size={18} />}
-                                {aprob.estado === 'APROBADO' ? `Aprobaste el resumen de ${nombreMes(mes)}` : `Observaste el resumen${obsGuardados.size ? ` (${obsGuardados.size} renglón${obsGuardados.size !== 1 ? 'es' : ''})` : ''}`}
+                                {aprob.estado === 'APROBADO' ? (aprob.automatico ? `Resumen de ${nombreMes(mes)} aprobado automáticamente` : `Aprobaste el resumen de ${nombreMes(mes)}`) : `Observaste el resumen${obsGuardados.size ? ` (${obsGuardados.size} renglón${obsGuardados.size !== 1 ? 'es' : ''})` : ''}`}
                             </p>
                             {aprob.comentario && <p className="text-body text-ink whitespace-pre-line">{aprob.comentario}</p>}
-                            <p className="text-caption text-muted">{aprob.usuario}{aprob.fecha ? ` · ${new Date(aprob.fecha).toLocaleDateString('es-AR')}` : ''}
+                            {aprob.automatico && <p className="text-caption text-secondary">No hubo observaciones en el plazo.</p>}
+                            <p className="text-caption text-muted">{aprob.automatico ? '' : aprob.usuario}{aprob.fecha ? ` · ${new Date(aprob.fecha).toLocaleDateString('es-AR')}` : ''}
                                 {data.puedeAprobar && <button type="button" onClick={() => { setMarcando(true); setObservados(new Set(aprob.observados || [])); setComentario(aprob.comentario || ''); }} className="ml-2 font-black text-secondary underline">Cambiar</button>}
                             </p>
                         </div>
@@ -136,6 +179,7 @@ export default function ResumenMes({ empresa }) {
                         <div className="p-4 rounded-2xl border-2 border-[#C9341F]/30 space-y-3">
                             <p className="text-body-lg font-black text-ink">{marcando ? 'Marcá lo que no reconocés' : `¿Está bien el resumen de ${nombreMes(mes)}?`}</p>
                             <p className="text-caption text-muted">{marcando ? 'Tocá cada renglón que no corresponda y contanos qué pasa.' : 'Con tu aprobación facturamos el mes. Si algo no coincide, avisanos acá.'}</p>
+                            {!marcando && data.limiteAprobacion && <p className="text-caption text-secondary">Si no marcás nada hasta el {fmt(data.limiteAprobacion)}, se aprueba solo.</p>}
                             {marcando && (
                                 <textarea rows={2} value={comentario} onChange={e => setComentario(e.target.value)} placeholder="Comentario (opcional si marcaste renglones)"
                                     className="w-full px-3.5 py-2.5 rounded-xl bg-chip text-body text-ink outline-none resize-none placeholder:text-muted" />
@@ -152,7 +196,7 @@ export default function ResumenMes({ empresa }) {
                         </div>
                     ))}
                     {!data?.items?.length ? (
-                        <p className="py-12 text-center text-body text-muted">No hubo trabajos en {nombreMes(mes)}.</p>
+                        <p className="py-12 text-center text-body text-muted">No hubo trabajos {modo === 'mes' ? `en ${nombreMes(mes)}` : `del ${etiqueta}`}.</p>
                     ) : porLugar.map(([lugar, items]) => (
                         <div key={lugar} className="rounded-2xl bg-card border border-black/[0.06] dark:border-white/[0.06] overflow-hidden">
                             <p className="px-4 pt-3 pb-2 flex items-center gap-1.5 text-label font-black text-ink"><LuMapPin size={14} className="text-brand-red" />{lugar}<span className="text-muted font-bold">· {items.length}</span></p>

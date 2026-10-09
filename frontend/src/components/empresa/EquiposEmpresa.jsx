@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { LuSearch, LuMapPin, LuChevronRight, LuHash } from 'react-icons/lu';
 import api from '../../services/api';
 import FichaEquipoSheet from './FichaEquipoSheet';
+import DescargarTodo from './DescargarTodo';
 import MapaLeaflet, { linkGps } from '../mapa/MapaLeaflet';
 import { Segmentado } from '../ui/Pantalla';
 import { LuNavigation, LuX } from 'react-icons/lu';
@@ -14,7 +15,7 @@ const fmt = (iso) => {
     return `${d}/${m}/${a.slice(2)}`;
 };
 
-export default function EquiposEmpresa({ onPedirServicio }) {
+export default function EquiposEmpresa({ onPedirServicio, conMapa = true, empresa }) {
     const [equipos, setEquipos] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [q, setQ] = useState('');
@@ -55,9 +56,10 @@ export default function EquiposEmpresa({ onPedirServicio }) {
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
-                <Segmentado valor={modo} onChange={setModo} opciones={[{ id: 'lista', label: 'Lista' }, { id: 'mapa', label: 'Mapa' }]} />
+                {conMapa ? <Segmentado valor={modo} onChange={setModo} opciones={[{ id: 'lista', label: 'Lista' }, { id: 'mapa', label: 'Mapa' }]} /> : <span />}
+                <DescargarTodo empresa={empresa} />
             </div>
-            {modo === 'mapa' ? (
+            {conMapa && modo === 'mapa' ? (
                 <div className="relative isolate rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/[0.06]">
                     <MapaLeaflet puntos={lugares || []} seleccionado={sel} ajustarKey={lugares ? lugares.length : 0}
                         onClickPunto={(p) => setSel(p.id)} onClickMapa={() => setSel(null)}

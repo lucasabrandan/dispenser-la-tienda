@@ -73,6 +73,26 @@ public class PedidoEmpresaAdminController {
         return a == null ? Map.of() : a;
     }
 
+    // Cerrar una observación de la empresa: RESUELTA o NO_CORRESPONDE (9-oct-2026)
+    @PatchMapping("/{id}/observacion")
+    public PedidoEmpresaDTO cerrarObservacion(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
+        return service.cerrarObservacion(yo(auth), id, body.get("estado"), body.get("nota"));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.dispenserlatienda.service.empresa.PortalConfigService portalConfig;
+
+    // Funciones del portal de un cliente (9-oct-2026)
+    @GetMapping("/portal/{clienteId}")
+    public Map<String, Object> portalDe(@PathVariable Long clienteId) {
+        return com.dispenserlatienda.service.empresa.PortalConfigService.aMapa(portalConfig.de(clienteId));
+    }
+
+    @PutMapping("/portal/{clienteId}")
+    public Map<String, Object> guardarPortal(@PathVariable Long clienteId, @RequestBody Map<String, Object> body) {
+        return com.dispenserlatienda.service.empresa.PortalConfigService.aMapa(portalConfig.guardar(clienteId, body));
+    }
+
     @GetMapping("/usuarios")
     public List<Map<String, Object>> usuarios() { return service.usuariosEmpresa(); }
 
