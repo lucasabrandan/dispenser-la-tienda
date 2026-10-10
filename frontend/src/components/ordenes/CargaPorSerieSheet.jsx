@@ -75,12 +75,38 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
             .catch(() => {});
     }, [cliente]);
 
-    // Visita con equipos ya elegidos por el admin: se agregan solos al abrir
+    // El lugar de la visita (la sede del cliente con la misma dirección): los N/S nuevos
+    // se dan de alta ahí sin preguntar (10-oct-2026: el pedido ya trae el lugar)
+    const [sedeVisita, setSedeVisita] = useState(null);
+    const lugarDeLaVisita = async () => {
+        if (!orden?.clienteId || !orden?.direccion) return null;
+        try {
+            const r = await api.get(`/sedes/cliente/${orden.clienteId}`);
+            const l = Array.isArray(r.data) ? r.data : (r.data?.content || []);
+            const norm = (x) => String(x || '').trim().toLowerCase();
+            const s = l.find(x => norm(x.direccion) === norm(orden.direccion));
+            return s ? String(s.id) : null;
+        } catch { return null; }
+    };
+
+    // Visita con equipos ya elegidos (pedido de empresa o admin): se agregan solos al
+    // abrir; los que todavía no estaban cargados se dan de alta en el lugar de la visita
     useEffect(() => {
-        if (!orden?.equiposSerie) return;
         (async () => {
-            for (const s of orden.equiposSerie.split(',').map(x => x.trim()).filter(Boolean)) {
-                await buscar(s); // eslint-disable-line no-await-in-loop
+            const sede = await lugarDeLaVisita();
+            setSedeVisita(sede);
+            if (sede) setSedeAlta(sede);
+            if (!orden?.equiposSerie) return;
+            for (const s of orden.equiposSerie.split(',').map(x => limpiarSerie(x)).filter(Boolean)) {
+                /* eslint-disable no-await-in-loop */
+                if (sede) {
+                    try {
+                        const r = await api.get('/equipos/historial/para-carga', { params: { serie: s } });
+                        if (!r.data?.encontrado) await api.post('/equipos', { numeroSerie: s, sedeId: Number(sede) });
+                    } catch { /* si falla, queda el alta a mano */ }
+                }
+                await buscar(s);
+                /* eslint-enable no-await-in-loop */
             }
         })();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -151,7 +177,7 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
             setNuevaDir(null);
             toast.success(`Equipo ${noEncontrado} dado de alta`);
             const s = noEncontrado;
-            setNoEncontrado(null); setSedeAlta('');
+            setNoEncontrado(null); setSedeAlta(sedeVisita || '');
             await buscar(s);
         } catch (e) {
             toast.error(e?.response?.data?.mensaje || 'No se pudo dar de alta');
