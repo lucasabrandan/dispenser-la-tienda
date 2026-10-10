@@ -28,6 +28,14 @@ async function subirFoto(dataUrl, prefijo) {
 
 // orden (opcional): visita agendada con equiposSerie — se precargan esos equipos y el
 // cliente; al guardar, quien llama cierra la visita.
+// Trabajos más comunes: un toque y queda escrito (10-oct-2026)
+const TRABAJOS_FRECUENTES = ['Sanitización', 'Cambio de filtro', 'Limpieza general', 'Cambio de canilla',
+    'Reparación de pérdida', 'Cambio de termostato', 'Revisión sin falla'];
+const sumarTrabajo = (texto, t) => {
+    const partes = String(texto || '').split(/\s*[·,]\s*/).map(x => x.trim()).filter(Boolean);
+    return (partes.includes(t) ? partes.filter(x => x !== t) : [...partes, t]).join(' · ');
+};
+
 export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }) {
     const { usuario, esAdmin } = useAuth();
     const [clientesTarifa, setClientesTarifa] = useState(null); // admin: elegir cliente para un equipo nuevo
@@ -44,6 +52,7 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
     const [repuestosDB, setRepuestosDB] = useState([]);
     const [sheetRep, setSheetRep] = useState(null);         // índice del item
     const [observaciones, setObservaciones] = useState('');
+    const [conObs, setConObs] = useState(false);
     const [guardando, setGuardando] = useState(false);
     // Testeo integral A5 (7-oct-2026): se guarda de a una sede; si se corta a mitad y se
     // reintenta, las sedes ya guardadas no se vuelven a mandar (antes se duplicaba la primera),
@@ -331,8 +340,17 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
                                 </div>
                                 <button onClick={() => quitar(i)} className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center bg-chip text-muted active:scale-95"><LuTrash2 size={14} /></button>
                             </div>
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                                {TRABAJOS_FRECUENTES.map(t => {
+                                    const on = it.trabajo.split(/\s*[·,]\s*/).includes(t);
+                                    return (
+                                        <button key={t} type="button" onClick={() => cambiar(i, 'trabajo', sumarTrabajo(it.trabajo, t))} aria-pressed={on}
+                                            className={`h-8 px-2.5 rounded-full text-label font-bold active:scale-95 ${on ? 'bg-brand-red text-white' : 'bg-chip text-secondary'}`}>{t}</button>
+                                    );
+                                })}
+                            </div>
                             <textarea value={it.trabajo} onChange={e => cambiar(i, 'trabajo', e.target.value)} rows={2}
-                                placeholder="Trabajo realizado (ej: limpieza, cambio de filtro, sanitización)" className={INPUT + ' text-caption mb-2'} />
+                                placeholder="Qué se hizo (tocá arriba o escribilo)" className={INPUT + ' text-caption mb-2'} />
                             <button onClick={() => setSheetRep(i)}
                                 className="w-full mb-2 h-9 rounded-lg text-label font-bold bg-chip text-secondary active:scale-95 flex items-center justify-center gap-1.5">
                                 <LuPackage size={13} />
@@ -353,8 +371,12 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
 
                 {items.length > 0 && (
                     <>
-                        <textarea value={observaciones} onChange={e => setObservaciones(e.target.value)} rows={2}
-                            placeholder="Observaciones generales (opcional)" className={INPUT + ' text-caption mt-3'} />
+                        {conObs || observaciones ? (
+                            <textarea value={observaciones} onChange={e => setObservaciones(e.target.value)} rows={2} autoFocus
+                                placeholder="Algo que quieras dejar anotado de toda la visita" className={INPUT + ' text-caption mt-3'} />
+                        ) : (
+                            <button type="button" onClick={() => setConObs(true)} className="mt-3 text-caption font-bold text-muted underline">+ Agregar una observación</button>
+                        )}
                         <button onClick={guardar} disabled={guardando || !listo}
                             className="w-full mt-3 h-12 rounded-xl font-black text-label uppercase bg-brand-red text-white active:scale-95 disabled:opacity-40">
                             {guardando ? 'Guardando…' : `Guardar ${items.length} equipo${items.length !== 1 ? 's' : ''}`}
