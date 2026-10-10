@@ -53,7 +53,14 @@ export function resumenVentanas(json) {
     const porFranja = {};
     vs.forEach(v => { (porFranja[v.franja] = porFranja[v.franja] || []).push(v.dia); });
     return Object.keys(porFranja).sort().map(f => {
-        const dias = [...new Set(porFranja[f])].sort((a, b) => ORDEN_DIAS.indexOf(a) - ORDEN_DIAS.indexOf(b)).map(d => DIA_CORTO[d] || d);
+        const ids = [...new Set(porFranja[f])].sort((a, b) => ORDEN_DIAS.indexOf(a) - ORDEN_DIAS.indexOf(b));
+        // Días seguidos (3 o más) como rango: "Lun a Sáb" (10-oct-2026)
+        const tramos = [];
+        ids.forEach(d => {
+            const ult = tramos.at(-1);
+            if (ult && ORDEN_DIAS.indexOf(d) === ORDEN_DIAS.indexOf(ult.at(-1)) + 1) ult.push(d); else tramos.push([d]);
+        });
+        const dias = tramos.flatMap(t => t.length >= 3 ? [`${DIA_CORTO[t[0]]} a ${DIA_CORTO[t.at(-1)]}`] : t.map(d => DIA_CORTO[d] || d));
         const listaDias = dias.length > 1 ? `${dias.slice(0, -1).join(', ')} y ${dias.at(-1)}` : dias[0];
         const [desde, hasta] = f.split('-').map(h => String(Number(h.split(':')[0])));
         return `${listaDias} · ${NOMBRE_FRANJA[f] || f} (${desde} a ${hasta} h)`;

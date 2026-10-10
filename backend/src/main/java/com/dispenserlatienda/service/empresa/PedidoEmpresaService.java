@@ -152,10 +152,12 @@ public class PedidoEmpresaService {
         p.setUrgente(Boolean.TRUE.equals(dto.urgente()));
         repo.save(p);
 
-        String texto = (equipos != null ? motivo : motivo + (p.getEquipoSerie() != null ? " · N/S " + p.getEquipoSerie() : ""))
+        boolean varios = equipos != null && equipos.size() > 1;
+        String texto = (varios ? motivo : equipos != null ? motivo + equipoEnLinea(equipos.get(0))
+                : motivo + (p.getEquipoSerie() != null ? " · N/S " + p.getEquipoSerie() : ""))
             + "\n📍 " + (lugar != null && !lugar.equalsIgnoreCase(direccion) ? lugar + " · " : "") + direccion
             + (clienteNuevo ? " (cliente nuevo)" : "")
-            + (equipos != null ? equiposTexto(equipos) : "")
+            + (varios ? equiposTexto(equipos) : "")
             + (ventanas != null ? "\n🗓️ Pueden: " + ventanasTexto(ventanas) : "")
             + (p.getDetalle() != null ? "\n" + p.getDetalle() : "")
             + (p.getFotos() != null ? "\n📷 " + p.getFotos().split(",").length + " foto(s)" : "");
@@ -628,20 +630,38 @@ public class PedidoEmpresaService {
         return orden.isEmpty() ? null : new ArrayList<>(orden.values());
     }
 
-    // "Lun mañana y tarde · Mié tarde" (o "cualquier día y horario")
+    // "Lun a Sáb mañana y mediodía" · "Lun y Mar tarde · Jue mañana" (o "cualquier día y horario"):
+    // los días seguidos con las mismas franjas van juntos
     public static String ventanasTexto(List<Map<String, String>> ventanas) {
         if (ventanas.size() == DIAS.size() * FRANJAS.size()) return "cualquier día y horario";
-        List<String> partes = new ArrayList<>();
-        for (int d = 0; d < DIAS.size(); d++) {
-            List<String> fr = new ArrayList<>();
+        List<List<Integer>> porDia = new ArrayList<>();
+        for (String dia : DIAS) {
+            List<Integer> fr = new ArrayList<>();
             for (int f = 0; f < FRANJAS.size(); f++)
                 for (Map<String, String> v : ventanas)
-                    if (DIAS.get(d).equals(v.get("dia")) && FRANJAS.get(f).equals(v.get("franja"))) fr.add(FRANJAS_CORTO.get(f));
-            if (fr.isEmpty()) continue;
-            partes.add(DIAS_CORTO.get(d) + " " + (fr.size() == FRANJAS.size() ? "todo el día"
+                    if (dia.equals(v.get("dia")) && FRANJAS.get(f).equals(v.get("franja")) && !fr.contains(f)) fr.add(f);
+            porDia.add(fr);
+        }
+        List<String> partes = new ArrayList<>();
+        for (int d = 0; d < DIAS.size(); d++) {
+            if (porDia.get(d).isEmpty()) continue;
+            int h = d;
+            while (h + 1 < DIAS.size() && porDia.get(h + 1).equals(porDia.get(d))) h++;
+            String dias = h == d ? DIAS_CORTO.get(d)
+                : h == d + 1 ? DIAS_CORTO.get(d) + " y " + DIAS_CORTO.get(h) : DIAS_CORTO.get(d) + " a " + DIAS_CORTO.get(h);
+            List<String> fr = porDia.get(d).stream().map(FRANJAS_CORTO::get).toList();
+            partes.add(dias + " " + (fr.size() == FRANJAS.size() ? "todo el día"
                 : fr.size() == 1 ? fr.get(0) : String.join(", ", fr.subList(0, fr.size() - 1)) + " y " + fr.get(fr.size() - 1)));
+            d = h;
         }
         return String.join(" · ", partes);
+    }
+
+    // " · N/S 123 · Bacope · Piso 2" (un solo equipo, en la misma línea del motivo)
+    private static String equipoEnLinea(Map<String, String> e) {
+        return (e.get("serie") != null ? " · N/S " + e.get("serie") : "")
+            + (e.get("modelo") != null ? " · " + e.get("modelo") : "")
+            + (e.get("ubicacion") != null ? " · " + e.get("ubicacion") : "");
     }
 
     // "\n• N/S 123 · Piso 2 — No enfría"
