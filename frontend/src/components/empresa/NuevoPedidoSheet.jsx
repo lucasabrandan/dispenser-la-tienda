@@ -75,9 +75,13 @@ export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null, s
     }, [paso, equipos.length, equiposDelLugar.length]);
 
     const filtradas = useMemo(() => {
-        const t = q.trim().toLowerCase();
-        if (!t) return sedes;
-        return sedes.filter(s => [s.nombre, s.direccion, ...(s.series || [])].filter(Boolean).join(' ').toLowerCase().includes(t));
+        const norm = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const palabras = norm(q).split(/\s+/).filter(Boolean);
+        if (!palabras.length) return sedes;
+        return sedes.filter(s => {
+            const texto = norm([s.nombre, s.direccion, ...(s.series || [])].filter(Boolean).join(' '));
+            return palabras.every(p => texto.includes(p));
+        });
     }, [q, sedes]);
 
     const clienteListo = cliente.nombre.trim().length >= 2 && cliente.calle.trim() && cliente.localidad.trim();
@@ -157,12 +161,15 @@ export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null, s
                 {/* ── 1. Cliente ─────────────────────────────────────────── */}
                 {paso === 0 && (!nuevo ? (
                     <section className="space-y-2">
-                        {sedes.length > 6 && (
-                            <div className="relative">
-                                <LuSearch size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-                                <input className={`${INPUT} pl-10`} placeholder="Buscar cliente, dirección o N/S" value={q} onChange={e => setQ(e.target.value)} autoFocus />
-                            </div>
-                        )}
+                        {/* Buscador siempre visible (Modo Agua tiene cientos de lugares) */}
+                        <div className="relative">
+                            <LuSearch size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                            <input className={`${INPUT} pl-10 pr-10`} placeholder="Buscar cliente, dirección o N/S" value={q} onChange={e => setQ(e.target.value)} autoFocus />
+                            {q && (
+                                <button type="button" onClick={() => setQ('')} aria-label="Borrar búsqueda"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg text-muted flex items-center justify-center active:scale-90"><LuX size={15} /></button>
+                            )}
+                        </div>
                         {cargando && <p className="text-caption text-muted">Cargando tus clientes…</p>}
                         <div className="space-y-1.5">
                             {filtradas.slice(0, 40).map(s => {
@@ -182,10 +189,11 @@ export default function NuevoPedidoSheet({ onCerrar, onCreado, inicial = null, s
                                 );
                             })}
                             {!cargando && q && filtradas.length === 0 && <p className="text-caption text-muted px-1">No hay ninguno con “{q}”.</p>}
+                            {filtradas.length > 40 && <p className="text-caption text-muted px-1">Mostrando 40 de {filtradas.length}: escribí para encontrarlo más rápido.</p>}
                         </div>
                         <button type="button" onClick={() => { setNuevo(true); setSedeId(null); setEquipos([]); setCliente(c => ({ ...c, nombre: c.nombre || q.trim() })); }}
                             className="w-full h-11 flex items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-black/15 dark:border-white/15 text-label font-black text-secondary active:scale-95">
-                            <LuUserPlus size={16} /> Cliente nuevo
+                            <LuUserPlus size={16} /> {q.trim() && filtradas.length === 0 ? `Cargar “${q.trim()}” como cliente nuevo` : 'Cliente nuevo'}
                         </button>
                     </section>
                 ) : (
