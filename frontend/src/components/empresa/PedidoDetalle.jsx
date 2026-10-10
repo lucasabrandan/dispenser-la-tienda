@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { LuMapPin, LuClock, LuSend, LuNavigation, LuTriangleAlert, LuHash, LuMessageCircle, LuCalendarDays } from 'react-icons/lu';
+import { LuMapPin, LuClock, LuSend, LuNavigation, LuTriangleAlert, LuHash, LuMessageCircle, LuCalendarDays, LuCar, LuCircleCheck } from 'react-icons/lu';
 import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import InformeTrabajo from './InformeTrabajo';
 import TrabajoHecho from './TrabajoHecho';
 import CancelarPedido from './CancelarPedido';
 import { VerFotos } from './FotosPedido';
+import ModalRegistrarTrabajo from '../ordenes/ModalRegistrarTrabajo';
 import { estadoDe, cuandoPedido, linkMaps, haceCuanto, PASOS_PEDIDO, esAbierto } from '../../utils/pedidosEmpresa';
 import { resumenVentanas } from '../../utils/ordenes';
 
@@ -21,6 +22,8 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
     const [texto, setTexto] = useState('');
     const [enviando, setEnviando] = useState(false);
     const [cancelando, setCancelando] = useState(false);
+    const [moviendo, setMoviendo] = useState(false);
+    const [cerrando, setCerrando] = useState(null); // la visita, para "Cerrar trabajo"
     const finRef = useRef(null);
     useEffect(() => { setP(inicial); }, [inicial]); // al agendar llega el pedido actualizado
 
@@ -73,6 +76,31 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
         }
     };
 
+    // Pasos de la visita desde el admin (10-oct-2026): lo mismo que hace el técnico
+    // desde su usuario. A la empresa le llegan los mismos avisos.
+    const PASO_VISITA = {
+        AGENDADO:  { estado: 'EN_CAMINO', label: 'Salió', Icon: LuCar },
+        EN_CAMINO: { estado: 'EN_SITIO', label: 'Llegó', Icon: LuMapPin, atras: 'PENDIENTE' },
+        EN_CURSO:  { cerrar: true, label: 'Cerrar trabajo', Icon: LuCircleCheck, atras: 'EN_CAMINO' },
+    };
+    const paso = modo === 'admin' && p.ordenId && p.fecha ? PASO_VISITA[p.estado] : null;
+    const moverVisita = async (estado) => {
+        setMoviendo(true);
+        try {
+            await api.patch(`/ordenes/${p.ordenId}/estado`, { estado });
+            await cargar();
+            onCambio && onCambio();
+        } catch (e) {
+            toast.error(e?.response?.data?.mensaje || e?.response?.data?.message || 'No se pudo actualizar la visita');
+        } finally { setMoviendo(false); }
+    };
+    const abrirCierre = async () => {
+        try {
+            const r = await api.get(`/ordenes/${p.ordenId}`);
+            setCerrando(r.data);
+        } catch { toast.error('No se pudo abrir la visita'); }
+    };
+
     const est = estadoDe(p);
     const cuando = cuandoPedido(p);
     const sinVisitaActiva = !p.ordenId || ['NO_ATENDIDO', 'PAUSADO'].includes(p.estado);
@@ -123,6 +151,18 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
                         </div>
                     )}
                     {cuando && <p className="flex items-center gap-2 text-label font-bold text-secondary"><LuClock size={15} className="shrink-0 text-muted" />{cuando}</p>}
+                    {paso && (
+                        <div className="flex gap-2 pt-1">
+                            <button type="button" disabled={moviendo} onClick={() => (paso.cerrar ? abrirCierre() : moverVisita(paso.estado))}
+                                className="flex-[2] h-11 rounded-xl bg-[#C9341F] text-white text-label font-black inline-flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-40">
+                                <paso.Icon size={16} /> {paso.label}
+                            </button>
+                            {paso.atras && (
+                                <button type="button" disabled={moviendo} onClick={() => moverVisita(paso.atras)}
+                                    className="flex-1 h-11 rounded-xl bg-chip text-secondary text-label font-black active:scale-95 disabled:opacity-40">Deshacer</button>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Datos */}
@@ -186,6 +226,11 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
                     <div ref={finRef} />
                 </div>
             </div>
+            {cerrando && (
+                <ModalRegistrarTrabajo orden={cerrando} tecnicoId={cerrando.tecnicoId}
+                    onCerrar={() => setCerrando(null)}
+                    onGuardado={() => { setCerrando(null); cargar(); onCambio && onCambio(); }} />
+            )}
         </ModalShell>
     );
 }

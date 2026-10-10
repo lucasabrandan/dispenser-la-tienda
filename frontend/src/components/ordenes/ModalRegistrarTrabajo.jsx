@@ -26,7 +26,8 @@ export default function ModalRegistrarTrabajo({ orden, tecnicoId, onGuardado, on
     const [pago,           setPago]           = useState(null);
     const [monto,          setMonto]          = useState(0);
     const precioAdmin = Number(orden?.montoEstimado) || 0;
-    const [serial,         setSerial]         = useState('');
+    // El N/S de la visita (pedidos de empresa) ya viene cargado
+    const [serial,         setSerial]         = useState(() => String(orden?.equiposSerie || '').split(',')[0].trim());
     const [fotoEvidencia,  setFotoEvidencia]  = useState(null);
     const [seleccionados,  setSeleccionados]  = useState([]);
     const [guardando,      setGuardando]      = useState(false);

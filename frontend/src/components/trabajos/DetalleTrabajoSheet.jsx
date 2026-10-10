@@ -27,7 +27,7 @@ const plata = (n) => `$${Math.round(Number(n) || 0).toLocaleString('es-AR')}`;
 export default function DetalleTrabajoSheet({ servicio: s, orden, total, onCerrar, onEditar, onReprogramar, onPDF }) {
     const direccion = s.sedeDireccion || orden?.direccion;
     const ordenActiva = orden && ACTIVAS.includes(orden.estado);
-    const hora = orden?.horaEstimada ? String(orden.horaEstimada).slice(0, 5) : null;
+    const hora = !orden?.horaEstimada ? null : /^\d{1,2}:\d{2}/.test(orden.horaEstimada) ? String(orden.horaEstimada).slice(0, 5) : orden.horaEstimada;
     const items = s.items || [];
     const accion = 'h-11 rounded-xl inline-flex items-center justify-center gap-1.5 text-label font-black active:scale-95 border border-black/10 dark:border-white/10 text-ink';
 

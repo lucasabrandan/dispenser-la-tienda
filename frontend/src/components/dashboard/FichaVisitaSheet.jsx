@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { LuMapPin, LuClock, LuArrowRight, LuTrash2 } from 'react-icons/lu';
+import { LuMapPin, LuClock, LuArrowRight, LuTrash2, LuCar, LuCircleCheck } from 'react-icons/lu';
 import { toast } from 'react-hot-toast';
 import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import ChatVisita from '../ordenes/ChatVisita';
+import ModalRegistrarTrabajo from '../ordenes/ModalRegistrarTrabajo';
 import AvatarTecnico from '../ui/AvatarTecnico';
 import { M } from '../servicio/ServicioUI';
 import { estadoLabel, etapaColor } from '../../utils/estados';
@@ -26,7 +27,17 @@ function Chip({ estado }) {
     );
 }
 
-export default function FichaVisitaSheet({ orden, onCerrar, onVerTrabajos, onEliminada }) {
+// Pasos de la visita desde el admin (10-oct-2026): lo mismo que hace el técnico desde su usuario
+const PASO_VISITA = {
+    PENDIENTE: { estado: 'EN_CAMINO', label: 'Salió', Icon: LuCar },
+    EN_CAMINO: { estado: 'EN_SITIO', label: 'Llegó', Icon: LuMapPin, atras: 'PENDIENTE' },
+    EN_SITIO:  { cerrar: true, label: 'Cerrar trabajo', Icon: LuCircleCheck, atras: 'EN_CAMINO' },
+};
+
+export default function FichaVisitaSheet({ orden: inicial, onCerrar, onVerTrabajos, onEliminada, onCambio }) {
+    const [orden, setOrden] = useState(inicial);
+    const [moviendo, setMoviendo] = useState(false);
+    const [cerrando, setCerrando] = useState(false);
     const [servicio, setServicio] = useState(null);
     const [error, setError] = useState(null); // 'borrado' | mensaje
     const [confirmar, setConfirmar] = useState(false);
@@ -53,7 +64,22 @@ export default function FichaVisitaSheet({ orden, onCerrar, onVerTrabajos, onEli
             .finally(() => setCargando(false));
     }, [orden.presupuestoId]);
 
-    const hora = orden.horaEstimada ? String(orden.horaEstimada).slice(0, 5) : 'Sin horario';
+    // "10:30:00" → "10:30"; una franja ("Mañana") queda entera (antes salía "Mañan")
+    const hora = !orden.horaEstimada ? 'Sin horario'
+        : /^\d{1,2}:\d{2}/.test(orden.horaEstimada) ? String(orden.horaEstimada).slice(0, 5) : orden.horaEstimada;
+    // El cierre con presupuesto se hace desde Trabajos (cobro, descuentos…)
+    const paso = orden.horarioACoordinar ? null : PASO_VISITA[orden.estado];
+    const pasoVisible = paso && !(paso.cerrar && orden.presupuestoId);
+    const mover = async (estado) => {
+        setMoviendo(true);
+        try {
+            const r = await api.patch(`/ordenes/${orden.id}/estado`, { estado });
+            setOrden(o => ({ ...o, ...(r.data || { estado }) }));
+            onCambio?.();
+        } catch (e) {
+            toast.error(e?.response?.data?.mensaje || 'No se pudo actualizar la visita');
+        } finally { setMoviendo(false); }
+    };
     const total = servicio
         ? (Number(servicio.montoFinal) > 0 ? Number(servicio.montoFinal) : totalServicio(servicio))
         : 0;
@@ -94,6 +120,20 @@ export default function FichaVisitaSheet({ orden, onCerrar, onVerTrabajos, onEli
                             <AvatarTecnico nombre={orden.tecnicoNombre} size={20} />{orden.tecnicoNombre || 'Sin técnico'}
                         </span>
                     </div>
+                    {paso && (
+                        <div className="flex gap-2 py-2.5 border-b border-black/[0.06] dark:border-white/[0.06]">
+                            {pasoVisible && (
+                                <button type="button" disabled={moviendo} onClick={() => (paso.cerrar ? setCerrando(true) : mover(paso.estado))}
+                                    className="flex-[2] h-10 rounded-xl bg-[#C9341F] text-white text-label font-black inline-flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-40">
+                                    <paso.Icon size={15} /> {paso.label}
+                                </button>
+                            )}
+                            {paso.atras && (
+                                <button type="button" disabled={moviendo} onClick={() => mover(paso.atras)}
+                                    className="flex-1 h-10 rounded-xl bg-chip text-secondary text-label font-black active:scale-95 disabled:opacity-40">Deshacer</button>
+                            )}
+                        </div>
+                    )}
                     {orden.direccion && (
                         <div className={fila}>
                             <span className="text-caption text-muted">Dónde</span>
@@ -157,6 +197,11 @@ export default function FichaVisitaSheet({ orden, onCerrar, onVerTrabajos, onEli
                 )}
                 {!orden.presupuestoId && <p className="text-caption text-muted text-center">Visita suelta, sin presupuesto cargado.</p>}
             </div>
+            {cerrando && (
+                <ModalRegistrarTrabajo orden={orden} tecnicoId={orden.tecnicoId}
+                    onCerrar={() => setCerrando(false)}
+                    onGuardado={() => { setCerrando(false); setOrden(o => ({ ...o, estado: 'COMPLETADA' })); onCambio?.(); }} />
+            )}
         </ModalShell>
     );
 }
