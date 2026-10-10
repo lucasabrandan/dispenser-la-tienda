@@ -196,7 +196,8 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
                     clienteNombre: cliente.nombre,
                     sedeId: Number(sedeId),
                     sedeNombre: grupo[0].equipo.sede || '',
-                    usuarioId: usuario?.id,
+                    // Cerrando una visita: el trabajo es del técnico de la visita aunque lo cierre el admin
+                    usuarioId: orden?.tecnicoId || usuario?.id,
                     servicioTipo: 'TECNICA',
                     estado: 'COMPLETADO',
                     ordenId: orden?.id || null,
@@ -204,7 +205,7 @@ export default function CargaPorSerieSheet({ onClose, onGuardado, orden = null }
                     observaciones: [observaciones.trim(), 'Cargado por N° de serie — se factura en el cierre mensual'].filter(Boolean).join(' | '),
                     items: grupo.map(it => ({
                         equipoSerial: it.serie,
-                        tecnico: usuario?.nombre || 'Técnico',
+                        tecnico: orden?.tecnicoNombre || usuario?.nombre || 'Técnico',
                         trabajoTipo: 'REPARACION',
                         metodoPago: 'EFECTIVO',
                         trabajoRealizado: it.trabajo.trim(),

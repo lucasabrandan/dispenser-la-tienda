@@ -263,6 +263,10 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
     );
 }
 
+// Visita de un pedido de empresa: se cierra con la carga por N/S (sin cobro, va al
+// cierre mensual), no con "¿Te pagó?" (10-oct-2026)
+const esDePedido = (o) => /^Pedido #\d+/.test(o?.descripcion || '');
+
 export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
     const { ordenes, cargando, avanzarEstado, recargar } = useOrdenes({ tecnicoId });
     const tab = 'activas'; // sin pestañas (4-oct-2026): agenda/completadas/rendimiento → "Mi mes"
@@ -553,7 +557,7 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                             )}
                             {abierto && <div className="space-y-4">
                                 {items.map(o => (
-                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={(o) => (o.equiposSerie ? setCargaSerie(o) : setOrdenRegistrando(o))} onProblema={setProblema} onConfirmar={confirmarVisita} onVerServicio={verServicio}
+                                    <OrdenCard key={o.id} orden={o} onHorarioConfirmado={recargar} onAvanzar={avanzarEstado} onEjecutar={handleEjecutar} onRegistrarTrabajo={(o) => (o.equiposSerie || esDePedido(o) ? setCargaSerie(o) : setOrdenRegistrando(o))} onProblema={setProblema} onConfirmar={confirmarVisita} onVerServicio={verServicio}
                                         seleccionando={modoSeleccion} seleccionada={seleccionados.has(o.id)} onToggleSel={toggleSeleccion} />
                                 ))}
                             </div>}

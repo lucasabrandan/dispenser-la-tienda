@@ -5,6 +5,7 @@ import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import ChatVisita from '../ordenes/ChatVisita';
 import ModalRegistrarTrabajo from '../ordenes/ModalRegistrarTrabajo';
+import CargaPorSerieSheet from '../ordenes/CargaPorSerieSheet';
 import AvatarTecnico from '../ui/AvatarTecnico';
 import { M } from '../servicio/ServicioUI';
 import { estadoLabel, etapaColor } from '../../utils/estados';
@@ -197,7 +198,16 @@ export default function FichaVisitaSheet({ orden: inicial, onCerrar, onVerTrabaj
                 )}
                 {!orden.presupuestoId && <p className="text-caption text-muted text-center">Visita suelta, sin presupuesto cargado.</p>}
             </div>
-            {cerrando && (
+            {/* Pedido de empresa o cliente con tarifa mensual: carga por N/S, sin cobro */}
+            {cerrando && (orden.equiposSerie || /^Pedido #\d+/.test(orden.descripcion || '')) && (
+                <CargaPorSerieSheet orden={orden} onClose={() => setCerrando(false)}
+                    onGuardado={async () => {
+                        try { await api.patch(`/ordenes/${orden.id}/estado`, { estado: 'COMPLETADA' }); }
+                        catch { toast.error('El trabajo quedó cargado, pero no se pudo cerrar la visita'); }
+                        setOrden(o => ({ ...o, estado: 'COMPLETADA' })); onCambio?.();
+                    }} />
+            )}
+            {cerrando && !(orden.equiposSerie || /^Pedido #\d+/.test(orden.descripcion || '')) && (
                 <ModalRegistrarTrabajo orden={orden} tecnicoId={orden.tecnicoId}
                     onCerrar={() => setCerrando(false)}
                     onGuardado={() => { setCerrando(false); setOrden(o => ({ ...o, estado: 'COMPLETADA' })); onCambio?.(); }} />

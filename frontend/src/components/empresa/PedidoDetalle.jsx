@@ -7,7 +7,7 @@ import InformeTrabajo from './InformeTrabajo';
 import TrabajoHecho from './TrabajoHecho';
 import CancelarPedido from './CancelarPedido';
 import { VerFotos } from './FotosPedido';
-import ModalRegistrarTrabajo from '../ordenes/ModalRegistrarTrabajo';
+import CargaPorSerieSheet from '../ordenes/CargaPorSerieSheet';
 import { estadoDe, cuandoPedido, linkMaps, haceCuanto, PASOS_PEDIDO, esAbierto } from '../../utils/pedidosEmpresa';
 import { resumenVentanas } from '../../utils/ordenes';
 
@@ -226,10 +226,14 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
                     <div ref={finRef} />
                 </div>
             </div>
+            {/* Empresa: sin cobro en el momento, se factura en el cierre mensual */}
             {cerrando && (
-                <ModalRegistrarTrabajo orden={cerrando} tecnicoId={cerrando.tecnicoId}
-                    onCerrar={() => setCerrando(null)}
-                    onGuardado={() => { setCerrando(null); cargar(); onCambio && onCambio(); }} />
+                <CargaPorSerieSheet orden={cerrando} onClose={() => setCerrando(null)}
+                    onGuardado={async () => {
+                        try { await api.patch(`/ordenes/${cerrando.id}/estado`, { estado: 'COMPLETADA' }); }
+                        catch { toast.error('El trabajo quedó cargado, pero no se pudo cerrar la visita'); }
+                        cargar(); onCambio && onCambio();
+                    }} />
             )}
         </ModalShell>
     );
