@@ -170,6 +170,7 @@ function OrdenCard({ orden, onAvanzar, onEjecutar, onRegistrarTrabajo, onProblem
                 {confirmandoHorario && (
                     <ConfirmarHorarioSheet
                         servicio={{ id: orden.presupuestoId, ventanasDisponibles: orden.ventanasCliente, clienteNombre: orden.clienteNombre }}
+                        url={orden.presupuestoId ? null : `/ordenes/${orden.id}/confirmar-horario`}
                         onCerrar={() => setConfirmandoHorario(false)}
                         onConfirmado={() => { setConfirmandoHorario(false); onHorarioConfirmado && onHorarioConfirmado(); }}
                     />
@@ -425,12 +426,16 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
         .filter(o => o.horaEstimada)
         .sort((a, b) => (a.horaEstimada || '').localeCompare(b.horaEstimada || ''))[0];
 
+    // Las visitas con el día "a coordinar" van primero, abiertas: el técnico tiene que
+    // elegir el día (antes quedaban plegadas en el día provisorio — 10-oct-2026)
+    const A_COORDINAR = 'a-coordinar';
     const porFecha = lista.reduce((acc, o) => {
-        const k = o.fechaProgramada;
+        const k = tab === 'activas' && o.horarioACoordinar ? A_COORDINAR : o.fechaProgramada;
         if (!acc[k]) acc[k] = [];
         acc[k].push(o);
         return acc;
     }, {});
+    const grupos = Object.entries(porFecha).sort(([a], [b]) => (a === A_COORDINAR ? -1 : b === A_COORDINAR ? 1 : 0));
 
     const hoy = getTodayISO();
     const formatFecha = (f) => {
@@ -528,9 +533,10 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                         </p>
                     </div>
                 ) : (
-                    Object.entries(porFecha).map(([fecha, items]) => {
+                    grupos.map(([fecha, items]) => {
                         // Hoy y lo atrasado, abierto. Los días que vienen, plegados (4-oct-2026)
-                        const futuro = fecha > hoy;
+                        const coordinar = fecha === A_COORDINAR;
+                        const futuro = !coordinar && fecha > hoy;
                         const abierto = !futuro || diasAbiertos.has(fecha);
                         return (
                         <div key={fecha} className="mb-5">
@@ -541,8 +547,8 @@ export default function MisOrdenes({ tecnicoId, onEjecutarOrden }) {
                                     <span className="text-label font-bold text-secondary inline-flex items-center gap-1">{items.length} visita{items.length !== 1 ? 's' : ''} {abierto ? <LuChevronUp size={14} /> : <LuChevronDown size={14} />}</span>
                                 </button>
                             ) : (
-                                <p className="text-label font-black text-muted uppercase tracking-wider mb-2 capitalize">
-                                    {fecha < hoy ? `Atrasada · ${formatFecha(fecha)}` : formatFecha(fecha)}
+                                <p className={`text-label font-black uppercase tracking-wider mb-2 ${coordinar ? 'text-[var(--warning-tx)]' : 'text-muted capitalize'}`}>
+                                    {coordinar ? `Elegí el día · ${items.length} visita${items.length !== 1 ? 's' : ''}` : fecha < hoy ? `Atrasada · ${formatFecha(fecha)}` : formatFecha(fecha)}
                                 </p>
                             )}
                             {abierto && <div className="space-y-4">

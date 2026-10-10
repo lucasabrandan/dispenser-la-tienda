@@ -101,6 +101,14 @@ public class OrdenVisitaController {
         return ResponseEntity.ok(service.confirmar(id));
     }
 
+    // Técnico: elige el día de una visita "a coordinar" de un pedido de empresa (10-oct-2026)
+    @PatchMapping("/{id}/confirmar-horario")
+    public ResponseEntity<OrdenVisitaDTO> confirmarHorario(@PathVariable Long id, @RequestBody Map<String, String> body,
+                                                           Authentication auth) {
+        verificarAccesoOrden(id, auth);
+        return ResponseEntity.ok(service.confirmarHorario(id, body.get("fecha"), body.get("hora")));
+    }
+
     // Técnico: "no puedo ir" a esta visita (motivo propio, no del cliente)
     @PostMapping("/{id}/no-puedo")
     public ResponseEntity<OrdenVisitaDTO> noPuedo(@PathVariable Long id,

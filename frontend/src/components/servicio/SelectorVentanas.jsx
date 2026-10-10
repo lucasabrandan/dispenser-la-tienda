@@ -24,7 +24,7 @@ export const FRANJAS = [
     { id: '18:00-20:00', corto: 'Tarde-noche', rango: '18 a 20' },
 ];
 
-export default function SelectorVentanas({ value, onChange }) {
+export default function SelectorVentanas({ value, onChange, ayuda = null }) {
     const ventanas = value || [];
 
     const estaMarcada = (dia, franja) =>
@@ -41,7 +41,7 @@ export default function SelectorVentanas({ value, onChange }) {
     return (
         <div>
             <p className="text-caption text-muted mb-2">
-                Tocá las combinaciones que le sirven al cliente — el resto queda descartado. El técnico va a poder elegir el día y horario exacto solo dentro de lo que marques acá.
+                {ayuda || 'Tocá las combinaciones que le sirven al cliente — el resto queda descartado. El técnico va a poder elegir el día y horario exacto solo dentro de lo que marques acá.'}
             </p>
             <div className="overflow-x-auto -mx-1 px-1">
                 <table className="w-full border-separate" style={{ borderSpacing: '4px' }}>

@@ -136,4 +136,15 @@ public class PedidoEmpresa {
     public LocalDateTime getCreadoEn() { return creadoEn; }
     public LocalDateTime getActualizadoEn() { return actualizadoEn; }
     public void setActualizadoEn(LocalDateTime v) { this.actualizadoEn = v; }
+
+    // Carga guiada (10-oct-2026): equipos [{serie, modelo, ubicacion, motivo}] y
+    // días/franjas en que pueden recibir al técnico [{dia, franja}], en JSON.
+    @Column(columnDefinition = "TEXT")
+    private String equipos;
+    @Column(columnDefinition = "TEXT")
+    private String ventanas;
+    public String getEquipos() { return equipos; }
+    public void setEquipos(String v) { this.equipos = v; }
+    public String getVentanas() { return ventanas; }
+    public void setVentanas(String v) { this.ventanas = v; }
 }

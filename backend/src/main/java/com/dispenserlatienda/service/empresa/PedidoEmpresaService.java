@@ -2,6 +2,7 @@ package com.dispenserlatienda.service.empresa;
 
 import com.dispenserlatienda.domain.empresa.PedidoComentario;
 import com.dispenserlatienda.domain.empresa.PedidoEmpresa;
+import com.dispenserlatienda.domain.equipo.Equipo;
 import com.dispenserlatienda.domain.notificacion.TipoNotificacion;
 import com.dispenserlatienda.domain.orden.EstadoOrden;
 import com.dispenserlatienda.domain.orden.OrdenVisita;
@@ -23,6 +24,8 @@ import com.dispenserlatienda.repository.sede.SedeRepository;
 import com.dispenserlatienda.repository.usuario.UsuarioRepository;
 import com.dispenserlatienda.service.notificacion.NotificacionService;
 import com.dispenserlatienda.service.orden.OrdenVisitaService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,6 +82,17 @@ public class PedidoEmpresaService {
             m.put("direccion", s.getDireccion());
             m.put("series", s.getEquipos() == null ? List.of() : s.getEquipos().stream()
                 .map(e -> e.getNumeroSerie()).filter(Objects::nonNull).toList());
+            // Carga guiada (10-oct-2026): cada equipo con modelo y ubicación, para elegirlo de un toque
+            List<Map<String, String>> eqs = new ArrayList<>();
+            if (s.getEquipos() != null) for (var e : s.getEquipos()) {
+                if (e.getNumeroSerie() == null) continue;
+                Map<String, String> x = new LinkedHashMap<>();
+                x.put("serie", e.getNumeroSerie());
+                x.put("modelo", e.getModelo());
+                x.put("ubicacion", e.getUbicacion());
+                eqs.add(x);
+            }
+            m.put("equipos", eqs);
             out.add(m);
         }
         return out;
@@ -94,7 +108,16 @@ public class PedidoEmpresaService {
         p.setCreadoPorNombre(empresa.getNombre());
         String direccion = limpio(dto.direccion());
         String lugar = limpio(dto.lugar());
-        if (dto.sedeId() != null) {
+        boolean clienteNuevo = false;
+        if (dto.sedeId() == null && dto.clienteNuevo() != null) {
+            // Cliente de la empresa que no estaba cargado (10-oct-2026): queda como un lugar suyo
+            if (empresa.getSedeId() != null) throw new BusinessException("Elegí tu lugar");
+            Lugar l = lugarNuevo(clienteId, dto.clienteNuevo());
+            clienteNuevo = l.nuevo();
+            p.setSedeId(l.sede().getId());
+            lugar = l.sede().getNombreSede();
+            direccion = l.sede().getDireccion();
+        } else if (dto.sedeId() != null) {
             Sede s = sedeRepo.findById(dto.sedeId()).orElseThrow(() -> new BusinessException("Ese lugar no existe"));
             if (s.getCliente() == null || !clienteId.equals(s.getCliente().getId())) throw new AccessDeniedException("Ese lugar no es tuyo");
             p.setSedeId(s.getId());
@@ -107,17 +130,33 @@ public class PedidoEmpresaService {
         if (direccion == null) throw new BusinessException("Falta la dirección");
         p.setFotos(fotosValidas(dto.fotos()));
         String motivo = limpio(dto.motivo());
+        List<Map<String, String>> equipos = equiposValidos(dto.equipos(), motivo);
+        if (equipos != null) {
+            // Varios equipos (10-oct-2026): cada uno con lo que le pasa; el motivo del pedido
+            // es ese mismo si es uno solo para todos, o "Varios"
+            p.setEquipos(aJson(equipos));
+            p.setEquipoSerie(corto(String.join(", ", equipos.stream().map(e -> e.get("serie")).filter(Objects::nonNull).toList()), 200));
+            if (p.getEquipoSerie() != null && p.getEquipoSerie().isEmpty()) p.setEquipoSerie(null);
+            Set<String> motivos = new LinkedHashSet<>(equipos.stream().map(e -> e.get("motivo")).toList());
+            motivo = motivos.size() == 1 ? motivos.iterator().next() : "Varios (" + equipos.size() + " equipos)";
+        } else {
+            p.setEquipoSerie(corto(limpio(dto.equipoSerie()), 200));
+        }
         if (motivo == null) throw new BusinessException("Elegí el motivo");
+        List<Map<String, String>> ventanas = ventanasValidas(dto.ventanas());
+        p.setVentanas(aJson(ventanas));
         p.setLugar(corto(lugar, 300));
         p.setDireccion(corto(direccion, 400));
-        p.setEquipoSerie(corto(limpio(dto.equipoSerie()), 200));
         p.setMotivo(corto(motivo, 120));
         p.setDetalle(limpio(dto.detalle()));
         p.setUrgente(Boolean.TRUE.equals(dto.urgente()));
         repo.save(p);
 
-        String texto = motivo + (p.getEquipoSerie() != null ? " · N/S " + p.getEquipoSerie() : "")
+        String texto = (equipos != null ? motivo : motivo + (p.getEquipoSerie() != null ? " · N/S " + p.getEquipoSerie() : ""))
             + "\n📍 " + (lugar != null && !lugar.equalsIgnoreCase(direccion) ? lugar + " · " : "") + direccion
+            + (clienteNuevo ? " (cliente nuevo)" : "")
+            + (equipos != null ? equiposTexto(equipos) : "")
+            + (ventanas != null ? "\n🗓️ Pueden: " + ventanasTexto(ventanas) : "")
             + (p.getDetalle() != null ? "\n" + p.getDetalle() : "")
             + (p.getFotos() != null ? "\n📷 " + p.getFotos().split(",").length + " foto(s)" : "");
         avisarAdmins(empresa, (p.isUrgente() ? "🔴 Pedido urgente #" : "Pedido nuevo #") + p.getId() + " · " + nombreCliente(p), texto, true);
@@ -217,6 +256,11 @@ public class PedidoEmpresaService {
     // le avisa a la empresa el día.
     @Transactional
     public PedidoEmpresaDTO agendar(Long id, Long tecnicoId, LocalDate fecha, String hora) {
+        return agendar(id, tecnicoId, fecha, hora, false);
+    }
+
+    @Transactional
+    public PedidoEmpresaDTO agendar(Long id, Long tecnicoId, LocalDate fecha, String hora, boolean aCoordinar) {
         PedidoEmpresa p = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
         if ("CANCELADO".equals(p.getEstado())) throw new BusinessException("El pedido está cancelado");
         if (p.getOrdenId() != null) {
@@ -224,10 +268,20 @@ public class PedidoEmpresaService {
             if (o.isPresent() && List.of(EstadoOrden.PENDIENTE, EstadoOrden.EN_CAMINO, EstadoOrden.EN_SITIO).contains(o.get().getEstado()))
                 throw new BusinessException("Ya tiene una visita agendada: reprogramala desde la visita");
         }
-        if (tecnicoId == null || fecha == null) throw new BusinessException("Elegí técnico y día");
+        List<Map<String, String>> vts = leerLista(p.getVentanas());
+        boolean coordinar = aCoordinar && !vts.isEmpty();
+        if (coordinar) {
+            if (fecha == null) fecha = proximaFecha(vts);
+            hora = null;
+        }
+        if (tecnicoId == null || fecha == null) throw new BusinessException(coordinar ? "Elegí el técnico" : "Elegí técnico y día");
+        List<Map<String, String>> eqs = leerLista(p.getEquipos());
         String desc = "Pedido #" + p.getId() + " de " + nombreCliente(p)
-            + (p.getEquipoSerie() != null ? "\nEquipo N/S: " + p.getEquipoSerie() : "")
+            + (!eqs.isEmpty() ? equiposTexto(eqs) : p.getEquipoSerie() != null ? "\nEquipo N/S: " + p.getEquipoSerie() : "")
+            + (!vts.isEmpty() ? "\nPueden: " + ventanasTexto(vts) : "")
             + (p.getDetalle() != null ? "\n" + p.getDetalle() : "");
+        String series = eqs.isEmpty() ? p.getEquipoSerie()
+            : String.join(",", eqs.stream().map(e -> e.get("serie")).filter(Objects::nonNull).toList());
         OrdenVisitaDTO o = ordenService.crear(new OrdenVisitaCreateDTO(
             tecnicoId,
             p.getMotivo() + (p.getLugar() != null ? " · " + p.getLugar() : ""),
@@ -240,7 +294,7 @@ public class PedidoEmpresaService {
             fecha,
             hora,
             null, null, null,
-            p.getEquipoSerie()));
+            series == null || series.isEmpty() ? null : series), coordinar ? aJson(vts) : null);
         p.setOrdenId(o.id());
         p.setEstado("NUEVO");
         // Volver a ir (por un reclamo): la conformidad anterior queda en la conversación
@@ -248,8 +302,13 @@ public class PedidoEmpresaService {
         p.setConformidadEn(null); p.setConformidadPor(null);
         p.setObservacionEstado(null); p.setObservacionRespuesta(null); p.setObservacionCerradaEn(null);
         p.setActualizadoEn(LocalDateTime.now());
-        avisarEmpresa(p.getClienteId(), p.getSedeId(), "Pedido #" + p.getId() + " agendado",
-            p.getMotivo() + " · " + cuando(fecha, hora) + "\n📍 " + p.getDireccion());
+        if (coordinar)
+            avisarEmpresa(p.getClienteId(), p.getSedeId(), "Pedido #" + p.getId() + " asignado",
+                p.getMotivo() + " · el técnico elige el día dentro de lo que marcaste (" + ventanasTexto(vts)
+                    + ") y te avisamos\n📍 " + p.getDireccion());
+        else
+            avisarEmpresa(p.getClienteId(), p.getSedeId(), "Pedido #" + p.getId() + " agendado",
+                p.getMotivo() + " · " + cuando(fecha, hora) + "\n📍 " + p.getDireccion());
         return aDTO(p);
     }
 
@@ -472,8 +531,9 @@ public class PedidoEmpresaService {
         String estado = p.getEstado();
         LocalDate fecha = null; String hora = null; String tecnico = null;
         if (!"CANCELADO".equals(estado) && o != null) {
-            fecha = o.getFechaProgramada();
-            hora = o.getHoraEstimada();
+            // Día "a coordinar": el que tiene la visita es provisorio, no se muestra (10-oct-2026)
+            fecha = o.getVentanasCliente() == null ? o.getFechaProgramada() : null;
+            hora = o.getVentanasCliente() == null ? o.getHoraEstimada() : null;
             tecnico = o.getTecnico() != null ? o.getTecnico().getNombre().split(" ")[0] : null;
             estado = switch (o.getEstado()) {
                 case PENDIENTE -> "AGENDADO";
@@ -490,6 +550,132 @@ public class PedidoEmpresaService {
             comentarioRepo.countByPedidoId(p.getId()), p.getCreadoEn(), p.getActualizadoEn(),
             listaFotos(p.getFotos()), p.getConformidad(), p.getCalificacion(), p.getConformidadComentario(),
             p.getConformidadEn(), p.getConformidadPor(),
-            p.getObservacionEstado(), p.getObservacionRespuesta(), p.getObservacionCerradaEn());
+            p.getObservacionEstado(), p.getObservacionRespuesta(), p.getObservacionCerradaEn(),
+            leerLista(p.getEquipos()), leerLista(p.getVentanas()));
+    }
+
+    // ── Carga guiada (10-oct-2026) ──────────────────────────────────────────
+
+    private static final ObjectMapper JSON = new ObjectMapper();
+    public static final List<String> DIAS = List.of("LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO");
+    public static final List<String> FRANJAS = List.of("08:00-12:00", "12:00-14:00", "14:00-18:00", "18:00-20:00");
+    private static final List<String> DIAS_CORTO = List.of("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb");
+    private static final List<String> FRANJAS_CORTO = List.of("mañana", "mediodía", "tarde", "tarde-noche");
+
+    // Crea el lugar (sede) con los datos que cargó la empresa. Si ya hay uno con el mismo
+    // nombre y la misma dirección se usa ese; con el mismo nombre y otra dirección, se avisa.
+    private record Lugar(Sede sede, boolean nuevo) {}
+
+    private Lugar lugarNuevo(Long clienteId, PedidoEmpresaCreateDTO.ClienteNuevo c) {
+        String nombre = corto(limpio(c.nombre()), 120), calle = corto(limpio(c.calle()), 120);
+        String numero = corto(limpio(c.numero()), 20), piso = corto(limpio(c.piso()), 20);
+        String depto = corto(limpio(c.depto()), 20), localidad = corto(limpio(c.localidad()), 120);
+        String notas = corto(limpio(c.notas()), 500);
+        if (nombre == null || nombre.length() < 2) throw new BusinessException("Falta el nombre del cliente");
+        if (calle == null) throw new BusinessException("Falta la calle");
+        if (localidad == null) throw new BusinessException("Falta la localidad");
+        String dir = corto(calle + (numero != null ? " " + numero : "") + (piso != null ? ", Piso " + piso : "")
+            + (depto != null ? " Depto " + depto : "") + ", " + localidad, 255);
+        Optional<Sede> mismo = sedeRepo.findByClienteId(clienteId).stream()
+            .filter(s -> nombre.equalsIgnoreCase(s.getNombreSede())).findFirst();
+        if (mismo.isPresent()) {
+            Sede s = mismo.get();
+            if (s.isActiva() && s.getDireccion() != null && s.getDireccion().equalsIgnoreCase(dir)) return new Lugar(s, false);
+            throw new BusinessException("Ya tenés un cliente llamado " + s.getNombreSede() + ": elegilo de la lista o agregale algo para diferenciarlo");
+        }
+        var cliente = clienteRepo.findById(clienteId).orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
+        return new Lugar(sedeRepo.save(new Sede(cliente, nombre, calle, numero, piso, depto, localidad, null, dir, notas)), true);
+    }
+
+    // Sin repetir N/S, hasta 30; cada uno con lo que le pasa (o el motivo del pedido)
+    private static List<Map<String, String>> equiposValidos(List<PedidoEmpresaCreateDTO.EquipoPedido> lista, String motivoPedido) {
+        if (lista == null) return null;
+        List<Map<String, String>> out = new ArrayList<>();
+        Set<String> vistas = new HashSet<>();
+        for (var e : lista) {
+            if (e == null) continue;
+            String serie = corto(Equipo.normalizarSerie(e.serie()), 60);
+            String modelo = corto(limpio(e.modelo()), 120), ubicacion = corto(limpio(e.ubicacion()), 120);
+            String motivo = corto(limpio(e.motivo()), 120);
+            if (motivo == null) motivo = motivoPedido;
+            if (serie == null && modelo == null && ubicacion == null && motivo == null) continue;
+            if (serie != null && !vistas.add(serie)) throw new BusinessException("El N/S " + serie + " está dos veces");
+            if (motivo == null) throw new BusinessException("Elegí qué le pasa a " + (serie != null ? "N/S " + serie : "cada equipo"));
+            if (out.size() >= 30) throw new BusinessException("Hasta 30 equipos por pedido");
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("serie", serie);
+            m.put("modelo", modelo);
+            m.put("ubicacion", ubicacion);
+            m.put("motivo", motivo);
+            out.add(m);
+        }
+        return out.isEmpty() ? null : out;
+    }
+
+    // Solo días y franjas conocidos, sin repetir y siempre en el mismo orden
+    private static List<Map<String, String>> ventanasValidas(List<PedidoEmpresaCreateDTO.Ventana> lista) {
+        if (lista == null) return null;
+        TreeMap<Integer, Map<String, String>> orden = new TreeMap<>();
+        for (var v : lista) {
+            if (v == null) continue;
+            int d = DIAS.indexOf(v.dia()), f = FRANJAS.indexOf(v.franja());
+            if (d < 0 || f < 0) throw new BusinessException("Día u horario inválido");
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("dia", v.dia());
+            m.put("franja", v.franja());
+            orden.put(d * 10 + f, m);
+        }
+        return orden.isEmpty() ? null : new ArrayList<>(orden.values());
+    }
+
+    // "Lun mañana y tarde · Mié tarde" (o "cualquier día y horario")
+    public static String ventanasTexto(List<Map<String, String>> ventanas) {
+        if (ventanas.size() == DIAS.size() * FRANJAS.size()) return "cualquier día y horario";
+        List<String> partes = new ArrayList<>();
+        for (int d = 0; d < DIAS.size(); d++) {
+            List<String> fr = new ArrayList<>();
+            for (int f = 0; f < FRANJAS.size(); f++)
+                for (Map<String, String> v : ventanas)
+                    if (DIAS.get(d).equals(v.get("dia")) && FRANJAS.get(f).equals(v.get("franja"))) fr.add(FRANJAS_CORTO.get(f));
+            if (fr.isEmpty()) continue;
+            partes.add(DIAS_CORTO.get(d) + " " + (fr.size() == FRANJAS.size() ? "todo el día"
+                : fr.size() == 1 ? fr.get(0) : String.join(", ", fr.subList(0, fr.size() - 1)) + " y " + fr.get(fr.size() - 1)));
+        }
+        return String.join(" · ", partes);
+    }
+
+    // "\n• N/S 123 · Piso 2 — No enfría"
+    private static String equiposTexto(List<Map<String, String>> equipos) {
+        StringBuilder sb = new StringBuilder();
+        for (Map<String, String> e : equipos)
+            sb.append("\n• ").append(e.get("serie") != null ? "N/S " + e.get("serie") : "Sin N/S")
+              .append(e.get("modelo") != null ? " · " + e.get("modelo") : "")
+              .append(e.get("ubicacion") != null ? " · " + e.get("ubicacion") : "")
+              .append(e.get("motivo") != null ? " — " + e.get("motivo") : "");
+        return sb.toString();
+    }
+
+    // Primer día desde mañana que les sirve (domingo nunca)
+    public static LocalDate proximaFecha(List<Map<String, String>> ventanas) {
+        Set<String> dias = new HashSet<>();
+        for (Map<String, String> v : ventanas) dias.add(v.get("dia"));
+        LocalDate d = LocalDate.now();
+        for (int i = 0; i < 14; i++) {
+            d = d.plusDays(1);
+            int idx = d.getDayOfWeek().getValue() - 1; // lunes = 0
+            if (idx < DIAS.size() && dias.contains(DIAS.get(idx))) return d;
+        }
+        return null;
+    }
+
+    private static String aJson(List<Map<String, String>> lista) {
+        if (lista == null || lista.isEmpty()) return null;
+        try { return JSON.writeValueAsString(lista); } catch (Exception e) { return null; }
+    }
+
+    public static List<Map<String, String>> leerLista(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        try { return JSON.readValue(json, new TypeReference<List<Map<String, String>>>() {}); }
+        catch (Exception e) { return List.of(); }
     }
 }

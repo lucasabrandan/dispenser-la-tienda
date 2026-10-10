@@ -35,7 +35,9 @@ function proximasFechas(diaId, cantidad = 4) {
     return resultado;
 }
 
-export default function ConfirmarHorarioSheet({ servicio, onCerrar, onConfirmado }) {
+// url: a dónde se confirma (por defecto el trabajo; una visita de un pedido de empresa
+// "a coordinar" se confirma en la visita misma — 10-oct-2026)
+export default function ConfirmarHorarioSheet({ servicio, url = null, onCerrar, onConfirmado }) {
     let ventanas = [];
     try {
         ventanas = servicio.ventanasDisponibles ? JSON.parse(servicio.ventanasDisponibles) : [];
@@ -60,7 +62,7 @@ export default function ConfirmarHorarioSheet({ servicio, onCerrar, onConfirmado
         if (!fechaSel || !hora) { toast.error('Elegí una fecha y un horario'); return; }
         setGuardando(true);
         try {
-            await api.patch(`/servicios/${servicio.id}/confirmar-horario`, { fecha: fechaSel, hora });
+            await api.patch(url || `/servicios/${servicio.id}/confirmar-horario`, { fecha: fechaSel, hora });
             toast.success('Horario confirmado');
             onConfirmado();
         } catch (e) {

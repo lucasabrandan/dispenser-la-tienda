@@ -80,6 +80,14 @@ public class OrdenVisita {
     @Column(name = "confirmada_en")
     private LocalDateTime confirmadaEn;
 
+    // Visita "a coordinar" que viene de un pedido de empresa (10-oct-2026): días/franjas
+    // en que el cliente puede [{dia, franja}]. El técnico elige el día dentro de eso;
+    // al confirmarlo (o si el admin la reprograma) se borra.
+    @Column(name = "ventanas_cliente", columnDefinition = "TEXT")
+    private String ventanasCliente;
+    public String getVentanasCliente() { return ventanasCliente; }
+    public void setVentanasCliente(String v) { this.ventanasCliente = v; }
+
     @PrePersist
     protected void onCreate() {
         this.creadoEn = LocalDateTime.now();

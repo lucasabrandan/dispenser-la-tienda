@@ -29,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,6 +68,13 @@ public class OrdenVisitaService {
     // ── Admin: crear orden ─────────────────────────────────────────────────────
     @Transactional
     public OrdenVisitaDTO crear(OrdenVisitaCreateDTO dto) {
+        return crear(dto, null);
+    }
+
+    // ventanasCliente (10-oct-2026): visita de un pedido de empresa "a coordinar" — JSON
+    // [{dia, franja}]; el técnico elige el día dentro de eso (confirmarHorario).
+    @Transactional
+    public OrdenVisitaDTO crear(OrdenVisitaCreateDTO dto, String ventanasCliente) {
         Usuario tecnico = usuarioRepo.findById(dto.tecnicoId())
             .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado: " + dto.tecnicoId()));
         exigirTecnicoValido(tecnico);
@@ -95,6 +103,7 @@ public class OrdenVisitaService {
         o.setFormaPago(dto.formaPago());
         o.setPresupuestoId(dto.presupuestoId());
         o.setEquiposSerie(dto.equiposSerie());
+        o.setVentanasCliente(ventanasCliente);
 
         OrdenVisitaDTO saved = toDTO(repo.save(o));
         historial(saved.id(), true, "Visita asignada a " + tecnico.getNombre() + " · " + cuandoTxt(o.getFechaProgramada(), o.getHoraEstimada()));
@@ -124,7 +133,8 @@ public class OrdenVisitaService {
             TipoNotificacion.ORDEN_ASIGNADA, tecnico.getId(), null,
             saved.titulo(),
             (saved.clienteNombre() != null ? saved.clienteNombre() : "") +
-            (saved.fechaProgramada() != null ? " · " + saved.fechaProgramada().format(DateTimeFormatter.ofPattern("dd/MM")) : ""),
+            (Boolean.TRUE.equals(saved.horarioACoordinar()) ? " · día a coordinar: elegilo en la app"
+                : saved.fechaProgramada() != null ? " · " + saved.fechaProgramada().format(DateTimeFormatter.ofPattern("dd/MM")) : ""),
             saved.id(), false); // el WhatsApp ya lo manda notificarTecnico(), con más detalle
         return saved;
     }
@@ -160,6 +170,8 @@ public class OrdenVisitaService {
                 || !java.util.Objects.equals(o.getHoraEstimada(), dto.horaEstimada())) {
             o.setConfirmadaEn(null);
         }
+        // El admin fijó el día: deja de estar "a coordinar"
+        if (cambioDia) o.setVentanasCliente(null);
         o.setTecnico(tecnico);
         o.setTitulo(dto.titulo().trim());
         o.setDescripcion(dto.descripcion());
@@ -602,7 +614,8 @@ public class OrdenVisitaService {
         if (numero == null || numero.isBlank()) return;
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String fecha = o.fechaProgramada() != null ? o.fechaProgramada().format(fmt) : "—";
+        String fecha = Boolean.TRUE.equals(o.horarioACoordinar()) ? "A coordinar: elegí el día en la app"
+            : o.fechaProgramada() != null ? o.fechaProgramada().format(fmt) : "—";
         String hora  = o.horaEstimada()    != null ? o.horaEstimada() : "";
 
         String prioridad = switch (o.prioridad()) {
@@ -634,6 +647,9 @@ public class OrdenVisitaService {
     // ── Mapper ─────────────────────────────────────────────────────────────────
     private OrdenVisitaDTO toDTO(OrdenVisita o) {
         Servicio tentativo = presupuestoTentativo(o);
+        // Visita de un pedido de empresa con el día a coordinar (10-oct-2026)
+        String ventanasPedido = tentativo == null && o.getVentanasCliente() != null && abiertaParaCoordinar(o)
+            ? o.getVentanasCliente() : null;
         return new OrdenVisitaDTO(
             o.getId(),
             o.getTecnico().getId(),
@@ -654,8 +670,8 @@ public class OrdenVisitaService {
             o.getMontoEstimado(),
             o.getFormaPago(),
             o.getPresupuestoId(),
-            tentativo != null,
-            tentativo != null ? tentativo.getVentanasDisponibles() : null,
+            tentativo != null || ventanasPedido != null,
+            tentativo != null ? tentativo.getVentanasDisponibles() : ventanasPedido,
             o.getEquiposSerie(),
             o.getConfirmadaEn()
         );
@@ -663,10 +679,14 @@ public class OrdenVisitaService {
 
     // Presupuesto vinculado con fecha "a coordinar" (o null). Solo mientras la orden
     // sigue abierta: una cerrada ya no necesita coordinar nada.
+    private static boolean abiertaParaCoordinar(OrdenVisita o) {
+        return o.getEstado() == EstadoOrden.PENDIENTE || o.getEstado() == EstadoOrden.EN_CAMINO
+            || o.getEstado() == EstadoOrden.EN_SITIO || o.getEstado() == EstadoOrden.NO_ATENDIDO;
+    }
+
     private Servicio presupuestoTentativo(OrdenVisita o) {
         if (o.getPresupuestoId() == null) return null;
-        if (o.getEstado() != EstadoOrden.PENDIENTE && o.getEstado() != EstadoOrden.EN_CAMINO
-                && o.getEstado() != EstadoOrden.EN_SITIO && o.getEstado() != EstadoOrden.NO_ATENDIDO) return null;
+        if (!abiertaParaCoordinar(o)) return null;
         return servicioRepository.findById(o.getPresupuestoId())
                 .filter(sv -> Boolean.TRUE.equals(sv.getFechaTentativa()))
                 .orElse(null);
@@ -802,6 +822,58 @@ public class OrdenVisitaService {
                     admin.getId(), o.getTecnico().getId(),
                     o.getTecnico().getNombre() + " confirmó · " + cliente, "Va el " + cuando.trim(), o.getId(), false));
         }
+        return toDTO(o);
+    }
+
+    // Técnico: elige día y hora de una visita "a coordinar" de un pedido de empresa,
+    // dentro de los días/franjas que marcó la empresa (10-oct-2026)
+    @Transactional
+    public OrdenVisitaDTO confirmarHorario(Long id, String fechaStr, String horaStr) {
+        OrdenVisita o = repo.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Orden no encontrada: " + id));
+        if (!ABIERTAS.contains(o.getEstado())) throw new IllegalArgumentException("Esta orden ya no está abierta");
+        List<Map<String, String>> ventanas = com.dispenserlatienda.service.empresa.PedidoEmpresaService.leerLista(o.getVentanasCliente());
+        if (ventanas.isEmpty())
+            throw new com.dispenserlatienda.exception.BusinessException("Esta visita no tiene un horario a coordinar");
+        LocalDate fecha;
+        java.time.LocalTime hora;
+        try {
+            fecha = LocalDate.parse(fechaStr);
+            hora = java.time.LocalTime.parse(horaStr);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Fecha u hora inválida");
+        }
+        if (fecha.isBefore(LocalDate.now()))
+            throw new com.dispenserlatienda.exception.BusinessException("Elegí un día de hoy en adelante");
+        String dia = switch (fecha.getDayOfWeek()) {
+            case MONDAY -> "LUNES"; case TUESDAY -> "MARTES"; case WEDNESDAY -> "MIERCOLES";
+            case THURSDAY -> "JUEVES"; case FRIDAY -> "VIERNES"; case SATURDAY -> "SABADO"; default -> "";
+        };
+        boolean dentro = ventanas.stream().anyMatch(v -> {
+            if (!dia.equals(v.get("dia"))) return false;
+            String[] fr = (v.get("franja") != null ? v.get("franja") : "").split("-");
+            try {
+                return fr.length == 2 && !hora.isBefore(java.time.LocalTime.parse(fr[0].trim()))
+                    && hora.isBefore(java.time.LocalTime.parse(fr[1].trim()));
+            } catch (Exception e) { return false; }
+        });
+        if (!dentro) throw new com.dispenserlatienda.exception.BusinessException(
+            "Ese día u horario no está dentro de lo que marcó el cliente");
+        String h = String.format("%02d:%02d", hora.getHour(), hora.getMinute());
+        o.setFechaProgramada(fecha);
+        o.setHoraEstimada(h);
+        o.setVentanasCliente(null);
+        if (o.getConfirmadaEn() == null) o.setConfirmadaEn(java.time.LocalDateTime.now());
+        repo.save(o);
+        historial(o.getId(), false, "Eligió el día: " + cuandoTxt(fecha, h));
+        String cliente = o.getClienteNombre() != null ? o.getClienteNombre() : o.getTitulo();
+        String cuando = com.dispenserlatienda.service.empresa.PedidoEmpresaService.cuando(fecha, h);
+        usuarioRepo.findAll().stream()
+            .filter(u -> u.getRol() == RolUsuario.ADMIN && u.isActivo())
+            .forEach(admin -> notificacionService.notificar(TipoNotificacion.MENSAJE_LIBRE,
+                admin.getId(), o.getTecnico().getId(),
+                o.getTecnico().getNombre() + " eligió el día · " + cliente, "Va el " + cuando, o.getId(), false));
+        avisarEmpresa(o, "agendado", "Vamos el " + cuando + (o.getDireccion() != null ? "\n📍 " + o.getDireccion() : ""));
         return toDTO(o);
     }
 

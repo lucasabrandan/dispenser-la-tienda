@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { LuMapPin, LuClock, LuSend, LuNavigation, LuTriangleAlert, LuHash, LuMessageCircle } from 'react-icons/lu';
+import { LuMapPin, LuClock, LuSend, LuNavigation, LuTriangleAlert, LuHash, LuMessageCircle, LuCalendarDays } from 'react-icons/lu';
 import api from '../../services/api';
 import ModalShell from '../ui/ModalShell';
 import InformeTrabajo from './InformeTrabajo';
@@ -8,6 +8,7 @@ import TrabajoHecho from './TrabajoHecho';
 import CancelarPedido from './CancelarPedido';
 import { VerFotos } from './FotosPedido';
 import { estadoDe, cuandoPedido, linkMaps, haceCuanto, PASOS_PEDIDO, esAbierto } from '../../utils/pedidosEmpresa';
+import { resumenVentanas } from '../../utils/ordenes';
 
 // Ficha de un pedido (Portal Empresa, 7-oct-2026). La usan los dos lados:
 // la empresa (modo="empresa") y el admin (modo="admin", con Agendar / Cancelar).
@@ -134,7 +135,30 @@ export default function PedidoDetalle({ pedido: inicial, modo = 'empresa', funci
                         </span>
                         <LuNavigation size={16} className="shrink-0 mt-0.5 text-muted" />
                     </a>
-                    {p.equipoSerie && <p className="flex items-center gap-2 px-1 text-label font-bold text-secondary"><LuHash size={15} className="text-muted" />Equipo N/S {p.equipoSerie}</p>}
+                    {/* Carga guiada (10-oct-2026): cada equipo con lo que le pasa */}
+                    {p.equipos?.length > 0 ? (
+                        <div className="rounded-2xl bg-chip divide-y divide-black/[0.05] dark:divide-white/[0.06]">
+                            {p.equipos.map((e, i) => (
+                                <div key={i} className="flex items-start gap-2.5 px-3 py-2.5">
+                                    <LuHash size={15} className="shrink-0 mt-0.5 text-muted" />
+                                    <span className="flex-1 min-w-0">
+                                        <span className="block text-label font-black text-ink">{e.serie ? `N/S ${e.serie}` : 'Sin N/S'}
+                                            {(e.modelo || e.ubicacion) && <span className="font-bold text-muted"> · {[e.modelo, e.ubicacion].filter(Boolean).join(' · ')}</span>}</span>
+                                        <span className="block text-caption text-secondary">{e.motivo}</span>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : p.equipoSerie && <p className="flex items-center gap-2 px-1 text-label font-bold text-secondary"><LuHash size={15} className="text-muted" />Equipo N/S {p.equipoSerie}</p>}
+                    {p.ventanas?.length > 0 && esAbierto(p) && (
+                        <div className="flex items-start gap-2.5 px-1">
+                            <LuCalendarDays size={15} className="shrink-0 mt-0.5 text-muted" />
+                            <span className="flex-1 min-w-0">
+                                <span className="block text-caption font-bold text-muted">Pueden recibirnos</span>
+                                {resumenVentanas(p.ventanas).map(l => <span key={l} className="block text-label font-bold text-secondary">{l}</span>)}
+                            </span>
+                        </div>
+                    )}
                     {p.detalle && <p className="px-1 text-body text-ink whitespace-pre-line">{p.detalle}</p>}
                     <VerFotos fotos={p.fotos} className="px-1" />
                 </div>

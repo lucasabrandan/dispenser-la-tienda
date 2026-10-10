@@ -55,7 +55,9 @@ public class PedidoEmpresaAdminController {
     public PedidoEmpresaDTO agendar(@PathVariable Long id, @RequestBody Map<String, String> body) {
         Long tecnicoId = body.get("tecnicoId") != null ? Long.valueOf(body.get("tecnicoId")) : null;
         LocalDate fecha = body.get("fecha") != null ? LocalDate.parse(body.get("fecha")) : null;
-        return service.agendar(id, tecnicoId, fecha, body.get("hora"));
+        // aCoordinar (10-oct-2026): la visita queda con los días/franjas que marcó la empresa
+        // y el técnico confirma el día (fecha opcional: si falta, el primer día que les sirve)
+        return service.agendar(id, tecnicoId, fecha, body.get("hora"), Boolean.parseBoolean(body.get("aCoordinar")));
     }
 
     @PatchMapping("/{id}/rechazar")

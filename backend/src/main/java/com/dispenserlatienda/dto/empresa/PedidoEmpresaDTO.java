@@ -33,5 +33,8 @@ public record PedidoEmpresaDTO(
     // Observación sin puntaje (9-oct-2026): PENDIENTE | RESUELTA | NO_CORRESPONDE
     String observacionEstado,
     String observacionRespuesta,
-    LocalDateTime observacionCerradaEn
+    LocalDateTime observacionCerradaEn,
+    // Carga guiada (10-oct-2026)
+    java.util.List<java.util.Map<String, String>> equipos,
+    java.util.List<java.util.Map<String, String>> ventanas
 ) {}

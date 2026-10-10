@@ -24,7 +24,8 @@ export const esAbierto = (p) => !['HECHO', 'CANCELADO'].includes(p?.estado);
 
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 export function cuandoPedido(p) {
-    if (!p?.fecha) return '';
+    // Asignado a un técnico que todavía tiene que elegir el día (carga guiada, 10-oct-2026)
+    if (!p?.fecha) return p?.estado === 'AGENDADO' && p?.tecnicoNombre ? `Día a coordinar · ${p.tecnicoNombre}` : '';
     const [a, m, d] = String(p.fecha).split('-').map(Number);
     const f = new Date(a, m - 1, d);
     const hora = p.hora ? (String(p.hora).includes(':') ? String(p.hora).slice(0, 5) : String(p.hora).toLowerCase()) : '';
